@@ -1,0 +1,114 @@
+/* @import url("./fonts.css"); */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  :root { 
+    --w:#fff;
+    --b:#3f3f3f;
+    --color-primary:#6b21a8;
+    --color-secondary:#581c87;
+  }
+}
+
+/* body {font-family: 'ManropeMedium';} */
+input,.mantine-PasswordInput-root,option,select {max-width:400px;}
+a {
+  /* @apply text-slate-300; */
+  color:#ddd6fe!important;
+}
+.nav-links {
+  text-decoration: none;
+  @apply block lg:inline-block hover:text-white lg:mr-10 lg:border-0 lg:p-0
+  underline-offset-2 hover:underline uppercase p-4;
+  font-family:'Quantico';
+}
+
+.nav-links.active {
+  text-decoration: underline;
+   font-style: italic;letter-spacing: 1px;
+   font-weight: 500;
+}
+
+.mobileNAV{
+  @apply w-full hidden lg:block flex-grow lg:m-0
+  lg:relative absolute top-1 left-0 bg-purple-900 lg:bg-transparent z-40 text-center
+  lg:flex lg:items-center lg:w-auto max-h-screen overflow-auto;
+}
+
+.small-nav-cont {
+   @apply pt-2 pb-4 px-4 gap-2 w-full flex flex-row overflow-x-auto scroll-pl-4 
+   snap-x snap-mandatory opacity-80 bg-purple-900 rounded-b-lg; 
+
+}
+.small-nav-cont .mantine-svc93q:hover,.mantine-ScrollArea-corner  {
+  background-color: #58168f;
+}
+
+/* .mantine-svc93q,.mantine-ScrollArea-thumb, .mantine-ScrollArea-scrollbar {
+  background-color:#6b21a5;
+} */
+ 
+.small-nav { 
+    @apply text-base rounded-md px-3 w-max text-white whitespace-nowrap border-black
+    relative snap-start scroll-ml-1 border-b-4 tracking-wider uppercase
+    hover:border-black cursor-pointer /*hover:text-secondary*/
+    hover:bg-white opacity-75 hover:opacity-100 underline-offset-2 ;
+} 
+
+.mantine-Button-label {
+  font-weight:500!important;
+}
+
+#menu-toggle {
+  display: none;
+}
+#menu-toggle:checked + #navbar {
+  display: block;
+}
+
+.bg-grape {
+  background-color:#9C36B5;
+}
+
+#accessmodal {
+  top: auto;
+    right: 0;
+    width: 50%;
+    height: 40vh;
+    bottom: 0;
+    left: auto;
+}
+#accessmodal .mantine-Modal-modal{border:2px solid #58168f;}
+#accessmodal-body {padding:10px 0;}
+#accessmodal .mantine-Modal-inner {padding:0;}
+
+#loadingContainer {
+  position:relative;display:flex;min-height: 300px;flex-direction: column;
+}
+
+#backtotop {position:fixed; bottom:4px;right:4px;padding:8px;}
+
+.mantine-Select-wrapper {max-width:400px;}
+
+.profileDashboard {display:flex;}
+
+.ProseMirror{min-height:400px;}
+
+/* button:disabled,
+button[disabled] {
+  background-color: var(--color-primary)!important;
+  color: white!important;
+} */
+ 
+@media screen and (max-width: 1023px) { 
+      #accessmodal {
+        width:100%;
+      }
+    .border-t-2 {
+      border-top:2px solid #7e22ce;
+    }
+}
+
