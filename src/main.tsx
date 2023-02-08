@@ -47,12 +47,12 @@ const router = createBrowserRouter([
         {label:'ARCHIVED',link:'/Forum/7'},
       ]} />,
           children: [
-            { path: "/:id", element: <MainForum />},
-            { path: "/:id/new", element:<Protect><NewTopic /></Protect>}, //new thread
-            { path: "/new", element: <Protect><NewTopic /></Protect>}, //new thread
-            { path: "/thread/:id", element: <Threads/>},
-            { path: "/thread/:id/:page", element: <Threads/>},
-            { path: "/thread/:id/post", element: <Protect><NewPost /></Protect>}, //new post
+            { path: ":id", element: <MainForum />},
+            { path: ":id/new", element:<Protect><NewTopic /></Protect>}, //new thread
+            { path: "new", element: <Protect><NewTopic /></Protect>}, //new thread
+            { path: "thread/:id", element: <Threads/>},
+            { path: "thread/:id/:page", element: <Threads/>},
+            { path: "thread/:id/post", element: <Protect><NewPost /></Protect>}, //new post
           ]  
         },
         { path: "/Marketplace",  element: <>Soon to come.</>, },
