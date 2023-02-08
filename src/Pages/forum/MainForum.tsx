@@ -80,7 +80,7 @@ const placeNum = place && !isNaN(parseInt(place.split("/")[2])) ? parseInt(place
              Created by {thread.createdBy}
             </Text></Link></td> 
           <td>
-            <Link style={{textDecoration: 'none'}} to={`lastpost${thread.count}`}>
+            <Link style={{textDecoration: 'none'}} to={`/Forum/thread/${thread.count}`}>
               {
               thread.timePosted.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: false })
               }

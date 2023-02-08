@@ -80,7 +80,7 @@ export default function MiniNavForum({ links }: HeaderTabsProps) {
       className={cx(classes.link, { [classes.linkActive]: active === link.link })}
       onClick={(event) => {
         event.preventDefault();
-        (window.location.pathname==='/forum'||window.location.pathname==='/forum/')? event.preventDefault(): navigate('/forum/1');
+        (window.location.pathname==='/Forum'||window.location.pathname==='/Forum/')? event.preventDefault(): navigate('/Forum/1');
         //check where you are
         setActive(link.link);
         toggleOpened(false);

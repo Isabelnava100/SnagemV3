@@ -38,11 +38,11 @@ export default function App() {
   const headerLinks: HeaderSearchProps = {
     all: [
       {
-        link: 'Forum/1',
+        link: '/Forum/1',
         label: 'Forum',
       },
       {
-        link: loginName,
+        link: '/'+loginName,
         label: loginName,
       },
       user?

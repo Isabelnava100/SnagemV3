@@ -32,12 +32,12 @@ const router = createBrowserRouter([
     loader: rootLoader,
     children: [
       { index: true, element: <>Welcome!</> },
-      { path: "Profile", element: <Protect><LeadGrid /></Protect>, },      
-      { path: "Login",  element: <Login />, },
-      { path: "Register",  element: <NewRegister />, },
-      { path: "Forgot",  element: <ForgotPassword />, },
-      { path: "Reset",  element: <ResetPW />, },
-      { path: "Forum",  element: <MiniNavForum links={[
+      { path: "/Profile", element: <Protect><LeadGrid /></Protect>, },      
+      { path: "/Login",  element: <Login />, },
+      { path: "/Register",  element: <NewRegister />, },
+      { path: "/Forgot",  element: <ForgotPassword />, },
+      { path: "/Reset",  element: <ResetPW />, },
+      { path: "/Forum",  element: <MiniNavForum links={[
         {label:'MAIN FORUMS',link:'/Forum/1'},
         {label:'SIDE RP',link:'/Forum/2'},
         {label:'MASTER MISSIONS',link:'/Forum/3'},
@@ -47,16 +47,16 @@ const router = createBrowserRouter([
         {label:'ARCHIVED',link:'/Forum/7'},
       ]} />,
           children: [
-            { path: ":id", element: <MainForum />},
-            { path: ":id/new", element:<Protect><NewTopic /></Protect>}, //new thread
-            { path: "new", element: <Protect><NewTopic /></Protect>}, //new thread
-            { path: "thread/:id", element: <Threads/>},
-            { path: "thread/:id/:page", element: <Threads/>},
-            { path: "thread/:id/post", element: <Protect><NewPost /></Protect>}, //new post
+            { path: "/:id", element: <MainForum />},
+            { path: "/:id/new", element:<Protect><NewTopic /></Protect>}, //new thread
+            { path: "/new", element: <Protect><NewTopic /></Protect>}, //new thread
+            { path: "/thread/:id", element: <Threads/>},
+            { path: "/thread/:id/:page", element: <Threads/>},
+            { path: "/thread/:id/post", element: <Protect><NewPost /></Protect>}, //new post
           ]  
         },
-        { path: "Marketplace",  element: <>Soon to come.</>, },
-        { path: "Activities",  element: <>Soon to come.</>, },
+        { path: "/Marketplace",  element: <>Soon to come.</>, },
+        { path: "/Activities",  element: <>Soon to come.</>, },
     ],
   },
   // {

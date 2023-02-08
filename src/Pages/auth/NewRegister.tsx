@@ -391,7 +391,7 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
         gaia==='Yes'?'':
     <Text color="dimmed" size="sm" mt={5}>
         Your registration will be accepted based on your 
-        application. <Anchor<'a'> href="Forum/1" size="sm" target="_blank"> Learn more about Team Snagem here. </Anchor>
+        application. <Anchor<'a'> href="/Forum/1" size="sm" target="_blank"> Learn more about Team Snagem here. </Anchor>
          </Text>   
   }
    
