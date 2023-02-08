@@ -211,7 +211,7 @@ useEffect(() => {
 }, [thethreadid]); //set to page
 
 if (shouldNavigate) {
-  return <Navigate to="/forum" />;
+  return <Navigate to="/Forum/1" />;
 }
 
 
@@ -228,7 +228,7 @@ const handleSubmit = async (character: string,text: string) => {
       timePosted: new Date(),
     });
     if (docRef){
-      navigate('/forum/thread/'+thethreadid);
+      navigate('/Forum/thread/'+thethreadid);
     }
     
   } catch (error:unknown) {     

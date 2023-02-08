@@ -167,7 +167,7 @@ export function NewTopic() {
         timePosted: new Date(),
       });
       if (docRef && docRef2){
-        navigate('/forum/'+forum);
+        navigate('/Forum/'+forum);
       }
       
     } catch (error:unknown) {     

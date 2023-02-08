@@ -62,7 +62,7 @@ export function ForgotPassword() {
    return sendPasswordResetEmail(auth, email)
       .then(() => {
         alert("Reset email has been sent !");
-        navigate('/login');
+        navigate('/Login');
       }).catch((error) => {        
         setVisible(false);
         if (error.code === 'auth/invalid-email') {

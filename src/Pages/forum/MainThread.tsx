@@ -53,8 +53,8 @@ function Threads() {
 
   const sortPostsByTime = (posts: Item[]): Item[] => {
     return posts.sort((a, b) => {
-      const timeA = a.timePosted.seconds + a.timePosted.nanoseconds / 1e9;
-      const timeB = b.timePosted.seconds + b.timePosted.nanoseconds / 1e9;
+      const timeA:number = a.timePosted.seconds + a.timePosted.nanoseconds / 1e9;
+      const timeB:number = b.timePosted.seconds + b.timePosted.nanoseconds / 1e9;
       return timeA - timeB;
     });
   };
@@ -120,7 +120,7 @@ useEffect(() => {
 }, [thethreadid, page]); //set to page
 
 if (shouldNavigate) {
-  return <Navigate to="/forum/1" />;
+  return <Navigate to="/Forum/1" />;
 }
 
   return (

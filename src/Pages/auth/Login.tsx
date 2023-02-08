@@ -29,7 +29,7 @@ const navigate=useNavigate();
 
   useEffect(() =>{
     if(user){
-      navigate('/profile');
+      navigate('/Profile');
     }
   }) 
 
@@ -53,7 +53,7 @@ const navigate=useNavigate();
           .then(async (result)=>{
             const {uid,email,displayName} = result.user;
             setUser({ uid, email,displayName});
-            navigate('/profile');
+            navigate('/Profile');
           }); //sign in
           
         });
@@ -62,7 +62,7 @@ const navigate=useNavigate();
         .then(async (result)=>{
           const {uid,email,displayName} = result.user;
           setUser({ uid, email,displayName});          
-          navigate('/profile');
+          navigate('/Profile');
         }); //sign in
       }
     } catch (error:unknown) {
@@ -91,7 +91,7 @@ const navigate=useNavigate();
       </Title>
       <Text color="dimmed" size="sm" align="center" mt={5}>
         Do not have an account yet?{' '}
-        <Anchor<'a'> href="register" size="sm">
+        <Anchor<'a'> href="Register" size="sm">
           Apply to Join.
         </Anchor>
       </Text>
