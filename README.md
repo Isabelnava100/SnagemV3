@@ -53,3 +53,6 @@ git add .
 git commit -m "msg"
 git push origin main
 
+
+ntl deploy
+ntl deploy --prod

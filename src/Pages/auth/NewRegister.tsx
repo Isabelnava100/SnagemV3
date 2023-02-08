@@ -325,6 +325,8 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
         }
         return retVal;
     }
+
+    //https://docs.netlify.com/forms/setup/?_ga=2.101709441.1670044853.1675828635-1761029195.1675828635
  
     return (
       <Container size={840} my={40} >
@@ -342,7 +344,8 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
         </Text>
   
         <Paper withBorder shadow="md" p={30} mt={30} radius="md" style={{background:'#222125'}}>
-        <form onSubmit={form.onSubmit((values) =>{
+
+        <form data-netlify="true" name="newRegister" onSubmit={form.onSubmit((values) =>{
         //console.log(values);
         if(values.isGaia==='Yes'){
           registerUser(values.email, values.password, values.application, values.gaiaName, values.username );
@@ -350,7 +353,6 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
         }
         registerUser(values.email, generatePassword(), values.application, values.gaiaName, values.username);
          
-        
         })}
         style={{display:'flex',justifyContent:'space-between',width:'100%'}}>
       <Grid gutter="sm" style={{width:'100%'}}>
