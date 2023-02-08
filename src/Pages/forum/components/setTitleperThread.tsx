@@ -66,7 +66,7 @@ export function FeaturesTitle({
         size="lg"
         radius="md"
         mt="xl"
-        component={Link} to={`/forum/thread/${id}/post`}
+        component={Link} to={`/Forum/thread/${id}/post`}
       >
         Make a New Post
       </Button>

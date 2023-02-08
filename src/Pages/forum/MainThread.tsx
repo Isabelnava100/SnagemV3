@@ -151,6 +151,7 @@ if (shouldNavigate) {
           radius="md"
           mt="xl"
           style={{alignSelf: 'end'}}
+          component={Link} to={`/Forum/thread/${id}/post`}
         >
           Make a New Post
         </Button>

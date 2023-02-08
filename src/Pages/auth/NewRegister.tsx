@@ -338,7 +338,7 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
         </Title>
         <Text color="dimmed" size="sm" align="center" mt={5}>
           Already have an account?{' '}
-          <Anchor<'a'> href="login" size="sm">
+          <Anchor<'a'> href="Login" size="sm">
             Go to login.
           </Anchor>
         </Text>
@@ -391,7 +391,7 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
         gaia==='Yes'?'':
     <Text color="dimmed" size="sm" mt={5}>
         Your registration will be accepted based on your 
-        application. <Anchor<'a'> href="forum" size="sm" target="_blank"> Learn more about Team Snagem here. </Anchor>
+        application. <Anchor<'a'> href="Forum/1" size="sm" target="_blank"> Learn more about Team Snagem here. </Anchor>
          </Text>   
   }
    

@@ -74,7 +74,7 @@ const placeNum = place && !isNaN(parseInt(place.split("/")[2])) ? parseInt(place
       {allThreads.map((thread) => (
        <tr key={thread.id}>        
         <td>
-          <Link style={{textDecoration: 'none'}} to={`/forum/thread/${thread.count}`}>
+          <Link style={{textDecoration: 'none'}} to={`/Forum/thread/${thread.count}`}>
             {thread.title}
             <Text color="dimmed" size="sm">
              Created by {thread.createdBy}

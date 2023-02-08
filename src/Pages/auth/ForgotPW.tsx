@@ -91,7 +91,7 @@ export function ForgotPassword() {
       <Paper withBorder shadow="md" p={30} radius="md" mt="xl" style={{background:'#222125'}}>
        <TextInput label="Your email" placeholder="Your@email.com" required  {...form.getInputProps('email')} />
         <Group position="apart" mt="lg" className={classes.controls}>
-          <Anchor<'a'> href="login" color="dimmed" size="sm" className={classes.control}>
+          <Anchor<'a'> href="Login" color="dimmed" size="sm" className={classes.control}>
             <Center inline>
               <ArrowLeft size={12} />
               <Box ml={5}>Back to login page</Box>
