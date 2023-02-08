@@ -22,6 +22,7 @@ import MiniNavForum from './Pages/forum/components/MiniNavForum';
 import { NewTopic } from './Pages/forum/NewTopic';
 import Threads from './Pages/forum/MainThread';
 import { NewPost } from './Pages/forum/NewPost';
+import HomePage from './Pages/Homepage';
 
 
 const router = createBrowserRouter([
@@ -31,7 +32,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     loader: rootLoader,
     children: [
-      { index: true, element: <>Welcome!</> },
+      { index: true, element: <HomePage/> },
       { path: "/Profile", element: <Protect><LeadGrid /></Protect>, },      
       { path: "/Login",  element: <Login />, },
       { path: "/Register",  element: <NewRegister />, },

@@ -23,7 +23,7 @@ export async function loader() {
   return { contacts };
 }
 
-//<LoadingOverlay visible={true} loader={<img src="https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/mewdumpy.gif?alt=media&token=8185fcca-14bf-4ab6-a890-dead2ee46265" alt="mew loading" />} />
+//<LoadingOverlay visible={true} loader={<img src="https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/mewdumpy_200x200.webp?alt=media&token=9348aff4-71b0-4d60-baf1-c28098f91f45" alt="mew loading" />} />
 
 export default function App() {
   const [count, setCount] = useState(0);
@@ -64,7 +64,7 @@ export default function App() {
       }} tabs={[]} />  */}
       <HeaderMenuColored links={headerLinks.all} />
       <LoadingOverlay visible={navigation.state === "loading"}
-      loader={<img src="https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/mewdumpy.gif?alt=media&token=8185fcca-14bf-4ab6-a890-dead2ee46265" alt="mew loading" />}
+      loader={<img src="https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/mewdumpy_200x200.webp?alt=media&token=9348aff4-71b0-4d60-baf1-c28098f91f45" alt="mew loading" />}
         />
 
         <Outlet  />
