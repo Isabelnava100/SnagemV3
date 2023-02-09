@@ -194,7 +194,7 @@ export function NewTopic() {
       dataRef.get().then((snapshot) => {
       setValueNT(snapshot.size+1);
       });
-  })
+  },[])
   const formTheCheck =form.isValid();
   
 
