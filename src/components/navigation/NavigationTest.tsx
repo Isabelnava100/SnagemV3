@@ -98,7 +98,9 @@ export function HeaderMenuColored({ links }: HeaderSearchProps) {
   };
   
     const items = links.map((link) => (
-      <>{link.label.length===0?'':
+      <div key={link.label}>
+        {link.label.length===0?''
+        :
       <Link
         key={link.label}
         to={link.link}
@@ -116,7 +118,7 @@ export function HeaderMenuColored({ links }: HeaderSearchProps) {
         {link.label}
       </Link>
       }
-        </>
+        </div>
     ));
   
     return (

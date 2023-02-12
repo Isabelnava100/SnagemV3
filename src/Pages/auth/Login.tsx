@@ -3,12 +3,13 @@ import { useForm } from '@mantine/form';
 import { useState, useEffect } from 'react';
 import { useLoaderData, useNavigate } from 'react-router-dom';
 import { browserLocalPersistence, setPersistence, signInWithEmailAndPassword } from "firebase/auth";
-import { auth, firebase } from '../../context/firebase';
+import { auth, db, firebase } from '../../context/firebase';
 import { UserAuth } from '../../context/AuthContext';
 import { LoaderData } from "../../context/Loader";
 import { getLoginCheck } from '../../context/Data';
 import { FirebaseError } from '@firebase/util'
 import { IconChevronsDownLeft } from '@tabler/icons';
+import { doc, getDoc } from 'firebase/firestore';
 
 
 
@@ -43,26 +44,46 @@ const navigate=useNavigate();
   
   const handleSignIn = async (email2: string, password: string, remember:boolean) => {
     setSub(true);
-    try {
-      
+    try {            
       if(remember){
         //localStorage.setItem('token', token);
-        const result = await setPersistence(auth, browserLocalPersistence)
+       await setPersistence(auth, browserLocalPersistence)
         .then(async ()=>{
           await signInWithEmailAndPassword(auth, email2, password)
           .then(async (result)=>{
             const {uid,email,displayName} = result.user;
-            setUser({ uid, email,displayName});
-            navigate('/Profile');
+              await getDoc(doc(db, "users", uid))
+              .then((user) =>{
+                setUser({ uid, email,displayName,
+                otherinfo:{
+                  permissions:user.data()?.permissions,
+                  badges:user.data()?.badges
+                  }
+                }); //set user
+                  
+              }).finally(() => {
+                navigate('/Profile');
+              });
+          
           }); //sign in
           
         });
       } else {
-        const result = await signInWithEmailAndPassword(auth, email2, password)
+        await signInWithEmailAndPassword(auth, email2, password)
         .then(async (result)=>{
           const {uid,email,displayName} = result.user;
-          setUser({ uid, email,displayName});          
-          navigate('/Profile');
+          await getDoc(doc(db, "users", uid))
+              .then((user) =>{
+                setUser({ uid, email,displayName,
+                otherinfo:{
+                  permissions:user.data()?.permissions,
+                  badges:user.data()?.badges
+                  }
+                }); //set user
+                  
+          }).finally(() => {
+            navigate('/Profile');
+          });
         }); //sign in
       }
     } catch (error:unknown) {

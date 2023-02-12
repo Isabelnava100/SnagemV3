@@ -13,7 +13,7 @@ import { EditorOptions, Extension, Mark, useEditor } from '@tiptap/react';
 import StarterKit, { StarterKitOptions } from '@tiptap/starter-kit';
 import { useState, useEffect } from 'react';
 import { ButtonProgress } from './components/LoadingButton';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { LinkOptions } from '@tiptap/extension-link';
 import { useForm } from '@mantine/form';
 import { db,firebase } from '../../context/firebase';
@@ -128,7 +128,8 @@ export function NewTopic() {
   const { id } = useParams();
   const { classes } = useStyles();
   const { user } = UserAuth();
-  const [valueNewThread, setValueNT] = useState<number>();
+  const [valueNewThread, setValueNT] = useState<number>(); //get rid of this
+  const [shouldNavigate, setShouldNavigate] = useState<boolean>(false);
   
   // const [valueForm, setValue] = useState<string>(id?id:'1');
   
@@ -152,29 +153,37 @@ export function NewTopic() {
       const dataRef2 = db.collection('posts');
       const docRef = await dataRef.add({
         closed: false,
-        count: valueNewThread,
         createdBy: user?.displayName,
         location: Number(forum),
         private: false,
         timePosted: new Date(),
+        threadLink:valueNewThread,
         title: title
-      });
+      });      
+     const docId = docRef.id;
       const docRef2 = await dataRef2.add({
         character: postas,
         owner: user?.displayName,
         text: firstpost,
-        thread: valueNewThread,
+        thread: docId,
+        threadLink:valueNewThread, //url number
         timePosted: new Date(),
       });
       if (docRef && docRef2){
         navigate('/Forum/'+forum);
       }
       
-    } catch (error:unknown) {     
+    } catch (error:unknown) {      
+    alert("There has been an error, please inform the administrator.");
+    setShouldNavigate(true);  
     }
   };//form
 
 
+  if (shouldNavigate) {
+    return <Navigate to="/Forum/1" />;
+  }
+  
   const form = useForm({
     initialValues: {
       title: '',

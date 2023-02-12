@@ -31,17 +31,15 @@ alignItems:'flex-end',
 
 interface ArticleCardVerticalProps {
   info: Object;  
+  threadID:string|null;
 }
 
-export function FeaturesTitle({
-  info
-}: ArticleCardVerticalProps) {
+export function FeaturesTitle({info,threadID}: ArticleCardVerticalProps) {
   const { classes } = useStyles();
   const { id } = useParams();
   const { user } = UserAuth();
   let arr: any[] = [info];
 
-  
 
   return (
     <div className={classes.wrapper}>
@@ -67,6 +65,7 @@ export function FeaturesTitle({
         radius="md"
         mt="xl"
         component={Link} to={`/Forum/thread/${id}/post`}
+        state={{newlocation: threadID}}
       >
         Make a New Post
       </Button>

@@ -11,9 +11,9 @@ import {
   createStyles,
 } from '@mantine/core';
 import { ButtonProgress } from './components/LoadingButton';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { SimpleGrid } from '@mantine/core';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '../../context/firebase';
 import { useForm } from '@mantine/form';
 import { useEditor } from '@tiptap/react';
@@ -146,6 +146,8 @@ interface Thread {
 
 export function NewPost() {  
   const { id: thethreadid } = useParams();
+  let { state } = useLocation();
+  const checkingLoc=(state && state.newlocation)?true:false;
   const { classes } = useStyles();
   // const [valuepost, changePost] = useState('');
   const [shouldNavigate, setShouldNavigate] = useState<boolean>(false);
@@ -157,26 +159,50 @@ export function NewPost() {
   const dataRun=async(ThreadLocation:number)=>{
     const newData:Thread[]=[];
     try{
-      await getDocs(collection(db, 'threads'))
-    .then((postsData)=>{
-    postsData.forEach((doc) => {
-      //  console.log(doc.id, " => ", doc.data());
-      if (doc.data().count === ThreadLocation) {
-        newData.push({
-          id: doc.id,
-          private: doc.data().private,
-          title: doc.data().title,
-          closed: doc.data().closed,
-          location: doc.data().location,
-        });
-      } //filter
-    });
-  })
-  .then(() => {
-  setAllThreads(newData);
+      if(checkingLoc){
+//1
+await getDoc(doc(db, "threads", state.newlocation))
+.then((currentThread)=>{
+  newData.push({ 
+    id: currentThread.id, 
+    location: currentThread.data()?.location,
+    private: currentThread.data()?.private,
+    title: currentThread.data()?.title,
+    closed: currentThread.data()?.closed
   });
+
+  } 
+).finally(()=>{
+  setAllThreads(newData);
+});
+//1
+      }else{
+//2
+await getDocs(collection(db, 'threads'))
+.then((postsData)=>{
+postsData.forEach((doc) => {
+  //  console.log(doc.id, " => ", doc.data());
+  if (doc.data().threadLink === ThreadLocation) {
+    newData.push({
+      id: doc.id,
+      private: doc.data().private,
+      title: doc.data().title,
+      closed: doc.data().closed,
+      location: doc.data().location,
+    });
+  } //filter
+});
+})
+.finally(() => {
+setAllThreads(newData);
+});
+//2
+      }//if else
     } 
-    catch (error) {console.log(error);}    
+    catch (error) {
+    alert("There has been an error, please inform the administrator.");
+    setShouldNavigate(true);
+    }    
   } // check permissions
 
   const editor = useEditor({
@@ -216,20 +242,25 @@ if (shouldNavigate) {
 
 
 const handleSubmit = async (character: string,text: string) => {
-  
+  const nextLocation=(allThreads.map(item => item.id))[0];
+
+  const thedate=new Date();
   try {
-    
-    const dataRef = db.collection('posts');
-    const docRef = await dataRef.add({
+      await db.collection('posts').add({
       character:character,
-      thread: Number(thethreadid),
+      thread:nextLocation,
+      threadLink: Number(thethreadid),
       owner: user?.displayName,
       text:text,
-      timePosted: new Date(),
-    });
-    if (docRef){
+      timePosted: thedate,
+    }).then(async ()=>{          
+     await updateDoc(doc(db, "threads", nextLocation),{
+      timePosted:thedate
+    });//update doc..
+    }).finally(()=>{
       navigate('/Forum/thread/'+thethreadid);
-    }
+    });
+
     
   } catch (error:unknown) {     
   }

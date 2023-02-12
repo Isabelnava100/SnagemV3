@@ -1,5 +1,6 @@
 import { Container, Grid, SimpleGrid, Skeleton, useMantineTheme } from '@mantine/core';
 import { redirect, useLoaderData } from 'react-router-dom';
+import { UserAuth } from '../../context/AuthContext';
 import { getContacts, updateContact } from "../../context/Data";
 import { LoaderData } from '../../context/Loader';
 
@@ -20,8 +21,9 @@ export async function loader() {
 
 export function LeadGrid() {
   
+  const {user}=UserAuth();
   const data = useLoaderData() as LoaderData<typeof loader>;
-  console.log(data);
+  // console.log(user);
 
   const theme = useMantineTheme();
   const SECONDARY_COL_HEIGHT = PRIMARY_COL_HEIGHT / 2 - theme.spacing.md / 2;

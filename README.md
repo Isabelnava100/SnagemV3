@@ -53,6 +53,6 @@ git add .
 git commit -m "msg"
 git push origin main
 
-
+npm run build
 ntl deploy
 ntl deploy --prod

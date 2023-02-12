@@ -33,6 +33,7 @@ export default function App() {
   const { height } = useWindowDimensions();
   
   const {user}=UserAuth();
+  // console.log(user);
   const loginName = user?"Profile":"Login";
 
   const headerLinks: HeaderSearchProps = {
@@ -70,8 +71,8 @@ export default function App() {
         <Outlet  />
         {scroll.y>height && 
         <Button onClick={() => scrollTo({ y: 0 })} id="backtotop">
-          Up
-        <img src='' width="16" height="16" alt='scroll back to the top'/>
+          Scroll Back Up
+        {/* <img src='' width="16" height="16" alt='scroll back to the top'/> */}
         </Button>
         }      
     </Container>

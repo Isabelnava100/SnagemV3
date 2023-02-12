@@ -10,7 +10,7 @@ import { db } from '../../context/firebase';
 
 interface Item {
   timePosted:Date;
-  count:number;
+  threadLink:number;
   private: boolean;
   title:string;
   closed:boolean;
@@ -40,7 +40,7 @@ function MainForum() {
           createdBy: doc.data().createdBy,
           location: doc.data().location,
           timePosted: new Date(doc.data().timePosted.seconds * 1000),
-          count: doc.data().count,
+          threadLink: doc.data().threadLink,
           private: doc.data().private,
           title: doc.data().title,
           closed: doc.data().closed
@@ -74,13 +74,13 @@ const placeNum = place && !isNaN(parseInt(place.split("/")[2])) ? parseInt(place
       {allThreads.map((thread) => (
        <tr key={thread.id}>        
         <td>
-          <Link style={{textDecoration: 'none'}} to={`/Forum/thread/${thread.count}`}>
+          <Link style={{textDecoration: 'none'}}  to={`/Forum/thread/${thread.threadLink}`}  state={{ newlocation: thread.id}}>
             {thread.title}
             <Text color="dimmed" size="sm">
              Created by {thread.createdBy}
             </Text></Link></td> 
           <td>
-            <Link style={{textDecoration: 'none'}} to={`/Forum/thread/${thread.count}`}>
+            <Link style={{textDecoration: 'none'}} to={`/Forum/thread/${thread.threadLink}`} state={{ newlocation: thread.id}}>
               {
               thread.timePosted.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: false })
               }

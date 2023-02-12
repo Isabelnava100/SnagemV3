@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { Container, Pagination, LoadingOverlay, Button } from '@mantine/core';
 // import threadJSON from '../../context/temporary/oneThread.json';
 import { ArticleCardVertical } from './components/EachPost';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, useLocation } from 'react-router-dom';
 import { FeaturesTitle } from './components/setTitleperThread';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { UserAuth } from '../../context/AuthContext';
 import { db } from '../../context/firebase';
 
@@ -17,6 +17,7 @@ interface Item {
   owner:string;
   text:string;
   thread:number;
+  threadLink:string;
   timePosted: {
     seconds: number;
     nanoseconds: number;
@@ -33,6 +34,8 @@ interface Thread {
 
 
 function Threads() {
+  let { state } = useLocation();
+  const checkingLoc=(state && state.newlocation)?true:false;
   const { id: thethreadid, page: thecurrentpage } = useParams();
   const [allPosts, setAllPosts] = useState<Item[]>([]);
   const [threadInfo, setThreadInfo] = useState<Thread[]>([]);
@@ -59,38 +62,35 @@ function Threads() {
     });
   };
   
-
+//part 1
   const dataRun=async(threadPlace:number)=>{
-    const newdata:Item[]=[];
     const newdata2:Thread[]=[];
-    try{
-
-      await getDocs(collection(db, 'posts'))
-    .then(async (postsData)=>{ 
-    postsData.forEach((doc) => {
-      //  console.log(doc.id, " => ", doc.data());
-      if(doc.data().thread === threadPlace) {
-      newdata.push({ 
-        id: doc.id, 
-        character:doc.data().character,
-        owner: doc.data().owner,  
-        text:doc.data().text, 
-        thread:doc.data().thread, 
-        timePosted:doc.data().timePosted
-      });
-      } //filter
-      
-  setAllPosts(sortPostsByTime(newdata));
-  setTots(newdata.length);
-  // console.log(newdata);
-
-    });
-
-    await getDocs(collection(db, 'threads'))
+    
+try{
+ //below gets info/title of the thread... needs to be redone without the foreach, just the uid
+if(checkingLoc){
+//1
+await getDoc(doc(db, "threads", state.newlocation))
+.then((currentThread)=>{
+  newdata2.push({ 
+    id: currentThread.id, 
+    createdBy: currentThread.data()?.createdBy,
+    private: currentThread.data()?.private,
+    title: currentThread.data()?.title,
+    closed: currentThread.data()?.closed
+  });
+setThreadInfo(newdata2);
+  } 
+).finally(()=>{
+  dataRun2(newdata2);
+});//1
+}else {
+  //2
+  await getDocs(collection(db, 'threads'))
   .then((postsData)=>{
   postsData.forEach((doc) => {
     //  console.log(doc.id, " => ", doc.data());
-    if(doc.data().count === threadPlace) {
+    if(doc.data().threadLink === threadPlace) {
     newdata2.push({ 
       id: doc.id, 
       createdBy: doc.data().createdBy,
@@ -98,24 +98,66 @@ function Threads() {
       title: doc.data().title,
       closed: doc.data().closed
     });
-    } //filter
-    
+    }
   setThreadInfo(newdata2);
+    //filter    
   });
-})
-.finally(()=>{
-  if(newdata.length===0){ setShouldNavigate(true)}
-});//checking thread title
+}).finally(()=>{
+  dataRun2(newdata2);
+});
+//2
+}//state.newlocation
 
-})
-}catch (error) {console.log(error);}
+}catch (error) {
+  alert("There has been an error, please inform the administrator.");
+  setShouldNavigate(true);}
 }
+//part 1
+
+
+//part 2
+ const dataRun2=async(newdata2:Thread[])=>{
+    const newdata:Item[]=[];
+   if(Object.keys(newdata2).length===0){
+    setShouldNavigate(true);
+   }else{
+    try{
+      //3
+      await getDocs(collection(db, 'posts'))
+        .then(async (postsData)=>{ 
+        postsData.forEach((doc) => {
+          //  console.log(doc.id, " => ", doc.data());
+          if(doc.data().thread === newdata2[0].id) {
+          newdata.push({ 
+            id: doc.id, 
+            character:doc.data().character,
+            owner: doc.data().owner,  
+            text:doc.data().text, 
+            thread:doc.data().thread, 
+            threadLink:doc.data().threadLink, 
+            timePosted:doc.data().timePosted
+          });
+          } //filter      
+      setAllPosts(sortPostsByTime(newdata));
+      setTots(newdata.length);
+      // console.log(newdata);
+        });   
+    });
+    //3    
+    }catch (error) {
+      alert("There has been an error, please inform the administrator.");
+      setShouldNavigate(true);
+    }
+   }
+}
+
+
 
 useEffect(() => {
   if (Number.isNaN(Number(thethreadid))) {
     setShouldNavigate(true);
   }else {
-    dataRun(Number(thethreadid));
+   dataRun(Number(thethreadid));
   }
 }, [thethreadid, page]); //set to page
 
@@ -127,7 +169,7 @@ if (shouldNavigate) {
       
     <Container size="lg" style={{marginTop:20,paddingBottom:100}}>
         <div id="loadingContainer">
-       {threadInfo.length?<FeaturesTitle info={threadInfo} />:''}
+       {threadInfo.length?<FeaturesTitle info={threadInfo} threadID={checkingLoc?state.newlocation:null} />:''}
         
           <Pagination total={pagesCount} color="violet" withEdges page={page} onChange={onChangePG}  
           style={{alignSelf: 'end'}} />

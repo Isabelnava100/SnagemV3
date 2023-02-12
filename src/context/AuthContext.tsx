@@ -17,13 +17,20 @@ import {
 	onAuthStateChanged,
 	signOut
  } from "firebase/auth";
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, DocumentData, DocumentSnapshot, getDoc } from 'firebase/firestore';
 import { LoadingOverlay } from '@mantine/core';
 
 type User = {
 	uid: string;
 	email: string | null;
 	displayName: string | null;
+	otherinfo?: { 
+		permissions: string; 
+		badges: string[]; 
+	},
+};
+type SpecificUser = {
+	permissions: string | null;
 };
 
 
@@ -32,9 +39,19 @@ type AuthContext = {
 	setUser: Dispatch<SetStateAction<User | undefined>>;
 };
 
-
-const login = async (email2: string, password: string, remember:boolean) => {
-	const result = await signInWithEmailAndPassword(auth, email2, password);
+const getInfo = async (uid: string) => {
+    const newdata2:SpecificUser[]=[];
+	return await getDoc(doc(db, "users", uid));
+	// .then((currentThread)=>{
+	// 	return currentThread.data();
+	//   newdata2.push({ 
+	// 	permissions: currentThread.data()?.permissions,
+	//   });
+	  
+	//   } 
+	// ).finally(()=>{
+		// return newdata2[0];
+	// });
 }
 
 
@@ -44,21 +61,29 @@ function AuthContextProvider({children}: {children: ReactNode}) {
 	//const [useLogin, setUserLogin] = useState<User>();
 	const [user, setUser] = useState<User>();
 	const [pending, setPending]=useState<Boolean>(true);
- 
+// console.log(user);
 	useEffect(() => {
-		const authConst = auth.onAuthStateChanged(user => {
+		const authConst = auth.onAuthStateChanged(async user => {
 			if (user) {
 				const {uid, email,displayName} = user;
 				setUser({
 					uid,
 					email,
 					displayName,
+					otherinfo:await getDoc(doc(db, "users", uid)).then((user) =>{
+						return {
+							permissions:user.data()?.permissions,
+							badges:user.data()?.badges
+						}
+							
+					}),
 				});
 				setPending(false);
 			}else {
 				setTimeout(function () {
 					setPending(false);
-				}, 800);
+				// }, 800);
+			});
 			}
 		});
 		return () => authConst();

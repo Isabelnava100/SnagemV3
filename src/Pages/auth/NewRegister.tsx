@@ -1,13 +1,15 @@
 import { useState, useRef } from 'react';
 import {
     TextInput,    PasswordInput,   Anchor,    Paper,    Title,
-    Text,    Container,    Group,    Button,    Grid, Textarea, Progress,  Popover,  Box, Radio, LoadingOverlay
+    Text,    Container,    Group,    Button,    Grid, Textarea, Progress,  Popover,  Box, Radio
   } from '@mantine/core';
   import { useForm } from '@mantine/form';
-import { addDoc, collection } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
 import {auth, db, firebase} from '../../context/firebase';
-import { createUserWithEmailAndPassword, getAuth,updateProfile,sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile,sendEmailVerification } from 'firebase/auth';
+
+
 
 const Gusers:Array<string>=[
   "Guest",
@@ -247,9 +249,9 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
   
   
   export function NewRegister() {
-    const [popoverOpened, setPopoverOpened] = useState(false);
-    const [value, setValue] = useState('');
-     
+    const [popoverOpened, setPopoverOpened] = useState<boolean>(false);
+    const [value, setValue] = useState<string>('');     
+    const [whensubmit, setwhensubmit] = useState<boolean>(false);     
     const navigate = useNavigate();
     const checks = requirements.map((requirement, index) => (
       <PasswordRequirement key={index} label={requirement.label} meets={requirement.re.test(value)} />
@@ -287,25 +289,30 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
   
       
      const registerUser= (email: string, password: string, application:string, gaiaName:string, username:string  )=> {
-     
       createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-          addDoc(collection(db, "users"), {
+      .then(async (userCredential) => {
+        const whereRef = doc(db, "users", userCredential.user.uid);
+         await setDoc(whereRef, {
             app: application?application:null,
             email: userCredential.user.email,
             gaia: gaiaName,
             username: username,
             new: true,
-            uid: userCredential.user.uid
+            // uid: userCredential.user.uid,
+            permissions:'User',
           }); 
-          const theuser = firebase.auth().currentUser;
-          theuser?.updateProfile({
-            displayName: username
+          return userCredential.user;
+        })
+        .then(async(user) => {
+          await updateProfile(user,{
+            displayName:username
           });
         })
-      .then(() => navigate('/Profile'))
-      .catch((error: firebase.FirebaseError) => {
-       
+        .finally(()=>{
+          navigate('/Login', { replace: true });
+          window.location.reload();
+        }) //sign in
+      .catch((error: firebase.FirebaseError) => {       
         //console.log(error.code);
         if (error.code === 'auth/email-already-in-use') {
           form.setErrors({ email: 'Email already in use.' });
@@ -345,13 +352,16 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
   
         <Paper withBorder shadow="md" p={30} mt={30} radius="md" style={{background:'#222125'}}>
 
-        <form data-netlify="true" name="newRegister" onSubmit={form.onSubmit((values) =>{
+        <form data-netlify="true" name="newRegister" onSubmit={
+          form.onSubmit((values) =>{
+            setwhensubmit(true);
         //console.log(values);
         if(values.isGaia==='Yes'){
           registerUser(values.email, values.password, values.application, values.gaiaName, values.username );
           return
-        }
-        registerUser(values.email, generatePassword(), values.application, values.gaiaName, values.username);
+        }else{ 
+          registerUser(values.email, generatePassword(), values.application, values.gaiaName, values.username);
+        }        
          
         })}
         style={{display:'flex',justifyContent:'space-between',width:'100%'}}>
@@ -457,7 +467,7 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
     }
   
           <Group position="right" mt="md">
-            <Button type="submit">Submit</Button>
+            <Button type="submit" disabled={whensubmit}>Submit</Button>
           </Group>
           </Grid.Col>
       </Grid>
