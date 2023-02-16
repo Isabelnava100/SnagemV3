@@ -141,7 +141,7 @@ const navigate=useNavigate();
         </Group>
         <Button type="submit" fullWidth mt="xl"
         disabled={submitted}>
-          Sign in
+       {submitted?'Loading...':'Sign in'}
         </Button>  
       </Paper>
       </form>

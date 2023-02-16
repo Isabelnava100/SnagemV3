@@ -22,6 +22,7 @@ interface Item {
     seconds: number;
     nanoseconds: number;
   };
+	badges: string[]; 
 }
 
 interface Thread {
@@ -40,12 +41,14 @@ function Threads() {
   const [allPosts, setAllPosts] = useState<Item[]>([]);
   const [threadInfo, setThreadInfo] = useState<Thread[]>([]);
   const [shouldNavigate, setShouldNavigate] = useState<boolean>(false);
+  // console.log(allPosts);
 
   const [totalItemsCount, setTots]=useState<number>(0);
 
   const [page, onChangePG] = useState<number>(thecurrentpage?Number(thecurrentpage):1); //if last then pages = pagesCount
   
   const { user } = UserAuth(); // for permissions
+  
   
   const postPerPage=6;
   const pagesCount=Math.ceil(totalItemsCount / postPerPage);
@@ -135,10 +138,12 @@ setThreadInfo(newdata2);
             text:doc.data().text, 
             thread:doc.data().thread, 
             threadLink:doc.data().threadLink, 
-            timePosted:doc.data().timePosted
+            timePosted:doc.data().timePosted, 
+            badges:doc.data().badges,
           });
           } //filter      
       setAllPosts(sortPostsByTime(newdata));
+      
       setTots(newdata.length);
       // console.log(newdata);
         });   
@@ -179,7 +184,8 @@ if (shouldNavigate) {
             <ArticleCardVertical key={apost.id}
             image={''} bigText={apost.text} chara={apost.character} author={{
               name: apost.owner,
-              avatar: 'avie'
+              avatar: 'avie',
+              badges: apost.badges
             }}/>
            )
         }

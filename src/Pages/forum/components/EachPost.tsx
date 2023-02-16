@@ -13,7 +13,14 @@ const useStyles = createStyles((theme) => ({
     backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[7] : theme.white,
     margin:'0',
   },
-
+  adjustmnets:{
+    width:'100%',
+    h1:{fontSize:'26px',fontWeight:'bold',},
+    h2:{fontSize:'20px',fontWeight:'bold',},
+    h3:{fontSize:'16px',fontWeight:'bold',},
+    h4:{fontSize:'14px',fontWeight:'bold',},
+    a:{textDecoration:'underline',}
+  },
 
   textArea: {
     gap:0,
@@ -72,14 +79,27 @@ interface ArticleCardVerticalProps {
   author: {
     name: string;
     avatar: string;
+    badges: string[]; 
   };
 }
 
+const badgesColors = [
+  { color1: 'red',color2: 'yellow', label: 'Test' },
+  { color1: 'blue',color2: 'green', label: 'Legacy' },
+];
+
+const getColor1 = (labelToFind: string):string => {
+  const badge = badgesColors.find(b => b.label === labelToFind);
+  return badge?.color1 ?? '';
+};
+const getColor2 = (labelToFind: string):string => {
+  const badge = badgesColors.find(b => b.label === labelToFind);
+  return badge?.color2 ?? '';
+};
+
+    
 export function ArticleCardVertical({
-  image,
-  bigText,
-  chara,
-  author,
+  image,  bigText,  chara,  author,
 }: ArticleCardVerticalProps) {
   const { classes } = useStyles();
   return (
@@ -94,12 +114,13 @@ export function ArticleCardVertical({
               <Text size="xs" className={classes.longText}>{author.name} </Text>
             </Group>
             <div className={classes.badgesGroup}>
-              <Badge  variant="gradient" gradient={{ from: 'yellow', to: 'red' }} className={classes.badge}>
-              admin </Badge>
-              <Badge  variant="gradient" gradient={{ from: 'yellow', to: 'red' }} className={classes.badge}>
-              new  </Badge>
-              <Badge  variant="gradient" gradient={{ from: 'yellow', to: 'red' }} className={classes.badge}>
-              Premium  </Badge>
+              { author.badges&&(author.badges).map((oneBadge,index)=>
+              <Badge key={author.name+index} variant="gradient" 
+              gradient={{ from: getColor1(oneBadge), to: getColor2(oneBadge) }} 
+              className={classes.badge}>
+              {oneBadge}
+              </Badge>
+              ) }
               </div>
           </Group>
           </div>
@@ -107,6 +128,7 @@ export function ArticleCardVertical({
         <div className={classes.textArea}>
 
             <Text color="dimmed" weight={700} size="xs"
+            className={classes.adjustmnets}
             dangerouslySetInnerHTML={{ __html: bigText }}
             >
           </Text>

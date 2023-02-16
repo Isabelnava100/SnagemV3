@@ -80,11 +80,21 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
+
+const forumLinks=[
+  {link:'/Forum/1',description:'This is where the roleplay happens.'},
+  {link:'/Forum/2',description:'This space is for small, side roleplays.'},
+  {link:'/Forum/3',description:'Here are where master missions happens.'},
+  {link:'/Forum/4',description:'Pick up quests to do on your own or with friends.'},
+  {link:'/Forum/5',description:'Participate in events and get prizes!'},
+  {link:'/Forum/6',description:'Keep a record of your own quests and roleplays here.'},
+  {link:'/Forum/7',description:'Any old, closed roleplay.'},
+];
+
 export function HeroText({send}:{send:string|null}) {
   const {user}=UserAuth();
     const { classes } = useStyles();
   const theme = useMantineTheme();
-
   return (
     <Container className={classes.wrapper} size={1400}>
 
@@ -98,7 +108,9 @@ export function HeroText({send}:{send:string|null}) {
 
         <Container p={0} size={600}>
           <Text size="lg" color="dimmed" className={classes.description}>
-            This is where the roleplay happens. 
+            {
+              forumLinks.find(link => link.link === send)?.description
+            }
           </Text>
         </Container>
 

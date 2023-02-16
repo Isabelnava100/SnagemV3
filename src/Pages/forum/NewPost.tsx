@@ -1,23 +1,26 @@
 
 import { useEffect, useState } from 'react';
-import { RichTextEditor, Link } from '@mantine/tiptap';
-import StarterKit, { StarterKitOptions } from '@tiptap/starter-kit';
-import {
-  Paper,
-  Text,
-  TextInput,
-  Group,
-  Container,
-  createStyles,
-} from '@mantine/core';
+import {  Paper,  Text,  TextInput,  Group,  Container,  createStyles,} from '@mantine/core';
 import { ButtonProgress } from './components/LoadingButton';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { SimpleGrid } from '@mantine/core';
 import { collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '../../context/firebase';
 import { useForm } from '@mantine/form';
-import { useEditor } from '@tiptap/react';
 import { UserAuth } from '../../context/AuthContext';
+import { useEditor } from '@tiptap/react';
+import { RichTextEditor, Link } from '@mantine/tiptap';
+import StarterKit, { StarterKitOptions } from '@tiptap/starter-kit';
+import { LinkOptions } from '@tiptap/extension-link';
+import Highlight from '@tiptap/extension-highlight';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import Superscript from '@tiptap/extension-superscript';
+import SubScript from '@tiptap/extension-subscript';
+import { IconColorPicker } from '@tabler/icons';
+import { Color } from '@tiptap/extension-color';
+import TextStyle from '@tiptap/extension-text-style';
+import Placeholder from '@tiptap/extension-placeholder';
 
 
 const data = [
@@ -133,6 +136,7 @@ interface Item {
   owner:string;
   text:string;
   thread:number;
+  otherinfo:SpecificUser | undefined;
 }
 
 interface Thread {
@@ -142,6 +146,11 @@ interface Thread {
   closed:boolean;
   location:number;
 }
+type SpecificUser = {
+	permissions: string; 
+	badges: string[]; 
+};
+
 
 
 export function NewPost() {  
@@ -154,6 +163,26 @@ export function NewPost() {
   const [allThreads, setAllThreads] = useState<Thread[]>([]);
   const { user } = UserAuth();
   const navigate=useNavigate();
+  
+
+
+  let filteredData=data;
+
+  switch (user?.otherinfo?.permissions) {
+    case 'Master':
+      filteredData = data.filter(item => ['2', '3', '6'].includes(item.value));
+      break;
+    case 'Admin':
+      filteredData = data.filter(item => ['1', '2', '3', '4', '5', '6'].includes(item.value));
+      break;
+    case 'User':
+      filteredData = data.filter(item => ['2', '6'].includes(item.value));
+      break;
+    default:
+      filteredData = data;
+      break;
+  }
+
 
 //check permissions
   const dataRun=async(ThreadLocation:number)=>{
@@ -168,11 +197,30 @@ await getDoc(doc(db, "threads", state.newlocation))
     location: currentThread.data()?.location,
     private: currentThread.data()?.private,
     title: currentThread.data()?.title,
-    closed: currentThread.data()?.closed
+    closed: currentThread.data()?.closed,
   });
 
   } 
 ).finally(()=>{
+  //setShouldNavigate(true); to redirect
+  switch (true) {
+    case newData.some(mission => mission.closed):
+      alert("This is thread has been closed.");
+      setShouldNavigate(true);
+      break;
+    case newData.some(mission => mission.private):
+      alert("This is thread is private.");
+      setShouldNavigate(true);
+        break;
+    case newData.some(mission => !(filteredData.some(item => item.value === mission.location.toString()))):
+      alert("You don't have permissions to post in this thread.");
+      setShouldNavigate(true);
+      break;
+    default:
+      console.log("Default case: No missions are closed or private");
+      break;
+  }
+  
   setAllThreads(newData);
 });
 //1
@@ -207,8 +255,13 @@ setAllThreads(newData);
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit, TextStyle, Color,
+      Underline, Placeholder.configure({ placeholder: 'This is placeholder' }),
       Link,
+      Superscript,
+      SubScript,
+      Highlight,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     onUpdate: (props) => {
       form.setFieldValue("text", props.editor.getHTML());
@@ -243,6 +296,7 @@ if (shouldNavigate) {
 
 const handleSubmit = async (character: string,text: string) => {
   const nextLocation=(allThreads.map(item => item.id))[0];
+  const checkBadges=user?.otherinfo?.badges;
 
   const thedate=new Date();
   try {
@@ -253,10 +307,12 @@ const handleSubmit = async (character: string,text: string) => {
       owner: user?.displayName,
       text:text,
       timePosted: thedate,
+      badges:checkBadges?user?.otherinfo?.badges:null,
     }).then(async ()=>{          
      await updateDoc(doc(db, "threads", nextLocation),{
       timePosted:thedate
     });//update doc..
+    return;
     }).finally(()=>{
       navigate('/Forum/thread/'+thethreadid);
     });
@@ -315,6 +371,38 @@ const formTheCheck =form.isValid();
 
 <RichTextEditor editor={editor}  >
       <RichTextEditor.Toolbar >
+     
+
+      <RichTextEditor.ColorPicker
+          colors={[
+            '#25262b',
+            '#868e96',
+            '#fa5252',
+            '#e64980',
+            '#be4bdb',
+            '#7950f2',
+            '#4c6ef5',
+            '#228be6',
+            '#15aabf',
+            '#12b886',
+            '#40c057',
+            '#82c91e',
+            '#fab005',
+            '#fd7e14',
+          ]}
+        />
+
+      <RichTextEditor.ControlsGroup>
+        <RichTextEditor.Control interactive={false}>
+            <IconColorPicker size={16} stroke={1.5} />
+          </RichTextEditor.Control>
+          <RichTextEditor.Color color="#F03E3E" />
+          <RichTextEditor.Color color="#7048E8" />
+          <RichTextEditor.Color color="#1098AD" />
+          <RichTextEditor.Color color="#37B24D" />
+          <RichTextEditor.Color color="#F59F00" />
+        </RichTextEditor.ControlsGroup>
+
       <RichTextEditor.ControlsGroup>
           <RichTextEditor.H1 />
           <RichTextEditor.H2 />
@@ -338,8 +426,8 @@ const formTheCheck =form.isValid();
           <RichTextEditor.Hr />
           <RichTextEditor.BulletList />
           <RichTextEditor.OrderedList />
-          {/* <RichTextEditor.Subscript />
-          <RichTextEditor.Superscript /> */}
+          <RichTextEditor.Subscript />
+          <RichTextEditor.Superscript />
         </RichTextEditor.ControlsGroup>
 
         <RichTextEditor.ControlsGroup>
@@ -347,14 +435,14 @@ const formTheCheck =form.isValid();
           <RichTextEditor.Unlink />
         </RichTextEditor.ControlsGroup>
 
-        {/* <RichTextEditor.ControlsGroup>
+        <RichTextEditor.ControlsGroup>
           <RichTextEditor.AlignLeft />
           <RichTextEditor.AlignCenter />
           <RichTextEditor.AlignJustify />
           <RichTextEditor.AlignRight />
-        </RichTextEditor.ControlsGroup> */}
+        </RichTextEditor.ControlsGroup>
+        
       </RichTextEditor.Toolbar>
-
       <RichTextEditor.Content  />
     </RichTextEditor>
 

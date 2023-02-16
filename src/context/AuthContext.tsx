@@ -24,13 +24,11 @@ type User = {
 	uid: string;
 	email: string | null;
 	displayName: string | null;
-	otherinfo?: { 
-		permissions: string; 
-		badges: string[]; 
-	},
+	otherinfo?: SpecificUser,
 };
 type SpecificUser = {
-	permissions: string | null;
+	permissions: string; 
+	badges: string[]; 
 };
 
 
@@ -39,19 +37,13 @@ type AuthContext = {
 	setUser: Dispatch<SetStateAction<User | undefined>>;
 };
 
-const getInfo = async (uid: string) => {
-    const newdata2:SpecificUser[]=[];
-	return await getDoc(doc(db, "users", uid));
-	// .then((currentThread)=>{
-	// 	return currentThread.data();
-	//   newdata2.push({ 
-	// 	permissions: currentThread.data()?.permissions,
-	//   });
-	  
-	//   } 
-	// ).finally(()=>{
-		// return newdata2[0];
-	// });
+const getInfo = async (uid: string):Promise<SpecificUser> => {
+	const user = await getDoc(doc(db, "users", uid));
+	const userData = user.data();
+	return {
+		permissions: userData ? userData.permissions : '',
+		badges: userData ? userData.badges : []
+	};
 }
 
 
@@ -66,17 +58,12 @@ function AuthContextProvider({children}: {children: ReactNode}) {
 		const authConst = auth.onAuthStateChanged(async user => {
 			if (user) {
 				const {uid, email,displayName} = user;
+				const otherinfo = await getInfo(uid);
 				setUser({
 					uid,
 					email,
 					displayName,
-					otherinfo:await getDoc(doc(db, "users", uid)).then((user) =>{
-						return {
-							permissions:user.data()?.permissions,
-							badges:user.data()?.badges
-						}
-							
-					}),
+					otherinfo,
 				});
 				setPending(false);
 			}else {
@@ -90,9 +77,13 @@ function AuthContextProvider({children}: {children: ReactNode}) {
 	}, [setUser]);
 
 	if(pending){		
-		return  <LoadingOverlay visible={true} loader={<img src=
+		return  <LoadingOverlay visible={true} loader={
+			<>
+		<img src=
 			"https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/mewdumpy_200x200.webp?alt=media&token=9348aff4-71b0-4d60-baf1-c28098f91f45"
-			alt="mew loading" />} />
+			alt="mew loading" />
+			</>
+		} />
 	}
 
 	return (

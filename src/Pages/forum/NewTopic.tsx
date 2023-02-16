@@ -1,23 +1,24 @@
 import { RichTextEditor, Link } from '@mantine/tiptap';
-import {
-  Paper,
-  Text,
-  TextInput,
-  Textarea,
-  Group,
-  Container,
-  createStyles, Select
+import {  Paper,  Text,  TextInput,  Textarea,  Group,  Container,  createStyles, Select
 } from '@mantine/core';
 import { UserAuth } from '../../context/AuthContext';
-import { EditorOptions, Extension, Mark, useEditor } from '@tiptap/react';
-import StarterKit, { StarterKitOptions } from '@tiptap/starter-kit';
 import { useState, useEffect } from 'react';
 import { ButtonProgress } from './components/LoadingButton';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { LinkOptions } from '@tiptap/extension-link';
 import { useForm } from '@mantine/form';
-import { db,firebase } from '../../context/firebase';
-
+import { db } from '../../context/firebase';
+import { EditorOptions, Extension, Mark, useEditor } from '@tiptap/react';
+import StarterKit, { StarterKitOptions } from '@tiptap/starter-kit';
+import { LinkOptions } from '@tiptap/extension-link';
+import Highlight from '@tiptap/extension-highlight';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import Superscript from '@tiptap/extension-superscript';
+import SubScript from '@tiptap/extension-subscript';
+import { IconColorPicker } from '@tabler/icons';
+import { Color } from '@tiptap/extension-color';
+import TextStyle from '@tiptap/extension-text-style';
+import Placeholder from '@tiptap/extension-placeholder';
 
 const data = [
   { value: '1', label: 'Main Forums' },
@@ -29,7 +30,9 @@ const data = [
   // { value: '7', label: 'Archived' },
 ];
 
-const useStyles = createStyles((theme) => {
+const useStyles = createStyles((theme
+  // : { fn: { smallerThan: (arg0: string) => any; }; spacing: { md: any; sm: number; xl: any; }; colorScheme: string; colors: { dark: any[]; }; white: any; radius: { lg: number; }; fontFamily: any; }
+  ) => {
   const BREAKPOINT = theme.fn.smallerThan('sm');
 
   return {
@@ -131,26 +134,46 @@ export function NewTopic() {
   const [valueNewThread, setValueNT] = useState<number>(); //get rid of this
   const [shouldNavigate, setShouldNavigate] = useState<boolean>(false);
   
-  // const [valueForm, setValue] = useState<string>(id?id:'1');
-  
   const navigate=useNavigate();
-  
+
+
+let filteredData=data;
+
+switch (user?.otherinfo?.permissions) {
+  case 'Master':
+    filteredData = data.filter(item => ['2', '3', '6'].includes(item.value));
+    break;
+  case 'Admin':
+    filteredData = data.filter(item => ['1', '2', '3', '4', '5', '6'].includes(item.value));
+    break;
+  case 'User':
+    filteredData = data.filter(item => ['2', '6'].includes(item.value));
+    break;
+  default:
+    filteredData = data;
+    break;
+}
   
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit, TextStyle, Color,
+      Underline, Placeholder.configure({ placeholder: 'This is placeholder' }),
       Link,
+      Superscript,
+      SubScript,
+      Highlight,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     onUpdate: (props) => {
       form.setFieldValue("firstpost", props.editor.getHTML());
     },
   });
-  
   const handleSubmit = async (title: string,forum: string,postas: string,firstpost: string) => {
   
     try {
       const dataRef = db.collection('threads');
       const dataRef2 = db.collection('posts');
+      const checkBadges=user?.otherinfo?.badges;
       const docRef = await dataRef.add({
         closed: false,
         createdBy: user?.displayName,
@@ -168,6 +191,7 @@ export function NewTopic() {
         thread: docId,
         threadLink:valueNewThread, //url number
         timePosted: new Date(),
+        badges:checkBadges?user?.otherinfo?.badges:null,
       });
       if (docRef && docRef2){
         navigate('/Forum/'+forum);
@@ -203,6 +227,7 @@ export function NewTopic() {
       dataRef.get().then((snapshot) => {
       setValueNT(snapshot.size+1);
       });
+      
   },[])
   const formTheCheck =form.isValid();
   
@@ -230,7 +255,7 @@ export function NewTopic() {
             minRows={3}
           /> */}
           <Select
-            data={data} mb="md"
+            data={filteredData} mb="md"
             // value={valueForm} onChange={setValue}
             label="Forum"
             {...form.getInputProps('forum2')}
@@ -277,6 +302,37 @@ export function NewTopic() {
 
 <RichTextEditor editor={editor}  >
       <RichTextEditor.Toolbar >
+
+      <RichTextEditor.ColorPicker
+          colors={[
+            '#25262b',
+            '#868e96',
+            '#fa5252',
+            '#e64980',
+            '#be4bdb',
+            '#7950f2',
+            '#4c6ef5',
+            '#228be6',
+            '#15aabf',
+            '#12b886',
+            '#40c057',
+            '#82c91e',
+            '#fab005',
+            '#fd7e14',
+          ]}
+        />
+
+      <RichTextEditor.ControlsGroup>
+        <RichTextEditor.Control interactive={false}>
+            <IconColorPicker size={16} stroke={1.5} />
+          </RichTextEditor.Control>
+          <RichTextEditor.Color color="#F03E3E" />
+          <RichTextEditor.Color color="#7048E8" />
+          <RichTextEditor.Color color="#1098AD" />
+          <RichTextEditor.Color color="#37B24D" />
+          <RichTextEditor.Color color="#F59F00" />
+        </RichTextEditor.ControlsGroup>
+
       <RichTextEditor.ControlsGroup>
           <RichTextEditor.H1 />
           <RichTextEditor.H2 />
@@ -300,8 +356,8 @@ export function NewTopic() {
           <RichTextEditor.Hr />
           <RichTextEditor.BulletList />
           <RichTextEditor.OrderedList />
-          {/* <RichTextEditor.Subscript />
-          <RichTextEditor.Superscript /> */}
+          <RichTextEditor.Subscript />
+          <RichTextEditor.Superscript />
         </RichTextEditor.ControlsGroup>
 
         <RichTextEditor.ControlsGroup>
@@ -309,12 +365,13 @@ export function NewTopic() {
           <RichTextEditor.Unlink />
         </RichTextEditor.ControlsGroup>
 
-        {/* <RichTextEditor.ControlsGroup>
+        <RichTextEditor.ControlsGroup>
           <RichTextEditor.AlignLeft />
           <RichTextEditor.AlignCenter />
           <RichTextEditor.AlignJustify />
           <RichTextEditor.AlignRight />
-        </RichTextEditor.ControlsGroup> */}
+        </RichTextEditor.ControlsGroup>
+        
       </RichTextEditor.Toolbar>
 
       <RichTextEditor.Content  />

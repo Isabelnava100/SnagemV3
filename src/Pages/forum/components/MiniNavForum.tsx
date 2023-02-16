@@ -70,7 +70,7 @@ type ContextType = { active:string | null };
 export default function MiniNavForum({ links }: HeaderTabsProps) {
   const { classes, cx } = useStyles();
   const [active, setActive] = useState<string | null>(links[0].link);
-  const [opened, toggleOpened] = useToggle([false, true]);
+  // const [opened, toggleOpened] = useToggle([false, true]);
   let navigate = useNavigate();
   
   const items = links.map((link) => (
@@ -83,7 +83,7 @@ export default function MiniNavForum({ links }: HeaderTabsProps) {
         (window.location.pathname==='/Forum'||window.location.pathname==='/Forum/')? event.preventDefault(): navigate('/Forum/1');
         //check where you are
         setActive(link.link);
-        toggleOpened(false);
+        // toggleOpened(false);
       }}
     >
       {link.label}

@@ -1,6 +1,6 @@
 
 import { Container, Table, Text } from '@mantine/core';
-import MiniNavForum, { useForumLink } from './components/MiniNavForum';
+import { useForumLink } from './components/MiniNavForum';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HeroText } from './components/HeroSection';
@@ -18,7 +18,6 @@ interface Item {
   location:number;
   createdBy:string
 }
-
 
 function MainForum() {
   const forumPlace  = useForumLink();
@@ -67,7 +66,7 @@ const placeNum = place && !isNaN(parseInt(place.split("/")[2])) ? parseInt(place
     
     <Container size="lg" style={{marginTop:20,paddingBottom:100}}>
         <div style={{ position: 'relative',display:'flex',flexDirection:'column' }}>
-        <HeroText send={place}/>
+        <HeroText send={place}/> 
         <Table highlightOnHover>
       <thead><tr><th>TOPICS</th><th>LAST POST</th></tr></thead>
       <tbody>

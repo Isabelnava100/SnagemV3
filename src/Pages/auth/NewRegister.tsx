@@ -297,9 +297,9 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
             email: userCredential.user.email,
             gaia: gaiaName,
             username: username,
-            new: true,
             // uid: userCredential.user.uid,
-            permissions:'User',
+            permissions: 'New',
+            badges:[]
           }); 
           return userCredential.user;
         })
@@ -307,6 +307,7 @@ function PasswordRequirement({ meets, label }: { meets: boolean; label: string }
           await updateProfile(user,{
             displayName:username
           });
+          return;
         })
         .finally(()=>{
           navigate('/Login', { replace: true });
