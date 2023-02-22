@@ -1,5 +1,7 @@
 import React from 'react';
 import { createStyles, Card, Image, Avatar, Text, Group, Badge } from '@mantine/core';
+import { EachPostVisual } from '../../../../components/types/typesUsed'
+import { getColor1,getColor2 } from '../../../../components/dashboard-user/getColorBadges';
 
 const useStyles = createStyles((theme) => ({
   all: {
@@ -71,36 +73,10 @@ fontWeight:500,
   },
 
 }));
-
-interface ArticleCardVerticalProps {
-  image: string;
-  bigText: string;
-  chara: string;
-  author: {
-    name: string;
-    avatar: string;
-    badges: string[]; 
-  };
-}
-
-const badgesColors = [
-  { color1: 'red',color2: 'yellow', label: 'Test' },
-  { color1: 'blue',color2: 'green', label: 'Legacy' },
-];
-
-const getColor1 = (labelToFind: string):string => {
-  const badge = badgesColors.find(b => b.label === labelToFind);
-  return badge?.color1 ?? '';
-};
-const getColor2 = (labelToFind: string):string => {
-  const badge = badgesColors.find(b => b.label === labelToFind);
-  return badge?.color2 ?? '';
-};
-
     
 export function ArticleCardVertical({
   image,  bigText,  chara,  author,
-}: ArticleCardVerticalProps) {
+}: EachPostVisual) {
   const { classes } = useStyles();
   return (
     <Card withBorder radius="md" pb={24} className={classes.card} mt={12} mb={12}>

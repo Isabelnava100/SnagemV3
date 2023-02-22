@@ -1,10 +1,9 @@
-import { createStyles, Header, Menu, Group, Center, Burger, Container, Transition, Paper } from '@mantine/core';
+import { createStyles, Header, Group, Burger, Container, Transition, Paper } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconChevronDown } from '@tabler/icons';
-import { useState } from 'react';
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { auth } from '../../context/firebase';
-// import { MantineLogo } from '@mantine/ds';
+import { handleLogout } from '../../Pages/auth/components/LogoutHandle';
+import {HeaderSearchProps} from '../types/typesUsed';
 
 const HEADER_HEIGHT = 60;
 
@@ -79,23 +78,10 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-interface HeaderSearchProps {
-  links: { link: string; label: string; links?: { link: string; label: string }[] }[];
-}
-
-
-export function HeaderMenuColored({ links }: HeaderSearchProps) {
-
+export const HeaderMenuColored=memo(({ links }: HeaderSearchProps) => {
   const [opened, { toggle, close }] = useDisclosure(false);
-  // const [active, setActive] = useState(links[0].link);
   const { classes, cx } = useStyles();
   
-  const handleLogout = () => {
-    auth.signOut().then(() => {
-      console.log('User signed out');
-      window.location.reload();
-    });
-  };
   
     const items = links.map((link) => (
       <div key={link.label}>
@@ -111,7 +97,6 @@ export function HeaderMenuColored({ links }: HeaderSearchProps) {
             event.preventDefault();
             handleLogout();
           }
-          // setActive(link.link);
           close();
         }}
       >
@@ -125,7 +110,7 @@ export function HeaderMenuColored({ links }: HeaderSearchProps) {
       <Header height={HEADER_HEIGHT} className={classes.root}>
         <Container className={classes.header}>
         <h1 className="text-lg m-0 uppercase font-bold underline-offset-2 hover:underline">
-      <Link to="/" style={{color:'white'}}>
+      <Link to="/" className='logo'>
       SNAGEM<span className="font-extralight"> HEADQUARTERS</span>
       </Link>
       </h1> 
@@ -145,11 +130,4 @@ export function HeaderMenuColored({ links }: HeaderSearchProps) {
         </Container>
       </Header>
   );
-}
-
-
-{/* <h1 className="text-lg m-0 uppercase font-bold underline-offset-2 hover:underline">
-<Link to="/" style={{color:'white'}}>
- SNAGEM<span className="font-extralight"> HEADQUARTERS</span>
- </Link>
-</h1> */}
+}, (prevProps, nextProps) => Object.is(prevProps.links, nextProps.links)); 

@@ -1,0 +1,147 @@
+// Type or Interface
+// In general, interfaces and types are interchangeable in many contexts,
+// but there are some differences in how they are used. For example,
+// interfaces can be extended and implemented, whereas types can be aliased
+// and merged. Additionally, some advanced features of TypeScript, such as
+// conditional types and mapped types, can only be used with types.
+
+import { Dispatch, SetStateAction } from "react";
+
+export interface HeaderSearchProps {
+  links: { link: string; label: string; links?: { link: string; label: string }[] }[];
+}
+// This is for changing the navigation if the user is logged in or not
+
+export interface PermissionsForForum {
+  value: string;
+  label: string;
+}
+//Interface for forum location listings
+
+export const basicForumLocationData:PermissionsForForum[] = [
+  { value: '1', label: 'Main Forums' },
+  { value: '2', label: 'Side Roleplay' },
+  { value: '3', label: 'Master Mission' },
+  { value: '4', label: 'Quests' },
+  { value: '5', label: 'Events' },
+  { value: '6', label: 'Private' },
+];
+//This is used for creating new topics
+
+export const basicThreadLocationData:PermissionsForForum[] = [
+  { value: '1', label: 'Main Forums' },
+  { value: '2', label: 'Side Roleplay' },
+  { value: '3', label: 'Master Mission' },
+  { value: '4', label: 'Quests' },
+  { value: '5', label: 'Events' },
+  { value: '6', label: 'Private' },
+  { value: '7', label: 'Archived' },
+];
+//This is used for creating new posts
+
+export const forumInformationStatic=[ 
+  {link:'/Forum/1',description:'This is where the roleplay happens.'},
+  {link:'/Forum/2',description:'This space is for small, side roleplays.'},
+  {link:'/Forum/3',description:'Here are where master missions happens.'},
+  {link:'/Forum/4',description:'Pick up quests to do on your own or with friends.'},
+  {link:'/Forum/5',description:'Participate in events and get prizes!'},
+  {link:'/Forum/6',description:'Keep a record of your own quests and roleplays here.'},
+  {link:'/Forum/7',description:'Any old, closed roleplay.'},
+];
+//This is used for the Hero Section of the Forums where we can add static content
+
+export const badgesColors = [
+  { color1: 'red',color2: 'yellow', label: 'Test' },
+  { color1: 'blue',color2: 'green', label: 'Legacy' },
+];
+//This is used for getting the static colors of badges
+
+export interface EachPostInfo { //used to be Item
+  id:string;
+  character:string;
+  owner:string;
+  text:string;
+  thread:number;
+  otherinfo:SpecificUser | undefined;
+}
+//This is the set up for fetching each post
+
+
+export interface EachPostVisual {
+  image: string;
+  bigText: string;
+  chara: string;
+  author: {
+    name: string;
+    avatar: string;
+    badges: string[]; 
+  };
+}
+//This is for showing each post on the threads
+
+
+export interface InfoOnThreadVisual {
+  info: {
+    id: string;
+    timePosted: {
+      seconds: number;
+      nanoseconds: number;
+    };
+    private: boolean;
+    title: string;
+    closed: boolean;
+    location: number;
+  }[];
+  threadID:string|null;
+}
+//This is for visually setting up the adjustments above each individual thread
+
+
+export interface ThreadInformation { 
+  id:string;
+  private: boolean;
+  title:string;
+  closed:boolean;
+  location:number;
+  timePosted:string;
+  threadLink?:number;
+  createdBy?:string;
+  notifyviaDiscord?:Array<string>;
+}
+//This is the set up for reading a thread
+
+
+export interface PostsStructure {
+  id:string;
+  character:string;
+  owner:string;
+  text:string;
+  thread:number;
+  threadLink:string;
+  timePosted: {
+    seconds: number;
+    nanoseconds: number;
+  };
+	badges: string[]; 
+}
+//This is the set up for reading a post
+
+export type User = {
+	uid: string;
+	email: string | null;
+	displayName: string | null;
+	otherinfo?: SpecificUser,
+};
+//Database for Users
+
+export type SpecificUser = {
+	permissions: string; 
+	badges: string[]; 
+};
+//Extra details added about the user
+
+export type AuthContextType = {
+	user: User | undefined;
+	setUser: Dispatch<SetStateAction<User | undefined>>;
+};
+//AuthContent

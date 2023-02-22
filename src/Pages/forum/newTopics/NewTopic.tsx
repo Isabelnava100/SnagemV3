@@ -1,15 +1,14 @@
 import { RichTextEditor, Link } from '@mantine/tiptap';
-import {  Paper,  Text,  TextInput,  Textarea,  Group,  Container,  createStyles, Select
+import {  Paper,  Text,  TextInput,   Group,  Container,  createStyles, Select
 } from '@mantine/core';
-import { UserAuth } from '../../context/AuthContext';
+import { UserAuth } from '../../../context/AuthContext';
 import { useState, useEffect } from 'react';
-import { ButtonProgress } from './components/LoadingButton';
+import { ButtonProgress } from '../reusable-components/LoadingButton';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from '@mantine/form';
-import { db } from '../../context/firebase';
-import { EditorOptions, Extension, Mark, useEditor } from '@tiptap/react';
-import StarterKit, { StarterKitOptions } from '@tiptap/starter-kit';
-import { LinkOptions } from '@tiptap/extension-link';
+import { db } from '../../../context/firebase';
+import { useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
@@ -19,16 +18,8 @@ import { IconColorPicker } from '@tabler/icons';
 import { Color } from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
-
-const data = [
-  { value: '1', label: 'Main Forums' },
-  { value: '2', label: 'Side Roleplay' },
-  { value: '3', label: 'Master Mission' },
-  { value: '4', label: 'Quests' },
-  { value: '5', label: 'Events' },
-  { value: '6', label: 'Private' },
-  // { value: '7', label: 'Archived' },
-];
+import {handleSubmit} from './components/handleSubmitTopic'
+import {filteredData} from '../reusable-components/checkPermsForum'
 
 const useStyles = createStyles((theme
   // : { fn: { smallerThan: (arg0: string) => any; }; spacing: { md: any; sm: number; xl: any; }; colorScheme: string; colors: { dark: any[]; }; white: any; radius: { lg: number; }; fontFamily: any; }
@@ -131,29 +122,24 @@ export function NewTopic() {
   const { id } = useParams();
   const { classes } = useStyles();
   const { user } = UserAuth();
-  const [valueNewThread, setValueNT] = useState<number>(); //get rid of this
-  const [shouldNavigate, setShouldNavigate] = useState<boolean>(false);
-  
+  const [valueNewThread, setValueNT] = useState<number>();
   const navigate=useNavigate();
 
+  const form = useForm({
+    initialValues: {
+      title: '',
+      forum2:id?id:'1',
+      postas:'',
+      firstpost: '',
+    },
+     validate: {
+      title: (value) => (value.length < 2 ? 'Title must have at least 2 letters' : null),
+      postas: (value) => (value.length < 2 ? 'Name must have at least 2 letters' : null),
+      firstpost: (value) => (value.length < 2 ? 'Post must have at least 2 letters' : null),
+    },
+  });  
+  const formTheCheck=form.isValid();
 
-let filteredData=data;
-
-switch (user?.otherinfo?.permissions) {
-  case 'Master':
-    filteredData = data.filter(item => ['2', '3', '6'].includes(item.value));
-    break;
-  case 'Admin':
-    filteredData = data.filter(item => ['1', '2', '3', '4', '5', '6'].includes(item.value));
-    break;
-  case 'User':
-    filteredData = data.filter(item => ['2', '6'].includes(item.value));
-    break;
-  default:
-    filteredData = data;
-    break;
-}
-  
   const editor = useEditor({
     extensions: [
       StarterKit, TextStyle, Color,
@@ -168,59 +154,7 @@ switch (user?.otherinfo?.permissions) {
       form.setFieldValue("firstpost", props.editor.getHTML());
     },
   });
-  const handleSubmit = async (title: string,forum: string,postas: string,firstpost: string) => {
-  
-    try {
-      const dataRef = db.collection('threads');
-      const dataRef2 = db.collection('posts');
-      const checkBadges=user?.otherinfo?.badges;
-      const docRef = await dataRef.add({
-        closed: false,
-        createdBy: user?.displayName,
-        location: Number(forum),
-        private: false,
-        timePosted: new Date(),
-        threadLink:valueNewThread,
-        title: title
-      });      
-     const docId = docRef.id;
-      const docRef2 = await dataRef2.add({
-        character: postas,
-        owner: user?.displayName,
-        text: firstpost,
-        thread: docId,
-        threadLink:valueNewThread, //url number
-        timePosted: new Date(),
-        badges:checkBadges?user?.otherinfo?.badges:null,
-      });
-      if (docRef && docRef2){
-        navigate('/Forum/'+forum);
-      }
-      
-    } catch (error:unknown) {      
-    alert("There has been an error, please inform the administrator.");
-    setShouldNavigate(true);  
-    }
-  };//form
 
-
-  if (shouldNavigate) {
-    return <Navigate to="/Forum/1" />;
-  }
-  
-  const form = useForm({
-    initialValues: {
-      title: '',
-      forum2:id?id:'1',
-      postas:'',
-      firstpost: '',
-    },
-     validate: {
-      title: (value) => (value.length < 2 ? 'Title must have at least 2 letters' : null),
-      postas: (value) => (value.length < 2 ? 'Name must have at least 2 letters' : null),
-      firstpost: (value) => (value.length < 2 ? 'Post must have at least 2 letters' : null),
-    },
-  });  
 
   useEffect(()=>{
     const dataRef = db.collection('threads');
@@ -229,13 +163,12 @@ switch (user?.otherinfo?.permissions) {
       });
       
   },[])
-  const formTheCheck =form.isValid();
   
-
   return (
     <Container size="lg" style={{marginTop:20,paddingBottom:100}}>
-       <form onSubmit={form.onSubmit((values) =>{
-        handleSubmit(values.title, values.forum2,values.postas,values.firstpost);
+       <form onSubmit={form.onSubmit(async (values) =>{
+        await (handleSubmit(values.title, values.forum2, values.postas, values.firstpost, user, valueNewThread))
+        ? navigate('/Forum/'+values.forum2) : navigate('/Forum/1');
         })}>
     <Paper shadow="md" radius="lg">
       <div className={classes.wrapper}>
@@ -255,7 +188,7 @@ switch (user?.otherinfo?.permissions) {
             minRows={3}
           /> */}
           <Select
-            data={filteredData} mb="md"
+            data={filteredData(user)} mb="md"
             // value={valueForm} onChange={setValue}
             label="Forum"
             {...form.getInputProps('forum2')}

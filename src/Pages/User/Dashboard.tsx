@@ -1,5 +1,5 @@
 import { Container, Grid, SimpleGrid, Skeleton, useMantineTheme } from '@mantine/core';
-import { redirect, useLoaderData } from 'react-router-dom';
+
 import { UserAuth } from '../../context/AuthContext';
 import { getContacts, updateContact } from "../../context/Data";
 import { LoaderData } from '../../context/Loader';
@@ -7,22 +7,10 @@ import { LoaderData } from '../../context/Loader';
 const PRIMARY_COL_HEIGHT = 300;
 
 
-export async function loader() {
-  const contacts = await getContacts();
-  return { contacts };
-}
-
-// export async function action({ request:any, params:any }) {
-//   const formData = await request.formData();
-//   const updates = Object.fromEntries(formData);
-//   await updateContact(params.contactId, updates);
-//   return redirect(`/contacts/${params.contactId}`);
-// }
 
 export function LeadGrid() {
   
   const {user}=UserAuth();
-  const data = useLoaderData() as LoaderData<typeof loader>;
   // console.log(user);
 
   const theme = useMantineTheme();

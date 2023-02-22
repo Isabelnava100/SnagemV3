@@ -19,6 +19,7 @@ a {
   /* @apply text-slate-300; */
   color:#ddd6fe!important;
 }
+.logo {color:white;}
 .nav-links {
   text-decoration: none;
   @apply block lg:inline-block hover:text-white lg:mr-10 lg:border-0 lg:p-0

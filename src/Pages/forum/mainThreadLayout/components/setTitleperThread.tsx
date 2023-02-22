@@ -1,8 +1,8 @@
 
 import { createStyles, Title, Text, Button, Grid, Col } from '@mantine/core';
 import { Link, useParams } from 'react-router-dom';
-import { UserAuth } from '../../../context/AuthContext';
-//import { Bookmark,BookmarkOff } from 'tabler-icons-react';
+import { InfoOnThreadVisual } from '../../../../components/types/typesUsed';
+import { UserAuth } from '../../../../context/AuthContext';
 import { BookmarkButton } from './BookmarkButton';
 
 const useStyles = createStyles((theme) => ({
@@ -29,16 +29,11 @@ alignItems:'flex-end',
   },
 }));
 
-interface ArticleCardVerticalProps {
-  info: Object;  
-  threadID:string|null;
-}
 
-export function FeaturesTitle({info,threadID}: ArticleCardVerticalProps) {
+export function FeaturesTitle({info,threadID}: InfoOnThreadVisual) {
   const { classes } = useStyles();
   const { id } = useParams();
   const { user } = UserAuth();
-  let arr: any[] = [info];
 
 
   return (
@@ -46,10 +41,9 @@ export function FeaturesTitle({info,threadID}: ArticleCardVerticalProps) {
       <Grid gutter={20} >
         <Col span={12} sm={9}>
           <Title className={classes.title} order={2}>
-         {arr[0][0]['title']}
+         {info[0]['title']}
           </Title>
-          {user&&<BookmarkButton/>}
-          
+          <BookmarkButton user={user}/>          
 
           {/* <Text color="dimmed">
           Description here...</Text> */}

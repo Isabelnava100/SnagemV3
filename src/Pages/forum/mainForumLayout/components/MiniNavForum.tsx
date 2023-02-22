@@ -8,8 +8,7 @@ import {
   Autocomplete,
 } from '@mantine/core';
 import { useState } from 'react';
-import { useToggle } from '@mantine/hooks';
-import { HeaderTabsProps } from '../../../context/interfaces';
+import { HeaderTabsProps } from '../../../../context/interfaces';
 
 
 const useStyles = createStyles((theme) => ({
@@ -67,11 +66,10 @@ const useStyles = createStyles((theme) => ({
 
 type ContextType = { active:string | null };
 
-export default function MiniNavForum({ links }: HeaderTabsProps) {
+function MiniNavForum({ links }: HeaderTabsProps) {
   const { classes, cx } = useStyles();
   const [active, setActive] = useState<string | null>(links[0].link);
-  // const [opened, toggleOpened] = useToggle([false, true]);
-  let navigate = useNavigate();
+  const navigate = useNavigate();
   
   const items = links.map((link) => (
     <Link
@@ -80,10 +78,9 @@ export default function MiniNavForum({ links }: HeaderTabsProps) {
       className={cx(classes.link, { [classes.linkActive]: active === link.link })}
       onClick={(event) => {
         event.preventDefault();
-        (window.location.pathname==='/Forum'||window.location.pathname==='/Forum/')? event.preventDefault(): navigate('/Forum/1');
-        //check where you are
+        (window.location.pathname==='/Forum'||window.location.pathname==='/Forum/')?
+         event.preventDefault(): navigate('/Forum/1');
         setActive(link.link);
-        // toggleOpened(false);
       }}
     >
       {link.label}
@@ -92,17 +89,11 @@ export default function MiniNavForum({ links }: HeaderTabsProps) {
   return (
       <>
      <Header height={40} className={classes.header} >
-     <ScrollArea style={{ height:46}} offsetScrollbars scrollbarSize={6}>
+     <ScrollArea style={{height:46}} offsetScrollbars scrollbarSize={6}>
               <div  className={classes.inner}>
           <Group spacing={5}>
             {items}
           </Group>
-          <Autocomplete style={{display:'none'}}
-            className={classes.searchBar}
-            placeholder="Search"
-            icon={<img src="" height='22' width='22' alt="search" />}
-            data={['React', 'Angular', 'Vue', 'Next.js', 'Riot.js', 'Svelte', 'Blitz.js']}
-          />
       </div>
     </ScrollArea>
     </Header>
@@ -111,7 +102,7 @@ export default function MiniNavForum({ links }: HeaderTabsProps) {
     </>
   );
 }
-
+export default (MiniNavForum);
 
 export function useForumLink() {
     return useOutletContext<ContextType>();

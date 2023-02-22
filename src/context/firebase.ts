@@ -2,11 +2,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 import 'firebase/compat/storage';
-//import { getDoc } from 'firebase/firestore';
-//import {getStorage, ref, uploadBytes, getBytes, getDownloadURL} from 'firebase/storage';
-//import { getFirestore, collection, addDoc, getDocs, doc, getDoc, query, where, setDoc, deleteDoc } from 'firebase/firestore';
 
- 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_BACKEND_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_BACKEND_FIREBASE_AUTH_DOMAIN,
@@ -19,15 +15,13 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
+type Auth = firebase.auth.Auth;
+type Firestore = firebase.firestore.Firestore;
+type Storage = firebase.storage.Storage;
+// type Firebase = typeof firebase;
+
+const auth: Auth = firebase.auth();
+const db: Firestore = firebase.firestore();
+const storage: Storage = firebase.storage();
 
 export {auth, db, storage, firebase};
-
-// export async function usersInfo(uid){
-//     const docRef=doc(db, "users", uid);
-//     const res=await getDoc(docRef);
-//     console.log(res.data());
-//     return res.data();
-// }
