@@ -12,34 +12,30 @@ const sortPostsByTime = (posts: PostsStructure[]): PostsStructure[] => {
   };
   
 //Get all posts to a specific thread
-export const dataRun2=async(newdata2:ThreadInformation[]):Promise<PostsStructure[]>=>{
+export const dataRun2=async(  
+  thethreadid: number,
+  forum:string,
+  ):Promise<PostsStructure[]>=>{
     const newdataPosts:PostsStructure[]=[];
-   if(Object.keys(newdata2).length===0){
-    return newdataPosts;
-   }else{
-        const colRef = collection(db, "posts");
-        const q = query(
-          colRef,
-          where("thread", "==", newdata2[0].id)
-        );
-        await getDocs(q)
+
+    const colRef = collection(db, 'forum', `${forum}`, 'threads', `${thethreadid}`, 'posts');
+        
+        await getDocs(colRef)
           .then((postsData) => {
             postsData.forEach((doc) => {
               newdataPosts.push({
                 id: doc.id, 
+                badges:doc.data().badges,
                 character:doc.data().character,
                 owner: doc.data().owner,  
                 text:doc.data().text, 
-                thread:doc.data().thread, 
-                threadLink:doc.data().threadLink, 
                 timePosted:doc.data().timePosted, 
-                badges:doc.data().badges,
               });
             });
           })
           .finally(() => {
             return(sortPostsByTime(newdataPosts));
           });
-   }
+   
    return newdataPosts;
 }

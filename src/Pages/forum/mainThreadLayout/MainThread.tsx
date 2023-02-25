@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Container, Pagination, LoadingOverlay, Button } from "@mantine/core";
+import { Container, Pagination } from "@mantine/core";
 import { ArticleCardVertical } from "./components/EachPost";
-import { useParams, Navigate, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { FeaturesTitle } from "./components/setTitleperThread";
 import {
   ThreadInformation,
@@ -9,67 +9,62 @@ import {
 } from "../../../components/types/typesUsed";
 import { dataRun } from "../reusable-components/getThreadInfo";
 import { dataRun2 } from "./components/getPosts";
-import { UserAuth } from "../../../context/AuthContext";
 
 export default function Threads() {
-  const { state } = useLocation();
-  const { id: thethreadid, page: thecurrentpage } = useParams();
-  const { user } = UserAuth();
+  const { forum, id: thethreadid, page } = useParams();
   const [allPosts, setAllPosts] = useState<PostsStructure[]>([]);
   const [threadInfo, setThreadInfo] = useState<ThreadInformation[]>([]);
-  const [totalItemsCount, setTots] = useState<number>(0);
-  const [page, onChangePG] = useState<number>(
-    thecurrentpage ? Number(thecurrentpage) : 1
+  const [currentPage, onChangePG] = useState<number>(
+    page ? Number(page) : 1
   ); //if last then pages = pagesCount
-  const checkingLoc = state && state.newlocation ? true : false;
 
   const postPerPage = 6;
-  const pagesCount = Math.ceil(totalItemsCount / postPerPage);
+  const pagesCount = Math.ceil(allPosts.length / postPerPage);
 
-  const start = (page - 1) * postPerPage;
-  const end = Math.min(page * postPerPage, totalItemsCount);
+  const start = (currentPage - 1) * postPerPage;
+  const end = Math.min(currentPage * postPerPage, allPosts.length);
 
   useEffect(() => {
     async function fetchData() {
       if (Number.isNaN(Number(thethreadid))) {
-        // setShouldNavigate(true);
-        console.log(thethreadid);
+        // navigate('/Forum/');
+        console.log('Thread ID is invalid.')
       } else {
-        const checkingThreads = await dataRun(
+        await dataRun(
           Number(thethreadid),
-          false,
-          "",
-          user
+          (forum||'Main-Forum')
         ).then(async (resultsThread) => {
           setThreadInfo(resultsThread);
-          await dataRun2(resultsThread)
-              .then((resultsPosts) => {
-                setAllPosts(resultsPosts);
-                setTots(resultsPosts.length);
+          await dataRun2(
+            Number(thethreadid),
+            (forum||'Main-Forum')
+            ).then((resultsPosts) => {
+                setAllPosts(resultsPosts);                
               });
         });
       }
     }
     fetchData();
-  }, [thethreadid, page]); //set to page
+  }, [thethreadid, currentPage]); //set to page
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
       <div id="loadingContainer">
         {threadInfo.length ? (
           <FeaturesTitle
+            forum={forum}
             info={threadInfo}
-            threadID={checkingLoc ? state.newlocation : null}
           />
         ) : (
           ""
         )}
 
+
         <Pagination
           total={pagesCount}
           color="violet"
           withEdges
-          page={page}
+          page={currentPage}
           onChange={onChangePG}
           style={{ alignSelf: "end" }}
         />
@@ -94,23 +89,10 @@ export default function Threads() {
           total={pagesCount}
           color="violet"
           withEdges
-          page={page}
+          page={currentPage}
           onChange={onChangePG}
           style={{ alignSelf: "end" }}
         />
-        {/* {user&&
-          <Button
-          variant="gradient"
-          gradient={{ deg: 133, from: 'grape', to: 'violet' }}
-          size="lg"
-          radius="md"
-          mt="xl"
-          style={{alignSelf: 'end'}}
-          component={Link} to={`/Forum/thread/${id}/post`}
-        >
-          Make a New Post
-        </Button>
-           } */}
       </div>
     </Container>
   );

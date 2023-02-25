@@ -18,7 +18,7 @@ function App() {
   const headerLinks: HeaderSearchProps = {
     links: [
       {
-        link: '/Forum/1',
+        link: '/Forum',
         label: 'Forum',
       },
       {

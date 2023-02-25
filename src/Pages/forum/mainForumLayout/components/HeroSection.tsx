@@ -8,7 +8,7 @@ import {
 } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { UserAuth } from "../../../../context/AuthContext";
-import { forumInformationStatic as forumLinks } from "../../../../components/types/typesUsed";
+import { NewForumInfo as forumLinks } from "../../../../components/types/typesUsed";
 
 const useStyles = createStyles((theme) => ({
   wrapper: {
@@ -90,7 +90,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export function HeroText({ send }: { send: number | null }) {
+export function HeroText({ send }: { send: string | undefined }) {
   const { user } = UserAuth();
   const { classes } = useStyles();
   const theme = useMantineTheme();
@@ -107,7 +107,7 @@ export function HeroText({ send }: { send: number | null }) {
         <Container p={0} size={600}>
           <Text size="lg" color="dimmed" className={classes.description}>
             {
-              forumLinks.find((link) => link.link === send?.toString())
+              forumLinks.find((link) => link.link === send)
                 ?.description
             }
           </Text>
@@ -127,7 +127,7 @@ export function HeroText({ send }: { send: number | null }) {
               className={classes.control}
               size="lg"
               component={Link}
-              to={`../new/${send}`}
+              to={`new`}
             >
               Create a New Topic
             </Button>

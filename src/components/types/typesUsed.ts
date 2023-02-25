@@ -18,6 +18,25 @@ export interface PermissionsForForum {
 }
 //Interface for forum location listings
 
+export interface ProviderForumSetup {
+  value: string;
+  label: string;
+  link: string;
+  description: string;
+}
+//Creating interface for forum provider interface
+
+export const NewForumInfo: ProviderForumSetup[] = [
+  { value: '1', label: 'Main Forums', link: 'Main-Forum', description: 'This is where the roleplay happens.' },
+  { value: '2', label: 'Side Roleplay', link:'Side-Roleplay',description:'This space is for small, side roleplays.'},
+  { value: '3', label: 'Master Mission', link:'Master-Mission',description:'Here are where master missions happens.'},
+  { value: '4', label: 'Quests', link:'Quests',description:'Pick up quests to do on your own or with friends.'},
+  { value: '5', label: 'Events', link:'Events',description:'Participate in events and get prizes!'},
+  { value: '6', label: 'Private', link:'Private',description:'Keep a record of your own quests and roleplays here.'},
+  { value: '7', label: 'Archived', link:'Archived',description:'Any old, closed roleplay.'},
+  ];
+  //replace all other with this
+
 export const basicForumLocationData:PermissionsForForum[] = [
   { value: '1', label: 'Main Forums' },
   { value: '2', label: 'Side Roleplay' },
@@ -81,48 +100,35 @@ export interface EachPostVisual {
 
 
 export interface InfoOnThreadVisual {
-  info: {
-    id: string;
-    timePosted: {
-      seconds: number;
-      nanoseconds: number;
-    };
-    private: boolean;
-    title: string;
-    closed: boolean;
-    location: number;
-  }[];
-  threadID:string|null;
+  info: ThreadInformation[];
+  forum:number|string|undefined;
 }
 //This is for visually setting up the adjustments above each individual thread
 
 
 export interface ThreadInformation { 
-  id:string;
+  id: number;
+  closed: boolean;
+  createdBy: string;
+  notifyviaDiscord: Array<string>;
   private: boolean;
-  title:string;
-  closed:boolean;
-  location:number;
-  timePosted:string;
-  threadLink?:number;
-  createdBy?:string;
-  notifyviaDiscord?:Array<string>;
+  timePosted: string;
+  title: string;
 }
+
 //This is the set up for reading a thread
 
 
 export interface PostsStructure {
   id:string;
+	badges: string[]; 
   character:string;
   owner:string;
   text:string;
-  thread:number;
-  threadLink:string;
   timePosted: {
     seconds: number;
     nanoseconds: number;
   };
-	badges: string[]; 
 }
 //This is the set up for reading a post
 

@@ -30,9 +30,9 @@ alignItems:'flex-end',
 }));
 
 
-export function FeaturesTitle({info,threadID}: InfoOnThreadVisual) {
+export function FeaturesTitle({info,forum}: InfoOnThreadVisual) {
   const { classes } = useStyles();
-  const { id } = useParams();
+  // const { id } = useParams();
   const { user } = UserAuth();
 
 
@@ -58,8 +58,7 @@ export function FeaturesTitle({info,threadID}: InfoOnThreadVisual) {
         size="lg"
         radius="md"
         mt="xl"
-        component={Link} to={`/Forum/thread/${id}/post`}
-        state={{newlocation: threadID}}
+        component={Link} to={`/Forum/${forum}/thread/${info[0]['id']}/post`}
       >
         Make a New Post
       </Button>

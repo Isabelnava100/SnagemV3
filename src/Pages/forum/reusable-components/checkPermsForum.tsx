@@ -1,7 +1,7 @@
 import {
-  basicForumLocationData as data,
+  NewForumInfo as data,
   PermissionsForForum,
-  User,
+  User
 } from "../../../components/types/typesUsed";
 
 //This ensures that the forum location is available to the user.

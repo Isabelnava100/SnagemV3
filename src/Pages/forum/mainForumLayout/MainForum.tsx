@@ -10,16 +10,14 @@ function MainForum() {
   const [allThreads, setAllThreads] = useState<ThreadInformation[]>([]);
   const forumPlace = useForumLink();
   const place = forumPlace?.active;
-  const placeNum =
-    place && !isNaN(parseInt(place.split("/")[2]))
-      ? parseInt(place.split("/")[2])
-      : 1;
+  const placeSimpleName =place?.slice(7);
 
   useEffect(() => { 
     async function fetchData(){   
-      const checkingThreads= await dataRun(placeNum);
+      const checkingThreads= await dataRun(placeSimpleName);
       setAllThreads(checkingThreads);
     }
+    
     fetchData();
   }, [place]);
 
@@ -33,7 +31,7 @@ function MainForum() {
             flexDirection: "column",
           }}
         >
-          <HeroText send={placeNum} />
+          <HeroText send={placeSimpleName} />
           <Table highlightOnHover>
             <thead>
               <tr>
@@ -47,8 +45,8 @@ function MainForum() {
                   <td>
                     <Link
                       style={{ textDecoration: "none" }}
-                      to={`/Forum/thread/${thread.threadLink}`}
-                      state={{ newlocation: thread.id }}
+                      to={`${place}/thread/${thread.id}`}
+                      // state={{ infoRead: thread }}
                     >
                       {thread.title}
                       <Text color="dimmed" size="sm">
@@ -59,8 +57,8 @@ function MainForum() {
                   <td>
                     <Link
                       style={{ textDecoration: "none" }}
-                      to={`/Forum/thread/${thread.threadLink}`}
-                      state={{ newlocation: thread.id }}
+                      to={`${place}/thread/${thread.id}`}
+                      // state={{ infoRead: thread }}
                     >
                       {thread.timePosted}
                     </Link>

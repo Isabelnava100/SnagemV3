@@ -20,6 +20,7 @@ import TextStyle from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
 import {handleSubmit} from './components/handleSubmitTopic'
 import {filteredData} from '../reusable-components/checkPermsForum'
+import { collection, getCountFromServer } from 'firebase/firestore';
 
 const useStyles = createStyles((theme
   // : { fn: { smallerThan: (arg0: string) => any; }; spacing: { md: any; sm: number; xl: any; }; colorScheme: string; colors: { dark: any[]; }; white: any; radius: { lg: number; }; fontFamily: any; }
@@ -119,16 +120,18 @@ const useStyles = createStyles((theme
 });
 
 export function NewTopic() {  
-  const { id } = useParams();
+  const { forum } = useParams();
   const { classes } = useStyles();
   const { user } = UserAuth();
   const [valueNewThread, setValueNT] = useState<number>();
   const navigate=useNavigate();
+  const coll = collection(db, 'forum', `${forum}`, 'threads');
 
   const form = useForm({
     initialValues: {
       title: '',
-      forum2:id?id:'1',
+      thread: valueNewThread,
+      forum2:forum?forum:'Side-Roleplay',
       postas:'',
       firstpost: '',
     },
@@ -155,14 +158,16 @@ export function NewTopic() {
     },
   });
 
+  const checkNewThread= async()=>{
+    const snapshot=await getCountFromServer(coll);
+    setValueNT(snapshot.data().count+1);
+    return;
+  }
+
 
   useEffect(()=>{
-    const dataRef = db.collection('threads');
-      dataRef.get().then((snapshot) => {
-      setValueNT(snapshot.size+1);
-      });
-      
-  },[])
+    checkNewThread();
+  },[forum])
   
   return (
     <Container size="lg" style={{marginTop:20,paddingBottom:100}}>
@@ -189,7 +194,7 @@ export function NewTopic() {
           /> */}
           <Select
             data={filteredData(user)} mb="md"
-            // value={valueForm} onChange={setValue}
+            // value={valueForm} onChange={checkNewThread}
             label="Forum"
             {...form.getInputProps('forum2')}
             placeholder="Choose location of the topic"

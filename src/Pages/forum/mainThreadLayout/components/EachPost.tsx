@@ -90,12 +90,16 @@ export function ArticleCardVertical({
               <Text size="xs" className={classes.longText}>{author.name} </Text>
             </Group>
             <div className={classes.badgesGroup}>
+              
               { author.badges&&(author.badges).map((oneBadge,index)=>
-              <Badge key={author.name+index} variant="gradient" 
+                <>
+                {oneBadge&&
+                <Badge key={author.name+index} variant="gradient" 
               gradient={{ from: getColor1(oneBadge), to: getColor2(oneBadge) }} 
               className={classes.badge}>
               {oneBadge}
-              </Badge>
+              </Badge>}
+                </>
               ) }
               </div>
           </Group>

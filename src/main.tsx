@@ -18,12 +18,14 @@ import { NewTopic } from './Pages/forum/newTopics/NewTopic';
 import Threads from './Pages/forum/mainThreadLayout/MainThread';
 import { NewPost } from './Pages/forum/newPost/NewPost';
 import HomePage from './Pages/Homepage';
+import { ForumProvider } from './Pages/forum/reusable-components/Provider';
 
 
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <AuthContextProvider>
+    <AuthContextProvider>      
+    <ForumProvider>
       <MantineProvider theme={{ colorScheme: 'dark', colors:{
         brand: ['#ffffff', '#f5f3ff', '#ede9fe', '#ddd6fe', '#c4b5fd', '#a78bfa', '#7c3aed', '#6d28d9', '#5b21b6', '#4c1d95']
       }, primaryColor:'brand' }} withGlobalStyles withNormalizeCSS>
@@ -37,27 +39,20 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                     <Route path="/Register" element={<NewRegister />} />
                     <Route path="/Forgot" element={<ForgotPassword />} />
                     <Route path="/Reset" element={<ResetPW />} />
-                    <Route path="/Forum" element={
-                    <MiniNavForum links={[
-                      {label:'MAIN FORUMS',link:'/Forum/1'},
-                      {label:'SIDE RP',link:'/Forum/2'},
-                      {label:'MASTER MISSIONS',link:'/Forum/3'},
-                      {label:'QUESTS',link:'/Forum/4'},
-                      {label:'EVENTS',link:'/Forum/5'},
-                      {label:'PRIVATE',link:'/Forum/6'},
-                      {label:'ARCHIVED',link:'/Forum/7'},  ]} />
+                    <Route path="/Forum?/:forum" element={
+                    <MiniNavForum  />
                     } >
-                          <Route path=":id" element={<MainForum />} />
-                          <Route path="new?/:id" element={<Protect><NewTopic /></Protect>} />
-                          <Route path="new" element={<Protect><NewTopic /></Protect>} />
-                          <Route path="thread/:id/:page?" element={<Threads />} />
-                          <Route path="thread/:id/post" element={<Protect><NewPost /></Protect>} />
+                          <Route index element={<MainForum />} />
+                          <Route path=":forum/new" element={<Protect><NewTopic /></Protect>} />
+                          <Route path=":forum/thread/:id/:page?" element={<Threads />} />
+                          <Route path=":forum/thread/:id/post" element={<Protect><NewPost /></Protect>} />
                     </Route>
                     <Route path="*" element={<ErrorPage />} />
                   </Route>
                 </Routes>
               </BrowserRouter>
       </MantineProvider>
+      </ForumProvider>  
     </AuthContextProvider>
   </React.StrictMode>
 )

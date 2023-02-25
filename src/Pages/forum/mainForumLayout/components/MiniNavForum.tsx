@@ -1,14 +1,12 @@
-
+import { useState } from 'react';
 import { Link, Outlet, useOutletContext,useNavigate  } from 'react-router-dom';
 import {
   createStyles,
   ScrollArea,
   Header,
   Group,
-  Autocomplete,
 } from '@mantine/core';
-import { useState } from 'react';
-import { HeaderTabsProps } from '../../../../context/interfaces';
+import {NewForumInfo as links} from '../../../../components/types/typesUsed';
 
 
 const useStyles = createStyles((theme) => ({
@@ -66,7 +64,7 @@ const useStyles = createStyles((theme) => ({
 
 type ContextType = { active:string | null };
 
-function MiniNavForum({ links }: HeaderTabsProps) {
+function MiniNavForum() {
   const { classes, cx } = useStyles();
   const [active, setActive] = useState<string | null>(links[0].link);
   const navigate = useNavigate();
@@ -74,12 +72,12 @@ function MiniNavForum({ links }: HeaderTabsProps) {
   const items = links.map((link) => (
     <Link
       key={link.label}
-      to={link.link}
+      to={`/Forum/${link.link}`}
       className={cx(classes.link, { [classes.linkActive]: active === link.link })}
       onClick={(event) => {
-        event.preventDefault();
-        (window.location.pathname==='/Forum'||window.location.pathname==='/Forum/')?
-         event.preventDefault(): navigate('/Forum/1');
+        // event.preventDefault();
+        // (window.location.pathname==='/Forum'||window.location.pathname==='/Forum/')?
+        //  event.preventDefault(): navigate('/Forum/Main-Forum');
         setActive(link.link);
       }}
     >
