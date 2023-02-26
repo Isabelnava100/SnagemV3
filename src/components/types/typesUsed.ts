@@ -26,7 +26,7 @@ export interface ProviderForumSetup {
   description: string;
 }
 //Creating interface for forum provider interface
-
+ 
 export const NewForumInfo: ProviderForumSetup[] = [
   { value: '1', label: 'Main Forums', link: 'Main-Forum', description: 'This is where the roleplay happens.' },
   { value: '2', label: 'Side Roleplay', link:'Side-Roleplay',description:'This space is for small, side roleplays.'},
