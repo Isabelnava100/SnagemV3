@@ -16,7 +16,13 @@ export const sendMessage = async (
       "from": displayName,
   };
       const response = await axios
-      .post('https://TediousAvariciousTasks.isabelnava.repl.co/', message);
+      .post('https://TediousAvariciousTasks.isabelnava.repl.co/', message,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': 'https://snagemguild.com',
+        },
+      });
       return(response.data);
   } 
   else {
