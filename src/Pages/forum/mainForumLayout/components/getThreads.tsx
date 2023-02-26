@@ -17,23 +17,25 @@ export const dataRun = async (
       await getDocs(newRef)
           .then((postsData) => {
             postsData.forEach((doc) => {
-                newData.push({
-                    id: Number(doc.id),
-                    closed: doc.data().closed,
-                    createdBy: doc.data().createdBy,
-                    notifyviaDiscord: doc.data().notifyviaDiscord,
-                    private: doc.data().private,
-                    timePosted: new Date(doc.data().timePosted.seconds * 1000)
-                    .toLocaleString("en-US", { 
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "numeric",
-                      hour12: false,
-                    }),
-                    title: doc.data().title,
-                  });
+               if(Object.keys(doc.data()).length > 0) {
+                          const date = new Date(doc.data().timePosted.seconds * 1000);
+                          newData.push({
+                            id: Number(doc.id),
+                            closed: doc.data().closed,
+                            createdBy: doc.data().createdBy,
+                            notifyviaDiscord: doc.data().notifyviaDiscord,
+                            private: doc.data().private,
+                            timePosted: date.toLocaleString("en-US", { 
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "numeric",
+                              hour12: false,
+                            }),
+                            title: doc.data().title,
+                          });
+                      }
             });
           })
           .finally(() => {

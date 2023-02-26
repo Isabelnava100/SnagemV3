@@ -7,15 +7,17 @@ import { ThreadInformation } from "../../../components/types/typesUsed";
 import { dataRun } from "./components/getThreads";
 
 function MainForum() {
-  const [allThreads, setAllThreads] = useState<ThreadInformation[]>([]);
+  const [allThreads, setAllThreads] = useState<ThreadInformation[]|undefined>([]);
   const forumPlace = useForumLink();
   const place = forumPlace?.active;
-  const placeSimpleName =place?.slice(7);
+  const placeSimpleName= place?place:'test';
 
   useEffect(() => { 
     async function fetchData(){   
-      const checkingThreads= await dataRun(placeSimpleName);
-      setAllThreads(checkingThreads);
+      if (place){
+        const checkingThreads= await dataRun(placeSimpleName);
+        setAllThreads(checkingThreads);
+      }
     }
     
     fetchData();
@@ -40,12 +42,12 @@ function MainForum() {
               </tr>
             </thead>
             <tbody>
-              {allThreads.map((thread) => (
+              {allThreads&&allThreads.map((thread) => (
                 <tr key={thread.id}>
                   <td>
                     <Link
                       style={{ textDecoration: "none" }}
-                      to={`${place}/thread/${thread.id}`}
+                      to={`/Forum/${place}/thread/${thread.id}`}
                       // state={{ infoRead: thread }}
                     >
                       {thread.title}
@@ -57,7 +59,7 @@ function MainForum() {
                   <td>
                     <Link
                       style={{ textDecoration: "none" }}
-                      to={`${place}/thread/${thread.id}`}
+                      to={`/Forum/${place}/thread/${thread.id}`}
                       // state={{ infoRead: thread }}
                     >
                       {thread.timePosted}

@@ -7,7 +7,7 @@ import { db } from "../../../context/firebase";
 
 //This is to fetch the needed info before making a new post and check permissions of the user
 export const dataRun = async (
-  thethreadid: number,
+  thethreadid: number, 
   forum:string,
   // user: User | undefined = undefined,
 ): Promise<ThreadInformation[]> => { 
@@ -43,4 +43,5 @@ export const dataRun = async (
         default:
           return newData;
       }
+      //add to check permissions
 }; 

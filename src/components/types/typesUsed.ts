@@ -13,6 +13,7 @@ export interface HeaderSearchProps {
 // This is for changing the navigation if the user is logged in or not
 
 export interface PermissionsForForum {
+  link: string;
   value: string;
   label: string;
 }
@@ -37,36 +38,36 @@ export const NewForumInfo: ProviderForumSetup[] = [
   ];
   //replace all other with this
 
-export const basicForumLocationData:PermissionsForForum[] = [
-  { value: '1', label: 'Main Forums' },
-  { value: '2', label: 'Side Roleplay' },
-  { value: '3', label: 'Master Mission' },
-  { value: '4', label: 'Quests' },
-  { value: '5', label: 'Events' },
-  { value: '6', label: 'Private' },
-];
-//This is used for creating new topics
+// export const basicForumLocationData:PermissionsForForum[] = [
+//   { value: '1', label: 'Main Forums' },
+//   { value: '2', label: 'Side Roleplay' },
+//   { value: '3', label: 'Master Mission' },
+//   { value: '4', label: 'Quests' },
+//   { value: '5', label: 'Events' },
+//   { value: '6', label: 'Private' },
+// ];
+// //This is used for creating new topics
 
-export const basicThreadLocationData:PermissionsForForum[] = [
-  { value: '1', label: 'Main Forums' },
-  { value: '2', label: 'Side Roleplay' },
-  { value: '3', label: 'Master Mission' },
-  { value: '4', label: 'Quests' },
-  { value: '5', label: 'Events' },
-  { value: '6', label: 'Private' },
-  { value: '7', label: 'Archived' },
-];
-//This is used for creating new posts
+// export const basicThreadLocationData:PermissionsForForum[] = [
+//   { value: '1', label: 'Main Forums' },
+//   { value: '2', label: 'Side Roleplay' },
+//   { value: '3', label: 'Master Mission' },
+//   { value: '4', label: 'Quests' },
+//   { value: '5', label: 'Events' },
+//   { value: '6', label: 'Private' },
+//   { value: '7', label: 'Archived' },
+// ];
+// //This is used for creating new posts
 
-export const forumInformationStatic=[ 
-  {link:'/Forum/1',description:'This is where the roleplay happens.'},
-  {link:'/Forum/2',description:'This space is for small, side roleplays.'},
-  {link:'/Forum/3',description:'Here are where master missions happens.'},
-  {link:'/Forum/4',description:'Pick up quests to do on your own or with friends.'},
-  {link:'/Forum/5',description:'Participate in events and get prizes!'},
-  {link:'/Forum/6',description:'Keep a record of your own quests and roleplays here.'},
-  {link:'/Forum/7',description:'Any old, closed roleplay.'},
-];
+// export const forumInformationStatic=[ 
+//   {link:'/Forum/1',description:'This is where the roleplay happens.'},
+//   {link:'/Forum/2',description:'This space is for small, side roleplays.'},
+//   {link:'/Forum/3',description:'Here are where master missions happens.'},
+//   {link:'/Forum/4',description:'Pick up quests to do on your own or with friends.'},
+//   {link:'/Forum/5',description:'Participate in events and get prizes!'},
+//   {link:'/Forum/6',description:'Keep a record of your own quests and roleplays here.'},
+//   {link:'/Forum/7',description:'Any old, closed roleplay.'},
+// ];
 //This is used for the Hero Section of the Forums where we can add static content
 
 export const badgesColors = [

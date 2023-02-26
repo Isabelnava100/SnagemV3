@@ -4,11 +4,13 @@ import { ThreadInformation } from "../components/types/typesUsed";
 export const sendMessage = async (
     allThreads:ThreadInformation[],
     displayName:string,
+    forumName:string,
+    thethreadid:string
     ) => {
   if (allThreads[0].notifyviaDiscord) {
     const message = {
-      "usernames":allThreads[0].notifyviaDiscord,
-      "url": "http://localhost:5173/Forum/thread/"+allThreads[0].location,
+      "usernames":allThreads[0].notifyviaDiscord, //
+      "url": `http://localhost:5173/Forum/${forumName}/thread/${thethreadid}`,
       "via": "Bookmarked by",
       "nameThread": allThreads[0].title,
       "from": displayName,

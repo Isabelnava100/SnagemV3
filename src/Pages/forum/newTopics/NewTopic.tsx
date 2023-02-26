@@ -1,12 +1,10 @@
 import { RichTextEditor, Link } from '@mantine/tiptap';
-import {  Paper,  Text,  TextInput,   Group,  Container,  createStyles, Select
+import {  Paper,  Text,  TextInput,   Group,  Container,  Select
 } from '@mantine/core';
 import { UserAuth } from '../../../context/AuthContext';
-import { useState, useEffect } from 'react';
 import { ButtonProgress } from '../reusable-components/LoadingButton';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import {  useNavigate, useParams } from 'react-router-dom';
 import { useForm } from '@mantine/form';
-import { db } from '../../../context/firebase';
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
@@ -20,118 +18,114 @@ import TextStyle from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
 import {handleSubmit} from './components/handleSubmitTopic'
 import {filteredData} from '../reusable-components/checkPermsForum'
-import { collection, getCountFromServer } from 'firebase/firestore';
+import { NewForumInfo } from '../../../components/types/typesUsed';
 
-const useStyles = createStyles((theme
-  // : { fn: { smallerThan: (arg0: string) => any; }; spacing: { md: any; sm: number; xl: any; }; colorScheme: string; colors: { dark: any[]; }; white: any; radius: { lg: number; }; fontFamily: any; }
-  ) => {
-  const BREAKPOINT = theme.fn.smallerThan('sm');
+// const useStyles = createStyles((theme
+//   // : { fn: { smallerThan: (arg0: string) => any; }; spacing: { md: any; sm: number; xl: any; }; colorScheme: string; colors: { dark: any[]; }; white: any; radius: { lg: number; }; fontFamily: any; }
+//   ) => {
+//   const BREAKPOINT = theme.fn.smallerThan('sm');
 
-  return {
-    wrapper: {
-      display: 'flex',
-      padding: 4,
-      gap:12,
+//   return {
+//     wrapper: {
+//       display: 'flex',
+//       padding: 4,
+//       gap:12,
 
-      [BREAKPOINT]: {
-        flexDirection: 'column',
-      },
-    },
+//       [BREAKPOINT]: {
+//         flexDirection: 'column',
+//       },
+//     },
 
-    form: {
-      boxSizing: 'border-box',
-      flex: 1,
-      padding: theme.spacing.md,
-      paddingLeft: theme.spacing.sm * 2,
-      borderLeft: 0,
+//     form: {
+//       boxSizing: 'border-box',
+//       flex: 1,
+//       padding: theme.spacing.md,
+//       paddingLeft: theme.spacing.sm * 2,
+//       borderLeft: 0,
       
-      backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.white,
-      borderRadius: theme.radius.lg,
+//       backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.white,
+//       borderRadius: theme.radius.lg,
 
-      [BREAKPOINT]: {
-        padding: theme.spacing.sm,
-        paddingLeft: theme.spacing.sm,
-      },
-    },
+//       [BREAKPOINT]: {
+//         padding: theme.spacing.sm,
+//         paddingLeft: theme.spacing.sm,
+//       },
+//     },
 
-    fields: {
-      marginTop: -12,
-    },
+//     fields: {
+//       marginTop: -12,
+//     },
 
-    fieldInput: {
-      flex: 1,
+//     fieldInput: {
+//       flex: 1,
 
-      '& + &': {
-        marginLeft: theme.spacing.sm,
+//       '& + &': {
+//         marginLeft: theme.spacing.sm,
 
-        [BREAKPOINT]: {
-          marginLeft: 0,
-          marginTop: theme.spacing.md,
-        },
-      },
-    },
+//         [BREAKPOINT]: {
+//           marginLeft: 0,
+//           marginTop: theme.spacing.md,
+//         },
+//       },
+//     },
 
-    fieldsGroup: {
-      display: 'flex',
+//     fieldsGroup: {
+//       display: 'flex',
 
-      [BREAKPOINT]: {
-        flexDirection: 'column',
-      },
-    },
+//       [BREAKPOINT]: {
+//         flexDirection: 'column',
+//       },
+//     },
 
-    contacts: {
-      boxSizing: 'border-box',
-      position: 'relative',
-      borderRadius: theme.radius.lg - 2,
-      // background: theme.fn.linearGradient(45, '#4338ca','#6b21a8',),
-      padding: theme.spacing.md,
-      flex: '0 0 280px',
-      marginBottom: 2,
+//     contacts: {
+//       boxSizing: 'border-box',
+//       position: 'relative',
+//       borderRadius: theme.radius.lg - 2,
+//       // background: theme.fn.linearGradient(45, '#4338ca','#6b21a8',),
+//       padding: theme.spacing.md,
+//       flex: '0 0 280px',
+//       marginBottom: 2,
       
 
-      [BREAKPOINT]: {
-        paddingLeft: theme.spacing.sm,
-      },
-    },
+//       [BREAKPOINT]: {
+//         paddingLeft: theme.spacing.sm,
+//       },
+//     },
 
-    title: {
-      marginBottom: theme.spacing.xl,
-      fontFamily: `Greycliff CF, ${theme.fontFamily}`,
+//     title: {
+//       marginBottom: theme.spacing.xl,
+//       fontFamily: `Greycliff CF, ${theme.fontFamily}`,
 
-      [BREAKPOINT]: {
-        marginBottom: theme.spacing.xl,
-      },
-    },
-    title2: {
-      marginBottom: theme.spacing.sm,
-      fontFamily: `Greycliff CF, ${theme.fontFamily}`,
+//       [BREAKPOINT]: {
+//         marginBottom: theme.spacing.xl,
+//       },
+//     },
+//     title2: {
+//       marginBottom: theme.spacing.sm,
+//       fontFamily: `Greycliff CF, ${theme.fontFamily}`,
 
-      [BREAKPOINT]: {
-        marginBottom: theme.spacing.xl,
-      },
-    },
+//       [BREAKPOINT]: {
+//         marginBottom: theme.spacing.xl,
+//       },
+//     },
 
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-  };
-});
+//     control: {
+//       [BREAKPOINT]: {
+//         flex: 1,
+//       },
+//     },
+//   };
+// });
 
-export function NewTopic() {  
+export function NewTopic(){  
   const { forum } = useParams();
-  const { classes } = useStyles();
   const { user } = UserAuth();
-  const [valueNewThread, setValueNT] = useState<number>();
   const navigate=useNavigate();
-  const coll = collection(db, 'forum', `${forum}`, 'threads');
 
   const form = useForm({
     initialValues: {
       title: '',
-      thread: valueNewThread,
-      forum2:forum?forum:'Side-Roleplay',
+      forum2:forum? NewForumInfo.find(info => info.link === forum):'2',
       postas:'',
       firstpost: '',
     },
@@ -141,44 +135,51 @@ export function NewTopic() {
       firstpost: (value) => (value.length < 2 ? 'Post must have at least 2 letters' : null),
     },
   });  
-  const formTheCheck=form.isValid();
+  const formTheCheck = form.isValid();
 
   const editor = useEditor({
     extensions: [
-      StarterKit, TextStyle, Color,
-      Underline, Placeholder.configure({ placeholder: 'This is placeholder' }),
+      StarterKit,
+      TextStyle,
+      Color,
+      Underline,
+      Placeholder.configure({ placeholder: 'This is placeholder' }),
       Link,
       Superscript,
       SubScript,
       Highlight,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
+    // onUpdate: useCallback((props: { editor: { getHTML: () => string; }; }) => {
+    //   form.setFieldValue('firstpost', props.editor.getHTML());
+    // }, [form]),    
     onUpdate: (props) => {
       form.setFieldValue("firstpost", props.editor.getHTML());
     },
   });
 
-  const checkNewThread= async()=>{
-    const snapshot=await getCountFromServer(coll);
-    setValueNT(snapshot.data().count+1);
+
+  const handleSubmitForm = async (values: { title: any; forum2: any; postas: any; firstpost: any; }) => {
+    // console.log(values.forum2);
+    const success = await handleSubmit(values.title, values.forum2, values.postas, values.firstpost,user);
+    if (success) {
+      navigate('/Forum/' + NewForumInfo.find(info => info.value === values.forum2)?.link);
+    } else {
+      navigate('/Forum/Main-Forum');
+    }
     return;
   }
-
-
-  useEffect(()=>{
-    checkNewThread();
-  },[forum])
+  
   
   return (
     <Container size="lg" style={{marginTop:20,paddingBottom:100}}>
-       <form onSubmit={form.onSubmit(async (values) =>{
-        await (handleSubmit(values.title, values.forum2, values.postas, values.firstpost, user, valueNewThread))
-        ? navigate('/Forum/'+values.forum2) : navigate('/Forum/1');
-        })}>
+      <form onSubmit={form.onSubmit(async (values) => {
+        await handleSubmitForm(values);
+      })}>
     <Paper shadow="md" radius="lg">
-      <div className={classes.wrapper}>
-        <div className={classes.contacts}>
-          <Text size="lg" weight={700} className={classes.title2} sx={{ color: '#fff' }}>
+      <div /* className={classes.wrapper} */>
+        <div /* className={classes.contacts} */>
+          <Text size="lg" weight={700} /* className={classes.title2} */ sx={{ color: '#fff' }}>
             Topic Information
           </Text>
           
@@ -224,12 +225,12 @@ export function NewTopic() {
 
         </div>
 
-       <div className={classes.form} >
-          <Text size="lg" weight={700} className={classes.title}>
+       <div /* className={classes.form} */ >
+          <Text size="lg" weight={700} /* className={classes.title} */>
             First Post <span className="text-red-600">*</span>
           </Text>
 
-          <div className={classes.fields}>
+          <div/*  className={classes.fields} */>
             {/* <SimpleGrid cols={2} breakpoints={[{ maxWidth: 'sm', cols: 1 }]}>
               <TextInput label="Your name" placeholder="Your name" />
               <TextInput label="Your email" placeholder="hello@mantine.dev" required />

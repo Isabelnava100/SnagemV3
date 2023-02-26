@@ -27,6 +27,7 @@ import { dataRun } from "../reusable-components/getThreadInfo";
 import { ThreadInformation } from "../../../components/types/typesUsed";
 import { handleSubmit } from "./components/handleNewPostSubmit";
 import { UserAuth } from "../../../context/AuthContext";
+import { filteredData } from "../reusable-components/checkPermsForum";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -130,10 +131,9 @@ const useStyles = createStyles((theme) => {
 });
 
 export function NewPost() {
-  const { id: thethreadid } = useParams();
+  const { id: thethreadid, forum:forumName } = useParams();
   const { user } = UserAuth();
-  const { state } = useLocation();
-  const checkingLoc = state && state.newlocation ? true : false;
+  // console.log(thethreadid);
   const { classes } = useStyles();
   const [allThreads, setAllThreads] = useState<ThreadInformation[]>([]);
   const navigate = useNavigate();
@@ -173,44 +173,49 @@ export function NewPost() {
 
   useEffect(() => {
     async function fetchData() {
-      if (Number.isNaN(Number(thethreadid))) {
-        navigate("/Forum/1");
-      } else {
-        const threadData = await dataRun( 
-          Number(thethreadid),
-          checkingLoc,
-          state.newlocation,
-          user,
-          'newPost',
-        );
-        if (threadData.length === 0) {
-          navigate("/Forum/1");
-        } else {
-          setAllThreads(threadData);
-        }
+    if(filteredData(user).find(item => item.link === forumName)){ //
+      const threadData = await dataRun(Number(thethreadid), forumName||'Side-Roleplay');
+      if(threadData.length===0) {
+        navigate("/Forum/Main-Forum");
+      }else {
+        setAllThreads(threadData);
       }
+    }else {
+      navigate("/Forum/Main-Forum");
     }
+  }
+  if (allThreads.length===0){
     fetchData();
-  }, [thethreadid]); //set to page
+  }    
+  }, [thethreadid,forumName]); //set to page
+
+  async function handleSubmitWrapper(values: { character: string, text: string }) {
+    const sendIt= await handleSubmit(
+      values.character,
+      values.text,
+      thethreadid,
+      user,
+      forumName,
+      allThreads
+    );
+    if(sendIt){
+      navigate(`/Forum/${forumName}/thread/${thethreadid}`);
+    }
+    
+    return;
+  }
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
       <form
         onSubmit={form.onSubmit((values) => {
-          handleSubmit(
-            values.character,
-            values.text,
-            allThreads,
-            thethreadid,
-            user
-          );
-          navigate("/Forum/thread/" + thethreadid);
+          handleSubmitWrapper(values);
         })}
       >
         <Paper shadow="md" radius="lg">
           <div className={classes.wrapper}>
             <div className={classes.form}>
-              {allThreads.map((thread) => (
+              {allThreads&&allThreads.map((thread) => (
                 <Text
                   size="lg"
                   weight={700}

@@ -1,4 +1,4 @@
-import { doc, updateDoc } from "firebase/firestore";
+import { collection, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { ThreadInformation, User } from "../../../../components/types/typesUsed";
 import { db } from "../../../../context/firebase";
 import { sendMessage } from "../../../../Discord/NewPost";
@@ -7,34 +7,44 @@ import { sendMessage } from "../../../../Discord/NewPost";
 export const handleSubmit = async (
     character: string,
     text: string,
-    allThreads:ThreadInformation[],
     thethreadid:string|undefined,
     user: User | undefined = undefined,
-    ) => {
-    
-  const nextLocation=(allThreads.map(item => item.id))[0];
+    forumName:string|undefined,
+    allThreads:ThreadInformation[]
+    ):Promise<boolean> => {
+  
+      
   const checkBadges=user?.otherinfo?.badges;
   const usernamePosting=user?.displayName||'';
+  const timePosted=new Date();
+  const batch = writeBatch(db);
+  if (forumName&&thethreadid){
+  
+    const colRefCount = collection(db, 'forum', `${forumName}`, 'threads');
+    const colRef = doc(colRefCount,`${thethreadid}`);
+    const colPost = collection(colRef, 'posts');
 
-  const thedate=new Date();
-  const batch = db.batch();
 
-  const newPostRef = db.collection("posts").doc();
-  batch.set(newPostRef, {
-    character: character,
-    thread: nextLocation,
-    threadLink: Number(thethreadid),
-    owner: usernamePosting,
-    text: text,
-    timePosted: thedate,
-    badges: checkBadges ? user?.otherinfo?.badges : null,
+    batch.set(colRef, {
+      timePosted,
+      }, { merge: true });
+
+      
+
+    batch.set(doc(colPost), {
+      badges:checkBadges?user?.otherinfo?.badges:null,
+      character,
+      owner: user?.displayName,
+      text,
+      timePosted,
   });
-
-  const threadRef = db.collection("threads").doc(nextLocation);
-  batch.update(threadRef, { timePosted: thedate });
-
-  await batch.commit();
-  await sendMessage(allThreads, usernamePosting);
-  //   console.log(await sendMessage(allThreads, usernamePosting));
+  
+    await batch.commit();
+    await sendMessage(allThreads, usernamePosting,forumName,thethreadid); 
+    return true; 
+  }else {
+    return false;
+  }
+  
     
 };

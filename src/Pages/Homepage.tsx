@@ -1,7 +1,7 @@
 
 
 const HomePage = () => {
-   
+   console.log('test2');
     return(
         <div style={{position:'relative',display:'flex',
         }}>
