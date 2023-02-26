@@ -200,9 +200,8 @@ export function NewPost() {
     );
     if(sendIt){
       navigate(`/Forum/${forumName}/thread/${thethreadid}`);
+      return;
     }
-    
-    return;
   }
 
   return (
