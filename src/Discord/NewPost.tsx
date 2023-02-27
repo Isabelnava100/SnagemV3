@@ -8,8 +8,9 @@ export const sendMessage = async (
     thethreadid:string
     ) => {
   if (allThreads[0].notifyviaDiscord) {
+    console.log(allThreads[0].notifyviaDiscord);
     const message = {
-      "usernames":allThreads[0].notifyviaDiscord, //
+      "usernames":['375276983766089731'], 
       "url": `http://localhost:5173/Forum/${forumName}/thread/${thethreadid}`,
       "via": "Bookmarked by",
       "nameThread": allThreads[0].title,
