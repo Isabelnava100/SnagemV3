@@ -68,18 +68,19 @@ export default function Threads() {
           onChange={onChangePG}
           style={{ alignSelf: "end" }}
         />
-        {allPosts.map(
+        {/*Replace the below with a new set up... */}
+        {allPosts.length>0&&allPosts.map(
           (apost, index) =>
             index >= start &&
             index + 1 <= end && (
               <ArticleCardVertical
-                key={apost.id}
+              key={apost.id}
                 image={""}
                 bigText={apost.text}
                 chara={apost.character}
                 author={{
                   name: apost.owner,
-                  avatar: "avie",
+                  avatar: apost.id,
                   badges: apost.badges,
                 }}
               />

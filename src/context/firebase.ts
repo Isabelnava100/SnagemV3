@@ -3,7 +3,7 @@ import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 import 'firebase/compat/storage';
 
-const firebaseConfig = {
+const firebaseConfig = { 
     apiKey: import.meta.env.VITE_BACKEND_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_BACKEND_FIREBASE_AUTH_DOMAIN,
     projectId: import.meta.env.VITE_BACKEND_FIREBASE_PROJECT_ID,

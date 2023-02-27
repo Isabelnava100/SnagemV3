@@ -8,16 +8,16 @@ export const sendMessage = async (
     thethreadid:string
     ) => {
   if (allThreads[0].notifyviaDiscord) {
-    console.log(allThreads[0].notifyviaDiscord);
+    console.log();
     const message = {
-      "usernames":['375276983766089731'], 
-      "url": `http://localhost:5173/Forum/${forumName}/thread/${thethreadid}`,
+      "usernames":allThreads[0].notifyviaDiscord, 
+      "url": `http://snagemguild.com/Forum/${forumName}/thread/${thethreadid}`,
       "via": "Bookmarked by",
       "nameThread": allThreads[0].title,
       "from": displayName,
   };
       const response = await axios
-      .post('https://TediousAvariciousTasks.isabelnava.repl.co/', message,
+      .post( import.meta.env.VITE_BACKEND_DISCORD_BOT, message,
       {
         headers: {
           'Content-Type': 'application/json',

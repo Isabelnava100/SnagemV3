@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { createStyles, Card, Image, Avatar, Text, Group, Badge } from '@mantine/core';
 import { EachPostVisual } from '../../../../components/types/typesUsed'
 import { getColor1,getColor2 } from '../../../../components/dashboard-user/getColorBadges';
@@ -79,14 +79,15 @@ export function ArticleCardVertical({
 }: EachPostVisual) {
   const { classes } = useStyles();
   return (
-    <Card withBorder radius="md" pb={24} className={classes.card} mt={12} mb={12}>
+    <Card withBorder radius="md" pb={24} className={classes.card} mt={12} mb={12}
+    key={author.avatar}>
       <div className={classes.all}>
         
         <div className={classes.body} >
         <Image src={image} height={140} width={140} mb="xs" className={classes.avatarimg} />
         <Group spacing="xs"className={classes.minitext}>
             <Group spacing="xs" noWrap> 
-              <Avatar size={20} src={author.avatar} />
+              {/* <Avatar size={20} src={author.avatar} /> */}
               <Text size="xs" className={classes.longText}>{author.name} </Text>
             </Group>
             <div className={classes.badgesGroup}>
