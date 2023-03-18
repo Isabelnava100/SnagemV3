@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Container, Pagination } from "@mantine/core";
-import { ArticleCardVertical } from "./components/EachPost";
-import { useParams } from "react-router-dom";
+import { Container } from "@mantine/core";
+import { useNavigate, useParams } from "react-router-dom";
 import { FeaturesTitle } from "./components/setTitleperThread";
 import {
   ThreadInformation,
@@ -9,26 +8,30 @@ import {
 } from "../../../components/types/typesUsed";
 import { dataRun } from "../reusable-components/getThreadInfo";
 import { dataRun2 } from "./components/getPosts";
+import { PaginationWithEachPost } from "./components/paginationPosts";
+
+function isNumeric(n:any):boolean {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+} // function that checks if string is a number
 
 export default function Threads() {
   const { forum, id: thethreadid, page } = useParams();
+  const navigate=useNavigate(); 
   const [allPosts, setAllPosts] = useState<PostsStructure[]>([]);
   const [threadInfo, setThreadInfo] = useState<ThreadInformation[]>([]);
+  
   const [currentPage, onChangePG] = useState<number>(
-    page ? Number(page) : 1
-  ); //if last then pages = pagesCount
-
+    isNumeric(page) ? Number(page) :  1
+  ); 
   const postPerPage = 6;
-  const pagesCount = Math.ceil(allPosts.length / postPerPage);
-
-  const start = (currentPage - 1) * postPerPage;
-  const end = Math.min(currentPage * postPerPage, allPosts.length);
+    const bookmarkBoolean=true;
 
   useEffect(() => {
     async function fetchData() {
       if (Number.isNaN(Number(thethreadid))) {
-        // navigate('/Forum/');
-        console.log('Thread ID is invalid.')
+        navigate('/Forum/');
+        console.log('Thread ID is invalid.');
+        return true;
       } else {
         await dataRun(
           Number(thethreadid),
@@ -38,8 +41,14 @@ export default function Threads() {
           await dataRun2(
             Number(thethreadid),
             (forum||'Main-Forum')
-            ).then((resultsPosts) => {
-                setAllPosts(resultsPosts);                
+            ).then((resultsPosts) => { 
+                if(page==='last'){
+                navigate(`/Forum/${forum}/thread/${thethreadid}/${Math.ceil(resultsPosts.length / postPerPage)}`);
+                onChangePG(Math.ceil(resultsPosts.length / postPerPage));
+                }else {                  
+                setAllPosts(resultsPosts);
+                }
+                return true;
               });
         });
       }
@@ -58,42 +67,21 @@ export default function Threads() {
         ) : (
           ""
         )}
-
-
-        <Pagination
-          total={pagesCount}
-          color="violet"
-          withEdges
-          page={currentPage}
-          onChange={onChangePG}
-          style={{ alignSelf: "end" }}
+        
+        {allPosts.length ?
+        <PaginationWithEachPost 
+        currentPage={currentPage}
+        onChangePG={onChangePG}
+        allPosts={allPosts}
+        postPerPage={postPerPage}
         />
-        {/*Replace the below with a new set up... */}
-        {allPosts.length>0&&allPosts.map(
-          (apost, index) =>
-            index >= start &&
-            index + 1 <= end && (
-              <ArticleCardVertical
-              key={apost.id}
-                image={""}
-                bigText={apost.text}
-                chara={apost.character}
-                author={{
-                  name: apost.owner,
-                  avatar: apost.id,
-                  badges: apost.badges,
-                }}
-              />
-            )
-        )}
-        <Pagination
-          total={pagesCount}
-          color="violet"
-          withEdges
-          page={currentPage}
-          onChange={onChangePG}
-          style={{ alignSelf: "end" }}
-        />
+      :
+      <img
+              src="https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/mewdumpy-compress.gif?alt=media&token=95a14be6-6495-43fd-a72a-a120f55e0bf8"
+              alt="mew loading" width='100' height='100'
+            />
+      }
+        
       </div>
     </Container>
   );
