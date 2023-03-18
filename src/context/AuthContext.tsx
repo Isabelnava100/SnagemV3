@@ -10,6 +10,7 @@ const getInfo = async (uid: string): Promise<SpecificUser> => {
   return {
     permissions: userData ? userData.permissions : "",
     badges: userData ? userData.badges : [],
+    discordUID: userData ? userData.discordUID : "",
   };
 };
 

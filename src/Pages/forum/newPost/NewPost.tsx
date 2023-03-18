@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Paper,
   Text,
@@ -19,15 +19,15 @@ import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Superscript from "@tiptap/extension-superscript";
 import SubScript from "@tiptap/extension-subscript";
-import { IconColorPicker } from "@tabler/icons";
+import { IconColorPicker, IconStar } from "@tabler/icons";
 import { Color } from "@tiptap/extension-color";
 import TextStyle from "@tiptap/extension-text-style";
 import Placeholder from "@tiptap/extension-placeholder";
-import { dataRun } from "../reusable-components/getThreadInfo";
+import Image from '@tiptap/extension-image';
+import { getThreadDataForNewPostAndCheckPrivateBoolean } from "./components/checkPostingPerms";
 import { ThreadInformation } from "../../../components/types/typesUsed";
 import { handleSubmit } from "./components/handleNewPostSubmit";
 import { UserAuth } from "../../../context/AuthContext";
-import { filteredData } from "../reusable-components/checkPermsForum";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -138,6 +138,34 @@ export function NewPost() {
   const [allThreads, setAllThreads] = useState<ThreadInformation[]>([]);
   const navigate = useNavigate();
 
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      TextStyle,
+      Color,
+      Underline,
+      Placeholder.configure({ placeholder: "This is placeholder" }),
+      Link,
+      Image.configure({
+        inline: true,
+      }),
+      Superscript,
+      SubScript,
+      Highlight,
+      TextAlign.configure({ types: ["heading", "paragraph", "image"] }),
+    ],
+    onUpdate: (props) => {
+      form.setFieldValue("text", props.editor.getHTML());
+    },
+  });
+
+  const addImage = useCallback(() => {
+    const url = window.prompt('URL');
+    if (url) {
+      editor?.chain().focus().setImage({ src: url }).run()
+    }
+  }, [editor])
+
   const form = useForm({
     initialValues: {
       character: "",
@@ -153,35 +181,27 @@ export function NewPost() {
 
   const formTheCheck = form.isValid();
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      TextStyle,
-      Color,
-      Underline,
-      Placeholder.configure({ placeholder: "This is placeholder" }),
-      Link,
-      Superscript,
-      SubScript,
-      Highlight,
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-    ],
-    onUpdate: (props) => {
-      form.setFieldValue("text", props.editor.getHTML());
-    },
-  });
+
 
   useEffect(() => {
     async function fetchData() {
-    if(filteredData(user).find(item => item.link === forumName)){ //
-      const threadData = await dataRun(Number(thethreadid), forumName||'Side-Roleplay');
+    if(forumName&&allThreads.length === 0){ 
+      const threadData = await getThreadDataForNewPostAndCheckPrivateBoolean(Number(thethreadid), forumName);
+      // console.log(threadData);
       if(threadData.length===0) {
-        navigate("/Forum/Main-Forum");
+        // navigate("/Forum/Main-Forum");
       }else {
-        setAllThreads(threadData);
+        if(threadData[0].private===true){
+          if(threadData[0].privateTo&&threadData[0].privateTo.includes(user?.displayName)){
+            setAllThreads(threadData);
+          }else {
+            // navigate("/Forum/Main-Forum");
+            //User isn't allowed to post.
+          }
+        }else {
+          setAllThreads(threadData);
+        }//check if privacy exists
       }
-    }else {
-      navigate("/Forum/Main-Forum");
     }
   }
   if (allThreads.length===0){
@@ -190,18 +210,17 @@ export function NewPost() {
   }, [thethreadid,forumName]); //set to page
 
   async function handleSubmitWrapper(values: { character: string, text: string }) {
-    const sendIt= await handleSubmit(
+    await handleSubmit(
       values.character,
       values.text,
       thethreadid,
       user,
       forumName,
       allThreads
-    );
-    if(sendIt){
+    ).finally(() => {      
       navigate(`/Forum/${forumName}/thread/${thethreadid}`);
       return;
-    }
+    });
   }
 
   return (
@@ -318,6 +337,13 @@ export function NewPost() {
                     <RichTextEditor.ControlsGroup>
                       <RichTextEditor.Link />
                       <RichTextEditor.Unlink />
+                      <RichTextEditor.Control
+                          onClick={addImage}
+                          aria-label="Insert image"
+                          title="Insert image"
+                        >
+                          <IconStar stroke={1.5} size={16} />
+                        </RichTextEditor.Control>
                     </RichTextEditor.ControlsGroup>
 
                     <RichTextEditor.ControlsGroup>

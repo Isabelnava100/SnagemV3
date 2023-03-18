@@ -5,6 +5,7 @@ import {
   Button,
   Container,
   useMantineTheme,
+  Switch,
 } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { UserAuth } from "../../../../context/AuthContext";
@@ -133,6 +134,8 @@ export function HeroText({ send }: { send: string | undefined }) {
             </Button>
           </div>
         )}
+
+        
       </div>
     </Container>
   );

@@ -34,7 +34,6 @@ export const NewForumInfo: ProviderForumSetup[] = [
   { value: '4', label: 'Quests', link:'Quests',description:'Pick up quests to do on your own or with friends.'},
   { value: '5', label: 'Events', link:'Events',description:'Participate in events and get prizes!'},
   { value: '6', label: 'Private', link:'Private',description:'Keep a record of your own quests and roleplays here.'},
-  { value: '7', label: 'Archived', link:'Archived',description:'Any old, closed roleplay.'},
   ];
   //replace all other with this
 
@@ -56,6 +55,7 @@ export interface EachPostInfo { //used to be Item
 
 
 export interface EachPostVisual {
+  newkey:string;
   image: string;
   bigText: string;
   chara: string;
@@ -81,6 +81,7 @@ export interface ThreadInformation {
   createdBy: string;
   notifyviaDiscord: Array<string>;
   private: boolean;
+  privateTo?: Array<string|null|undefined>;
   timePosted: string;
   title: string;
 }
@@ -112,6 +113,7 @@ export type User = {
 export type SpecificUser = {
 	permissions: string; 
 	badges: string[]; 
+  discordUID:string;
 };
 //Extra details added about the user
 

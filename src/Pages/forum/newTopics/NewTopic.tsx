@@ -12,6 +12,7 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Superscript from '@tiptap/extension-superscript';
 import SubScript from '@tiptap/extension-subscript';
+import Image from '@tiptap/extension-image';
 import { IconColorPicker } from '@tabler/icons';
 import { Color } from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
@@ -141,7 +142,7 @@ export function NewTopic(){
     extensions: [
       StarterKit,
       TextStyle,
-      Color,
+      Color,Image,
       Underline,
       Placeholder.configure({ placeholder: 'This is placeholder' }),
       Link,

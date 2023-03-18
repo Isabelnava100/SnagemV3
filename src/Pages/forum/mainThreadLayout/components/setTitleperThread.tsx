@@ -34,8 +34,6 @@ export function FeaturesTitle({info,forum}: InfoOnThreadVisual) {
   const { classes } = useStyles();
   // const { id } = useParams();
   const { user } = UserAuth();
-
-
   return (
     <div className={classes.wrapper}>
       <Grid gutter={20} >
@@ -43,10 +41,9 @@ export function FeaturesTitle({info,forum}: InfoOnThreadVisual) {
           <Title className={classes.title} order={2}>
          {info[0]['title']}
           </Title>
-          <BookmarkButton user={user}/>          
-
-          {/* <Text color="dimmed">
-          Description here...</Text> */}
+          {/* {user && 
+          <BookmarkButton user={user} listofnotify={info[0].notifyviaDiscord}/>          
+          } */}
           
         </Col>
         <Col span={12} sm={3} className={classes.buttonArea}>

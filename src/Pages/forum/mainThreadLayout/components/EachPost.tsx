@@ -2,6 +2,7 @@
 import { createStyles, Card, Image, Avatar, Text, Group, Badge } from '@mantine/core';
 import { EachPostVisual } from '../../../../components/types/typesUsed'
 import { getColor1,getColor2 } from '../../../../components/dashboard-user/getColorBadges';
+import React from 'react';
 
 const useStyles = createStyles((theme) => ({
   all: {
@@ -75,12 +76,12 @@ fontWeight:500,
 }));
     
 export function ArticleCardVertical({
-  image,  bigText,  chara,  author,
+  newkey, image,  bigText,  chara,  author, 
 }: EachPostVisual) {
   const { classes } = useStyles();
   return (
     <Card withBorder radius="md" pb={24} className={classes.card} mt={12} mb={12}
-    key={author.avatar}>
+    key={newkey}>
       <div className={classes.all}>
         
         <div className={classes.body} >
@@ -93,14 +94,14 @@ export function ArticleCardVertical({
             <div className={classes.badgesGroup}>
               
               { author.badges&&(author.badges).map((oneBadge,index)=>
-                <>
+                <React.Fragment key={newkey+index}>
                 {oneBadge&&
-                <Badge key={author.name+index} variant="gradient" 
+                <Badge key={newkey+author.name} variant="gradient" 
               gradient={{ from: getColor1(oneBadge), to: getColor2(oneBadge) }} 
               className={classes.badge}>
               {oneBadge}
               </Badge>}
-                </>
+                </React.Fragment>
               ) }
               </div>
           </Group>

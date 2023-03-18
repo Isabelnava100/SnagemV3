@@ -24,6 +24,7 @@ export function NewRegister() {
   const navigate = useNavigate();
   const strength = getStrength(value);
   const color = strength === 100 ? "teal" : strength > 50 ? "yellow" : "red";
+  
   const checks = requirements.map((requirement, index) => (
     <PasswordRequirement
       key={index}
@@ -69,24 +70,13 @@ export function NewRegister() {
     async () => {
       setwhensubmit(true);
       const values = form.values;
-      let results;
-      if (values.isGaia === "Yes") {
-        results = await registerUser(
+      const results = await registerUser(
           values.email,
           values.password,
           values.application,
           values.gaiaName,
-          values.username
+          values.username,
         );
-      } else {
-        results = await registerUser(
-          values.email,
-          generatePassword(),
-          values.application,
-          values.gaiaName,
-          values.username
-        );
-      }
       if (results === "success") {
         navigate('/Login', { replace: true });
         window.location.reload();

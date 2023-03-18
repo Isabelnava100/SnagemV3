@@ -1,27 +1,24 @@
-import { Container, Table, Text } from "@mantine/core";
+import { Container, Switch, Table, Text } from "@mantine/core";
 import { useForumLink } from "./components/MiniNavForum";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { HeroText } from "./components/HeroSection";
 import { ThreadInformation } from "../../../components/types/typesUsed";
 import { dataRun } from "./components/getThreads";
 
 function MainForum() {
   const [allThreads, setAllThreads] = useState<ThreadInformation[]|undefined>([]);
-  const forumPlace = useForumLink();
-  const place = forumPlace?.active;
-  const placeSimpleName= place?place:'test';
+  const { forum } = useParams();
+  const placeSimpleName= forum&&forum!='Forum'?forum:'Main-Forum';
+  const [archive, setArchive]= useState<boolean>(false);
 
   useEffect(() => { 
-    async function fetchData(){   
-      if (place){
-        const checkingThreads= await dataRun(placeSimpleName);
-        setAllThreads(checkingThreads);
-      }
-    }
-    
+    async function fetchData(){ 
+        const checkingThreads= await dataRun(placeSimpleName,archive);
+        setAllThreads(checkingThreads);        
+    }    
     fetchData();
-  }, [place]);
+  }, [forum,archive]);
 
   return (
     <>
@@ -34,6 +31,9 @@ function MainForum() {
           }}
         >
           <HeroText send={placeSimpleName} />
+          <Switch aria-label="View Archived Threads" onLabel="Archived Threads" offLabel="Open Threads" size="xl" 
+          className='self-end' onChange={() => setArchive(!archive)}/>
+          
           <Table highlightOnHover>
             <thead>
               <tr>
@@ -47,7 +47,7 @@ function MainForum() {
                   <td>
                     <Link
                       style={{ textDecoration: "none" }}
-                      to={`/Forum/${place}/thread/${thread.id}`}
+                      to={`/Forum/${placeSimpleName}/thread/${thread.id}`}
                       // state={{ infoRead: thread }}
                     >
                       {thread.title}
@@ -59,7 +59,7 @@ function MainForum() {
                   <td>
                     <Link
                       style={{ textDecoration: "none" }}
-                      to={`/Forum/${place}/thread/${thread.id}`}
+                      to={`/Forum/${placeSimpleName}/thread/${thread.id}/last`}
                       // state={{ infoRead: thread }}
                     >
                       {thread.timePosted}

@@ -9,6 +9,7 @@ import { db } from "../../../../context/firebase";
 
 export const dataRun = async (
   ForumWhich: string|undefined,
+  archive:boolean,
 ): Promise<ThreadInformation[]> => {
   const newData: ThreadInformation[] = [];
       //Get Threads for a specific Forum location start
@@ -19,6 +20,7 @@ export const dataRun = async (
             postsData.forEach((doc) => {
                if(Object.keys(doc.data()).length > 0) {
                           const date = new Date(doc.data().timePosted.seconds * 1000);
+                          if(doc.data().closed===archive){
                           newData.push({
                             id: Number(doc.id),
                             closed: doc.data().closed,
@@ -35,6 +37,7 @@ export const dataRun = async (
                             }),
                             title: doc.data().title,
                           });
+                        }
                       }
             });
           })
