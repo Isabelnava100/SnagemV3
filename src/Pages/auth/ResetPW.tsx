@@ -50,7 +50,7 @@ export function ResetPW() {
 
   return (
     <Container size={460} my={30}>
-      <Title className='title' align="center">
+      <Title className='titleAuth' align="center">
         Reset Your Password
       </Title>
       <Text color="dimmed" size="sm" align="center">
@@ -63,7 +63,7 @@ export function ResetPW() {
         p={30}
         radius="md"
         mt="xl"
-        className='paperBG'
+        className='paperBGAuth'
       >
         <form
           onSubmit={form.onSubmit((values) => {
@@ -106,8 +106,8 @@ export function ResetPW() {
           />
         </form>
 
-        <Group position="apart" mt="lg" className='controls'>
-          <Button className='control'>Reset password</Button>
+        <Group position="apart" mt="lg" className='controlsAuth'>
+          <Button className='controlAuth'>Reset password</Button>
         </Group>
       </Paper>
     </Container>

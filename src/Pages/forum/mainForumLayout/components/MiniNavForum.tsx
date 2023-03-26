@@ -25,9 +25,9 @@ function MiniNavForum() {
   ));
   return (
     <>
-      <Header height={40} className='header'>
+      <Header height={40} className='headerMiniNav'>
         <ScrollArea style={{ height: 46 }} offsetScrollbars scrollbarSize={6}>
-          <div className='inner'>
+          <div className='innerMiniNav'>
             <Group spacing={5}>{items}</Group>
           </div>
         </ScrollArea>

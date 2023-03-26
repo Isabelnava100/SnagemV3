@@ -18,7 +18,7 @@ export const HeaderMenuColored=memo(({ links }: HeaderSearchProps) => {
       <Link
         key={link.label} 
         to={link.link}
-        className='link' //[classes.linkActive]: active === link.link }
+        className='linkMainNav' //[classes.linkActive]: active === link.link }
         onClick={(event) => {
           
           if(link.label==='Logout'){
@@ -35,22 +35,22 @@ export const HeaderMenuColored=memo(({ links }: HeaderSearchProps) => {
     ));
   
     return (
-      <Header height={60} className='root'>
-        <Container className='header'>
+      <Header height={60} className='rootHeader'>
+        <Container className='headerNav'>
         <h1 className="text-lg m-0 uppercase font-bold underline-offset-2 hover:underline">
       <Link to="/" className='logo'>
       SNAGEM<span className="font-extralight"> HEADQUARTERS</span>
       </Link>
       </h1> 
-          <Group spacing={5} className='links'>
+          <Group spacing={5} className='linksManyMainNav'>
             {items}
           </Group>
   
-          <Burger opened={opened} onClick={toggle} className='burger' size="sm" />
+          <Burger opened={opened} onClick={toggle} className='burgerMenu' size="sm" />
   
           <Transition transition="fade" duration={200} mounted={opened}>
             {(styles) => (
-              <Paper className='dropdown' withBorder style={styles}>
+              <Paper className='dropdownMenu' withBorder style={styles}>
                 {items}
               </Paper>
             )}

@@ -1,17 +1,17 @@
-.paperBG {
+.paperBGAuth {
     background: "#222125";
 }
-.title {
+.titleAuth {
     font-size: 26px;
     font-weight: 900;
-  }
+  } 
   
   @media (max-width: 576px) {
-    .controls {
+    .controlsAuth {
       flex-direction: column-reverse;
     }
   
-    .control {
+    .controlAuth {
       width: 100%;
       text-align: center;
     }

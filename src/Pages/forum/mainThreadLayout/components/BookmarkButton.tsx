@@ -20,6 +20,7 @@ export function BookmarkButton({ user,listofnotify,name}
 
 
     const handleBookmarkClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+      try{
       if(id!=undefined){
          const batch = writeBatch(db);
         if(isBookmarked){
@@ -41,6 +42,7 @@ export function BookmarkButton({ user,listofnotify,name}
       }
       resetBookmark(!isBookmarked);
       }      
+    }catch (err){console.error(err)}finally{return Promise.resolve()}
     };
  
   return (

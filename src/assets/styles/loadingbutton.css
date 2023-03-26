@@ -1,9 +1,9 @@
-.button {
+.buttonLB {
     position: 'relative';
     transition: 'background-color 150ms ease';
 }
 
-.progress {
+.progressLB {
     position: 'absolute';
     bottom: -1;
     right: -1;
@@ -11,10 +11,10 @@
     top: -1;
     height: 'auto';
     background-color: 'transparent';
-    z-index: 0;
+    z-index: 0; 
 }
 
-.label {
+.labelLB {
     position: 'relative';
     z-index: 1;
 }

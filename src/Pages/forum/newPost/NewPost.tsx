@@ -3,7 +3,7 @@ import {
   Paper,
   Text,
   TextInput,
-  Group,
+  Group, 
   Container,
 } from "@mantine/core";
 import { ButtonProgress } from "../reusable-components/LoadingButton";
@@ -83,6 +83,7 @@ export function NewPost() {
   useEffect(() => {
     async function fetchData() {
     if(forumName&&allThreads.length === 0){ 
+      try{
       const threadData = await getThreadDataForNewPostAndCheckPrivateBoolean(Number(thethreadid), forumName);
       // console.log(threadData);
       if(threadData.length===0) {
@@ -99,6 +100,7 @@ export function NewPost() {
           setAllThreads(threadData);
         }//check if privacy exists
       }
+    }catch (err){console.error(err)}finally{return Promise.resolve()}
     }
   }
   if (allThreads.length===0){
@@ -107,6 +109,7 @@ export function NewPost() {
   }, [thethreadid,forumName]); //set to page
 
   async function handleSubmitWrapper(values: { character: string, text: string }) {
+
     await handleSubmit(
       values.character,
       values.text,
@@ -115,7 +118,7 @@ export function NewPost() {
       forumName,
       allThreads
     ).finally(() => {      
-      navigate(`/Forum/${forumName}/thread/${thethreadid}`);
+      navigate(`/Forum/${forumName}/thread/${thethreadid}/last`);
       return;
     });
   }
@@ -128,20 +131,20 @@ export function NewPost() {
         })}
       >
         <Paper shadow="md" radius="lg">
-          <div className='wrapper'>
-            <div className='form'>
+          <div className='wrapperNewPost'>
+            <div className='formNewPost'>
               {allThreads&&allThreads.map((thread) => (
                 <Text
                   size="lg"
                   weight={700}
-                  className='title'
+                  className='titleNewPost'
                   key={thread.id}
                 >
                   Make a Post on {thread.title}
                 </Text>
               ))}
 
-              <div className='fields'>
+              <div className='fieldsNewPost'>
                 <SimpleGrid
                   cols={2}
                   breakpoints={[{ maxWidth: "sm", cols: 1 }]}

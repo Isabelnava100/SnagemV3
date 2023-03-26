@@ -1,8 +1,8 @@
 
-.wrapper {
+.wrapperNewTopic {
     display:flex;padding:4px;gap:12px;
 }
-.form {
+.formNewTopic {
     box-sizing: 'border-box';
           flex: 1;
            padding: 16px;
@@ -11,10 +11,10 @@
            background-color:#141517;
            border-radius: 12px;
 }
-.title1,.title2 { margin-bottom: 12px;}
-.title { margin-bottom: 32px;}
+.title2NewTopic { margin-bottom: 12px;}
+.titleNewTopic { margin-bottom: 32px;}
 
-.contacts {
+.contactsNewTopic {
        box-sizing: 'border-box';
        position: 'relative';
        border-radius: 10px;
@@ -24,17 +24,14 @@
 }
 
 @media screen and (max-width: 48em) {
-    .wrapper {
+    .wrapperNewTopic {
         flex-direction: column;
     }
-    .form {
+    .formNewTopic {
       padding: 12px;
       padding-left: 12px;
     }
-    .contacts {
+    .contactsNewTopic {
         padding-left: 8px;
-    }
-    .control {
-        flex:1;
     }
   }

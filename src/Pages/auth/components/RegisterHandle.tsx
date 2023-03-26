@@ -28,10 +28,11 @@ export const registerUser= (
         return userCredential.user;
       })
       .then(async(user) => {
+        try{
         await updateProfile(user,{
           displayName:username
         });
-        return;
+      }catch (err){console.error(err)}finally{return Promise.resolve()}
       })
       .finally(()=>{
          return 'success';

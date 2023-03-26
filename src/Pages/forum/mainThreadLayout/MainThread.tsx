@@ -34,6 +34,7 @@ export default function Threads() {
         console.log('Thread ID is invalid.');
         return true;
       } else {
+        try{
         await dataRun(
           Number(thethreadid),
           (forum||'Main-Forum')
@@ -52,6 +53,7 @@ export default function Threads() {
                 return true;
               });
         });
+      }catch (err){console.error(err)}finally{return Promise.resolve()}
       }
     }
     fetchData();

@@ -1,15 +1,15 @@
-.header {
+.headerMiniNav {
     background-color: #772976;
     display: flex;
     justify-content: center;
   }
-  .inner {
+  .innerMiniNav {
     width: 930px;
     display: flex;
     justify-content: center;
     gap: 6px;
   }
-  .searchBar {
+  .searchBarMiniNav {
     width: 200px;
   }
   
@@ -36,15 +36,15 @@
   }
 
 @media screen and (max-width: 62em) {
-    .header {
+    .headerMiniNav {
         justify-content: flex-start;
       }
-    .inner {
+    .innerMiniNav {
         width: 730px;
         padding-left: 20px;
         justify-content: flex-start;
       }
-      .searchBar {
+      .searchBarMiniNav {
         display:none;
       }
   }

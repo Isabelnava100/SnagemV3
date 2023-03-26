@@ -1,46 +1,23 @@
-.wrapper {
+.wrapperNewPost {
     display: "flex";
     background-color:#141517;
     border-radius: 8px;
-    padding: 16px;
+    padding: 16px; 
     /* border: 1px solid #772976; */
 }
-.form { box-sizing: "border-box";
+.formNewPost{ box-sizing: "border-box";
     flex: 1;
     padding:32px;
     padding-left:16px;
     border-left: 0;
 }
-.fields {margin-top:-22px;margin-bottom:4px;}
-.fieldInput{flex:1;}
-.fieldsGroup{display:flex;}
-
-.contacts {
-    box-sizing: 'border-box';
-    position: 'relative';
-    border-radius: 10px;
-    background: linear-gradient(45deg, #933592, #5A0D59);
-    padding: 16px;
-    flex: '0 0 280px';    
-    margin-bottom: "20px";
-    margin-top: "20px";
-}
-.title1,.title2 { margin-bottom: 12px;}
-.title { margin-bottom: 32px;}
+.fieldsNewPost {margin-top:-22px;margin-bottom:4px;}
+.titleNewPost { margin-bottom: 32px;}
 
 @media screen and (max-width: 48em) {
-    .wrapper {flex-direction: "column";}
-    .form {
+    .wrapperNewPost {flex-direction: "column";}
+    .formNewPost {
         padding: 8px;
         padding-left: 8px;
     }
-    .fieldsGroup{flex-direction: "column";}
-.contacts{
-    margin-bottom: 8px;
-    margin-top: 0;
-    padding-left: 8px;
-}
-.control {
-    flex:1;
-}
   }

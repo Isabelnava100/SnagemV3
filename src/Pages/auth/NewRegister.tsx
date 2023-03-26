@@ -67,6 +67,7 @@ export function NewRegister() {
 
   const handleSubmitReg = useCallback(
     async () => {
+      try{
       setwhensubmit(true);
       const values = form.values;
       const results = await registerUser(
@@ -87,6 +88,7 @@ export function NewRegister() {
           form.setErrors({ email: "Badly formatted email." });
         }
       }
+    }catch (err){console.error(err)}finally{return Promise.resolve()}
     },
     [form, navigate]
   );

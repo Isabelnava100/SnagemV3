@@ -9,7 +9,7 @@ import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Underline from '@tiptap/extension-underline';
-import TextAlign from '@tiptap/extension-text-align';
+import TextAlign from '@tiptap/extension-text-align'; 
 import Superscript from '@tiptap/extension-superscript';
 import SubScript from '@tiptap/extension-subscript';
 import Image from '@tiptap/extension-image';
@@ -83,12 +83,12 @@ export function NewTopic(){
   return (
     <Container size="lg" style={{marginTop:20,paddingBottom:100}}>
       <form onSubmit={form.onSubmit(async (values) => {
-        await handleSubmitForm(values);
+       try{ await handleSubmitForm(values); }catch (err){console.error(err)}finally{return Promise.resolve()}
       })}>
     <Paper shadow="md" radius="lg">
-      <div className='wrapper'>
-        <div className='contacts'>
-          <Text size="lg" weight={700} className='title2'  sx={{ color: '#fff' }}>
+      <div className='wrapperNewTopic'>
+        <div className='contactNewTopics'>
+          <Text size="lg" weight={700} className='title2NewTopic'  sx={{ color: '#fff' }}>
             Topic Information
           </Text>
           
@@ -134,8 +134,8 @@ export function NewTopic(){
 
         </div>
 
-       <div className='form'>
-          <Text size="lg" weight={700} className='title'>
+       <div className='formNewTopic'>
+          <Text size="lg" weight={700} className='titleNewTopic'>
             First Post <span className="text-red-600">*</span>
           </Text>
 

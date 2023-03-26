@@ -13,8 +13,10 @@ function MainForum() {
 
   useEffect(() => { 
     async function fetchData(){ 
+      try{
         const checkingThreads= await dataRun(placeSimpleName,archive);
         setAllThreads(checkingThreads);        
+      }catch (err){console.error(err)}finally{return Promise.resolve()}
     }    
     fetchData();
   }, [forum,archive]);

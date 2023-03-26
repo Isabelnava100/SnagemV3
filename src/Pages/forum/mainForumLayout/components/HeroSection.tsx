@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { UserAuth } from "../../../../context/AuthContext";
 import { NewForumInfo as forumLinks } from "../../../../components/types/typesUsed";
 import '/src/assets/styles/forumHeroSection.css';
- 
+  
 
 export function HeroText({ send }: { send: string | undefined }) {
   const { user } = UserAuth();
@@ -29,7 +29,7 @@ export function HeroText({ send }: { send: string | undefined }) {
           </Text>
 
         {user && (
-          <div className='forumButtonContainer'>
+          <div className='forumButtonContainerHero'>
             <Button
               size="lg"
               variant="default"
