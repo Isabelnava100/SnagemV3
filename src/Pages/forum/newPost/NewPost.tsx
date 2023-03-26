@@ -5,10 +5,9 @@ import {
   TextInput,
   Group,
   Container,
-  createStyles,
 } from "@mantine/core";
 import { ButtonProgress } from "../reusable-components/LoadingButton";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { SimpleGrid } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEditor } from "@tiptap/react";
@@ -28,113 +27,11 @@ import { getThreadDataForNewPostAndCheckPrivateBoolean } from "./components/chec
 import { ThreadInformation } from "../../../components/types/typesUsed";
 import { handleSubmit } from "./components/handleNewPostSubmit";
 import { UserAuth } from "../../../context/AuthContext";
-
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    wrapper: {
-      display: "flex",
-      backgroundColor:
-        theme.colorScheme === "dark" ? theme.colors.dark[8] : theme.white,
-      borderRadius: theme.radius.lg,
-      padding: 4,
-      border: `1px solid ${
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[8]
-          : theme.colors.gray[2]
-      }`,
-
-      [BREAKPOINT]: {
-        flexDirection: "column",
-      },
-    },
-
-    form: {
-      boxSizing: "border-box",
-      flex: 1,
-      padding: theme.spacing.xl,
-      paddingLeft: theme.spacing.sm * 2,
-      borderLeft: 0,
-
-      [BREAKPOINT]: {
-        padding: theme.spacing.sm,
-        paddingLeft: theme.spacing.sm,
-      },
-    },
-
-    fields: {
-      marginTop: -12,
-    },
-
-    fieldInput: {
-      flex: 1,
-
-      "& + &": {
-        marginLeft: theme.spacing.sm,
-
-        [BREAKPOINT]: {
-          marginLeft: 0,
-          marginTop: theme.spacing.md,
-        },
-      },
-    },
-
-    fieldsGroup: {
-      display: "flex",
-
-      [BREAKPOINT]: {
-        flexDirection: "column",
-      },
-    },
-
-    contacts: {
-      boxSizing: "border-box",
-      position: "relative",
-      borderRadius: theme.radius.lg - 2,
-      background: theme.fn.linearGradient(45, "#4338ca", "#6b21a8"),
-      padding: theme.spacing.xl,
-      flex: "0 0 280px",
-      marginBottom: "20px",
-      marginTop: "20px",
-
-      [BREAKPOINT]: {
-        marginBottom: theme.spacing.sm,
-        marginTop: 0,
-        paddingLeft: theme.spacing.sm,
-      },
-    },
-
-    title: {
-      marginBottom: theme.spacing.xl,
-      fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-
-      [BREAKPOINT]: {
-        marginBottom: theme.spacing.xl,
-      },
-    },
-    title2: {
-      marginBottom: theme.spacing.sm,
-      fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-
-      [BREAKPOINT]: {
-        marginBottom: theme.spacing.xl,
-      },
-    },
-
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-  };
-});
+import '/src/assets/styles/newPost.css'; 
 
 export function NewPost() {
   const { id: thethreadid, forum:forumName } = useParams();
   const { user } = UserAuth();
-  // console.log(thethreadid);
-  const { classes } = useStyles();
   const [allThreads, setAllThreads] = useState<ThreadInformation[]>([]);
   const navigate = useNavigate();
 
@@ -189,13 +86,13 @@ export function NewPost() {
       const threadData = await getThreadDataForNewPostAndCheckPrivateBoolean(Number(thethreadid), forumName);
       // console.log(threadData);
       if(threadData.length===0) {
-        // navigate("/Forum/Main-Forum");
+        navigate("/Forum/Main-Forum");
       }else {
         if(threadData[0].private===true){
           if(threadData[0].privateTo&&threadData[0].privateTo.includes(user?.displayName)){
             setAllThreads(threadData);
           }else {
-            // navigate("/Forum/Main-Forum");
+            navigate("/Forum/Main-Forum");
             //User isn't allowed to post.
           }
         }else {
@@ -231,20 +128,20 @@ export function NewPost() {
         })}
       >
         <Paper shadow="md" radius="lg">
-          <div className={classes.wrapper}>
-            <div className={classes.form}>
+          <div className='wrapper'>
+            <div className='form'>
               {allThreads&&allThreads.map((thread) => (
                 <Text
                   size="lg"
                   weight={700}
-                  className={classes.title}
+                  className='title'
                   key={thread.id}
                 >
                   Make a Post on {thread.title}
                 </Text>
               ))}
 
-              <div className={classes.fields}>
+              <div className='fields'>
                 <SimpleGrid
                   cols={2}
                   breakpoints={[{ maxWidth: "sm", cols: 1 }]}
@@ -268,7 +165,7 @@ export function NewPost() {
             required
           /> */}
                 </SimpleGrid>
-                <Text size="sm" style={{ marginTop: 10 }}>
+                <Text size="sm" style={{ marginTop: 10,marginBottom:4 }}>
                   Your Message
                   <span aria-hidden="true" style={{ color: "#ff6b6b" }}>
                     {" "}

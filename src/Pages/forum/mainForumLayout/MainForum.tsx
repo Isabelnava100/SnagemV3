@@ -1,5 +1,4 @@
 import { Container, Switch, Table, Text } from "@mantine/core";
-import { useForumLink } from "./components/MiniNavForum";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { HeroText } from "./components/HeroSection";

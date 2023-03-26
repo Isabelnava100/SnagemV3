@@ -1,123 +1,36 @@
 import {
-  createStyles,
   Title,
   Text,
   Button,
   Container,
-  useMantineTheme,
-  Switch,
 } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { UserAuth } from "../../../../context/AuthContext";
 import { NewForumInfo as forumLinks } from "../../../../components/types/typesUsed";
-
-const useStyles = createStyles((theme) => ({
-  wrapper: {
-    position: "relative",
-    paddingTop: 40,
-    paddingBottom: 60,
-
-    "@media (max-width: 755px)": {
-      paddingTop: 10,
-      paddingBottom: 30,
-    },
-  },
-
-  inner: {
-    position: "relative",
-  },
-
-  dots: {
-    position: "absolute",
-    color:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[5]
-        : theme.colors.gray[1],
-
-    "@media (max-width: 755px)": {
-      display: "none",
-    },
-  },
-
-  dotsLeft: {
-    left: 0,
-    top: 0,
-  },
-
-  title: {
-    textAlign: "center",
-    fontWeight: 800,
-    fontSize: 40,
-    letterSpacing: -1,
-    color: theme.colorScheme === "dark" ? theme.white : theme.black,
-    marginBottom: theme.spacing.xs,
-    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-    "@media (max-width: 520px)": {
-      fontSize: 28,
-      textAlign: "left",
-    },
-  },
-
-  description: {
-    textAlign: "center",
-
-    "@media (max-width: 520px)": {
-      textAlign: "left",
-      fontSize: theme.fontSizes.md,
-    },
-  },
-
-  controls: {
-    marginTop: theme.spacing.lg,
-    display: "flex",
-    justifyContent: "center",
-
-    "@media (max-width: 520px)": {
-      flexDirection: "column",
-    },
-  },
-
-  control: {
-    marginLeft: theme.spacing.md,
-    marginTop: theme.spacing.md,
-    "@media (max-width: 520px)": {
-      height: 42,
-      fontSize: theme.fontSizes.md,
-
-      "&:not(:first-of-type)": {
-        marginLeft: 0,
-      },
-    },
-  },
-}));
+import '/src/assets/styles/forumHeroSection.css';
+ 
 
 export function HeroText({ send }: { send: string | undefined }) {
   const { user } = UserAuth();
-  const { classes } = useStyles();
-  const theme = useMantineTheme();
   return (
-    <Container className={classes.wrapper} size={1400}>
-      <div className={classes.inner}>
-        <Title className={classes.title}>
+    <Container style={{background:'none'}}>
+        <Title order={1} color={'white'}>
           Welcome to the{" "}
-          <Text component="span" color={theme.primaryColor} inherit>
+          <Text component="span" color={'#772976'} inherit>
             Snagem Forums
           </Text>
         </Title>
 
-        <Container p={0} size={600}>
-          <Text size="lg" color="dimmed" className={classes.description}>
+          <Text size="lg" color="dimmed">
             {
               forumLinks.find((link) => link.link === send)
                 ?.description
             }
           </Text>
-        </Container>
 
         {user && (
-          <div className={classes.controls}>
+          <div className='forumButtonContainer'>
             <Button
-              className={classes.control}
               size="lg"
               variant="default"
               color="gray"
@@ -125,7 +38,6 @@ export function HeroText({ send }: { send: string | undefined }) {
               Check Your Bookmarks
             </Button>
             <Button
-              className={classes.control}
               size="lg"
               component={Link}
               to={`new`}
@@ -134,9 +46,6 @@ export function HeroText({ send }: { send: string | undefined }) {
             </Button>
           </div>
         )}
-
-        
-      </div>
     </Container>
   );
 }

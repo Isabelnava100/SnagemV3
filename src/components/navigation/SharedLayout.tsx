@@ -28,7 +28,6 @@ function SharedLayout() {
         links: [
           { link: '/profile', label: 'Profile' },
           { link: '/logout', label: 'Logout' },
-          { link: '/logout', label: 'Logout' },
         ],
       },
     ],

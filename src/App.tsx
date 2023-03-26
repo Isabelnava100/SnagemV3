@@ -18,7 +18,7 @@ function App() {
   const headerLinks: HeaderSearchProps = {
     links: [
       {
-        link: '/Forum',
+        link: '/Forum/Main-Forum',
         label: 'Forum',
       },
       {
@@ -41,7 +41,7 @@ function App() {
   }, [scrollTo]); 
 
   return (    
-    <Container style={{minHeight:'100vh'}} fluid={true}>
+    <Container style={{minHeight:'100vh'}} p={0} fluid={true}>
       {/* <HeaderTabsColored user={{
         name: '',
         image: ''

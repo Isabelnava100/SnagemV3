@@ -1,0 +1,40 @@
+
+.wrapper {
+    display:flex;padding:4px;gap:12px;
+}
+.form {
+    box-sizing: 'border-box';
+          flex: 1;
+           padding: 16px;
+           padding-left: 24px;
+           border-left: 0;
+           background-color:#141517;
+           border-radius: 12px;
+}
+.title1,.title2 { margin-bottom: 12px;}
+.title { margin-bottom: 32px;}
+
+.contacts {
+       box-sizing: 'border-box';
+       position: 'relative';
+       border-radius: 10px;
+       background: linear-gradient(45deg, #933592, #5A0D59);
+       padding: 16px;
+       flex: '0 0 280px';
+}
+
+@media screen and (max-width: 48em) {
+    .wrapper {
+        flex-direction: column;
+    }
+    .form {
+      padding: 12px;
+      padding-left: 12px;
+    }
+    .contacts {
+        padding-left: 8px;
+    }
+    .control {
+        flex:1;
+    }
+  }

@@ -27,7 +27,8 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <AuthContextProvider>      
     <ForumProvider>
       <MantineProvider theme={{ colorScheme: 'dark', colors:{
-        brand: ['#ffffff', '#f5f3ff', '#ede9fe', '#ddd6fe', '#c4b5fd', '#a78bfa', '#7c3aed', '#6d28d9', '#5b21b6', '#4c1d95']
+        brand: ['#FFFFFF', '#FFDDFF', '#FFD0FE', '#F9ACF8', '#DA8CD9', '#B467B3', '#772976',  '#651764', '#5A0D59', '#440843'] 
+        //          1          2          3          4           5           6       this one     8     9          10
       }, primaryColor:'brand' }} withGlobalStyles withNormalizeCSS>
         {/* <RouterProvider router={router} /> */}
               <BrowserRouter>

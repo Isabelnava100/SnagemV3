@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, FormEvent } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   TextInput,  PasswordInput,  Anchor,  Paper,  Title,  Text,  Container, 
   Button,  Grid,  Textarea,  Progress, Popover,   Radio, Group,
@@ -9,8 +9,7 @@ import {
   requirements,
   Gusers,
   PasswordRequirement,
-  getStrength,
-  generatePassword,
+  getStrength
 } from "./components/Components";
 import { registerUser } from "./components/RegisterHandle";
 
@@ -78,8 +77,8 @@ export function NewRegister() {
           values.username,
         );
       if (results === "success") {
-        navigate('/Login', { replace: true });
-        window.location.reload();
+        // navigate('/Login', { replace: true });
+        // window.location.reload();
       } else {
         if (results === "auth/email-already-in-use") {
           form.setErrors({ email: "Email already in use." });

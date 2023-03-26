@@ -9,6 +9,7 @@ import {
 import { dataRun } from "../reusable-components/getThreadInfo";
 import { dataRun2 } from "./components/getPosts";
 import { PaginationWithEachPost } from "./components/paginationPosts";
+import LoadingSpinner from "../../../components/navigation/loading";
 
 function isNumeric(n:any):boolean {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -24,7 +25,7 @@ export default function Threads() {
     isNumeric(page) ? Number(page) :  1
   ); 
   const postPerPage = 6;
-    const bookmarkBoolean=true;
+    // const bookmarkBoolean=true;
 
   useEffect(() => {
     async function fetchData() {
@@ -58,7 +59,7 @@ export default function Threads() {
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
-      <div id="loadingContainer">
+      <div style={{position:'relative',display:'flex',minHeight: '300px',flexDirection: 'column'}}>
         {threadInfo.length ? (
           <FeaturesTitle
             forum={forum}
@@ -76,13 +77,11 @@ export default function Threads() {
         postPerPage={postPerPage}
         />
       :
-      <img
-              src="https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/mewdumpy-compress.gif?alt=media&token=95a14be6-6495-43fd-a72a-a120f55e0bf8"
-              alt="mew loading" width='100' height='100'
-            />
+      <LoadingSpinner />
       }
         
       </div>
     </Container>
   );
 }
+ 

@@ -1,0 +1,19 @@
+.paperBG {
+    background: "#222125";
+}
+.title {
+    font-size: 26px;
+    font-weight: 900;
+  }
+  
+  @media (max-width: 576px) {
+    .controls {
+      flex-direction: column-reverse;
+    }
+  
+    .control {
+      width: 100%;
+      text-align: center;
+    }
+  }
+  
