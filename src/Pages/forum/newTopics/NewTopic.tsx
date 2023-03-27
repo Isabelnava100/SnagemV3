@@ -122,7 +122,7 @@ export function NewTopic(){
           <TextInput label="Post As"           
           {...form.getInputProps('postas')}
           placeholder="Write the Name of your Character" required />
-
+ 
 
           {/* <Select
             data={data} mb="md"

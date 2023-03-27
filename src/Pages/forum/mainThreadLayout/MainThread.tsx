@@ -45,12 +45,13 @@ export default function Threads() {
             (forum||'Main-Forum')
             ).then((resultsPosts) => { 
                 if(page==='last'){
-                navigate(`/Forum/${forum}/thread/${thethreadid}/${Math.ceil(resultsPosts.length / postPerPage)}`);
-                onChangePG(Math.ceil(resultsPosts.length / postPerPage));
+                  onChangePG(Math.ceil(resultsPosts.length / postPerPage));
+                  navigate(`/Forum/${forum}/thread/${thethreadid}/${Math.ceil(resultsPosts.length / postPerPage)}`);
+                  setAllPosts(resultsPosts);
                 }else {                  
                 setAllPosts(resultsPosts);
                 }
-                return true;
+                return Promise.resolve();
               });
         });
       }catch (err){console.error(err)}finally{return Promise.resolve()}

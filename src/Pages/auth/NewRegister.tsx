@@ -18,7 +18,7 @@ export function NewRegister() {
   const refTextarea = useRef<HTMLTextAreaElement>(null);
   const [popoverOpened, setPopoverOpened] = useState<boolean>(false);
   const [value, setValue] = useState<string>("");
-  const [whensubmit, setwhensubmit] = useState<boolean>(false);
+  const [whensubmit, setWhenSubmit] = useState<boolean>(false);
   const [gaia, setGaia] = useState<string>("No");
   const navigate = useNavigate();
   const strength = getStrength(value);
@@ -67,28 +67,43 @@ export function NewRegister() {
 
   const handleSubmitReg = useCallback(
     async () => {
-      try{
-      setwhensubmit(true);
-      const values = form.values;
-      const results = await registerUser(
-          values.email,
+     
+      let results;
+      try {
+        setWhenSubmit(true);
+        const values = form.values;
+        results = await registerUser(
+          values.email, 
           values.password,
           values.application,
           values.gaiaName,
           values.username,
         );
-      if (results === "success") {
-        // navigate('/Login', { replace: true });
-        // window.location.reload();
-      } else {
-        if (results === "auth/email-already-in-use") {
-          form.setErrors({ email: "Email already in use." });
+        
+      
+        return Promise.resolve(results);
+
+      } catch (err) {
+        console.error(err);
+      } finally {
+        // console.log(results);
+        if (results === "success") {
+          navigate('/Login', { replace: true });
+          // window.location.reload();
+        } else {
+          if (results === "auth/email-already-in-use") {
+            form.setErrors({ email: "Email already in use." });
+          }
+          if (results === "auth/invalid-email") {
+            form.setErrors({ email: "Badly formatted email." });
+          }
         }
-        if (results === "auth/invalid-email") {
-          form.setErrors({ email: "Badly formatted email." });
-        }
+        
       }
-    }catch (err){console.error(err)}finally{return Promise.resolve()}
+
+
+
+
     },
     [form, navigate]
   );

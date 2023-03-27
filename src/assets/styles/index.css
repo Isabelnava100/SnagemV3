@@ -3,19 +3,31 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @layer base {
-  :root { 
-    --w:#fff;
-    --b:#3f3f3f;
-    --color-primary:#772976;
-    --color-secondary:#933592;
-  } 
+  :root {
+    --w: #fff;
+    --b: #3f3f3f;
+    --color-primary: #772976;
+    --color-secondary: #933592;
+  }
 }
 
 /* body {font-family: 'ManropeMedium';} */
-input,.mantine-PasswordInput-root,option,select {max-width:400px;}
-a {
-  color:#ddd6fe!important;
+input,
+.mantine-PasswordInput-root,
+.mantine-Input-Wrapper,
+.mantine-Select-wrapper,
+.mantine-Select-Dropdown,
+option,
+select {
+  max-width: 400px;
 }
-#backtotop {position:fixed; bottom:4px;right:4px;padding:8px;}
+a {
+  color: #ddd6fe !important;
+}
+#backtotop {
+  position: fixed;
+  bottom: 4px;
+  right: 4px;
+  padding: 8px;
+}

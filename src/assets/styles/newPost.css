@@ -13,6 +13,7 @@
 }
 .fieldsNewPost {margin-top:-22px;margin-bottom:4px;}
 .titleNewPost { margin-bottom: 32px;}
+.ProseMirror{min-height:400px;}
 
 @media screen and (max-width: 48em) {
     .wrapperNewPost {flex-direction: "column";}

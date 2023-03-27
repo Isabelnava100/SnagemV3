@@ -1,7 +1,7 @@
 import {
     doc,
     getDoc,
-  } from "firebase/firestore";
+  } from "firebase/firestore"; 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
   import { myBookmarksInfo, User } from "../../../components/types/typesUsed";
@@ -15,14 +15,17 @@ async function fetchMyBookmarks(user: User | undefined = undefined): Promise<myB
   
     if (docSnap.exists()) {      
       const str=docSnap.data().myBookmarks;
-      str.forEach((bookmark: { match: (arg0: RegExp) => string[]; }) => {
-        const where = bookmark.match(/where\[(.*?)\]/)[1];
-        const name = bookmark.match(/name\[(.*?)\]/)[1];
-        newData.push({where, name});
-      });
-      return newData;
-    } else {
-      console.log("No Bookmarks.");
+      // console.log(str);
+      if(typeof str !== "undefined"){ // it exists
+      if (str.some((str1: string) => str1.trim().length > 0)) { // there's data
+        str.forEach((bookmark: { match: (arg0: RegExp) => string[]; }) => {
+          const where = bookmark.match(/where\[(.*?)\]/)[1];
+          const name = bookmark.match(/name\[(.*?)\]/)[1];
+          newData.push({where, name});
+        });
+      }      
+    } 
+      // return newData;
     }
   
     return newData;
@@ -37,24 +40,25 @@ const BookmarkModule: React.FC = () => {
     async function fetchData() {
         try{ 
             const bookmarks = await fetchMyBookmarks(user);
-            setMyBookmarks(bookmarks);
+            bookmarks!==null&&setMyBookmarks(bookmarks);
         }catch (err){console.error(err)}finally{return Promise.resolve()} //add to all promises
     }
     fetchData();
   }, []);
-
   return (
     <div>
-      {myBookmarks.length === 0?"No Bookmarks found.":
-      myBookmarks.map((bookmark, index) => {
-        return (
+      { myBookmarks.length > 0 ? (
+        myBookmarks.map((bookmark, index) => (
           <p key={index + bookmark.name}>
             <Link to={"/" + bookmark.where}>{bookmark.name}</Link>
           </p>
-        );
-      })}
+        ))
+      ) : (
+        "No Bookmarks found."
+      )}
     </div>
   );
+  
 };
 
 export default BookmarkModule;

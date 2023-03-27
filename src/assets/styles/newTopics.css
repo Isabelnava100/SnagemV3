@@ -12,9 +12,10 @@
            border-radius: 12px;
 }
 .title2NewTopic { margin-bottom: 12px;}
-.titleNewTopic { margin-bottom: 32px;}
+.titleNewTopic { margin-bottom: 4px;}
+.ProseMirror{min-height:400px;}
 
-.contactsNewTopic {
+.contactNewTopics {
        box-sizing: 'border-box';
        position: 'relative';
        border-radius: 10px;
@@ -31,7 +32,7 @@
       padding: 12px;
       padding-left: 12px;
     }
-    .contactsNewTopic {
+    .contactNewTopics {
         padding-left: 8px;
     }
   }

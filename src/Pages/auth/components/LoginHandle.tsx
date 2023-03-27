@@ -26,7 +26,7 @@ export const handleSignIn = async (
                   badges:user.data()?.badges
                   }
                 }); //set user
-                  
+                   
               }).finally(() => {
                 return true;
               });

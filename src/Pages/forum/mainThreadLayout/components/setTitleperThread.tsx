@@ -28,8 +28,8 @@ export function FeaturesTitle({ info, forum }: InfoOnThreadVisual) {
       >
         {user && (
           <Button
-            variant="gradient"
-            gradient={{ deg: 133, from: "#933592", to: "#B467B3" }}
+            variant="gradient" 
+            gradient={{ deg: 133, from: "#933592", to: "#651764" }}
             size="lg"
             radius="md"
             mt="sm"
