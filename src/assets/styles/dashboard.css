@@ -1,0 +1,7 @@
+.cardDashboard {
+    border:1px solid #772976;
+      border-radius:5px;
+      margin:8px 4px 16px 4px;
+      padding:8px;
+      box-shadow:0px 4px 8px rgba(180, 103, 179, 0.4);
+}
