@@ -1,11 +1,7 @@
 import { Container, Grid, SimpleGrid, Skeleton, Title, useMantineTheme } from '@mantine/core';
 import { lazy } from 'react';
-import { Suspense, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Suspense } from 'react';
 import LoadingSpinner from '../../components/navigation/loading';
-import { myBookmarksInfo } from '../../components/types/typesUsed';
-import { UserAuth } from '../../context/AuthContext';
-// import { getMyBookmarks } from './components/myBookmarks';
 import '/src/assets/styles/dashboard.css';
 
 const PRIMARY_COL_HEIGHT = 300;

@@ -4,10 +4,25 @@ import {
     getDoc,
   } from "firebase/firestore"; 
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
   import { User } from "../../../components/types/typesUsed";
 import { UserAuth } from "../../../context/AuthContext";
   import { db } from "../../../context/firebase";
+  import Duskball from'../../../assets/images/defaultAvatars/Duskball.png';
+  import Friendball from'../../../assets/images/defaultAvatars/Friendball.png';
+import Greatball from'../../../assets/images/defaultAvatars/Greatball.png';
+import GSBall from'../../../assets/images/defaultAvatars/GSBall.png';
+import Healball from'../../../assets/images/defaultAvatars/Healball.png';
+import Levelball from'../../../assets/images/defaultAvatars/Levelball.png';
+import Loveball from'../../../assets/images/defaultAvatars/Loveball.png';
+import Lureball from'../../../assets/images/defaultAvatars/Lureball.png';
+import Masterball from'../../../assets/images/defaultAvatars/Masterball.png';
+import Moonball from'../../../assets/images/defaultAvatars/Moonball.png';
+import Pokeball from'../../../assets/images/defaultAvatars/Pokeball.png';
+import Quickball from'../../../assets/images/defaultAvatars/Quickball.png';
+import Safariball from'../../../assets/images/defaultAvatars/Safariball.png';
+import TeamRocketsball from'../../../assets/images/defaultAvatars/TeamRocketsball.png';
+import Timerball from'../../../assets/images/defaultAvatars/Timerball.png';
+import Ultraball from'../../../assets/images/defaultAvatars/Ultraball.png';
   
 async function fetchMyAvatar(user: User | undefined = undefined): Promise<string> {
  
@@ -30,7 +45,7 @@ async function fetchMyAvatar(user: User | undefined = undefined): Promise<string
 
 const BookmarkModule: React.FC = () => {
     const {user}=UserAuth();
-  const [myAvatar, setMyAvatar] = useState<string>('/src/assets/images/defaultAvatars/Pokeball.png');
+  const [myAvatar, setMyAvatar] = useState<string>(Pokeball);
 
   useEffect(() => {
     async function fetchData() {
@@ -48,22 +63,22 @@ const BookmarkModule: React.FC = () => {
       <div style={{textAlign:'center',width:'50%'}}>
         <Title order={5}>Select Your Avatar:</Title>
         <p style={{margin:0}}>(Pending function)</p>
-        <img src='/src/assets/images/defaultAvatars/Duskball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Friendball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Greatball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/GSBall.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Healball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Levelball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Loveball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Lureball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Masterball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Moonball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Pokeball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Quickball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Safariball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/TeamRocketsball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Timerball.png' alt='pokeball' height='50' width='50'/>
-        <img src='/src/assets/images/defaultAvatars/Ultraball.png' alt='pokeball' height='50' width='50'/>
+        <img src={Duskball} alt='Duskball' height='50' width='50'/>
+        <img src={Friendball} alt='Friendball' height='50' width='50'/>
+        <img src={Greatball} alt='Greatball' height='50' width='50'/>
+        <img src={GSBall} alt='GSBall' height='50' width='50'/>
+        <img src={Healball} alt='Healball' height='50' width='50'/>
+        <img src={Levelball} alt='Levelball' height='50' width='50'/>
+        <img src={Loveball} alt='Loveball' height='50' width='50'/>
+        <img src={Lureball} alt='Lureball' height='50' width='50'/>
+        <img src={Masterball} alt='Masterball' height='50' width='50'/>
+        <img src={Moonball} alt='Moonball' height='50' width='50'/>
+        <img src={Pokeball} alt='Pokeball' height='50' width='50'/>
+        <img src={Quickball} alt='Quickball' height='50' width='50'/>
+        <img src={Safariball} alt='Safariball' height='50' width='50'/>
+        <img src={TeamRocketsball} alt='TeamRocketsball' height='50' width='50'/>
+        <img src={Timerball} alt='Timerball' height='50' width='50'/>
+        <img src={Ultraball} alt='Ultraball' height='50' width='50'/>
         </div>
     </div>
   );
