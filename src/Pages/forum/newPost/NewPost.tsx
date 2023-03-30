@@ -153,6 +153,7 @@ export function NewPost() {
       SubScript,
       Highlight,
       TextAlign.configure({ types: ["heading", "paragraph", "image"] }),
+
     ],
     onUpdate: (props) => {
       form.setFieldValue("text", props.editor.getHTML());
@@ -346,6 +347,14 @@ export function NewPost() {
                         </RichTextEditor.Control>
                     </RichTextEditor.ControlsGroup>
 
+                    <RichTextEditor.ControlsGroup>
+                      <RichTextEditor.AlignLeft />
+                      <RichTextEditor.AlignCenter />
+                      <RichTextEditor.AlignJustify />
+                      <RichTextEditor.AlignRight />
+                    </RichTextEditor.ControlsGroup>
+
+                    {/* TODO */}
                     <RichTextEditor.ControlsGroup>
                       <RichTextEditor.AlignLeft />
                       <RichTextEditor.AlignCenter />
