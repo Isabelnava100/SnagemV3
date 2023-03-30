@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { MantineProvider } from '@mantine/core'
-import {  BrowserRouter , Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthContextProvider } from './context/AuthContext';
 import { ErrorPage } from './components/navigation/error-page';
-import App  from './App'
+import App from './App'
 import './assets/styles/index.css';
 import { LeadGrid } from './Pages/User/Dashboard';
 import { Login } from './Pages/auth/Login';
