@@ -1,0 +1,19 @@
+.paperBGAuth {
+    background: "#222125";
+}
+.titleAuth {
+    font-size: 26px;
+    font-weight: 900;
+  } 
+  
+  @media (max-width: 576px) {
+    .controlsAuth {
+      flex-direction: column-reverse;
+    }
+  
+    .controlAuth {
+      width: 100%;
+      text-align: center;
+    }
+  }
+  

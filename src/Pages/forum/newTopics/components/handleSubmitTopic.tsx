@@ -9,7 +9,7 @@ export const handleSubmit = async (
     postas: string,
     firstpost: string,
     user: User | undefined = undefined,
-    ) => {
+    ):Promise<boolean> => {
       const dataRef = db.collection('threads');
       const dataRef2 = db.collection('posts');
       const checkBadges=user?.otherinfo?.badges;

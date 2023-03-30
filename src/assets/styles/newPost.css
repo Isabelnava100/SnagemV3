@@ -1,0 +1,24 @@
+.wrapperNewPost {
+    display: "flex";
+    background-color:#141517;
+    border-radius: 8px;
+    padding: 16px; 
+    /* border: 1px solid #772976; */
+}
+.formNewPost{ box-sizing: "border-box";
+    flex: 1;
+    padding:32px;
+    padding-left:16px;
+    border-left: 0;
+}
+.fieldsNewPost {margin-top:-22px;margin-bottom:4px;}
+.titleNewPost { margin-bottom: 32px;}
+.ProseMirror{min-height:400px;}
+
+@media screen and (max-width: 48em) {
+    .wrapperNewPost {flex-direction: "column";}
+    .formNewPost {
+        padding: 8px;
+        padding-left: 8px;
+    }
+  }

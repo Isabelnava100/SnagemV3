@@ -16,7 +16,7 @@ const navigate=useNavigate();
     initialValues: {
       email: '',
       password:'',
-      remember: false,
+      remember: false, 
     }
   });    
 
@@ -46,6 +46,7 @@ const navigate=useNavigate();
         .then((results)=>{
           if(results){
             navigate('/Profile');
+            return true;
           }else {
         // console.log(error.code=== 'auth/wrong-password');
         // console.log(error.code);
@@ -58,6 +59,7 @@ const navigate=useNavigate();
               }
           setSub(false);
           }
+          return;
         });        
 
         })}

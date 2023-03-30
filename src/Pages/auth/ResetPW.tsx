@@ -1,6 +1,6 @@
 import { useState,useCallback } from "react";
 import {
-  PasswordInput,  Paper,  Title,  createStyles,  Text,
+  PasswordInput,  Paper,  Title,   Text,
   Container,  Group,  Button,  Progress,  Popover,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
@@ -9,31 +9,9 @@ import {
   PasswordRequirement,
   getStrength,
 } from "./components/Components";
-import './components/stylesReset.css';
-
-const useStyles = createStyles((theme) => ({
-  title: {
-    fontSize: 26,
-    fontWeight: 900,
-    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-  },
-
-  controls: {
-    [theme.fn.smallerThan("xs")]: {
-      flexDirection: "column-reverse",
-    },
-  },
-
-  control: {
-    [theme.fn.smallerThan("xs")]: {
-      width: "100%",
-      textAlign: "center",
-    },
-  },
-}));
+import '/src/assets/styles/authentication.css';
 
 export function ResetPW() {
-  const { classes } = useStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [value, setValue] = useState("");
   const strength = getStrength(value);
@@ -72,7 +50,7 @@ export function ResetPW() {
 
   return (
     <Container size={460} my={30}>
-      <Title className={classes.title} align="center">
+      <Title className='titleAuth' align="center">
         Reset Your Password
       </Title>
       <Text color="dimmed" size="sm" align="center">
@@ -85,7 +63,7 @@ export function ResetPW() {
         p={30}
         radius="md"
         mt="xl"
-        className='paperBG'
+        className='paperBGAuth'
       >
         <form
           onSubmit={form.onSubmit((values) => {
@@ -128,8 +106,8 @@ export function ResetPW() {
           />
         </form>
 
-        <Group position="apart" mt="lg" className={classes.controls}>
-          <Button className={classes.control}>Reset password</Button>
+        <Group position="apart" mt="lg" className='controlsAuth'>
+          <Button className='controlAuth'>Reset password</Button>
         </Group>
       </Paper>
     </Container>

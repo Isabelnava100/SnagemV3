@@ -13,7 +13,7 @@ export const registerUser= (
     ) => {
       const pwClean=application&&generatePassword();
       const password=pwCheck||pwClean;
-      const where=application?"newuser":"users";
+      const where=application?"NewUsers":"users";
     createUserWithEmailAndPassword(auth, email, password)
     .then(async (userCredential) => {
       const whereRef = doc(db, where, userCredential.user.uid);
@@ -28,10 +28,11 @@ export const registerUser= (
         return userCredential.user;
       })
       .then(async(user) => {
+        try{
         await updateProfile(user,{
           displayName:username
         });
-        return;
+      }catch (err){console.error(err)}finally{return Promise.resolve()}
       })
       .finally(()=>{
          return 'success';
