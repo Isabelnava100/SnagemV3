@@ -28,18 +28,18 @@ export function ButtonProgress(props: Props) {
     <Button
     type="submit"
       fullWidth
-      className={'button'}
+      className='buttonLB'
       onClick={() => (loaded ? setLoaded(false) : !interval.active && interval.start())}
       color={'brand'}
        disabled={(formCheck)}
     >
-      <div className={'label'}>
+      <div className='labelLB'>
         {progress !== 0 ? 'Loading...' : loaded ? 'Posted! Redirecting...' : 'Make Post'}
       </div>
       {progress !== 0 && (
         <Progress
           value={progress}
-          className={'progress'}
+          className='progressLB'
           color={'brand'}
           radius="sm"
         />

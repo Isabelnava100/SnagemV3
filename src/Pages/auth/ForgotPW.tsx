@@ -8,32 +8,10 @@ import { useForm } from '@mantine/form';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../context/firebase';
 import { useNavigate } from 'react-router-dom';
-import './components/stylesReset.css';
-
-const useStyles = createStyles((theme) => ({
-  title: {
-    fontSize: 26,
-    fontWeight: 900,
-    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-  },
-
-  controls: {
-    [theme.fn.smallerThan('xs')]: {
-      flexDirection: 'column-reverse',
-    },
-  },
-
-  control: {
-    [theme.fn.smallerThan('xs')]: {
-      width: '100%',
-      textAlign: 'center',
-    },
-  },
-}));
+import '/src/assets/styles/authentication.css';
 
 export function ForgotPassword() {
 	const navigate = useNavigate();
-  const { classes } = useStyles();
 
   const form = useForm({
     initialValues: {
@@ -67,23 +45,23 @@ export function ForgotPassword() {
         resetPassword(values.email);
         })}
        >
-      <Title className={classes.title} align="center">
+      <Title className='titleAuth' align="center">
         Forgot your password?
       </Title>
       <Text color="dimmed" size="sm" align="center">
         Enter your email to get a reset link.
       </Text>
 
-      <Paper withBorder shadow="md" p={30} radius="md" mt="xl" className='paperBG'>
+      <Paper withBorder shadow="md" p={30} radius="md" mt="xl" className='paperBGAuth'>
        <TextInput label="Your email" placeholder="Your@email.com" required  {...form.getInputProps('email')} />
-        <Group position="apart" mt="lg" className={classes.controls}>
-          <Anchor<'a'> href="Login" color="dimmed" size="sm" className={classes.control}>
+        <Group position="apart" mt="lg" className='controlsAuth'>
+          <Anchor<'a'> href="Login" color="dimmed" size="sm" className='controlAuth'>
             <Center inline>
               <ArrowLeft size={12} />
               <Box ml={5}>Back to login page</Box>
             </Center>
             </Anchor>
-          <Button className={classes.control} type='submit' >Reset password</Button>
+          <Button className='controlAuth' type='submit' >Reset password</Button>
         </Group>
       </Paper>
       </form>

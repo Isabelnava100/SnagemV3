@@ -1,7 +1,7 @@
 
 import { createStyles, Card, Image, Avatar, Text, Group, Badge } from '@mantine/core';
 import { EachPostVisual } from '../../../../components/types/typesUsed'
-import { getColor1,getColor2 } from '../../../../components/dashboard-user/getColorBadges';
+import { getColor1,getColor2 } from '../../../../components/user-forum/getColorBadges';
 import React from 'react';
 
 const useStyles = createStyles((theme) => ({

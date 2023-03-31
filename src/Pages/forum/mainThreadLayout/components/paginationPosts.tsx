@@ -19,7 +19,7 @@ return(
     <>
     <Pagination
     total={pagesCount}
-    color="violet"
+    color="#772976"
     withEdges
     page={currentPage}
     onChange={onChangePG}
@@ -46,7 +46,7 @@ return(
   )}
   <Pagination
     total={pagesCount}
-    color="violet"
+    color="#772976"
     withEdges
     page={currentPage}
     onChange={onChangePG}

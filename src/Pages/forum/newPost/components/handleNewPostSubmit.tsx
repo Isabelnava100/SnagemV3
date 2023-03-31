@@ -40,12 +40,14 @@ export const handleSubmit = async (
   });
   
     await batch.commit();
-    if(allThreads[0].notifyviaDiscord) {
-      await sendMessage(allThreads, usernamePosting,forumName,thethreadid); 
-      return true;
-    }else {
-    return true; 
-    }
+    //below for discord
+    // if(allThreads[0].notifyviaDiscord) {
+    //   await sendMessage(allThreads, usernamePosting,forumName,thethreadid); 
+    //   return true;
+    // }else {
+    // return true; 
+    // }
+    return true; //for now
   }else {
     return false;
   }

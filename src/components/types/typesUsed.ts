@@ -113,7 +113,7 @@ export type User = {
 export type SpecificUser = {
 	permissions: string; 
 	badges: string[]; 
-  discordUID:string;
+  discordUID?:string;
 };
 //Extra details added about the user
 
@@ -122,3 +122,9 @@ export type AuthContextType = {
 	setUser: Dispatch<SetStateAction<User | undefined>>;
 };
 //AuthContent
+
+
+export interface myBookmarksInfo {
+  where:string;
+  name:string;
+}

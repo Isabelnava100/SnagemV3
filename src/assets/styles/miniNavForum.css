@@ -1,0 +1,50 @@
+.headerMiniNav {
+    background-color: #772976;
+    display: flex;
+    justify-content: center;
+  }
+  .innerMiniNav {
+    width: 930px;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+  }
+  .searchBarMiniNav {
+    width: 200px;
+  }
+  
+.linkMini {
+    display: block;
+    line-height: 1;
+    margin-top:4px;
+    padding: 8px 12px!important; 
+    border-radius: 6px!important;
+    text-decoration: none;
+    color: #4c4f56;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .linkMini:hover {
+    background-color: #933592;
+    color: #ffffff;
+  }
+  
+  .linkActiveMini,
+  .linkActiveMini:hover {
+    background-color: #933592;
+    color: #ffffff;
+  }
+
+@media screen and (max-width: 62em) {
+    .headerMiniNav {
+        justify-content: flex-start;
+      }
+    .innerMiniNav {
+        width: 730px;
+        padding-left: 20px;
+        justify-content: flex-start;
+      }
+      .searchBarMiniNav {
+        display:none;
+      }
+  }

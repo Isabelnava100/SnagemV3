@@ -3,6 +3,7 @@ import { auth, db } from "./firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { LoadingOverlay } from "@mantine/core";
 import { User, SpecificUser, AuthContextType } from "../components/types/typesUsed";
+import LoadingSpinner from "../components/navigation/loading";
 
 const getInfo = async (uid: string): Promise<SpecificUser> => {
   const user = await getDoc(doc(db, "users", uid));
@@ -46,10 +47,7 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
 		<LoadingOverlay
         visible={pending}
         loader={
-            <img
-              src="https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/mewdumpy-compress.gif?alt=media&token=95a14be6-6495-43fd-a72a-a120f55e0bf8"
-              alt="mew loading"
-            />
+            <LoadingSpinner/>
         }
       />
     );

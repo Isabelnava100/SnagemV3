@@ -10,7 +10,7 @@ export const handleSignIn = async (
     remember:boolean,
     setUser: (arg0: User) => void,
     ) => {
-    try {            
+    try {             
       if(remember){
         //localStorage.setItem('token', token);
        await setPersistence(auth, browserLocalPersistence)
@@ -26,7 +26,7 @@ export const handleSignIn = async (
                   badges:user.data()?.badges
                   }
                 }); //set user
-                  
+                   
               }).finally(() => {
                 return true;
               });

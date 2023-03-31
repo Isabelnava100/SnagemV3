@@ -1,5 +1,4 @@
 import { Container, Switch, Table, Text } from "@mantine/core";
-import { useForumLink } from "./components/MiniNavForum";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { HeroText } from "./components/HeroSection";
@@ -14,8 +13,10 @@ function MainForum() {
 
   useEffect(() => { 
     async function fetchData(){ 
+      try{
         const checkingThreads= await dataRun(placeSimpleName,archive);
         setAllThreads(checkingThreads);        
+      }catch (err){console.error(err)}finally{return Promise.resolve()}
     }    
     fetchData();
   }, [forum,archive]);
