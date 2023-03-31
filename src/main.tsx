@@ -24,36 +24,42 @@ import { ForumProvider } from './Pages/forum/reusable-components/Provider';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <AuthContextProvider>      
-    <ForumProvider>
-      <MantineProvider theme={{ colorScheme: 'dark', colors:{
-        brand: ['#FFFFFF', '#FFDDFF', '#FFD0FE', '#F9ACF8', '#DA8CD9', '#B467B3', '#772976',  '#651764', '#5A0D59', '#440843'] 
-        //          1          2          3          4           5           6       this one     8     9          10
-      }, primaryColor:'brand' }} withGlobalStyles withNormalizeCSS>
-        {/* <RouterProvider router={router} /> */}
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<App/>}>
-                    <Route index element={<HomePage/>} />
-                    <Route path="/Profile" element={<Protect><LeadGrid /></Protect>} />
-                    <Route path="/Login" element={<Login />} />
-                    <Route path="/Register" element={<NewRegister />} />
-                    <Route path="/Forgot" element={<ForgotPassword />} />
-                    <Route path="/Reset" element={<ResetPW />} />
-                    <Route path="/Forum?/:forum" element={
-                    <MiniNavForum  />
-                    } >
-                          <Route index element={<MainForum />} />
-                          <Route path=":forum/new" element={<Protect><NewTopic /></Protect>} />
-                          <Route path=":forum/thread/:id/:page?" element={<Threads />} />
-                          <Route path=":forum/thread/:id/post" element={<Protect><NewPost /></Protect>} />
-                    </Route>
-                    <Route path="*" element={<ErrorPage />} />
-                  </Route>
-                </Routes>
-              </BrowserRouter>
-      </MantineProvider>
-      </ForumProvider>  
+    <AuthContextProvider>
+      <ForumProvider>
+        <MantineProvider theme={{
+          colorScheme: 'dark', colors: {
+            brand: ['#FFFFFF', '#FFDDFF', '#FFD0FE', '#F9ACF8', '#DA8CD9', '#B467B3', '#772976', '#651764', '#5A0D59', '#440843']
+            //          1          2          3          4           5           6       this one     8     9          10
+          }, primaryColor: 'brand'
+        }} withGlobalStyles withNormalizeCSS>
+          {/* <RouterProvider router={router} /> */}
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<App />}>
+                <Route index element={<HomePage />} />
+                <Route path="/Profile" element={<Protect><LeadGrid /></Protect>} />
+                <Route path="/Login" element={<Login />} />
+                <Route path="/Register" element={<NewRegister />} />
+                <Route path="/Forgot" element={<ForgotPassword />} />
+                <Route path="/Reset" element={<ResetPW />} />
+                <Route path="/Forum?/:forum" element={
+                  <MiniNavForum />
+                } >
+                  <Route index element={<MainForum />} />
+                  {/* TODO: CHANGE BACK TO ALLOW PROTECTION */}
+                  <Route path=":forum/new" element={<NewTopic />} />
+                  {/* <Route path=":forum/new" element={<Protect><NewTopic /></Protect>} /> */}
+                  <Route path=":forum/thread/:id/:page?" element={<Threads />} />
+                  {/* TODO: CHANGE BACK TO ALLOW PROTECTION */}
+                  <Route path=":forum/thread/:id/post" element={<NewPost />} />
+                  {/* <Route path=":forum/thread/:id/post" element={<Protect><NewPost /></Protect>} /> */}
+                </Route>
+                <Route path="*" element={<ErrorPage />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </MantineProvider>
+      </ForumProvider>
     </AuthContextProvider>
   </React.StrictMode>
 )

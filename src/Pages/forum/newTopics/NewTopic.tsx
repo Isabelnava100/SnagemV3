@@ -32,10 +32,12 @@ import { useDisclosure } from '@mantine/hooks';
 import '../../../components/editor/style.css'
 
 import '/src/assets/styles/newTopics.css'; 
+import CropImgModal from '../../../components/crop-image/cropImgModal';
 
 
 export function NewTopic() {
   const [opened, { open, close }] = useDisclosure(false);
+  const [ openedCropImg , { open: openCropImg, close: closeCropImg }] = useDisclosure(false);
   const { forum } = useParams();
   const { user } = UserAuth();
   const navigate = useNavigate();
@@ -101,10 +103,12 @@ export function NewTopic() {
 
   // ADD IMAGE
   const addImage = useCallback(() => {
-    const url = window.prompt('URL');
-    if (url) {
-      editor?.chain().focus().setImage({ src: url }).run()
-    }
+    // const url = window.prompt('URL');
+    // if (url) {
+    //   editor?.chain().focus().setImage({ src: url }).run()
+    // }
+
+    openCropImg()
   }, [editor])
 
   // INSERT EMOJI
@@ -285,6 +289,7 @@ export function NewTopic() {
                   </RichTextEditor.Toolbar>
                   {/* {isEmojiOpen && <EmojiPicker />} */}
                   <EmojiModal opened={opened} close={close} insertEmoji={insertEmoji} />
+                  <CropImgModal opened={openedCropImg} close={closeCropImg} editor={editor} />
                   <RichTextEditor.Content />
 
                 </RichTextEditor>
