@@ -1,7 +1,6 @@
-import { useDisclosure } from '@mantine/hooks';
 import { Modal, Button, Group } from '@mantine/core';
 import EmojiPicker from 'emoji-picker-react';
-import { FC } from 'react';
+
 
 
 interface propTypes {

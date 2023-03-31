@@ -1,0 +1,1 @@
+declare module 'src/components/editor/Suggestion'

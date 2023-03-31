@@ -14,7 +14,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Superscript from '@tiptap/extension-superscript';
 import SubScript from '@tiptap/extension-subscript';
 import Image from '@tiptap/extension-image';
-import { Icon360, IconColorPicker, IconPictureInPictureOn } from '@tabler/icons';
+import { IconColorPicker, IconPictureInPictureOn } from '@tabler/icons';
 import { Color } from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -27,6 +27,7 @@ import Mention from '@tiptap/extension-mention';
 import EmojiModal from '../../../components/editor/EmojiModal'
 import suggestion from '../../../components/editor/Suggestion'
 import { useDisclosure } from '@mantine/hooks';
+
 
 import '../../../components/editor/style.css'
 
@@ -203,6 +204,10 @@ export function NewTopic() {
     }
     close()
   }
+  // MENTION USER
+  const handleMention = () => {
+    editor?.chain().focus().insertContent('@').run()
+  }
 
 
   return (
@@ -364,6 +369,8 @@ export function NewTopic() {
                       <RichTextEditor.Control
                         aria-label="Mention someone"
                         title="Mention someone"
+                        onClick={handleMention}
+
                       >
                         @
                       </RichTextEditor.Control>
@@ -372,7 +379,7 @@ export function NewTopic() {
 
                   </RichTextEditor.Toolbar>
                   {/* {isEmojiOpen && <EmojiPicker />} */}
-                  <EmojiModal opened={opened} close={close} insertEmoji={insertEmoji}/>
+                  <EmojiModal opened={opened} close={close} insertEmoji={insertEmoji} />
                   <RichTextEditor.Content />
 
                 </RichTextEditor>
