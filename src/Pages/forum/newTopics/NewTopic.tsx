@@ -14,7 +14,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Superscript from '@tiptap/extension-superscript';
 import SubScript from '@tiptap/extension-subscript';
 import Image from '@tiptap/extension-image';
-import { Icon360, IconColorPicker, IconPictureInPictureOn } from '@tabler/icons';
+import { IconColorPicker, IconPictureInPictureOn } from '@tabler/icons';
 import { Color } from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -28,13 +28,16 @@ import EmojiModal from '../../../components/editor/EmojiModal'
 import suggestion from '../../../components/editor/Suggestion'
 import { useDisclosure } from '@mantine/hooks';
 
+
 import '../../../components/editor/style.css'
 
 import '/src/assets/styles/newTopics.css'; 
+import CropImgModal from '../../../components/crop-image/cropImgModal';
 
 
 export function NewTopic() {
   const [opened, { open, close }] = useDisclosure(false);
+  const [ openedCropImg , { open: openCropImg, close: closeCropImg }] = useDisclosure(false);
   const { forum } = useParams();
   const { user } = UserAuth();
   const navigate = useNavigate();
@@ -100,10 +103,12 @@ export function NewTopic() {
 
   // ADD IMAGE
   const addImage = useCallback(() => {
-    const url = window.prompt('URL');
-    if (url) {
-      editor?.chain().focus().setImage({ src: url }).run()
-    }
+    // const url = window.prompt('URL');
+    // if (url) {
+    //   editor?.chain().focus().setImage({ src: url }).run()
+    // }
+
+    openCropImg()
   }, [editor])
 
   // INSERT EMOJI
@@ -112,6 +117,10 @@ export function NewTopic() {
       editor?.chain().focus().insertContent(emoji?.emoji).run()
     }
     close()
+  }
+  // MENTION USER
+  const handleMention = () => {
+    editor?.chain().focus().insertContent('@').run()
   }
 
 
@@ -269,6 +278,8 @@ export function NewTopic() {
                       <RichTextEditor.Control
                         aria-label="Mention someone"
                         title="Mention someone"
+                        onClick={handleMention}
+
                       >
                         @
                       </RichTextEditor.Control>
@@ -277,7 +288,8 @@ export function NewTopic() {
 
                   </RichTextEditor.Toolbar>
                   {/* {isEmojiOpen && <EmojiPicker />} */}
-                  <EmojiModal opened={opened} close={close} insertEmoji={insertEmoji}/>
+                  <EmojiModal opened={opened} close={close} insertEmoji={insertEmoji} />
+                  <CropImgModal opened={openedCropImg} close={closeCropImg} editor={editor} />
                   <RichTextEditor.Content />
 
                 </RichTextEditor>
