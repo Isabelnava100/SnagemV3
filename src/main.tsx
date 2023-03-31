@@ -46,13 +46,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                   <MiniNavForum />
                 } >
                   <Route index element={<MainForum />} />
-                  {/* TODO: CHANGE BACK TO ALLOW PROTECTION */}
-                  <Route path=":forum/new" element={<NewTopic />} />
-                  {/* <Route path=":forum/new" element={<Protect><NewTopic /></Protect>} /> */}
+                  <Route path=":forum/new" element={<Protect><NewTopic /></Protect>} />
                   <Route path=":forum/thread/:id/:page?" element={<Threads />} />
-                  {/* TODO: CHANGE BACK TO ALLOW PROTECTION */}
-                  <Route path=":forum/thread/:id/post" element={<NewPost />} />
-                  {/* <Route path=":forum/thread/:id/post" element={<Protect><NewPost /></Protect>} /> */}
+                  <Route path=":forum/thread/:id/post" element={<Protect><NewPost /></Protect>} />
                 </Route>
                 <Route path="*" element={<ErrorPage />} />
               </Route>
