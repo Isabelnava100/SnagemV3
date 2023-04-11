@@ -1,11 +1,11 @@
-import { Title, Button, Grid, Col } from "@mantine/core";
+import { Button, Col, Grid, Title } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { InfoOnThreadVisual } from "../../../../components/types/typesUsed";
-import { UserAuth } from "../../../../context/AuthContext";
+import { useAuth } from "../../../../context/AuthContext";
 import { BookmarkButton } from "./BookmarkButton";
 
 export function FeaturesTitle({ info, forum }: InfoOnThreadVisual) {
-  const { user } = UserAuth();
+  const { user } = useAuth();
   return (
     <Grid gutter={20} style={{ padding: "16px 8px", background: "none" }}>
       <Col span={12} p={0} sm={9} className="titleBox">
@@ -20,15 +20,10 @@ export function FeaturesTitle({ info, forum }: InfoOnThreadVisual) {
           />
         )}
       </Col>
-      <Col
-        span={12}
-        p={0}
-        sm={3}
-        style={{ display: "flex", justifyContent: "end" }}
-      >
+      <Col span={12} p={0} sm={3} style={{ display: "flex", justifyContent: "end" }}>
         {user && (
           <Button
-            variant="gradient" 
+            variant="gradient"
             gradient={{ deg: 133, from: "#933592", to: "#651764" }}
             size="lg"
             radius="md"

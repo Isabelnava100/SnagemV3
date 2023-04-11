@@ -1,16 +1,23 @@
-import { useState, useRef, useCallback } from "react";
 import {
-  TextInput,  PasswordInput,  Anchor,  Paper,  Title,  Text,  Container, 
-  Button,  Grid,  Textarea,  Progress, Popover,   Radio, Group,
+  Anchor,
+  Button,
+  Container,
+  Grid,
+  Group,
+  Paper,
+  PasswordInput,
+  Popover,
+  Progress,
+  Radio,
+  Text,
+  TextInput,
+  Textarea,
+  Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  requirements,
-  Gusers,
-  PasswordRequirement,
-  getStrength
-} from "./components/Components";
+import { Gusers, PasswordRequirement, getStrength, requirements } from "./components/Components";
 import { registerUser } from "./components/RegisterHandle";
 
 export function NewRegister() {
@@ -23,13 +30,9 @@ export function NewRegister() {
   const navigate = useNavigate();
   const strength = getStrength(value);
   const color = strength === 100 ? "teal" : strength > 50 ? "yellow" : "red";
-  
+
   const checks = requirements.map((requirement, index) => (
-    <PasswordRequirement
-      key={index}
-      label={requirement.label}
-      meets={requirement.re.test(value)}
-    />
+    <PasswordRequirement key={index} label={requirement.label} meets={requirement.re.test(value)} />
   ));
 
   const form = useForm({
@@ -45,12 +48,9 @@ export function NewRegister() {
 
     validate: {
       email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email."),
-      username: (value) =>
-        /^[a-zA-Z0-9-_]{3,23}$/.test(value) ? null : "Invalid username.",
+      username: (value) => (/^[a-zA-Z0-9-_]{3,23}$/.test(value) ? null : "Invalid username."),
       confirmPassword: (value, values) =>
-        value !== values.password && gaia === "Yes"
-          ? "Passwords did not match."
-          : null,
+        value !== values.password && gaia === "Yes" ? "Passwords did not match." : null,
       application: (value) =>
         value.length < 500 && gaia === "No"
           ? "Application must be at least 500 characters long."
@@ -65,48 +65,37 @@ export function NewRegister() {
     },
   });
 
-  const handleSubmitReg = useCallback(
-    async () => {
-     
-      let results;
-      try {
-        setWhenSubmit(true);
-        const values = form.values;
-        results = await registerUser(
-          values.email, 
-          values.password,
-          values.application,
-          values.gaiaName,
-          values.username,
-        );
-        
-      
-        return Promise.resolve(results);
+  const handleSubmitReg = useCallback(async () => {
+    let results;
+    try {
+      setWhenSubmit(true);
+      const values = form.values;
+      results = await registerUser(
+        values.email,
+        values.password,
+        values.application,
+        values.gaiaName,
+        values.username
+      );
 
-      } catch (err) {
-        console.error(err);
-      } finally {
-        // console.log(results);
-        if (results === "success") {
-          navigate('/Login', { replace: true });
-          // window.location.reload();
-        } else {
-          if (results === "auth/email-already-in-use") {
-            form.setErrors({ email: "Email already in use." });
-          }
-          if (results === "auth/invalid-email") {
-            form.setErrors({ email: "Badly formatted email." });
-          }
+      return Promise.resolve(results);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      // console.log(results);
+      if (results === "success") {
+        navigate("/Login", { replace: true });
+        // window.location.reload();
+      } else {
+        if (results === "auth/email-already-in-use") {
+          form.setErrors({ email: "Email already in use." });
         }
-        
+        if (results === "auth/invalid-email") {
+          form.setErrors({ email: "Badly formatted email." });
+        }
       }
-
-
-
-
-    },
-    [form, navigate]
-  );
+    }
+  }, [form, navigate]);
 
   return (
     <Container size={840} my={40}>
@@ -126,14 +115,7 @@ export function NewRegister() {
         </Anchor>
       </Text>
 
-      <Paper
-        withBorder
-        shadow="md"
-        p={30}
-        mt={30}
-        radius="md"
-        style={{ background: "#222125" }}
-      >
+      <Paper withBorder shadow="md" p={30} mt={30} radius="md" style={{ background: "#222125" }}>
         <form
           data-netlify="true"
           name="newRegister"
@@ -216,10 +198,7 @@ export function NewRegister() {
                         onBlur={() => setPopoverOpened((o) => false)}
                         onChange={(event) => {
                           setValue(event.currentTarget.value);
-                          form.setFieldValue(
-                            "password",
-                            event.currentTarget.value
-                          );
+                          form.setFieldValue("password", event.currentTarget.value);
                         }}
                       />
                     </Popover.Target>
@@ -259,9 +238,7 @@ export function NewRegister() {
 
                   <Group position="right">
                     <Text size="xs">
-                      {refTextarea.current?.value.length
-                        ? refTextarea.current?.value.length
-                        : 0}{" "}
+                      {refTextarea.current?.value.length ? refTextarea.current?.value.length : 0}{" "}
                       Characters
                     </Text>
                   </Group>

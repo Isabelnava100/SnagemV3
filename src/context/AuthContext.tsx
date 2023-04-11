@@ -1,9 +1,9 @@
-import {  createContext,  ReactNode,  useContext,  useEffect,  useState,} from "react";
-import { auth, db } from "./firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { LoadingOverlay } from "@mantine/core";
-import { User, SpecificUser, AuthContextType } from "../components/types/typesUsed";
+import { doc, getDoc } from "firebase/firestore";
+import { ReactNode, createContext, useContext, useEffect, useState } from "react";
 import LoadingSpinner from "../components/navigation/loading";
+import { AuthContextType, SpecificUser, User } from "../components/types/typesUsed";
+const { auth, db } = await import("./firebase");
 
 const getInfo = async (uid: string): Promise<SpecificUser> => {
   const user = await getDoc(doc(db, "users", uid));
@@ -26,8 +26,8 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
       if (user) {
         const { uid, email, displayName } = user;
         const otherinfo = await getInfo(uid);
-        setUser(prevState=>({
-		  ...prevState,
+        setUser((prevState) => ({
+          ...prevState,
           uid,
           email,
           displayName,
@@ -35,34 +35,22 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
         }));
         setPending(false);
       } else {
-          setPending(false);
+        setPending(false);
       }
     });
     return () => authConst();
-  }, [setUser,user]);
-
+  }, [setUser, user]);
 
   if (pending) {
-    return (
-		<LoadingOverlay
-        visible={pending}
-        loader={
-            <LoadingSpinner/>
-        }
-      />
-    );
+    return <LoadingOverlay visible={pending} loader={<LoadingSpinner />} />;
   }
 
-  return (
-    <AuthContext.Provider value={{ user, setUser }}>		
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, setUser }}>{children}</AuthContext.Provider>;
 }
 
 export { AuthContextProvider };
 
-export const UserAuth = () => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthContextProvider");

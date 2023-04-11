@@ -1,53 +1,58 @@
-import { Container, Group, Paper, Select, Text, TextInput } from "@mantine/core";
-import { useForm } from "@mantine/form";
-import { useDisclosure } from "@mantine/hooks";
-import { Link, RichTextEditor } from "@mantine/tiptap";
-import { IconColorPicker, IconPictureInPictureOn } from "@tabler/icons";
-import { Color } from "@tiptap/extension-color";
-import Highlight from "@tiptap/extension-highlight";
-import Image from "@tiptap/extension-image";
-import Mention from "@tiptap/extension-mention";
-import Placeholder from "@tiptap/extension-placeholder";
-import SubScript from "@tiptap/extension-subscript";
-import Superscript from "@tiptap/extension-superscript";
-import TextAlign from "@tiptap/extension-text-align";
-import TextStyle from "@tiptap/extension-text-style";
-import Underline from "@tiptap/extension-underline";
-import { useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import EmojiModal from "../../../components/editor/EmojiModal";
-import suggestion from "../../../components/editor/Suggestion";
-import { NewForumInfo } from "../../../components/types/typesUsed";
-import { useAuth } from "../../../context/AuthContext";
-import { filteredData } from "../reusable-components/checkPermsForum";
-import { handleSubmit } from "./components/handleSubmitTopic";
-const { ButtonProgress } = await import("../reusable-components/LoadingButton");
+import { RichTextEditor, Link } from '@mantine/tiptap';
+import {
+  Paper, Text, TextInput, Group, Container, Select
+} from '@mantine/core';
+import { UserAuth } from '../../../context/AuthContext';
+import { ButtonProgress } from '../reusable-components/LoadingButton';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from '@mantine/form';
+import { useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Highlight from '@tiptap/extension-highlight';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align'; 
+import Superscript from '@tiptap/extension-superscript';
+import SubScript from '@tiptap/extension-subscript';
+import Image from '@tiptap/extension-image';
+import { IconColorPicker, IconPictureInPictureOn } from '@tabler/icons';
+import { Color } from '@tiptap/extension-color';
+import TextStyle from '@tiptap/extension-text-style';
+import Placeholder from '@tiptap/extension-placeholder';
+import { handleSubmit } from './components/handleSubmitTopic'
+import { filteredData } from '../reusable-components/checkPermsForum'
+import { NewForumInfo } from '../../../components/types/typesUsed';
+import { useCallback, useState } from 'react';
+// import EmojiPicker from 'emoji-picker-react';
+import Mention from '@tiptap/extension-mention';
+import EmojiModal from '../../../components/editor/EmojiModal'
+import suggestion from '../../../components/editor/Suggestion'
+import { useDisclosure } from '@mantine/hooks';
 
-import "../../../components/editor/style.css";
 
-import CropImgModal from "../../../components/crop-image/cropImgModal";
-import "/src/assets/styles/newTopics.css";
+import '../../../components/editor/style.css'
+
+import '/src/assets/styles/newTopics.css'; 
+import CropImgModal from '../../../components/crop-image/cropImgModal';
+
 
 export function NewTopic() {
   const [opened, { open, close }] = useDisclosure(false);
-  const [openedCropImg, { open: openCropImg, close: closeCropImg }] = useDisclosure(false);
+  const [ openedCropImg , { open: openCropImg, close: closeCropImg }] = useDisclosure(false);
   const { forum } = useParams();
-  const { user } = useAuth();
+  const { user } = UserAuth();
   const navigate = useNavigate();
 
   const form = useForm({
     initialValues: {
-      title: "",
-      forum2: forum ? NewForumInfo.find((info) => info.link === forum) : "2",
-      postas: "",
-      firstpost: "",
+      title: '',
+      forum2: forum ? NewForumInfo.find(info => info.link === forum) : '2',
+      postas: '',
+      firstpost: '',
     },
     validate: {
-      title: (value) => (value.length < 2 ? "Title must have at least 2 letters" : null),
-      postas: (value) => (value.length < 2 ? "Name must have at least 2 letters" : null),
-      firstpost: (value) => (value.length < 2 ? "Post must have at least 2 letters" : null),
+      title: (value) => (value.length < 2 ? 'Title must have at least 2 letters' : null),
+      postas: (value) => (value.length < 2 ? 'Name must have at least 2 letters' : null),
+      firstpost: (value) => (value.length < 2 ? 'Post must have at least 2 letters' : null),
     },
   });
   const formTheCheck = form.isValid();
@@ -59,55 +64,42 @@ export function NewTopic() {
       Color,
       Image,
       Underline,
-      Placeholder.configure({ placeholder: "This is placeholder" }),
+      Placeholder.configure({ placeholder: 'This is placeholder' }),
       Link,
       Superscript,
       SubScript,
       Highlight,
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Mention.configure({
         HTMLAttributes: {
-          class: "mention",
+          class: 'mention', //border: 1px solid #ffffff; border-radius: 0.4rem; box-decoration-break: clone; padding: 0.1rem 0.3rem;
         },
         suggestion,
       }),
     ],
     // onUpdate: useCallback((props: { editor: { getHTML: () => string; }; }) => {
     //   form.setFieldValue('firstpost', props.editor.getHTML());
-    // }, [form]),
+    // }, [form]),    
     onUpdate: (props) => {
       form.setFieldValue("firstpost", props.editor.getHTML());
     },
   });
 
-  const handleSubmitForm = async (values: {
-    title: any;
-    forum2: any;
-    postas: any;
-    firstpost: any;
-  }) => {
+
+  const handleSubmitForm = async (values: { title: any; forum2: any; postas: any; firstpost: any; }) => {
     // console.log(values.forum2);
 
-    try {
-      const success = await handleSubmit(
-        values.title,
-        values.forum2,
-        values.postas,
-        values.firstpost,
-        user
-      );
+    try{
+    const success = await handleSubmit(values.title, values.forum2, values.postas, values.firstpost,user);
 
-      if (success) {
-        navigate("/Forum/" + NewForumInfo.find((info) => info.value === values.forum2)?.link);
-      } else {
-        navigate("/Forum/Main-Forum");
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      return Promise.resolve();
-    } //add to all promises
-  };
+    if (success) {
+      navigate('/Forum/' + NewForumInfo.find(info => info.value === values.forum2)?.link);
+    } else {
+      navigate('/Forum/Main-Forum');
+    }
+    }catch (err){console.error(err)}finally{return Promise.resolve()} //add to all promises
+   
+  }
 
   // ADD IMAGE
   const addImage = useCallback(() => {
@@ -116,50 +108,41 @@ export function NewTopic() {
     //   editor?.chain().focus().setImage({ src: url }).run()
     // }
 
-    openCropImg();
-  }, [editor]);
+    openCropImg()
+  }, [editor])
 
   // INSERT EMOJI
   const insertEmoji = (emoji: { emoji: string }) => {
     if (emoji) {
-      editor?.chain().focus().insertContent(emoji?.emoji).run();
+      editor?.chain().focus().insertContent(emoji?.emoji).insertContent(' ').run();
+      
     }
     close();
   };
   // MENTION USER
   const handleMention = () => {
-    editor?.chain().focus().insertContent("@").run();
-  };
+    editor?.chain().focus().insertContent('@').run()
+  }
+
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
-      <form
-        onSubmit={form.onSubmit(async (values) => {
-          try {
-            await handleSubmitForm(values);
-          } catch (err) {
-            console.error(err);
-          } finally {
-            return Promise.resolve();
-          }
-        })}
-      >
-        <Paper shadow="md" radius="lg">
-          <div className="wrapperNewTopic">
-            <div className="contactNewTopics">
-              <Text size="lg" weight={700} className="title2NewTopic" sx={{ color: "#fff" }}>
-                Topic Information
-              </Text>
+      <form onSubmit={form.onSubmit(async (values) => {
+       try{ await handleSubmitForm(values); }catch (err){console.error(err)}finally{return Promise.resolve()}
+      })}>
 
-              <TextInput
-                label="Title"
-                className="mb-4"
-                {...form.getInputProps("title")}
-                placeholder="Title of the Topic"
-                required
-              />
+    <Paper shadow="md" radius="lg">
+      <div className='wrapperNewTopic'>
+        <div className='contactNewTopics'>
+          <Text size="lg" weight={700} className='title2NewTopic'  sx={{ color: '#fff' }}>
+            Topic Information
+          </Text>
+          
+          <TextInput label="Title" className='mb-4'
+           {...form.getInputProps('title')}
+          placeholder="Title of the Topic" required />
 
-              {/* <Textarea
+          {/* <Textarea
 
             mt="md" mb="md"
             label="Short Description"
@@ -167,14 +150,14 @@ export function NewTopic() {
             minRows={3}
           /> */}
               <Select
-                data={filteredData(user)}
-                mb="md"
+                data={filteredData(user)} mb="md"
                 // value={valueForm} onChange={checkNewThread}
                 label="Forum"
-                {...form.getInputProps("forum2")}
+                {...form.getInputProps('forum2')}
                 placeholder="Choose location of the topic"
                 required
               />
+
 
               {/* <Select
             data={data} mb="md"
@@ -182,12 +165,10 @@ export function NewTopic() {
             placeholder="Choose your character "
             required
           /> */}
-              <TextInput
-                label="Post As"
-                {...form.getInputProps("postas")}
-                placeholder="Write the Name of your Character"
-                required
-              />
+          <TextInput label="Post As"           
+          {...form.getInputProps('postas')}
+          placeholder="Write the Name of your Character" required />
+ 
 
               {/* <Select
             data={data} mb="md"
@@ -195,32 +176,37 @@ export function NewTopic() {
             placeholder="Choose your team"
             required
           /> */}
+
+
             </div>
 
-            <div className="formNewTopic">
-              <Text size="lg" weight={700} className="titleNewTopic">
-                First Post <span className="text-red-600">*</span>
-              </Text>
+       <div className='formNewTopic'>
+          <Text size="lg" weight={700} className='titleNewTopic'>
+            First Post <span className="text-red-600">*</span>
+          </Text>
 
-              <div>
-                <RichTextEditor editor={editor}>
-                  <RichTextEditor.Toolbar>
+          <div>
+
+
+                <RichTextEditor editor={editor}  >
+                  <RichTextEditor.Toolbar stickyOffset={60}>
+
                     <RichTextEditor.ColorPicker
                       colors={[
-                        "#25262b",
-                        "#868e96",
-                        "#fa5252",
-                        "#e64980",
-                        "#be4bdb",
-                        "#7950f2",
-                        "#4c6ef5",
-                        "#228be6",
-                        "#15aabf",
-                        "#12b886",
-                        "#40c057",
-                        "#82c91e",
-                        "#fab005",
-                        "#fd7e14",
+                        '#25262b',
+                        '#868e96',
+                        '#fa5252',
+                        '#e64980',
+                        '#be4bdb',
+                        '#7950f2',
+                        '#4c6ef5',
+                        '#228be6',
+                        '#15aabf',
+                        '#12b886',
+                        '#40c057',
+                        '#82c91e',
+                        '#fab005',
+                        '#fd7e14',
                       ]}
                     />
 
@@ -241,6 +227,7 @@ export function NewTopic() {
                       <RichTextEditor.H3 />
                       <RichTextEditor.H4 />
                     </RichTextEditor.ControlsGroup>
+
 
                     <RichTextEditor.ControlsGroup>
                       <RichTextEditor.Bold />
@@ -293,15 +280,18 @@ export function NewTopic() {
                         aria-label="Mention someone"
                         title="Mention someone"
                         onClick={handleMention}
+
                       >
                         @
                       </RichTextEditor.Control>
+
                     </RichTextEditor.ControlsGroup>
+
                   </RichTextEditor.Toolbar>
-                  {/* {isEmojiOpen && <EmojiPicker />} */}
                   <EmojiModal opened={opened} close={close} insertEmoji={insertEmoji} />
                   <CropImgModal opened={openedCropImg} close={closeCropImg} editor={editor} />
                   <RichTextEditor.Content />
+
                 </RichTextEditor>
                 <Group position="right" mt="md">
                   <ButtonProgress formCheck={!formTheCheck} />

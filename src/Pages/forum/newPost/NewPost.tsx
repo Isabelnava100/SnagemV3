@@ -1,37 +1,30 @@
-import { useCallback, useEffect, useState } from "react";
-import {
-  Paper,
-  Text,
-  TextInput,
-  Group, 
-  Container,
-} from "@mantine/core";
-import { ButtonProgress } from "../reusable-components/LoadingButton";
-import { useNavigate, useParams } from "react-router-dom";
-import { SimpleGrid } from "@mantine/core";
+import { Container, Group, Paper, SimpleGrid, Text, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useEditor } from "@tiptap/react";
-import { RichTextEditor, Link } from "@mantine/tiptap";
-import StarterKit from "@tiptap/starter-kit";
-import Highlight from "@tiptap/extension-highlight";
-import Underline from "@tiptap/extension-underline";
-import TextAlign from "@tiptap/extension-text-align";
-import Superscript from "@tiptap/extension-superscript";
-import SubScript from "@tiptap/extension-subscript";
+import { Link, RichTextEditor } from "@mantine/tiptap";
 import { IconColorPicker, IconStar } from "@tabler/icons";
 import { Color } from "@tiptap/extension-color";
-import TextStyle from "@tiptap/extension-text-style";
+import Highlight from "@tiptap/extension-highlight";
+import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
-import Image from '@tiptap/extension-image';
-import { getThreadDataForNewPostAndCheckPrivateBoolean } from "./components/checkPostingPerms";
+import SubScript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
+import TextAlign from "@tiptap/extension-text-align";
+import TextStyle from "@tiptap/extension-text-style";
+import Underline from "@tiptap/extension-underline";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { ThreadInformation } from "../../../components/types/typesUsed";
+import { getThreadDataForNewPostAndCheckPrivateBoolean } from "./components/checkPostingPerms";
 import { handleSubmit } from "./components/handleNewPostSubmit";
-import { UserAuth } from "../../../context/AuthContext";
-import '/src/assets/styles/newPost.css'; 
+import "/src/assets/styles/newPost.css";
+const { useAuth } = await import("../../../context/AuthContext");
+const { ButtonProgress } = await import("../reusable-components/LoadingButton");
 
 export function NewPost() {
-  const { id: thethreadid, forum:forumName } = useParams();
-  const { user } = UserAuth();
+  const { id: thethreadid, forum: forumName } = useParams();
+  const { user } = useAuth();
   const [allThreads, setAllThreads] = useState<ThreadInformation[]>([]);
   const navigate = useNavigate();
 
@@ -50,7 +43,6 @@ export function NewPost() {
       SubScript,
       Highlight,
       TextAlign.configure({ types: ["heading", "paragraph", "image"] }),
-
     ],
     onUpdate: (props) => {
       form.setFieldValue("text", props.editor.getHTML());
@@ -58,11 +50,11 @@ export function NewPost() {
   });
 
   const addImage = useCallback(() => {
-    const url = window.prompt('URL');
+    const url = window.prompt("URL");
     if (url) {
-      editor?.chain().focus().setImage({ src: url }).run()
+      editor?.chain().focus().setImage({ src: url }).run();
     }
-  }, [editor])
+  }, [editor]);
 
   const form = useForm({
     initialValues: {
@@ -70,47 +62,49 @@ export function NewPost() {
       text: "",
     },
     validate: {
-      character: (value) =>
-        value.length < 2 ? "Name must have at least 2 letters" : null,
-      text: (value) =>
-        value.length < 2 ? "Post must have at least 2 letters" : null,
+      character: (value) => (value.length < 2 ? "Name must have at least 2 letters" : null),
+      text: (value) => (value.length < 2 ? "Post must have at least 2 letters" : null),
     },
   });
 
   const formTheCheck = form.isValid();
 
-
-
   useEffect(() => {
     async function fetchData() {
-    if(forumName&&allThreads.length === 0){ 
-      try{
-      const threadData = await getThreadDataForNewPostAndCheckPrivateBoolean(Number(thethreadid), forumName);
-      // console.log(threadData);
-      if(threadData.length===0) {
-        navigate("/Forum/Main-Forum");
-      }else {
-        if(threadData[0].private===true){
-          if(threadData[0].privateTo&&threadData[0].privateTo.includes(user?.displayName)){
-            setAllThreads(threadData);
-          }else {
+      if (forumName && allThreads.length === 0) {
+        try {
+          const threadData = await getThreadDataForNewPostAndCheckPrivateBoolean(
+            Number(thethreadid),
+            forumName
+          );
+          // console.log(threadData);
+          if (threadData.length === 0) {
             navigate("/Forum/Main-Forum");
-            //User isn't allowed to post.
+          } else {
+            if (threadData[0].private === true) {
+              if (threadData[0].privateTo && threadData[0].privateTo.includes(user?.displayName)) {
+                setAllThreads(threadData);
+              } else {
+                navigate("/Forum/Main-Forum");
+                //User isn't allowed to post.
+              }
+            } else {
+              setAllThreads(threadData);
+            } //check if privacy exists
           }
-        }else {
-          setAllThreads(threadData);
-        }//check if privacy exists
+        } catch (err) {
+          console.error(err);
+        } finally {
+          return Promise.resolve();
+        }
       }
-    }catch (err){console.error(err)}finally{return Promise.resolve()}
     }
-  }
-  if (allThreads.length===0){
-    fetchData();
-  }    
-  }, [thethreadid,forumName]); //set to page
+    if (allThreads.length === 0) {
+      fetchData();
+    }
+  }, [thethreadid, forumName]); //set to page
 
-  async function handleSubmitWrapper(values: { character: string, text: string }) {
-
+  async function handleSubmitWrapper(values: { character: string; text: string }) {
     await handleSubmit(
       values.character,
       values.text,
@@ -118,7 +112,7 @@ export function NewPost() {
       user,
       forumName,
       allThreads
-    ).finally(() => {      
+    ).finally(() => {
       navigate(`/Forum/${forumName}/thread/${thethreadid}/last`);
       return;
     });
@@ -132,24 +126,17 @@ export function NewPost() {
         })}
       >
         <Paper shadow="md" radius="lg">
-          <div className='wrapperNewPost'>
-            <div className='formNewPost'>
-              {allThreads&&allThreads.map((thread) => (
-                <Text
-                  size="lg"
-                  weight={700}
-                  className='titleNewPost'
-                  key={thread.id}
-                >
-                  Make a Post on {thread.title}
-                </Text>
-              ))}
+          <div className="wrapperNewPost">
+            <div className="formNewPost">
+              {allThreads &&
+                allThreads.map((thread) => (
+                  <Text size="lg" weight={700} className="titleNewPost" key={thread.id}>
+                    Make a Post on {thread.title}
+                  </Text>
+                ))}
 
-              <div className='fieldsNewPost'>
-                <SimpleGrid
-                  cols={2}
-                  breakpoints={[{ maxWidth: "sm", cols: 1 }]}
-                >
+              <div className="fieldsNewPost">
+                <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
                   <TextInput
                     label="Post As"
                     placeholder="Write the Name of your Character"
@@ -169,7 +156,7 @@ export function NewPost() {
             required
           /> */}
                 </SimpleGrid>
-                <Text size="sm" style={{ marginTop: 10,marginBottom:4 }}>
+                <Text size="sm" style={{ marginTop: 10, marginBottom: 4 }}>
                   Your Message
                   <span aria-hidden="true" style={{ color: "#ff6b6b" }}>
                     {" "}
@@ -239,12 +226,12 @@ export function NewPost() {
                       <RichTextEditor.Link />
                       <RichTextEditor.Unlink />
                       <RichTextEditor.Control
-                          onClick={addImage}
-                          aria-label="Insert image"
-                          title="Insert image"
-                        >
-                          <IconStar stroke={1.5} size={16} />
-                        </RichTextEditor.Control>
+                        onClick={addImage}
+                        aria-label="Insert image"
+                        title="Insert image"
+                      >
+                        <IconStar stroke={1.5} size={16} />
+                      </RichTextEditor.Control>
                     </RichTextEditor.ControlsGroup>
 
                     <RichTextEditor.ControlsGroup>
