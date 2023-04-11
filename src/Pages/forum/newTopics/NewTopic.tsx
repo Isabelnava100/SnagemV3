@@ -23,7 +23,7 @@ import { NewForumInfo } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import { filteredData } from "../reusable-components/checkPermsForum";
 import { handleSubmit } from "./components/handleSubmitTopic";
-const { ButtonProgress } = await import("../reusable-components/LoadingButton");
+const { ButtonProgress } = await import("../reusable-components/LoadingButton");//new
 
 import "../../../components/editor/style.css";
 
@@ -122,7 +122,7 @@ export function NewTopic() {
   // INSERT EMOJI
   const insertEmoji = (emoji: { emoji: string }) => {
     if (emoji) {
-      editor?.chain().focus().insertContent(emoji?.emoji).run();
+      editor?.chain().focus().insertContent(emoji?.emoji).insertContent(' ').run();
     }
     close();
   };
@@ -298,7 +298,7 @@ export function NewTopic() {
                       </RichTextEditor.Control>
                     </RichTextEditor.ControlsGroup>
                   </RichTextEditor.Toolbar>
-                  {/* {isEmojiOpen && <EmojiPicker />} */}
+                  
                   <EmojiModal opened={opened} close={close} insertEmoji={insertEmoji} />
                   <CropImgModal opened={openedCropImg} close={closeCropImg} editor={editor} />
                   <RichTextEditor.Content />
