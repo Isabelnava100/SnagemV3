@@ -16,11 +16,11 @@ import StarterKit from "@tiptap/starter-kit";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ThreadInformation } from "../../../components/types/typesUsed";
+import { useAuth } from "../../../context/AuthContext";
+import { ButtonProgress } from "../reusable-components/LoadingButton";
 import { getThreadDataForNewPostAndCheckPrivateBoolean } from "./components/checkPostingPerms";
 import { handleSubmit } from "./components/handleNewPostSubmit";
 import "/src/assets/styles/newPost.css";
-const { useAuth } = await import("../../../context/AuthContext");
-const { ButtonProgress } = await import("../reusable-components/LoadingButton");
 
 export function NewPost() {
   const { id: thethreadid, forum: forumName } = useParams();

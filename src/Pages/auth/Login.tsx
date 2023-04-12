@@ -1,4 +1,15 @@
-import * as Core from "@mantine/core";
+import {
+  Anchor,
+  Button,
+  Checkbox,
+  Container,
+  Group,
+  Paper,
+  PasswordInput,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -25,19 +36,19 @@ export function Login() {
   }, [user]);
 
   return (
-    <Core.Container size={420} my={40}>
-      <Core.Title
+    <Container size={420} my={40}>
+      <Title
         align="center"
         sx={(theme) => ({ fontFamily: `Greycliff CF, ${theme.fontFamily}`, fontWeight: 900 })}
       >
         Welcome back!
-      </Core.Title>
-      <Core.Text color="dimmed" size="sm" align="center" mt={5}>
+      </Title>
+      <Text color="dimmed" size="sm" align="center" mt={5}>
         Do not have an account yet?{" "}
-        <Core.Anchor<"a"> href="Register" size="sm">
+        <Anchor<"a"> href="Register" size="sm">
           Apply to Join.
-        </Core.Anchor>
-      </Core.Text>
+        </Anchor>
+      </Text>
       <form
         onSubmit={form.onSubmit((values) => {
           setSub(true);
@@ -59,21 +70,14 @@ export function Login() {
           });
         })}
       >
-        <Core.Paper
-          withBorder
-          shadow="md"
-          p={30}
-          mt={30}
-          radius="md"
-          style={{ background: "#222125" }}
-        >
-          <Core.TextInput
+        <Paper withBorder shadow="md" p={30} mt={30} radius="md" style={{ background: "#222125" }}>
+          <TextInput
             label="Email"
             placeholder="Your@email.com"
             required
             {...form.getInputProps("email")}
           />
-          <Core.PasswordInput
+          <PasswordInput
             mt="md"
             required
             // {...form.getInputProps('password')}
@@ -85,18 +89,18 @@ export function Login() {
               form.setFieldValue("password", event.currentTarget.value);
             }}
           />
-          <Core.Group position="apart" mt="md">
-            <Core.Checkbox label="Remember me" {...form.getInputProps("remember")} />
+          <Group position="apart" mt="md">
+            <Checkbox label="Remember me" {...form.getInputProps("remember")} />
             <div></div>
-            <Core.Anchor<"a"> href="Forgot" size="sm">
+            <Anchor<"a"> href="Forgot" size="sm">
               Forgot password?
-            </Core.Anchor>
-          </Core.Group>
-          <Core.Button type="submit" fullWidth mt="xl" disabled={submitted}>
+            </Anchor>
+          </Group>
+          <Button type="submit" fullWidth mt="xl" disabled={submitted}>
             {submitted ? "Loading..." : "Sign in"}
-          </Core.Button>
-        </Core.Paper>
+          </Button>
+        </Paper>
       </form>
-    </Core.Container>
+    </Container>
   );
 }
