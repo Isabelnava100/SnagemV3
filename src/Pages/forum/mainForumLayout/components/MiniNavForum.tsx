@@ -6,7 +6,7 @@ import "/src/assets/styles/miniNavForum.css";
 
 type ContextType = { active: string | null };
 
-function MiniNavForum() {
+export function MiniNavForum() {
   const { forum: forumName } = useParams();
   const [active, setActive] = useState<string | null>(forumName || links[0].link);
 
@@ -36,7 +36,6 @@ function MiniNavForum() {
     </>
   );
 }
-export default MiniNavForum;
 
 export function useForumLink() {
   return useOutletContext<ContextType>();

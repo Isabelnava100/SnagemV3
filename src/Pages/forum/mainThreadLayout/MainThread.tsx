@@ -12,7 +12,7 @@ function isNumeric(n: any): boolean {
   return !isNaN(parseFloat(n)) && isFinite(n);
 } // function that checks if string is a number
 
-export default function Threads() {
+export function Threads() {
   const { forum, id: thethreadid, page } = useParams();
   const navigate = useNavigate();
   const [allPosts, setAllPosts] = useState<PostsStructure[]>([]);

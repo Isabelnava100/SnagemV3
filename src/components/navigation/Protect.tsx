@@ -4,7 +4,7 @@ type Props = {
   children: JSX.Element;
 };
 
-const Protect = ({ children }: Props) => {
+export const Protect = ({ children }: Props) => {
   const { user } = useAuth();
   // let {pathname} = useLocation();
   // console.log(pathname);
@@ -27,5 +27,3 @@ const Protect = ({ children }: Props) => {
 
   return children;
 };
-
-export default Protect;

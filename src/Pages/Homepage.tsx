@@ -1,4 +1,4 @@
-const HomePage = () => {
+export const HomePage = () => {
   return (
     <div style={{ position: "relative", display: "flex" }}>
       <img
@@ -14,5 +14,3 @@ const HomePage = () => {
     </div>
   );
 };
-
-export default HomePage;

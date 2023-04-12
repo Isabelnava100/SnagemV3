@@ -7,7 +7,7 @@ import useWindowDimensions from "./components/navigation/Screen";
 import { HeaderSearchProps } from "./components/types/typesUsed";
 import { useAuth } from "./context/AuthContext";
 
-function App() {
+export const App = memo(() => {
   const [scroll, scrollTo] = useWindowScroll();
   const { height } = useWindowDimensions();
 
@@ -42,6 +42,4 @@ function App() {
       )}
     </Container>
   );
-}
-
-export default memo(App);
+});
