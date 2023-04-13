@@ -1,7 +1,19 @@
+.mention {
+  border: 1px solid #ffffff;
+  border-radius: 0.4rem;
+  box-decoration-break: clone;
+  padding: 0.1rem 0.3rem;
+}
 
-  .mention {
-    border: 1px solid #ffffff;
-    border-radius: 0.4rem;
-    box-decoration-break: clone;
-    padding: 0.1rem 0.3rem;
-  }
+.ProseMirror > * + * {
+  margin-top: 0.75em;
+}
+
+.ProseMirror img {
+  height: auto;
+  max-width: 100%;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 1px solid #ac5dab;
+}
