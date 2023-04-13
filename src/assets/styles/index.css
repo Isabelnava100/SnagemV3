@@ -22,6 +22,11 @@ option,
 select {
   max-width: 400px;
 }
+
+.auto-width {
+  max-width: none !important;
+}
+
 a {
   color: #ddd6fe !important;
 }

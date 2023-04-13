@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./assets/styles/index.css";
 
 import React from "react";
+import { Loader } from "./components/navigation/loading";
 import { theme } from "./lib/mantine";
 import { lazyImport } from "./utils/lazyImport";
 
@@ -44,7 +45,7 @@ export default function AppRoutes() {
       <ForumProvider>
         <MantineProvider theme={theme} withGlobalStyles withNormalizeCSS>
           <BrowserRouter>
-            <React.Suspense fallback={<></>}>
+            <React.Suspense fallback={<Loader />}>
               <Routes>
                 <Route path="/" element={<App />}>
                   <Route index element={<HomePage />} />
