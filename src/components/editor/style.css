@@ -17,3 +17,17 @@
 .ProseMirror img.ProseMirror-selectednode {
   outline: 1px solid #ac5dab;
 }
+
+.inline-image {
+  display: inline;
+}
+
+.wrap-text-image {
+  float: left;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.break-text-image {
+  display: block;
+}

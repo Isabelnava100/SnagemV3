@@ -5,7 +5,6 @@ import { Link, RichTextEditor } from "@mantine/tiptap";
 import { IconColorPicker } from "@tabler/icons";
 import { Color } from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
-import Image from "@tiptap/extension-image";
 import Mention from "@tiptap/extension-mention";
 import Placeholder from "@tiptap/extension-placeholder";
 import SubScript from "@tiptap/extension-subscript";
@@ -30,8 +29,33 @@ const { UploadAndCropImage } = lazyImport(
   "UploadAndCropImage"
 );
 
+import Image from "@tiptap/extension-image";
 import "../../../components/editor/style.css";
 import "/src/assets/styles/newTopics.css";
+
+const CustomImage = Image.extend({
+  name: "CustomImage",
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      alignment: {
+        default: "inline-image",
+        parseHTML: (element) => ({
+          class: element.getAttribute("alignment"),
+        }),
+        renderHTML: (attributes) => {
+          if (!attributes.alignment) {
+            return {};
+          }
+
+          return {
+            class: attributes.alignment,
+          };
+        },
+      },
+    };
+  },
+});
 
 export function NewTopic() {
   const [opened, { open, close }] = useDisclosure(false);
@@ -58,8 +82,8 @@ export function NewTopic() {
     extensions: [
       StarterKit,
       TextStyle,
+      CustomImage,
       Color,
-      Image,
       Underline,
       Placeholder.configure({ placeholder: "This is placeholder" }),
       Link,
@@ -118,6 +142,8 @@ export function NewTopic() {
   const handleMention = () => {
     editor?.chain().focus().insertContent("@").run();
   };
+
+  if (!editor) return <></>;
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
@@ -253,6 +279,38 @@ export function NewTopic() {
                         onClick={handleMention}
                       >
                         @
+                      </RichTextEditor.Control>
+                    </RichTextEditor.ControlsGroup>
+                    <RichTextEditor.ControlsGroup>
+                      <RichTextEditor.Control
+                        onClick={() => {
+                          editor
+                            .chain()
+                            .updateAttributes("CustomImage", { alignment: "inline-image" })
+                            .run();
+                        }}
+                      >
+                        Inline
+                      </RichTextEditor.Control>
+                      <RichTextEditor.Control
+                        onClick={() => {
+                          editor
+                            .chain()
+                            .updateAttributes("CustomImage", { alignment: "wrap-text-image" })
+                            .run();
+                        }}
+                      >
+                        Wrap
+                      </RichTextEditor.Control>
+                      <RichTextEditor.Control
+                        onClick={() => {
+                          editor
+                            .chain()
+                            .updateAttributes("CustomImage", { alignment: "break-text-image" })
+                            .run();
+                        }}
+                      >
+                        Break
                       </RichTextEditor.Control>
                     </RichTextEditor.ControlsGroup>
                   </RichTextEditor.Toolbar>
