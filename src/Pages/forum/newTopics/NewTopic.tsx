@@ -2,10 +2,9 @@ import { Container, Group, Paper, Select, Text, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, RichTextEditor } from "@mantine/tiptap";
-import { IconColorPicker, IconPictureInPictureOn } from "@tabler/icons";
+import { IconColorPicker } from "@tabler/icons";
 import { Color } from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
-import Image from "@tiptap/extension-image";
 import Mention from "@tiptap/extension-mention";
 import Placeholder from "@tiptap/extension-placeholder";
 import SubScript from "@tiptap/extension-subscript";
@@ -15,24 +14,54 @@ import TextStyle from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback } from "react";
+import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import EmojiModal from "../../../components/editor/EmojiModal";
 import suggestion from "../../../components/editor/Suggestion";
 import { NewForumInfo } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
+import { lazyImport } from "../../../utils/lazyImport";
 import { ButtonProgress } from "../reusable-components/LoadingButton";
 import { filteredData } from "../reusable-components/checkPermsForum";
 import { handleSubmit } from "./components/handleSubmitTopic";
+const { UploadAndCropImage } = lazyImport(
+  () => import("../../../components/crop-image/UploadAndCropImage"),
+  "UploadAndCropImage"
+);
 
+import Image from "@tiptap/extension-image";
 import "../../../components/editor/style.css";
-
-import CropImgModal from "../../../components/crop-image/cropImgModal";
+import BreakIcon from "/src/assets/icons/break_icon.png";
+import InlineIcon from "/src/assets/icons/inline_icon.png";
+import WrapIcon from "/src/assets/icons/wrap_icon.png";
 import "/src/assets/styles/newTopics.css";
+
+const CustomImage = Image.extend({
+  name: "CustomImage",
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      alignment: {
+        default: "inline-image",
+        parseHTML: (element) => ({
+          class: element.getAttribute("alignment"),
+        }),
+        renderHTML: (attributes) => {
+          if (!attributes.alignment) {
+            return {};
+          }
+
+          return {
+            class: attributes.alignment,
+          };
+        },
+      },
+    };
+  },
+});
 
 export function NewTopic() {
   const [opened, { open, close }] = useDisclosure(false);
-  const [openedCropImg, { open: openCropImg, close: closeCropImg }] = useDisclosure(false);
   const { forum } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -56,8 +85,8 @@ export function NewTopic() {
     extensions: [
       StarterKit,
       TextStyle,
+      CustomImage,
       Color,
-      Image,
       Underline,
       Placeholder.configure({ placeholder: "This is placeholder" }),
       Link,
@@ -72,9 +101,6 @@ export function NewTopic() {
         suggestion,
       }),
     ],
-    // onUpdate: useCallback((props: { editor: { getHTML: () => string; }; }) => {
-    //   form.setFieldValue('firstpost', props.editor.getHTML());
-    // }, [form]),
     onUpdate: (props) => {
       form.setFieldValue("firstpost", props.editor.getHTML());
     },
@@ -86,8 +112,6 @@ export function NewTopic() {
     postas: any;
     firstpost: any;
   }) => {
-    // console.log(values.forum2);
-
     try {
       const success = await handleSubmit(
         values.title,
@@ -109,16 +133,6 @@ export function NewTopic() {
     } //add to all promises
   };
 
-  // ADD IMAGE
-  const addImage = useCallback(() => {
-    // const url = window.prompt('URL');
-    // if (url) {
-    //   editor?.chain().focus().setImage({ src: url }).run()
-    // }
-
-    openCropImg();
-  }, [editor]);
-
   // INSERT EMOJI
   const insertEmoji = (emoji: { emoji: string }) => {
     if (emoji) {
@@ -126,10 +140,13 @@ export function NewTopic() {
     }
     close();
   };
+
   // MENTION USER
   const handleMention = () => {
     editor?.chain().focus().insertContent("@").run();
   };
+
+  if (!editor) return <></>;
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
@@ -159,50 +176,29 @@ export function NewTopic() {
                 required
               />
 
-              {/* <Textarea
-
-            mt="md" mb="md"
-            label="Short Description"
-            placeholder="This short description will show up under the title name, it's optional."
-            minRows={3}
-          /> */}
               <Select
                 data={filteredData(user)}
                 mb="md"
-                // value={valueForm} onChange={checkNewThread}
                 label="Forum"
                 {...form.getInputProps("forum2")}
                 placeholder="Choose location of the topic"
                 required
               />
 
-              {/* <Select
-            data={data} mb="md"
-            label="Post As"
-            placeholder="Choose your character "
-            required
-          /> */}
               <TextInput
                 label="Post As"
                 {...form.getInputProps("postas")}
                 placeholder="Write the Name of your Character"
                 required
               />
-
-              {/* <Select
-            data={data} mb="md"
-            label="With"            
-            placeholder="Choose your team"
-            required
-          /> */}
             </div>
 
             <div className="formNewTopic">
               <Text size="lg" weight={700} className="titleNewTopic">
-                First Post <span className="text-red-600">*</span>
+                First Post <sup className="text-red-600">*</sup>
               </Text>
 
-              <div>
+              <React.Suspense fallback={<></>}>
                 <RichTextEditor editor={editor}>
                   <RichTextEditor.Toolbar>
                     <RichTextEditor.ColorPicker
@@ -248,8 +244,6 @@ export function NewTopic() {
                       <RichTextEditor.Underline />
                       <RichTextEditor.Strikethrough />
                       <RichTextEditor.ClearFormatting />
-                      {/* <RichTextEditor.Highlight />
-          <RichTextEditor.Code /> */}
                     </RichTextEditor.ControlsGroup>
 
                     <RichTextEditor.ControlsGroup>
@@ -274,19 +268,12 @@ export function NewTopic() {
                     </RichTextEditor.ControlsGroup>
 
                     <RichTextEditor.ControlsGroup>
-                      <RichTextEditor.Control
-                        onClick={addImage}
-                        aria-label="Insert image"
-                        title="Insert image"
-                      >
-                        <IconPictureInPictureOn stroke={1.5} size={16} />
-                      </RichTextEditor.Control>
+                      <UploadAndCropImage editor={editor} />
                       <RichTextEditor.Control
                         onClick={() => open()}
                         aria-label="Insert emoji"
                         title="Insert emoji"
                       >
-                        {/* <Icon360 stroke={1.5} size={16} /> */}
                         😘
                       </RichTextEditor.Control>
                       <RichTextEditor.Control
@@ -297,16 +284,53 @@ export function NewTopic() {
                         @
                       </RichTextEditor.Control>
                     </RichTextEditor.ControlsGroup>
+                    <RichTextEditor.ControlsGroup>
+                      <RichTextEditor.Control
+                        aria-label="Inline image"
+                        title="Inline image"
+                        onClick={() => {
+                          editor
+                            .chain()
+                            .updateAttributes("CustomImage", { alignment: "inline-image" })
+                            .run();
+                        }}
+                      >
+                        <img src={InlineIcon} alt="inline icon" />
+                      </RichTextEditor.Control>
+                      <RichTextEditor.Control
+                        aria-label="Wrap text"
+                        title="Wrap text"
+                        onClick={() => {
+                          editor
+                            .chain()
+                            .updateAttributes("CustomImage", { alignment: "wrap-text-image" })
+                            .run();
+                        }}
+                      >
+                        <img src={WrapIcon} alt="wrap icon" />
+                      </RichTextEditor.Control>
+                      <RichTextEditor.Control
+                        aria-label="Break text" 
+                        title="Break text"
+                        onClick={() => {
+                          editor
+                            .chain()
+                            .updateAttributes("CustomImage", { alignment: "break-text-image" })
+                            .run();
+                        }}
+                      >
+                        <img src={BreakIcon} alt="break icon" />
+                      </RichTextEditor.Control>
+                    </RichTextEditor.ControlsGroup>
                   </RichTextEditor.Toolbar>
 
                   <EmojiModal opened={opened} close={close} insertEmoji={insertEmoji} />
-                  <CropImgModal opened={openedCropImg} close={closeCropImg} editor={editor} />
                   <RichTextEditor.Content />
                 </RichTextEditor>
                 <Group position="right" mt="md">
                   <ButtonProgress formCheck={!formTheCheck} />
                 </Group>
-              </div>
+              </React.Suspense>
             </div>
           </div>
         </Paper>
