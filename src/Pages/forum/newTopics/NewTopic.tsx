@@ -31,6 +31,9 @@ const { UploadAndCropImage } = lazyImport(
 
 import Image from "@tiptap/extension-image";
 import "../../../components/editor/style.css";
+import BreakIcon from "/src/assets/icons/break_icon.png";
+import InlineIcon from "/src/assets/icons/inline_icon.png";
+import WrapIcon from "/src/assets/icons/wrap_icon.png";
 import "/src/assets/styles/newTopics.css";
 
 const CustomImage = Image.extend({
@@ -283,6 +286,7 @@ export function NewTopic() {
                     </RichTextEditor.ControlsGroup>
                     <RichTextEditor.ControlsGroup>
                       <RichTextEditor.Control
+                        aria-label="Inline image"
                         onClick={() => {
                           editor
                             .chain()
@@ -290,9 +294,10 @@ export function NewTopic() {
                             .run();
                         }}
                       >
-                        Inline
+                        <img src={InlineIcon} alt="inline icon" />
                       </RichTextEditor.Control>
                       <RichTextEditor.Control
+                        aria-label="Wrap text"
                         onClick={() => {
                           editor
                             .chain()
@@ -300,9 +305,10 @@ export function NewTopic() {
                             .run();
                         }}
                       >
-                        Wrap
+                        <img src={WrapIcon} alt="wrap icon" />
                       </RichTextEditor.Control>
                       <RichTextEditor.Control
+                        aria-label="Break text"
                         onClick={() => {
                           editor
                             .chain()
@@ -310,7 +316,7 @@ export function NewTopic() {
                             .run();
                         }}
                       >
-                        Break
+                        <img src={BreakIcon} alt="break icon" />
                       </RichTextEditor.Control>
                     </RichTextEditor.ControlsGroup>
                   </RichTextEditor.Toolbar>

@@ -17,12 +17,11 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: numbe
 interface propsType {
   editor: Editor | null;
   src: string;
-  blobUrlRef: React.MutableRefObject<string>;
   close: () => void;
 }
 
 export default function CropImg(props: propsType) {
-  const { editor, src, blobUrlRef, close } = props;
+  const { editor, src, close } = props;
 
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
@@ -32,6 +31,7 @@ export default function CropImg(props: propsType) {
 
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const blobUrlRef = React.useRef("");
 
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     if (aspect) {

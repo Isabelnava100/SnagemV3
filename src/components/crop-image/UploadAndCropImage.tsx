@@ -27,7 +27,6 @@ export function UploadAndCropImage(props: CropImageModalProps) {
   const [imgSrc, setImgSrc] = React.useState("");
   const [imgURLInput, setImgURLInput] = React.useState("");
   const [debouncedImgURL] = useDebouncedValue(imgURLInput, 500);
-  const blobUrlRef = React.useRef("");
 
   const handleFileSelect: FileInputProps["onChange"] = (payload) => {
     const file = payload;
@@ -55,7 +54,6 @@ export function UploadAndCropImage(props: CropImageModalProps) {
     if (!opened) {
       setImgSrc("");
       setImgURLInput("");
-      blobUrlRef.current = "";
     }
   }, [opened]);
 
@@ -99,7 +97,7 @@ export function UploadAndCropImage(props: CropImageModalProps) {
               </Stack>
             </Stack>
           }
-          fallback={<CropImg editor={editor} src={imgSrc} blobUrlRef={blobUrlRef} close={close} />}
+          fallback={<CropImg editor={editor} src={imgSrc} close={close} />}
         />
       </Modal>
     </React.Fragment>
