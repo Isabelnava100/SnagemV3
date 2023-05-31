@@ -1,4 +1,4 @@
-import { LoadingOverlay } from "@mantine/core";
+import { Center, Loader as CoreLoader, LoadingOverlay } from "@mantine/core";
 
 export default function LoadingSpinner() {
   return (
@@ -12,4 +12,12 @@ export default function LoadingSpinner() {
 
 export function Loader() {
   return <LoadingOverlay visible loader={<LoadingSpinner />} />;
+}
+
+export function SectionLoader() {
+  return (
+    <Center w="100%" h="100%" py={20}>
+      <CoreLoader />
+    </Center>
+  );
 }
