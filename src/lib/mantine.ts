@@ -16,6 +16,8 @@ export const theme: MantineThemeOverride = {
       "#2A0229",
     ],
     pink: ["#E35C65", "#B1446D", "#7E2C75"],
+    violet: ["#4D14C4"],
+    cyan: ["#12B7B6"],
   },
   primaryColor: "brand",
   white: "#FFFFFF",

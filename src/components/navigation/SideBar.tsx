@@ -8,7 +8,7 @@ import "/src/assets/styles/navigation.css";
 function SingleLink(props: { label?: string; link?: string; icon: string }) {
   const { label, link, icon } = props;
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
-  const { isOverSm } = useMediaQuery();
+  const { isOverSm, isOverMd } = useMediaQuery();
   return (
     <div>
       {label?.length === 0 ? (
@@ -19,6 +19,7 @@ function SingleLink(props: { label?: string; link?: string; icon: string }) {
           style={({ isActive }) => {
             return {
               display: "flex",
+              height: "100%",
               flexDirection: "column",
               paddingTop: 15,
               paddingBottom: 15,
@@ -31,9 +32,9 @@ function SingleLink(props: { label?: string; link?: string; icon: string }) {
               background: isActive
                 ? "linear-gradient(180deg, #912691 41.15%, #4D14C4 90.1%)"
                 : undefined,
-              borderTopRightRadius: isOverSm ? 30 : 15,
-              borderTopLeftRadius: isOverSm ? 0 : 15,
-              borderBottomRightRadius: isOverSm ? 30 : 0,
+              borderTopRightRadius: isOverMd ? 30 : 15,
+              borderTopLeftRadius: isOverMd ? 0 : 15,
+              borderBottomRightRadius: isOverMd ? 30 : 0,
             };
           }}
         >

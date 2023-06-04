@@ -2,7 +2,6 @@ import {
   ActionIcon,
   Avatar,
   Box,
-  Button,
   Flex,
   Group,
   Image,
@@ -22,6 +21,7 @@ import BackgroundImage from "../../../assets/images/dashboard-background.jpg";
 import PokemonImage from "../../../assets/images/sylveon.svg";
 import SectionWrapper, { ActionButton } from "../../../components/Dashboard/SectionWrapper";
 import { Conditional } from "../../../components/common/Conditional";
+import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { useAuth } from "../../../context/AuthContext";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
@@ -146,7 +146,7 @@ function TabsPanel() {
     <SectionWrapper
       title="Tabs"
       customHeader={
-        <Paper bg="#4C4B4C">
+        <Paper bg="#3C3A3C">
           <Flex align="center" justify="start" gap={isOverMd ? 45 : 0}>
             {dashboardTabLinks.map((link) => {
               const linkPath = `/Dashboard${link.path}`;
@@ -212,14 +212,9 @@ function Announcements() {
             Please go here to create a character and start your journey with Snagem!
           </Text>
           <Box>
-            <Button
-              variant="gradient"
-              radius={10}
-              fullWidth={!isOverMd}
-              gradient={{ from: theme.colors.pink[2], to: theme.colors.pink[0] }}
-            >
+            <GradientButtonPrimary fullWidth={!isOverMd}>
               Create Your First Character
-            </Button>
+            </GradientButtonPrimary>
           </Box>
         </Stack>
       </Flex>

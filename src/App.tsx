@@ -1,14 +1,17 @@
-import { Box, Flex, Paper } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
+import { ActionIcon, Box, Flex, Image, Paper, Title } from "@mantine/core";
+import { useMediaQuery as useMediaQueryCore } from "@mantine/hooks";
 import { memo } from "react";
 import { Outlet } from "react-router-dom";
 import { SideBar } from "./components/navigation/SideBar";
 import { useAuth } from "./context/AuthContext";
+import useMediaQuery from "./hooks/useMediaQuery";
+import { Bell } from "./icons";
 
 export const App = memo(() => {
   const { user } = useAuth();
   const loginName = user ? "Profile" : "Login";
-  const isUnder900 = useMediaQuery("(max-width: 900px)");
+  const isUnder900 = useMediaQueryCore("(max-width: 900px)");
+  const { isOverMd } = useMediaQuery();
 
   return (
     <Box
@@ -64,6 +67,16 @@ export const App = memo(() => {
             <Outlet />
           </Paper>
         </div>
+        {!isOverMd && (
+          <Flex align="center" mih={65} px={17} justify="space-between" bg="#1E1E1E" w="100%">
+            <Title order={4} size={20} color="white">
+              Welcome, {user?.displayName}
+            </Title>
+            <ActionIcon variant="transparent" size={35} h="auto">
+              <Image src={Bell} w={35} />
+            </ActionIcon>
+          </Flex>
+        )}
       </Flex>
     </Box>
   );

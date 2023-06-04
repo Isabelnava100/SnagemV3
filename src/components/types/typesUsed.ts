@@ -190,3 +190,18 @@ export interface Draft {
   thread_id: string;
   title_thread: string;
 }
+
+export interface Character {
+  id: string;
+  age: string;
+  birthday: string;
+  height: string;
+  moveset: string;
+  name: string;
+  short_description: string;
+  species: string;
+  type: "None" | "Hybrid" | "Channeler";
+  imageURL: string;
+}
+
+export const characterTypes = ["None", "Hybrid", "Channeler"];

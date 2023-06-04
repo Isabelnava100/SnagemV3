@@ -1,4 +1,4 @@
-import { Currencies, Draft, Item } from "../components/types/typesUsed";
+import { Character, Currencies, Draft, Item } from "../components/types/typesUsed";
 import { db } from "../context/firebase";
 
 export const getCurrencies = async (uid: string): Promise<Currencies> => {
@@ -36,4 +36,17 @@ export const getDrafts = async (uid: string): Promise<Draft[]> => {
   });
 
   return data;
+};
+
+export const getCharacters = async (uid: string) => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  const data = (await getDoc(doc(db, "users", uid, "bag", "characters"))).data() as Record<
+    string,
+    Character
+  >;
+  const formattedData = Object.keys(data).map((key) => {
+    const character = data[key] as Character;
+    return { ...character, id: key };
+  }) as Character[];
+  return formattedData;
 };

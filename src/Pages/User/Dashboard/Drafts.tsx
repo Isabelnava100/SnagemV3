@@ -29,10 +29,14 @@ export default function Drafts() {
 }
 
 function SingleDraft(props: Draft) {
-  const { isOverLg } = useMediaQuery();
+  const { isOverSm } = useMediaQuery();
   return (
     <Paper bg="#3E3D3D" radius={15} py={0} sx={{ overflow: "hidden" }}>
-      <Flex justify="space-between" align="start">
+      <Flex
+        justify="space-between"
+        sx={{ flexDirection: isOverSm ? "row" : "column" }}
+        align="start"
+      >
         <Stack py={10} px={18}>
           <Title order={3} size={20} color="white">
             {props.title_thread}
@@ -40,17 +44,30 @@ function SingleDraft(props: Draft) {
         </Stack>
         <Stack
           bg={props.color}
-          sx={{ borderTopLeftRadius: 100 }}
-          align="end"
-          px={isOverLg ? 20 : 10}
-          py={10}
+          sx={{
+            borderTopLeftRadius: isOverSm ? 100 : undefined,
+            borderRadius: isOverSm ? undefined : 15,
+          }}
+          align={isOverSm ? "end" : undefined}
+          px={isOverSm ? 20 : undefined}
+          py={isOverSm ? 10 : undefined}
+          w={isOverSm ? undefined : "100%"}
         >
-          <Image src={Edit} alt="Draft icon" width={45} />
-          <Text align="end" color="white">
-            Draft saved at
-            <br />
-            {formatter.format(new Date(props.date_saved.seconds))}
-          </Text>
+          <Flex
+            justify="center"
+            sx={{ flexDirection: isOverSm ? "column" : "row-reverse" }}
+            align={isOverSm ? "end" : "center"}
+            px={7}
+            py={8}
+            gap={isOverSm ? 10 : 15}
+          >
+            <Image src={Edit} alt="Draft icon" width={45} />
+            <Text align="end" color="white">
+              Draft saved at:
+              <br />
+              {formatter.format(new Date(props.date_saved.seconds))}
+            </Text>
+          </Flex>
         </Stack>
       </Flex>
     </Paper>
