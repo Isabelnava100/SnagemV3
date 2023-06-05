@@ -202,6 +202,10 @@ export interface Character {
   species: string;
   type: "None" | "Hybrid" | "Channeler";
   imageURL: string;
+  createdAt: {
+    nt: number;
+    seconds: number;
+  };
 }
 
 export const characterTypes = ["None", "Hybrid", "Channeler"];

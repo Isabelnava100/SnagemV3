@@ -1,6 +1,8 @@
 import {
   Avatar,
+  Button,
   Flex,
+  Group,
   Image,
   Paper,
   Select,
@@ -11,8 +13,9 @@ import {
   Title,
 } from "@mantine/core";
 import { UseFormReturnType, useForm } from "@mantine/form";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { v4 as uuid } from "uuid";
 import DefaultCharacterImage from "../../../assets/images/character-default.jpg";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
@@ -44,8 +47,51 @@ export default function Characters() {
   );
 }
 
+function useUpdateOrAddDocument(documentId?: string) {
+  const { user } = useAuth();
+  const mutation = useMutation({
+    mutationFn: async ({ values }: { values?: Omit<Character, "id"> }) => {
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("../../../context/firebase");
+
+      const docRef = doc(db, "users", user?.uid as string, "bag", "characters");
+      await updateDoc(docRef, {
+        [documentId || uuid()]: values || {
+          age: "",
+          birthday: "",
+          height: "",
+          moveset: "",
+          name: "No name",
+          short_description: "",
+          species: "",
+          type: "None",
+          imageURL: "",
+          createdAt: new Date(),
+        },
+      });
+    },
+  });
+  return mutation;
+}
+
 function CreateNewCharacter() {
-  return <GradientButtonSecondary>Create a new Character</GradientButtonSecondary>;
+  const { mutateAsync, isLoading } = useUpdateOrAddDocument();
+  const queryClient = useQueryClient();
+
+  const handleClick = async () => {
+    try {
+      await mutateAsync({});
+      await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
+    } catch (err) {
+      //
+    }
+  };
+
+  return (
+    <GradientButtonSecondary onClick={handleClick} loading={isLoading}>
+      Create a new Character
+    </GradientButtonSecondary>
+  );
 }
 
 type FormFields = Omit<Character, "id">;
@@ -67,7 +113,7 @@ function InputWrapper(props: {
         </Text>
         {!isEditing ? (
           <Text py={7} lineClamp={1} color="white" px={2}>
-            {form.values[name as keyof FormFields]}
+            {form.values[name as keyof FormFields].toString()}
           </Text>
         ) : inputType === "input" ? (
           <TextInput sx={{ flex: 1 }} radius={8} {...form.getInputProps(name)} />
@@ -90,9 +136,9 @@ function TextareaWrapper(props: {
   name: keyof FormFields;
   isEditing: boolean;
   isMoveSet?: boolean;
-  characterType?: Character["type"];
 }) {
-  const { title, isEditing, isMoveSet = false, characterType, form, name } = props;
+  const { title, isEditing, isMoveSet = false, form, name } = props;
+  const characterType = form.values.type;
 
   if (isEditing) {
     if (isMoveSet) {
@@ -116,9 +162,9 @@ function TextareaWrapper(props: {
       <Text color="white">
         {isMoveSet
           ? characterType === "Channeler" || characterType === "Hybrid"
-            ? value
+            ? value.toString()
             : "This option is only available to Hybrids and Channelers."
-          : value}
+          : value.toString()}
       </Text>
     </Stack>
   );
@@ -129,10 +175,16 @@ function SingleCharacter(props: Character) {
   const form = useForm<FormFields>({
     initialValues: { ...props },
   });
+  const { mutateAsync, isLoading } = useUpdateOrAddDocument(props.id);
   const { isOverSm } = useMediaQuery();
+  const queryClient = useQueryClient();
+
   const handleSaveChanges = async () => {
+    await mutateAsync({ values: form.values });
+    await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
     setEditing(false);
   };
+
   return (
     <Stack
       bg="#3E3D3D"
@@ -177,9 +229,25 @@ function SingleCharacter(props: Character) {
                   Edit
                 </GradientButtonPrimary>
               ) : (
-                <GradientButtonSecondary fullWidth={!isOverSm} onClick={handleSaveChanges}>
-                  Save Your Changes
-                </GradientButtonSecondary>
+                <Group>
+                  <Button
+                    color="gray"
+                    variant="light"
+                    onClick={() => {
+                      form.reset();
+                      setEditing(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <GradientButtonSecondary
+                    loading={isLoading}
+                    fullWidth={!isOverSm}
+                    onClick={handleSaveChanges}
+                  >
+                    Save Your Changes
+                  </GradientButtonSecondary>
+                </Group>
               ))}
           </Flex>
           <Flex
@@ -206,7 +274,6 @@ function SingleCharacter(props: Character) {
               <TextareaWrapper
                 name="moveset"
                 isMoveSet
-                characterType={props.type}
                 form={form}
                 isEditing={isEditing}
                 title="Moveset"
@@ -225,7 +292,11 @@ function SingleCharacter(props: Character) {
                 Edit
               </GradientButtonPrimary>
             ) : (
-              <GradientButtonSecondary fullWidth={!isOverSm} onClick={handleSaveChanges}>
+              <GradientButtonSecondary
+                loading={isLoading}
+                fullWidth={!isOverSm}
+                onClick={handleSaveChanges}
+              >
                 Save Your Changes
               </GradientButtonSecondary>
             ))}
