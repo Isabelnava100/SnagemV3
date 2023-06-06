@@ -330,8 +330,8 @@ function Currency(props: { amount: string; name: string; color: string; icon: st
   const { amount, name, color, icon } = props;
   return (
     <Paper bg={color} radius={8}>
-      <Flex align="center" justify="start" px={10} gap={10}>
-        <Image src={icon} alt="Icon" width={60} />
+      <Flex align="baseline" justify="start" px={10} py={5} gap={10}>
+        <Image src={icon} mt={-100} alt="Icon" width={60} />
         <Text color="white" size={32}>
           {amount.padStart(3, "0")}
         </Text>
