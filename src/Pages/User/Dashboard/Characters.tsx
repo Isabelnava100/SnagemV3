@@ -88,7 +88,7 @@ function CreateNewCharacter() {
   };
 
   return (
-    <GradientButtonSecondary onClick={handleClick} loading={isLoading}>
+    <GradientButtonSecondary id="create-character-button" onClick={handleClick} loading={isLoading}>
       Create a new Character
     </GradientButtonSecondary>
   );

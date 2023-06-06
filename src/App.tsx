@@ -64,7 +64,7 @@ export const App = memo(() => {
               overflowX: "hidden",
             }}
           >
-            <Box sx={{ width: "100%", height: "100%", overflowX: "hidden" }}>
+            <Box sx={{ width: "100%", height: "100%", overflowX: "hidden" }} id="app-layout-main">
               <Outlet />
             </Box>
           </Paper>

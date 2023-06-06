@@ -15,7 +15,7 @@ import {
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { Link } from "react-router-dom";
 import BackgroundImage from "../../../assets/images/dashboard-background.jpg";
 import ItemsBackground from "../../../assets/images/items-background.png";
@@ -192,6 +192,16 @@ function TabsPanel() {
 function Announcements() {
   const theme = useMantineTheme();
   const { isOverMd } = useMediaQuery();
+  const navigate = useNavigate();
+  const handleClick = () => {
+    const nestedElement = document.querySelector("#app-layout-main");
+    if (nestedElement) {
+      navigate("/Dashboard/Characters");
+      setTimeout(() => {
+        nestedElement.scrollTo(0, nestedElement.scrollHeight);
+      }, 500);
+    }
+  };
   return (
     <SectionWrapper
       title="Important Announcement!"
@@ -213,7 +223,7 @@ function Announcements() {
             Please go here to create a character and start your journey with Snagem!
           </Text>
           <Box>
-            <GradientButtonPrimary fullWidth={!isOverMd}>
+            <GradientButtonPrimary onClick={handleClick} fullWidth={!isOverMd}>
               Create Your First Character
             </GradientButtonPrimary>
           </Box>
