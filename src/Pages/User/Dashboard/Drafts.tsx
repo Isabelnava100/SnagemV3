@@ -51,6 +51,7 @@ function SingleDraft(props: Draft) {
           align={isOverSm ? "end" : undefined}
           px={isOverSm ? 20 : undefined}
           py={isOverSm ? 10 : undefined}
+          miw={200}
           w={isOverSm ? undefined : "100%"}
         >
           <Flex
