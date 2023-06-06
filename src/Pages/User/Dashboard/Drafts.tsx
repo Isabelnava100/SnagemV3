@@ -1,4 +1,4 @@
-import { Flex, Image, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import { ActionIcon, Flex, Image, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Draft } from "../../../components/types/typesUsed";
@@ -61,7 +61,9 @@ function SingleDraft(props: Draft) {
             py={8}
             gap={isOverSm ? 10 : 15}
           >
-            <Image src={Edit} alt="Draft icon" width={45} />
+            <ActionIcon variant="transparent" size="xl">
+              <Image src={Edit} alt="Draft icon" width={45} />
+            </ActionIcon>
             <Text align="end" color="white">
               Draft saved at:
               <br />

@@ -191,7 +191,7 @@ function TabsPanel() {
 
 function Announcements() {
   const theme = useMantineTheme();
-  const { isOverMd } = useMediaQuery();
+  const { isOverMd, isOverLg } = useMediaQuery();
   const navigate = useNavigate();
   const handleClick = () => {
     const nestedElement = document.querySelector("#app-layout-main");
@@ -208,13 +208,13 @@ function Announcements() {
       style={{ overflow: "visible" }}
       action={<ActionButton action={() => {}}>Mark as Read</ActionButton>}
     >
-      <Flex pos="relative">
-        {isOverMd && (
-          <Box pos="absolute" top={-200} sx={{ zIndex: 3 }} right={200}>
+      <Flex direction="row-reverse" justify="space-between">
+        {isOverLg && (
+          <Box mt={-230} mr={100}>
             <Image src={PokemonImage} alt="Sylveon" />
           </Box>
         )}
-        <Stack>
+        <Stack sx={{ flex: 1 }}>
           <Text>
             Welcome to the Snagem Guild! We truly appreciate your stay.
             <br />
