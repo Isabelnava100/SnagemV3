@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import BackgroundImage from "../../../assets/images/dashboard-background.jpg";
+import ItemsBackground from "../../../assets/images/items-background.png";
 import PokemonImage from "../../../assets/images/sylveon.svg";
 import SectionWrapper, { ActionButton } from "../../../components/Dashboard/SectionWrapper";
 import { Conditional } from "../../../components/common/Conditional";
@@ -266,17 +267,30 @@ function MyItems() {
           </Text>
         }
         fallback={
-          <ScrollArea>
-            <Flex mah={260} maw={500} gap={25} sx={{ flexWrap: "nowrap" }}>
+          <ScrollArea
+            sx={{
+              background: `url(${ItemsBackground})`,
+              backgroundSize: 250,
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <Flex
+              mah={260}
+              maw={500}
+              gap={25}
+              sx={{
+                flexWrap: "nowrap",
+              }}
+            >
               {categories.map((categoryName) => (
                 <Stack key={categoryName} miw={330}>
-                  <Title order={3} size={isOverLg ? 24 : 20} sx={itemCommonStyle} bg="#7E2C75">
+                  <Title order={3} size={isOverLg ? 24 : 20} sx={itemCommonStyle} bg="#7e2c75a1">
                     {categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}
                   </Title>
                   {data
                     ?.filter((item) => item.category === categoryName)
                     .map((item, index) => (
-                      <Box key={index} bg="#3E3D3D" sx={itemCommonStyle}>
+                      <Box key={index} bg="#3e3d3dba" sx={itemCommonStyle}>
                         <Flex w="100%" justify="space-between" align="center">
                           <Group spacing={8}>
                             <Avatar src={item.image_url} alt={item.name} w={40} />
