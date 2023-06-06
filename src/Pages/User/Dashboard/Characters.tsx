@@ -1,10 +1,12 @@
 import {
+  ActionIcon,
   Avatar,
   Button,
   Flex,
   Group,
   Image,
   Paper,
+  Popover,
   Select,
   Stack,
   Text,
@@ -13,6 +15,8 @@ import {
   Title,
 } from "@mantine/core";
 import { UseFormReturnType, useForm } from "@mantine/form";
+import { useDisclosure } from "@mantine/hooks";
+import { IconTrash } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { v4 as uuid } from "uuid";
@@ -37,9 +41,10 @@ export default function Characters() {
 
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
+  const { sortedData } = data;
   return (
     <Stack align="end">
-      {data.map((character) => (
+      {sortedData.map((character) => (
         <SingleCharacter key={character.id} {...character} />
       ))}
       <CreateNewCharacter />
@@ -170,6 +175,62 @@ function TextareaWrapper(props: {
   );
 }
 
+function DeleteCharacter(props: { characterId: string }) {
+  const { characterId } = props;
+  const [opened, { close, open }] = useDisclosure(false);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { mutateAsync, isLoading } = useMutation({
+    mutationFn: async ({ characterId }: { characterId: string }) => {
+      const { setDoc, doc, getDoc } = await import("firebase/firestore");
+      const { db } = await import("../../../context/firebase");
+
+      const docRef = doc(db, "users", user?.uid as string, "bag", "characters");
+      const {
+        rawData: { [characterId]: documentToBeDeleted, ...rest },
+      } = await getCharacters(user?.uid as string);
+
+      await setDoc(docRef, {
+        ...rest,
+      });
+    },
+  });
+
+  const handleDelete = async () => {
+    try {
+      await mutateAsync({ characterId });
+      close();
+      await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
+    } catch (err) {
+      //
+    }
+  };
+
+  return (
+    <Popover withArrow opened={opened} onClose={close}>
+      <Popover.Target>
+        <ActionIcon onClick={open} color="red" variant="transparent">
+          <IconTrash size={20} />
+        </ActionIcon>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <Stack>
+          <Text>Are you sure, you want to delete this character?</Text>
+          <Group>
+            <Button loading={isLoading} onClick={handleDelete}>
+              Yes
+            </Button>
+            <Button onClick={close} loading={isLoading} color="gray">
+              No
+            </Button>
+          </Group>
+        </Stack>
+      </Popover.Dropdown>
+    </Popover>
+  );
+}
+
 function SingleCharacter(props: Character) {
   const [isEditing, setEditing] = useState(false);
   const form = useForm<FormFields>({
@@ -225,13 +286,16 @@ function SingleCharacter(props: Character) {
             )}
             {isOverSm &&
               (!isEditing ? (
-                <GradientButtonPrimary
-                  rightIcon={<Image src={Edit2} alt="Edit icon" />}
-                  fullWidth={!isOverSm}
-                  onClick={() => setEditing(true)}
-                >
-                  Edit
-                </GradientButtonPrimary>
+                <Group>
+                  <DeleteCharacter characterId={props.id} />
+                  <GradientButtonPrimary
+                    rightIcon={<Image src={Edit2} alt="Edit icon" />}
+                    fullWidth={!isOverSm}
+                    onClick={() => setEditing(true)}
+                  >
+                    Edit
+                  </GradientButtonPrimary>
+                </Group>
               ) : (
                 <Group>
                   <Button

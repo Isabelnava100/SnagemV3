@@ -49,5 +49,5 @@ export const getCharacters = async (uid: string) => {
     return { ...character, id: key };
   }) as Character[];
   const sortedData = formattedData.sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
-  return sortedData;
+  return { sortedData, rawData: data };
 };
