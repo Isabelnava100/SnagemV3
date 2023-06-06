@@ -160,8 +160,8 @@ function TabsPanel() {
                       : undefined,
                     borderTopLeftRadius: 16,
                     borderTopRightRadius: 16,
-                    paddingLeft: 15,
-                    paddingRight: 15,
+                    paddingLeft: 25,
+                    paddingRight: 25,
                     paddingTop: 10,
                     paddingBottom: 10,
                     textDecoration: "none",
@@ -300,15 +300,20 @@ function MyItems() {
                   {data
                     ?.filter((item) => item.category === categoryName)
                     .map((item, index) => (
-                      <Box key={index} bg="#3e3d3dba" sx={itemCommonStyle}>
+                      <Box
+                        key={index}
+                        p={0}
+                        bg="#3e3d3dba"
+                        sx={{ ...itemCommonStyle, overflow: "hidden" }}
+                      >
                         <Flex w="100%" justify="space-between" align="center">
-                          <Group spacing={8}>
+                          <Group px={18} py={10} spacing={8}>
                             <Avatar src={item.image_url} alt={item.name} w={40} />
                             <Text color="white" size={16}>
                               {item.name}
                             </Text>
                           </Group>
-                          <Box>
+                          <Box bg="#525151" py={10} px={20} sx={{ borderTopLeftRadius: 50 }}>
                             <Text color="white" size={isOverLg ? 32 : 28}>
                               x{item.quantity}
                             </Text>
