@@ -24,7 +24,7 @@ import { SectionLoader } from "../../../components/navigation/loading";
 import { Character, characterTypes } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import useMediaQuery from "../../../hooks/useMediaQuery";
-import { Upload } from "../../../icons";
+import { Edit2, Upload } from "../../../icons";
 import { getCharacters } from "../../../queries/dashboard";
 
 export default function Characters() {
@@ -225,7 +225,11 @@ function SingleCharacter(props: Character) {
             )}
             {isOverSm &&
               (!isEditing ? (
-                <GradientButtonPrimary fullWidth={!isOverSm} onClick={() => setEditing(true)}>
+                <GradientButtonPrimary
+                  rightIcon={<Image src={Edit2} alt="Edit icon" />}
+                  fullWidth={!isOverSm}
+                  onClick={() => setEditing(true)}
+                >
                   Edit
                 </GradientButtonPrimary>
               ) : (
