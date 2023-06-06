@@ -64,7 +64,9 @@ export const App = memo(() => {
               overflowX: "hidden",
             }}
           >
-            <Outlet />
+            <Box sx={{ width: "100%", height: "100%", overflowX: "hidden" }}>
+              <Outlet />
+            </Box>
           </Paper>
         </div>
         {!isOverMd && (
