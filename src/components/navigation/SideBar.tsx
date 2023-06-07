@@ -118,7 +118,7 @@ function MobileMenu(props: { links: { link: string; label: string; icon: string 
             paddingRight: 15,
           }}
         >
-          <Image src={Menu} width={40} />
+          <Image src={Menu} width={30} />
         </UnstyledButton>
       </Popover.Target>
       <Popover.Dropdown>
