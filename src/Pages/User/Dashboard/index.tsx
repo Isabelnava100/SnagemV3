@@ -148,7 +148,7 @@ function TabsPanel() {
       title="Tabs"
       customHeader={
         <Paper bg="#3C3A3C">
-          <Flex sx={{ overflowY: "hidden" }} align="center" justify="start" gap={isOverMd ? 45 : 0}>
+          <Flex align="center" justify="start" gap={isOverMd ? 45 : 0}>
             {dashboardTabLinks.map((link) => {
               const linkPath = `/Dashboard${link.path}`;
               const isActive = linkPath === currentPath;
@@ -282,7 +282,6 @@ function MyItems() {
               background: `url(${ItemsBackground})`,
               backgroundSize: 250,
               backgroundRepeat: "no-repeat",
-              paddingBottom: 20,
             }}
           >
             <Flex
@@ -315,7 +314,7 @@ function MyItems() {
                             </Text>
                           </Group>
                           <Box bg="#525151" py={10} px={20} sx={{ borderTopLeftRadius: 50 }}>
-                            <Text color="white" size={isOverLg ? 32 : 24}>
+                            <Text color="white" size={isOverLg ? 32 : 28}>
                               x{item.quantity}
                             </Text>
                           </Box>

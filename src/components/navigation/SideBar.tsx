@@ -8,8 +8,6 @@ import "/src/assets/styles/navigation.css";
 function SingleLink(props: { label?: string; link?: string; icon: string }) {
   const { label, link, icon } = props;
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
-  const hasLessHeight = useCoreMediaQuery("(max-height: 900px)");
-  const hasVeryLessHeight = useCoreMediaQuery("(max-height: 700px)");
   const { isOverSm, isOverMd } = useMediaQuery();
   return (
     <div>
@@ -41,23 +39,7 @@ function SingleLink(props: { label?: string; link?: string; icon: string }) {
           }}
         >
           <Box>
-            <Image
-              src={icon}
-              width={
-                isUnder900
-                  ? hasLessHeight
-                    ? hasVeryLessHeight
-                      ? 30
-                      : 35
-                    : 40
-                  : hasLessHeight
-                  ? hasVeryLessHeight
-                    ? 30
-                    : 35
-                  : undefined
-              }
-              alt={label}
-            />
+            <Image src={icon} width={isUnder900 ? 40 : undefined} alt={label} />
           </Box>
           {!isUnder900 && (
             <Text color="white" transform="uppercase" size={16}>
@@ -77,7 +59,7 @@ export const SideBar = () => {
   const headerLinks = {
     links: [
       { link: "/", label: "Activities", icon: Activities },
-      { link: "/", label: "Missions", icon: Quests },
+      { link: "/", label: "Quests", icon: Quests },
       { link: "/", label: "Shop", icon: Marketplace, mustShow: true },
       { link: "/", label: "Users", icon: Users },
       { link: "/Forum/Main-Forum", label: "Forum", icon: Forum, mustShow: true },
@@ -136,7 +118,7 @@ function MobileMenu(props: { links: { link: string; label: string; icon: string 
             paddingRight: 15,
           }}
         >
-          <Image src={Menu} width={30} />
+          <Image src={Menu} width={40} />
         </UnstyledButton>
       </Popover.Target>
       <Popover.Dropdown>
