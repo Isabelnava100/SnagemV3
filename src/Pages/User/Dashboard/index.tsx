@@ -314,7 +314,7 @@ function MyItems() {
                             </Text>
                           </Group>
                           <Box bg="#525151" py={10} px={20} sx={{ borderTopLeftRadius: 50 }}>
-                            <Text color="white" size={isOverLg ? 32 : 28}>
+                            <Text color="white" size={isOverLg ? 32 : 24}>
                               x{item.quantity}
                             </Text>
                           </Box>
