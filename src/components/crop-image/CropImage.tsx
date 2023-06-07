@@ -15,13 +15,14 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: numbe
 }
 
 interface propsType {
-  editor: Editor | null;
+  editor?: Editor | null;
   src: string;
   close: () => void;
+  setStateAction?: React.Dispatch<React.SetStateAction<Blob | undefined>>;
 }
 
 export default function CropImg(props: propsType) {
-  const { editor, src, close } = props;
+  const { editor, src, close, setStateAction } = props;
 
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
@@ -79,6 +80,9 @@ export default function CropImg(props: propsType) {
       }
       blobUrlRef.current = URL.createObjectURL(blob);
       editor?.chain().focus().setImage({ src: blobUrlRef.current }).run();
+      if (setStateAction) {
+        setStateAction(blob);
+      }
       close();
     });
   }

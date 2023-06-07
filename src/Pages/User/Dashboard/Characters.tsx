@@ -18,12 +18,13 @@ import { UseFormReturnType, useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import { IconTrash } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import DefaultCharacterImage from "../../../assets/images/character-default.jpg";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
+import { UploadAndCropImage } from "../../../components/crop-image/UploadAndCropImage";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Character, characterTypes } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
@@ -231,6 +232,59 @@ function DeleteCharacter(props: { characterId: string }) {
   );
 }
 
+function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }) {
+  const { id, form, ...character } = props;
+  const [fileBlob, setFileBlob] = useState<Blob>();
+  const [isProcessing, setProcessing] = useState(false);
+  const { mutateAsync } = useUpdateOrAddDocument(props.id);
+  const queryClient = useQueryClient();
+
+  const handleAvatarUpload = async () => {
+    if (!fileBlob) return;
+    try {
+      setProcessing(true);
+
+      const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
+      const { storage } = await import("../../../context/firebase");
+
+      const fileName = `${uuid()}.jpg`;
+
+      const storageRef = ref(storage, fileName);
+
+      const res = await uploadBytes(storageRef, fileBlob);
+
+      const imagePublicURL = await getDownloadURL(res.ref);
+
+      form.setFieldValue("imageURL", imagePublicURL);
+
+      setFileBlob(undefined);
+    } catch (err) {
+      //
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (fileBlob) {
+      handleAvatarUpload();
+    }
+    return () => {
+      setFileBlob(undefined);
+    };
+  }, [fileBlob]);
+  return (
+    <UploadAndCropImage
+      setStateAction={setFileBlob}
+      target={
+        <GradientButtonPrimary loading={isProcessing} rightIcon={<Image src={Upload} />}>
+          Upload
+        </GradientButtonPrimary>
+      }
+    />
+  );
+}
+
 function SingleCharacter(props: Character) {
   const [isEditing, setEditing] = useState(false);
   const form = useForm<FormFields>({
@@ -262,13 +316,11 @@ function SingleCharacter(props: Character) {
           <Avatar
             style={{ border: "4px solid #FFFFFF", borderRadius: "100%" }}
             w={150}
-            src={props.imageURL || DefaultCharacterImage}
+            src={form.values.imageURL || DefaultCharacterImage}
             h={150}
             sx={{ objectFit: "cover" }}
           />
-          {isEditing && (
-            <GradientButtonPrimary rightIcon={<Image src={Upload} />}>Upload</GradientButtonPrimary>
-          )}
+          {isEditing && <UploadAvatar form={form} {...props} />}
         </Stack>
         <Stack spacing={isOverSm ? 8 : 16} w="100%">
           <Flex
