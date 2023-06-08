@@ -246,8 +246,9 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
       const { storage } = await import("../../../context/firebase");
 
       const fileName = `${uuid()}.jpg`;
+      const folder = "Avatars";
 
-      const storageRef = ref(storage, fileName);
+      const storageRef = ref(storage, `${folder}/${fileName}`);
 
       const res = await uploadBytes(storageRef, fileBlob);
 
