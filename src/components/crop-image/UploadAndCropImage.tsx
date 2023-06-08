@@ -21,18 +21,20 @@ type CropImageModalProps = {
   editor?: Editor | null;
   target?: React.ReactElement;
   setStateAction?: React.Dispatch<React.SetStateAction<Blob | undefined>>;
+  toggleAspect?: boolean;
 };
 
 export function UploadAndCropImage(props: CropImageModalProps) {
   const [opened, { close, open }] = useDisclosure(false);
   const {
     editor,
+    setStateAction,
+    toggleAspect,
     target = (
       <RichTextEditor.Control aria-label="Insert image" title="Insert image">
         <IconPictureInPictureOn stroke={1.5} size={16} />
       </RichTextEditor.Control>
     ),
-    setStateAction,
   } = props;
   const [imgSrc, setImgSrc] = React.useState("");
   const [imgURLInput, setImgURLInput] = React.useState("");
@@ -108,7 +110,13 @@ export function UploadAndCropImage(props: CropImageModalProps) {
             </Stack>
           }
           fallback={
-            <CropImg setStateAction={setStateAction} editor={editor} src={imgSrc} close={close} />
+            <CropImg
+              toggleAspect={toggleAspect}
+              setStateAction={setStateAction}
+              editor={editor}
+              src={imgSrc}
+              close={close}
+            />
           }
         />
       </Modal>

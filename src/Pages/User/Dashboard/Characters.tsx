@@ -236,8 +236,6 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
   const { id, form, ...character } = props;
   const [fileBlob, setFileBlob] = useState<Blob>();
   const [isProcessing, setProcessing] = useState(false);
-  const { mutateAsync } = useUpdateOrAddDocument(props.id);
-  const queryClient = useQueryClient();
 
   const handleAvatarUpload = async () => {
     if (!fileBlob) return;
@@ -248,8 +246,9 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
       const { storage } = await import("../../../context/firebase");
 
       const fileName = `${uuid()}.jpg`;
+      const folder = "Avatars";
 
-      const storageRef = ref(storage, fileName);
+      const storageRef = ref(storage, `${folder}/${fileName}`);
 
       const res = await uploadBytes(storageRef, fileBlob);
 
