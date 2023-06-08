@@ -19,16 +19,17 @@ interface propsType {
   src: string;
   close: () => void;
   setStateAction?: React.Dispatch<React.SetStateAction<Blob | undefined>>;
+  toggleAspect?: boolean;
 }
 
 export default function CropImg(props: propsType) {
-  const { editor, src, close, setStateAction } = props;
+  const { editor, src, close, setStateAction, toggleAspect = false } = props;
 
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [scale, setScale] = useState(1);
   const [rotate, setRotate] = useState(0);
-  const [aspect, setAspect] = useState<number | undefined>(16 / 9);
+  const [aspect, setAspect] = useState<number | undefined>(toggleAspect ? undefined : 16 / 9);
 
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
