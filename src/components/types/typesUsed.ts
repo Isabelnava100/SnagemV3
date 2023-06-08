@@ -209,3 +209,30 @@ export interface Character {
 }
 
 export const characterTypes = ["None", "Hybrid", "Channeler"];
+
+export interface Team {
+  id: string;
+  pokemon_ids: string[];
+  pokemons: OwnedPokemon[] | [];
+  team_name: string;
+  times_battled: string;
+  created_at: {
+    nt: number;
+    seconds: number;
+  };
+}
+
+export interface OwnedPokemon {
+  id: string;
+  date_caught: {
+    nt: number;
+    seconds: number;
+  };
+  image_url: string;
+  name: string;
+  pokedex: string;
+  regiondex: string;
+  species: string;
+  type1: string;
+  type2?: string;
+}

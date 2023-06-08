@@ -148,7 +148,7 @@ function TabsPanel() {
       title="Tabs"
       customHeader={
         <Paper bg="#3C3A3C">
-          <Flex align="center" justify="start" gap={isOverMd ? 45 : 0}>
+          <Flex sx={{ overflowY: "hidden" }} align="center" justify="start" gap={isOverMd ? 45 : 0}>
             {dashboardTabLinks.map((link) => {
               const linkPath = `/Dashboard${link.path}`;
               const isActive = linkPath === currentPath;
@@ -190,7 +190,6 @@ function TabsPanel() {
 }
 
 function Announcements() {
-  const theme = useMantineTheme();
   const { isOverMd, isOverLg } = useMediaQuery();
   const navigate = useNavigate();
   const handleClick = () => {

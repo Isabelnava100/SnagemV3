@@ -407,9 +407,12 @@ function SingleCharacter(props: Character) {
           </Flex>
           {!isOverSm &&
             (!isEditing ? (
-              <GradientButtonPrimary fullWidth={!isOverSm} onClick={() => setEditing(true)}>
-                Edit
-              </GradientButtonPrimary>
+              <Group grow>
+                <DeleteCharacter characterId={props.id} />
+                <GradientButtonPrimary fullWidth={!isOverSm} onClick={() => setEditing(true)}>
+                  Edit
+                </GradientButtonPrimary>
+              </Group>
             ) : (
               <GradientButtonSecondary
                 loading={isLoading}

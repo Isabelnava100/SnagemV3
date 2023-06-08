@@ -8,6 +8,7 @@ import DollarSign from "./dollarcircle.svg";
 import Drafts from "./drafts.svg";
 import Edit from "./edit.svg";
 import Edit2 from "./edit2.svg";
+import FileSearch from "./filtersearch.svg";
 import Forum from "./forum.svg";
 import GengarCoins from "./gengar_coins.svg";
 import Marketplace from "./marketplace.svg";
@@ -44,4 +45,5 @@ export {
   Menu,
   Upload,
   Edit2,
+  FileSearch,
 };

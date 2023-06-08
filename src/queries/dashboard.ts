@@ -1,4 +1,11 @@
-import { Character, Currencies, Draft, Item } from "../components/types/typesUsed";
+import {
+  Character,
+  Currencies,
+  Draft,
+  Item,
+  OwnedPokemon,
+  Team,
+} from "../components/types/typesUsed";
 import { db } from "../context/firebase";
 
 export const getCurrencies = async (uid: string): Promise<Currencies> => {
@@ -49,5 +56,47 @@ export const getCharacters = async (uid: string) => {
     return { ...character, id: key };
   }) as Character[];
   const sortedData = formattedData.sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
+  return { sortedData, rawData: data };
+};
+
+export const getOwnedPokemons = async (uid: string) => {
+  const { doc, getDoc } = await import("firebase/firestore");
+
+  const data = (await getDoc(doc(db, "users", uid, "bag", "owned_pokemons"))).data() as Record<
+    string,
+    Omit<OwnedPokemon, "id">
+  >;
+
+  const formattedData = Object.keys(data).map((key) => {
+    const character = data[key] as Omit<OwnedPokemon, "id">;
+    return { ...character, id: key };
+  }) as OwnedPokemon[];
+
+  const sortedData = formattedData.sort((a, b) => a.date_caught.seconds - b.date_caught.seconds);
+
+  return { sortedData, rawData: data };
+};
+
+export const getTeams = async (uid: string) => {
+  const { doc, getDoc } = await import("firebase/firestore");
+
+  const data = (await getDoc(doc(db, "users", uid, "bag", "teams"))).data() as Record<
+    string,
+    Omit<Team, "id">
+  >;
+
+  const { sortedData: ownedPokemons } = await getOwnedPokemons(uid);
+  const ownedPokemonIds = ownedPokemons.map((pokemon) => pokemon.id);
+
+  const formattedData = Object.keys(data).map((key) => {
+    const team = data[key] as Omit<Team, "id">;
+
+    const teamPokemons = ownedPokemons.filter((pokemon) => team.pokemon_ids.includes(pokemon.id));
+
+    return { ...team, id: key, pokemons: teamPokemons };
+  }) as Team[];
+
+  const sortedData = formattedData.sort((a, b) => a.created_at.seconds - b.created_at.seconds);
+
   return { sortedData, rawData: data };
 };
