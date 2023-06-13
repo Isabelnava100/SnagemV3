@@ -1,4 +1,4 @@
-import { Character, Currencies, Draft, Item } from "../components/types/typesUsed";
+import { Character, Currencies, Draft, Item, Profile } from "../components/types/typesUsed";
 import { db } from "../context/firebase";
 
 export const getCurrencies = async (uid: string): Promise<Currencies> => {
@@ -50,4 +50,10 @@ export const getCharacters = async (uid: string) => {
   }) as Character[];
   const sortedData = formattedData.sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
   return { sortedData, rawData: data };
+};
+
+export const getProfile = async (uid: string) => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  const data = (await getDoc(doc(db, "users", uid, "bag", "profile"))).data() as Profile;
+  return data;
 };

@@ -209,3 +209,11 @@ export interface Character {
 }
 
 export const characterTypes = ["None", "Hybrid", "Channeler"];
+
+export interface Profile {
+  avatars: string[];
+  coverBG: string;
+  cover_backgrounds: string[];
+  description: string;
+  tags: string[];
+}
