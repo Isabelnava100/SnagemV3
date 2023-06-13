@@ -236,8 +236,6 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
   const { id, form, ...character } = props;
   const [fileBlob, setFileBlob] = useState<Blob>();
   const [isProcessing, setProcessing] = useState(false);
-  const { mutateAsync } = useUpdateOrAddDocument(props.id);
-  const queryClient = useQueryClient();
 
   const handleAvatarUpload = async () => {
     if (!fileBlob) return;

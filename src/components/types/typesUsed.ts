@@ -137,6 +137,7 @@ export interface PostsStructure {
 export type User = {
   uid: string;
   email: string | null;
+  avatar?: string;
   displayName: string | null;
   otherinfo?: SpecificUser;
 };
