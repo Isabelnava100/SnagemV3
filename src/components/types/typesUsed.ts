@@ -137,6 +137,7 @@ export interface PostsStructure {
 export type User = {
   uid: string;
   email: string | null;
+  avatar?: string;
   displayName: string | null;
   otherinfo?: SpecificUser;
 };
@@ -235,4 +236,12 @@ export interface OwnedPokemon {
   species: string;
   type1: string;
   type2?: string;
+}
+
+export interface Profile {
+  avatars: string[];
+  coverBG: string;
+  cover_backgrounds: string[];
+  description: string;
+  tags: string[];
 }

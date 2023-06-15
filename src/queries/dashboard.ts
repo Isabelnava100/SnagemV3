@@ -4,6 +4,7 @@ import {
   Draft,
   Item,
   OwnedPokemon,
+  Profile,
   Team,
 } from "../components/types/typesUsed";
 import { db } from "../context/firebase";
@@ -99,4 +100,10 @@ export const getTeams = async (uid: string) => {
   const sortedData = formattedData.sort((a, b) => a.created_at.seconds - b.created_at.seconds);
 
   return { sortedData, rawData: data };
+};
+
+export const getProfile = async (uid: string) => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  const data = (await getDoc(doc(db, "users", uid, "bag", "profile"))).data() as Profile;
+  return data;
 };
