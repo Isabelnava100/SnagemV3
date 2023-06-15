@@ -76,7 +76,7 @@ export function useRichTextEditor(options?: Partial<Omit<EditorType["options"], 
 
   React.useEffect(() => {
     if (editor) {
-      if (options?.content) {
+      if (options?.content && !editor.isDestroyed) {
         editor.commands.setContent(options.content);
       }
     }
