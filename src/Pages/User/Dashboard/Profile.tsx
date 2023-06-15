@@ -1,9 +1,13 @@
 import {
+  Alert,
   Avatar,
   Box,
   Flex,
   Image,
+  MultiSelect,
+  MultiSelectProps,
   ScrollArea,
+  SelectItem,
   Stack,
   Text,
   Title,
@@ -11,6 +15,7 @@ import {
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
+import { InfoCircle } from "tabler-icons-react";
 import { v4 as uuid } from "uuid";
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
@@ -317,10 +322,9 @@ function CoverBackgrounds() {
                 {data?.cover_backgrounds.map((cover_background_url) => {
                   const isActive = data.coverBG === cover_background_url;
                   return (
-                    <div className="relative">
+                    <div key={cover_background_url} className="relative">
                       <Image
                         onClick={() => handleSelectCoverImage(cover_background_url)}
-                        key={cover_background_url}
                         src={cover_background_url}
                         sx={{
                           borderWidth: isActive ? 4 : 2,
@@ -361,9 +365,72 @@ function CoverBackgrounds() {
 }
 
 function Tags() {
+  const { data, isLoading } = useProfileQuery();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [processing, setProcessing] = React.useState(false);
+  const [items, setItems] = useState<SelectItem[]>([]);
+
+  const handleCreateTag: MultiSelectProps["onCreate"] = (query) => {
+    const item: SelectItem = { label: query, value: query };
+    setItems((pre) => [...pre, item]);
+    return query;
+  };
+
+  const addTag = async () => {
+    if (isLoading) return;
+    try {
+      setProcessing(true);
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("../../../context/firebase");
+
+      const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
+
+      await updateDoc(docRef, {
+        tags: items.map((item) => item.value),
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
+    } catch (err) {
+      //
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (!isLoading && data) {
+      setItems(data.tags.map((tagString) => ({ label: tagString, value: tagString })));
+    }
+  }, [isLoading]);
+
+  React.useEffect(() => {
+    addTag();
+  }, [items.length]);
+
   return (
     <Wrapper p={16}>
-      <h1>Tags</h1>
+      <Stack>
+        <Flex align="start" justify="center">
+          <Text size={16} color="white">
+            Tags
+          </Text>
+          <Alert icon={<InfoCircle />} py={0} color="gray" bg="transparent" sx={{ flex: 1 }}>
+            Maximum 6 tags allowed. These are used to make filtering and searching easy on the users
+            page.
+          </Alert>
+        </Flex>
+        <MultiSelect
+          onChange={(values) => setItems(values.map((value) => ({ value, label: value })))}
+          data={items}
+          disabled={processing}
+          value={items.map((selectItem) => selectItem.value)}
+          creatable
+          searchable
+          getCreateLabel={(query) => `+ Add ${query}`}
+          onCreate={handleCreateTag}
+        />
+      </Stack>
     </Wrapper>
   );
 }
