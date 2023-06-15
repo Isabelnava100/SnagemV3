@@ -10,7 +10,7 @@ import {
   type StackProps,
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
@@ -107,8 +107,9 @@ function Avatars() {
       const { storage, db } = await import("../../../context/firebase");
 
       const fileName = `${uuid()}.jpg`;
+      const folderName = "profile-avatars";
 
-      const storageRef = ref(storage, fileName);
+      const storageRef = ref(storage, `${folderName}/${fileName}`);
 
       const res = await uploadBytes(storageRef, fileBlob);
 
@@ -133,7 +134,7 @@ function Avatars() {
 
   const handleSelectAvatar = async (url: string) => {
     try {
-      const { doc, updateDoc, arrayUnion } = await import("firebase/firestore");
+      const { doc, updateDoc } = await import("firebase/firestore");
       const { db } = await import("../../../context/firebase");
 
       const docRef = doc(db, "users", user?.uid as string);
@@ -172,7 +173,7 @@ function Avatars() {
         src={user?.avatar || DefaultAvatar}
         w={100}
         h={100}
-        sx={{ borderRadius: "100%", flexShrink: 0, cursor: "pointer" }}
+        sx={{ borderRadius: "100%", flexShrink: 0, border: "4px solid white" }}
       />
       <Stack w="100%" maw="100%" sx={{ flex: 1, overflow: "hidden" }}>
         <Flex w="100%" justify="space-between" align="center">
@@ -204,6 +205,7 @@ function Avatars() {
                         w={60}
                         h={60}
                         radius="xl"
+                        sx={{ cursor: "pointer" }}
                         key={avatarUrl}
                       />
                     );
@@ -225,6 +227,72 @@ function Avatars() {
 
 function CoverBackgrounds() {
   const { data } = useProfileQuery();
+  const [fileBlob, setFileBlob] = useState<Blob>();
+  const [isProcessing, setProcessing] = useState(false);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const handleImageUpload = async () => {
+    if (!fileBlob) return;
+    try {
+      setProcessing(true);
+
+      const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
+      const { doc, updateDoc, arrayUnion } = await import("firebase/firestore");
+      const { storage, db } = await import("../../../context/firebase");
+
+      const fileName = `${uuid()}.jpg`;
+      const folderName = "cover-backgrounds";
+
+      const storageRef = ref(storage, `${folderName}/${fileName}`);
+
+      const res = await uploadBytes(storageRef, fileBlob);
+
+      const imagePublicURL = await getDownloadURL(res.ref);
+
+      // push it into avatars array in db
+      const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
+
+      await updateDoc(docRef, {
+        cover_backgrounds: arrayUnion(imagePublicURL),
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
+
+      setFileBlob(undefined);
+    } catch (err) {
+      //
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleSelectCoverImage = async (url: string) => {
+    try {
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("../../../context/firebase");
+
+      const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
+
+      await updateDoc(docRef, {
+        coverBG: url,
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
+    } catch (err) {
+      //
+    }
+  };
+
+  useEffect(() => {
+    if (fileBlob) {
+      handleImageUpload();
+    }
+    return () => {
+      setFileBlob(undefined);
+    };
+  }, [fileBlob]);
+
   return (
     <Wrapper p={16}>
       <Stack>
@@ -232,11 +300,59 @@ function CoverBackgrounds() {
           <Text size={16} color="white">
             Cover Background
           </Text>
-          <GradientButtonPrimary rightIcon={<Image src={Upload} />}>Upload</GradientButtonPrimary>
+          <UploadAndCropImage
+            setStateAction={setFileBlob}
+            target={
+              <GradientButtonPrimary loading={isProcessing} rightIcon={<Image src={Upload} />}>
+                Upload
+              </GradientButtonPrimary>
+            }
+          />
         </Flex>
         <Conditional
           condition={!!data?.cover_backgrounds.length}
-          component={<h1>We have that</h1>}
+          component={
+            <ScrollArea pb={20}>
+              <Flex gap={12} sx={{ flexWrap: "nowrap" }}>
+                {data?.cover_backgrounds.map((cover_background_url) => {
+                  const isActive = data.coverBG === cover_background_url;
+                  return (
+                    <div className="relative">
+                      <Image
+                        onClick={() => handleSelectCoverImage(cover_background_url)}
+                        key={cover_background_url}
+                        src={cover_background_url}
+                        sx={{
+                          borderWidth: isActive ? 4 : 2,
+                          borderColor: "white",
+                          borderStyle: "solid",
+                          borderRadius: 22,
+                          overflow: "hidden",
+                          objectFit: "cover",
+                          cursor: "pointer",
+                        }}
+                        width={160}
+                        h={92}
+                      />
+                      {isActive && (
+                        <div className="absolute bottom-0 left-0 w-full py-2">
+                          <Text
+                            transform="uppercase"
+                            color="white"
+                            align="center"
+                            weight="bold"
+                            size={14}
+                          >
+                            Selected
+                          </Text>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </Flex>
+            </ScrollArea>
+          }
           fallback={<EmptyMessage message="No covers found" />}
         />
       </Stack>
@@ -255,8 +371,9 @@ function Tags() {
 function RightSideContent() {
   const { data } = useProfileQuery();
   const editor = useRichTextEditor({ content: data?.description as string });
+
   return (
-    <Stack>
+    <Stack sx={{ flex: 1 }}>
       <Wrapper sx={{ flex: 1, borderRadius: 22 }}>
         <Title color="white" order={2} size={24}>
           Description

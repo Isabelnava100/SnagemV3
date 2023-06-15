@@ -13,6 +13,7 @@ import {
 import { useForm } from "@mantine/form";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { DragDropContext, Droppable, OnDragEndResponder } from "react-beautiful-dnd";
 import PokemonImage from "../../../assets/images/sylveon.svg";
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary, {
@@ -27,10 +28,20 @@ import { getOwnedPokemons, getTeams } from "../../../queries/dashboard";
 
 export default function Pokemons() {
   const { isOverLg } = useMediaQuery();
+
+  const handleDragEnd: OnDragEndResponder = async () => {
+    try {
+    } catch (err) {
+      //
+    }
+  };
+
   return (
     <Flex sx={{ flexDirection: isOverLg ? "row" : "column" }} gap={15} align="start">
-      <Teams />
-      <OwnedPokemons />
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Teams />
+        <OwnedPokemons />
+      </DragDropContext>
     </Flex>
   );
 }
@@ -113,24 +124,34 @@ function SingleTeam(props: { team: Team }) {
             }
           />
         </Flex>
-        <SimpleGrid cols={isOverLg ? 6 : 3} w="100%" maw={isOverLg ? undefined : 250} spacing={7}>
-          {team.pokemons.map((pokemon) => (
-            <SinglePokemon isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
-          ))}
-          {isEditing &&
-            slotsRemaining > 0 &&
-            Array(slotsRemaining)
-              .fill(0)
-              .map((_, index) => (
-                <Box
-                  w={60}
-                  h={60}
-                  sx={{ border: "1px solid #DB5866", borderRadius: "100%" }}
-                  bg="#3C3A3C"
-                  key={index}
-                />
+        <Droppable droppableId="team-droppable">
+          {(provided) => (
+            <SimpleGrid
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              cols={isOverLg ? 6 : 3}
+              w="100%"
+              maw={isOverLg ? undefined : 250}
+              spacing={7}
+            >
+              {team.pokemons.map((pokemon) => (
+                <SinglePokemon isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
               ))}
-        </SimpleGrid>
+              {isEditing &&
+                slotsRemaining > 0 &&
+                Array(slotsRemaining)
+                  .fill(0)
+                  .map((_, index) => (
+                    <Box
+                      w={60}
+                      h={60}
+                      sx={{ border: "1px solid #DB5866", borderRadius: "100%" }}
+                      bg="#3C3A3C"
+                    />
+                  ))}
+            </SimpleGrid>
+          )}
+        </Droppable>
       </Stack>
     </Box>
   );
@@ -189,7 +210,7 @@ function SinglePokemon(props: { pokemon: OwnedPokemon; isEditing?: boolean }) {
         border: isEditing ? "1px solid #DB5866" : undefined,
       }}
     >
-      <Image src={PokemonImage} alt={pokemon.name} maw="100%" mah="100%" />
+      <Image src={pokemon.image_url || PokemonImage} alt={pokemon.name} maw="100%" mah="100%" />
     </Flex>
   );
 }
