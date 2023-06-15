@@ -13,7 +13,8 @@ import {
   Title,
   type StackProps,
 } from "@mantine/core";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useDebouncedValue } from "@mantine/hooks";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
 import { InfoCircle } from "tabler-icons-react";
 import { v4 as uuid } from "uuid";
@@ -437,14 +438,48 @@ function Tags() {
 
 function RightSideContent() {
   const { data } = useProfileQuery();
-  const editor = useRichTextEditor({ content: data?.description as string });
+  const [value, setValue] = useState(data?.description);
+  const [debounced] = useDebouncedValue(value, 500);
+  const editor = useRichTextEditor({
+    content: data?.description as string,
+    async onUpdate({ editor }) {
+      setValue(editor.getHTML());
+    },
+  });
+  const { mutate, isLoading, isSuccess } = useMutation({
+    mutationFn: () => saveChanges(),
+  });
+  const { user } = useAuth();
+
+  const saveChanges = async () => {
+    try {
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("../../../context/firebase");
+
+      const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
+
+      await updateDoc(docRef, {
+        description: debounced,
+      });
+    } catch (err) {
+      //
+    }
+  };
+
+  React.useEffect(() => {
+    mutate();
+  }, [debounced]);
 
   return (
     <Stack sx={{ flex: 1 }}>
       <Wrapper sx={{ flex: 1, borderRadius: 22 }}>
-        <Title color="white" order={2} size={24}>
-          Description
-        </Title>
+        <Flex justify="space-between" align="center">
+          <Title color="white" order={2} size={24}>
+            Description
+          </Title>
+          {isLoading && <Text>Saving changes...</Text>}
+          {isSuccess && <Text color="green">Saved</Text>}
+        </Flex>
         <Box sx={{ borderRadius: 12, overflow: "hidden" }}>
           <Editor editor={editor} />
         </Box>
