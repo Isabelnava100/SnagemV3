@@ -97,7 +97,8 @@ function Avatars() {
   const MAX_ITEMS_COUNT = 8;
   const REMAINING_ITEMS_COUNT = useMemo(() => {
     if (data?.avatars.length) {
-      return MAX_ITEMS_COUNT - data?.avatars.length;
+      const count = MAX_ITEMS_COUNT - data?.avatars.length;
+      return count >= 0 ? count : 0;
     } else {
       return 0;
     }
