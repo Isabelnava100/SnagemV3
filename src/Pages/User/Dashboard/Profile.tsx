@@ -162,6 +162,8 @@ function Avatars() {
   };
 
   const handleRemoveAvatar = async (url: string) => {
+    const confirmed = window.confirm("Are you sure, you want to remove this permanently?");
+    if (!confirmed) return;
     try {
       const { storage, db } = await import("../../../context/firebase");
       const { ref, deleteObject } = await import("firebase/storage");
@@ -235,6 +237,7 @@ function Avatars() {
                 {/* all of them except the one the has picked as his profile avatar */}
                 {data?.avatars
                   .filter((avatarUrl) => avatarUrl !== user?.avatar)
+                  .reverse()
                   .map((avatarUrl) => {
                     return (
                       <div key={avatarUrl} className="relative">
@@ -335,6 +338,34 @@ function CoverBackgrounds() {
     }
   };
 
+  const handleRemoveCoverImage = async (url: string) => {
+    const confirmed = window.confirm("Are you sure, you want to remove this permanently?");
+    if (!confirmed) return;
+    try {
+      const { storage, db } = await import("../../../context/firebase");
+      const { ref, deleteObject } = await import("firebase/storage");
+      const { arrayRemove, doc, updateDoc } = await import("firebase/firestore");
+
+      const httpsReference = storage.refFromURL(url);
+      const fileName = httpsReference.name;
+
+      const fileRef = ref(storage, `${COVER_BACKGROUNDS_FOLDER_NAME}/${fileName}`);
+
+      await deleteObject(fileRef);
+
+      // update the avatars array
+      const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
+
+      await updateDoc(docRef, {
+        cover_backgrounds: arrayRemove(url),
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
+    } catch (err) {
+      //
+    }
+  };
+
   useEffect(() => {
     if (fileBlob) {
       handleImageUpload();
@@ -365,41 +396,57 @@ function CoverBackgrounds() {
           component={
             <ScrollArea pb={20}>
               <Flex gap={12} sx={{ flexWrap: "nowrap" }}>
-                {data?.cover_backgrounds.map((cover_background_url) => {
-                  const isActive = data.coverBG === cover_background_url;
-                  return (
-                    <div key={cover_background_url} className="relative">
-                      <Image
-                        onClick={() => handleSelectCoverImage(cover_background_url)}
-                        src={cover_background_url}
-                        sx={{
-                          borderWidth: isActive ? 4 : 2,
-                          borderColor: "white",
-                          borderStyle: "solid",
-                          borderRadius: 22,
-                          overflow: "hidden",
-                          objectFit: "cover",
-                          cursor: "pointer",
-                        }}
-                        width={160}
-                        h={92}
-                      />
-                      {isActive && (
-                        <div className="absolute bottom-0 left-0 w-full py-2">
-                          <Text
-                            transform="uppercase"
-                            color="white"
-                            align="center"
-                            weight="bold"
-                            size={14}
-                          >
-                            Selected
-                          </Text>
+                {data?.cover_backgrounds
+                  .filter(() => true)
+                  .reverse()
+                  .map((cover_background_url) => {
+                    const isActive = data.coverBG === cover_background_url;
+                    return (
+                      <div key={cover_background_url} className="relative">
+                        <Image
+                          onClick={() => handleSelectCoverImage(cover_background_url)}
+                          src={cover_background_url}
+                          sx={{
+                            borderWidth: isActive ? 4 : 2,
+                            borderColor: "white",
+                            borderStyle: "solid",
+                            borderRadius: 22,
+                            overflow: "hidden",
+                            objectFit: "cover",
+                            cursor: "pointer",
+                          }}
+                          width={160}
+                          h={92}
+                        />
+                        {isActive && (
+                          <div className="absolute bottom-0 left-0 w-full py-2">
+                            <Text
+                              transform="uppercase"
+                              color="white"
+                              align="center"
+                              weight="bold"
+                              size={14}
+                            >
+                              Selected
+                            </Text>
+                          </div>
+                        )}
+                        <div className="absolute top-0 right-0">
+                          <Tooltip label="Remove">
+                            <ActionIcon
+                              onClick={() => handleRemoveCoverImage(cover_background_url)}
+                              color="red"
+                              variant="filled"
+                              radius="xl"
+                              size="xs"
+                            >
+                              <IconX />
+                            </ActionIcon>
+                          </Tooltip>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      </div>
+                    );
+                  })}
               </Flex>
             </ScrollArea>
           }
