@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Alert,
   Avatar,
   Box,
@@ -11,9 +12,11 @@ import {
   Stack,
   Text,
   Title,
+  Tooltip,
   type StackProps,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
+import { IconX } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
 import { InfoCircle } from "tabler-icons-react";
@@ -28,6 +31,9 @@ import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Upload } from "../../../icons";
 import { getProfile } from "../../../queries/dashboard";
 import DefaultAvatar from "/src/assets/images/character-default.jpg";
+
+const PROFILE_AVATARS_FOLDER_NAME = "profile-avatars";
+const COVER_BACKGROUNDS_FOLDER_NAME = "cover-backgrounds";
 
 function useProfileQuery() {
   const { user } = useAuth();
@@ -114,9 +120,8 @@ function Avatars() {
       const { storage, db } = await import("../../../context/firebase");
 
       const fileName = `${uuid()}.jpg`;
-      const folderName = "profile-avatars";
 
-      const storageRef = ref(storage, `${folderName}/${fileName}`);
+      const storageRef = ref(storage, `${PROFILE_AVATARS_FOLDER_NAME}/${fileName}`);
 
       const res = await uploadBytes(storageRef, fileBlob);
 
@@ -148,6 +153,32 @@ function Avatars() {
 
       await updateDoc(docRef, {
         avatar: url,
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
+    } catch (err) {
+      //
+    }
+  };
+
+  const handleRemoveAvatar = async (url: string) => {
+    try {
+      const { storage, db } = await import("../../../context/firebase");
+      const { ref, deleteObject } = await import("firebase/storage");
+      const { arrayRemove, doc, updateDoc } = await import("firebase/firestore");
+
+      const httpsReference = storage.refFromURL(url);
+      const fileName = httpsReference.name;
+
+      const fileRef = ref(storage, `${PROFILE_AVATARS_FOLDER_NAME}/${fileName}`);
+
+      await deleteObject(fileRef);
+
+      // update the avatars array
+      const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
+
+      await updateDoc(docRef, {
+        avatars: arrayRemove(url),
       });
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
@@ -206,15 +237,29 @@ function Avatars() {
                   .filter((avatarUrl) => avatarUrl !== user?.avatar)
                   .map((avatarUrl) => {
                     return (
-                      <Avatar
-                        onClick={() => handleSelectAvatar(avatarUrl)}
-                        src={avatarUrl}
-                        w={60}
-                        h={60}
-                        radius="xl"
-                        sx={{ cursor: "pointer" }}
-                        key={avatarUrl}
-                      />
+                      <div key={avatarUrl} className="relative">
+                        <Avatar
+                          onClick={() => handleSelectAvatar(avatarUrl)}
+                          src={avatarUrl}
+                          w={60}
+                          h={60}
+                          radius="xl"
+                          sx={{ cursor: "pointer" }}
+                        />
+                        <div className="absolute top-0 right-0">
+                          <Tooltip label="Remove">
+                            <ActionIcon
+                              onClick={() => handleRemoveAvatar(avatarUrl)}
+                              color="red"
+                              variant="filled"
+                              radius="xl"
+                              size="xs"
+                            >
+                              <IconX />
+                            </ActionIcon>
+                          </Tooltip>
+                        </div>
+                      </div>
                     );
                   })}
                 {Array(REMAINING_ITEMS_COUNT)
@@ -249,9 +294,8 @@ function CoverBackgrounds() {
       const { storage, db } = await import("../../../context/firebase");
 
       const fileName = `${uuid()}.jpg`;
-      const folderName = "cover-backgrounds";
 
-      const storageRef = ref(storage, `${folderName}/${fileName}`);
+      const storageRef = ref(storage, `${COVER_BACKGROUNDS_FOLDER_NAME}/${fileName}`);
 
       const res = await uploadBytes(storageRef, fileBlob);
 
