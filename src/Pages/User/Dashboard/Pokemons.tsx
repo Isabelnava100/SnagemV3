@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Avatar,
   Box,
   Button,
   Flex,
@@ -8,6 +9,7 @@ import {
   Popover,
   SimpleGrid,
   Stack,
+  Sx,
   Text,
   TextInput,
   Title,
@@ -31,6 +33,7 @@ import { excludeProperties } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
 import { getOwnedPokemons, getTeams } from "../../../queries/dashboard";
+import formatter from "../../../utils/date";
 
 type TeamForm = UseFormReturnType<Team | null>;
 
@@ -301,7 +304,7 @@ function OwnedPokemons(props: EditingProps) {
   const { sortedData } = data;
 
   return (
-    <Box bg="#403C43" w="100%" p={20} sx={{ borderRadius: 20, overflow: "hidden" }}>
+    <Box bg="#403C43" w="100%" p={20} sx={{ borderRadius: 20 }}>
       <Stack>
         <Flex justify="space-between" align="center">
           <Group align="end">
@@ -330,6 +333,101 @@ function OwnedPokemons(props: EditingProps) {
   );
 }
 
+const PokemonAvatar = React.forwardRef<
+  HTMLDivElement,
+  { src?: string; alt?: string; sx?: Sx; onClick?: () => void }
+>((props, ref) => {
+  const { src, alt, sx, onClick } = props;
+  return (
+    <Image
+      ref={ref}
+      src={src || PokemonImage}
+      onClick={onClick || undefined}
+      alt={alt}
+      w="100%"
+      h="100%"
+      sx={{ objectFit: "cover", ...(sx || {}) }}
+    />
+  );
+});
+
+function RemovePokemonFromTeam(props: {
+  isEditing: boolean;
+  isOwned: boolean;
+  form: TeamForm;
+  pokemonId: string;
+}) {
+  const { isEditing, isOwned, form, pokemonId } = props;
+
+  if (!isEditing || isOwned) return <></>;
+
+  const handleRemovePokemonFromTeam = () => {
+    if (form.values && form.values.pokemon_ids.includes(pokemonId)) {
+      form.setFieldValue(
+        "pokemon_ids",
+        form.values.pokemon_ids.filter((listedPokemonId) => listedPokemonId !== pokemonId)
+      );
+
+      form.setFieldValue(
+        "pokemons",
+        form.values.pokemons.filter((listedPokemon) => listedPokemon.id !== pokemonId)
+      );
+    }
+  };
+
+  return (
+    <div className="absolute top-0 right-0">
+      <Tooltip label="Remove">
+        <ActionIcon
+          onClick={handleRemovePokemonFromTeam}
+          color="red"
+          variant="filled"
+          radius="xl"
+          size="xs"
+        >
+          <IconX />
+        </ActionIcon>
+      </Tooltip>
+    </div>
+  );
+}
+
+function PokemonDetails(props: { pokemon: OwnedPokemon }) {
+  const { pokemon } = props;
+  return (
+    <Stack>
+      <Group>
+        <Avatar
+          src={pokemon.image_url}
+          w={60}
+          h={60}
+          radius="xl"
+          sx={{ border: "4px solid white" }}
+          bg="#909090"
+        />
+        <Stack spacing={3}>
+          <Title order={3} size={16}>
+            {pokemon.name}
+          </Title>
+          <Text>{formatter.format(new Date(pokemon.date_caught.seconds))}</Text>
+        </Stack>
+      </Group>
+      <Stack>
+        Details: Shiny
+        <br />
+        Experience pts: 203
+        <br />
+        Friendship pts: 4
+        <br />
+        Purification pts: 0
+        <br />
+        Shadow pts: 0
+      </Stack>
+    </Stack>
+  );
+}
+
+// This component is being used to represent both team and owned pokemons through the isOwned prop
 function SinglePokemon(props: {
   pokemon: OwnedPokemon;
   isEditing?: boolean;
@@ -337,60 +435,106 @@ function SinglePokemon(props: {
   form: TeamForm;
 }) {
   const { pokemon, isEditing, isOwned = false, form } = props;
+  const [opened, { open, close }] = useDisclosure(false);
+  const [isShowingDetails, setShowingDetails] = React.useState(false);
+
+  const handleAddPokemonToTeam = () => {
+    if (!form.values || !isOwned || !isEditing) return;
+    if (!form.values.pokemon_ids.includes(pokemon.id)) {
+      form.setFieldValue("pokemon_ids", [...form.values.pokemon_ids, pokemon.id]);
+      form.setFieldValue("pokemons", [...form.values.pokemons, pokemon]);
+    }
+  };
+
+  const closePopover = () => {
+    close();
+    setShowingDetails(false);
+  };
+
   return (
     <Flex
       p={10}
       bg="#3C3A3C"
       justify="center"
       align="center"
+      pos="relative"
       w={60}
       h={60}
       sx={{
         borderRadius: "100%",
         border: isEditing ? "1px solid #DB5866" : undefined,
       }}
-      onClick={
-        (isOwned &&
-          isEditing &&
-          (() => {
-            if (!form.values) return;
-            if (!form.values.pokemon_ids.includes(pokemon.id)) {
-              form.setFieldValue("pokemon_ids", [...form.values.pokemon_ids, pokemon.id]);
-              form.setFieldValue("pokemons", [...form.values.pokemons, pokemon]);
-            }
-          })) ||
-        undefined
-      }
-      pos="relative"
     >
-      <Image src={pokemon.image_url || PokemonImage} alt={pokemon.name} maw="100%" mah="100%" />
-      {isEditing && !isOwned && (
-        <div className="absolute top-0 right-0">
-          <Tooltip label="Remove">
-            <ActionIcon
-              onClick={() => {
-                if (form.values && form.values.pokemon_ids.includes(pokemon.id)) {
-                  form.setFieldValue(
-                    "pokemon_ids",
-                    form.values.pokemon_ids.filter((pokemonId) => pokemonId !== pokemon.id)
-                  );
-
-                  form.setFieldValue(
-                    "pokemons",
-                    form.values.pokemons.filter((listedPokemon) => listedPokemon.id !== pokemon.id)
-                  );
-                }
-              }}
-              color="red"
-              variant="filled"
-              radius="xl"
-              size="xs"
+      <Conditional
+        condition={Boolean(isEditing && isOwned)}
+        fallback={<PokemonAvatar src={pokemon.image_url} alt={pokemon.name} />}
+        /**
+         * A popover to show up two options (view and select). The view option will change the contents within the popover dropdown
+         * Meaning it will remove the two buttons from the dropdown and render the pokemon details instead
+         */
+        component={
+          <Popover
+            opened={opened}
+            position="top"
+            onClose={closePopover}
+            styles={{
+              dropdown: isShowingDetails
+                ? undefined
+                : { background: "transparent", border: "none", boxShadow: "none" },
+            }}
+          >
+            <Popover.Target>
+              <PokemonAvatar
+                src={pokemon.image_url}
+                onClick={open}
+                alt={pokemon.name}
+                sx={{ cursor: "pointer" }}
+              />
+            </Popover.Target>
+            <Popover.Dropdown
+              bg={isShowingDetails ? "#1E1D20" : undefined}
+              sx={{ borderRadius: isShowingDetails ? 22 : undefined }}
+              p={isShowingDetails ? 16 : undefined}
+              w="100%"
+              maw={250}
             >
-              <IconX />
-            </ActionIcon>
-          </Tooltip>
-        </div>
-      )}
+              {/*  */}
+              <Conditional
+                condition={isShowingDetails}
+                component={<PokemonDetails pokemon={pokemon} />}
+                fallback={
+                  <Group w="100%" spacing={5}>
+                    <GradientButtonPrimary
+                      onClick={() => {
+                        handleAddPokemonToTeam();
+                        closePopover();
+                      }}
+                      radius="xl"
+                      size="xs"
+                    >
+                      Select
+                    </GradientButtonPrimary>
+                    <GradientButtonPrimary
+                      onClick={() => setShowingDetails(true)}
+                      radius="xl"
+                      size="xs"
+                    >
+                      View
+                    </GradientButtonPrimary>
+                  </Group>
+                }
+              />
+            </Popover.Dropdown>
+          </Popover>
+        }
+      />
+      {/* This option is not shown in owned pokemons. Only in team pokemons to remove a pokemon from team */}
+      <RemovePokemonFromTeam
+        form={form}
+        isEditing={isEditing as boolean}
+        isOwned={isOwned}
+        pokemonId={pokemon.id}
+      />
     </Flex>
   );
 }
