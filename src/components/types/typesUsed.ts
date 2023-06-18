@@ -214,7 +214,7 @@ export const characterTypes = ["None", "Hybrid", "Channeler"];
 export interface Team {
   id: string;
   pokemon_ids: string[];
-  pokemons: OwnedPokemon[] | [];
+  pokemons: OwnedPokemon[];
   team_name: string;
   times_battled: string;
   created_at: {

@@ -40,7 +40,6 @@
     "match-sorter": "^6.3.1",
     "netlify-cli": "^2.71.0",
     "react": "^18.2.0",
-    "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.2.0",
     "react-image-crop": "^10.0.9",
     "react-router-dom": "^6.8.0",

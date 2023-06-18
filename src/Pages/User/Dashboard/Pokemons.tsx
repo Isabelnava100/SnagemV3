@@ -1,19 +1,24 @@
 import {
+  ActionIcon,
   Box,
   Button,
   Flex,
   Group,
   Image,
+  Popover,
   SimpleGrid,
   Stack,
   Text,
   TextInput,
   Title,
+  Tooltip,
 } from "@mantine/core";
-import { useForm } from "@mantine/form";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { DragDropContext, Droppable, OnDragEndResponder } from "react-beautiful-dnd";
+import { UseFormReturnType, useForm } from "@mantine/form";
+import { useDisclosure } from "@mantine/hooks";
+import { IconTrash, IconX } from "@tabler/icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react";
+import { v4 as uuid } from "uuid";
 import PokemonImage from "../../../assets/images/sylveon.svg";
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary, {
@@ -22,31 +27,71 @@ import GradientButtonPrimary, {
 import { SectionLoader } from "../../../components/navigation/loading";
 import { OwnedPokemon, Team } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
+import { excludeProperties } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
 import { getOwnedPokemons, getTeams } from "../../../queries/dashboard";
 
+type TeamForm = UseFormReturnType<Team | null>;
+
+interface EditingProps {
+  loadTeamForEdit: (team: Team) => void;
+  resetEditing: () => void;
+  form: TeamForm;
+}
+
+type EditTeamType = Omit<Team, "id" | "pokemons">;
+
 export default function Pokemons() {
   const { isOverLg } = useMediaQuery();
+  const currentForm = useForm<Team | null>({
+    initialValues: null,
+  });
 
-  const handleDragEnd: OnDragEndResponder = async () => {
-    try {
-    } catch (err) {
-      //
-    }
+  const loadTeamForEdit = (team: Team) => {
+    currentForm.setValues(team);
+  };
+
+  const resetEditing = () => {
+    currentForm.reset();
   };
 
   return (
     <Flex sx={{ flexDirection: isOverLg ? "row" : "column" }} gap={15} align="start">
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Teams />
-        <OwnedPokemons />
-      </DragDropContext>
+      <Teams form={currentForm} loadTeamForEdit={loadTeamForEdit} resetEditing={resetEditing} />
+      <OwnedPokemons
+        form={currentForm}
+        loadTeamForEdit={loadTeamForEdit}
+        resetEditing={resetEditing}
+      />
     </Flex>
   );
 }
 
-function Teams() {
+function useUpdateOrAddDocument(documentId?: string) {
+  const { user } = useAuth();
+
+  const mutation = useMutation({
+    mutationFn: async ({ values }: { values?: EditTeamType }) => {
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("../../../context/firebase");
+
+      const docRef = doc(db, "users", user?.uid as string, "bag", "teams");
+      await updateDoc(docRef, {
+        [documentId || uuid()]: values || {
+          pokemon_ids: [],
+          team_name: "Untitled",
+          times_battled: "0",
+          created_at: new Date(),
+        },
+      });
+    },
+  });
+  return mutation;
+}
+
+function Teams(props: EditingProps) {
+  const { form, loadTeamForEdit, resetEditing } = props;
   const { user } = useAuth();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["get-teams"],
@@ -60,28 +105,107 @@ function Teams() {
   const { sortedData } = data;
 
   return (
-    <Stack w="100%" maw={isOverLg ? 455 : undefined}>
+    <Stack align="end" w="100%" maw={isOverLg ? 455 : undefined}>
       {sortedData.map((team) => (
-        <SingleTeam team={team} key={team.id} />
+        <SingleTeam
+          form={form}
+          resetEditing={resetEditing}
+          loadTeamForEdit={loadTeamForEdit}
+          team={team}
+          key={team.id}
+        />
       ))}
+      <CreateNewTeam />
     </Stack>
   );
 }
 
-function SingleTeam(props: { team: Team }) {
-  const { team } = props;
-  const [isEditing, setEditing] = useState(false);
-  const form = useForm({
-    initialValues: { ...team },
-  });
-  const { team_name } = form.values;
-  const { isOverLg } = useMediaQuery();
+function DeleteTeam(props: { teamId: string }) {
+  const { teamId } = props;
+  const [opened, { close, open }] = useDisclosure(false);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const MAX_SLOTS = 6;
-  const slotsRemaining = MAX_SLOTS - team.pokemon_ids.length;
+  const { mutateAsync, isLoading } = useMutation({
+    mutationFn: async ({ teamId }: { teamId: string }) => {
+      const { setDoc, doc } = await import("firebase/firestore");
+      const { db } = await import("../../../context/firebase");
+
+      const docRef = doc(db, "users", user?.uid as string, "bag", "teams");
+      const {
+        rawData: { [teamId]: documentToBeDeleted, ...rest },
+      } = await getTeams(user?.uid as string);
+
+      await setDoc(docRef, {
+        ...rest,
+      });
+    },
+  });
+
+  const handleDelete = async () => {
+    try {
+      await mutateAsync({ teamId });
+      close();
+      await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
+    } catch (err) {
+      //
+    }
+  };
 
   return (
-    <Box bg="#403C43" p={20} sx={{ borderRadius: 20, overflow: "hidden" }}>
+    <Popover withArrow opened={opened} onClose={close}>
+      <Popover.Target>
+        <ActionIcon onClick={open} color="red" variant="transparent">
+          <IconTrash size={20} />
+        </ActionIcon>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <Stack>
+          <Text>Are you sure, you want to delete this team?</Text>
+          <Group>
+            <Button loading={isLoading} onClick={handleDelete}>
+              Yes
+            </Button>
+            <Button onClick={close} loading={isLoading} color="gray">
+              No
+            </Button>
+          </Group>
+        </Stack>
+      </Popover.Dropdown>
+    </Popover>
+  );
+}
+
+function SingleTeam(props: { team: Team } & EditingProps) {
+  const { team, form, loadTeamForEdit, resetEditing } = props;
+  const { mutateAsync, isLoading } = useUpdateOrAddDocument(team.id);
+  const { isOverLg } = useMediaQuery();
+  const queryClient = useQueryClient();
+
+  const isEditing = React.useMemo(() => {
+    return form.values?.id === team.id;
+  }, [form.values?.id]);
+
+  const teamPokemons = React.useMemo(() => {
+    return isEditing ? form.values?.pokemons || [] : team.pokemons;
+  }, [isEditing, form.values?.pokemons, team.pokemons]);
+
+  const MAX_SLOTS = 6;
+  const slotsRemaining = MAX_SLOTS - teamPokemons.length;
+
+  const handleSave = async () => {
+    if (!form.values) return;
+    try {
+      await mutateAsync({ values: excludeProperties(form.values, ["id", "pokemons"]) });
+      await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
+      resetEditing();
+    } catch (err) {
+      //
+    }
+  };
+
+  return (
+    <Box bg="#403C43" w="100%" p={20} sx={{ borderRadius: 20, overflow: "hidden" }}>
       <Stack align={isOverLg ? undefined : "center"}>
         <Flex justify="space-between" align="center" w="100%">
           <Conditional
@@ -91,7 +215,7 @@ function SingleTeam(props: { team: Team }) {
             }
             fallback={
               <Title order={3} size={isOverLg ? 24 : 18} color="white">
-                {team_name}
+                {team.team_name}
               </Title>
             }
           />
@@ -99,65 +223,71 @@ function SingleTeam(props: { team: Team }) {
             condition={isEditing}
             component={
               <Group spacing={0}>
-                <Button
-                  onClick={() => {
-                    form.reset();
-                    setEditing(false);
-                  }}
-                  color="gray"
-                  variant="subtle"
-                >
+                <Button onClick={() => resetEditing()} color="gray" variant="subtle">
                   Cancel
                 </Button>
-                <GradientButtonSecondary onClick={() => setEditing(false)}>
+                <GradientButtonSecondary loading={isLoading} onClick={handleSave}>
                   Save
                 </GradientButtonSecondary>
               </Group>
             }
             fallback={
-              <GradientButtonPrimary
-                onClick={() => setEditing(true)}
-                rightIcon={<Image src={Edit2} />}
-              >
-                Edit
-              </GradientButtonPrimary>
+              <Group>
+                <DeleteTeam teamId={team.id} />
+                <GradientButtonPrimary
+                  onClick={() => loadTeamForEdit(team)}
+                  rightIcon={<Image src={Edit2} />}
+                >
+                  Edit
+                </GradientButtonPrimary>
+              </Group>
             }
           />
         </Flex>
-        <Droppable droppableId="team-droppable">
-          {(provided) => (
-            <SimpleGrid
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              cols={isOverLg ? 6 : 3}
-              w="100%"
-              maw={isOverLg ? undefined : 250}
-              spacing={7}
-            >
-              {team.pokemons.map((pokemon) => (
-                <SinglePokemon isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
+        <SimpleGrid cols={isOverLg ? 6 : 3} w="100%" maw={isOverLg ? undefined : 250} spacing={7}>
+          {teamPokemons.map((pokemon) => (
+            <SinglePokemon form={form} isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
+          ))}
+          {slotsRemaining > 0 &&
+            Array(slotsRemaining)
+              .fill(0)
+              .map((_, index) => (
+                <Box
+                  w={60}
+                  h={60}
+                  key={index}
+                  sx={{ border: isEditing ? "1px solid #DB5866" : undefined, borderRadius: "100%" }}
+                  bg="#3C3A3C"
+                />
               ))}
-              {isEditing &&
-                slotsRemaining > 0 &&
-                Array(slotsRemaining)
-                  .fill(0)
-                  .map((_, index) => (
-                    <Box
-                      w={60}
-                      h={60}
-                      sx={{ border: "1px solid #DB5866", borderRadius: "100%" }}
-                      bg="#3C3A3C"
-                    />
-                  ))}
-            </SimpleGrid>
-          )}
-        </Droppable>
+        </SimpleGrid>
       </Stack>
     </Box>
   );
 }
 
-function OwnedPokemons() {
+function CreateNewTeam() {
+  const { mutateAsync, isLoading } = useUpdateOrAddDocument();
+  const queryClient = useQueryClient();
+
+  const handleClick = async () => {
+    try {
+      await mutateAsync({});
+      await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
+    } catch (err) {
+      //
+    }
+  };
+
+  return (
+    <GradientButtonSecondary onClick={handleClick} loading={isLoading}>
+      Create a New Team
+    </GradientButtonSecondary>
+  );
+}
+
+function OwnedPokemons(props: EditingProps) {
+  const { form } = props;
   const { user } = useAuth();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["get-owned-pokemons"],
@@ -186,7 +316,13 @@ function OwnedPokemons() {
         </Flex>
         <Flex sx={{ flexWrap: "wrap" }} gap={7}>
           {sortedData.map((pokemon) => (
-            <SinglePokemon key={pokemon.id} pokemon={pokemon} />
+            <SinglePokemon
+              form={form}
+              key={pokemon.id}
+              isOwned
+              pokemon={pokemon}
+              isEditing={!!form.values?.id}
+            />
           ))}
         </Flex>
       </Stack>
@@ -194,8 +330,13 @@ function OwnedPokemons() {
   );
 }
 
-function SinglePokemon(props: { pokemon: OwnedPokemon; isEditing?: boolean }) {
-  const { pokemon, isEditing } = props;
+function SinglePokemon(props: {
+  pokemon: OwnedPokemon;
+  isEditing?: boolean;
+  isOwned?: boolean;
+  form: TeamForm;
+}) {
+  const { pokemon, isEditing, isOwned = false, form } = props;
   return (
     <Flex
       p={10}
@@ -206,11 +347,50 @@ function SinglePokemon(props: { pokemon: OwnedPokemon; isEditing?: boolean }) {
       h={60}
       sx={{
         borderRadius: "100%",
-        overflow: "hidden",
         border: isEditing ? "1px solid #DB5866" : undefined,
       }}
+      onClick={
+        (isOwned &&
+          isEditing &&
+          (() => {
+            if (!form.values) return;
+            if (!form.values.pokemon_ids.includes(pokemon.id)) {
+              form.setFieldValue("pokemon_ids", [...form.values.pokemon_ids, pokemon.id]);
+              form.setFieldValue("pokemons", [...form.values.pokemons, pokemon]);
+            }
+          })) ||
+        undefined
+      }
+      pos="relative"
     >
       <Image src={pokemon.image_url || PokemonImage} alt={pokemon.name} maw="100%" mah="100%" />
+      {isEditing && !isOwned && (
+        <div className="absolute top-0 right-0">
+          <Tooltip label="Remove">
+            <ActionIcon
+              onClick={() => {
+                if (form.values && form.values.pokemon_ids.includes(pokemon.id)) {
+                  form.setFieldValue(
+                    "pokemon_ids",
+                    form.values.pokemon_ids.filter((pokemonId) => pokemonId !== pokemon.id)
+                  );
+
+                  form.setFieldValue(
+                    "pokemons",
+                    form.values.pokemons.filter((listedPokemon) => listedPokemon.id !== pokemon.id)
+                  );
+                }
+              }}
+              color="red"
+              variant="filled"
+              radius="xl"
+              size="xs"
+            >
+              <IconX />
+            </ActionIcon>
+          </Tooltip>
+        </div>
+      )}
     </Flex>
   );
 }
