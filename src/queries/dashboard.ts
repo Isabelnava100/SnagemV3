@@ -87,7 +87,6 @@ export const getTeams = async (uid: string) => {
   >;
 
   const { sortedData: ownedPokemons } = await getOwnedPokemons(uid);
-  const ownedPokemonIds = ownedPokemons.map((pokemon) => pokemon.id);
 
   const formattedData = Object.keys(data).map((key) => {
     const team = data[key] as Omit<Team, "id">;
@@ -100,6 +99,29 @@ export const getTeams = async (uid: string) => {
   const sortedData = formattedData.sort((a, b) => a.created_at.seconds - b.created_at.seconds);
 
   return { sortedData, rawData: data };
+};
+
+export const getTeam = async (uid: string, teamId: string) => {
+  const { doc, getDoc } = await import("firebase/firestore");
+
+  const data = (await getDoc(doc(db, "users", uid, "bag", "teams"))).data() as Record<
+    string,
+    Omit<Team, "id">
+  >;
+
+  const { sortedData: ownedPokemons } = await getOwnedPokemons(uid);
+
+  const formattedData = Object.keys(data).map((key) => {
+    const team = data[key] as Omit<Team, "id">;
+
+    const teamPokemons = ownedPokemons.filter((pokemon) => team.pokemon_ids.includes(pokemon.id));
+
+    return { ...team, id: key, pokemons: teamPokemons };
+  }) as Team[];
+
+  const team = formattedData.find((teamData) => teamData.id === teamId);
+
+  return { team };
 };
 
 export const getProfile = async (uid: string) => {

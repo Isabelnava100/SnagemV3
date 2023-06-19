@@ -229,7 +229,9 @@ export interface OwnedPokemon {
     nt: number;
     seconds: number;
   };
-  image_url: string;
+  gender: "M" | "F";
+  generation: string;
+  image_slug: string;
   name: string;
   pokedex: string;
   regiondex: string;

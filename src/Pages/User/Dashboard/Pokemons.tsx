@@ -20,6 +20,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconTrash, IconX } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 import PokemonImage from "../../../assets/images/sylveon.svg";
 import { Conditional } from "../../../components/common/Conditional";
@@ -29,7 +30,7 @@ import GradientButtonPrimary, {
 import { SectionLoader } from "../../../components/navigation/loading";
 import { OwnedPokemon, Team } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
-import { excludeProperties } from "../../../helpers";
+import { excludeProperties, getPokemonImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
 import { getOwnedPokemons, getTeams } from "../../../queries/dashboard";
@@ -45,10 +46,11 @@ interface EditingProps {
 
 type EditTeamType = Omit<Team, "id" | "pokemons">;
 
-export default function Pokemons() {
+export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team }) {
+  const { isSingleTeam = false, team = null } = props;
   const { isOverLg } = useMediaQuery();
   const currentForm = useForm<Team | null>({
-    initialValues: null,
+    initialValues: team,
   });
 
   const loadTeamForEdit = (team: Team) => {
@@ -61,12 +63,36 @@ export default function Pokemons() {
 
   return (
     <Flex sx={{ flexDirection: isOverLg ? "row" : "column" }} gap={15} align="start">
-      <Teams form={currentForm} loadTeamForEdit={loadTeamForEdit} resetEditing={resetEditing} />
-      <OwnedPokemons
-        form={currentForm}
-        loadTeamForEdit={loadTeamForEdit}
-        resetEditing={resetEditing}
+      <Conditional
+        condition={!!isSingleTeam}
+        component={
+          <SingleTeam
+            form={currentForm}
+            isSingleTeam={isSingleTeam}
+            loadTeamForEdit={loadTeamForEdit}
+            resetEditing={resetEditing}
+            team={team as Team}
+          />
+        }
+        fallback={
+          <Teams form={currentForm} loadTeamForEdit={loadTeamForEdit} resetEditing={resetEditing} />
+        }
       />
+      {isSingleTeam ? (
+        <OwnedPokemons
+          form={currentForm}
+          loadTeamForEdit={loadTeamForEdit}
+          resetEditing={resetEditing}
+        />
+      ) : (
+        isOverLg && (
+          <OwnedPokemons
+            form={currentForm}
+            loadTeamForEdit={loadTeamForEdit}
+            resetEditing={resetEditing}
+          />
+        )
+      )}
     </Flex>
   );
 }
@@ -179,11 +205,12 @@ function DeleteTeam(props: { teamId: string }) {
   );
 }
 
-function SingleTeam(props: { team: Team } & EditingProps) {
-  const { team, form, loadTeamForEdit, resetEditing } = props;
+export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam?: boolean }) {
+  const { team, form, loadTeamForEdit, resetEditing, isSingleTeam = false } = props;
   const { mutateAsync, isLoading } = useUpdateOrAddDocument(team.id);
   const { isOverLg } = useMediaQuery();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const isEditing = React.useMemo(() => {
     return form.values?.id === team.id;
@@ -201,7 +228,11 @@ function SingleTeam(props: { team: Team } & EditingProps) {
     try {
       await mutateAsync({ values: excludeProperties(form.values, ["id", "pokemons"]) });
       await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
+      await queryClient.invalidateQueries({ queryKey: ["get-team", team.id] });
       resetEditing();
+      if (isSingleTeam) {
+        navigate("/Dashboard/Pokemons");
+      }
     } catch (err) {
       //
     }
@@ -226,7 +257,11 @@ function SingleTeam(props: { team: Team } & EditingProps) {
             condition={isEditing}
             component={
               <Group spacing={0}>
-                <Button onClick={() => resetEditing()} color="gray" variant="subtle">
+                <Button
+                  onClick={() => (isSingleTeam ? navigate("/Dashboard/Pokemons") : resetEditing())}
+                  color="gray"
+                  variant="subtle"
+                >
                   Cancel
                 </Button>
                 <GradientButtonSecondary loading={isLoading} onClick={handleSave}>
@@ -238,7 +273,9 @@ function SingleTeam(props: { team: Team } & EditingProps) {
               <Group>
                 <DeleteTeam teamId={team.id} />
                 <GradientButtonPrimary
-                  onClick={() => loadTeamForEdit(team)}
+                  onClick={() =>
+                    isOverLg ? loadTeamForEdit(team) : navigate(`/Dashboard/Pokemons/${team.id}`)
+                  }
                   rightIcon={<Image src={Edit2} />}
                 >
                   Edit
@@ -398,7 +435,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
     <Stack>
       <Group>
         <Avatar
-          src={pokemon.image_url}
+          src={getPokemonImageURL(pokemon.image_slug)}
           w={60}
           h={60}
           radius="xl"
@@ -407,22 +444,12 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         />
         <Stack spacing={3}>
           <Title order={3} size={16}>
-            {pokemon.name}
+            {pokemon.species} ({pokemon.gender})
           </Title>
           <Text>{formatter.format(new Date(pokemon.date_caught.seconds))}</Text>
         </Stack>
       </Group>
-      <Stack>
-        Details: Shiny
-        <br />
-        Experience pts: 203
-        <br />
-        Friendship pts: 4
-        <br />
-        Purification pts: 0
-        <br />
-        Shadow pts: 0
-      </Stack>
+      <Stack></Stack>
     </Stack>
   );
 }
@@ -467,7 +494,7 @@ function SinglePokemon(props: {
     >
       <Conditional
         condition={Boolean(isEditing && isOwned)}
-        fallback={<PokemonAvatar src={pokemon.image_url} alt={pokemon.name} />}
+        fallback={<PokemonAvatar src={getPokemonImageURL(pokemon.image_slug)} alt={pokemon.name} />}
         /**
          * A popover to show up two options (view and select). The view option will change the contents within the popover dropdown
          * Meaning it will remove the two buttons from the dropdown and render the pokemon details instead
@@ -485,7 +512,7 @@ function SinglePokemon(props: {
           >
             <Popover.Target>
               <PokemonAvatar
-                src={pokemon.image_url}
+                src={getPokemonImageURL(pokemon.image_slug)}
                 onClick={open}
                 alt={pokemon.name}
                 sx={{ cursor: "pointer" }}

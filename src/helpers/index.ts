@@ -10,3 +10,9 @@ export function excludeProperties<T, K extends keyof T>(
   });
   return result;
 }
+
+export const getPokemonImageURL = (slug: string) => {
+  const url = "http://raw.githubusercontent.com/msikma/pokesprite/master/pokemon-gen8/shiny";
+  const extension = "png";
+  return `${url}/${slug}.${extension}`;
+};

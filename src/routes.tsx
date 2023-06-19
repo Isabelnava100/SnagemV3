@@ -54,6 +54,10 @@ const { default: Pokemons } = lazyImport(
   "default"
 );
 const { default: Profile } = lazyImport(() => import("./Pages/User/Dashboard/Profile"), "default");
+const { default: PokemonTeam } = lazyImport(
+  () => import("./Pages/User/Dashboard/PokemonTeam"),
+  "default"
+);
 
 export default function AppRoutes() {
   return (
@@ -77,6 +81,7 @@ export default function AppRoutes() {
                       <Route index element={<Bookmarks />} />
                       <Route path="Drafts" element={<Drafts />} />
                       <Route path="Characters" element={<Characters />} />
+                      <Route path="Pokemons/:teamId" element={<PokemonTeam />} />
                       <Route path="Pokemons" element={<Pokemons />} />
                       <Route path="Profile" element={<Profile />} />
                       <Route path="*" element={<Navigate to="" />} />
