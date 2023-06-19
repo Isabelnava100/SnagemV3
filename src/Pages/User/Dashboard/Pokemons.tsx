@@ -7,6 +7,7 @@ import {
   Group,
   Image,
   Popover,
+  ScrollArea,
   SimpleGrid,
   Stack,
   Sx,
@@ -245,7 +246,11 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
           <Conditional
             condition={isEditing}
             component={
-              <TextInput maw={isOverLg ? undefined : 100} {...form.getInputProps("team_name")} />
+              <TextInput
+                size="sm"
+                maw={isOverLg ? undefined : 100}
+                {...form.getInputProps("team_name")}
+              />
             }
             fallback={
               <Title order={3} size={isOverLg ? 24 : 18} color="white">
@@ -260,11 +265,12 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
                 <Button
                   onClick={() => (isSingleTeam ? navigate("/Dashboard/Pokemons") : resetEditing())}
                   color="gray"
+                  size="xs"
                   variant="subtle"
                 >
                   Cancel
                 </Button>
-                <GradientButtonSecondary loading={isLoading} onClick={handleSave}>
+                <GradientButtonSecondary size="xs" loading={isLoading} onClick={handleSave}>
                   Save
                 </GradientButtonSecondary>
               </Group>
@@ -276,6 +282,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
                   onClick={() =>
                     isOverLg ? loadTeamForEdit(team) : navigate(`/Dashboard/Pokemons/${team.id}`)
                   }
+                  size="xs"
                   rightIcon={<Image src={Edit2} />}
                 >
                   Edit
@@ -284,23 +291,28 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
             }
           />
         </Flex>
-        <SimpleGrid cols={isOverLg ? 6 : 3} w="100%" maw={isOverLg ? undefined : 250} spacing={7}>
-          {teamPokemons.map((pokemon) => (
-            <SinglePokemon form={form} isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
-          ))}
-          {slotsRemaining > 0 &&
-            Array(slotsRemaining)
-              .fill(0)
-              .map((_, index) => (
-                <Box
-                  w={60}
-                  h={60}
-                  key={index}
-                  sx={{ border: isEditing ? "1px solid #DB5866" : undefined, borderRadius: "100%" }}
-                  bg="#3C3A3C"
-                />
-              ))}
-        </SimpleGrid>
+        <ScrollArea>
+          <SimpleGrid cols={isOverLg ? 6 : 3} w="100%" maw={isOverLg ? undefined : 250} spacing={7}>
+            {teamPokemons.map((pokemon) => (
+              <SinglePokemon form={form} isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
+            ))}
+            {slotsRemaining > 0 &&
+              Array(slotsRemaining)
+                .fill(0)
+                .map((_, index) => (
+                  <Box
+                    w={60}
+                    h={60}
+                    key={index}
+                    sx={{
+                      border: isEditing ? "1px solid #DB5866" : undefined,
+                      borderRadius: "100%",
+                    }}
+                    bg="#3C3A3C"
+                  />
+                ))}
+          </SimpleGrid>
+        </ScrollArea>
       </Stack>
     </Box>
   );
