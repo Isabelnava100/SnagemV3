@@ -247,3 +247,29 @@ export interface Profile {
   description: string;
   tags: string[];
 }
+
+export const pokemonTypes = [
+  "Normal",
+  "Fire",
+  "Water",
+  "Electric",
+  "Grass",
+  "Ice",
+  "Fighting",
+  "Poison",
+] as const;
+
+export type PokemonTypes = (typeof pokemonTypes)[number];
+
+export const pokemonGenerations = [
+  "Generation I",
+  "Generation II",
+  "Generation III",
+  "Generation IV",
+  "Generation V",
+  "Generation VI",
+  "Generation VII",
+  "Generation VIII",
+] as const;
+
+export type PokemonGenerations = (typeof pokemonGenerations)[number];

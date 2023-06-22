@@ -8,6 +8,7 @@ import {
   Image,
   Popover,
   ScrollArea,
+  Select,
   SimpleGrid,
   Stack,
   Sx,
@@ -29,7 +30,14 @@ import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
 import { SectionLoader } from "../../../components/navigation/loading";
-import { OwnedPokemon, Team } from "../../../components/types/typesUsed";
+import {
+  OwnedPokemon,
+  PokemonGenerations,
+  PokemonTypes,
+  Team,
+  pokemonGenerations,
+  pokemonTypes,
+} from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import { excludeProperties, getPokemonImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
@@ -338,6 +346,12 @@ function CreateNewTeam() {
   );
 }
 
+interface FilterState {
+  type1: PokemonTypes | "";
+  type2: PokemonTypes | "";
+  generation: PokemonGenerations | "";
+}
+
 function OwnedPokemons(props: EditingProps) {
   const { form } = props;
   const { user } = useAuth();
@@ -345,29 +359,120 @@ function OwnedPokemons(props: EditingProps) {
     queryKey: ["get-owned-pokemons"],
     queryFn: () => getOwnedPokemons(user?.uid as string),
   });
+  const [filteredData, setFilteredData] = React.useState<typeof sortedData>([]);
+  const [filterState, setFilterState] = React.useState<FilterState>({
+    generation: "",
+    type1: "",
+    type2: "",
+  });
   const { isOverLg } = useMediaQuery();
+
+  // If one of the filter state has a value, means filter mode
+  const isFiltering = React.useMemo(() => {
+    const { generation, type1, type2 } = filterState;
+    return generation || type1 || type2;
+  }, [filterState]);
+
+  // Filter the date when the filter state changes
+  React.useEffect(() => {
+    const { generation, type1, type2 } = filterState;
+
+    if (generation === "" && type1 === "" && type2 === "") return;
+
+    const filteredSortedData = data?.sortedData.filter((data) => {
+      if (type1 && data.type1 !== type1) return false; // Filter out if type1 doesn't match
+      if (type2 && data.type2 !== type2) return false; // Filter out if type2 doesn't match
+      if (generation && data.generation !== generation) return false; // Filter out if generation doesn't match
+      return true; // Keep the Pokemon in the filtered array
+    });
+
+    setFilteredData(filteredSortedData || []);
+  }, [filterState]);
 
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
 
   const { sortedData } = data;
 
+  const displayedData = isFiltering ? filteredData : sortedData;
+
+  // formatting them for the select field
+  const pokemonTypesFormatted = pokemonTypes.map((type) => ({
+    label: type,
+    value: type,
+  }));
+
+  const pokemonGenerationsFormatted = pokemonGenerations.map((generation) => ({
+    label: generation,
+    value: generation,
+  }));
+
+  // exit filter mode
+  const resetFilters = () => {
+    setFilterState({
+      generation: "",
+      type1: "",
+      type2: "",
+    });
+    setFilteredData([]);
+  };
+
   return (
-    <Box bg="#403C43" w="100%" p={20} sx={{ borderRadius: 20 }}>
+    <Box bg="#403C43" w="100%" p={20} sx={{ borderRadius: 20, overflow: "hidden" }}>
       <Stack>
         <Flex justify="space-between" align="center">
           <Group align="end">
             <Title order={3} color="white" size={isOverLg ? 24 : 18}>
               All Your Pokemon
             </Title>
-            {isOverLg && <Text>Drag & Drop to Move</Text>}
           </Group>
-          <GradientButtonPrimary rightIcon={<Image src={FileSearch} />}>
-            Adjust filters
-          </GradientButtonPrimary>
+          <Popover position="bottom-end" withinPortal withArrow>
+            <Popover.Target>
+              <GradientButtonPrimary rightIcon={<Image src={FileSearch} />}>
+                Adjust filters
+              </GradientButtonPrimary>
+            </Popover.Target>
+            <Popover.Dropdown maw="100%">
+              <Stack p="sm">
+                <Group>
+                  <Text color="white">Type:</Text>
+                  <Select
+                    value={filterState.type1}
+                    onChange={(value) =>
+                      setFilterState((pre) => ({ ...pre, type1: value as PokemonTypes }))
+                    }
+                    data={pokemonTypesFormatted}
+                    placeholder="Type 1"
+                  />
+                  <Select
+                    value={filterState.type2}
+                    onChange={(value) =>
+                      setFilterState((pre) => ({ ...pre, type2: value as PokemonTypes }))
+                    }
+                    data={pokemonTypesFormatted}
+                    placeholder="Type 2"
+                  />
+                </Group>
+                <Group>
+                  <Text color="white">Generation</Text>
+                  <Select
+                    value={filterState.generation}
+                    data={pokemonGenerationsFormatted}
+                    placeholder="Generation"
+                    onChange={(value) =>
+                      setFilterState((pre) => ({ ...pre, generation: value as PokemonGenerations }))
+                    }
+                  />
+                </Group>
+                <Button onClick={resetFilters} variant="subtle" size="xs" w="fit-content">
+                  Clear filters
+                </Button>
+              </Stack>
+            </Popover.Dropdown>
+          </Popover>
         </Flex>
         <Flex sx={{ flexWrap: "wrap" }} gap={7}>
-          {sortedData.map((pokemon) => (
+          {displayedData.map((pokemon) => (
             <SinglePokemon
               form={form}
               key={pokemon.id}
