@@ -622,6 +622,9 @@ function SinglePokemon(props: {
   const { pokemon, isEditing, isOwned = false, form } = props;
   const [opened, { open, close }] = useDisclosure(false);
   const [isShowingDetails, setShowingDetails] = React.useState(false);
+  const isAlreadyInTeam = React.useMemo(() => {
+    return form.values?.pokemon_ids.includes(pokemon.id);
+  }, [form.values?.pokemon_ids]);
 
   const handleAddPokemonToTeam = () => {
     if (!form.values || !isOwned || !isEditing) return;
@@ -647,7 +650,9 @@ function SinglePokemon(props: {
       h={60}
       sx={{
         borderRadius: "100%",
-        border: isEditing ? "1px solid #DB5866" : undefined,
+        border: isEditing
+          ? `1px solid ${opened ? "#762B77" : isAlreadyInTeam ? "#4821C3" : "#DB5866"}`
+          : undefined,
         flexShrink: 0,
       }}
     >
