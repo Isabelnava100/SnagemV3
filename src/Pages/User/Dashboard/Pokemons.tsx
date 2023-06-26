@@ -7,7 +7,6 @@ import {
   Group,
   Image,
   Popover,
-  ScrollArea,
   Select,
   SimpleGrid,
   Stack,
@@ -57,7 +56,7 @@ type EditTeamType = Omit<Team, "id" | "pokemons">;
 
 export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team }) {
   const { isSingleTeam = false, team = null } = props;
-  const { isOverLg } = useMediaQuery();
+  const { isOverLg, isOverXs, isOverMd } = useMediaQuery();
   const currentForm = useForm<Team | null>({
     initialValues: team,
   });
@@ -71,7 +70,20 @@ export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team })
   };
 
   return (
-    <Flex sx={{ flexDirection: isOverLg ? "row" : "column" }} gap={15} align="start">
+    <Flex
+      sx={{
+        flexDirection:
+          /**
+           * Base "Column"
+           * Base - Md "Row"
+           * Md - Lg "Column"
+           * Lg - * "Row"
+           */
+          isOverXs ? (isOverMd ? (isOverLg ? "row" : "column") : "row") : "row",
+      }}
+      gap={15}
+      align="start"
+    >
       <Conditional
         condition={!!isSingleTeam}
         component={
@@ -94,7 +106,7 @@ export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team })
           resetEditing={resetEditing}
         />
       ) : (
-        isOverLg && (
+        (isOverLg || isOverXs) && (
           <OwnedPokemons
             form={currentForm}
             loadTeamForEdit={loadTeamForEdit}
@@ -229,8 +241,11 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
     return isEditing ? form.values?.pokemons || [] : team.pokemons;
   }, [isEditing, form.values?.pokemons, team.pokemons]);
 
-  const MAX_SLOTS = 6;
-  const slotsRemaining = MAX_SLOTS - teamPokemons.length;
+  const MAX_SLOTS_IN_A_ROW = 3;
+  const firstRow = teamPokemons.slice(0, 3);
+  const lastRow = teamPokemons.slice(3);
+  const slotsRemainingRow1 = MAX_SLOTS_IN_A_ROW - firstRow.length;
+  const slotsRemainingRow2 = MAX_SLOTS_IN_A_ROW - lastRow.length;
 
   const handleSave = async () => {
     if (!form.values) return;
@@ -261,7 +276,13 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
               />
             }
             fallback={
-              <Title order={3} size={isOverLg ? 24 : 18} color="white">
+              <Title
+                lineClamp={1}
+                sx={{ whiteSpace: "normal" }}
+                order={3}
+                size={isOverLg ? 22 : 18}
+                color="white"
+              >
                 {team.team_name}
               </Title>
             }
@@ -269,7 +290,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
           <Conditional
             condition={isEditing}
             component={
-              <Group spacing={0}>
+              <Group noWrap spacing={0}>
                 <Button
                   onClick={() => (isSingleTeam ? navigate("/Dashboard/Pokemons") : resetEditing())}
                   color="gray"
@@ -284,7 +305,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
               </Group>
             }
             fallback={
-              <Group>
+              <Group noWrap>
                 <DeleteTeam teamId={team.id} />
                 <GradientButtonPrimary
                   onClick={() =>
@@ -299,28 +320,48 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
             }
           />
         </Flex>
-        <ScrollArea>
-          <SimpleGrid cols={isOverLg ? 6 : 3} w="100%" maw={isOverLg ? undefined : 250} spacing={7}>
-            {teamPokemons.map((pokemon) => (
+        <Flex justify="center" w="100%" wrap="wrap" gap={7}>
+          <SimpleGrid sx={{ flexShrink: 0 }} cols={3} spacing={7}>
+            {firstRow.map((pokemon) => (
               <SinglePokemon form={form} isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
             ))}
-            {slotsRemaining > 0 &&
-              Array(slotsRemaining)
-                .fill(0)
-                .map((_, index) => (
-                  <Box
-                    w={60}
-                    h={60}
-                    key={index}
-                    sx={{
-                      border: isEditing ? "1px solid #DB5866" : undefined,
-                      borderRadius: "100%",
-                    }}
-                    bg="#3C3A3C"
-                  />
-                ))}
+            {Array(slotsRemainingRow1)
+              .fill(0)
+              .map((_, index) => (
+                <Box
+                  w={60}
+                  h={60}
+                  key={index}
+                  sx={{
+                    border: isEditing ? "1px solid #DB5866" : undefined,
+                    borderRadius: "100%",
+                    flexShrink: 0,
+                  }}
+                  bg="#3C3A3C"
+                />
+              ))}
           </SimpleGrid>
-        </ScrollArea>
+          <SimpleGrid cols={3} spacing={7} sx={{ flexShrink: 0 }}>
+            {lastRow.slice(0, 3).map((pokemon) => (
+              <SinglePokemon form={form} isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
+            ))}
+            {Array(slotsRemainingRow2)
+              .fill(0)
+              .map((_, index) => (
+                <Box
+                  w={60}
+                  h={60}
+                  key={index}
+                  sx={{
+                    border: isEditing ? "1px solid #DB5866" : undefined,
+                    borderRadius: "100%",
+                    flexShrink: 0,
+                  }}
+                  bg="#3C3A3C"
+                />
+              ))}
+          </SimpleGrid>
+        </Flex>
       </Stack>
     </Box>
   );
@@ -422,7 +463,7 @@ function OwnedPokemons(props: EditingProps) {
       <Stack>
         <Flex justify="space-between" align="center">
           <Group align="end">
-            <Title order={3} color="white" size={isOverLg ? 24 : 18}>
+            <Title order={3} color="white" size={isOverLg ? 22 : 18}>
               All Your Pokemon
             </Title>
           </Group>
@@ -607,6 +648,7 @@ function SinglePokemon(props: {
       sx={{
         borderRadius: "100%",
         border: isEditing ? "1px solid #DB5866" : undefined,
+        flexShrink: 0,
       }}
     >
       <Conditional

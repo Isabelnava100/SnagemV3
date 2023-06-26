@@ -11,6 +11,7 @@ export const App = memo(() => {
   const { user } = useAuth();
   const loginName = user ? "Profile" : "Login";
   const isUnder900 = useMediaQueryCore("(max-width: 900px)");
+  const hasLessHeight = useMediaQueryCore("(max-height: 900px)");
   const { isOverMd } = useMediaQuery();
 
   return (
@@ -41,7 +42,7 @@ export const App = memo(() => {
             height: isUnder900 ? 70 : "auto",
             maxHeight: "100%",
             overflowY: "auto",
-            width: isUnder900 ? "100%" : 150,
+            width: isUnder900 ? "100%" : hasLessHeight ? 120 : 150,
           }}
         >
           <SideBar />

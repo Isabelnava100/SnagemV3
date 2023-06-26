@@ -24,7 +24,7 @@ export const theme: MantineThemeOverride = {
   breakpoints: {
     md: 900,
     xl: 1440,
-    xs: 500,
+    xs: 480,
     sm: 800,
     lg: 1200,
   },
