@@ -3,6 +3,7 @@ import Activities from "./activities.svg";
 import Bell from "./bell.svg";
 import Bookmarks from "./bookmarks.svg";
 import Characters from "./characters.svg";
+import DirectRight from "./directright.svg";
 import Upload from "./documentupload.svg";
 import DollarSign from "./dollarcircle.svg";
 import Drafts from "./drafts.svg";
@@ -23,27 +24,28 @@ import Tether from "./tether.svg";
 import Users from "./users.svg";
 
 export {
-  TeamSangem,
-  Forum,
-  Users,
-  Marketplace,
-  Quests,
   Activities,
   Bell,
-  Bookmarks,
-  Drafts,
-  Characters,
-  Pokemons,
-  Profile,
   BookmarkSymbol,
-  PokePesos,
-  GengarCoins,
-  SnagCoins,
-  Edit,
-  Tether,
+  Bookmarks,
+  Characters,
+  DirectRight,
   DollarSign,
-  Menu,
-  Upload,
+  Drafts,
+  Edit,
   Edit2,
   FileSearch,
+  Forum,
+  GengarCoins,
+  Marketplace,
+  Menu,
+  PokePesos,
+  Pokemons,
+  Profile,
+  Quests,
+  SnagCoins,
+  TeamSangem,
+  Tether,
+  Upload,
+  Users,
 };

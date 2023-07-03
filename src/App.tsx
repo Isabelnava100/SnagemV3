@@ -1,11 +1,12 @@
-import { ActionIcon, Box, Flex, Image, Paper, Title } from "@mantine/core";
+import { ActionIcon, Box, Button, Flex, Group, Image, Paper, Title } from "@mantine/core";
 import { useMediaQuery as useMediaQueryCore } from "@mantine/hooks";
 import { memo } from "react";
 import { Outlet } from "react-router-dom";
+import TeamSnagemLogoSrc from "./assets/images/team-snagem-logo.png";
 import { SideBar } from "./components/navigation/SideBar";
 import { useAuth } from "./context/AuthContext";
 import useMediaQuery from "./hooks/useMediaQuery";
-import { Bell } from "./icons";
+import { Bell, DirectRight } from "./icons";
 
 export const App = memo(() => {
   const { user } = useAuth();
@@ -70,16 +71,34 @@ export const App = memo(() => {
             </Box>
           </Paper>
         </div>
-        {!isOverMd && (
-          <Flex align="center" mih={65} px={17} justify="space-between" bg="#1E1E1E" w="100%">
-            <Title order={4} size={20} color="white">
-              Welcome, {user?.displayName}
-            </Title>
-            <ActionIcon variant="transparent" size={35} h="auto">
-              <Image src={Bell} w={35} />
-            </ActionIcon>
-          </Flex>
-        )}
+        {!isOverMd &&
+          (user ? (
+            <Flex align="center" mih={65} px={17} justify="space-between" bg="#1E1E1E" w="100%">
+              <Title order={4} size={20} color="white">
+                Welcome, {user?.displayName}
+              </Title>
+              <ActionIcon variant="transparent" size={35} h="auto">
+                <Image src={Bell} w={35} />
+              </ActionIcon>
+            </Flex>
+          ) : (
+            <Flex align="center" mih={65} px={17} justify="space-between" bg="#1E1E1E" w="100%">
+              <Group noWrap align="center" sx={{ gap: "0.25rem" }}>
+                <Image src={TeamSnagemLogoSrc} alt="Team Snagem Logo" width="3.125rem" />
+                <Title order={4} transform="uppercase" size="1rem" color="white">
+                  SNAGEM HEADQUATERS
+                </Title>
+              </Group>
+              <Button
+                variant="subtle"
+                sx={{ color: "#8C2595" }}
+                color="#8C2595"
+                rightIcon={<Image src={DirectRight} />}
+              >
+                Login
+              </Button>
+            </Flex>
+          ))}
       </Flex>
     </Box>
   );
