@@ -139,11 +139,11 @@ function MobileMenu(props: { links: { link: string; label: string; icon: string 
           <Image src={Menu} width={35} />
         </UnstyledButton>
       </Popover.Target>
-      <Popover.Dropdown>
+      <Popover.Dropdown h="auto">
         <SimpleGrid cols={2} w="100%">
           {links.map((link) => (
             <Link key={link.label} style={{ padding: 15 }} to={link.link}>
-              <Image src={link.icon} width={35} />
+              <Image src={link.icon} width={35} height={35} />
             </Link>
           ))}
         </SimpleGrid>
