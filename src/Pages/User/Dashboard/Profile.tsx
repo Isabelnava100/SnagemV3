@@ -100,7 +100,9 @@ function Avatars() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const MAX_ITEMS_COUNT = 8;
+  const canUpload = data && data.avatars && data.avatars.length < 6;
+
+  const MAX_ITEMS_COUNT = 6;
   const REMAINING_ITEMS_COUNT = useMemo(() => {
     if (data?.avatars.length) {
       const count = MAX_ITEMS_COUNT - data?.avatars.length;
@@ -112,6 +114,7 @@ function Avatars() {
 
   const handleAvatarUpload = async () => {
     if (!fileBlob) return;
+    if (!canUpload) return;
     try {
       setProcessing(true);
 
@@ -223,7 +226,11 @@ function Avatars() {
           <UploadAndCropImage
             setStateAction={setFileBlob}
             target={
-              <GradientButtonPrimary loading={isProcessing} rightIcon={<Image src={Upload} />}>
+              <GradientButtonPrimary
+                disabled={isProcessing || !canUpload}
+                loading={isProcessing}
+                rightIcon={<Image src={Upload} />}
+              >
                 Upload
               </GradientButtonPrimary>
             }
@@ -287,8 +294,11 @@ function CoverBackgrounds() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const canUpload = data && data.cover_backgrounds && data.cover_backgrounds.length < 6;
+
   const handleImageUpload = async () => {
     if (!fileBlob) return;
+    if (!canUpload) return;
     try {
       setProcessing(true);
 
@@ -385,7 +395,11 @@ function CoverBackgrounds() {
           <UploadAndCropImage
             setStateAction={setFileBlob}
             target={
-              <GradientButtonPrimary loading={isProcessing} rightIcon={<Image src={Upload} />}>
+              <GradientButtonPrimary
+                disabled={isProcessing || !canUpload}
+                loading={isProcessing}
+                rightIcon={<Image src={Upload} />}
+              >
                 Upload
               </GradientButtonPrimary>
             }
@@ -464,7 +478,10 @@ function Tags() {
   const [processing, setProcessing] = React.useState(false);
   const [items, setItems] = useState<SelectItem[]>([]);
 
+  const canAdd = items.length < 6;
+
   const handleCreateTag: MultiSelectProps["onCreate"] = (query) => {
+    if (!canAdd) return;
     const item: SelectItem = { label: query, value: query };
     setItems((pre) => [...pre, item]);
     return query;
