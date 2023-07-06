@@ -273,3 +273,16 @@ export const pokemonGenerations = [
 ] as const;
 
 export type PokemonGenerations = (typeof pokemonGenerations)[number];
+
+export interface Bookmark {
+  id: string;
+  title: string;
+  color: string;
+  date: {
+    nt: number;
+    seconds: number;
+  };
+  send2discord: string;
+  threadID: string;
+  threadLocation: "Main-Forum" | "Side-Roleplay";
+}

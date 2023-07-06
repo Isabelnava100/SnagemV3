@@ -1,4 +1,5 @@
 import {
+  Bookmark,
   Character,
   Currencies,
   Draft,
@@ -44,6 +45,20 @@ export const getDrafts = async (uid: string): Promise<Draft[]> => {
   });
 
   return data;
+};
+
+export const getBookmarks = async (uid: string) => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  const data = (await getDoc(doc(db, "users", uid, "bookmarks", "Main-Forum"))).data() as Record<
+    string,
+    Bookmark
+  >;
+  const formattedData = Object.keys(data).map((key) => {
+    const character = data[key] as Bookmark;
+    return { ...character, id: key };
+  }) as Bookmark[];
+  const sortedData = formattedData.sort((a, b) => a.date.seconds - b.date.seconds);
+  return { sortedData, rawData: data };
 };
 
 export const getCharacters = async (uid: string) => {
