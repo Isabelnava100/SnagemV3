@@ -18,15 +18,29 @@ import { Conditional } from "../common/Conditional";
 import CropImg from "./CropImage";
 
 type CropImageModalProps = {
-  editor: Editor | null;
+  editor?: Editor | null;
+  target?: React.ReactElement;
+  setStateAction?: React.Dispatch<React.SetStateAction<Blob | undefined>>;
+  toggleAspect?: boolean;
 };
 
 export function UploadAndCropImage(props: CropImageModalProps) {
-  const { editor } = props;
   const [opened, { close, open }] = useDisclosure(false);
+  const {
+    editor,
+    setStateAction,
+    toggleAspect,
+    target = (
+      <RichTextEditor.Control aria-label="Insert image" title="Insert image">
+        <IconPictureInPictureOn stroke={1.5} size={16} />
+      </RichTextEditor.Control>
+    ),
+  } = props;
   const [imgSrc, setImgSrc] = React.useState("");
   const [imgURLInput, setImgURLInput] = React.useState("");
   const [debouncedImgURL] = useDebouncedValue(imgURLInput, 500);
+
+  const targetElement = React.cloneElement(target, { onClick: open });
 
   const handleFileSelect: FileInputProps["onChange"] = (payload) => {
     const file = payload;
@@ -59,9 +73,7 @@ export function UploadAndCropImage(props: CropImageModalProps) {
 
   return (
     <React.Fragment>
-      <RichTextEditor.Control onClick={open} aria-label="Insert image" title="Insert image">
-        <IconPictureInPictureOn stroke={1.5} size={16} />
-      </RichTextEditor.Control>
+      {targetElement}
       <Modal
         overflow="inside"
         opened={opened}
@@ -97,7 +109,15 @@ export function UploadAndCropImage(props: CropImageModalProps) {
               </Stack>
             </Stack>
           }
-          fallback={<CropImg editor={editor} src={imgSrc} close={close} />}
+          fallback={
+            <CropImg
+              toggleAspect={toggleAspect}
+              setStateAction={setStateAction}
+              editor={editor}
+              src={imgSrc}
+              close={close}
+            />
+          }
         />
       </Modal>
     </React.Fragment>

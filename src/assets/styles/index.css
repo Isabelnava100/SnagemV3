@@ -41,3 +41,35 @@ img {
   height: auto;
   max-width: 100%;
 }
+
+.mantine-ScrollArea-scrollbar {
+  background: #363535;
+  border-radius: 10px;
+}
+
+.mantine-ScrollArea-thumb {
+  background: #7e2c75;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #363535;
+  border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #7e2c75;
+  border-radius: 200px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #7e2c75;
+}

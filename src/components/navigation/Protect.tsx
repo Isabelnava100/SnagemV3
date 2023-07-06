@@ -1,3 +1,5 @@
+import { Button, Center, Stack, Text } from "@mantine/core";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 type Props = {
@@ -11,7 +13,16 @@ export const Protect = ({ children }: Props) => {
   // console.log(user?.otherinfo?.permissions);
 
   if (!user) {
-    return <>You must be logged in to see this page.</>;
+    return (
+      <Center w="100%" h="100%">
+        <Stack>
+          <Text>You must be logged in to view this page</Text>
+          <Button component={Link} to="/Login">
+            Login
+          </Button>
+        </Stack>
+      </Center>
+    );
   }
 
   // if(pathname.includes('/Forum')){
