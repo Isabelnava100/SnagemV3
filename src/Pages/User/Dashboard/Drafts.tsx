@@ -1,5 +1,6 @@
 import { ActionIcon, Flex, Image, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Draft } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
@@ -18,6 +19,9 @@ export default function Drafts() {
 
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
+
+  if (!data.length)
+    return <EmptyMessage title="No drafts" description="You currently have no drafts created" />;
 
   return (
     <SimpleGrid cols={isOverLg ? 2 : 1}>

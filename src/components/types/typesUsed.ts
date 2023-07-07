@@ -240,13 +240,13 @@ export interface OwnedPokemon {
   type2?: string;
 }
 
-export interface Profile {
+export type Profile = Partial<{
   avatars: string[];
   coverBG: string;
   cover_backgrounds: string[];
   description: string;
   tags: string[];
-}
+}>;
 
 export const pokemonTypes = [
   "Normal",

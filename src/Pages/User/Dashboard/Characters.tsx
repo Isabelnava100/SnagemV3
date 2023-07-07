@@ -24,6 +24,7 @@ import DefaultCharacterImage from "../../../assets/images/character-default.jpg"
 import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
+import { EmptyMessage } from "../../../components/common/Message";
 import { UploadAndCropImage } from "../../../components/crop-image/UploadAndCropImage";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Character, characterTypes } from "../../../components/types/typesUsed";
@@ -43,6 +44,14 @@ export default function Characters() {
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const { sortedData } = data;
+  if (!sortedData.length)
+    return (
+      <EmptyMessage
+        title="No characters"
+        description="You currently have no characters created. Click the button below to create one."
+        action={<CreateNewCharacter />}
+      />
+    );
   return (
     <Stack align="end">
       {sortedData.map((character) => (
@@ -57,24 +66,28 @@ function useUpdateOrAddDocument(documentId?: string) {
   const { user } = useAuth();
   const mutation = useMutation({
     mutationFn: async ({ values }: { values?: Omit<Character, "id"> }) => {
-      const { doc, updateDoc } = await import("firebase/firestore");
+      const { doc, setDoc } = await import("firebase/firestore");
       const { db } = await import("../../../context/firebase");
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "characters");
-      await updateDoc(docRef, {
-        [documentId || uuid()]: values || {
-          age: "",
-          birthday: "",
-          height: "",
-          moveset: "",
-          name: "No name",
-          short_description: "",
-          species: "",
-          type: "None",
-          imageURL: "",
-          createdAt: new Date(),
+      await setDoc(
+        docRef,
+        {
+          [documentId || uuid()]: values || {
+            age: "",
+            birthday: "",
+            height: "",
+            moveset: "",
+            name: "No name",
+            short_description: "",
+            species: "",
+            type: "None",
+            imageURL: "",
+            createdAt: new Date(),
+          },
         },
-      });
+        { merge: true }
+      );
     },
   });
   return mutation;
@@ -183,13 +196,13 @@ function DeleteCharacter(props: { characterId: string }) {
   const queryClient = useQueryClient();
 
   const { mutateAsync, isLoading } = useMutation({
-    mutationFn: async ({ characterId }: { characterId: string }) => {
-      const { setDoc, doc, getDoc } = await import("firebase/firestore");
+    mutationFn: async ({ characterIdInput }: { characterIdInput: string }) => {
+      const { setDoc, doc } = await import("firebase/firestore");
       const { db } = await import("../../../context/firebase");
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "characters");
       const {
-        rawData: { [characterId]: documentToBeDeleted, ...rest },
+        rawData: { [characterIdInput]: documentToBeDeleted, ...rest },
       } = await getCharacters(user?.uid as string);
 
       await setDoc(docRef, {
@@ -200,7 +213,7 @@ function DeleteCharacter(props: { characterId: string }) {
 
   const handleDelete = async () => {
     try {
-      await mutateAsync({ characterId });
+      await mutateAsync({ characterIdInput: characterId });
       close();
       await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
     } catch (err) {

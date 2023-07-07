@@ -85,7 +85,7 @@ export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team })
       align="start"
     >
       <Conditional
-        condition={!!isSingleTeam}
+        condition={isSingleTeam}
         component={
           <SingleTeam
             form={currentForm}
@@ -123,18 +123,22 @@ function useUpdateOrAddDocument(documentId?: string) {
 
   const mutation = useMutation({
     mutationFn: async ({ values }: { values?: EditTeamType }) => {
-      const { doc, updateDoc } = await import("firebase/firestore");
+      const { doc, setDoc } = await import("firebase/firestore");
       const { db } = await import("../../../context/firebase");
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "teams");
-      await updateDoc(docRef, {
-        [documentId || uuid()]: values || {
-          pokemon_ids: [],
-          team_name: "Untitled",
-          times_battled: "0",
-          created_at: new Date(),
+      await setDoc(
+        docRef,
+        {
+          [documentId || uuid()]: values || {
+            pokemon_ids: [],
+            team_name: "Untitled",
+            times_battled: "0",
+            created_at: new Date(),
+          },
         },
-      });
+        { merge: true }
+      );
     },
   });
   return mutation;
