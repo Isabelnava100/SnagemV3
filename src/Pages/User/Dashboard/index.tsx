@@ -40,6 +40,7 @@ import {
 } from "../../../icons";
 import { getCurrencies, getItems } from "../../../queries/dashboard";
 import "/src/assets/styles/dashboard.css";
+import {handleLogout} from "../../auth/components/LogoutHandle";
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -73,6 +74,7 @@ export function Dashboard() {
             </Group>
           </Stack>
         )}
+      <p onClick={handleLogout}>logout button</p>
         <Announcements />
         <ItemsAndCurrencySection />
         <TabsPanel />

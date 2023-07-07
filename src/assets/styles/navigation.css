@@ -11,7 +11,7 @@
 
 .dropdownMenu {
   position: absolute;
-  top: var(--HEADER_HEIGHT);
+  bottom: var(--HEADER_HEIGHT);
   left: 0;
   right: 0;
   z-index: 9999;

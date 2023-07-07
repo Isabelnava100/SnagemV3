@@ -5,4 +5,4 @@ export const handleLogout = () => {
     console.log('User signed out');
     window.location.reload();
   });
-};
+}; 

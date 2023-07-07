@@ -14,7 +14,7 @@ import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { handleSignIn } from "./components/LoginHandle";
+import { handleSignIn } from "./components/LoginHandle"
 
 export function Login() {
   const navigate = useNavigate();
@@ -27,11 +27,16 @@ export function Login() {
       password: "",
       remember: false,
     },
+    validate: {
+      email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email."),
+    },
   });
+
+
 
   useEffect(() => {
     if (user) {
-      navigate("/Profile");
+      navigate("/Dashboard");
     }
   }, [user]);
 
@@ -53,19 +58,19 @@ export function Login() {
         onSubmit={form.onSubmit((values) => {
           setSub(true);
           handleSignIn(values.email, values.password, values.remember, setUser).then((results) => {
-            if (results) {
-              navigate("/Profile");
-              return true;
-            } else {
+          // console.log(results);
               if (results === "auth/user-not-found") {
-                form.setErrors({ email: "Invalid email." });
+                form.setFieldError('email', 'Invalid email');
               } else if (results === "auth/wrong-password") {
-                form.setErrors({ password: "Invalid password." });
+                form.setFieldError('password', 'Invalid password');
               } else if (results === "auth/too-many-requests") {
-                form.setErrors({ email: "Try again later." });
+                form.setFieldError('email', 'Too many attempts');
+              } else {
+                  navigate("/Dashboard");
+                  return true;
               }
               setSub(false);
-            }
+            
             return;
           });
         })}
@@ -77,18 +82,16 @@ export function Login() {
             required
             {...form.getInputProps("email")}
           />
-          <PasswordInput
-            mt="md"
-            required
-            // {...form.getInputProps('password')}
-            label="Your password"
-            placeholder="Your password"
-            value={value}
-            onChange={(event) => {
-              setValue(event.currentTarget.value);
-              form.setFieldValue("password", event.currentTarget.value);
-            }}
-          />
+<PasswordInput
+        mt="md"
+        required
+        {...form.getInputProps('password')}
+        error={form.errors.password}
+        label="Your password"
+        placeholder="Your password"
+        value={form.values.password}
+        onChange={(event) => form.setFieldValue('password', event.currentTarget.value)}
+      />
           <Group position="apart" mt="md">
             <Checkbox label="Remember me" {...form.getInputProps("remember")} />
             <div></div>

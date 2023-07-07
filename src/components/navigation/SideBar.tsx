@@ -4,7 +4,7 @@ import { Link, NavLink } from "react-router-dom";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { Activities, Forum, Marketplace, Menu, Quests, TeamSangem, Users } from "../../icons";
 import "/src/assets/styles/navigation.css";
-
+ 
 function SingleLink(props: { label?: string; link?: string; icon: string }) {
   const { label, link, icon } = props;
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
@@ -76,10 +76,10 @@ export const SideBar = () => {
 
   const headerLinks = {
     links: [
-      { link: "/", label: "Activities", icon: Activities },
-      { link: "/", label: "Missions", icon: Quests },
-      { link: "/", label: "Shop", icon: Marketplace, mustShow: true },
-      { link: "/", label: "Users", icon: Users },
+      { link: "/Activities", label: "Activities", icon: Activities },
+      { link: "/Missions", label: "Missions", icon: Quests },
+      { link: "/Shop", label: "Shop", icon: Marketplace, mustShow: true },
+      { link: "/Users", label: "Users", icon: Users },
       { link: "/Forum/Main-Forum", label: "Forum", icon: Forum, mustShow: true },
       { link: "/Dashboard", label: "Snag", icon: TeamSangem, mustShow: true },
       // { link: "/" + loginName, label: loginName }

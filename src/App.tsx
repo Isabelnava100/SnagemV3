@@ -71,7 +71,7 @@ export const App = memo(() => {
             </Box>
           </Paper>
         </div>
-        {!isOverMd &&
+        {/* {!isOverMd &&
           (user ? (
             <Flex align="center" mih={65} px={17} justify="space-between" bg="#1E1E1E" w="100%">
               <Title order={4} size={20} color="white">
@@ -81,7 +81,7 @@ export const App = memo(() => {
                 <Image src={Bell} w={35} />
               </ActionIcon>
             </Flex>
-          ) : (
+          ) : ( 
             <Flex align="center" mih={65} px={17} justify="space-between" bg="#1E1E1E" w="100%">
               <Group noWrap align="center" sx={{ gap: "0.25rem" }}>
                 <Image src={TeamSnagemLogoSrc} alt="Team Snagem Logo" width="3.125rem" />
@@ -98,7 +98,7 @@ export const App = memo(() => {
                 Login
               </Button>
             </Flex>
-          ))}
+          ))} */}
       </Flex>
     </Box>
   );
