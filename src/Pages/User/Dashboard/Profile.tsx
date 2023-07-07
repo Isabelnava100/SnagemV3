@@ -100,17 +100,17 @@ function Avatars() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const canUpload = data && data.avatars && data.avatars.length < 6;
+  const canUpload = data && data.avatars ? data.avatars.length < 6 : true;
 
   const MAX_ITEMS_COUNT = 6;
   const REMAINING_ITEMS_COUNT = useMemo(() => {
-    if (data?.avatars.length) {
+    if (data?.avatars?.length) {
       const count = MAX_ITEMS_COUNT - data?.avatars.length;
       return count >= 0 ? count : 0;
     } else {
       return 0;
     }
-  }, [data?.avatars.length]);
+  }, [data?.avatars?.length]);
 
   const handleAvatarUpload = async () => {
     if (!fileBlob) return;
@@ -119,7 +119,7 @@ function Avatars() {
       setProcessing(true);
 
       const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
-      const { doc, updateDoc, arrayUnion } = await import("firebase/firestore");
+      const { doc, arrayUnion, setDoc } = await import("firebase/firestore");
       const { storage, db } = await import("../../../context/firebase");
 
       const fileName = `${uuid()}.jpg`;
@@ -133,15 +133,13 @@ function Avatars() {
       // push it into avatars array in db
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 
-      await updateDoc(docRef, {
-        avatars: arrayUnion(imagePublicURL),
-      });
+      await setDoc(docRef, { avatars: arrayUnion(imagePublicURL) }, { merge: true });
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
 
       setFileBlob(undefined);
     } catch (err) {
-      //
+      console.log(err);
     } finally {
       setProcessing(false);
     }
@@ -149,14 +147,18 @@ function Avatars() {
 
   const handleSelectAvatar = async (url: string) => {
     try {
-      const { doc, updateDoc } = await import("firebase/firestore");
+      const { doc, setDoc } = await import("firebase/firestore");
       const { db } = await import("../../../context/firebase");
 
       const docRef = doc(db, "users", user?.uid as string);
 
-      await updateDoc(docRef, {
-        avatar: url,
-      });
+      await setDoc(
+        docRef,
+        {
+          avatar: url,
+        },
+        { merge: true }
+      );
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
     } catch (err) {
@@ -170,7 +172,7 @@ function Avatars() {
     try {
       const { storage, db } = await import("../../../context/firebase");
       const { ref, deleteObject } = await import("firebase/storage");
-      const { arrayRemove, doc, updateDoc } = await import("firebase/firestore");
+      const { arrayRemove, doc, setDoc } = await import("firebase/firestore");
 
       const httpsReference = storage.refFromURL(url);
       const fileName = httpsReference.name;
@@ -182,9 +184,13 @@ function Avatars() {
       // update the avatars array
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 
-      await updateDoc(docRef, {
-        avatars: arrayRemove(url),
-      });
+      await setDoc(
+        docRef,
+        {
+          avatars: arrayRemove(url),
+        },
+        { merge: true }
+      );
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
     } catch (err) {
@@ -237,41 +243,43 @@ function Avatars() {
           />
         </Flex>
         <Conditional
-          condition={!!data?.avatars.length}
+          condition={!!data?.avatars?.length}
           component={
             <ScrollArea pb={20}>
               <Flex gap={6} sx={{ flexWrap: "nowrap" }}>
                 {/* all of them except the one the has picked as his profile avatar */}
-                {data?.avatars
-                  .filter((avatarUrl) => avatarUrl !== user?.avatar)
-                  .reverse()
-                  .map((avatarUrl) => {
-                    return (
-                      <div key={avatarUrl} className="relative">
-                        <Avatar
-                          onClick={() => handleSelectAvatar(avatarUrl)}
-                          src={avatarUrl}
-                          w={60}
-                          h={60}
-                          radius="xl"
-                          sx={{ cursor: "pointer" }}
-                        />
-                        <div className="absolute top-0 right-0">
-                          <Tooltip label="Remove">
-                            <ActionIcon
-                              onClick={() => handleRemoveAvatar(avatarUrl)}
-                              color="red"
-                              variant="filled"
-                              radius="xl"
-                              size="xs"
-                            >
-                              <IconX />
-                            </ActionIcon>
-                          </Tooltip>
+                {data &&
+                  data.avatars &&
+                  data.avatars
+                    .filter((avatarUrl) => avatarUrl !== user?.avatar)
+                    .reverse()
+                    .map((avatarUrl) => {
+                      return (
+                        <div key={avatarUrl} className="relative">
+                          <Avatar
+                            onClick={() => handleSelectAvatar(avatarUrl)}
+                            src={avatarUrl}
+                            w={60}
+                            h={60}
+                            radius="xl"
+                            sx={{ cursor: "pointer" }}
+                          />
+                          <div className="absolute top-0 right-0">
+                            <Tooltip label="Remove">
+                              <ActionIcon
+                                onClick={() => handleRemoveAvatar(avatarUrl)}
+                                color="red"
+                                variant="filled"
+                                radius="xl"
+                                size="xs"
+                              >
+                                <IconX />
+                              </ActionIcon>
+                            </Tooltip>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 {Array(REMAINING_ITEMS_COUNT)
                   .fill(0)
                   .map((_) => (
@@ -294,7 +302,7 @@ function CoverBackgrounds() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const canUpload = data && data.cover_backgrounds && data.cover_backgrounds.length < 6;
+  const canUpload = data && data.cover_backgrounds ? data.cover_backgrounds.length < 6 : true;
 
   const handleImageUpload = async () => {
     if (!fileBlob) return;
@@ -303,7 +311,7 @@ function CoverBackgrounds() {
       setProcessing(true);
 
       const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
-      const { doc, updateDoc, arrayUnion } = await import("firebase/firestore");
+      const { doc, setDoc, arrayUnion } = await import("firebase/firestore");
       const { storage, db } = await import("../../../context/firebase");
 
       const fileName = `${uuid()}.jpg`;
@@ -317,9 +325,13 @@ function CoverBackgrounds() {
       // push it into avatars array in db
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 
-      await updateDoc(docRef, {
-        cover_backgrounds: arrayUnion(imagePublicURL),
-      });
+      await setDoc(
+        docRef,
+        {
+          cover_backgrounds: arrayUnion(imagePublicURL),
+        },
+        { merge: true }
+      );
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
 
@@ -333,14 +345,18 @@ function CoverBackgrounds() {
 
   const handleSelectCoverImage = async (url: string) => {
     try {
-      const { doc, updateDoc } = await import("firebase/firestore");
+      const { doc, setDoc } = await import("firebase/firestore");
       const { db } = await import("../../../context/firebase");
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 
-      await updateDoc(docRef, {
-        coverBG: url,
-      });
+      await setDoc(
+        docRef,
+        {
+          coverBG: url,
+        },
+        { merge: true }
+      );
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
     } catch (err) {
@@ -354,7 +370,7 @@ function CoverBackgrounds() {
     try {
       const { storage, db } = await import("../../../context/firebase");
       const { ref, deleteObject } = await import("firebase/storage");
-      const { arrayRemove, doc, updateDoc } = await import("firebase/firestore");
+      const { arrayRemove, doc, setDoc } = await import("firebase/firestore");
 
       const httpsReference = storage.refFromURL(url);
       const fileName = httpsReference.name;
@@ -366,9 +382,13 @@ function CoverBackgrounds() {
       // update the avatars array
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 
-      await updateDoc(docRef, {
-        cover_backgrounds: arrayRemove(url),
-      });
+      await setDoc(
+        docRef,
+        {
+          cover_backgrounds: arrayRemove(url),
+        },
+        { merge: true }
+      );
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
     } catch (err) {
@@ -406,61 +426,63 @@ function CoverBackgrounds() {
           />
         </Flex>
         <Conditional
-          condition={!!data?.cover_backgrounds.length}
+          condition={!!data?.cover_backgrounds?.length}
           component={
             <ScrollArea pb={20}>
               <Flex gap={12} sx={{ flexWrap: "nowrap" }}>
-                {data?.cover_backgrounds
-                  .filter(() => true)
-                  .reverse()
-                  .map((cover_background_url) => {
-                    const isActive = data.coverBG === cover_background_url;
-                    return (
-                      <div key={cover_background_url} className="relative">
-                        <Image
-                          onClick={() => handleSelectCoverImage(cover_background_url)}
-                          src={cover_background_url}
-                          sx={{
-                            borderWidth: isActive ? 4 : 2,
-                            borderColor: "white",
-                            borderStyle: "solid",
-                            borderRadius: 22,
-                            overflow: "hidden",
-                            objectFit: "cover",
-                            cursor: "pointer",
-                          }}
-                          width={160}
-                          h={92}
-                        />
-                        {isActive && (
-                          <div className="absolute bottom-0 left-0 w-full py-2">
-                            <Text
-                              transform="uppercase"
-                              color="white"
-                              align="center"
-                              weight="bold"
-                              size={14}
-                            >
-                              Selected
-                            </Text>
+                {data &&
+                  data.cover_backgrounds &&
+                  data.cover_backgrounds
+                    .filter(() => true)
+                    .reverse()
+                    .map((cover_background_url) => {
+                      const isActive = data.coverBG === cover_background_url;
+                      return (
+                        <div key={cover_background_url} className="relative">
+                          <Image
+                            onClick={() => handleSelectCoverImage(cover_background_url)}
+                            src={cover_background_url}
+                            sx={{
+                              borderWidth: isActive ? 4 : 2,
+                              borderColor: "white",
+                              borderStyle: "solid",
+                              borderRadius: 22,
+                              overflow: "hidden",
+                              objectFit: "cover",
+                              cursor: "pointer",
+                            }}
+                            width={160}
+                            h={92}
+                          />
+                          {isActive && (
+                            <div className="absolute bottom-0 left-0 w-full py-2">
+                              <Text
+                                transform="uppercase"
+                                color="white"
+                                align="center"
+                                weight="bold"
+                                size={14}
+                              >
+                                Selected
+                              </Text>
+                            </div>
+                          )}
+                          <div className="absolute top-0 right-0">
+                            <Tooltip label="Remove">
+                              <ActionIcon
+                                onClick={() => handleRemoveCoverImage(cover_background_url)}
+                                color="red"
+                                variant="filled"
+                                radius="xl"
+                                size="xs"
+                              >
+                                <IconX />
+                              </ActionIcon>
+                            </Tooltip>
                           </div>
-                        )}
-                        <div className="absolute top-0 right-0">
-                          <Tooltip label="Remove">
-                            <ActionIcon
-                              onClick={() => handleRemoveCoverImage(cover_background_url)}
-                              color="red"
-                              variant="filled"
-                              radius="xl"
-                              size="xs"
-                            >
-                              <IconX />
-                            </ActionIcon>
-                          </Tooltip>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
               </Flex>
             </ScrollArea>
           }
@@ -477,6 +499,7 @@ function Tags() {
   const { user } = useAuth();
   const [processing, setProcessing] = React.useState(false);
   const [items, setItems] = useState<SelectItem[]>([]);
+  const [isFirstTime, setFirstTime] = useState(true);
 
   const canAdd = items.length < 6;
 
@@ -491,14 +514,18 @@ function Tags() {
     if (isLoading) return;
     try {
       setProcessing(true);
-      const { doc, updateDoc } = await import("firebase/firestore");
+      const { doc, setDoc } = await import("firebase/firestore");
       const { db } = await import("../../../context/firebase");
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 
-      await updateDoc(docRef, {
-        tags: items.map((item) => item.value),
-      });
+      await setDoc(
+        docRef,
+        {
+          tags: items.map((item) => item.value),
+        },
+        { merge: true }
+      );
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
     } catch (err) {
@@ -509,13 +536,16 @@ function Tags() {
   };
 
   React.useEffect(() => {
-    if (!isLoading && data) {
+    if (!isLoading && data && data.tags) {
       setItems(data.tags.map((tagString) => ({ label: tagString, value: tagString })));
     }
   }, [isLoading]);
 
   React.useEffect(() => {
-    addTag();
+    if (!isFirstTime) {
+      addTag();
+    }
+    setFirstTime(false);
   }, [items.length]);
 
   return (
@@ -548,6 +578,7 @@ function Tags() {
 function RightSideContent() {
   const { data } = useProfileQuery();
   const [value, setValue] = useState(data?.description);
+  const [isFirstTime, setFirstTime] = useState(true);
   const [debounced] = useDebouncedValue(value, 500);
   const editor = useRichTextEditor({
     content: data?.description as string,
@@ -562,21 +593,22 @@ function RightSideContent() {
 
   const saveChanges = async () => {
     try {
-      const { doc, updateDoc } = await import("firebase/firestore");
+      const { doc, setDoc } = await import("firebase/firestore");
       const { db } = await import("../../../context/firebase");
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 
-      await updateDoc(docRef, {
-        description: debounced,
-      });
+      await setDoc(docRef, { description: debounced }, { merge: true });
     } catch (err) {
       //
     }
   };
 
   React.useEffect(() => {
-    mutate();
+    if (!isFirstTime) {
+      mutate();
+    }
+    setFirstTime(false);
   }, [debounced]);
 
   return (

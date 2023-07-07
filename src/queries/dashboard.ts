@@ -12,7 +12,8 @@ import { db } from "../context/firebase";
 
 export const getCurrencies = async (uid: string): Promise<Currencies> => {
   const { doc, getDoc } = await import("firebase/firestore");
-  return (await getDoc(doc(db, "users", uid, "bag", "currency"))).data() as Currencies;
+  const data = (await getDoc(doc(db, "users", uid, "bag", "currency"))).data() as Currencies;
+  return data || [];
 };
 
 export const getItems = async (uid: string): Promise<Item[]> => {
@@ -21,6 +22,7 @@ export const getItems = async (uid: string): Promise<Item[]> => {
     string,
     Omit<Item, "name">
   >;
+  if (!data) return [];
   const formattedData = Object.keys(data).map((name) => ({
     name,
     category: data[name].category,
@@ -53,6 +55,7 @@ export const getBookmarks = async (uid: string) => {
     string,
     Bookmark
   >;
+  if (!data) return { sortedData: [], rawData: {} };
   const formattedData = Object.keys(data).map((key) => {
     const character = data[key] as Bookmark;
     return { ...character, id: key };
@@ -67,6 +70,7 @@ export const getCharacters = async (uid: string) => {
     string,
     Character
   >;
+  if (!data) return { sortedData: [], rawData: {} };
   const formattedData = Object.keys(data).map((key) => {
     const character = data[key] as Character;
     return { ...character, id: key };
@@ -82,6 +86,8 @@ export const getOwnedPokemons = async (uid: string) => {
     string,
     Omit<OwnedPokemon, "id">
   >;
+
+  if (!data) return { sortedData: [], rawData: {} };
 
   const formattedData = Object.keys(data).map((key) => {
     const character = data[key] as Omit<OwnedPokemon, "id">;
@@ -100,6 +106,8 @@ export const getTeams = async (uid: string) => {
     string,
     Omit<Team, "id">
   >;
+
+  if (!data) return { sortedData: [], rawData: {} };
 
   const { sortedData: ownedPokemons } = await getOwnedPokemons(uid);
 
@@ -142,5 +150,5 @@ export const getTeam = async (uid: string, teamId: string) => {
 export const getProfile = async (uid: string) => {
   const { doc, getDoc } = await import("firebase/firestore");
   const data = (await getDoc(doc(db, "users", uid, "bag", "profile"))).data() as Profile;
-  return data;
+  return data || {};
 };

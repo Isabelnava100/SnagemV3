@@ -1,5 +1,7 @@
 import { Avatar, Flex, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Bookmark } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
@@ -10,7 +12,7 @@ import DefaultCharacterAvatarSrc from "/src/assets/images/character-default.jpg"
 
 export default function Bookmarks() {
   const { user } = useAuth();
-  const { isLoading, data, isError } = useQuery({
+  const { isLoading, data, isError, error } = useQuery({
     queryKey: ["get-bookmarks"],
     queryFn: () => getBookmarks(user?.uid as string),
     enabled: !!user,
@@ -21,6 +23,22 @@ export default function Bookmarks() {
   if (isError) return <></>;
 
   const { sortedData } = data;
+
+  if (sortedData.length === 0)
+    return (
+      <EmptyMessage
+        description={
+          <Text>
+            You currently have no bookmarks!
+            <br />
+            Go to any thread in the <Link to="/Forum/Main-Forum">Forums</Link> and mark it as
+            bookmarked to see it appear in this section.
+            <br />
+            You can also edit your settings to receive notifications your liking.
+          </Text>
+        }
+      />
+    );
 
   return (
     <SimpleGrid cols={isOverLg ? 2 : 1}>
