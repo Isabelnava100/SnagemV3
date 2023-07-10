@@ -136,7 +136,7 @@ const dashboardTabLinks: DashboardTabLink[] = [
   { path: "", icon: Bookmarks, label: "Bookmarks" },
   { path: "/Drafts", icon: Drafts, label: "Drafts" },
   { path: "/Characters", icon: Characters, label: "Characters" },
-  { path: "/Pokemons", icon: Pokemons, label: "Pokemons" },
+  { path: "/Pokemon", icon: Pokemons, label: "Pokemon" },
   { path: "/Profile", icon: Profile, label: "Profile" },
 ];
 

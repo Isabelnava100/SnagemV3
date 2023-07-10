@@ -81,8 +81,8 @@ export default function AppRoutes() {
                       <Route index element={<Bookmarks />} />
                       <Route path="Drafts" element={<Drafts />} />
                       <Route path="Characters" element={<Characters />} />
-                      <Route path="Pokemons/:teamId" element={<PokemonTeam />} />
-                      <Route path="Pokemons" element={<Pokemons />} />
+                      <Route path="Pokemon/:teamId" element={<PokemonTeam />} />
+                      <Route path="Pokemon" element={<Pokemons />} />
                       <Route path="Profile" element={<Profile />} />
                       <Route path="*" element={<Navigate to="" />} />
                     </Route>

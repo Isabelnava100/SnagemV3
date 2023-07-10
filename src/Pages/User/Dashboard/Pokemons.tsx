@@ -259,7 +259,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
       await queryClient.invalidateQueries({ queryKey: ["get-team", team.id] });
       resetEditing();
       if (isSingleTeam) {
-        navigate("/Dashboard/Pokemons");
+        navigate("/Dashboard/Pokemon");
       }
     } catch (err) {
       //
@@ -296,7 +296,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
             component={
               <Group noWrap spacing={0}>
                 <Button
-                  onClick={() => (isSingleTeam ? navigate("/Dashboard/Pokemons") : resetEditing())}
+                  onClick={() => (isSingleTeam ? navigate("/Dashboard/Pokemon") : resetEditing())}
                   color="gray"
                   size="xs"
                   variant="subtle"
@@ -313,7 +313,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
                 <DeleteTeam teamId={team.id} />
                 <GradientButtonPrimary
                   onClick={() =>
-                    isOverLg ? loadTeamForEdit(team) : navigate(`/Dashboard/Pokemons/${team.id}`)
+                    isOverLg ? loadTeamForEdit(team) : navigate(`/Dashboard/Pokemon/${team.id}`)
                   }
                   size="xs"
                   rightIcon={<Image src={Edit2} />}
