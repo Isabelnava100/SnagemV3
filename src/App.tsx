@@ -28,7 +28,7 @@ export const App = memo(() => {
     >
       <Flex
         sx={{
-          flexDirection: isUnder900 ? "column-reverse" : "row",
+          flexDirection: isUnder900 ? "column" : "row",
           justifyContent: "center",
           alignItems: isUnder900 ? "center" : "start",
           width: "100%",
@@ -40,7 +40,7 @@ export const App = memo(() => {
       >
         <nav
           style={{
-            height: isUnder900 ? 70 : "auto",
+            height: isUnder900 ? 82 : "auto",
             maxHeight: "100%",
             overflowY: "auto",
             width: isUnder900 ? "100%" : hasLessHeight ? 120 : 150,
