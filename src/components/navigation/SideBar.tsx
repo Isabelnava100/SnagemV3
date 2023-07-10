@@ -23,8 +23,8 @@ function SingleLink(props: { label?: string; link?: string; icon: string }) {
               display: "flex",
               height: "100%",
               flexDirection: "column",
-              paddingTop: 15,
-              paddingBottom: 15,
+              paddingTop: 14,
+              paddingBottom: 14,
               paddingLeft: isOverSm ? 30 : 20,
               paddingRight: isOverSm ? 30 : 20,
               gap: "8px",
@@ -34,9 +34,9 @@ function SingleLink(props: { label?: string; link?: string; icon: string }) {
               background: isActive
                 ? "linear-gradient(180deg, #912691 41.15%, #4D14C4 90.1%)"
                 : undefined,
-              borderTopRightRadius: isOverMd ? 30 : 15,
-              borderTopLeftRadius: isOverMd ? 0 : 15,
-              borderBottomRightRadius: isOverMd ? 30 : 0,
+              borderTopRightRadius: isOverMd ? 30 : 0,
+              borderBottomLeftRadius: isOverMd ? 0 : 15,
+              borderBottomRightRadius: isOverMd ? 30 : 15,
             };
           }}
         >
@@ -44,20 +44,22 @@ function SingleLink(props: { label?: string; link?: string; icon: string }) {
             <Image
               src={icon}
               width={
-                isUnder900
-                  ? hasLessHeight
-                    ? hasVeryLessHeight
-                      ? 30
-                      : 35
-                    : 40
-                  : hasLessHeight
-                  ? hasVeryLessHeight
-                    ? 30
-                    : 35
-                  : undefined
+                isUnder900 ? 44 : 100
+                  // ? hasLessHeight
+                  //   ? hasVeryLessHeight
+                  //     ? 30
+                  //     : 35
+                  //   : 40
+                  // : hasLessHeight
+                  // ? hasVeryLessHeight
+                  //   ? 30
+                  //   : 35
+                  // : undefined
               }
+              height={ isUnder900 ? 40 : 100}
               alt={label}
             />
+            <Text fz="xs" tt="uppercase" ta="center">{label}</Text>
           </Box>
           {!isUnder900 && (
             <Text color="white" transform="uppercase" size={16}>
@@ -99,9 +101,10 @@ export const SideBar = () => {
         display: isUnder900 ? "flex" : "block",
         width: "100%",
         height: "100%",
-        borderTopRightRadius: isUnder900 ? 30 : 60,
-        borderTopLeftRadius: isUnder900 ? 30 : 0,
-        borderBottomRightRadius: isUnder900 ? 0 : 60,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: isUnder900 ? 0 : 60,
+        borderBottomLeftRadius: isUnder900 ? 30 : 0,
+        borderBottomRightRadius: isUnder900 ? 30 : 60,
         overflow: "auto",
         flexShrink: 0,
         justifyContent: "center",
@@ -144,6 +147,7 @@ function MobileMenu(props: { links: { link: string; label: string; icon: string 
           {links.map((link) => (
             <Link key={link.label} style={{ padding: 15 }} to={link.link}>
               <Image src={link.icon} width={35} height={35} />
+            <Text fz="xs" tt="uppercase">{link.label}</Text>
             </Link>
           ))}
         </SimpleGrid>
