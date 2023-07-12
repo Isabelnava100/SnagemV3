@@ -80,38 +80,32 @@ export default function AdjustLists() {
         </Title>
         <CreateList />
       </Flex>
-      <table className="border-collapse border-none">
-        <thead>
-          <tr>
-            <th className="text-start">Name</th>
-            <th className="text-start">Created by</th>
-            <th className="text-start">List of Pokemon</th>
-          </tr>
-        </thead>
-        <tbody className="p-6">
+      <div>
+        <div className="grid grid-cols-3 py-2">
+          <span className="text-start text-white uppercase font-[700] text-sm">Name</span>
+          <span className="text-start text-white uppercase font-[700] text-sm">Created by</span>
+          <span className="text-start text-white uppercase font-[700] text-sm">
+            List of Pokemon
+          </span>
+        </div>
+        <div className="flex flex-col gap-2">
           {formattedData.map((list) => (
-            <tr className="bg-[#57525B80] p-10! w-full">
-              <td>
-                <Stack align="start">
-                  <Text>{list.name || "Untitled"}</Text>
-                  <GradientButtonPrimary>Duplicate</GradientButtonPrimary>
-                </Stack>
-              </td>
-              <td>
-                <Stack align="start">
-                  <Text>{list.creator}</Text>
-                  <Badge>{list.public ? "Public list" : "Private list"}</Badge>
-                </Stack>
-              </td>
-              <td>
-                <Stack>
-                  <Text>{list.rule}</Text>
-                </Stack>
-              </td>
-            </tr>
+            <div className="bg-[#57525B80] p-3 rounded-[8px] grid grid-cols-3 w-full">
+              <Stack align="start">
+                <Text>{list.name || "Untitled"}</Text>
+                <GradientButtonPrimary>Duplicate</GradientButtonPrimary>
+              </Stack>
+              <Stack align="start">
+                <Text>{list.creator}</Text>
+                <Badge>{list.public ? "Public list" : "Private list"}</Badge>
+              </Stack>
+              <Stack>
+                <Text>{list.rule}</Text>
+              </Stack>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </div>
     </Stack>
   );
 }
