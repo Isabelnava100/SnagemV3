@@ -28,4 +28,5 @@ export const theme: MantineThemeOverride = {
     sm: 800,
     lg: 1200,
   },
+  fontFamily: "'Roboto', sans-serif",
 };

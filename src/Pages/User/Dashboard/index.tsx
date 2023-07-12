@@ -2,6 +2,7 @@ import {
   ActionIcon,
   Avatar,
   Box,
+  Button,
   Flex,
   Group,
   Image,
@@ -26,6 +27,7 @@ import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { useAuth } from "../../../context/AuthContext";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
+  AdminAccessIcon,
   Bell,
   Bookmarks,
   Characters,
@@ -39,8 +41,8 @@ import {
   Tether,
 } from "../../../icons";
 import { getCurrencies, getItems } from "../../../queries/dashboard";
+import { handleLogout } from "../../auth/components/LogoutHandle";
 import "/src/assets/styles/dashboard.css";
-import {handleLogout} from "../../auth/components/LogoutHandle";
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -72,9 +74,11 @@ export function Dashboard() {
                 Welcome, {user?.displayName}!
               </Text>
             </Group>
+            <Button className="self-start" variant="subtle" onClick={handleLogout}>
+              Logout
+            </Button>
           </Stack>
         )}
-      <p onClick={handleLogout}>logout button</p>
         <Announcements />
         <ItemsAndCurrencySection />
         <TabsPanel />
@@ -130,20 +134,27 @@ type DashboardTabLink = {
   path: string;
   icon: string;
   label: string;
+  enabled: boolean;
 };
-
-const dashboardTabLinks: DashboardTabLink[] = [
-  { path: "", icon: Bookmarks, label: "Bookmarks" },
-  { path: "/Drafts", icon: Drafts, label: "Drafts" },
-  { path: "/Characters", icon: Characters, label: "Characters" },
-  { path: "/Pokemon", icon: Pokemons, label: "Pokemon" },
-  { path: "/Profile", icon: Profile, label: "Profile" },
-];
 
 function TabsPanel() {
   const location = useLocation();
   const currentPath = location.pathname;
   const { isOverMd } = useMediaQuery();
+  const { user } = useAuth();
+  const dashboardTabLinks: DashboardTabLink[] = [
+    { path: "/Bookmarks", icon: Bookmarks, label: "Bookmarks", enabled: true },
+    { path: "/Drafts", icon: Drafts, label: "Drafts", enabled: true },
+    { path: "/Characters", icon: Characters, label: "Characters", enabled: true },
+    { path: "/Pokemon", icon: Pokemons, label: "Pokemon", enabled: true },
+    { path: "/Profile", icon: Profile, label: "Profile", enabled: true },
+    {
+      path: "/Admin-Access",
+      icon: AdminAccessIcon,
+      label: "Admin Access",
+      enabled: user?.otherinfo?.permissions === "Admin",
+    },
+  ];
 
   return (
     <SectionWrapper
@@ -153,7 +164,7 @@ function TabsPanel() {
           <Flex sx={{ overflowY: "hidden" }} align="center" justify="start" gap={isOverMd ? 45 : 0}>
             {dashboardTabLinks.map((link) => {
               const linkPath = `/Dashboard${link.path}`;
-              const isActive = linkPath === currentPath;
+              const isActive = currentPath.includes(linkPath);
               return (
                 <Link
                   style={{

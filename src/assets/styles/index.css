@@ -12,6 +12,10 @@
   }
 }
 
+body {
+  font-family: "Roboto", sans-serif;
+}
+
 /* body {font-family: 'ManropeMedium';} */
 input,
 .mantine-PasswordInput-root,

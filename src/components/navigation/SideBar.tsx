@@ -1,6 +1,7 @@
 import { Box, Image, Paper, Popover, SimpleGrid, Text, UnstyledButton } from "@mantine/core";
 import { useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
 import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { Activities, Forum, Marketplace, Menu, Quests, TeamSangem, Users } from "../../icons";
 import "/src/assets/styles/navigation.css";
@@ -75,6 +76,7 @@ function SingleLink(props: { label?: string; link?: string; icon: string }) {
 export const SideBar = () => {
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
   const { isOverSm } = useMediaQuery();
+  const { user } = useAuth();
 
   const headerLinks = {
     links: [

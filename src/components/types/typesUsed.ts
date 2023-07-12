@@ -286,3 +286,12 @@ export interface Bookmark {
   threadID: string;
   threadLocation: "Main-Forum" | "Side-Roleplay";
 }
+
+export interface AdminPokemonList {
+  id: string;
+  name?: string;
+  creator: string;
+  pokemons: string[];
+  public: boolean;
+  rule: "except" | "only";
+}
