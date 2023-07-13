@@ -201,6 +201,7 @@ export interface Character {
   name: string;
   short_description: string;
   species: string;
+  pronouns: string;
   type: "None" | "Hybrid" | "Channeler";
   imageURL: string;
   createdAt: {

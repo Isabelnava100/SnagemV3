@@ -81,6 +81,7 @@ function useUpdateOrAddDocument(documentId?: string) {
             name: "No name",
             short_description: "",
             species: "",
+            pronouns: "",
             type: "None",
             imageURL: "",
             createdAt: new Date(),
@@ -125,13 +126,13 @@ function InputWrapper(props: {
 }) {
   const { title, isEditing, inputType = "input", options, name, form } = props;
   return (
-    <Paper w="100%" bg="#525151" py={3} px={5} radius={8}>
+    <Paper w="100%" bg="#525151" py={3} px={7} radius={8}>
       <Flex align="center">
-        <Text w={65} lineClamp={1}>
+        <Text w={65} size={14} lineClamp={1}>
           {title}:
         </Text>
         {!isEditing ? (
-          <Text py={7} lineClamp={1} color="white" px={2}>
+          <Text lineClamp={1} size={18} color="white" px={2}>
             {form.values[name as keyof FormFields].toString()}
           </Text>
         ) : inputType === "input" ? (
@@ -401,6 +402,7 @@ function SingleCharacter(props: Character) {
               <InputWrapper form={form} name="height" isEditing={isEditing} title="Height" />
               <InputWrapper form={form} name="age" isEditing={isEditing} title="Age" />
               <InputWrapper form={form} name="birthday" isEditing={isEditing} title="Birthday" />
+              <InputWrapper form={form} name="pronouns" isEditing={isEditing} title="Pronouns" />
             </Stack>
             <Stack spacing={8} sx={{ flex: 1 }}>
               <TextareaWrapper
