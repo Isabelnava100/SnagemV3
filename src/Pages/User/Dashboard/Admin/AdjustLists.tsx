@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Avatar,
   Badge,
   Box,
@@ -8,6 +9,7 @@ import {
   Group,
   Image,
   MultiSelect,
+  Popover,
   Select,
   Stack,
   Text,
@@ -15,6 +17,8 @@ import {
   Title,
 } from "@mantine/core";
 import { UseFormReturnType, useForm } from "@mantine/form";
+import { useDisclosure } from "@mantine/hooks";
+import { IconTrash } from "@tabler/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { v4 as uuid } from "uuid";
@@ -193,7 +197,7 @@ function EditSingleListItem(props: {
           </GradientButtonSecondary>
         </Group>
       </Group>
-      <Group align="end">
+      <Group align="start">
         <Select
           {...form.getInputProps("rule")}
           placeholder="Select"
@@ -226,6 +230,7 @@ function EditSingleListItem(props: {
           />
         </React.Suspense>
         <Checkbox
+          pt={25}
           {...form.getInputProps("public")}
           checked={form.values.public}
           size="lg"
@@ -253,6 +258,63 @@ function EditSingleListItem(props: {
         </Box>
       </Stack>
     </Stack>
+  );
+}
+
+function DeleteSingleListItem(props: { itemId: string }) {
+  const { itemId } = props;
+  const [opened, { open, close }] = useDisclosure();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { mutateAsync, isLoading } = useMutation({
+    mutationFn: async ({ itemIdInput }: { itemIdInput: string }) => {
+      const { setDoc, doc } = await import("firebase/firestore");
+      const { db } = await import("../../../../context/firebase");
+
+      const docRef = doc(db, "admin", "pokemon_lists");
+      const {
+        data: { [itemIdInput]: documentToBeDeleted, ...rest },
+      } = await getPokemonLists();
+
+      await setDoc(docRef, {
+        ...rest,
+      });
+    },
+  });
+
+  const handleDelete = async () => {
+    if (user?.otherinfo?.permissions !== "Admin") return;
+    try {
+      await mutateAsync({ itemIdInput: itemId });
+      close();
+      await queryClient.invalidateQueries({ queryKey: ["get-admin-pokemon-lists"] });
+    } catch (err) {
+      //
+    }
+  };
+
+  return (
+    <Popover withArrow opened={opened} onClose={close}>
+      <Popover.Target>
+        <ActionIcon onClick={open} color="red" variant="transparent">
+          <IconTrash size={20} />
+        </ActionIcon>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <Stack>
+          <Text>Are you sure, you want to delete this list?</Text>
+          <Group>
+            <Button loading={isLoading} onClick={handleDelete}>
+              Yes
+            </Button>
+            <Button onClick={close} loading={isLoading} color="gray">
+              No
+            </Button>
+          </Group>
+        </Stack>
+      </Popover.Dropdown>
+    </Popover>
   );
 }
 
@@ -285,7 +347,7 @@ function SingleListItem(props: { list: AdminPokemonList }) {
           </Badge>
         )}
       </Stack>
-      <Stack spacing={3}>
+      <Stack w="100%" spacing={3}>
         <Conditional
           condition={list.rule === "only"}
           component={<Text>Only</Text>}
@@ -294,14 +356,17 @@ function SingleListItem(props: { list: AdminPokemonList }) {
         <PokemonList pokemons={list.pokemons} />
       </Stack>
       <Stack align="end">
-        <GradientButtonPrimary
-          onClick={() => setEditing(true)}
-          size="xs"
-          radius="lg"
-          rightIcon={<Image src={Edit2} />}
-        >
-          Edit
-        </GradientButtonPrimary>
+        <Group>
+          <DeleteSingleListItem itemId={list.id} />
+          <GradientButtonPrimary
+            onClick={() => setEditing(true)}
+            size="xs"
+            radius="lg"
+            rightIcon={<Image src={Edit2} />}
+          >
+            Edit
+          </GradientButtonPrimary>
+        </Group>
       </Stack>
     </div>
   );

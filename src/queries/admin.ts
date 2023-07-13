@@ -8,7 +8,7 @@ export const getPokemonLists = async () => {
     Omit<AdminPokemonList, "id">
   >;
 
-  if (!data) return { data: [], formattedData: [] };
+  if (!data) return { data: {}, formattedData: [] };
 
   const formattedData = Object.keys(data).map((id) => ({
     id,
