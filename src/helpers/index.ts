@@ -1,3 +1,5 @@
+import { pokemonData } from "../data/pokemon";
+
 type ExcludeProperties<T, K extends keyof T> = Omit<T, K>;
 
 export function excludeProperties<T, K extends keyof T>(
@@ -15,4 +17,10 @@ export const getPokemonImageURL = (slug: string) => {
   const url = "http://raw.githubusercontent.com/msikma/pokesprite/master/pokemon-gen8/shiny";
   const extension = "png";
   return `${url}/${slug}.${extension}`;
+};
+
+export const getPokemonName = (slug: string) => {
+  const pokemon = pokemonData.find((pokemon) => pokemon.slug === slug);
+  if (!pokemon) throw new Error(`Pokemon with the slug: ${slug} does not exits`);
+  return pokemon.name;
 };

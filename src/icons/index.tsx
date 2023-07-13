@@ -5,6 +5,7 @@ import Bell from "./bell.svg";
 import Bookmarks from "./bookmarks.svg";
 import Characters from "./characters.svg";
 import DirectRight from "./directright.svg";
+import DocumentCopyIcon from "./document-copy.svg";
 import Upload from "./documentupload.svg";
 import DollarSign from "./dollarcircle.svg";
 import Drafts from "./drafts.svg";
@@ -17,6 +18,7 @@ import Marketplace from "./marketplace.svg";
 import Menu from "./menu.svg";
 import Pokemons from "./my_pokemons.svg";
 import PokePesos from "./poke_pesos.svg";
+import Polygon5Icon from "./polygon-5.svg";
 import Profile from "./profile.svg";
 import Quests from "./quests.svg";
 import SnagCoins from "./snag_coins.svg";
@@ -32,6 +34,7 @@ export {
   Bookmarks,
   Characters,
   DirectRight,
+  DocumentCopyIcon,
   DollarSign,
   Drafts,
   Edit,
@@ -43,6 +46,7 @@ export {
   Menu,
   PokePesos,
   Pokemons,
+  Polygon5Icon,
   Profile,
   Quests,
   SnagCoins,
