@@ -106,14 +106,14 @@ export default function AdjustLists() {
         <CreateList />
       </Flex>
       <div>
-        <div className="grid grid-cols-4 py-2">
+        <div className="grid grid-cols-4 py-2 w-full">
           <span className="text-start text-white uppercase font-[700] text-sm">Name</span>
           <span className="text-start text-white uppercase font-[700] text-sm">Created by</span>
           <span className="text-start text-white uppercase font-[700] text-sm">
             List of Pokemon
           </span>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 w-full">
           {formattedData.map((list) => (
             <SingleListItem list={list} key={list.id} />
           ))}
@@ -148,7 +148,7 @@ function PokemonList(props: { pokemons: string[] }) {
   return (
     <Flex wrap="wrap" gap={8}>
       {pokemons.map((pokemonSlug) => (
-        <Avatar src={getPokemonImageURL(pokemonSlug)} size="lg" />
+        <Avatar key={pokemonSlug} src={getPokemonImageURL(pokemonSlug)} size="lg" />
       ))}
     </Flex>
   );

@@ -1,7 +1,6 @@
 import { Box, Flex, Stack, Text } from "@mantine/core";
 import { Outlet, useLocation } from "react-router";
 import { Link } from "react-router-dom";
-import "./admin.css";
 
 export default function AdminLayout() {
   const adminTabLinks = [
@@ -13,7 +12,7 @@ export default function AdminLayout() {
 
   return (
     <Flex justify="space-between" gap={37} align="start">
-      <Stack w="100%" maw={320}>
+      <Stack w="100%" maw={320} sx={{ flexShrink: 0 }}>
         {adminTabLinks.map((link, index) => {
           const linkPath = `/Dashboard/Admin-Access/${link.path}`;
           const isActive = currentPath.includes(linkPath);
@@ -49,7 +48,7 @@ export default function AdminLayout() {
           );
         })}
       </Stack>
-      <Box bg="#403C43" w="100%" className="flex-1 p-4 rounded-[22px]">
+      <Box className="bg-[#403C43] w-full flex-1 p-4 rounded-[22px]">
         <Outlet />
       </Box>
     </Flex>
