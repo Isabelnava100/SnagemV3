@@ -37,6 +37,7 @@ import {
   PokePesos,
   Pokemons,
   Profile,
+  SettingsIcon,
   SnagCoins,
   Tether,
 } from "../../../icons";
@@ -148,6 +149,7 @@ function TabsPanel() {
     { path: "/Characters", icon: Characters, label: "Characters", enabled: true },
     { path: "/Pokemon", icon: Pokemons, label: "Pokemon", enabled: true },
     { path: "/Profile", icon: Profile, label: "Profile", enabled: true },
+    { path: "/Settings", icon: SettingsIcon, label: "Settings", enabled: true },
     {
       path: "/Admin-Access",
       icon: AdminAccessIcon,

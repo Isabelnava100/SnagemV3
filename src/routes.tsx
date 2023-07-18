@@ -70,6 +70,19 @@ const { default: Donate } = lazyImport(
   "default"
 );
 
+const { default: Settings } = lazyImport(
+  () => import("./Pages/User/Dashboard/Settings"),
+  "default"
+);
+const { default: Notifications } = lazyImport(
+  () => import("./Pages/User/Dashboard/Settings/Notifications"),
+  "default"
+);
+const { default: Collections } = lazyImport(
+  () => import("./Pages/User/Dashboard/Settings/Collections"),
+  "default"
+);
+
 export default function AppRoutes() {
   return (
     <AuthContextProvider>
@@ -100,6 +113,11 @@ export default function AppRoutes() {
                         <Route index element={<Navigate to="Adjust-Lists" />} />
                         <Route path="Adjust-Lists" element={<AdjustLists />} />
                         <Route path="Donate" element={<Donate />} />
+                      </Route>
+                      <Route path="Settings" element={<Settings />}>
+                        <Route index element={<Navigate to="Notifications" />} />
+                        <Route path="Notifications" element={<Notifications />} />
+                        <Route path="Collections" element={<Collections />} />
                       </Route>
                       <Route path="*" element={<Navigate to="" />} />
                     </Route>

@@ -21,6 +21,7 @@ import PokePesos from "./poke_pesos.svg";
 import Polygon5Icon from "./polygon-5.svg";
 import Profile from "./profile.svg";
 import Quests from "./quests.svg";
+import SettingsIcon from "./settings.png";
 import SnagCoins from "./snag_coins.svg";
 import TeamSangem from "./team_snagem.svg";
 import Tether from "./tether.svg";
@@ -49,6 +50,7 @@ export {
   Polygon5Icon,
   Profile,
   Quests,
+  SettingsIcon,
   SnagCoins,
   TeamSangem,
   Tether,

@@ -140,6 +140,7 @@ export type User = {
   avatar?: string;
   displayName: string | null;
   otherinfo?: SpecificUser;
+  username: string;
 };
 //Database for Users
 
@@ -295,4 +296,11 @@ export interface AdminPokemonList {
   pokemons: string[];
   public: boolean;
   rule: "except" | "only";
+}
+
+export interface Settings {
+  directPingNotifications: boolean;
+  discordNotifications: boolean;
+  postsAndBookmarkedThreadsNotification: boolean;
+  siteNotifications: boolean;
 }
