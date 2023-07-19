@@ -4,8 +4,8 @@ import LoadingSpinner from "../components/navigation/loading";
 import { AuthContextType, SpecificUser, User } from "../components/types/typesUsed";
 import { auth, db } from "./firebase";
 
-// return the user avatar from here
-const getInfo = async (
+// return the user avatar and username from here
+export const getInfo = async (
   uid: string
 ): Promise<SpecificUser & { avatar?: string; username: string }> => {
   const { doc, getDoc } = await import("firebase/firestore");
