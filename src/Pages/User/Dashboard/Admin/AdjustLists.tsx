@@ -10,6 +10,7 @@ import {
   Image,
   MultiSelect,
   Popover,
+  ScrollArea,
   Select,
   Stack,
   Text,
@@ -32,6 +33,7 @@ import { AdminPokemonList } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
 import { pokemonData } from "../../../../data/pokemon";
 import { getPokemonImageURL } from "../../../../helpers";
+import useMediaQuery from "../../../../hooks/useMediaQuery";
 import { DocumentCopyIcon, Edit2, Polygon5Icon } from "../../../../icons";
 import { getPokemonLists } from "../../../../queries/admin";
 
@@ -50,7 +52,7 @@ function useUpdateOrAddDocument(documentId?: string) {
           [documentId || uuid()]:
             values ||
             ({
-              creator: user?.displayName,
+              creator: user?.username,
               pokemons: [],
               public: false,
               rule: "only",
@@ -67,6 +69,7 @@ function useUpdateOrAddDocument(documentId?: string) {
 function CreateList() {
   const { mutateAsync, isLoading } = useUpdateOrAddDocument();
   const queryClient = useQueryClient();
+  const { isOverXs } = useMediaQuery();
 
   const handleCreateNewList = async () => {
     try {
@@ -77,7 +80,12 @@ function CreateList() {
     }
   };
   return (
-    <GradientButtonSecondary loading={isLoading} onClick={handleCreateNewList} radius="lg">
+    <GradientButtonSecondary
+      size={isOverXs ? "sm" : "xs"}
+      loading={isLoading}
+      onClick={handleCreateNewList}
+      radius="lg"
+    >
       Create New List
     </GradientButtonSecondary>
   );
@@ -88,6 +96,7 @@ export default function AdjustLists() {
     queryKey: ["get-admin-pokemon-lists"],
     queryFn: getPokemonLists,
   });
+  const { isOverXs } = useMediaQuery();
 
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
@@ -95,18 +104,24 @@ export default function AdjustLists() {
   const { formattedData } = data;
 
   if (!formattedData.length)
-    return <EmptyMessage title="Empty lists" description="You currently have no lists created" />;
+    return (
+      <EmptyMessage
+        title="Empty lists"
+        description="You currently have no lists created"
+        action={<CreateList />}
+      />
+    );
 
   return (
     <Stack>
-      <Flex justify="space-between" align="center">
-        <Title color="white" order={2} size={24} weight={400}>
+      <Flex gap="md" justify="space-between" align="center">
+        <Title color="white" order={2} size={isOverXs ? 24 : 18} weight={400}>
           Groups of Pokemon Encounter Limits
         </Title>
         <CreateList />
       </Flex>
-      <div>
-        <div className="grid grid-cols-4 py-2 w-full">
+      <ScrollArea>
+        <div className="grid grid-cols-4 py-2 w-full min-w-[800px]">
           <span className="text-start text-white uppercase font-[700] text-sm">Name</span>
           <span className="text-start text-white uppercase font-[700] text-sm">Created by</span>
           <span className="text-start text-white uppercase font-[700] text-sm">
@@ -118,7 +133,7 @@ export default function AdjustLists() {
             <SingleListItem list={list} key={list.id} />
           ))}
         </div>
-      </div>
+      </ScrollArea>
     </Stack>
   );
 }
@@ -318,6 +333,32 @@ function DeleteSingleListItem(props: { itemId: string }) {
   );
 }
 
+function DuplicateListItem(props: { listItem: AdminPokemonList }) {
+  const {
+    listItem: { id, ...values },
+  } = props;
+  const { mutateAsync, isLoading } = useUpdateOrAddDocument();
+  const queryClient = useQueryClient();
+  const handleDuplicateListItem = async () => {
+    try {
+      await mutateAsync({ values: { ...values, name: `${values.name} [DUPLICATE]` } });
+      await queryClient.invalidateQueries({ queryKey: ["get-admin-pokemon-lists"] });
+    } catch (err) {
+      //
+    }
+  };
+  return (
+    <GradientButtonPrimary
+      loading={isLoading}
+      onClick={handleDuplicateListItem}
+      size="xs"
+      rightIcon={<Image src={DocumentCopyIcon} />}
+    >
+      Duplicate
+    </GradientButtonPrimary>
+  );
+}
+
 function SingleListItem(props: { list: AdminPokemonList }) {
   const { list } = props;
   const form = useForm<EditListForm>({
@@ -331,9 +372,7 @@ function SingleListItem(props: { list: AdminPokemonList }) {
     <div className="bg-[#57525B80] p-3 rounded-[8px] grid grid-cols-4 w-full text-white">
       <Stack align="start" spacing={10}>
         <Text size={16}>{list.name || "Untitled"}</Text>
-        <GradientButtonPrimary size="xs" rightIcon={<Image src={DocumentCopyIcon} />}>
-          Duplicate
-        </GradientButtonPrimary>
+        <DuplicateListItem listItem={list} />
       </Stack>
       <Stack spacing={6} align="start">
         <Text>{list.creator}</Text>
