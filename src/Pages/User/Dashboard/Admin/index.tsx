@@ -1,5 +1,7 @@
 import { Outlet } from "react-router";
-import SubTabsLayout from "../../../../components/Dashboard/SubTabsLayout";
+import SubTabsLayout, {
+  SimpleSectionWrapper,
+} from "../../../../components/Dashboard/SubTabsLayout";
 
 export default function AdminLayout() {
   const adminTabLinks = [
@@ -8,7 +10,9 @@ export default function AdminLayout() {
   ];
   return (
     <SubTabsLayout links={adminTabLinks} parentRoutePath="/Dashboard/Admin-Access">
-      <Outlet />
+      <SimpleSectionWrapper>
+        <Outlet />
+      </SimpleSectionWrapper>
     </SubTabsLayout>
   );
 }

@@ -1,6 +1,7 @@
 import BookmarkSymbol from "./Bookmark-Symb.svg";
 import Activities from "./activities.svg";
 import AdminAccessIcon from "./admin-access.svg";
+import ArrowSwapIcon from "./arrow-swap.svg";
 import Bell from "./bell.svg";
 import Bookmarks from "./bookmarks.svg";
 import Characters from "./characters.svg";
@@ -30,6 +31,7 @@ import Users from "./users.svg";
 export {
   Activities,
   AdminAccessIcon,
+  ArrowSwapIcon,
   Bell,
   BookmarkSymbol,
   Bookmarks,

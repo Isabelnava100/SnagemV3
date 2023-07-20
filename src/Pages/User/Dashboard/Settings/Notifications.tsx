@@ -1,4 +1,4 @@
-import { Flex, Stack, Switch, TextInput, type SwitchProps } from "@mantine/core";
+import { Box, Flex, Stack, Switch, TextInput, type SwitchProps } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -139,30 +139,32 @@ export default function Notifications() {
   if (isError) return <></>;
 
   return (
-    <Stack>
-      <CustomSwitch
-        disabled={isProcessing}
-        {...getInputProps("siteNotifications", { type: "checkbox" })}
-        label="Enable on-site notifications"
-      />
+    <Box className="bg-[#403C43] max-w-full flex-1 overflow-auto p-4 rounded-[22px]">
       <Stack>
         <CustomSwitch
           disabled={isProcessing}
-          {...getInputProps("discordNotifications", { type: "checkbox" })}
-          label="Enable Discord notifications"
+          {...getInputProps("siteNotifications", { type: "checkbox" })}
+          label="Enable on-site notifications"
         />
-        {values.discordNotifications && <CreateNewDiscordTicket />}
+        <Stack>
+          <CustomSwitch
+            disabled={isProcessing}
+            {...getInputProps("discordNotifications", { type: "checkbox" })}
+            label="Enable Discord notifications"
+          />
+          {values.discordNotifications && <CreateNewDiscordTicket />}
+        </Stack>
+        <CustomSwitch
+          disabled={isProcessing}
+          {...getInputProps("postsAndBookmarkedThreadsNotification", { type: "checkbox" })}
+          label="Receive notifications for new posts on your bookmarked threads"
+        />
+        <CustomSwitch
+          disabled={isProcessing}
+          {...getInputProps("directPingNotifications", { type: "checkbox" })}
+          label="Receive notifications for direct pings"
+        />
       </Stack>
-      <CustomSwitch
-        disabled={isProcessing}
-        {...getInputProps("postsAndBookmarkedThreadsNotification", { type: "checkbox" })}
-        label="Receive notifications for new posts on your bookmarked threads"
-      />
-      <CustomSwitch
-        disabled={isProcessing}
-        {...getInputProps("directPingNotifications", { type: "checkbox" })}
-        label="Receive notifications for direct pings"
-      />
-    </Stack>
+    </Box>
   );
 }

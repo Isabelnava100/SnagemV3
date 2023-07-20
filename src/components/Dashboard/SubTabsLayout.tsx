@@ -67,9 +67,14 @@ export default function SubTabsLayout(props: {
           );
         })}
       </Stack>
-      <Box className="bg-[#403C43] max-w-full flex-1 overflow-auto p-4 rounded-[22px]">
-        {children}
-      </Box>
+      {children}
     </Flex>
+  );
+}
+
+export function SimpleSectionWrapper(props: { children: React.ReactNode }) {
+  const { children } = props;
+  return (
+    <Box className="bg-[#403C43] w-full flex-1 overflow-auto p-4 rounded-[22px]">{children}</Box>
   );
 }
