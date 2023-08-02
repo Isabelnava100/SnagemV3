@@ -4,7 +4,7 @@ import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLa
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
 import { ArrowSwapIcon } from "../../../../icons";
-import { getBadges } from "../../../../queries/settings";
+import { getBadges, getEmojis } from "../../../../queries/settings";
 
 export type BadgeTypes = "New User" | "Admin" | "Legacy";
 
@@ -27,7 +27,7 @@ function BadgesSectionWrapper(props: {
   return (
     <Stack spacing={12}>
       <Group align="center">
-        <Title color="white" weight={400} order={3}>
+        <Title size={24} color="white" weight={400} order={3}>
           {title}
         </Title>
         {secondaryText && (
@@ -75,9 +75,26 @@ function Badges() {
 }
 
 function Emojis() {
+  const { user } = useAuth();
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["get-emojis"],
+    queryFn: async () => getEmojis(user?.uid as string),
+  });
+  if (isLoading) return <SectionLoader />;
+  if (isError) return <></>;
+  const emojis = data;
   return (
     <SimpleSectionWrapper>
-      <h1>Emojis</h1>
+      <Title size={24} color="white" weight={400} order={3}>
+        Your Emoji Collection
+      </Title>
+      <Flex wrap="wrap">
+        {emojis.map((emojiUrl: string) => (
+          <div key={emojiUrl}>
+            <Image w={30} h={30} sx={{ objectFit: "cover" }} src={emojiUrl} alt={emojiUrl} />
+          </div>
+        ))}
+      </Flex>
     </SimpleSectionWrapper>
   );
 }

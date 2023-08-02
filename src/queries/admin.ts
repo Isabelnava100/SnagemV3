@@ -1,8 +1,8 @@
 import { AdminPokemonList } from "../components/types/typesUsed";
-import { db } from "../context/firebase";
 
 export const getPokemonLists = async () => {
   const { getDoc, doc } = await import("firebase/firestore");
+  const { db } = await import("../context/firebase");
   const data = (await getDoc(doc(db, "admin", "pokemon_lists"))).data() as Record<
     string,
     Omit<AdminPokemonList, "id">
@@ -16,4 +16,14 @@ export const getPokemonLists = async () => {
   })) as AdminPokemonList[];
 
   return { data, formattedData };
+};
+
+export const getUsers = async () => {
+  const { getDocs, collection } = await import("firebase/firestore");
+  const { db } = await import("../context/firebase");
+  const data = (await getDocs(collection(db, "users"))).docs.map((doc) => {
+    const user = doc.data();
+    return { id: doc.id, username: user.username };
+  });
+  return data;
 };

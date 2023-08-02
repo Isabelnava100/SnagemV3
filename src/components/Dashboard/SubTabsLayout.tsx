@@ -72,9 +72,15 @@ export default function SubTabsLayout(props: {
   );
 }
 
-export function SimpleSectionWrapper(props: { children: React.ReactNode }) {
-  const { children } = props;
+export function SimpleSectionWrapper(props: {
+  children: React.ReactNode;
+  bg?: string;
+  borderRadius?: number;
+}) {
+  const { children, bg = "#403C43", borderRadius = 22 } = props;
   return (
-    <Box className="bg-[#403C43] w-full flex-1 overflow-auto p-4 rounded-[22px]">{children}</Box>
+    <Box bg={bg} sx={{ borderRadius }} className="w-full overflow-auto p-4">
+      {children}
+    </Box>
   );
 }

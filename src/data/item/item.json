@@ -1,0 +1,5912 @@
+{
+  "1": {
+    "Item ID": "item_0851",
+    "Name": "beast",
+    "Group": "ball",
+    "Filename": "ball/beast.png"
+  },
+  "2": {
+    "Item ID": "item_0016",
+    "Name": "cherish",
+    "Group": "ball",
+    "Filename": "ball/cherish.png"
+  },
+  "3": {
+    "Item ID": "item_0007",
+    "Name": "dive",
+    "Group": "ball",
+    "Filename": "ball/dive.png"
+  },
+  "4": {
+    "Item ID": "item_0576",
+    "Name": "dream",
+    "Group": "ball",
+    "Filename": "ball/dream.png"
+  },
+  "5": {
+    "Item ID": "item_0013",
+    "Name": "dusk",
+    "Group": "ball",
+    "Filename": "ball/dusk.png"
+  },
+  "6": {
+    "Item ID": "item_0492",
+    "Name": "fast",
+    "Group": "ball",
+    "Filename": "ball/fast.png"
+  },
+  "7": {
+    "Item ID": "item_1713",
+    "Name": "feather",
+    "Group": "ball",
+    "Filename": "ball/feather.png"
+  },
+  "8": {
+    "Item ID": "item_0497",
+    "Name": "friend",
+    "Group": "ball",
+    "Filename": "ball/friend.png"
+  },
+  "9": {
+    "Item ID": "item_1750",
+    "Name": "gigaton",
+    "Group": "ball",
+    "Filename": "ball/gigaton.png"
+  },
+  "10": {
+    "Item ID": "item_0003",
+    "Name": "great",
+    "Group": "ball",
+    "Filename": "ball/great.png"
+  },
+  "11": {
+    "Item ID": "item_0014",
+    "Name": "heal",
+    "Group": "ball",
+    "Filename": "ball/heal.png"
+  },
+  "12": {
+    "Item ID": "item_0495",
+    "Name": "heavy",
+    "Group": "ball",
+    "Filename": "ball/heavy.png"
+  },
+  "13": {
+    "Item ID": "item_1711",
+    "Name": "hisuian-great",
+    "Group": "ball",
+    "Filename": "ball/hisuian-great.png"
+  },
+  "14": {
+    "Item ID": "item_1748",
+    "Name": "hisuian-heavy",
+    "Group": "ball",
+    "Filename": "ball/hisuian-heavy.png"
+  },
+  "15": {
+    "Item ID": "item_1710",
+    "Name": "hisuian-poke",
+    "Group": "ball",
+    "Filename": "ball/hisuian-poke.png"
+  },
+  "16": {
+    "Item ID": "item_1712",
+    "Name": "hisuian-ultra",
+    "Group": "ball",
+    "Filename": "ball/hisuian-ultra.png"
+  },
+  "17": {
+    "Item ID": "item_1747",
+    "Name": "jet",
+    "Group": "ball",
+    "Filename": "ball/jet.png"
+  },
+  "18": {
+    "Item ID": "item_1749",
+    "Name": "leaden",
+    "Group": "ball",
+    "Filename": "ball/leaden.png"
+  },
+  "19": {
+    "Item ID": "item_0493",
+    "Name": "level",
+    "Group": "ball",
+    "Filename": "ball/level.png"
+  },
+  "20": {
+    "Item ID": "item_0496",
+    "Name": "love",
+    "Group": "ball",
+    "Filename": "ball/love.png"
+  },
+  "21": {
+    "Item ID": "item_0494",
+    "Name": "lure",
+    "Group": "ball",
+    "Filename": "ball/lure.png"
+  },
+  "22": {
+    "Item ID": "item_0011",
+    "Name": "luxury",
+    "Group": "ball",
+    "Filename": "ball/luxury.png"
+  },
+  "23": {
+    "Item ID": "item_0001",
+    "Name": "master",
+    "Group": "ball",
+    "Filename": "ball/master.png"
+  },
+  "24": {
+    "Item ID": "item_0498",
+    "Name": "moon",
+    "Group": "ball",
+    "Filename": "ball/moon.png"
+  },
+  "25": {
+    "Item ID": "item_0008",
+    "Name": "nest",
+    "Group": "ball",
+    "Filename": "ball/nest.png"
+  },
+  "26": {
+    "Item ID": "item_0006",
+    "Name": "net",
+    "Group": "ball",
+    "Filename": "ball/net.png"
+  },
+  "27": {
+    "Item ID": "item_1771",
+    "Name": "origin",
+    "Group": "ball",
+    "Filename": "ball/origin.png"
+  },
+  "28": {
+    "Item ID": "item_0500",
+    "Name": "park",
+    "Group": "ball",
+    "Filename": "ball/park.png"
+  },
+  "29": {
+    "Item ID": "item_0004",
+    "Name": "poke",
+    "Group": "ball",
+    "Filename": "ball/poke.png"
+  },
+  "30": {
+    "Item ID": "item_0012",
+    "Name": "premier",
+    "Group": "ball",
+    "Filename": "ball/premier.png"
+  },
+  "31": {
+    "Item ID": "item_0015",
+    "Name": "quick",
+    "Group": "ball",
+    "Filename": "ball/quick.png"
+  },
+  "32": {
+    "Item ID": "item_0009",
+    "Name": "repeat",
+    "Group": "ball",
+    "Filename": "ball/repeat.png"
+  },
+  "33": {
+    "Item ID": "item_0005",
+    "Name": "safari",
+    "Group": "ball",
+    "Filename": "ball/safari.png"
+  },
+  "34": {
+    "Item ID": "item_0499",
+    "Name": "sport",
+    "Group": "ball",
+    "Filename": "ball/sport.png"
+  },
+  "35": {
+    "Item ID": "item_1785",
+    "Name": "strange",
+    "Group": "ball",
+    "Filename": "ball/strange.png"
+  },
+  "36": {
+    "Item ID": "item_0010",
+    "Name": "timer",
+    "Group": "ball",
+    "Filename": "ball/timer.png"
+  },
+  "37": {
+    "Item ID": "item_0002",
+    "Name": "ultra",
+    "Group": "ball",
+    "Filename": "ball/ultra.png"
+  },
+  "38": {
+    "Item ID": "item_1746",
+    "Name": "wing",
+    "Group": "ball",
+    "Filename": "ball/wing.png"
+  },
+  "39": {
+    "Item ID": "item_0645",
+    "Name": "ability-capsule",
+    "Group": "medicine",
+    "Filename": "medicine/ability-capsule.png"
+  },
+  "40": {
+    "Item ID": "item_0018",
+    "Name": "antidote",
+    "Group": "medicine",
+    "Filename": "medicine/antidote.png"
+  },
+  "41": {
+    "Item ID": "item_0021",
+    "Name": "awakening",
+    "Group": "medicine",
+    "Filename": "medicine/awakening.png"
+  },
+  "42": {
+    "Item ID": "item_0043",
+    "Name": "berry-juice",
+    "Group": "medicine",
+    "Filename": "medicine/berry-juice.png"
+  },
+  "43": {
+    "Item ID": "item_0852",
+    "Name": "big-malasada",
+    "Group": "medicine",
+    "Filename": "medicine/big-malasada.png"
+  },
+  "44": {
+    "Item ID": "item_0019",
+    "Name": "burn-heal",
+    "Group": "medicine",
+    "Filename": "medicine/burn-heal.png"
+  },
+  "45": {
+    "Item ID": "item_0049",
+    "Name": "calcium",
+    "Group": "medicine",
+    "Filename": "medicine/calcium.png"
+  },
+  "46": {
+    "Item ID": "item_0048",
+    "Name": "carbos",
+    "Group": "medicine",
+    "Filename": "medicine/carbos.png"
+  },
+  "47": {
+    "Item ID": "item_0591",
+    "Name": "casteliacone",
+    "Group": "medicine",
+    "Filename": "medicine/casteliacone.png"
+  },
+  "48": {
+    "Item ID": "item_0569",
+    "Name": "clever-wing",
+    "Group": "medicine",
+    "Filename": "medicine/clever-wing.png"
+  },
+  "49": {
+    "Item ID": "item_0040",
+    "Name": "elixir",
+    "Group": "medicine",
+    "Filename": "medicine/elixir.png"
+  },
+  "50": {
+    "Item ID": "item_0034",
+    "Name": "energy-powder",
+    "Group": "medicine",
+    "Filename": "medicine/energy-powder.png"
+  },
+  "51": {
+    "Item ID": "item_0035",
+    "Name": "energy-root",
+    "Group": "medicine",
+    "Filename": "medicine/energy-root.png"
+  },
+  "52": {
+    "Item ID": "item_0038",
+    "Name": "ether",
+    "Group": "medicine",
+    "Filename": "medicine/ether.png"
+  },
+  "53": {
+    "Item ID": "item_0030",
+    "Name": "fresh-water",
+    "Group": "medicine",
+    "Filename": "medicine/fresh-water.png"
+  },
+  "54": {
+    "Item ID": "item_0027",
+    "Name": "full-heal",
+    "Group": "medicine",
+    "Filename": "medicine/full-heal.png"
+  },
+  "55": {
+    "Item ID": "item_0023",
+    "Name": "full-restore",
+    "Group": "medicine",
+    "Filename": "medicine/full-restore.png"
+  },
+  "56": {
+    "Item ID": "item_0568",
+    "Name": "genius-wing",
+    "Group": "medicine",
+    "Filename": "medicine/genius-wing.png"
+  },
+  "57": {
+    "Item ID": "item_0036",
+    "Name": "heal-powder",
+    "Group": "medicine",
+    "Filename": "medicine/heal-powder.png"
+  },
+  "58": {
+    "Item ID": "item_0565",
+    "Name": "health-wing",
+    "Group": "medicine",
+    "Filename": "medicine/health-wing.png"
+  },
+  "59": {
+    "Item ID": "item_0045",
+    "Name": "hp-up",
+    "Group": "medicine",
+    "Filename": "medicine/hp-up.png"
+  },
+  "60": {
+    "Item ID": "item_0025",
+    "Name": "hyper-potion",
+    "Group": "medicine",
+    "Filename": "medicine/hyper-potion.png"
+  },
+  "61": {
+    "Item ID": "item_0020",
+    "Name": "ice-heal",
+    "Group": "medicine",
+    "Filename": "medicine/ice-heal.png"
+  },
+  "62": {
+    "Item ID": "item_0047",
+    "Name": "iron",
+    "Group": "medicine",
+    "Filename": "medicine/iron.png"
+  },
+  "63": {
+    "Item ID": "item_0042",
+    "Name": "lava-cookie",
+    "Group": "medicine",
+    "Filename": "medicine/lava-cookie.png"
+  },
+  "64": {
+    "Item ID": "item_0032",
+    "Name": "lemonade",
+    "Group": "medicine",
+    "Filename": "medicine/lemonade.png"
+  },
+  "65": {
+    "Item ID": "item_0708",
+    "Name": "lumiose-galette",
+    "Group": "medicine",
+    "Filename": "medicine/lumiose-galette.png"
+  },
+  "66": {
+    "Item ID": "item_0041",
+    "Name": "max-elixir",
+    "Group": "medicine",
+    "Filename": "medicine/max-elixir.png"
+  },
+  "67": {
+    "Item ID": "item_0039",
+    "Name": "max-ether",
+    "Group": "medicine",
+    "Filename": "medicine/max-ether.png"
+  },
+  "68": {
+    "Item ID": "item_1579",
+    "Name": "max-honey",
+    "Group": "medicine",
+    "Filename": "medicine/max-honey.png"
+  },
+  "69": {
+    "Item ID": "item_0024",
+    "Name": "max-potion",
+    "Group": "medicine",
+    "Filename": "medicine/max-potion.png"
+  },
+  "70": {
+    "Item ID": "item_0029",
+    "Name": "max-revive",
+    "Group": "medicine",
+    "Filename": "medicine/max-revive.png"
+  },
+  "71": {
+    "Item ID": "item_0033",
+    "Name": "moomoo-milk",
+    "Group": "medicine",
+    "Filename": "medicine/moomoo-milk.png"
+  },
+  "72": {
+    "Item ID": "item_0566",
+    "Name": "muscle-wing",
+    "Group": "medicine",
+    "Filename": "medicine/muscle-wing.png"
+  },
+  "73": {
+    "Item ID": "item_0054",
+    "Name": "old-gateau",
+    "Group": "medicine",
+    "Filename": "medicine/old-gateau.png"
+  },
+  "74": {
+    "Item ID": "item_0022",
+    "Name": "paralyze-heal",
+    "Group": "medicine",
+    "Filename": "medicine/paralyze-heal.png"
+  },
+  "75": {
+    "Item ID": "item_0903",
+    "Name": "pewter-crunchies",
+    "Group": "medicine",
+    "Filename": "medicine/pewter-crunchies.png"
+  },
+  "76": {
+    "Item ID": "item_0017",
+    "Name": "potion",
+    "Group": "medicine",
+    "Filename": "medicine/potion.png"
+  },
+  "77": {
+    "Item ID": "item_0053",
+    "Name": "pp-max",
+    "Group": "medicine",
+    "Filename": "medicine/pp-max.png"
+  },
+  "78": {
+    "Item ID": "item_0051",
+    "Name": "pp-up",
+    "Group": "medicine",
+    "Filename": "medicine/pp-up.png"
+  },
+  "79": {
+    "Item ID": "item_0046",
+    "Name": "protein",
+    "Group": "medicine",
+    "Filename": "medicine/protein.png"
+  },
+  "80": {
+    "Item ID": "item_0504",
+    "Name": "rage-candy-bar",
+    "Group": "medicine",
+    "Filename": "medicine/rage-candy-bar.png"
+  },
+  "81": {
+    "Item ID": "item_0050",
+    "Name": "rare-candy",
+    "Group": "medicine",
+    "Filename": "medicine/rare-candy.png"
+  },
+  "82": {
+    "Item ID": "item_0567",
+    "Name": "resist-wing",
+    "Group": "medicine",
+    "Filename": "medicine/resist-wing.png"
+  },
+  "83": {
+    "Item ID": "item_0037",
+    "Name": "revival-herb",
+    "Group": "medicine",
+    "Filename": "medicine/revival-herb.png"
+  },
+  "84": {
+    "Item ID": "item_0028",
+    "Name": "revive",
+    "Group": "medicine",
+    "Filename": "medicine/revive.png"
+  },
+  "85": {
+    "Item ID": "item_0044",
+    "Name": "sacred-ash",
+    "Group": "medicine",
+    "Filename": "medicine/sacred-ash.png"
+  },
+  "86": {
+    "Item ID": "item_0709",
+    "Name": "shalour-sable",
+    "Group": "medicine",
+    "Filename": "medicine/shalour-sable.png"
+  },
+  "87": {
+    "Item ID": "item_0031",
+    "Name": "soda-pop",
+    "Group": "medicine",
+    "Filename": "medicine/soda-pop.png"
+  },
+  "88": {
+    "Item ID": "item_0026",
+    "Name": "super-potion",
+    "Group": "medicine",
+    "Filename": "medicine/super-potion.png"
+  },
+  "89": {
+    "Item ID": "item_0134",
+    "Name": "sweet-heart",
+    "Group": "medicine",
+    "Filename": "medicine/sweet-heart.png"
+  },
+  "90": {
+    "Item ID": "item_0570",
+    "Name": "swift-wing",
+    "Group": "medicine",
+    "Filename": "medicine/swift-wing.png"
+  },
+  "91": {
+    "Item ID": "item_0052",
+    "Name": "zinc",
+    "Group": "medicine",
+    "Filename": "medicine/zinc.png"
+  },
+  "92": {
+    "Item ID": "item_0056",
+    "Name": "dire-hit",
+    "Group": "battle-item",
+    "Filename": "battle-item/dire-hit.png"
+  },
+  "93": {
+    "Item ID": "item_0055",
+    "Name": "guard-spec",
+    "Group": "battle-item",
+    "Filename": "battle-item/guard-spec.png"
+  },
+  "94": {
+    "Item ID": "item_1580",
+    "Name": "max-mushrooms",
+    "Group": "battle-item",
+    "Filename": "battle-item/max-mushrooms.png"
+  },
+  "95": {
+    "Item ID": "item_0060",
+    "Name": "x-accuracy",
+    "Group": "battle-item",
+    "Filename": "battle-item/x-accuracy.png"
+  },
+  "96": {
+    "Item ID": "item_0057",
+    "Name": "x-attack",
+    "Group": "battle-item",
+    "Filename": "battle-item/x-attack.png"
+  },
+  "97": {
+    "Item ID": "item_0058",
+    "Name": "x-defense",
+    "Group": "battle-item",
+    "Filename": "battle-item/x-defense.png"
+  },
+  "98": {
+    "Item ID": "item_0061",
+    "Name": "x-sp-atk",
+    "Group": "battle-item",
+    "Filename": "battle-item/x-sp-atk.png"
+  },
+  "99": {
+    "Item ID": "item_0062",
+    "Name": "x-sp-def",
+    "Group": "battle-item",
+    "Filename": "battle-item/x-sp-def.png"
+  },
+  "100": {
+    "Item ID": "item_0059",
+    "Name": "x-speed",
+    "Group": "battle-item",
+    "Filename": "battle-item/x-speed.png"
+  },
+  "101": {
+    "Item ID": "item_1606",
+    "Name": "ability-patch",
+    "Group": "other-item",
+    "Filename": "other-item/ability-patch.png"
+  },
+  "102": {
+    "Item ID": "item_1588",
+    "Name": "armorite-ore",
+    "Group": "other-item",
+    "Filename": "other-item/armorite-ore.png"
+  },
+  "103": {
+    "Item ID": "item_0795",
+    "Name": "bottle-cap",
+    "Group": "other-item",
+    "Filename": "other-item/bottle-cap.png"
+  },
+  "104": {
+    "Item ID": "item_0699",
+    "Name": "discount-coupon",
+    "Group": "other-item",
+    "Filename": "other-item/discount-coupon.png"
+  },
+  "105": {
+    "Item ID": "item_1129",
+    "Name": "dynamax-candy",
+    "Group": "other-item",
+    "Filename": "other-item/dynamax-candy.png"
+  },
+  "106": {
+    "Item ID": "item_11291",
+    "Name": "dynamax-crystal",
+    "Group": "other-item",
+    "Filename": "other-item/dynamax-crystal.png"
+  },
+  "107": {
+    "Item ID": "item_1604",
+    "Name": "dynite-ore",
+    "Group": "other-item",
+    "Filename": "other-item/dynite-ore.png"
+  },
+  "108": {
+    "Item ID": "item_0078",
+    "Name": "escape-rope",
+    "Group": "other-item",
+    "Filename": "other-item/escape-rope.png"
+  },
+  "109": {
+    "Item ID": "item_0064",
+    "Name": "fluffy-tail",
+    "Group": "other-item",
+    "Filename": "other-item/fluffy-tail.png"
+  },
+  "110": {
+    "Item ID": "item_1581",
+    "Name": "galarica-twig",
+    "Group": "other-item",
+    "Filename": "other-item/galarica-twig.png"
+  },
+  "111": {
+    "Item ID": "item_0796",
+    "Name": "gold-bottle-cap",
+    "Group": "other-item",
+    "Filename": "other-item/gold-bottle-cap.png"
+  },
+  "112": {
+    "Item ID": "item_0093",
+    "Name": "heart-scale",
+    "Group": "other-item",
+    "Filename": "other-item/heart-scale.png"
+  },
+  "113": {
+    "Item ID": "item_0094",
+    "Name": "honey",
+    "Group": "other-item",
+    "Filename": "other-item/honey.png"
+  },
+  "114": {
+    "Item ID": "item_0900",
+    "Name": "lure",
+    "Group": "other-item",
+    "Filename": "other-item/lure.png"
+  },
+  "115": {
+    "Item ID": "item_0902",
+    "Name": "max-lure",
+    "Group": "other-item",
+    "Filename": "other-item/max-lure.png"
+  },
+  "116": {
+    "Item ID": "item_0077",
+    "Name": "max-repel",
+    "Group": "other-item",
+    "Filename": "other-item/max-repel.png"
+  },
+  "117": {
+    "Item ID": "item_0111",
+    "Name": "odd-keystone",
+    "Group": "other-item",
+    "Filename": "other-item/odd-keystone.png"
+  },
+  "118": {
+    "Item ID": "item_0575",
+    "Name": "pass-orb",
+    "Group": "other-item",
+    "Filename": "other-item/pass-orb.png"
+  },
+  "119": {
+    "Item ID": "item_0855",
+    "Name": "pink-nectar",
+    "Group": "other-item",
+    "Filename": "other-item/pink-nectar.png"
+  },
+  "120": {
+    "Item ID": "item_0063",
+    "Name": "poke-doll",
+    "Group": "other-item",
+    "Filename": "other-item/poke-doll.png"
+  },
+  "121": {
+    "Item ID": "item_0577",
+    "Name": "poke-toy",
+    "Group": "other-item",
+    "Filename": "other-item/poke-toy.png"
+  },
+  "122": {
+    "Item ID": "item_0856",
+    "Name": "purple-nectar",
+    "Group": "other-item",
+    "Filename": "other-item/purple-nectar.png"
+  },
+  "123": {
+    "Item ID": "item_0853",
+    "Name": "red-nectar",
+    "Group": "other-item",
+    "Filename": "other-item/red-nectar.png"
+  },
+  "124": {
+    "Item ID": "item_0079",
+    "Name": "repel",
+    "Group": "other-item",
+    "Filename": "other-item/repel.png"
+  },
+  "125": {
+    "Item ID": "item_0218",
+    "Name": "soothe-bell",
+    "Group": "other-item",
+    "Filename": "other-item/soothe-bell.png"
+  },
+  "126": {
+    "Item ID": "item_0704",
+    "Name": "strange-souvenir",
+    "Group": "other-item",
+    "Filename": "other-item/strange-souvenir.png"
+  },
+  "127": {
+    "Item ID": "item_0901",
+    "Name": "super-lure",
+    "Group": "other-item",
+    "Filename": "other-item/super-lure.png"
+  },
+  "128": {
+    "Item ID": "item_0076",
+    "Name": "super-repel",
+    "Group": "other-item",
+    "Filename": "other-item/super-repel.png"
+  },
+  "129": {
+    "Item ID": "item_1252",
+    "Name": "wishing-piece",
+    "Group": "other-item",
+    "Filename": "other-item/wishing-piece.png"
+  },
+  "130": {
+    "Item ID": "item_0854",
+    "Name": "yellow-nectar",
+    "Group": "other-item",
+    "Filename": "other-item/yellow-nectar.png"
+  },
+  "131": {
+    "Item ID": "item_0068",
+    "Name": "black",
+    "Group": "flute",
+    "Filename": "flute/black.png"
+  },
+  "132": {
+    "Item ID": "item_0065",
+    "Name": "blue",
+    "Group": "flute",
+    "Filename": "flute/blue.png"
+  },
+  "133": {
+    "Item ID": "item_0067",
+    "Name": "red",
+    "Group": "flute",
+    "Filename": "flute/red.png"
+  },
+  "134": {
+    "Item ID": "item_0069",
+    "Name": "white",
+    "Group": "flute",
+    "Filename": "flute/white.png"
+  },
+  "135": {
+    "Item ID": "item_0066",
+    "Name": "yellow",
+    "Group": "flute",
+    "Filename": "flute/yellow.png"
+  },
+  "136": {
+    "Item ID": "item_0580",
+    "Name": "balm-mushroom",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/balm-mushroom.png"
+  },
+  "137": {
+    "Item ID": "item_0087",
+    "Name": "big-mushroom",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/big-mushroom.png"
+  },
+  "138": {
+    "Item ID": "item_0581",
+    "Name": "big-nugget",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/big-nugget.png"
+  },
+  "139": {
+    "Item ID": "item_0089",
+    "Name": "big-pearl",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/big-pearl.png"
+  },
+  "140": {
+    "Item ID": "item_0583",
+    "Name": "comet-shard",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/comet-shard.png"
+  },
+  "141": {
+    "Item ID": "item_0092",
+    "Name": "nugget",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/nugget.png"
+  },
+  "142": {
+    "Item ID": "item_0088",
+    "Name": "pearl",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/pearl.png"
+  },
+  "143": {
+    "Item ID": "item_0582",
+    "Name": "pearl-string",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/pearl-string.png"
+  },
+  "144": {
+    "Item ID": "item_0571",
+    "Name": "pretty-wing",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/pretty-wing.png"
+  },
+  "145": {
+    "Item ID": "item_0106",
+    "Name": "rare-bone",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/rare-bone.png"
+  },
+  "146": {
+    "Item ID": "item_0588",
+    "Name": "relic-band",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/relic-band.png"
+  },
+  "147": {
+    "Item ID": "item_0584",
+    "Name": "relic-copper",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/relic-copper.png"
+  },
+  "148": {
+    "Item ID": "item_0590",
+    "Name": "relic-crown",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/relic-crown.png"
+  },
+  "149": {
+    "Item ID": "item_0586",
+    "Name": "relic-gold",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/relic-gold.png"
+  },
+  "150": {
+    "Item ID": "item_0585",
+    "Name": "relic-silver",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/relic-silver.png"
+  },
+  "151": {
+    "Item ID": "item_0589",
+    "Name": "relic-statue",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/relic-statue.png"
+  },
+  "152": {
+    "Item ID": "item_0587",
+    "Name": "relic-vase",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/relic-vase.png"
+  },
+  "153": {
+    "Item ID": "item_0070",
+    "Name": "shoal-salt",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/shoal-salt.png"
+  },
+  "154": {
+    "Item ID": "item_0071",
+    "Name": "shoal-shell",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/shoal-shell.png"
+  },
+  "155": {
+    "Item ID": "item_0473",
+    "Name": "slowpoke-tail",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/slowpoke-tail.png"
+  },
+  "156": {
+    "Item ID": "item_0091",
+    "Name": "star-piece",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/star-piece.png"
+  },
+  "157": {
+    "Item ID": "item_0090",
+    "Name": "stardust",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/stardust.png"
+  },
+  "158": {
+    "Item ID": "item_0086",
+    "Name": "tiny-mushroom",
+    "Group": "valuable-item",
+    "Filename": "valuable-item/tiny-mushroom.png"
+  },
+  "159": {
+    "Item ID": "item_0073",
+    "Name": "blue",
+    "Group": "shard",
+    "Filename": "shard/blue.png"
+  },
+  "160": {
+    "Item ID": "item_0075",
+    "Name": "green",
+    "Group": "shard",
+    "Filename": "shard/green.png"
+  },
+  "161": {
+    "Item ID": "item_0072",
+    "Name": "red",
+    "Group": "shard",
+    "Filename": "shard/red.png"
+  },
+  "162": {
+    "Item ID": "item_0074",
+    "Name": "yellow",
+    "Group": "shard",
+    "Filename": "shard/yellow.png"
+  },
+  "163": {
+    "Item ID": "item_1111",
+    "Name": "berry-sweet",
+    "Group": "evo-item",
+    "Filename": "evo-item/berry-sweet.png"
+  },
+  "164": {
+    "Item ID": "item_1254",
+    "Name": "chipped-pot",
+    "Group": "evo-item",
+    "Filename": "evo-item/chipped-pot.png"
+  },
+  "165": {
+    "Item ID": "item_1112",
+    "Name": "clover-sweet",
+    "Group": "evo-item",
+    "Filename": "evo-item/clover-sweet.png"
+  },
+  "166": {
+    "Item ID": "item_1253",
+    "Name": "cracked-pot",
+    "Group": "evo-item",
+    "Filename": "evo-item/cracked-pot.png"
+  },
+  "167": {
+    "Item ID": "item_0109",
+    "Name": "dawn-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/dawn-stone.png"
+  },
+  "168": {
+    "Item ID": "item_0227",
+    "Name": "deep-sea-scale",
+    "Group": "evo-item",
+    "Filename": "evo-item/deep-sea-scale.png"
+  },
+  "169": {
+    "Item ID": "item_0226",
+    "Name": "deep-sea-tooth",
+    "Group": "evo-item",
+    "Filename": "evo-item/deep-sea-tooth.png"
+  },
+  "170": {
+    "Item ID": "item_0235",
+    "Name": "dragon-scale",
+    "Group": "evo-item",
+    "Filename": "evo-item/dragon-scale.png"
+  },
+  "171": {
+    "Item ID": "item_0324",
+    "Name": "dubious-disc",
+    "Group": "evo-item",
+    "Filename": "evo-item/dubious-disc.png"
+  },
+  "172": {
+    "Item ID": "item_0108",
+    "Name": "dusk-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/dusk-stone.png"
+  },
+  "173": {
+    "Item ID": "item_0322",
+    "Name": "electirizer",
+    "Group": "evo-item",
+    "Filename": "evo-item/electirizer.png"
+  },
+  "174": {
+    "Item ID": "item_0082",
+    "Name": "fire-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/fire-stone.png"
+  },
+  "175": {
+    "Item ID": "item_1113",
+    "Name": "flower-sweet",
+    "Group": "evo-item",
+    "Filename": "evo-item/flower-sweet.png"
+  },
+  "176": {
+    "Item ID": "item_1582",
+    "Name": "galarica-cuff",
+    "Group": "evo-item",
+    "Filename": "evo-item/galarica-cuff.png"
+  },
+  "177": {
+    "Item ID": "item_1592",
+    "Name": "galarica-wreath",
+    "Group": "evo-item",
+    "Filename": "evo-item/galarica-wreath.png"
+  },
+  "178": {
+    "Item ID": "item_0849",
+    "Name": "ice-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/ice-stone.png"
+  },
+  "179": {
+    "Item ID": "item_0221",
+    "Name": "kings-rock",
+    "Group": "evo-item",
+    "Filename": "evo-item/kings-rock.png"
+  },
+  "180": {
+    "Item ID": "item_0085",
+    "Name": "leaf-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/leaf-stone.png"
+  },
+  "181": {
+    "Item ID": "item_1110",
+    "Name": "love-sweet",
+    "Group": "evo-item",
+    "Filename": "evo-item/love-sweet.png"
+  },
+  "182": {
+    "Item ID": "item_0323",
+    "Name": "magmarizer",
+    "Group": "evo-item",
+    "Filename": "evo-item/magmarizer.png"
+  },
+  "183": {
+    "Item ID": "item_03231",
+    "Name": "metal-coat",
+    "Group": "evo-item",
+    "Filename": "evo-item/metal-coat.png†"
+  },
+  "184": {
+    "Item ID": "item_0081",
+    "Name": "moon-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/moon-stone.png"
+  },
+  "185": {
+    "Item ID": "item_0110",
+    "Name": "oval-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/oval-stone.png"
+  },
+  "186": {
+    "Item ID": "item_0537",
+    "Name": "prism-scale",
+    "Group": "evo-item",
+    "Filename": "evo-item/prism-scale.png"
+  },
+  "187": {
+    "Item ID": "item_0321",
+    "Name": "protector",
+    "Group": "evo-item",
+    "Filename": "evo-item/protector.png"
+  },
+  "188": {
+    "Item ID": "item_0326",
+    "Name": "razor-claw",
+    "Group": "evo-item",
+    "Filename": "evo-item/razor-claw.png"
+  },
+  "189": {
+    "Item ID": "item_0327",
+    "Name": "razor-fang",
+    "Group": "evo-item",
+    "Filename": "evo-item/razor-fang.png"
+  },
+  "190": {
+    "Item ID": "item_0325",
+    "Name": "reaper-cloth",
+    "Group": "evo-item",
+    "Filename": "evo-item/reaper-cloth.png"
+  },
+  "191": {
+    "Item ID": "item_1115",
+    "Name": "ribbon-sweet",
+    "Group": "evo-item",
+    "Filename": "evo-item/ribbon-sweet.png"
+  },
+  "192": {
+    "Item ID": "item_0647",
+    "Name": "sachet",
+    "Group": "evo-item",
+    "Filename": "evo-item/sachet.png"
+  },
+  "193": {
+    "Item ID": "item_0107",
+    "Name": "shiny-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/shiny-stone.png"
+  },
+  "194": {
+    "Item ID": "item_1114",
+    "Name": "star-sweet",
+    "Group": "evo-item",
+    "Filename": "evo-item/star-sweet.png"
+  },
+  "195": {
+    "Item ID": "item_1109",
+    "Name": "strawberry-sweet",
+    "Group": "evo-item",
+    "Filename": "evo-item/strawberry-sweet.png"
+  },
+  "196": {
+    "Item ID": "item_0080",
+    "Name": "sun-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/sun-stone.png"
+  },
+  "197": {
+    "Item ID": "item_1116",
+    "Name": "sweet-apple",
+    "Group": "evo-item",
+    "Filename": "evo-item/sweet-apple.png"
+  },
+  "198": {
+    "Item ID": "item_1117",
+    "Name": "tart-apple",
+    "Group": "evo-item",
+    "Filename": "evo-item/tart-apple.png"
+  },
+  "199": {
+    "Item ID": "item_0083",
+    "Name": "thunder-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/thunder-stone.png"
+  },
+  "200": {
+    "Item ID": "item_0252",
+    "Name": "up-grade",
+    "Group": "evo-item",
+    "Filename": "evo-item/up-grade.png"
+  },
+  "201": {
+    "Item ID": "item_0084",
+    "Name": "water-stone",
+    "Group": "evo-item",
+    "Filename": "evo-item/water-stone.png"
+  },
+  "202": {
+    "Item ID": "item_0646",
+    "Name": "whipped-dream",
+    "Group": "evo-item",
+    "Filename": "evo-item/whipped-dream.png"
+  },
+  "203": {
+    "Item ID": "item_0655",
+    "Name": "amaze",
+    "Group": "mulch",
+    "Filename": "mulch/amaze.png"
+  },
+  "204": {
+    "Item ID": "item_0654",
+    "Name": "boost",
+    "Group": "mulch",
+    "Filename": "mulch/boost.png"
+  },
+  "205": {
+    "Item ID": "item_0096",
+    "Name": "damp",
+    "Group": "mulch",
+    "Filename": "mulch/damp.png"
+  },
+  "206": {
+    "Item ID": "item_0098",
+    "Name": "gooey",
+    "Group": "mulch",
+    "Filename": "mulch/gooey.png"
+  },
+  "207": {
+    "Item ID": "item_0095",
+    "Name": "growth",
+    "Group": "mulch",
+    "Filename": "mulch/growth.png"
+  },
+  "208": {
+    "Item ID": "item_0652",
+    "Name": "rich",
+    "Group": "mulch",
+    "Filename": "mulch/rich.png"
+  },
+  "209": {
+    "Item ID": "item_0097",
+    "Name": "stable",
+    "Group": "mulch",
+    "Filename": "mulch/stable.png"
+  },
+  "210": {
+    "Item ID": "item_0653",
+    "Name": "surprise",
+    "Group": "mulch",
+    "Filename": "mulch/surprise.png"
+  },
+  "211": {
+    "Item ID": "item_0104",
+    "Name": "armor",
+    "Group": "fossil",
+    "Filename": "fossil/armor.png"
+  },
+  "212": {
+    "Item ID": "item_1105",
+    "Name": "bird",
+    "Group": "fossil",
+    "Filename": "fossil/bird.png"
+  },
+  "213": {
+    "Item ID": "item_0100",
+    "Name": "claw",
+    "Group": "fossil",
+    "Filename": "fossil/claw.png"
+  },
+  "214": {
+    "Item ID": "item_0572",
+    "Name": "cover",
+    "Group": "fossil",
+    "Filename": "fossil/cover.png"
+  },
+  "215": {
+    "Item ID": "item_1108",
+    "Name": "dino",
+    "Group": "fossil",
+    "Filename": "fossil/dino.png"
+  },
+  "216": {
+    "Item ID": "item_0102",
+    "Name": "dome",
+    "Group": "fossil",
+    "Filename": "fossil/dome.png"
+  },
+  "217": {
+    "Item ID": "item_1107",
+    "Name": "drake",
+    "Group": "fossil",
+    "Filename": "fossil/drake.png"
+  },
+  "218": {
+    "Item ID": "item_1106",
+    "Name": "fish",
+    "Group": "fossil",
+    "Filename": "fossil/fish.png"
+  },
+  "219": {
+    "Item ID": "item_0101",
+    "Name": "helix",
+    "Group": "fossil",
+    "Filename": "fossil/helix.png"
+  },
+  "220": {
+    "Item ID": "item_0710",
+    "Name": "jaw",
+    "Group": "fossil",
+    "Filename": "fossil/jaw.png"
+  },
+  "221": {
+    "Item ID": "item_0103",
+    "Name": "old-amber",
+    "Group": "fossil",
+    "Filename": "fossil/old-amber.png"
+  },
+  "222": {
+    "Item ID": "item_0573",
+    "Name": "plume",
+    "Group": "fossil",
+    "Filename": "fossil/plume.png"
+  },
+  "223": {
+    "Item ID": "item_0099",
+    "Name": "root",
+    "Group": "fossil",
+    "Filename": "fossil/root.png"
+  },
+  "224": {
+    "Item ID": "item_0711",
+    "Name": "sail",
+    "Group": "fossil",
+    "Filename": "fossil/sail.png"
+  },
+  "225": {
+    "Item ID": "item_0105",
+    "Name": "skull",
+    "Group": "fossil",
+    "Filename": "fossil/skull.png"
+  },
+  "226": {
+    "Item ID": "item_0545",
+    "Name": "absorb-bulb",
+    "Group": "hold-item",
+    "Filename": "hold-item/absorb-bulb.png"
+  },
+  "227": {
+    "Item ID": "item_0135",
+    "Name": "adamant-orb",
+    "Group": "hold-item",
+    "Filename": "hold-item/adamant-orb.png"
+  },
+  "228": {
+    "Item ID": "item_0846",
+    "Name": "adrenaline-orb",
+    "Group": "hold-item",
+    "Filename": "hold-item/adrenaline-orb.png"
+  },
+  "229": {
+    "Item ID": "item_0541",
+    "Name": "air-balloon",
+    "Group": "hold-item",
+    "Filename": "hold-item/air-balloon.png"
+  },
+  "230": {
+    "Item ID": "item_0223",
+    "Name": "amulet-coin",
+    "Group": "hold-item",
+    "Filename": "hold-item/amulet-coin.png"
+  },
+  "231": {
+    "Item ID": "item_0640",
+    "Name": "assault-vest",
+    "Group": "hold-item",
+    "Filename": "hold-item/assault-vest.png"
+  },
+  "232": {
+    "Item ID": "item_0296",
+    "Name": "big-root",
+    "Group": "hold-item",
+    "Filename": "hold-item/big-root.png"
+  },
+  "233": {
+    "Item ID": "item_0544",
+    "Name": "binding-band",
+    "Group": "hold-item",
+    "Filename": "hold-item/binding-band.png"
+  },
+  "234": {
+    "Item ID": "item_0241",
+    "Name": "black-belt",
+    "Group": "hold-item",
+    "Filename": "hold-item/black-belt.png"
+  },
+  "235": {
+    "Item ID": "item_0240",
+    "Name": "black-glasses",
+    "Group": "hold-item",
+    "Filename": "hold-item/black-glasses.png"
+  },
+  "236": {
+    "Item ID": "item_0281",
+    "Name": "black-sludge",
+    "Group": "hold-item",
+    "Filename": "hold-item/black-sludge.png"
+  },
+  "237": {
+    "Item ID": "item_0535",
+    "Name": "blue-orb",
+    "Group": "hold-item",
+    "Filename": "hold-item/blue-orb.png"
+  },
+  "238": {
+    "Item ID": "item_1121",
+    "Name": "blunder-policy",
+    "Group": "hold-item",
+    "Filename": "hold-item/blunder-policy.png"
+  },
+  "239": {
+    "Item ID": "item_0213",
+    "Name": "bright-powder",
+    "Group": "hold-item",
+    "Filename": "hold-item/bright-powder.png"
+  },
+  "240": {
+    "Item ID": "item_0118",
+    "Name": "burn-drive",
+    "Group": "hold-item",
+    "Filename": "hold-item/burn-drive.png"
+  },
+  "241": {
+    "Item ID": "item_0546",
+    "Name": "cell-battery",
+    "Group": "hold-item",
+    "Filename": "hold-item/cell-battery.png"
+  },
+  "242": {
+    "Item ID": "item_0249",
+    "Name": "charcoal",
+    "Group": "hold-item",
+    "Filename": "hold-item/charcoal.png"
+  },
+  "243": {
+    "Item ID": "item_0119",
+    "Name": "chill-drive",
+    "Group": "hold-item",
+    "Filename": "hold-item/chill-drive.png"
+  },
+  "244": {
+    "Item ID": "item_0220",
+    "Name": "choice-band",
+    "Group": "hold-item",
+    "Filename": "hold-item/choice-band.png"
+  },
+  "245": {
+    "Item ID": "item_0287",
+    "Name": "choice-scarf",
+    "Group": "hold-item",
+    "Filename": "hold-item/choice-scarf.png"
+  },
+  "246": {
+    "Item ID": "item_0297",
+    "Name": "choice-specs",
+    "Group": "hold-item",
+    "Filename": "hold-item/choice-specs.png"
+  },
+  "247": {
+    "Item ID": "item_0224",
+    "Name": "cleanse-tag",
+    "Group": "hold-item",
+    "Filename": "hold-item/cleanse-tag.png"
+  },
+  "248": {
+    "Item ID": "item_0285",
+    "Name": "damp-rock",
+    "Group": "hold-item",
+    "Filename": "hold-item/damp-rock.png"
+  },
+  "249": {
+    "Item ID": "item_0280",
+    "Name": "destiny-knot",
+    "Group": "hold-item",
+    "Filename": "hold-item/destiny-knot.png"
+  },
+  "250": {
+    "Item ID": "item_0116",
+    "Name": "douse-drive",
+    "Group": "hold-item",
+    "Filename": "hold-item/douse-drive.png"
+  },
+  "251": {
+    "Item ID": "item_0250",
+    "Name": "dragon-fang",
+    "Group": "hold-item",
+    "Filename": "hold-item/dragon-fang.png"
+  },
+  "252": {
+    "Item ID": "item_0547",
+    "Name": "eject-button",
+    "Group": "hold-item",
+    "Filename": "hold-item/eject-button.png"
+  },
+  "253": {
+    "Item ID": "item_1119",
+    "Name": "eject-pack",
+    "Group": "hold-item",
+    "Filename": "hold-item/eject-pack.png"
+  },
+  "254": {
+    "Item ID": "item_0881",
+    "Name": "electric-seed",
+    "Group": "hold-item",
+    "Filename": "hold-item/electric-seed.png"
+  },
+  "255": {
+    "Item ID": "item_0229",
+    "Name": "everstone",
+    "Group": "hold-item",
+    "Filename": "hold-item/everstone.png"
+  },
+  "256": {
+    "Item ID": "item_0538",
+    "Name": "eviolite",
+    "Group": "hold-item",
+    "Filename": "hold-item/eviolite.png"
+  },
+  "257": {
+    "Item ID": "item_0268",
+    "Name": "expert-belt",
+    "Group": "hold-item",
+    "Filename": "hold-item/expert-belt.png"
+  },
+  "258": {
+    "Item ID": "item_0273",
+    "Name": "flame-orb",
+    "Group": "hold-item",
+    "Filename": "hold-item/flame-orb.png"
+  },
+  "259": {
+    "Item ID": "item_0539",
+    "Name": "float-stone",
+    "Group": "hold-item",
+    "Filename": "hold-item/float-stone.png"
+  },
+  "260": {
+    "Item ID": "item_0230",
+    "Name": "focus-band",
+    "Group": "hold-item",
+    "Filename": "hold-item/focus-band.png"
+  },
+  "261": {
+    "Item ID": "item_0275",
+    "Name": "focus-sash",
+    "Group": "hold-item",
+    "Filename": "hold-item/focus-sash.png"
+  },
+  "262": {
+    "Item ID": "item_0884",
+    "Name": "grassy-seed",
+    "Group": "hold-item",
+    "Filename": "hold-item/grassy-seed.png"
+  },
+  "263": {
+    "Item ID": "item_0286",
+    "Name": "grip-claw",
+    "Group": "hold-item",
+    "Filename": "hold-item/grip-claw.png"
+  },
+  "264": {
+    "Item ID": "item_0112",
+    "Name": "griseous-orb",
+    "Group": "hold-item",
+    "Filename": "hold-item/griseous-orb.png"
+  },
+  "265": {
+    "Item ID": "item_0238",
+    "Name": "hard-stone",
+    "Group": "hold-item",
+    "Filename": "hold-item/hard-stone.png"
+  },
+  "266": {
+    "Item ID": "item_0284",
+    "Name": "heat-rock",
+    "Group": "hold-item",
+    "Filename": "hold-item/heat-rock.png"
+  },
+  "267": {
+    "Item ID": "item_1120",
+    "Name": "heavy-duty-boots",
+    "Group": "hold-item",
+    "Filename": "hold-item/heavy-duty-boots.png"
+  },
+  "268": {
+    "Item ID": "item_0282",
+    "Name": "icy-rock",
+    "Group": "hold-item",
+    "Filename": "hold-item/icy-rock.png"
+  },
+  "269": {
+    "Item ID": "item_0278",
+    "Name": "iron-ball",
+    "Group": "hold-item",
+    "Filename": "hold-item/iron-ball.png"
+  },
+  "270": {
+    "Item ID": "item_02781",
+    "Name": "kings-rock",
+    "Group": "hold-item",
+    "Filename": "hold-item/kings-rock.png†"
+  },
+  "271": {
+    "Item ID": "item_0279",
+    "Name": "lagging-tail",
+    "Group": "hold-item",
+    "Filename": "hold-item/lagging-tail.png"
+  },
+  "272": {
+    "Item ID": "item_0234",
+    "Name": "leftovers",
+    "Group": "hold-item",
+    "Filename": "hold-item/leftovers.png"
+  },
+  "273": {
+    "Item ID": "item_0270",
+    "Name": "life-orb",
+    "Group": "hold-item",
+    "Filename": "hold-item/life-orb.png"
+  },
+  "274": {
+    "Item ID": "item_0236",
+    "Name": "light-ball",
+    "Group": "hold-item",
+    "Filename": "hold-item/light-ball.png"
+  },
+  "275": {
+    "Item ID": "item_0269",
+    "Name": "light-clay",
+    "Group": "hold-item",
+    "Filename": "hold-item/light-clay.png"
+  },
+  "276": {
+    "Item ID": "item_0231",
+    "Name": "lucky-egg",
+    "Group": "hold-item",
+    "Filename": "hold-item/lucky-egg.png"
+  },
+  "277": {
+    "Item ID": "item_0256",
+    "Name": "lucky-punch",
+    "Group": "hold-item",
+    "Filename": "hold-item/lucky-punch.png"
+  },
+  "278": {
+    "Item ID": "item_0648",
+    "Name": "luminous-moss",
+    "Group": "hold-item",
+    "Filename": "hold-item/luminous-moss.png"
+  },
+  "279": {
+    "Item ID": "item_0136",
+    "Name": "lustrous-orb",
+    "Group": "hold-item",
+    "Filename": "hold-item/lustrous-orb.png"
+  },
+  "280": {
+    "Item ID": "item_0242",
+    "Name": "magnet",
+    "Group": "hold-item",
+    "Filename": "hold-item/magnet.png"
+  },
+  "281": {
+    "Item ID": "item_0219",
+    "Name": "mental-herb",
+    "Group": "hold-item",
+    "Filename": "hold-item/mental-herb.png"
+  },
+  "282": {
+    "Item ID": "item_0233",
+    "Name": "metal-coat",
+    "Group": "hold-item",
+    "Filename": "hold-item/metal-coat.png"
+  },
+  "283": {
+    "Item ID": "item_0257",
+    "Name": "metal-powder",
+    "Group": "hold-item",
+    "Filename": "hold-item/metal-powder.png"
+  },
+  "284": {
+    "Item ID": "item_0277",
+    "Name": "metronome",
+    "Group": "hold-item",
+    "Filename": "hold-item/metronome.png"
+  },
+  "285": {
+    "Item ID": "item_0239",
+    "Name": "miracle-seed",
+    "Group": "hold-item",
+    "Filename": "hold-item/miracle-seed.png"
+  },
+  "286": {
+    "Item ID": "item_0883",
+    "Name": "misty-seed",
+    "Group": "hold-item",
+    "Filename": "hold-item/misty-seed.png"
+  },
+  "287": {
+    "Item ID": "item_0266",
+    "Name": "muscle-band",
+    "Group": "hold-item",
+    "Filename": "hold-item/muscle-band.png"
+  },
+  "288": {
+    "Item ID": "item_0243",
+    "Name": "mystic-water",
+    "Group": "hold-item",
+    "Filename": "hold-item/mystic-water.png"
+  },
+  "289": {
+    "Item ID": "item_0246",
+    "Name": "never-melt-ice",
+    "Group": "hold-item",
+    "Filename": "hold-item/never-melt-ice.png"
+  },
+  "290": {
+    "Item ID": "item_0245",
+    "Name": "poison-barb",
+    "Group": "hold-item",
+    "Filename": "hold-item/poison-barb.png"
+  },
+  "291": {
+    "Item ID": "item_0271",
+    "Name": "power-herb",
+    "Group": "hold-item",
+    "Filename": "hold-item/power-herb.png"
+  },
+  "292": {
+    "Item ID": "item_0880",
+    "Name": "protective-pads",
+    "Group": "hold-item",
+    "Filename": "hold-item/protective-pads.png"
+  },
+  "293": {
+    "Item ID": "item_0882",
+    "Name": "psychic-seed",
+    "Group": "hold-item",
+    "Filename": "hold-item/psychic-seed.png"
+  },
+  "294": {
+    "Item ID": "item_0217",
+    "Name": "quick-claw",
+    "Group": "hold-item",
+    "Filename": "hold-item/quick-claw.png"
+  },
+  "295": {
+    "Item ID": "item_0274",
+    "Name": "quick-powder",
+    "Group": "hold-item",
+    "Filename": "hold-item/quick-powder.png"
+  },
+  "296": {
+    "Item ID": "item_0542",
+    "Name": "red-card",
+    "Group": "hold-item",
+    "Filename": "hold-item/red-card.png"
+  },
+  "297": {
+    "Item ID": "item_0534",
+    "Name": "red-orb",
+    "Group": "hold-item",
+    "Filename": "hold-item/red-orb.png"
+  },
+  "298": {
+    "Item ID": "item_0543",
+    "Name": "ring-target",
+    "Group": "hold-item",
+    "Filename": "hold-item/ring-target.png"
+  },
+  "299": {
+    "Item ID": "item_0540",
+    "Name": "rocky-helmet",
+    "Group": "hold-item",
+    "Filename": "hold-item/rocky-helmet.png"
+  },
+  "300": {
+    "Item ID": "item_1122",
+    "Name": "room-service",
+    "Group": "hold-item",
+    "Filename": "hold-item/room-service.png"
+  },
+  "301": {
+    "Item ID": "item_1104",
+    "Name": "rusted-shield",
+    "Group": "hold-item",
+    "Filename": "hold-item/rusted-shield.png"
+  },
+  "302": {
+    "Item ID": "item_1103",
+    "Name": "rusted-sword",
+    "Group": "hold-item",
+    "Filename": "hold-item/rusted-sword.png"
+  },
+  "303": {
+    "Item ID": "item_0650",
+    "Name": "safety-goggles",
+    "Group": "hold-item",
+    "Filename": "hold-item/safety-goggles.png"
+  },
+  "304": {
+    "Item ID": "item_0232",
+    "Name": "scope-lens",
+    "Group": "hold-item",
+    "Filename": "hold-item/scope-lens.png"
+  },
+  "305": {
+    "Item ID": "item_0244",
+    "Name": "sharp-beak",
+    "Group": "hold-item",
+    "Filename": "hold-item/sharp-beak.png"
+  },
+  "306": {
+    "Item ID": "item_0295",
+    "Name": "shed-shell",
+    "Group": "hold-item",
+    "Filename": "hold-item/shed-shell.png"
+  },
+  "307": {
+    "Item ID": "item_0253",
+    "Name": "shell-bell",
+    "Group": "hold-item",
+    "Filename": "hold-item/shell-bell.png"
+  },
+  "308": {
+    "Item ID": "item_0117",
+    "Name": "shock-drive",
+    "Group": "hold-item",
+    "Filename": "hold-item/shock-drive.png"
+  },
+  "309": {
+    "Item ID": "item_0251",
+    "Name": "silk-scarf",
+    "Group": "hold-item",
+    "Filename": "hold-item/silk-scarf.png"
+  },
+  "310": {
+    "Item ID": "item_0222",
+    "Name": "silver-powder",
+    "Group": "hold-item",
+    "Filename": "hold-item/silver-powder.png"
+  },
+  "311": {
+    "Item ID": "item_0228",
+    "Name": "smoke-ball",
+    "Group": "hold-item",
+    "Filename": "hold-item/smoke-ball.png"
+  },
+  "312": {
+    "Item ID": "item_0283",
+    "Name": "smooth-rock",
+    "Group": "hold-item",
+    "Filename": "hold-item/smooth-rock.png"
+  },
+  "313": {
+    "Item ID": "item_0649",
+    "Name": "snowball",
+    "Group": "hold-item",
+    "Filename": "hold-item/snowball.png"
+  },
+  "314": {
+    "Item ID": "item_0237",
+    "Name": "soft-sand",
+    "Group": "hold-item",
+    "Filename": "hold-item/soft-sand.png"
+  },
+  "315": {
+    "Item ID": "item_0225",
+    "Name": "soul-dew",
+    "Group": "hold-item",
+    "Filename": "hold-item/soul-dew.png"
+  },
+  "316": {
+    "Item ID": "item_0247",
+    "Name": "spell-tag",
+    "Group": "hold-item",
+    "Filename": "hold-item/spell-tag.png"
+  },
+  "317": {
+    "Item ID": "item_0259",
+    "Name": "stick",
+    "Group": "hold-item",
+    "Filename": "hold-item/stick.png"
+  },
+  "318": {
+    "Item ID": "item_0288",
+    "Name": "sticky-barb",
+    "Group": "hold-item",
+    "Filename": "hold-item/sticky-barb.png"
+  },
+  "319": {
+    "Item ID": "item_0879",
+    "Name": "terrain-extender",
+    "Group": "hold-item",
+    "Filename": "hold-item/terrain-extender.png"
+  },
+  "320": {
+    "Item ID": "item_0258",
+    "Name": "thick-club",
+    "Group": "hold-item",
+    "Filename": "hold-item/thick-club.png"
+  },
+  "321": {
+    "Item ID": "item_1118",
+    "Name": "throat-spray",
+    "Group": "hold-item",
+    "Filename": "hold-item/throat-spray.png"
+  },
+  "322": {
+    "Item ID": "item_0272",
+    "Name": "toxic-orb",
+    "Group": "hold-item",
+    "Filename": "hold-item/toxic-orb.png"
+  },
+  "323": {
+    "Item ID": "item_0248",
+    "Name": "twisted-spoon",
+    "Group": "hold-item",
+    "Filename": "hold-item/twisted-spoon.png"
+  },
+  "324": {
+    "Item ID": "item_1123",
+    "Name": "utility-umbrella",
+    "Group": "hold-item",
+    "Filename": "hold-item/utility-umbrella.png"
+  },
+  "325": {
+    "Item ID": "item_0639",
+    "Name": "weakness-policy",
+    "Group": "hold-item",
+    "Filename": "hold-item/weakness-policy.png"
+  },
+  "326": {
+    "Item ID": "item_0214",
+    "Name": "white-herb",
+    "Group": "hold-item",
+    "Filename": "hold-item/white-herb.png"
+  },
+  "327": {
+    "Item ID": "item_0265",
+    "Name": "wide-lens",
+    "Group": "hold-item",
+    "Filename": "hold-item/wide-lens.png"
+  },
+  "328": {
+    "Item ID": "item_0267",
+    "Name": "wise-glasses",
+    "Group": "hold-item",
+    "Filename": "hold-item/wise-glasses.png"
+  },
+  "329": {
+    "Item ID": "item_0276",
+    "Name": "zoom-lens",
+    "Group": "hold-item",
+    "Filename": "hold-item/zoom-lens.png"
+  },
+  "330": {
+    "Item ID": "item_0719",
+    "Name": "acro-bike",
+    "Group": "key-item",
+    "Filename": "key-item/acro-bike.png"
+  },
+  "331": {
+    "Item ID": "item_0703",
+    "Name": "adventure-guide",
+    "Group": "key-item",
+    "Filename": "key-item/adventure-guide.png"
+  },
+  "332": {
+    "Item ID": "item_0468",
+    "Name": "apricorn-box",
+    "Group": "key-item",
+    "Filename": "key-item/apricorn-box.png"
+  },
+  "333": {
+    "Item ID": "item_0742",
+    "Name": "aqua-suit",
+    "Group": "key-item",
+    "Filename": "key-item/aqua-suit.png"
+  },
+  "334": {
+    "Item ID": "item_1584",
+    "Name": "armor-pass",
+    "Group": "key-item",
+    "Filename": "key-item/armor-pass.png"
+  },
+  "335": {
+    "Item ID": "item_15855",
+    "Name": "auroraticket",
+    "Group": "key-item",
+    "Filename": "key-item/auroraticket.png"
+  },
+  "336": {
+    "Item ID": "item_0115",
+    "Name": "autograph",
+    "Group": "key-item",
+    "Filename": "key-item/autograph.png"
+  },
+  "337": {
+    "Item ID": "item_0455",
+    "Name": "azure-flute",
+    "Group": "key-item",
+    "Filename": "key-item/azure-flute.png"
+  },
+  "338": {
+    "Item ID": "item_1270",
+    "Name": "band-autograph",
+    "Group": "key-item",
+    "Filename": "key-item/band-autograph.png"
+  },
+  "339": {
+    "Item ID": "item_0476",
+    "Name": "basement-key",
+    "Group": "key-item",
+    "Filename": "key-item/basement-key.png"
+  },
+  "340": {
+    "Item ID": "item_0723",
+    "Name": "basement-key--goldenrod",
+    "Group": "key-item",
+    "Filename": "key-item/basement-key--goldenrod.png"
+  },
+  "341": {
+    "Item ID": "item_07233",
+    "Name": "basement-key--new-mauville",
+    "Group": "key-item",
+    "Filename": "key-item/basement-key--new-mauville.png†"
+  },
+  "342": {
+    "Item ID": "item_0470",
+    "Name": "berry-pots",
+    "Group": "key-item",
+    "Filename": "key-item/berry-pots.png"
+  },
+  "343": {
+    "Item ID": "item_04711",
+    "Name": "berry-pouch",
+    "Group": "key-item",
+    "Filename": "key-item/berry-pouch.png"
+  },
+  "344": {
+    "Item ID": "item_04721",
+    "Name": "bicycle",
+    "Group": "key-item",
+    "Filename": "key-item/bicycle.png"
+  },
+  "345": {
+    "Item ID": "item_0450",
+    "Name": "bike--green",
+    "Group": "key-item",
+    "Filename": "key-item/bike--green.png"
+  },
+  "346": {
+    "Item ID": "item_11162",
+    "Name": "bike--green",
+    "Group": "key-item",
+    "Filename": "key-item/bike--green.png"
+  },
+  "347": {
+    "Item ID": "item_0713",
+    "Name": "bike--yellow",
+    "Group": "key-item",
+    "Filename": "key-item/bike--yellow.png"
+  },
+  "348": {
+    "Item ID": "item_04744",
+    "Name": "bike-voucher",
+    "Group": "key-item",
+    "Filename": "key-item/bike-voucher.png"
+  },
+  "349": {
+    "Item ID": "item_1601",
+    "Name": "black-mane-hair",
+    "Group": "key-item",
+    "Filename": "key-item/black-mane-hair.png"
+  },
+  "350": {
+    "Item ID": "item_0472",
+    "Name": "blue-card",
+    "Group": "key-item",
+    "Filename": "key-item/blue-card.png"
+  },
+  "351": {
+    "Item ID": "item_1100",
+    "Name": "camping-gear",
+    "Group": "key-item",
+    "Filename": "key-item/camping-gear.png"
+  },
+  "352": {
+    "Item ID": "item_0475",
+    "Name": "card-key",
+    "Group": "key-item",
+    "Filename": "key-item/card-key.png"
+  },
+  "353": {
+    "Item ID": "item_1605",
+    "Name": "carrot-seeds",
+    "Group": "key-item",
+    "Filename": "key-item/carrot-seeds.png"
+  },
+  "354": {
+    "Item ID": "item_1267",
+    "Name": "catching-charm",
+    "Group": "key-item",
+    "Filename": "key-item/catching-charm.png"
+  },
+  "355": {
+    "Item ID": "item_0474",
+    "Name": "clear-bell",
+    "Group": "key-item",
+    "Filename": "key-item/clear-bell.png"
+  },
+  "356": {
+    "Item ID": "item_0444",
+    "Name": "coin-case",
+    "Group": "key-item",
+    "Filename": "key-item/coin-case.png"
+  },
+  "357": {
+    "Item ID": "item_0635",
+    "Name": "colress-machine",
+    "Group": "key-item",
+    "Filename": "key-item/colress-machine.png"
+  },
+  "358": {
+    "Item ID": "item_0698",
+    "Name": "common-stone",
+    "Group": "key-item",
+    "Filename": "key-item/common-stone.png"
+  },
+  "359": {
+    "Item ID": "item_04755",
+    "Name": "contest-costume--dress",
+    "Group": "key-item",
+    "Filename": "key-item/contest-costume--dress.png"
+  },
+  "360": {
+    "Item ID": "item_0739",
+    "Name": "contest-costume--jacket",
+    "Group": "key-item",
+    "Filename": "key-item/contest-costume--jacket.png"
+  },
+  "361": {
+    "Item ID": "item_0457",
+    "Name": "contest-pass",
+    "Group": "key-item",
+    "Filename": "key-item/contest-pass.png"
+  },
+  "362": {
+    "Item ID": "item_0460",
+    "Name": "coupon-1",
+    "Group": "key-item",
+    "Filename": "key-item/coupon-1.png"
+  },
+  "363": {
+    "Item ID": "item_0461",
+    "Name": "coupon-2",
+    "Group": "key-item",
+    "Filename": "key-item/coupon-2.png"
+  },
+  "364": {
+    "Item ID": "item_0462",
+    "Name": "coupon-3",
+    "Group": "key-item",
+    "Filename": "key-item/coupon-3.png"
+  },
+  "365": {
+    "Item ID": "item_1597",
+    "Name": "crown-pass",
+    "Group": "key-item",
+    "Filename": "key-item/crown-pass.png"
+  },
+  "366": {
+    "Item ID": "item_0617",
+    "Name": "dark-stone",
+    "Group": "key-item",
+    "Filename": "key-item/dark-stone.png"
+  },
+  "367": {
+    "Item ID": "item_04716",
+    "Name": "data-card",
+    "Group": "key-item",
+    "Filename": "key-item/data-card.png"
+  },
+  "368": {
+    "Item ID": "item_04717",
+    "Name": "devon-goods",
+    "Group": "key-item",
+    "Filename": "key-item/devon-goods.png"
+  },
+  "369": {
+    "Item ID": "item_0721",
+    "Name": "devon-parts",
+    "Group": "key-item",
+    "Filename": "key-item/devon-parts.png"
+  },
+  "370": {
+    "Item ID": "item_0735",
+    "Name": "devon-scope",
+    "Group": "key-item",
+    "Filename": "key-item/devon-scope.png"
+  },
+  "371": {
+    "Item ID": "item_0738",
+    "Name": "devon-scuba-gear",
+    "Group": "key-item",
+    "Filename": "key-item/devon-scuba-gear.png"
+  },
+  "372": {
+    "Item ID": "item_0628",
+    "Name": "dna-splicers",
+    "Group": "key-item",
+    "Filename": "key-item/dna-splicers.png"
+  },
+  "373": {
+    "Item ID": "item_0629",
+    "Name": "dna-splicers",
+    "Group": "key-item",
+    "Filename": "key-item/dna-splicers.png"
+  },
+  "374": {
+    "Item ID": "item_0471",
+    "Name": "dowsing-machine",
+    "Group": "key-item",
+    "Filename": "key-item/dowsing-machine.png"
+  },
+  "375": {
+    "Item ID": "item_04718",
+    "Name": "dowsing-machine-xy",
+    "Group": "key-item",
+    "Filename": "key-item/dowsing-machine-xy.png"
+  },
+  "376": {
+    "Item ID": "item_0579",
+    "Name": "dragon-skull",
+    "Group": "key-item",
+    "Filename": "key-item/dragon-skull.png"
+  },
+  "377": {
+    "Item ID": "item_0636",
+    "Name": "dropped-item",
+    "Group": "key-item",
+    "Filename": "key-item/dropped-item.png"
+  },
+  "378": {
+    "Item ID": "item_04719",
+    "Name": "dropped-item--red",
+    "Group": "key-item",
+    "Filename": "key-item/dropped-item--red.png"
+  },
+  "379": {
+    "Item ID": "item_07002",
+    "Name": "dropped-item--yellow",
+    "Group": "key-item",
+    "Filename": "key-item/dropped-item--yellow.png"
+  },
+  "380": {
+    "Item ID": "item_1077",
+    "Name": "dynamax-band",
+    "Group": "key-item",
+    "Filename": "key-item/dynamax-band.png"
+  },
+  "381": {
+    "Item ID": "item_0700",
+    "Name": "elevator-key",
+    "Group": "key-item",
+    "Filename": "key-item/elevator-key.png"
+  },
+  "382": {
+    "Item ID": "item_1074",
+    "Name": "endorsement",
+    "Group": "key-item",
+    "Filename": "key-item/endorsement.png"
+  },
+  "383": {
+    "Item ID": "item_0536",
+    "Name": "enigma-stone",
+    "Group": "key-item",
+    "Filename": "key-item/enigma-stone.png"
+  },
+  "384": {
+    "Item ID": "item_0860",
+    "Name": "enigmatic-card",
+    "Group": "key-item",
+    "Filename": "key-item/enigmatic-card.png"
+  },
+  "385": {
+    "Item ID": "item_0775",
+    "Name": "eon-flute",
+    "Group": "key-item",
+    "Filename": "key-item/eon-flute.png"
+  },
+  "386": {
+    "Item ID": "item_0726",
+    "Name": "eon-ticket",
+    "Group": "key-item",
+    "Filename": "key-item/eon-ticket.png"
+  },
+  "387": {
+    "Item ID": "item_1587",
+    "Name": "exp-charm",
+    "Group": "key-item",
+    "Filename": "key-item/exp-charm.png"
+  },
+  "388": {
+    "Item ID": "item_07004",
+    "Name": "exp-share",
+    "Group": "key-item",
+    "Filename": "key-item/exp-share.png"
+  },
+  "389": {
+    "Item ID": "item_0428",
+    "Name": "explorer-kit",
+    "Group": "key-item",
+    "Filename": "key-item/explorer-kit.png"
+  },
+  "390": {
+    "Item ID": "item_04289",
+    "Name": "fame-checker",
+    "Group": "key-item",
+    "Filename": "key-item/fame-checker.png"
+  },
+  "391": {
+    "Item ID": "item_0435",
+    "Name": "fashion-case",
+    "Group": "key-item",
+    "Filename": "key-item/fashion-case.png"
+  },
+  "392": {
+    "Item ID": "item_0844",
+    "Name": "festival-ticket",
+    "Group": "key-item",
+    "Filename": "key-item/festival-ticket.png"
+  },
+  "393": {
+    "Item ID": "item_1080",
+    "Name": "fishing-rod",
+    "Group": "key-item",
+    "Filename": "key-item/fishing-rod.png"
+  },
+  "394": {
+    "Item ID": "item_0841",
+    "Name": "forage-bag",
+    "Group": "key-item",
+    "Filename": "key-item/forage-bag.png"
+  },
+  "395": {
+    "Item ID": "item_0440",
+    "Name": "galactic-key",
+    "Group": "key-item",
+    "Filename": "key-item/galactic-key.png"
+  },
+  "396": {
+    "Item ID": "item_0502",
+    "Name": "gb-sounds",
+    "Group": "key-item",
+    "Filename": "key-item/gb-sounds.png"
+  },
+  "397": {
+    "Item ID": "item_07284",
+    "Name": "go-goggles",
+    "Group": "key-item",
+    "Filename": "key-item/go-goggles.png"
+  },
+  "398": {
+    "Item ID": "item_07286",
+    "Name": "god-stone",
+    "Group": "key-item",
+    "Filename": "key-item/god-stone.png"
+  },
+  "399": {
+    "Item ID": "item_0877",
+    "Name": "gold-teeth",
+    "Group": "key-item",
+    "Filename": "key-item/gold-teeth.png"
+  },
+  "400": {
+    "Item ID": "item_0446",
+    "Name": "good-rod",
+    "Group": "key-item",
+    "Filename": "key-item/good-rod.png"
+  },
+  "401": {
+    "Item ID": "item_0466",
+    "Name": "gracidea",
+    "Group": "key-item",
+    "Filename": "key-item/gracidea.png"
+  },
+  "402": {
+    "Item ID": "item_0623",
+    "Name": "gram-1",
+    "Group": "key-item",
+    "Filename": "key-item/gram-1.png"
+  },
+  "403": {
+    "Item ID": "item_0624",
+    "Name": "gram-2",
+    "Group": "key-item",
+    "Filename": "key-item/gram-2.png"
+  },
+  "404": {
+    "Item ID": "item_0625",
+    "Name": "gram-3",
+    "Group": "key-item",
+    "Filename": "key-item/gram-3.png"
+  },
+  "405": {
+    "Item ID": "item_0634",
+    "Name": "grubby-hanky",
+    "Group": "key-item",
+    "Filename": "key-item/grubby-hanky.png"
+  },
+  "406": {
+    "Item ID": "item_1255",
+    "Name": "hi-tech-earbuds",
+    "Group": "key-item",
+    "Filename": "key-item/hi-tech-earbuds.png"
+  },
+  "407": {
+    "Item ID": "item_0641",
+    "Name": "holo-caster",
+    "Group": "key-item",
+    "Filename": "key-item/holo-caster.png"
+  },
+  "408": {
+    "Item ID": "item_06413",
+    "Name": "holo-caster--green",
+    "Group": "key-item",
+    "Filename": "key-item/holo-caster--green.png†"
+  },
+  "409": {
+    "Item ID": "item_06412",
+    "Name": "holo-caster--red",
+    "Group": "key-item",
+    "Filename": "key-item/holo-caster--red.png†"
+  },
+  "410": {
+    "Item ID": "item_0702",
+    "Name": "honor-of-kalos",
+    "Group": "key-item",
+    "Filename": "key-item/honor-of-kalos.png"
+  },
+  "411": {
+    "Item ID": "item_1602",
+    "Name": "iceroot-carrot",
+    "Group": "key-item",
+    "Filename": "key-item/iceroot-carrot.png"
+  },
+  "412": {
+    "Item ID": "item_0697",
+    "Name": "intriguing-stone",
+    "Group": "key-item",
+    "Filename": "key-item/intriguing-stone.png"
+  },
+  "413": {
+    "Item ID": "item_0532",
+    "Name": "jade-orb",
+    "Group": "key-item",
+    "Filename": "key-item/jade-orb.png"
+  },
+  "414": {
+    "Item ID": "item_0433",
+    "Name": "journal",
+    "Group": "key-item",
+    "Filename": "key-item/journal.png"
+  },
+  "415": {
+    "Item ID": "item_0773",
+    "Name": "key-stone",
+    "Group": "key-item",
+    "Filename": "key-item/key-stone.png"
+  },
+  "416": {
+    "Item ID": "item_0730",
+    "Name": "key-to-room-1",
+    "Group": "key-item",
+    "Filename": "key-item/key-to-room-1.png"
+  },
+  "417": {
+    "Item ID": "item_0731",
+    "Name": "key-to-room-2",
+    "Group": "key-item",
+    "Filename": "key-item/key-to-room-2.png"
+  },
+  "418": {
+    "Item ID": "item_0732",
+    "Name": "key-to-room-4",
+    "Group": "key-item",
+    "Filename": "key-item/key-to-room-4.png"
+  },
+  "419": {
+    "Item ID": "item_0733",
+    "Name": "key-to-room-6",
+    "Group": "key-item",
+    "Filename": "key-item/key-to-room-6.png"
+  },
+  "420": {
+    "Item ID": "item_1593",
+    "Name": "legendary-clue",
+    "Group": "key-item",
+    "Filename": "key-item/legendary-clue.png"
+  },
+  "421": {
+    "Item ID": "item_0705",
+    "Name": "lens-case",
+    "Group": "key-item",
+    "Filename": "key-item/lens-case.png"
+  },
+  "422": {
+    "Item ID": "item_0725",
+    "Name": "letter",
+    "Group": "key-item",
+    "Filename": "key-item/letter.png"
+  },
+  "423": {
+    "Item ID": "item_0574",
+    "Name": "liberty-pass",
+    "Group": "key-item",
+    "Filename": "key-item/liberty-pass.png"
+  },
+  "424": {
+    "Item ID": "item_0878",
+    "Name": "lift-key",
+    "Group": "key-item",
+    "Filename": "key-item/lift-key.png"
+  },
+  "425": {
+    "Item ID": "item_0616",
+    "Name": "light-stone",
+    "Group": "key-item",
+    "Filename": "key-item/light-stone.png"
+  },
+  "426": {
+    "Item ID": "item_0533",
+    "Name": "lock-capsule",
+    "Group": "key-item",
+    "Filename": "key-item/lock-capsule.png"
+  },
+  "427": {
+    "Item ID": "item_0712",
+    "Name": "looker-ticket",
+    "Group": "key-item",
+    "Filename": "key-item/looker-ticket.png"
+  },
+  "428": {
+    "Item ID": "item_0429",
+    "Name": "loot-sack",
+    "Group": "key-item",
+    "Filename": "key-item/loot-sack.png"
+  },
+  "429": {
+    "Item ID": "item_0479",
+    "Name": "lost-item",
+    "Group": "key-item",
+    "Filename": "key-item/lost-item.png"
+  },
+  "430": {
+    "Item ID": "item_04799",
+    "Name": "lost-item-mimejr",
+    "Group": "key-item",
+    "Filename": "key-item/lost-item-mimejr.png"
+  },
+  "431": {
+    "Item ID": "item_0453",
+    "Name": "lunar-wing",
+    "Group": "key-item",
+    "Filename": "key-item/lunar-wing.png"
+  },
+  "432": {
+    "Item ID": "item_0718",
+    "Name": "mach-bike",
+    "Group": "key-item",
+    "Filename": "key-item/mach-bike.png"
+  },
+  "433": {
+    "Item ID": "item_0481",
+    "Name": "machine-part",
+    "Group": "key-item",
+    "Filename": "key-item/machine-part.png"
+  },
+  "434": {
+    "Item ID": "item_04790",
+    "Name": "magma-emblem",
+    "Group": "key-item",
+    "Filename": "key-item/magma-emblem.png"
+  },
+  "435": {
+    "Item ID": "item_0458",
+    "Name": "magma-stone",
+    "Group": "key-item",
+    "Filename": "key-item/magma-stone.png"
+  },
+  "436": {
+    "Item ID": "item_0741",
+    "Name": "magma-suit",
+    "Group": "key-item",
+    "Filename": "key-item/magma-suit.png"
+  },
+  "437": {
+    "Item ID": "item_0706",
+    "Name": "makeup-bag",
+    "Group": "key-item",
+    "Filename": "key-item/makeup-bag.png"
+  },
+  "438": {
+    "Item ID": "item_1589",
+    "Name": "mark-charm",
+    "Group": "key-item",
+    "Filename": "key-item/mark-charm.png"
+  },
+  "439": {
+    "Item ID": "item_0627",
+    "Name": "medal-box",
+    "Group": "key-item",
+    "Filename": "key-item/medal-box.png"
+  },
+  "440": {
+    "Item ID": "item_0744",
+    "Name": "mega-bracelet",
+    "Group": "key-item",
+    "Filename": "key-item/mega-bracelet.png"
+  },
+  "441": {
+    "Item ID": "item_0716",
+    "Name": "mega-charm",
+    "Group": "key-item",
+    "Filename": "key-item/mega-charm.png"
+  },
+  "442": {
+    "Item ID": "item_0766",
+    "Name": "mega-cuff",
+    "Group": "key-item",
+    "Filename": "key-item/mega-cuff.png"
+  },
+  "443": {
+    "Item ID": "item_0696",
+    "Name": "mega-ring",
+    "Group": "key-item",
+    "Filename": "key-item/mega-ring.png"
+  },
+  "444": {
+    "Item ID": "item_0454",
+    "Name": "member-card",
+    "Group": "key-item",
+    "Filename": "key-item/member-card.png"
+  },
+  "445": {
+    "Item ID": "item_0729",
+    "Name": "meteorite",
+    "Group": "key-item",
+    "Filename": "key-item/meteorite.png"
+  },
+  "446": {
+    "Item ID": "item_04796",
+    "Name": "meteorite--2",
+    "Group": "key-item",
+    "Filename": "key-item/meteorite--2.png†"
+  },
+  "447": {
+    "Item ID": "item_04795",
+    "Name": "meteorite--3",
+    "Group": "key-item",
+    "Filename": "key-item/meteorite--3.png†"
+  },
+  "448": {
+    "Item ID": "item_04794",
+    "Name": "meteorite--4",
+    "Group": "key-item",
+    "Filename": "key-item/meteorite--4.png†"
+  },
+  "449": {
+    "Item ID": "item_0774",
+    "Name": "meteorite-shard",
+    "Group": "key-item",
+    "Filename": "key-item/meteorite-shard.png"
+  },
+  "450": {
+    "Item ID": "item_0858",
+    "Name": "moon-flute",
+    "Group": "key-item",
+    "Filename": "key-item/moon-flute.png"
+  },
+  "451": {
+    "Item ID": "item_0484",
+    "Name": "mystery-egg",
+    "Group": "key-item",
+    "Filename": "key-item/mystery-egg.png"
+  },
+  "452": {
+    "Item ID": "item_04793",
+    "Name": "mysticticket",
+    "Group": "key-item",
+    "Filename": "key-item/mysticticket.png"
+  },
+  "453": {
+    "Item ID": "item_0944",
+    "Name": "n-lunarizer",
+    "Group": "key-item",
+    "Filename": "key-item/n-lunarizer.png"
+  },
+  "454": {
+    "Item ID": "item_0946",
+    "Name": "n-lunarizer",
+    "Group": "key-item",
+    "Filename": "key-item/n-lunarizer.png"
+  },
+  "455": {
+    "Item ID": "item_0943",
+    "Name": "n-solarizer",
+    "Group": "key-item",
+    "Filename": "key-item/n-solarizer.png"
+  },
+  "456": {
+    "Item ID": "item_0945",
+    "Name": "n-solarizer",
+    "Group": "key-item",
+    "Filename": "key-item/n-solarizer.png"
+  },
+  "457": {
+    "Item ID": "item_04792",
+    "Name": "oaks-letter",
+    "Group": "key-item",
+    "Filename": "key-item/oaks-letter.png"
+  },
+  "458": {
+    "Item ID": "item_04791",
+    "Name": "old-amber",
+    "Group": "key-item",
+    "Filename": "key-item/old-amber.png†"
+  },
+  "459": {
+    "Item ID": "item_0439",
+    "Name": "old-charm",
+    "Group": "key-item",
+    "Filename": "key-item/old-charm.png"
+  },
+  "460": {
+    "Item ID": "item_1269",
+    "Name": "old-letter",
+    "Group": "key-item",
+    "Filename": "key-item/old-letter.png"
+  },
+  "461": {
+    "Item ID": "item_0445",
+    "Name": "old-rod",
+    "Group": "key-item",
+    "Filename": "key-item/old-rod.png"
+  },
+  "462": {
+    "Item ID": "item_05013",
+    "Name": "old-sea-map",
+    "Group": "key-item",
+    "Filename": "key-item/old-sea-map.png"
+  },
+  "463": {
+    "Item ID": "item_0631",
+    "Name": "oval-charm",
+    "Group": "key-item",
+    "Filename": "key-item/oval-charm.png"
+  },
+  "464": {
+    "Item ID": "item_0743",
+    "Name": "pair-of-tickets",
+    "Group": "key-item",
+    "Filename": "key-item/pair-of-tickets.png"
+  },
+  "465": {
+    "Item ID": "item_0437",
+    "Name": "pal-pad",
+    "Group": "key-item",
+    "Filename": "key-item/pal-pad.png"
+  },
+  "466": {
+    "Item ID": "item_0459",
+    "Name": "parcel",
+    "Group": "key-item",
+    "Filename": "key-item/parcel.png"
+  },
+  "467": {
+    "Item ID": "item_0480",
+    "Name": "pass",
+    "Group": "key-item",
+    "Filename": "key-item/pass.png"
+  },
+  "468": {
+    "Item ID": "item_0630",
+    "Name": "permit",
+    "Group": "key-item",
+    "Filename": "key-item/permit.png"
+  },
+  "469": {
+    "Item ID": "item_0501",
+    "Name": "photo-album",
+    "Group": "key-item",
+    "Filename": "key-item/photo-album.png"
+  },
+  "470": {
+    "Item ID": "item_0633",
+    "Name": "plasma-card",
+    "Group": "key-item",
+    "Filename": "key-item/plasma-card.png"
+  },
+  "471": {
+    "Item ID": "item_0449",
+    "Name": "poffin-case",
+    "Group": "key-item",
+    "Filename": "key-item/poffin-case.png"
+  },
+  "472": {
+    "Item ID": "item_0432",
+    "Name": "point-card",
+    "Group": "key-item",
+    "Filename": "key-item/point-card.png"
+  },
+  "473": {
+    "Item ID": "item_0651",
+    "Name": "poke-flute",
+    "Group": "key-item",
+    "Filename": "key-item/poke-flute.png"
+  },
+  "474": {
+    "Item ID": "item_0431",
+    "Name": "poke-radar",
+    "Group": "key-item",
+    "Filename": "key-item/poke-radar.png"
+  },
+  "475": {
+    "Item ID": "item_05016",
+    "Name": "pokeblock-case",
+    "Group": "key-item",
+    "Filename": "key-item/pokeblock-case.png"
+  },
+  "476": {
+    "Item ID": "item_0724",
+    "Name": "pokeblock-kit",
+    "Group": "key-item",
+    "Filename": "key-item/pokeblock-kit.png"
+  },
+  "477": {
+    "Item ID": "item_1075",
+    "Name": "pokemon-box-link",
+    "Group": "key-item",
+    "Filename": "key-item/pokemon-box-link.png"
+  },
+  "478": {
+    "Item ID": "item_11111",
+    "Name": "powder-jar",
+    "Group": "key-item",
+    "Filename": "key-item/powder-jar.png"
+  },
+  "479": {
+    "Item ID": "item_0695",
+    "Name": "power-plant-pass",
+    "Group": "key-item",
+    "Filename": "key-item/power-plant-pass.png"
+  },
+  "480": {
+    "Item ID": "item_0765",
+    "Name": "prison-bottle",
+    "Group": "key-item",
+    "Filename": "key-item/prison-bottle.png"
+  },
+  "481": {
+    "Item ID": "item_11112",
+    "Name": "professors-mask",
+    "Group": "key-item",
+    "Filename": "key-item/professors-mask.png"
+  },
+  "482": {
+    "Item ID": "item_11113",
+    "Name": "profs-letter",
+    "Group": "key-item",
+    "Filename": "key-item/profs-letter.png"
+  },
+  "483": {
+    "Item ID": "item_0578",
+    "Name": "prop-case",
+    "Group": "key-item",
+    "Filename": "key-item/prop-case.png"
+  },
+  "484": {
+    "Item ID": "item_1599",
+    "Name": "radiant-petal",
+    "Group": "key-item",
+    "Filename": "key-item/radiant-petal.png"
+  },
+  "485": {
+    "Item ID": "item_0941",
+    "Name": "rainbow-flower",
+    "Group": "key-item",
+    "Filename": "key-item/rainbow-flower.png"
+  },
+  "486": {
+    "Item ID": "item_11114",
+    "Name": "rainbow-pass",
+    "Group": "key-item",
+    "Filename": "key-item/rainbow-pass.png"
+  },
+  "487": {
+    "Item ID": "item_0483",
+    "Name": "rainbow-wing",
+    "Group": "key-item",
+    "Filename": "key-item/rainbow-wing.png"
+  },
+  "488": {
+    "Item ID": "item_0441",
+    "Name": "red-chain",
+    "Group": "key-item",
+    "Filename": "key-item/red-chain.png"
+  },
+  "489": {
+    "Item ID": "item_0478",
+    "Name": "red-scale",
+    "Group": "key-item",
+    "Filename": "key-item/red-scale.png"
+  },
+  "490": {
+    "Item ID": "item_1590",
+    "Name": "reins-of-unity",
+    "Group": "key-item",
+    "Filename": "key-item/reins-of-unity.png"
+  },
+  "491": {
+    "Item ID": "item_0638",
+    "Name": "reveal-glass",
+    "Group": "key-item",
+    "Filename": "key-item/reveal-glass.png"
+  },
+  "492": {
+    "Item ID": "item_0850",
+    "Name": "ride-pager",
+    "Group": "key-item",
+    "Filename": "key-item/ride-pager.png"
+  },
+  "493": {
+    "Item ID": "item_11115",
+    "Name": "rm-1-key",
+    "Group": "key-item",
+    "Filename": "key-item/rm-1-key.png"
+  },
+  "494": {
+    "Item ID": "item_11116",
+    "Name": "rm-2-key",
+    "Group": "key-item",
+    "Filename": "key-item/rm-2-key.png"
+  },
+  "495": {
+    "Item ID": "item_11117",
+    "Name": "rm-4-key",
+    "Group": "key-item",
+    "Filename": "key-item/rm-4-key.png"
+  },
+  "496": {
+    "Item ID": "item_11118",
+    "Name": "rm-6-key",
+    "Group": "key-item",
+    "Filename": "key-item/rm-6-key.png"
+  },
+  "497": {
+    "Item ID": "item_0643",
+    "Name": "roller-skates",
+    "Group": "key-item",
+    "Filename": "key-item/roller-skates.png"
+  },
+  "498": {
+    "Item ID": "item_1081",
+    "Name": "rotom-bike-1",
+    "Group": "key-item",
+    "Filename": "key-item/rotom-bike-1.png"
+  },
+  "499": {
+    "Item ID": "item_1266",
+    "Name": "rotom-bike-2",
+    "Group": "key-item",
+    "Filename": "key-item/rotom-bike-2.png"
+  },
+  "500": {
+    "Item ID": "item_1585",
+    "Name": "rotom-bike-3",
+    "Group": "key-item",
+    "Filename": "key-item/rotom-bike-3.png"
+  },
+  "501": {
+    "Item ID": "item_1586",
+    "Name": "rotom-bike-4",
+    "Group": "key-item",
+    "Filename": "key-item/rotom-bike-4.png"
+  },
+  "502": {
+    "Item ID": "item_1278",
+    "Name": "rotom-catalog",
+    "Group": "key-item",
+    "Filename": "key-item/rotom-catalog.png"
+  },
+  "503": {
+    "Item ID": "item_11119",
+    "Name": "ruby",
+    "Group": "key-item",
+    "Filename": "key-item/ruby.png"
+  },
+  "504": {
+    "Item ID": "item_0430",
+    "Name": "rule-book",
+    "Group": "key-item",
+    "Filename": "key-item/rule-book.png"
+  },
+  "505": {
+    "Item ID": "item_11120",
+    "Name": "sapphire",
+    "Group": "key-item",
+    "Filename": "key-item/sapphire.png"
+  },
+  "506": {
+    "Item ID": "item_0727",
+    "Name": "scanner",
+    "Group": "key-item",
+    "Filename": "key-item/scanner.png"
+  },
+  "507": {
+    "Item ID": "item_0436",
+    "Name": "seal-bag",
+    "Group": "key-item",
+    "Filename": "key-item/seal-bag.png"
+  },
+  "508": {
+    "Item ID": "item_0434",
+    "Name": "seal-case",
+    "Group": "key-item",
+    "Filename": "key-item/seal-case.png"
+  },
+  "509": {
+    "Item ID": "item_0467",
+    "Name": "secret-key-sinnoh",
+    "Group": "key-item",
+    "Filename": "key-item/secret-key-sinnoh.png"
+  },
+  "510": {
+    "Item ID": "item_0464",
+    "Name": "secret-potion",
+    "Group": "key-item",
+    "Filename": "key-item/secret-potion.png"
+  },
+  "511": {
+    "Item ID": "item_1603",
+    "Name": "shaderoot-carrot",
+    "Group": "key-item",
+    "Filename": "key-item/shaderoot-carrot.png"
+  },
+  "512": {
+    "Item ID": "item_0632",
+    "Name": "shiny-charm",
+    "Group": "key-item",
+    "Filename": "key-item/shiny-charm.png"
+  },
+  "513": {
+    "Item ID": "item_0874",
+    "Name": "silph-scope",
+    "Group": "key-item",
+    "Filename": "key-item/silph-scope.png"
+  },
+  "514": {
+    "Item ID": "item_0482",
+    "Name": "silver-wing",
+    "Group": "key-item",
+    "Filename": "key-item/silver-wing.png"
+  },
+  "515": {
+    "Item ID": "item_1271",
+    "Name": "sonias-book",
+    "Group": "key-item",
+    "Filename": "key-item/sonias-book.png"
+  },
+  "516": {
+    "Item ID": "item_0722",
+    "Name": "soot-sack",
+    "Group": "key-item",
+    "Filename": "key-item/soot-sack.png"
+  },
+  "517": {
+    "Item ID": "item_0845",
+    "Name": "sparkling-stone",
+    "Group": "key-item",
+    "Filename": "key-item/sparkling-stone.png"
+  },
+  "518": {
+    "Item ID": "item_11121",
+    "Name": "sparkling-stone-sm",
+    "Group": "key-item",
+    "Filename": "key-item/sparkling-stone-sm.png"
+  },
+  "519": {
+    "Item ID": "item_0448",
+    "Name": "sprayduck",
+    "Group": "key-item",
+    "Filename": "key-item/sprayduck.png"
+  },
+  "520": {
+    "Item ID": "item_0689",
+    "Name": "sprinklotad",
+    "Group": "key-item",
+    "Filename": "key-item/sprinklotad.png"
+  },
+  "521": {
+    "Item ID": "item_0477",
+    "Name": "squirt-bottle",
+    "Group": "key-item",
+    "Filename": "key-item/squirt-bottle.png"
+  },
+  "522": {
+    "Item ID": "item_0456",
+    "Name": "ss-ticket",
+    "Group": "key-item",
+    "Filename": "key-item/ss-ticket.png"
+  },
+  "523": {
+    "Item ID": "item_0736",
+    "Name": "ss-ticket",
+    "Group": "key-item",
+    "Filename": "key-item/ss-ticket.png"
+  },
+  "524": {
+    "Item ID": "item_0463",
+    "Name": "storage-key",
+    "Group": "key-item",
+    "Filename": "key-item/storage-key.png"
+  },
+  "525": {
+    "Item ID": "item_11122",
+    "Name": "storage-key--galactic-warehouse",
+    "Group": "key-item",
+    "Filename": "key-item/storage-key--galactic-warehouse.png†"
+  },
+  "526": {
+    "Item ID": "item_11123",
+    "Name": "storage-key--sea-mauville",
+    "Group": "key-item",
+    "Filename": "key-item/storage-key--sea-mauville.png†"
+  },
+  "527": {
+    "Item ID": "item_1583",
+    "Name": "style-card",
+    "Group": "key-item",
+    "Filename": "key-item/style-card.png"
+  },
+  "528": {
+    "Item ID": "item_0451",
+    "Name": "suite-key",
+    "Group": "key-item",
+    "Filename": "key-item/suite-key.png"
+  },
+  "529": {
+    "Item ID": "item_0857",
+    "Name": "sun-flute",
+    "Group": "key-item",
+    "Filename": "key-item/sun-flute.png"
+  },
+  "530": {
+    "Item ID": "item_0447",
+    "Name": "super-rod",
+    "Group": "key-item",
+    "Filename": "key-item/super-rod.png"
+  },
+  "531": {
+    "Item ID": "item_0942",
+    "Name": "surge-badge",
+    "Group": "key-item",
+    "Filename": "key-item/surge-badge.png"
+  },
+  "532": {
+    "Item ID": "item_0113",
+    "Name": "tea",
+    "Group": "key-item",
+    "Filename": "key-item/tea.png"
+  },
+  "533": {
+    "Item ID": "item_11124",
+    "Name": "teachy-tv",
+    "Group": "key-item",
+    "Filename": "key-item/teachy-tv.png"
+  },
+  "534": {
+    "Item ID": "item_0503",
+    "Name": "tidal-bell",
+    "Group": "key-item",
+    "Filename": "key-item/tidal-bell.png"
+  },
+  "535": {
+    "Item ID": "item_0701",
+    "Name": "tmv-pass",
+    "Group": "key-item",
+    "Filename": "key-item/tmv-pass.png"
+  },
+  "536": {
+    "Item ID": "item_0442",
+    "Name": "town-map",
+    "Group": "key-item",
+    "Filename": "key-item/town-map.png"
+  },
+  "537": {
+    "Item ID": "item_0707",
+    "Name": "travel-trunk",
+    "Group": "key-item",
+    "Filename": "key-item/travel-trunk.png"
+  },
+  "538": {
+    "Item ID": "item_11125",
+    "Name": "travel-trunk--gold",
+    "Group": "key-item",
+    "Filename": "key-item/travel-trunk--gold.png†"
+  },
+  "539": {
+    "Item ID": "item_11126",
+    "Name": "travel-trunk--silver",
+    "Group": "key-item",
+    "Filename": "key-item/travel-trunk--silver.png†"
+  },
+  "540": {
+    "Item ID": "item_11127",
+    "Name": "tri-pass",
+    "Group": "key-item",
+    "Filename": "key-item/tri-pass.png"
+  },
+  "541": {
+    "Item ID": "item_0469",
+    "Name": "unown-report",
+    "Group": "key-item",
+    "Filename": "key-item/unown-report.png"
+  },
+  "542": {
+    "Item ID": "item_11128",
+    "Name": "vs-recorder",
+    "Group": "key-item",
+    "Filename": "key-item/vs-recorder.png"
+  },
+  "543": {
+    "Item ID": "item_11129",
+    "Name": "vs-seeker",
+    "Group": "key-item",
+    "Filename": "key-item/vs-seeker.png"
+  },
+  "544": {
+    "Item ID": "item_0720",
+    "Name": "wailmer-pail",
+    "Group": "key-item",
+    "Filename": "key-item/wailmer-pail.png"
+  },
+  "545": {
+    "Item ID": "item_1600",
+    "Name": "white-mane-hair",
+    "Group": "key-item",
+    "Filename": "key-item/white-mane-hair.png"
+  },
+  "546": {
+    "Item ID": "item_1265",
+    "Name": "wishing-chip",
+    "Group": "key-item",
+    "Filename": "key-item/wishing-chip.png"
+  },
+  "547": {
+    "Item ID": "item_1076",
+    "Name": "wishing-star",
+    "Group": "key-item",
+    "Filename": "key-item/wishing-star.png"
+  },
+  "548": {
+    "Item ID": "item_1598",
+    "Name": "wooden-crown",
+    "Group": "key-item",
+    "Filename": "key-item/wooden-crown.png"
+  },
+  "549": {
+    "Item ID": "item_0438",
+    "Name": "works-key",
+    "Group": "key-item",
+    "Filename": "key-item/works-key.png"
+  },
+  "550": {
+    "Item ID": "item_0621",
+    "Name": "xtransceiver",
+    "Group": "key-item",
+    "Filename": "key-item/xtransceiver.png"
+  },
+  "551": {
+    "Item ID": "item_11130",
+    "Name": "xtransceiver--blue",
+    "Group": "key-item",
+    "Filename": "key-item/xtransceiver--blue.png†"
+  },
+  "552": {
+    "Item ID": "item_11131",
+    "Name": "xtransceiver--red",
+    "Group": "key-item",
+    "Filename": "key-item/xtransceiver--red.png†"
+  },
+  "553": {
+    "Item ID": "item_11132",
+    "Name": "xtransceiver--yellow",
+    "Group": "key-item",
+    "Filename": "key-item/xtransceiver--yellow.png†"
+  },
+  "554": {
+    "Item ID": "item_0933",
+    "Name": "z-power-ring",
+    "Group": "key-item",
+    "Filename": "key-item/z-power-ring.png"
+  },
+  "555": {
+    "Item ID": "item_0797",
+    "Name": "z-ring",
+    "Group": "key-item",
+    "Filename": "key-item/z-ring.png"
+  },
+  "556": {
+    "Item ID": "item_0847",
+    "Name": "zygarde-cube",
+    "Group": "key-item",
+    "Filename": "key-item/zygarde-cube.png"
+  },
+  "557": {
+    "Item ID": "item_0128",
+    "Name": "battle-pocket",
+    "Group": "storage",
+    "Filename": "storage/battle-pocket.png"
+  },
+  "558": {
+    "Item ID": "item_0124",
+    "Name": "candy-jar",
+    "Group": "storage",
+    "Filename": "storage/candy-jar.png"
+  },
+  "559": {
+    "Item ID": "item_0127",
+    "Name": "catching-pocket",
+    "Group": "storage",
+    "Filename": "storage/catching-pocket.png"
+  },
+  "560": {
+    "Item ID": "item_0126",
+    "Name": "clothing-trunk",
+    "Group": "storage",
+    "Filename": "storage/clothing-trunk.png"
+  },
+  "561": {
+    "Item ID": "item_0122",
+    "Name": "medicine-pocket",
+    "Group": "storage",
+    "Filename": "storage/medicine-pocket.png"
+  },
+  "562": {
+    "Item ID": "item_0121",
+    "Name": "pokemon-box",
+    "Group": "storage",
+    "Filename": "storage/pokemon-box.png"
+  },
+  "563": {
+    "Item ID": "item_0125",
+    "Name": "power-up-pocket",
+    "Group": "storage",
+    "Filename": "storage/power-up-pocket.png"
+  },
+  "564": {
+    "Item ID": "item_0123",
+    "Name": "tm-case",
+    "Group": "storage",
+    "Filename": "storage/tm-case.png"
+  },
+  "565": {
+    "Item ID": "item_11133",
+    "Name": "air-mail",
+    "Group": "mail",
+    "Filename": "mail/air-mail.png"
+  },
+  "566": {
+    "Item ID": "item_11134",
+    "Name": "bead-mail",
+    "Group": "mail",
+    "Filename": "mail/bead-mail.png"
+  },
+  "567": {
+    "Item ID": "item_11135",
+    "Name": "bloom-mail",
+    "Group": "mail",
+    "Filename": "mail/bloom-mail.png"
+  },
+  "568": {
+    "Item ID": "item_11136",
+    "Name": "brick-mail",
+    "Group": "mail",
+    "Filename": "mail/brick-mail.png"
+  },
+  "569": {
+    "Item ID": "item_0145",
+    "Name": "bridge-mail-d",
+    "Group": "mail",
+    "Filename": "mail/bridge-mail-d.png"
+  },
+  "570": {
+    "Item ID": "item_0148",
+    "Name": "bridge-mail-m",
+    "Group": "mail",
+    "Filename": "mail/bridge-mail-m.png"
+  },
+  "571": {
+    "Item ID": "item_0144",
+    "Name": "bridge-mail-s",
+    "Group": "mail",
+    "Filename": "mail/bridge-mail-s.png"
+  },
+  "572": {
+    "Item ID": "item_0146",
+    "Name": "bridge-mail-t",
+    "Group": "mail",
+    "Filename": "mail/bridge-mail-t.png"
+  },
+  "573": {
+    "Item ID": "item_0147",
+    "Name": "bridge-mail-v",
+    "Group": "mail",
+    "Filename": "mail/bridge-mail-v.png"
+  },
+  "574": {
+    "Item ID": "item_11137",
+    "Name": "bubble-mail",
+    "Group": "mail",
+    "Filename": "mail/bubble-mail.png"
+  },
+  "575": {
+    "Item ID": "item_11138",
+    "Name": "dream-mail",
+    "Group": "mail",
+    "Filename": "mail/dream-mail.png"
+  },
+  "576": {
+    "Item ID": "item_11139",
+    "Name": "fab-mail",
+    "Group": "mail",
+    "Filename": "mail/fab-mail.png"
+  },
+  "577": {
+    "Item ID": "item_0138",
+    "Name": "favored-mail",
+    "Group": "mail",
+    "Filename": "mail/favored-mail.png"
+  },
+  "578": {
+    "Item ID": "item_11140",
+    "Name": "flame-mail",
+    "Group": "mail",
+    "Filename": "mail/flame-mail.png"
+  },
+  "579": {
+    "Item ID": "item_11141",
+    "Name": "glitter-mail",
+    "Group": "mail",
+    "Filename": "mail/glitter-mail.png"
+  },
+  "580": {
+    "Item ID": "item_11142",
+    "Name": "grass-mail",
+    "Group": "mail",
+    "Filename": "mail/grass-mail.png"
+  },
+  "581": {
+    "Item ID": "item_0137",
+    "Name": "greet-mail",
+    "Group": "mail",
+    "Filename": "mail/greet-mail.png"
+  },
+  "582": {
+    "Item ID": "item_11143",
+    "Name": "harbor-mail",
+    "Group": "mail",
+    "Filename": "mail/harbor-mail.png"
+  },
+  "583": {
+    "Item ID": "item_11144",
+    "Name": "heart-mail",
+    "Group": "mail",
+    "Filename": "mail/heart-mail.png"
+  },
+  "584": {
+    "Item ID": "item_0141",
+    "Name": "inquiry-mail",
+    "Group": "mail",
+    "Filename": "mail/inquiry-mail.png"
+  },
+  "585": {
+    "Item ID": "item_0142",
+    "Name": "like-mail",
+    "Group": "mail",
+    "Filename": "mail/like-mail.png"
+  },
+  "586": {
+    "Item ID": "item_11145",
+    "Name": "mech-mail",
+    "Group": "mail",
+    "Filename": "mail/mech-mail.png"
+  },
+  "587": {
+    "Item ID": "item_11146",
+    "Name": "mosaic-mail",
+    "Group": "mail",
+    "Filename": "mail/mosaic-mail.png"
+  },
+  "588": {
+    "Item ID": "item_11147",
+    "Name": "orange-mail",
+    "Group": "mail",
+    "Filename": "mail/orange-mail.png"
+  },
+  "589": {
+    "Item ID": "item_0143",
+    "Name": "reply-mail",
+    "Group": "mail",
+    "Filename": "mail/reply-mail.png"
+  },
+  "590": {
+    "Item ID": "item_11148",
+    "Name": "retro-mail",
+    "Group": "mail",
+    "Filename": "mail/retro-mail.png"
+  },
+  "591": {
+    "Item ID": "item_0139",
+    "Name": "rsvp-mail",
+    "Group": "mail",
+    "Filename": "mail/rsvp-mail.png"
+  },
+  "592": {
+    "Item ID": "item_11149",
+    "Name": "shadow-mail",
+    "Group": "mail",
+    "Filename": "mail/shadow-mail.png"
+  },
+  "593": {
+    "Item ID": "item_11150",
+    "Name": "snow-mail",
+    "Group": "mail",
+    "Filename": "mail/snow-mail.png"
+  },
+  "594": {
+    "Item ID": "item_11151",
+    "Name": "space-mail",
+    "Group": "mail",
+    "Filename": "mail/space-mail.png"
+  },
+  "595": {
+    "Item ID": "item_11152",
+    "Name": "steel-mail",
+    "Group": "mail",
+    "Filename": "mail/steel-mail.png"
+  },
+  "596": {
+    "Item ID": "item_0140",
+    "Name": "thanks-mail",
+    "Group": "mail",
+    "Filename": "mail/thanks-mail.png"
+  },
+  "597": {
+    "Item ID": "item_11153",
+    "Name": "tropic-mail",
+    "Group": "mail",
+    "Filename": "mail/tropic-mail.png"
+  },
+  "598": {
+    "Item ID": "item_11154",
+    "Name": "tunnel-mail",
+    "Group": "mail",
+    "Filename": "mail/tunnel-mail.png"
+  },
+  "599": {
+    "Item ID": "item_11155",
+    "Name": "wave-mail",
+    "Group": "mail",
+    "Filename": "mail/wave-mail.png"
+  },
+  "600": {
+    "Item ID": "item_11156",
+    "Name": "wood-mail",
+    "Group": "mail",
+    "Filename": "mail/wood-mail.png"
+  },
+  "601": {
+    "Item ID": "item_0162",
+    "Name": "aguav",
+    "Group": "berry",
+    "Filename": "berry/aguav.png"
+  },
+  "602": {
+    "Item ID": "item_0205",
+    "Name": "apicot",
+    "Group": "berry",
+    "Filename": "berry/apicot.png"
+  },
+  "603": {
+    "Item ID": "item_0153",
+    "Name": "aspear",
+    "Group": "berry",
+    "Filename": "berry/aspear.png"
+  },
+  "604": {
+    "Item ID": "item_0199",
+    "Name": "babiri",
+    "Group": "berry",
+    "Filename": "berry/babiri.png"
+  },
+  "605": {
+    "Item ID": "item_0183",
+    "Name": "belue",
+    "Group": "berry",
+    "Filename": "berry/belue.png"
+  },
+  "606": {
+    "Item ID": "item_0165",
+    "Name": "bluk",
+    "Group": "berry",
+    "Filename": "berry/bluk.png"
+  },
+  "607": {
+    "Item ID": "item_0195",
+    "Name": "charti",
+    "Group": "berry",
+    "Filename": "berry/charti.png"
+  },
+  "608": {
+    "Item ID": "item_0149",
+    "Name": "cheri",
+    "Group": "berry",
+    "Filename": "berry/cheri.png"
+  },
+  "609": {
+    "Item ID": "item_0150",
+    "Name": "chesto",
+    "Group": "berry",
+    "Filename": "berry/chesto.png"
+  },
+  "610": {
+    "Item ID": "item_0200",
+    "Name": "chilan",
+    "Group": "berry",
+    "Filename": "berry/chilan.png"
+  },
+  "611": {
+    "Item ID": "item_0189",
+    "Name": "chople",
+    "Group": "berry",
+    "Filename": "berry/chople.png"
+  },
+  "612": {
+    "Item ID": "item_0192",
+    "Name": "coba",
+    "Group": "berry",
+    "Filename": "berry/coba.png"
+  },
+  "613": {
+    "Item ID": "item_0198",
+    "Name": "colbur",
+    "Group": "berry",
+    "Filename": "berry/colbur.png"
+  },
+  "614": {
+    "Item ID": "item_0175",
+    "Name": "cornn",
+    "Group": "berry",
+    "Filename": "berry/cornn.png"
+  },
+  "615": {
+    "Item ID": "item_0210",
+    "Name": "custap",
+    "Group": "berry",
+    "Filename": "berry/custap.png"
+  },
+  "616": {
+    "Item ID": "item_0182",
+    "Name": "durin",
+    "Group": "berry",
+    "Filename": "berry/durin.png"
+  },
+  "617": {
+    "Item ID": "item_0208",
+    "Name": "enigma",
+    "Group": "berry",
+    "Filename": "berry/enigma.png"
+  },
+  "618": {
+    "Item ID": "item_0159",
+    "Name": "figy",
+    "Group": "berry",
+    "Filename": "berry/figy.png"
+  },
+  "619": {
+    "Item ID": "item_0202",
+    "Name": "ganlon",
+    "Group": "berry",
+    "Filename": "berry/ganlon.png"
+  },
+  "620": {
+    "Item ID": "item_0864",
+    "Name": "golden-nanab",
+    "Group": "berry",
+    "Filename": "berry/golden-nanab.png"
+  },
+  "621": {
+    "Item ID": "item_0866",
+    "Name": "golden-pinap",
+    "Group": "berry",
+    "Filename": "berry/golden-pinap.png"
+  },
+  "622": {
+    "Item ID": "item_0862",
+    "Name": "golden-razz",
+    "Group": "berry",
+    "Filename": "berry/golden-razz.png"
+  },
+  "623": {
+    "Item ID": "item_0173",
+    "Name": "grepa",
+    "Group": "berry",
+    "Filename": "berry/grepa.png"
+  },
+  "624": {
+    "Item ID": "item_0197",
+    "Name": "haban",
+    "Group": "berry",
+    "Filename": "berry/haban.png"
+  },
+  "625": {
+    "Item ID": "item_0172",
+    "Name": "hondew",
+    "Group": "berry",
+    "Filename": "berry/hondew.png"
+  },
+  "626": {
+    "Item ID": "item_0163",
+    "Name": "iapapa",
+    "Group": "berry",
+    "Filename": "berry/iapapa.png"
+  },
+  "627": {
+    "Item ID": "item_0211",
+    "Name": "jaboca",
+    "Group": "berry",
+    "Filename": "berry/jaboca.png"
+  },
+  "628": {
+    "Item ID": "item_0196",
+    "Name": "kasib",
+    "Group": "berry",
+    "Filename": "berry/kasib.png"
+  },
+  "629": {
+    "Item ID": "item_0190",
+    "Name": "kebia",
+    "Group": "berry",
+    "Filename": "berry/kebia.png"
+  },
+  "630": {
+    "Item ID": "item_0687",
+    "Name": "kee",
+    "Group": "berry",
+    "Filename": "berry/kee.png"
+  },
+  "631": {
+    "Item ID": "item_0170",
+    "Name": "kelpsy",
+    "Group": "berry",
+    "Filename": "berry/kelpsy.png"
+  },
+  "632": {
+    "Item ID": "item_0206",
+    "Name": "lansat",
+    "Group": "berry",
+    "Filename": "berry/lansat.png"
+  },
+  "633": {
+    "Item ID": "item_0154",
+    "Name": "leppa",
+    "Group": "berry",
+    "Filename": "berry/leppa.png"
+  },
+  "634": {
+    "Item ID": "item_0201",
+    "Name": "liechi",
+    "Group": "berry",
+    "Filename": "berry/liechi.png"
+  },
+  "635": {
+    "Item ID": "item_0157",
+    "Name": "lum",
+    "Group": "berry",
+    "Filename": "berry/lum.png"
+  },
+  "636": {
+    "Item ID": "item_0161",
+    "Name": "mago",
+    "Group": "berry",
+    "Filename": "berry/mago.png"
+  },
+  "637": {
+    "Item ID": "item_0176",
+    "Name": "magost",
+    "Group": "berry",
+    "Filename": "berry/magost.png"
+  },
+  "638": {
+    "Item ID": "item_0688",
+    "Name": "maranga",
+    "Group": "berry",
+    "Filename": "berry/maranga.png"
+  },
+  "639": {
+    "Item ID": "item_0209",
+    "Name": "micle",
+    "Group": "berry",
+    "Filename": "berry/micle.png"
+  },
+  "640": {
+    "Item ID": "item_0166",
+    "Name": "nanab",
+    "Group": "berry",
+    "Filename": "berry/nanab.png"
+  },
+  "641": {
+    "Item ID": "item_0178",
+    "Name": "nomel",
+    "Group": "berry",
+    "Filename": "berry/nomel.png"
+  },
+  "642": {
+    "Item ID": "item_0184",
+    "Name": "occa",
+    "Group": "berry",
+    "Filename": "berry/occa.png"
+  },
+  "643": {
+    "Item ID": "item_0155",
+    "Name": "oran",
+    "Group": "berry",
+    "Filename": "berry/oran.png"
+  },
+  "644": {
+    "Item ID": "item_0180",
+    "Name": "pamtre",
+    "Group": "berry",
+    "Filename": "berry/pamtre.png"
+  },
+  "645": {
+    "Item ID": "item_0185",
+    "Name": "passho",
+    "Group": "berry",
+    "Filename": "berry/passho.png"
+  },
+  "646": {
+    "Item ID": "item_0193",
+    "Name": "payapa",
+    "Group": "berry",
+    "Filename": "berry/payapa.png"
+  },
+  "647": {
+    "Item ID": "item_0151",
+    "Name": "pecha",
+    "Group": "berry",
+    "Filename": "berry/pecha.png"
+  },
+  "648": {
+    "Item ID": "item_0156",
+    "Name": "persim",
+    "Group": "berry",
+    "Filename": "berry/persim.png"
+  },
+  "649": {
+    "Item ID": "item_0204",
+    "Name": "petaya",
+    "Group": "berry",
+    "Filename": "berry/petaya.png"
+  },
+  "650": {
+    "Item ID": "item_0168",
+    "Name": "pinap",
+    "Group": "berry",
+    "Filename": "berry/pinap.png"
+  },
+  "651": {
+    "Item ID": "item_0169",
+    "Name": "pomeg",
+    "Group": "berry",
+    "Filename": "berry/pomeg.png"
+  },
+  "652": {
+    "Item ID": "item_0171",
+    "Name": "qualot",
+    "Group": "berry",
+    "Filename": "berry/qualot.png"
+  },
+  "653": {
+    "Item ID": "item_0177",
+    "Name": "rabuta",
+    "Group": "berry",
+    "Filename": "berry/rabuta.png"
+  },
+  "654": {
+    "Item ID": "item_0152",
+    "Name": "rawst",
+    "Group": "berry",
+    "Filename": "berry/rawst.png"
+  },
+  "655": {
+    "Item ID": "item_0164",
+    "Name": "razz",
+    "Group": "berry",
+    "Filename": "berry/razz.png"
+  },
+  "656": {
+    "Item ID": "item_0187",
+    "Name": "rindo",
+    "Group": "berry",
+    "Filename": "berry/rindo.png"
+  },
+  "657": {
+    "Item ID": "item_0686",
+    "Name": "roseli",
+    "Group": "berry",
+    "Filename": "berry/roseli.png"
+  },
+  "658": {
+    "Item ID": "item_0212",
+    "Name": "rowap",
+    "Group": "berry",
+    "Filename": "berry/rowap.png"
+  },
+  "659": {
+    "Item ID": "item_0203",
+    "Name": "salac",
+    "Group": "berry",
+    "Filename": "berry/salac.png"
+  },
+  "660": {
+    "Item ID": "item_0191",
+    "Name": "shuca",
+    "Group": "berry",
+    "Filename": "berry/shuca.png"
+  },
+  "661": {
+    "Item ID": "item_0863",
+    "Name": "silver-nanab",
+    "Group": "berry",
+    "Filename": "berry/silver-nanab.png"
+  },
+  "662": {
+    "Item ID": "item_0865",
+    "Name": "silver-pinap",
+    "Group": "berry",
+    "Filename": "berry/silver-pinap.png"
+  },
+  "663": {
+    "Item ID": "item_0861",
+    "Name": "silver-razz",
+    "Group": "berry",
+    "Filename": "berry/silver-razz.png"
+  },
+  "664": {
+    "Item ID": "item_0158",
+    "Name": "sitrus",
+    "Group": "berry",
+    "Filename": "berry/sitrus.png"
+  },
+  "665": {
+    "Item ID": "item_0179",
+    "Name": "spelon",
+    "Group": "berry",
+    "Filename": "berry/spelon.png"
+  },
+  "666": {
+    "Item ID": "item_0207",
+    "Name": "starf",
+    "Group": "berry",
+    "Filename": "berry/starf.png"
+  },
+  "667": {
+    "Item ID": "item_0174",
+    "Name": "tamato",
+    "Group": "berry",
+    "Filename": "berry/tamato.png"
+  },
+  "668": {
+    "Item ID": "item_0194",
+    "Name": "tanga",
+    "Group": "berry",
+    "Filename": "berry/tanga.png"
+  },
+  "669": {
+    "Item ID": "item_0186",
+    "Name": "wacan",
+    "Group": "berry",
+    "Filename": "berry/wacan.png"
+  },
+  "670": {
+    "Item ID": "item_0181",
+    "Name": "watmel",
+    "Group": "berry",
+    "Filename": "berry/watmel.png"
+  },
+  "671": {
+    "Item ID": "item_0167",
+    "Name": "wepear",
+    "Group": "berry",
+    "Filename": "berry/wepear.png"
+  },
+  "672": {
+    "Item ID": "item_0160",
+    "Name": "wiki",
+    "Group": "berry",
+    "Filename": "berry/wiki.png"
+  },
+  "673": {
+    "Item ID": "item_0188",
+    "Name": "yache",
+    "Group": "berry",
+    "Filename": "berry/yache.png"
+  },
+  "674": {
+    "Item ID": "item_0215",
+    "Name": "macho-brace",
+    "Group": "ev-item",
+    "Filename": "ev-item/macho-brace.png"
+  },
+  "675": {
+    "Item ID": "item_0293",
+    "Name": "power-anklet",
+    "Group": "ev-item",
+    "Filename": "ev-item/power-anklet.png"
+  },
+  "676": {
+    "Item ID": "item_0292",
+    "Name": "power-band",
+    "Group": "ev-item",
+    "Filename": "ev-item/power-band.png"
+  },
+  "677": {
+    "Item ID": "item_0290",
+    "Name": "power-belt",
+    "Group": "ev-item",
+    "Filename": "ev-item/power-belt.png"
+  },
+  "678": {
+    "Item ID": "item_0289",
+    "Name": "power-bracer",
+    "Group": "ev-item",
+    "Filename": "ev-item/power-bracer.png"
+  },
+  "679": {
+    "Item ID": "item_0291",
+    "Name": "power-lens",
+    "Group": "ev-item",
+    "Filename": "ev-item/power-lens.png"
+  },
+  "680": {
+    "Item ID": "item_0294",
+    "Name": "power-weight",
+    "Group": "ev-item",
+    "Filename": "ev-item/power-weight.png"
+  },
+  "681": {
+    "Item ID": "item_0316",
+    "Name": "full",
+    "Group": "incense",
+    "Filename": "incense/full.png"
+  },
+  "682": {
+    "Item ID": "item_0255",
+    "Name": "lax",
+    "Group": "incense",
+    "Filename": "incense/lax.png"
+  },
+  "683": {
+    "Item ID": "item_0319",
+    "Name": "luck",
+    "Group": "incense",
+    "Filename": "incense/luck.png"
+  },
+  "684": {
+    "Item ID": "item_0314",
+    "Name": "odd",
+    "Group": "incense",
+    "Filename": "incense/odd.png"
+  },
+  "685": {
+    "Item ID": "item_0320",
+    "Name": "pure",
+    "Group": "incense",
+    "Filename": "incense/pure.png"
+  },
+  "686": {
+    "Item ID": "item_0315",
+    "Name": "rock",
+    "Group": "incense",
+    "Filename": "incense/rock.png"
+  },
+  "687": {
+    "Item ID": "item_0318",
+    "Name": "rose",
+    "Group": "incense",
+    "Filename": "incense/rose.png"
+  },
+  "688": {
+    "Item ID": "item_0254",
+    "Name": "sea",
+    "Group": "incense",
+    "Filename": "incense/sea.png"
+  },
+  "689": {
+    "Item ID": "item_0317",
+    "Name": "wave",
+    "Group": "incense",
+    "Filename": "incense/wave.png"
+  },
+  "690": {
+    "Item ID": "item_0261",
+    "Name": "blue",
+    "Group": "scarf",
+    "Filename": "scarf/blue.png"
+  },
+  "691": {
+    "Item ID": "item_0263",
+    "Name": "green",
+    "Group": "scarf",
+    "Filename": "scarf/green.png"
+  },
+  "692": {
+    "Item ID": "item_0262",
+    "Name": "pink",
+    "Group": "scarf",
+    "Filename": "scarf/pink.png"
+  },
+  "693": {
+    "Item ID": "item_0260",
+    "Name": "red",
+    "Group": "scarf",
+    "Filename": "scarf/red.png"
+  },
+  "694": {
+    "Item ID": "item_0264",
+    "Name": "yellow",
+    "Group": "scarf",
+    "Filename": "scarf/yellow.png"
+  },
+  "695": {
+    "Item ID": "item_0311",
+    "Name": "draco",
+    "Group": "plate",
+    "Filename": "plate/draco.png"
+  },
+  "696": {
+    "Item ID": "item_0312",
+    "Name": "dread",
+    "Group": "plate",
+    "Filename": "plate/dread.png"
+  },
+  "697": {
+    "Item ID": "item_0305",
+    "Name": "earth",
+    "Group": "plate",
+    "Filename": "plate/earth.png"
+  },
+  "698": {
+    "Item ID": "item_0303",
+    "Name": "fist",
+    "Group": "plate",
+    "Filename": "plate/fist.png"
+  },
+  "699": {
+    "Item ID": "item_0298",
+    "Name": "flame",
+    "Group": "plate",
+    "Filename": "plate/flame.png"
+  },
+  "700": {
+    "Item ID": "item_0302",
+    "Name": "icicle",
+    "Group": "plate",
+    "Filename": "plate/icicle.png"
+  },
+  "701": {
+    "Item ID": "item_0308",
+    "Name": "insect",
+    "Group": "plate",
+    "Filename": "plate/insect.png"
+  },
+  "702": {
+    "Item ID": "item_0313",
+    "Name": "iron",
+    "Group": "plate",
+    "Filename": "plate/iron.png"
+  },
+  "703": {
+    "Item ID": "item_0301",
+    "Name": "meadow",
+    "Group": "plate",
+    "Filename": "plate/meadow.png"
+  },
+  "704": {
+    "Item ID": "item_0307",
+    "Name": "mind",
+    "Group": "plate",
+    "Filename": "plate/mind.png"
+  },
+  "705": {
+    "Item ID": "item_0644",
+    "Name": "pixie",
+    "Group": "plate",
+    "Filename": "plate/pixie.png"
+  },
+  "706": {
+    "Item ID": "item_0306",
+    "Name": "sky",
+    "Group": "plate",
+    "Filename": "plate/sky.png"
+  },
+  "707": {
+    "Item ID": "item_0299",
+    "Name": "splash",
+    "Group": "plate",
+    "Filename": "plate/splash.png"
+  },
+  "708": {
+    "Item ID": "item_0310",
+    "Name": "spooky",
+    "Group": "plate",
+    "Filename": "plate/spooky.png"
+  },
+  "709": {
+    "Item ID": "item_0309",
+    "Name": "stone",
+    "Group": "plate",
+    "Filename": "plate/stone.png"
+  },
+  "710": {
+    "Item ID": "item_0304",
+    "Name": "toxic",
+    "Group": "plate",
+    "Filename": "plate/toxic.png"
+  },
+  "711": {
+    "Item ID": "item_0300",
+    "Name": "zap",
+    "Group": "plate",
+    "Filename": "plate/zap.png"
+  },
+  "712": {
+    "Item ID": "item_0403",
+    "Name": "bug",
+    "Group": "tm",
+    "Filename": "tm/bug.png"
+  },
+  "713": {
+    "Item ID": "item_0328",
+    "Name": "dark",
+    "Group": "tm",
+    "Filename": "tm/dark.png"
+  },
+  "714": {
+    "Item ID": "item_0329",
+    "Name": "dragon",
+    "Group": "tm",
+    "Filename": "tm/dragon.png"
+  },
+  "715": {
+    "Item ID": "item_0338",
+    "Name": "electric",
+    "Group": "tm",
+    "Filename": "tm/electric.png"
+  },
+  "716": {
+    "Item ID": "item_0618",
+    "Name": "electric",
+    "Group": "tm",
+    "Filename": "tm/electric.png"
+  },
+  "717": {
+    "Item ID": "item_0357",
+    "Name": "fairy",
+    "Group": "tm",
+    "Filename": "tm/fairy.png"
+  },
+  "718": {
+    "Item ID": "item_11157",
+    "Name": "fighting",
+    "Group": "tm",
+    "Filename": "tm/fighting.png"
+  },
+  "719": {
+    "Item ID": "item_0351",
+    "Name": "fire",
+    "Group": "tm",
+    "Filename": "tm/fire.png"
+  },
+  "720": {
+    "Item ID": "item_11158",
+    "Name": "flying",
+    "Group": "tm",
+    "Filename": "tm/flying.png"
+  },
+  "721": {
+    "Item ID": "item_0693",
+    "Name": "ghost",
+    "Group": "tm",
+    "Filename": "tm/ghost.png"
+  },
+  "722": {
+    "Item ID": "item_0349",
+    "Name": "grass",
+    "Group": "tm",
+    "Filename": "tm/grass.png"
+  },
+  "723": {
+    "Item ID": "item_0353",
+    "Name": "ground",
+    "Group": "tm",
+    "Filename": "tm/ground.png"
+  },
+  "724": {
+    "Item ID": "item_0334",
+    "Name": "ice",
+    "Group": "tm",
+    "Filename": "tm/ice.png"
+  },
+  "725": {
+    "Item ID": "item_11159",
+    "Name": "normal",
+    "Group": "tm",
+    "Filename": "tm/normal.png"
+  },
+  "726": {
+    "Item ID": "item_0333",
+    "Name": "poison",
+    "Group": "tm",
+    "Filename": "tm/poison.png"
+  },
+  "727": {
+    "Item ID": "item_0330",
+    "Name": "psychic",
+    "Group": "tm",
+    "Filename": "tm/psychic.png"
+  },
+  "728": {
+    "Item ID": "item_0350",
+    "Name": "rock",
+    "Group": "tm",
+    "Filename": "tm/rock.png"
+  },
+  "729": {
+    "Item ID": "item_0401",
+    "Name": "steel",
+    "Group": "tm",
+    "Filename": "tm/steel.png"
+  },
+  "730": {
+    "Item ID": "item_11160",
+    "Name": "water",
+    "Group": "tm",
+    "Filename": "tm/water.png"
+  },
+  "731": {
+    "Item ID": "item_0335",
+    "Name": "fighting",
+    "Group": "hm",
+    "Filename": "hm/fighting.png"
+  },
+  "732": {
+    "Item ID": "item_0421",
+    "Name": "flying",
+    "Group": "hm",
+    "Filename": "hm/flying.png"
+  },
+  "733": {
+    "Item ID": "item_0332",
+    "Name": "normal",
+    "Group": "hm",
+    "Filename": "hm/normal.png"
+  },
+  "734": {
+    "Item ID": "item_0345",
+    "Name": "water",
+    "Group": "hm",
+    "Filename": "hm/water.png"
+  },
+  "735": {
+    "Item ID": "item_0491",
+    "Name": "black",
+    "Group": "apricorn",
+    "Filename": "apricorn/black.png"
+  },
+  "736": {
+    "Item ID": "item_0486",
+    "Name": "blue",
+    "Group": "apricorn",
+    "Filename": "apricorn/blue.png"
+  },
+  "737": {
+    "Item ID": "item_0488",
+    "Name": "green",
+    "Group": "apricorn",
+    "Filename": "apricorn/green.png"
+  },
+  "738": {
+    "Item ID": "item_0489",
+    "Name": "pink",
+    "Group": "apricorn",
+    "Filename": "apricorn/pink.png"
+  },
+  "739": {
+    "Item ID": "item_0485",
+    "Name": "red",
+    "Group": "apricorn",
+    "Filename": "apricorn/red.png"
+  },
+  "740": {
+    "Item ID": "item_0490",
+    "Name": "white",
+    "Group": "apricorn",
+    "Filename": "apricorn/white.png"
+  },
+  "741": {
+    "Item ID": "item_0487",
+    "Name": "yellow",
+    "Group": "apricorn",
+    "Filename": "apricorn/yellow.png"
+  },
+  "742": {
+    "Item ID": "item_0558",
+    "Name": "bug",
+    "Group": "gem",
+    "Filename": "gem/bug.png"
+  },
+  "743": {
+    "Item ID": "item_0562",
+    "Name": "dark",
+    "Group": "gem",
+    "Filename": "gem/dark.png"
+  },
+  "744": {
+    "Item ID": "item_0561",
+    "Name": "dragon",
+    "Group": "gem",
+    "Filename": "gem/dragon.png"
+  },
+  "745": {
+    "Item ID": "item_0550",
+    "Name": "electric",
+    "Group": "gem",
+    "Filename": "gem/electric.png"
+  },
+  "746": {
+    "Item ID": "item_0715",
+    "Name": "fairy",
+    "Group": "gem",
+    "Filename": "gem/fairy.png"
+  },
+  "747": {
+    "Item ID": "item_0553",
+    "Name": "fighting",
+    "Group": "gem",
+    "Filename": "gem/fighting.png"
+  },
+  "748": {
+    "Item ID": "item_0548",
+    "Name": "fire",
+    "Group": "gem",
+    "Filename": "gem/fire.png"
+  },
+  "749": {
+    "Item ID": "item_0556",
+    "Name": "flying",
+    "Group": "gem",
+    "Filename": "gem/flying.png"
+  },
+  "750": {
+    "Item ID": "item_0560",
+    "Name": "ghost",
+    "Group": "gem",
+    "Filename": "gem/ghost.png"
+  },
+  "751": {
+    "Item ID": "item_0551",
+    "Name": "grass",
+    "Group": "gem",
+    "Filename": "gem/grass.png"
+  },
+  "752": {
+    "Item ID": "item_0555",
+    "Name": "ground",
+    "Group": "gem",
+    "Filename": "gem/ground.png"
+  },
+  "753": {
+    "Item ID": "item_0552",
+    "Name": "ice",
+    "Group": "gem",
+    "Filename": "gem/ice.png"
+  },
+  "754": {
+    "Item ID": "item_0564",
+    "Name": "normal",
+    "Group": "gem",
+    "Filename": "gem/normal.png"
+  },
+  "755": {
+    "Item ID": "item_0554",
+    "Name": "poison",
+    "Group": "gem",
+    "Filename": "gem/poison.png"
+  },
+  "756": {
+    "Item ID": "item_0557",
+    "Name": "psychic",
+    "Group": "gem",
+    "Filename": "gem/psychic.png"
+  },
+  "757": {
+    "Item ID": "item_0559",
+    "Name": "rock",
+    "Group": "gem",
+    "Filename": "gem/rock.png"
+  },
+  "758": {
+    "Item ID": "item_0563",
+    "Name": "steel",
+    "Group": "gem",
+    "Filename": "gem/steel.png"
+  },
+  "759": {
+    "Item ID": "item_0549",
+    "Name": "water",
+    "Group": "gem",
+    "Filename": "gem/water.png"
+  },
+  "760": {
+    "Item ID": "item_0674",
+    "Name": "abomasite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/abomasite.png"
+  },
+  "761": {
+    "Item ID": "item_0677",
+    "Name": "absolite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/absolite.png"
+  },
+  "762": {
+    "Item ID": "item_0672",
+    "Name": "aerodactylite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/aerodactylite.png"
+  },
+  "763": {
+    "Item ID": "item_0667",
+    "Name": "aggronite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/aggronite.png"
+  },
+  "764": {
+    "Item ID": "item_0679",
+    "Name": "alakazite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/alakazite.png"
+  },
+  "765": {
+    "Item ID": "item_0755",
+    "Name": "altarianite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/altarianite.png"
+  },
+  "766": {
+    "Item ID": "item_0658",
+    "Name": "ampharosite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/ampharosite.png"
+  },
+  "767": {
+    "Item ID": "item_0757",
+    "Name": "audinite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/audinite.png"
+  },
+  "768": {
+    "Item ID": "item_0668",
+    "Name": "banettite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/banettite.png"
+  },
+  "769": {
+    "Item ID": "item_0770",
+    "Name": "beedrillite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/beedrillite.png"
+  },
+  "770": {
+    "Item ID": "item_0661",
+    "Name": "blastoisinite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/blastoisinite.png"
+  },
+  "771": {
+    "Item ID": "item_0664",
+    "Name": "blazikenite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/blazikenite.png"
+  },
+  "772": {
+    "Item ID": "item_0767",
+    "Name": "cameruptite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/cameruptite.png"
+  },
+  "773": {
+    "Item ID": "item_0660",
+    "Name": "charizardite-x",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/charizardite-x.png"
+  },
+  "774": {
+    "Item ID": "item_0678",
+    "Name": "charizardite-y",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/charizardite-y.png"
+  },
+  "775": {
+    "Item ID": "item_0764",
+    "Name": "diancite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/diancite.png"
+  },
+  "776": {
+    "Item ID": "item_0756",
+    "Name": "galladite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/galladite.png"
+  },
+  "777": {
+    "Item ID": "item_0683",
+    "Name": "garchompite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/garchompite.png"
+  },
+  "778": {
+    "Item ID": "item_0657",
+    "Name": "gardevoirite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/gardevoirite.png"
+  },
+  "779": {
+    "Item ID": "item_0656",
+    "Name": "gengarite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/gengarite.png"
+  },
+  "780": {
+    "Item ID": "item_0763",
+    "Name": "glalitite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/glalitite.png"
+  },
+  "781": {
+    "Item ID": "item_0676",
+    "Name": "gyaradosite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/gyaradosite.png"
+  },
+  "782": {
+    "Item ID": "item_0680",
+    "Name": "heracronite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/heracronite.png"
+  },
+  "783": {
+    "Item ID": "item_0666",
+    "Name": "houndoominite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/houndoominite.png"
+  },
+  "784": {
+    "Item ID": "item_0675",
+    "Name": "kangaskhanite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/kangaskhanite.png"
+  },
+  "785": {
+    "Item ID": "item_0684",
+    "Name": "latiasite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/latiasite.png"
+  },
+  "786": {
+    "Item ID": "item_0685",
+    "Name": "latiosite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/latiosite.png"
+  },
+  "787": {
+    "Item ID": "item_0768",
+    "Name": "lopunnite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/lopunnite.png"
+  },
+  "788": {
+    "Item ID": "item_0673",
+    "Name": "lucarionite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/lucarionite.png"
+  },
+  "789": {
+    "Item ID": "item_0682",
+    "Name": "manectite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/manectite.png"
+  },
+  "790": {
+    "Item ID": "item_0681",
+    "Name": "mawilite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/mawilite.png"
+  },
+  "791": {
+    "Item ID": "item_0665",
+    "Name": "medichamite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/medichamite.png"
+  },
+  "792": {
+    "Item ID": "item_0758",
+    "Name": "metagrossite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/metagrossite.png"
+  },
+  "793": {
+    "Item ID": "item_0662",
+    "Name": "mewtwonite-x",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/mewtwonite-x.png"
+  },
+  "794": {
+    "Item ID": "item_0663",
+    "Name": "mewtwonite-y",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/mewtwonite-y.png"
+  },
+  "795": {
+    "Item ID": "item_0762",
+    "Name": "pidgeotite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/pidgeotite.png"
+  },
+  "796": {
+    "Item ID": "item_0671",
+    "Name": "pinsirite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/pinsirite.png"
+  },
+  "797": {
+    "Item ID": "item_0754",
+    "Name": "sablenite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/sablenite.png"
+  },
+  "798": {
+    "Item ID": "item_0769",
+    "Name": "salamencite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/salamencite.png"
+  },
+  "799": {
+    "Item ID": "item_0753",
+    "Name": "sceptilite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/sceptilite.png"
+  },
+  "800": {
+    "Item ID": "item_0670",
+    "Name": "scizorite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/scizorite.png"
+  },
+  "801": {
+    "Item ID": "item_0759",
+    "Name": "sharpedonite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/sharpedonite.png"
+  },
+  "802": {
+    "Item ID": "item_0760",
+    "Name": "slowbronite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/slowbronite.png"
+  },
+  "803": {
+    "Item ID": "item_0761",
+    "Name": "steelixite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/steelixite.png"
+  },
+  "804": {
+    "Item ID": "item_0752",
+    "Name": "swampertite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/swampertite.png"
+  },
+  "805": {
+    "Item ID": "item_0669",
+    "Name": "tyranitarite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/tyranitarite.png"
+  },
+  "806": {
+    "Item ID": "item_0659",
+    "Name": "venusaurite",
+    "Group": "mega-stone",
+    "Filename": "mega-stone/venusaurite.png"
+  },
+  "807": {
+    "Item ID": "item_0803",
+    "Name": "aloraichium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/aloraichium-z--held.png"
+  },
+  "808": {
+    "Item ID": "item_0787",
+    "Name": "buginium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/buginium-z--held.png"
+  },
+  "809": {
+    "Item ID": "item_0791",
+    "Name": "darkinium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/darkinium-z--held.png"
+  },
+  "810": {
+    "Item ID": "item_0780",
+    "Name": "decidium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/decidium-z--held.png"
+  },
+  "811": {
+    "Item ID": "item_0790",
+    "Name": "dragonium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/dragonium-z--held.png"
+  },
+  "812": {
+    "Item ID": "item_0805",
+    "Name": "eevium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/eevium-z--held.png"
+  },
+  "813": {
+    "Item ID": "item_0779",
+    "Name": "electrium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/electrium-z--held.png"
+  },
+  "814": {
+    "Item ID": "item_0793",
+    "Name": "fairium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/fairium-z--held.png"
+  },
+  "815": {
+    "Item ID": "item_0782",
+    "Name": "fightinium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/fightinium-z--held.png"
+  },
+  "816": {
+    "Item ID": "item_0777",
+    "Name": "firium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/firium-z--held.png"
+  },
+  "817": {
+    "Item ID": "item_0785",
+    "Name": "flyinium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/flyinium-z--held.png"
+  },
+  "818": {
+    "Item ID": "item_0789",
+    "Name": "ghostium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/ghostium-z--held.png"
+  },
+  "819": {
+    "Item ID": "item_0798",
+    "Name": "grassium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/grassium-z--held.png"
+  },
+  "820": {
+    "Item ID": "item_0784",
+    "Name": "groundium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/groundium-z--held.png"
+  },
+  "821": {
+    "Item ID": "item_0781",
+    "Name": "icium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/icium-z--held.png"
+  },
+  "822": {
+    "Item ID": "item_0799",
+    "Name": "incinium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/incinium-z--held.png"
+  },
+  "823": {
+    "Item ID": "item_0926",
+    "Name": "kommonium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/kommonium-z--held.png"
+  },
+  "824": {
+    "Item ID": "item_0922",
+    "Name": "lunalium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/lunalium-z--held.png"
+  },
+  "825": {
+    "Item ID": "item_0925",
+    "Name": "lycanium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/lycanium-z--held.png"
+  },
+  "826": {
+    "Item ID": "item_0802",
+    "Name": "marshadium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/marshadium-z--held.png"
+  },
+  "827": {
+    "Item ID": "item_0806",
+    "Name": "mewnium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/mewnium-z--held.png"
+  },
+  "828": {
+    "Item ID": "item_0924",
+    "Name": "mimikium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/mimikium-z--held.png"
+  },
+  "829": {
+    "Item ID": "item_0776",
+    "Name": "normalium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/normalium-z--held.png"
+  },
+  "830": {
+    "Item ID": "item_0794",
+    "Name": "pikanium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/pikanium-z--held.png"
+  },
+  "831": {
+    "Item ID": "item_0835",
+    "Name": "pikashunium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/pikashunium-z--held.png"
+  },
+  "832": {
+    "Item ID": "item_0783",
+    "Name": "poisonium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/poisonium-z--held.png"
+  },
+  "833": {
+    "Item ID": "item_0778",
+    "Name": "primarium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/primarium-z--held.png"
+  },
+  "834": {
+    "Item ID": "item_0786",
+    "Name": "psychium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/psychium-z--held.png"
+  },
+  "835": {
+    "Item ID": "item_0788",
+    "Name": "rockium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/rockium-z--held.png"
+  },
+  "836": {
+    "Item ID": "item_0804",
+    "Name": "snorlium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/snorlium-z--held.png"
+  },
+  "837": {
+    "Item ID": "item_0921",
+    "Name": "solganium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/solganium-z--held.png"
+  },
+  "838": {
+    "Item ID": "item_0792",
+    "Name": "steelium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/steelium-z--held.png"
+  },
+  "839": {
+    "Item ID": "item_0801",
+    "Name": "tapunium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/tapunium-z--held.png"
+  },
+  "840": {
+    "Item ID": "item_0923",
+    "Name": "ultranecrozium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/ultranecrozium-z--held.png"
+  },
+  "841": {
+    "Item ID": "item_0800",
+    "Name": "waterium-z--held",
+    "Group": "z-crystals",
+    "Filename": "z-crystals/waterium-z--held.png"
+  },
+  "842": {
+    "Item ID": "item_0889",
+    "Name": "beach-glass",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/beach-glass.png"
+  },
+  "843": {
+    "Item ID": "item_0886",
+    "Name": "chalky-stone",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/chalky-stone.png"
+  },
+  "844": {
+    "Item ID": "item_0890",
+    "Name": "gold-leaf",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/gold-leaf.png"
+  },
+  "845": {
+    "Item ID": "item_0894",
+    "Name": "leaf-letter-eevee",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/leaf-letter-eevee.png"
+  },
+  "846": {
+    "Item ID": "item_0895",
+    "Name": "leaf-letter-pikachu",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/leaf-letter-pikachu.png"
+  },
+  "847": {
+    "Item ID": "item_0888",
+    "Name": "lone-earring",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/lone-earring.png"
+  },
+  "848": {
+    "Item ID": "item_0887",
+    "Name": "marble",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/marble.png"
+  },
+  "849": {
+    "Item ID": "item_0892",
+    "Name": "polished-mud-ball",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/polished-mud-ball.png"
+  },
+  "850": {
+    "Item ID": "item_0891",
+    "Name": "silver-leaf",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/silver-leaf.png"
+  },
+  "851": {
+    "Item ID": "item_0896",
+    "Name": "small-bouquet",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/small-bouquet.png"
+  },
+  "852": {
+    "Item ID": "item_0885",
+    "Name": "stretchy-spring",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/stretchy-spring.png"
+  },
+  "853": {
+    "Item ID": "item_0893",
+    "Name": "tropical-shell",
+    "Group": "partner-gift",
+    "Filename": "partner-gift/tropical-shell.png"
+  },
+  "854": {
+    "Item ID": "item_0909",
+    "Name": "bug",
+    "Group": "memory",
+    "Filename": "memory/bug.png"
+  },
+  "855": {
+    "Item ID": "item_0919",
+    "Name": "dark",
+    "Group": "memory",
+    "Filename": "memory/dark.png"
+  },
+  "856": {
+    "Item ID": "item_0918",
+    "Name": "dragon",
+    "Group": "memory",
+    "Filename": "memory/dragon.png"
+  },
+  "857": {
+    "Item ID": "item_0915",
+    "Name": "electric",
+    "Group": "memory",
+    "Filename": "memory/electric.png"
+  },
+  "858": {
+    "Item ID": "item_0920",
+    "Name": "fairy",
+    "Group": "memory",
+    "Filename": "memory/fairy.png"
+  },
+  "859": {
+    "Item ID": "item_0904",
+    "Name": "fighting",
+    "Group": "memory",
+    "Filename": "memory/fighting.png"
+  },
+  "860": {
+    "Item ID": "item_0912",
+    "Name": "fire",
+    "Group": "memory",
+    "Filename": "memory/fire.png"
+  },
+  "861": {
+    "Item ID": "item_0905",
+    "Name": "flying",
+    "Group": "memory",
+    "Filename": "memory/flying.png"
+  },
+  "862": {
+    "Item ID": "item_0910",
+    "Name": "ghost",
+    "Group": "memory",
+    "Filename": "memory/ghost.png"
+  },
+  "863": {
+    "Item ID": "item_0914",
+    "Name": "grass",
+    "Group": "memory",
+    "Filename": "memory/grass.png"
+  },
+  "864": {
+    "Item ID": "item_0907",
+    "Name": "ground",
+    "Group": "memory",
+    "Filename": "memory/ground.png"
+  },
+  "865": {
+    "Item ID": "item_0917",
+    "Name": "ice",
+    "Group": "memory",
+    "Filename": "memory/ice.png"
+  },
+  "866": {
+    "Item ID": "item_0906",
+    "Name": "poison",
+    "Group": "memory",
+    "Filename": "memory/poison.png"
+  },
+  "867": {
+    "Item ID": "item_0916",
+    "Name": "psychic",
+    "Group": "memory",
+    "Filename": "memory/psychic.png"
+  },
+  "868": {
+    "Item ID": "item_0908",
+    "Name": "rock",
+    "Group": "memory",
+    "Filename": "memory/rock.png"
+  },
+  "869": {
+    "Item ID": "item_0911",
+    "Name": "steel",
+    "Group": "memory",
+    "Filename": "memory/steel.png"
+  },
+  "870": {
+    "Item ID": "item_0913",
+    "Name": "water",
+    "Group": "memory",
+    "Filename": "memory/water.png"
+  },
+  "871": {
+    "Item ID": "item_0936",
+    "Name": "blue",
+    "Group": "petal",
+    "Filename": "petal/blue.png"
+  },
+  "872": {
+    "Item ID": "item_0938",
+    "Name": "green",
+    "Group": "petal",
+    "Filename": "petal/green.png"
+  },
+  "873": {
+    "Item ID": "item_0935",
+    "Name": "orange",
+    "Group": "petal",
+    "Filename": "petal/orange.png"
+  },
+  "874": {
+    "Item ID": "item_0934",
+    "Name": "pink",
+    "Group": "petal",
+    "Filename": "petal/pink.png"
+  },
+  "875": {
+    "Item ID": "item_0940",
+    "Name": "purple",
+    "Group": "petal",
+    "Filename": "petal/purple.png"
+  },
+  "876": {
+    "Item ID": "item_0937",
+    "Name": "red",
+    "Group": "petal",
+    "Filename": "petal/red.png"
+  },
+  "877": {
+    "Item ID": "item_0939",
+    "Name": "yellow",
+    "Group": "petal",
+    "Filename": "petal/yellow.png"
+  },
+  "878": {
+    "Item ID": "item_0950",
+    "Name": "bargain",
+    "Group": "roto",
+    "Filename": "roto/bargain.png"
+  },
+  "879": {
+    "Item ID": "item_0958",
+    "Name": "boost",
+    "Group": "roto",
+    "Filename": "roto/boost.png"
+  },
+  "880": {
+    "Item ID": "item_0959",
+    "Name": "catch",
+    "Group": "roto",
+    "Filename": "roto/catch.png"
+  },
+  "881": {
+    "Item ID": "item_0954",
+    "Name": "encounter",
+    "Group": "roto",
+    "Filename": "roto/encounter.png"
+  },
+  "882": {
+    "Item ID": "item_11161",
+    "Name": "exp-points",
+    "Group": "roto",
+    "Filename": "roto/exp-points.png"
+  },
+  "883": {
+    "Item ID": "item_0953",
+    "Name": "friendship",
+    "Group": "roto",
+    "Filename": "roto/friendship.png"
+  },
+  "884": {
+    "Item ID": "item_0949",
+    "Name": "hatch",
+    "Group": "roto",
+    "Filename": "roto/hatch.png"
+  },
+  "885": {
+    "Item ID": "item_0956",
+    "Name": "hp-restore",
+    "Group": "roto",
+    "Filename": "roto/hp-restore.png"
+  },
+  "886": {
+    "Item ID": "item_0957",
+    "Name": "pp-restore",
+    "Group": "roto",
+    "Filename": "roto/pp-restore.png"
+  },
+  "887": {
+    "Item ID": "item_0951",
+    "Name": "prize-money",
+    "Group": "roto",
+    "Filename": "roto/prize-money.png"
+  },
+  "888": {
+    "Item ID": "item_0955",
+    "Name": "stealth",
+    "Group": "roto",
+    "Filename": "roto/stealth.png"
+  },
+  "889": {
+    "Item ID": "item_0964",
+    "Name": "courage",
+    "Group": "av-candy",
+    "Filename": "av-candy/courage.png"
+  },
+  "890": {
+    "Item ID": "item_0970",
+    "Name": "courage-l",
+    "Group": "av-candy",
+    "Filename": "av-candy/courage-l.png"
+  },
+  "891": {
+    "Item ID": "item_0976",
+    "Name": "courage-xl",
+    "Group": "av-candy",
+    "Filename": "av-candy/courage-xl.png"
+  },
+  "892": {
+    "Item ID": "item_0960",
+    "Name": "health",
+    "Group": "av-candy",
+    "Filename": "av-candy/health.png"
+  },
+  "893": {
+    "Item ID": "item_0966",
+    "Name": "health-l",
+    "Group": "av-candy",
+    "Filename": "av-candy/health-l.png"
+  },
+  "894": {
+    "Item ID": "item_0972",
+    "Name": "health-xl",
+    "Group": "av-candy",
+    "Filename": "av-candy/health-xl.png"
+  },
+  "895": {
+    "Item ID": "item_0961",
+    "Name": "mighty",
+    "Group": "av-candy",
+    "Filename": "av-candy/mighty.png"
+  },
+  "896": {
+    "Item ID": "item_0967",
+    "Name": "mighty-l",
+    "Group": "av-candy",
+    "Filename": "av-candy/mighty-l.png"
+  },
+  "897": {
+    "Item ID": "item_0973",
+    "Name": "mighty-xl",
+    "Group": "av-candy",
+    "Filename": "av-candy/mighty-xl.png"
+  },
+  "898": {
+    "Item ID": "item_0965",
+    "Name": "quick",
+    "Group": "av-candy",
+    "Filename": "av-candy/quick.png"
+  },
+  "899": {
+    "Item ID": "item_0971",
+    "Name": "quick-l",
+    "Group": "av-candy",
+    "Filename": "av-candy/quick-l.png"
+  },
+  "900": {
+    "Item ID": "item_0977",
+    "Name": "quick-xl",
+    "Group": "av-candy",
+    "Filename": "av-candy/quick-xl.png"
+  },
+  "901": {
+    "Item ID": "item_0963",
+    "Name": "smart",
+    "Group": "av-candy",
+    "Filename": "av-candy/smart.png"
+  },
+  "902": {
+    "Item ID": "item_0969",
+    "Name": "smart-l",
+    "Group": "av-candy",
+    "Filename": "av-candy/smart-l.png"
+  },
+  "903": {
+    "Item ID": "item_0975",
+    "Name": "smart-xl",
+    "Group": "av-candy",
+    "Filename": "av-candy/smart-xl.png"
+  },
+  "904": {
+    "Item ID": "item_0962",
+    "Name": "tough",
+    "Group": "av-candy",
+    "Filename": "av-candy/tough.png"
+  },
+  "905": {
+    "Item ID": "item_0968",
+    "Name": "tough-l",
+    "Group": "av-candy",
+    "Filename": "av-candy/tough-l.png"
+  },
+  "906": {
+    "Item ID": "item_0974",
+    "Name": "tough-xl",
+    "Group": "av-candy",
+    "Filename": "av-candy/tough-xl.png"
+  },
+  "907": {
+    "Item ID": "item_0987",
+    "Name": "black",
+    "Group": "poke-candy",
+    "Filename": "poke-candy/black.png"
+  },
+  "908": {
+    "Item ID": "item_0980",
+    "Name": "blue",
+    "Group": "poke-candy",
+    "Filename": "poke-candy/blue.png"
+  },
+  "909": {
+    "Item ID": "item_0981",
+    "Name": "brown",
+    "Group": "poke-candy",
+    "Filename": "poke-candy/brown.png"
+  },
+  "910": {
+    "Item ID": "item_0985",
+    "Name": "gray",
+    "Group": "poke-candy",
+    "Filename": "poke-candy/gray.png"
+  },
+  "911": {
+    "Item ID": "item_0978",
+    "Name": "green",
+    "Group": "poke-candy",
+    "Filename": "poke-candy/green.png"
+  },
+  "912": {
+    "Item ID": "item_0984",
+    "Name": "pink",
+    "Group": "poke-candy",
+    "Filename": "poke-candy/pink.png"
+  },
+  "913": {
+    "Item ID": "item_0982",
+    "Name": "purple",
+    "Group": "poke-candy",
+    "Filename": "poke-candy/purple.png"
+  },
+  "914": {
+    "Item ID": "item_0979",
+    "Name": "red",
+    "Group": "poke-candy",
+    "Filename": "poke-candy/red.png"
+  },
+  "915": {
+    "Item ID": "item_0986",
+    "Name": "white",
+    "Group": "poke-candy",
+    "Filename": "poke-candy/white.png"
+  },
+  "916": {
+    "Item ID": "item_0983",
+    "Name": "yellow",
+    "Group": "poke-candy",
+    "Filename": "poke-candy/yellow.png"
+  },
+  "917": {
+    "Item ID": "item_1086",
+    "Name": "bachs-food-tin",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/bachs-food-tin.png"
+  },
+  "918": {
+    "Item ID": "item_1085",
+    "Name": "bobs-food-tin",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/bobs-food-tin.png"
+  },
+  "919": {
+    "Item ID": "item_1099",
+    "Name": "boiled-egg",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/boiled-egg.png"
+  },
+  "920": {
+    "Item ID": "item_1088",
+    "Name": "bread",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/bread.png"
+  },
+  "921": {
+    "Item ID": "item_1094",
+    "Name": "brittle-bones",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/brittle-bones.png"
+  },
+  "922": {
+    "Item ID": "item_1261",
+    "Name": "coconut-milk",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/coconut-milk.png"
+  },
+  "923": {
+    "Item ID": "item_1093",
+    "Name": "fancy-apple",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/fancy-apple.png"
+  },
+  "924": {
+    "Item ID": "item_1259",
+    "Name": "fresh-cream",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/fresh-cream.png"
+  },
+  "925": {
+    "Item ID": "item_1098",
+    "Name": "fried-food",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/fried-food.png"
+  },
+  "926": {
+    "Item ID": "item_1256",
+    "Name": "fruit-bunch",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/fruit-bunch.png"
+  },
+  "927": {
+    "Item ID": "item_1264",
+    "Name": "gigantamix",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/gigantamix.png"
+  },
+  "928": {
+    "Item ID": "item_1262",
+    "Name": "instant-noodles",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/instant-noodles.png"
+  },
+  "929": {
+    "Item ID": "item_1092",
+    "Name": "large-leek",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/large-leek.png"
+  },
+  "930": {
+    "Item ID": "item_1090",
+    "Name": "mixed-mushrooms",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/mixed-mushrooms.png"
+  },
+  "931": {
+    "Item ID": "item_1257",
+    "Name": "moomoo-cheese",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/moomoo-cheese.png"
+  },
+  "932": {
+    "Item ID": "item_1095",
+    "Name": "pack-of-potatoes",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/pack-of-potatoes.png"
+  },
+  "933": {
+    "Item ID": "item_1260",
+    "Name": "packaged-curry",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/packaged-curry.png"
+  },
+  "934": {
+    "Item ID": "item_1089",
+    "Name": "pasta",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/pasta.png"
+  },
+  "935": {
+    "Item ID": "item_1263",
+    "Name": "precooked-burger",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/precooked-burger.png"
+  },
+  "936": {
+    "Item ID": "item_1096",
+    "Name": "pungent-root",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/pungent-root.png"
+  },
+  "937": {
+    "Item ID": "item_1097",
+    "Name": "salad-mix",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/salad-mix.png"
+  },
+  "938": {
+    "Item ID": "item_1084",
+    "Name": "sausages",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/sausages.png"
+  },
+  "939": {
+    "Item ID": "item_1091",
+    "Name": "smoke-poke-tail",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/smoke-poke-tail.png"
+  },
+  "940": {
+    "Item ID": "item_1258",
+    "Name": "spice-mix",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/spice-mix.png"
+  },
+  "941": {
+    "Item ID": "item_1087",
+    "Name": "tin-of-beans",
+    "Group": "curry-ingredient",
+    "Filename": "curry-ingredient/tin-of-beans.png"
+  },
+  "942": {
+    "Item ID": "item_1127",
+    "Name": "l",
+    "Group": "exp-candy",
+    "Filename": "exp-candy/l.png"
+  },
+  "943": {
+    "Item ID": "item_1126",
+    "Name": "m",
+    "Group": "exp-candy",
+    "Filename": "exp-candy/m.png"
+  },
+  "944": {
+    "Item ID": "item_1125",
+    "Name": "s",
+    "Group": "exp-candy",
+    "Filename": "exp-candy/s.png"
+  },
+  "945": {
+    "Item ID": "item_1128",
+    "Name": "xl",
+    "Group": "exp-candy",
+    "Filename": "exp-candy/xl.png"
+  },
+  "946": {
+    "Item ID": "item_1124",
+    "Name": "xs",
+    "Group": "exp-candy",
+    "Filename": "exp-candy/xs.png"
+  },
+  "947": {
+    "Item ID": "item_1148",
+    "Name": "bug",
+    "Group": "tr",
+    "Filename": "tr/bug.png"
+  },
+  "948": {
+    "Item ID": "item_1162",
+    "Name": "dark",
+    "Group": "tr",
+    "Filename": "tr/dark.png"
+  },
+  "949": {
+    "Item ID": "item_1154",
+    "Name": "dragon",
+    "Group": "tr",
+    "Filename": "tr/dragon.png"
+  },
+  "950": {
+    "Item ID": "item_1138",
+    "Name": "electric",
+    "Group": "tr",
+    "Filename": "tr/electric.png"
+  },
+  "951": {
+    "Item ID": "item_1220",
+    "Name": "fairy",
+    "Group": "tr",
+    "Filename": "tr/fairy.png"
+  },
+  "952": {
+    "Item ID": "item_1137",
+    "Name": "fighting",
+    "Group": "tr",
+    "Filename": "tr/fighting.png"
+  },
+  "953": {
+    "Item ID": "item_1132",
+    "Name": "fire",
+    "Group": "tr",
+    "Filename": "tr/fire.png"
+  },
+  "954": {
+    "Item ID": "item_1196",
+    "Name": "flying",
+    "Group": "tr",
+    "Filename": "tr/flying.png"
+  },
+  "955": {
+    "Item ID": "item_1163",
+    "Name": "ghost",
+    "Group": "tr",
+    "Filename": "tr/ghost.png"
+  },
+  "956": {
+    "Item ID": "item_1180",
+    "Name": "grass",
+    "Group": "tr",
+    "Filename": "tr/grass.png"
+  },
+  "957": {
+    "Item ID": "item_1140",
+    "Name": "ground",
+    "Group": "tr",
+    "Filename": "tr/ground.png"
+  },
+  "958": {
+    "Item ID": "item_1135",
+    "Name": "ice",
+    "Group": "tr",
+    "Filename": "tr/ice.png"
+  },
+  "959": {
+    "Item ID": "item_1130",
+    "Name": "normal",
+    "Group": "tr",
+    "Filename": "tr/normal.png"
+  },
+  "960": {
+    "Item ID": "item_1152",
+    "Name": "poison",
+    "Group": "tr",
+    "Filename": "tr/poison.png"
+  },
+  "961": {
+    "Item ID": "item_1141",
+    "Name": "psychic",
+    "Group": "tr",
+    "Filename": "tr/psychic.png"
+  },
+  "962": {
+    "Item ID": "item_1193",
+    "Name": "rock",
+    "Group": "tr",
+    "Filename": "tr/rock.png"
+  },
+  "963": {
+    "Item ID": "item_1161",
+    "Name": "steel",
+    "Group": "tr",
+    "Filename": "tr/steel.png"
+  },
+  "964": {
+    "Item ID": "item_1133",
+    "Name": "water",
+    "Group": "tr",
+    "Filename": "tr/water.png"
+  },
+  "965": {
+    "Item ID": "item_1231",
+    "Name": "attack",
+    "Group": "mint",
+    "Filename": "mint/attack.png"
+  },
+  "966": {
+    "Item ID": "item_1232",
+    "Name": "attack",
+    "Group": "mint",
+    "Filename": "mint/attack.png"
+  },
+  "967": {
+    "Item ID": "item_1233",
+    "Name": "attack",
+    "Group": "mint",
+    "Filename": "mint/attack.png"
+  },
+  "968": {
+    "Item ID": "item_1234",
+    "Name": "attack",
+    "Group": "mint",
+    "Filename": "mint/attack.png"
+  },
+  "969": {
+    "Item ID": "item_1235",
+    "Name": "defense",
+    "Group": "mint",
+    "Filename": "mint/defense.png"
+  },
+  "970": {
+    "Item ID": "item_1236",
+    "Name": "defense",
+    "Group": "mint",
+    "Filename": "mint/defense.png"
+  },
+  "971": {
+    "Item ID": "item_1237",
+    "Name": "defense",
+    "Group": "mint",
+    "Filename": "mint/defense.png"
+  },
+  "972": {
+    "Item ID": "item_1238",
+    "Name": "defense",
+    "Group": "mint",
+    "Filename": "mint/defense.png"
+  },
+  "973": {
+    "Item ID": "item_1251",
+    "Name": "neutral",
+    "Group": "mint",
+    "Filename": "mint/neutral.png"
+  },
+  "974": {
+    "Item ID": "item_1239",
+    "Name": "special-attack",
+    "Group": "mint",
+    "Filename": "mint/special-attack.png"
+  },
+  "975": {
+    "Item ID": "item_1240",
+    "Name": "special-attack",
+    "Group": "mint",
+    "Filename": "mint/special-attack.png"
+  },
+  "976": {
+    "Item ID": "item_1241",
+    "Name": "special-attack",
+    "Group": "mint",
+    "Filename": "mint/special-attack.png"
+  },
+  "977": {
+    "Item ID": "item_1242",
+    "Name": "special-attack",
+    "Group": "mint",
+    "Filename": "mint/special-attack.png"
+  },
+  "978": {
+    "Item ID": "item_1243",
+    "Name": "special-defense",
+    "Group": "mint",
+    "Filename": "mint/special-defense.png"
+  },
+  "979": {
+    "Item ID": "item_1244",
+    "Name": "special-defense",
+    "Group": "mint",
+    "Filename": "mint/special-defense.png"
+  },
+  "980": {
+    "Item ID": "item_1245",
+    "Name": "special-defense",
+    "Group": "mint",
+    "Filename": "mint/special-defense.png"
+  },
+  "981": {
+    "Item ID": "item_1246",
+    "Name": "special-defense",
+    "Group": "mint",
+    "Filename": "mint/special-defense.png"
+  },
+  "982": {
+    "Item ID": "item_1247",
+    "Name": "speed",
+    "Group": "mint",
+    "Filename": "mint/speed.png"
+  },
+  "983": {
+    "Item ID": "item_1248",
+    "Name": "speed",
+    "Group": "mint",
+    "Filename": "mint/speed.png"
+  },
+  "984": {
+    "Item ID": "item_1249",
+    "Name": "speed",
+    "Group": "mint",
+    "Filename": "mint/speed.png"
+  },
+  "985": {
+    "Item ID": "item_1250",
+    "Name": "speed",
+    "Group": "mint",
+    "Filename": "mint/speed.png"
+  }
+}

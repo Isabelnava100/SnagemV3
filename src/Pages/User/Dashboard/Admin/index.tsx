@@ -6,7 +6,7 @@ import SubTabsLayout, {
 export default function AdminLayout() {
   const adminTabLinks = [
     { path: "Adjust-Lists", label: "Adjust Lists" },
-    { path: "Donate", label: "Donate" },
+    { path: "Donate", label: "Give Items to Users" },
   ];
   return (
     <SubTabsLayout links={adminTabLinks} parentRoutePath="/Dashboard/Admin-Access">

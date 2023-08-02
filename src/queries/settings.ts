@@ -1,9 +1,9 @@
 import { Badge, BadgeTypes } from "../Pages/User/Dashboard/Settings/Collections";
 import { Settings } from "../components/types/typesUsed";
-import { db } from "../context/firebase";
 
 export const getSettings = async (uid: string) => {
   const { getDoc, doc } = await import("firebase/firestore");
+  const { db } = await import("../context/firebase");
   const { settings } = (await getDoc(doc(db, "users", uid))).data() as {
     settings: Settings | null;
   };
@@ -17,6 +17,7 @@ export const getSettings = async (uid: string) => {
 
 export const getBadges = async (uid: string) => {
   const { getDoc, doc } = await import("firebase/firestore");
+  const { db } = await import("../context/firebase");
   const data = (await getDoc(doc(db, "users", uid, "bag", "badges"))).data() as Record<
     string,
     [BadgeTypes, string, boolean]
@@ -27,4 +28,11 @@ export const getBadges = async (uid: string) => {
     return { label: badge[0], background: badge[1], enabled: badge[2] } satisfies Badge;
   });
   return { data, formattedData };
+};
+
+export const getEmojis = async (uid: string) => {
+  const { getDoc, doc } = await import("firebase/firestore");
+  const { db } = await import("../context/firebase");
+  const data = (await getDoc(doc(db, "users", uid))).data();
+  return (data ? data.emojis || [] : []) satisfies string[];
 };

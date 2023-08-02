@@ -15,6 +15,7 @@ import Edit2 from "./edit2.svg";
 import FileSearch from "./filtersearch.svg";
 import Forum from "./forum.svg";
 import GengarCoins from "./gengar_coins.svg";
+import ItemIcon from "./items.png";
 import Marketplace from "./marketplace.svg";
 import Menu from "./menu.svg";
 import Pokemons from "./my_pokemons.svg";
@@ -45,6 +46,7 @@ export {
   FileSearch,
   Forum,
   GengarCoins,
+  ItemIcon,
   Marketplace,
   Menu,
   PokePesos,
