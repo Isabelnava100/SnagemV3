@@ -20,15 +20,15 @@ export const getItems = async (uid: string): Promise<Item[]> => {
   const { doc, getDoc } = await import("firebase/firestore");
   const data = (await getDoc(doc(db, "users", uid, "bag", "items"))).data() as Record<
     string,
-    Omit<Item, "name">
+    Omit<Item, "id">
   >;
   if (!data) return [];
-  const formattedData = Object.keys(data).map((name) => ({
-    name,
-    category: data[name].category,
-    quantity: data[name].quantity,
-    action: data[name].action,
-    box_id: data[name].box_id,
+  const formattedData = Object.keys(data).map((id) => ({
+    id,
+    name: data[id].name,
+    category: data[id].category,
+    quantity: data[id].quantity,
+    filePath: data[id].filePath,
   })) as Item[];
   return formattedData;
 };

@@ -1,11 +1,24 @@
-import { Box, Flex, Image, MultiSelect, Stack, Text, Title } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Avatar,
+  Box,
+  Button,
+  Flex,
+  Group,
+  Image,
+  MultiSelect,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLayout";
 import { Conditional } from "../../../../components/common/Conditional";
 import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
 import { EmptyMessage } from "../../../../components/common/Message";
 import { itemData } from "../../../../data/item";
+import { getItemImageURL } from "../../../../helpers";
+import useMediaQuery from "../../../../hooks/useMediaQuery";
 import { ItemIcon } from "../../../../icons";
 import { getUsers } from "../../../../queries/admin";
 
@@ -29,9 +42,12 @@ export default function Donate() {
     queryFn: getUsers,
   });
 
+  const [showConfirmation, setShowConfirmation] = React.useState(false);
+  const [isSending, setSending] = React.useState(false);
+
   const [toUserIds, setToUserIds] = React.useState<string[]>([]);
   const toUsers = React.useMemo(() => {
-    return users?.filter((user) => toUserIds.includes(user.id));
+    return users?.filter((user) => toUserIds.includes(user.id)) || [];
   }, [toUserIds]);
 
   const [itemsToSendIds, setItemsToSendIds] = React.useState<string[]>([]);
@@ -42,9 +58,58 @@ export default function Donate() {
       .filter((item) => itemsToSendIds.includes(item.id));
   }, [itemsToSendIds, itemsToSendQtys]);
 
+  const uniqueCategoriesSelectedToSend = React.useMemo(() => {
+    const uniqueGroupsSet = new Set<string>();
+
+    itemsToSendWithQty.forEach((item) => {
+      uniqueGroupsSet.add(item.category);
+    });
+
+    return Array.from(uniqueGroupsSet) || [];
+  }, [itemsToSendWithQty]);
+
+  const queryClient = useQueryClient();
+  const { isOverXl } = useMediaQuery();
+
+  const handleShowConfirmation = () => {
+    if (itemsToSendWithQty.length > 0 && toUsers?.length > 0) {
+      setShowConfirmation(true);
+    }
+  };
+
+  const handleConfirmAndSendItemsToUsers = async () => {
+    try {
+      setSending(true);
+      const { doc, setDoc, increment } = await import("firebase/firestore");
+      const { db } = await import("../../../../context/firebase");
+
+      for (const user of toUsers) {
+        const docRef = doc(db, "users", user.id, "bag", "items");
+        for (const { id: itemId, ...item } of itemsToSendWithQty) {
+          await setDoc(
+            docRef,
+            { [itemId]: { ...item, quantity: increment(item.quantity) } },
+            { merge: true }
+          );
+        }
+      }
+
+      setItemsToSendIds([]);
+      setItemsToSendQtys({});
+      setToUserIds([]);
+      setShowConfirmation(false);
+
+      await queryClient.invalidateQueries({ queryKey: ["get-items"] });
+    } catch (err) {
+      //
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <Stack spacing={24}>
-      <Flex gap={10}>
+      <Flex direction={isOverXl ? "row" : "column"} gap={10}>
         <Stack w="100%">
           <Stack sx={{ flex: 1 }} spacing={7}>
             <TopHeader>Items to send</TopHeader>
@@ -54,7 +119,7 @@ export default function Donate() {
               onChange={(value) => setItemsToSendIds(value)}
               data={itemData.map((item) => ({ label: item.name, value: item.id }))}
               searchable
-              limit={20}
+              limit={50}
               placeholder="Search to add an item"
             />
           </Stack>
@@ -85,9 +150,17 @@ export default function Donate() {
                   <Stack>
                     {itemsToSendWithQty.map((item) => (
                       <div key={item.id} className="grid grid-cols-2 border-b-2 border-[#D9D9D9]">
-                        <Text size={16} weight={400} color="white">
-                          {item.name}
-                        </Text>
+                        <Group spacing={5}>
+                          <Image
+                            width={30}
+                            className="object-cover"
+                            src={getItemImageURL(item.filePath)}
+                            alt={item.name}
+                          />
+                          <Text size={16} weight={400} color="white">
+                            {item.name}
+                          </Text>
+                        </Group>
                         <div className="flex justify-end">
                           <input
                             type="number"
@@ -110,7 +183,7 @@ export default function Donate() {
             </SimpleSectionWrapper>
           </Stack>
         </Stack>
-        <Stack w="100%" sx={{ flexShrink: 0 }} maw={250} spacing={7}>
+        <Stack w="100%" sx={{ flexShrink: 0 }} maw={isOverXl ? 250 : undefined} spacing={7}>
           <TopHeader>To users</TopHeader>
           <MultiSelect
             disabled={isUsersLoading}
@@ -125,26 +198,75 @@ export default function Donate() {
         </Stack>
       </Flex>
 
-      <GradientButtonSecondary sx={{ alignSelf: "end" }} radius="lg">
-        Send Items
-      </GradientButtonSecondary>
+      <Conditional
+        condition={!showConfirmation}
+        fallback={<></>}
+        component={
+          <GradientButtonSecondary
+            onClick={handleShowConfirmation}
+            sx={{ alignSelf: "end" }}
+            radius="lg"
+          >
+            Send Items
+          </GradientButtonSecondary>
+        }
+      />
 
       {/* Confirmation */}
-      {false && (
+      {showConfirmation && (
         <Stack spacing={24}>
           <Title order={2} color="white" size={24} weight={400}>
             Confirm that you&apos;ll be sending these items to these users...
           </Title>
-          <Flex gap={10}>
+          <Flex direction={isOverXl ? "row" : "column"} gap={10}>
             <Stack bg="#4C474F" sx={{ flex: 1, borderRadius: 8 }} spacing={0}>
               <TopHeader>Items to send</TopHeader>
-              <Box p={8}>
-                <h1>Content</h1>
-              </Box>
+              <Stack p={8} spacing={16}>
+                {uniqueCategoriesSelectedToSend.map((categoryName) => (
+                  <Stack spacing={7} key={categoryName}>
+                    <Text
+                      px={14}
+                      py={7}
+                      w="100%"
+                      bg="rgba(96, 42, 90, 0.50)"
+                      className="rounded-[22px]"
+                      color="white"
+                      weight={400}
+                      size={14}
+                    >
+                      Category: {categoryName}
+                    </Text>
+                    <Stack>
+                      {itemsToSendWithQty
+                        .filter((item) => item.category === categoryName)
+                        .map((item) => (
+                          <Box key={item.id}>
+                            <Group spacing={8}>
+                              <Image
+                                width={30}
+                                className="object-cover"
+                                src={getItemImageURL(item.filePath)}
+                                alt={item.name}
+                              />
+                              <Group>
+                                <Text size={16} color="white" weight={400}>
+                                  {item.quantity}
+                                </Text>
+                                <Text size={16} color="white" weight={400}>
+                                  {item.name}
+                                </Text>
+                              </Group>
+                            </Group>
+                          </Box>
+                        ))}
+                    </Stack>
+                  </Stack>
+                ))}
+              </Stack>
             </Stack>
             <Stack
               w="100%"
-              maw={250}
+              maw={isOverXl ? 250 : undefined}
               sx={{ borderRadius: 8, flexShrink: 0 }}
               bg="#4C474F"
               spacing={0}
@@ -153,17 +275,35 @@ export default function Donate() {
               <Box p={8}>
                 <Stack spacing="xs">
                   {toUsers?.map((user) => (
-                    <Text color="white" size={16} weight={400} key={user.id}>
-                      {user.username}
-                    </Text>
+                    <Group key={user.id} spacing={6}>
+                      <Avatar sx={{ borderRadius: "100%" }} />
+                      <Text color="white" size={16} weight={400} key={user.id}>
+                        {user.username}
+                      </Text>
+                    </Group>
                   ))}
                 </Stack>
               </Box>
             </Stack>
           </Flex>
-          <GradientButtonSecondary sx={{ alignSelf: "end" }} radius="lg">
-            Confirm
-          </GradientButtonSecondary>
+          <Group w="100%" sx={{ justifyContent: "end" }}>
+            <Button
+              disabled={isSending}
+              onClick={() => setShowConfirmation(false)}
+              color="gray"
+              variant="light"
+            >
+              Cancel
+            </Button>
+            <GradientButtonSecondary
+              loading={isSending}
+              onClick={handleConfirmAndSendItemsToUsers}
+              sx={{ alignSelf: "end" }}
+              radius="lg"
+            >
+              Confirm
+            </GradientButtonSecondary>
+          </Group>
         </Stack>
       )}
     </Stack>

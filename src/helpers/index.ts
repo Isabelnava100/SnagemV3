@@ -19,6 +19,11 @@ export const getPokemonImageURL = (slug: string) => {
   return `${url}/${slug}.${extension}`;
 };
 
+export const getItemImageURL = (filePath: string) => {
+  const url = "http://raw.githubusercontent.com/msikma/pokesprite/master/items";
+  return `${url}/${filePath}`;
+};
+
 export const getPokemonName = (slug: string) => {
   const pokemon = pokemonData.find((pokemon) => pokemon.slug === slug);
   if (!pokemon) throw new Error(`Pokemon with the slug: ${slug} does not exits`);

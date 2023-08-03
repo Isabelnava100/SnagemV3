@@ -25,6 +25,7 @@ import SectionWrapper, { ActionButton } from "../../../components/Dashboard/Sect
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { useAuth } from "../../../context/AuthContext";
+import { getItemImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
   AdminAccessIcon,
@@ -292,20 +293,16 @@ function MyItems() {
         }
         fallback={
           <ScrollArea
+            style={{ height: 260, width: "100%" }}
+            pb={20}
+            pr={20}
             sx={{
               background: `url(${ItemsBackground})`,
               backgroundSize: 250,
               backgroundRepeat: "no-repeat",
             }}
           >
-            <Flex
-              mah={260}
-              maw={500}
-              gap={25}
-              sx={{
-                flexWrap: "nowrap",
-              }}
-            >
+            <Flex h="100%" w="100%" gap={25} sx={{ flexWrap: "nowrap" }}>
               {categories.map((categoryName) => (
                 <Stack key={categoryName} miw={330}>
                   <Title order={3} size={isOverLg ? 24 : 20} sx={itemCommonStyle} bg="#7e2c75a1">
@@ -322,7 +319,7 @@ function MyItems() {
                       >
                         <Flex w="100%" justify="space-between" align="center">
                           <Group px={18} py={10} spacing={8}>
-                            <Avatar src={item.image_url} alt={item.name} w={40} />
+                            <Avatar src={getItemImageURL(item.filePath)} alt={item.name} w={40} />
                             <Text color="white" size={16}>
                               {item.name}
                             </Text>

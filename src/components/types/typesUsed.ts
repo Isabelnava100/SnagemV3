@@ -167,15 +167,12 @@ export interface Currencies {
   pokecoin: string;
 }
 
-export type Categories = "held items" | "pokeball" | "Special";
-
 export type Item = {
+  id: string;
   name: string;
-  category: Categories;
-  image_url?: string;
-  quantity: string;
-  box_id?: string;
-  action?: string;
+  category: string;
+  filePath: string;
+  quantity: number;
 };
 
 export interface Draft {
