@@ -1,6 +1,19 @@
-import { Badge, Flex, Group, Image, Popover, Stack, Text, Title } from "@mantine/core";
+import {
+  Anchor,
+  Badge,
+  Box,
+  Flex,
+  Group,
+  Image,
+  List,
+  Popover,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
+import { Link } from "react-router-dom";
 import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLayout";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
@@ -149,22 +162,86 @@ function EmojiCollection() {
       </Title>
       <Flex wrap="wrap" gap={8}>
         {emojiData.map((emoji, index) => (
-          <Flex
-            justify="center"
-            align="center"
-            key={index}
-            bg="#3C3A3C"
-            sx={{
-              borderRadius: "100%",
-              width: 50,
-              height: 50,
-              cursor: "pointer",
-              border: "3px solid",
-              borderColor: "transparent",
-            }}
-          >
-            <Image src={emoji.imageSrc} alt={emoji.Name} width={30} height={30} />
-          </Flex>
+          <Popover width={265} withinPortal position="bottom-start" shadow="md" key={index}>
+            <Popover.Target>
+              <Flex
+                justify="center"
+                align="center"
+                bg="#3C3A3C"
+                sx={{
+                  borderRadius: "100%",
+                  width: 50,
+                  height: 50,
+                  cursor: "pointer",
+                  border: "3px solid",
+                  borderColor: "transparent",
+                }}
+              >
+                <Image src={emoji.imageSrc} alt={emoji.Name} width={30} height={30} />
+              </Flex>
+            </Popover.Target>
+            <Popover.Dropdown
+              bg="#1E1D20"
+              sx={{ borderRadius: 22, border: "none", color: "white" }}
+              p={16}
+            >
+              <Stack spacing={8}>
+                <Flex gap={10}>
+                  <Flex
+                    w={60}
+                    h={60}
+                    justify="center"
+                    align="center"
+                    sx={{
+                      borderRadius: "100%",
+                      border: "4px solid",
+                      borderColor: "white",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Image
+                      src={emoji.imageSrc}
+                      alt={emoji.Name}
+                      width={30}
+                      height={30}
+                      className="object-cover"
+                    />
+                  </Flex>
+                  <Stack spacing={0}>
+                    <Title order={4} size={16} weight={500}>
+                      {emoji.Name}
+                    </Title>
+                    <Text size={12}>{emoji.Description}</Text>
+                  </Stack>
+                  <Box sx={{ flexShrink: 0 }}>
+                    <Image src={CheckCircleIcon} alt="Check circle icon" width={20} height={20} />
+                  </Box>
+                </Flex>
+                <Stack spacing={0}>
+                  <Title order={5} size={16} weight={600}>
+                    How to Obtain:
+                  </Title>
+                  <List color="white" sx={{ fontSize: 16, color: "white", fontWeight: 400 }}>
+                    <List.Item>Join before 2025</List.Item>
+                    <List.Item>
+                      Buy for {emoji.CoinCost} Snag Coins in the{" "}
+                      <Anchor className="underline text-white" component={Link} to="/Shop">
+                        Marketplace
+                      </Anchor>
+                      .
+                    </List.Item>
+                    <List.Item>
+                      Buy for {emoji.GemCost} Gem in the{" "}
+                      <Anchor className="underline text-white inline" component={Link} to="/Shop">
+                        Credit shop
+                      </Anchor>
+                      .
+                    </List.Item>
+                  </List>
+                </Stack>
+              </Stack>
+            </Popover.Dropdown>
+          </Popover>
         ))}
       </Flex>
     </Stack>
