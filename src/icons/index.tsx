@@ -5,6 +5,7 @@ import ArrowSwapIcon from "./arrow-swap.svg";
 import Bell from "./bell.svg";
 import Bookmarks from "./bookmarks.svg";
 import Characters from "./characters.svg";
+import CheckCircleIcon from "./check-circle.svg";
 import DirectRight from "./directright.svg";
 import DocumentCopyIcon from "./document-copy.svg";
 import Upload from "./documentupload.svg";
@@ -37,6 +38,7 @@ export {
   BookmarkSymbol,
   Bookmarks,
   Characters,
+  CheckCircleIcon,
   DirectRight,
   DocumentCopyIcon,
   DollarSign,

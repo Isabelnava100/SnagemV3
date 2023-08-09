@@ -1,11 +1,10 @@
-import { Anchor, Badge, Flex, Group, Image, List, Stack, Text, Title } from "@mantine/core";
+import { Badge, Flex, Group, Image, Popover, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
-import { Link } from "react-router-dom";
 import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLayout";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
-import { ArrowSwapIcon } from "../../../../icons";
+import { ArrowSwapIcon, CheckCircleIcon } from "../../../../icons";
 import { getBadges, getEmojis } from "../../../../queries/settings";
 import Emoji1Src from "/src/assets/emojis/emoji-1.png";
 import Emoji2Src from "/src/assets/emojis/emoji-2.png";
@@ -107,60 +106,38 @@ function Emojis() {
 }
 
 interface EmojiItem {
-  name: string;
-  description: string;
-  obtainingInstructions: React.ReactNode[];
+  Name: string;
+  Description: string;
   imageSrc: string;
+  Timeline: string;
+  GemCost: number;
+  CoinCost: number;
 }
 
 const emojiData: EmojiItem[] = [
   {
-    name: "Happy Espeon",
-    description: "Commissioned from Seviyummy in 2022.",
+    Name: "Happy Espeon",
+    Description: "Commissioned from Seviyummy in 2022.",
     imageSrc: Emoji1Src,
-    obtainingInstructions: [
-      <List.Item>Join before 2025.</List.Item>,
-      <List.Item>
-        Buy for 50 Snag Coins in the{" "}
-        <Anchor component={Link} to="/Shop">
-          Marketplace
-        </Anchor>
-        .
-      </List.Item>,
-      <List.Item>Buy for 1 Gem in the Credit Shop.</List.Item>,
-    ],
+    Timeline: new Date().toISOString(),
+    GemCost: 1,
+    CoinCost: 50,
   },
   {
-    name: "Happy Espeon",
-    description: "Commissioned from Seviyummy in 2022.",
+    Name: "Happy Espeon",
+    Description: "Commissioned from Seviyummy in 2022.",
     imageSrc: Emoji2Src,
-    obtainingInstructions: [
-      <List.Item>Join before 2025.</List.Item>,
-      <List.Item>
-        Buy for 50 Snag Coins in the{" "}
-        <Anchor component={Link} to="/Shop">
-          Marketplace
-        </Anchor>
-        .
-      </List.Item>,
-      <List.Item>Buy for 1 Gem in the Credit Shop.</List.Item>,
-    ],
+    Timeline: new Date().toISOString(),
+    GemCost: 1,
+    CoinCost: 50,
   },
   {
-    name: "Zoroark's Laugh",
-    description: "Commissioned from Seviyummy in 2022.",
+    Name: "Zoroark's Laugh",
+    Description: "Commissioned from Seviyummy in 2022.",
+    Timeline: new Date().toISOString(),
+    GemCost: 1,
+    CoinCost: 50,
     imageSrc: Emoji3Src,
-    obtainingInstructions: [
-      <List.Item>Join before 2025.</List.Item>,
-      <List.Item>
-        Buy for 50 Snag Coins in the{" "}
-        <Anchor component={Link} to="/Shop">
-          Marketplace
-        </Anchor>
-        .
-      </List.Item>,
-      <List.Item>Buy for 1 Gem in the Credit Shop.</List.Item>,
-    ],
   },
 ];
 
@@ -186,7 +163,7 @@ function EmojiCollection() {
               borderColor: "transparent",
             }}
           >
-            <Image src={emoji.imageSrc} alt={emoji.name} width={30} height={30} />
+            <Image src={emoji.imageSrc} alt={emoji.Name} width={30} height={30} />
           </Flex>
         ))}
       </Flex>
@@ -229,21 +206,43 @@ function BadgesCollection() {
       </Stack>
       <Flex wrap="wrap" gap={8}>
         {badgeData.map((badge, index) => (
-          <Badge
-            key={index}
-            size="lg"
-            sx={{
-              background: badge.background,
-              color: "white",
-              textTransform: "none",
-              fontSize: 16,
-              fontWeight: 400,
-              paddingTop: 5,
-              paddingBottom: 5,
-            }}
-          >
-            {badge.name}
-          </Badge>
+          <Popover width={265} withinPortal position="bottom-start" shadow="md" key={index}>
+            <Popover.Target>
+              <Badge
+                size="lg"
+                sx={{
+                  background: badge.background,
+                  color: "white",
+                  textTransform: "none",
+                  fontSize: 16,
+                  fontWeight: 400,
+                  paddingTop: 5,
+                  paddingBottom: 5,
+                  cursor: "pointer",
+                }}
+              >
+                {badge.name}
+              </Badge>
+            </Popover.Target>
+            <Popover.Dropdown
+              bg="#1E1D20"
+              sx={{ borderRadius: 22, border: "none", color: "white" }}
+              py={12}
+              px={17}
+            >
+              <Stack>
+                <Text size={14} weight={500}>
+                  {badge.description}
+                </Text>
+                <Flex justify="space-between" align="center">
+                  <Text size={14} weight={500} color="#22B573">
+                    You have this badge
+                  </Text>
+                  <Image src={CheckCircleIcon} alt="Check circle icon" width={20} />
+                </Flex>
+              </Stack>
+            </Popover.Dropdown>
+          </Popover>
         ))}
       </Flex>
     </Stack>
