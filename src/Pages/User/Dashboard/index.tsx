@@ -167,37 +167,39 @@ function TabsPanel() {
       customHeader={
         <Paper bg="#3C3A3C">
           <Flex sx={{ overflowY: "hidden" }} align="center" justify="start" gap={isOverMd ? 45 : 0}>
-            {dashboardTabLinks.map((link) => {
-              const linkPath = `/Dashboard${link.path}`;
-              const isActive = currentPath.includes(linkPath);
-              return (
-                <Link
-                  style={{
-                    background: isActive
-                      ? "linear-gradient(180deg, #912691 28.65%, #4D14C4 89.06%)"
-                      : undefined,
-                    borderTopLeftRadius: 16,
-                    borderTopRightRadius: 16,
-                    paddingLeft: 25,
-                    paddingRight: 25,
-                    paddingTop: 10,
-                    paddingBottom: 10,
-                    textDecoration: "none",
-                  }}
-                  to={linkPath}
-                  key={link.path}
-                >
-                  <Group spacing={10}>
-                    <Image width={isOverMd ? 45 : 25} src={link.icon} alt={link.label} />
-                    {isActive && isOverMd && (
-                      <Text color="white" size={20} transform="uppercase">
-                        {link.label}
-                      </Text>
-                    )}
-                  </Group>
-                </Link>
-              );
-            })}
+            {dashboardTabLinks
+              .filter((link) => link.enabled)
+              .map((link) => {
+                const linkPath = `/Dashboard${link.path}`;
+                const isActive = currentPath.includes(linkPath);
+                return (
+                  <Link
+                    style={{
+                      background: isActive
+                        ? "linear-gradient(180deg, #912691 28.65%, #4D14C4 89.06%)"
+                        : undefined,
+                      borderTopLeftRadius: 16,
+                      borderTopRightRadius: 16,
+                      paddingLeft: 25,
+                      paddingRight: 25,
+                      paddingTop: 10,
+                      paddingBottom: 10,
+                      textDecoration: "none",
+                    }}
+                    to={linkPath}
+                    key={link.path}
+                  >
+                    <Group spacing={10}>
+                      <Image width={isOverMd ? 45 : 25} src={link.icon} alt={link.label} />
+                      {isActive && isOverMd && (
+                        <Text color="white" size={20} transform="uppercase">
+                          {link.label}
+                        </Text>
+                      )}
+                    </Group>
+                  </Link>
+                );
+              })}
           </Flex>
         </Paper>
       }
