@@ -133,9 +133,10 @@ function InputWrapper(props: {
         </Text>
         {!isEditing ? (
           <Text lineClamp={1} size={18} color="white" px={2}>
-            {form.values[name as keyof FormFields].toString()}
+            {form.values[name as keyof FormFields]?.toString()}
           </Text>
-        ) : inputType === "input" ? (
+        ) : // Input for editing. It can also be a select input
+        inputType === "input" ? (
           <TextInput sx={{ flex: 1 }} radius={8} {...form.getInputProps(name)} />
         ) : (
           <Select
@@ -313,6 +314,11 @@ function SingleCharacter(props: Character) {
     setEditing(false);
   };
 
+  const handleCancelEdit = () => {
+    form.reset();
+    setEditing(false);
+  };
+
   return (
     <Stack
       bg="#3E3D3D"
@@ -363,14 +369,7 @@ function SingleCharacter(props: Character) {
                 </Group>
               ) : (
                 <Group>
-                  <Button
-                    color="gray"
-                    variant="light"
-                    onClick={() => {
-                      form.reset();
-                      setEditing(false);
-                    }}
-                  >
+                  <Button color="gray" variant="light" onClick={handleCancelEdit}>
                     Cancel
                   </Button>
                   <GradientButtonSecondary
