@@ -307,13 +307,26 @@ function MyItems() {
             }}
           >
             <Flex h="100%" w="100%" gap={25} sx={{ flexWrap: "nowrap" }}>
-              {categories.map((categoryName) => (
+              {categories.sort().map((categoryName) => (
                 <Stack key={categoryName} miw={330}>
                   <Title order={3} size={isOverLg ? 24 : 20} sx={itemCommonStyle} bg="#7e2c75a1">
                     {categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}
                   </Title>
                   {data
                     ?.filter((item) => item.category === categoryName)
+                    // sort them in alphabetical order
+                    .sort((a, b) => {
+                      const nameA = a.name.toLowerCase();
+                      const nameB = b.name.toLowerCase();
+
+                      if (nameA < nameB) {
+                        return -1;
+                      }
+                      if (nameA > nameB) {
+                        return 1;
+                      }
+                      return 0;
+                    })
                     .map((item, index) => (
                       <Box
                         key={index}
