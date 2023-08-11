@@ -67,18 +67,20 @@ export function Dashboard() {
       <Stack spacing={isOverMd ? 30 : 10} w="100%">
         {isOverMd && (
           <Stack spacing={13}>
-            <Title order={2} color="white" size={40} transform="uppercase">
-              Snag Dashboard
-            </Title>
+            <Flex justify="space-between" align="center">
+              <Title order={2} color="white" size={40} transform="uppercase">
+                Snag Dashboard
+              </Title>
+              <Button className="self-start" variant="subtle" onClick={handleLogout}>
+                Logout
+              </Button>
+            </Flex>
             <Group>
               <Image src={Bell} alt="Bell icon" width={40} />
               <Text color="white" size={20}>
                 Welcome, {user?.displayName}!
               </Text>
             </Group>
-            <Button className="self-start" variant="subtle" onClick={handleLogout}>
-              Logout
-            </Button>
           </Stack>
         )}
         <Announcements />
