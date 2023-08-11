@@ -180,9 +180,12 @@ function EditSingleListItem(props: {
   const { mutateAsync, isLoading } = useUpdateOrAddDocument(list.id);
   const queryClient = useQueryClient();
 
-  const finishEditing = () => {
-    form.reset();
-    setEditing(false);
+  const cancelEditing = () => {
+    const confirmed = window.confirm("Are you sure you want to quite editing?");
+    if (confirmed) {
+      form.reset();
+      setEditing(false);
+    }
   };
 
   const handleSaveEdits = async () => {
@@ -204,7 +207,7 @@ function EditSingleListItem(props: {
           {...form.getInputProps("name")}
         />
         <Group spacing={5}>
-          <Button color="gray" variant="subtle" onClick={finishEditing}>
+          <Button color="gray" variant="subtle" onClick={cancelEditing}>
             Cancel
           </Button>
           <GradientButtonSecondary loading={isLoading} onClick={handleSaveEdits} size="xs">
