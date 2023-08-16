@@ -28,6 +28,7 @@ import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
+import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
 import {
   OwnedPokemon,
@@ -160,15 +161,19 @@ function Teams(props: EditingProps) {
 
   return (
     <Stack align="end" w="100%" maw={isOverLg ? 455 : undefined}>
-      {sortedData.map((team) => (
-        <SingleTeam
-          form={form}
-          resetEditing={resetEditing}
-          loadTeamForEdit={loadTeamForEdit}
-          team={team}
-          key={team.id}
-        />
-      ))}
+      {sortedData.length ? (
+        sortedData.map((team) => (
+          <SingleTeam
+            form={form}
+            resetEditing={resetEditing}
+            loadTeamForEdit={loadTeamForEdit}
+            team={team}
+            key={team.id}
+          />
+        ))
+      ) : (
+        <EmptyMessage title="No teams" description="You currently have no teams created" />
+      )}
       <CreateNewTeam />
     </Stack>
   );
