@@ -267,6 +267,10 @@ function EmojiCollection() {
 }
 
 function BadgesCollection() {
+  const { data, isLoading, isError } = useGetBadgesQuery();
+  if (isLoading) return <SectionLoader />;
+  if (isError) return <></>;
+  const { formattedData: userBadges } = data;
   return (
     <Stack spacing={18}>
       <Stack spacing={0}>
@@ -276,45 +280,59 @@ function BadgesCollection() {
         <Text>Here&apos;s a list of all badges and how to obtain them.</Text>
       </Stack>
       <Flex wrap="wrap" gap={8}>
-        {badgeData.map((badge, index) => (
-          <Popover width={265} withinPortal position="bottom-start" shadow="md" key={index}>
-            <Popover.Target>
-              <Badge
-                size="lg"
-                sx={{
-                  background: badge.background,
-                  color: "white",
-                  textTransform: "none",
-                  fontSize: 16,
-                  fontWeight: 400,
-                  paddingTop: 5,
-                  paddingBottom: 5,
-                  cursor: "pointer",
-                }}
+        {badgeData.map((badge, index) => {
+          const existingUserBadge = userBadges.find((userBadge) => userBadge.label === badge.name);
+          return (
+            <Popover width={265} withinPortal position="bottom-start" shadow="md" key={index}>
+              <Popover.Target>
+                <Badge
+                  size="lg"
+                  sx={{
+                    background: badge.background,
+                    color: "white",
+                    textTransform: "none",
+                    fontSize: 16,
+                    fontWeight: 400,
+                    paddingTop: 5,
+                    paddingBottom: 5,
+                    cursor: "pointer",
+                  }}
+                >
+                  {badge.name}
+                </Badge>
+              </Popover.Target>
+              <Popover.Dropdown
+                bg="#1E1D20"
+                sx={{ borderRadius: 22, border: "none", color: "white" }}
+                py={12}
+                px={17}
               >
-                {badge.name}
-              </Badge>
-            </Popover.Target>
-            <Popover.Dropdown
-              bg="#1E1D20"
-              sx={{ borderRadius: 22, border: "none", color: "white" }}
-              py={12}
-              px={17}
-            >
-              <Stack>
-                <Text size={14} weight={500}>
-                  {badge.description}
-                </Text>
-                <Flex justify="space-between" align="center">
-                  <Text size={14} weight={500} color="#22B573">
-                    You have this badge
+                <Stack>
+                  <Text size={14} weight={500}>
+                    {badge.description}
                   </Text>
-                  <Image src={CheckCircleIcon} alt="Check circle icon" width={20} />
-                </Flex>
-              </Stack>
-            </Popover.Dropdown>
-          </Popover>
-        ))}
+                  <Flex justify="space-between" align="center">
+                    {existingUserBadge ? (
+                      <>
+                        <Text size={14} weight={500} color="#22B573">
+                          You have this badge
+                        </Text>
+                        <Image src={CheckCircleIcon} alt="Check circle icon" width={20} />
+                      </>
+                    ) : (
+                      <>
+                        <Text size={14} weight={500} color="#E35C65">
+                          You don&apos;t have this badge
+                        </Text>
+                        <Image src={CrossCircleIcon} alt="Cross circle icon" width={20} />
+                      </>
+                    )}
+                  </Flex>
+                </Stack>
+              </Popover.Dropdown>
+            </Popover>
+          );
+        })}
       </Flex>
     </Stack>
   );
