@@ -39,7 +39,7 @@ function SingleDraft(props: Draft) {
       <Flex
         justify="space-between"
         sx={{ flexDirection: isOverSm ? "row" : "column" }}
-        align="start"
+        align="stretch"
       >
         <Stack py={10} px={18}>
           <Title order={3} size={20} color="white">

@@ -12,16 +12,20 @@
   }
 }
 
+body {
+  font-family: "Roboto", sans-serif;
+}
+
 /* body {font-family: 'ManropeMedium';} */
-input,
-.mantine-PasswordInput-root,
+/* input, */
+/* .mantine-PasswordInput-root,
 .mantine-Input-Wrapper,
 .mantine-Select-wrapper,
-.mantine-Select-Dropdown,
-option,
+.mantine-Select-Dropdown, */
+/* option,
 select {
   max-width: 400px;
-}
+} */
 
 .auto-width {
   max-width: none !important;

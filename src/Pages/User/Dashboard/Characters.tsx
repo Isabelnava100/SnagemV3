@@ -81,6 +81,7 @@ function useUpdateOrAddDocument(documentId?: string) {
             name: "No name",
             short_description: "",
             species: "",
+            pronouns: "",
             type: "None",
             imageURL: "",
             createdAt: new Date(),
@@ -125,16 +126,17 @@ function InputWrapper(props: {
 }) {
   const { title, isEditing, inputType = "input", options, name, form } = props;
   return (
-    <Paper w="100%" bg="#525151" py={3} px={5} radius={8}>
+    <Paper w="100%" bg="#525151" py={3} px={7} radius={8}>
       <Flex align="center">
-        <Text w={65} lineClamp={1}>
+        <Text w={65} size={14} lineClamp={1}>
           {title}:
         </Text>
         {!isEditing ? (
-          <Text py={7} lineClamp={1} color="white" px={2}>
-            {form.values[name as keyof FormFields].toString()}
+          <Text lineClamp={1} size={18} color="white" px={2}>
+            {form.values[name as keyof FormFields]?.toString()}
           </Text>
-        ) : inputType === "input" ? (
+        ) : // Input for editing. It can also be a select input
+        inputType === "input" ? (
           <TextInput sx={{ flex: 1 }} radius={8} {...form.getInputProps(name)} />
         ) : (
           <Select
@@ -312,6 +314,11 @@ function SingleCharacter(props: Character) {
     setEditing(false);
   };
 
+  const handleCancelEdit = () => {
+    form.reset();
+    setEditing(false);
+  };
+
   return (
     <Stack
       bg="#3E3D3D"
@@ -362,14 +369,7 @@ function SingleCharacter(props: Character) {
                 </Group>
               ) : (
                 <Group>
-                  <Button
-                    color="gray"
-                    variant="light"
-                    onClick={() => {
-                      form.reset();
-                      setEditing(false);
-                    }}
-                  >
+                  <Button color="gray" variant="light" onClick={handleCancelEdit}>
                     Cancel
                   </Button>
                   <GradientButtonSecondary
@@ -401,6 +401,7 @@ function SingleCharacter(props: Character) {
               <InputWrapper form={form} name="height" isEditing={isEditing} title="Height" />
               <InputWrapper form={form} name="age" isEditing={isEditing} title="Age" />
               <InputWrapper form={form} name="birthday" isEditing={isEditing} title="Birthday" />
+              <InputWrapper form={form} name="pronouns" isEditing={isEditing} title="Pronouns" />
             </Stack>
             <Stack spacing={8} sx={{ flex: 1 }}>
               <TextareaWrapper

@@ -1,10 +1,11 @@
 import { Box, Image, Paper, Popover, SimpleGrid, Text, UnstyledButton } from "@mantine/core";
 import { useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
 import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { Activities, Forum, Marketplace, Menu, Quests, TeamSangem, Users } from "../../icons";
 import "/src/assets/styles/navigation.css";
- 
+
 function SingleLink(props: { label?: string; link?: string; icon: string }) {
   const { label, link, icon } = props;
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
@@ -45,21 +46,21 @@ function SingleLink(props: { label?: string; link?: string; icon: string }) {
               src={icon}
               width={
                 isUnder900 ? 44 : 100
-                  // ? hasLessHeight
-                  //   ? hasVeryLessHeight
-                  //     ? 30
-                  //     : 35
-                  //   : 40
-                  // : hasLessHeight
-                  // ? hasVeryLessHeight
-                  //   ? 30
-                  //   : 35
-                  // : undefined
+                // ? hasLessHeight
+                //   ? hasVeryLessHeight
+                //     ? 30
+                //     : 35
+                //   : 40
+                // : hasLessHeight
+                // ? hasVeryLessHeight
+                //   ? 30
+                //   : 35
+                // : undefined
               }
-              height={ isUnder900 ? 40 : 100}
+              height={isUnder900 ? 40 : 100}
               alt={label}
             />
-            <Text fz="xs" tt="uppercase" ta="center">{label}</Text>
+            {/* <Text fz="xs" tt="uppercase" ta="center">{label}</Text> */}
           </Box>
           {!isUnder900 && (
             <Text color="white" transform="uppercase" size={16}>
@@ -75,6 +76,7 @@ function SingleLink(props: { label?: string; link?: string; icon: string }) {
 export const SideBar = () => {
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
   const { isOverSm } = useMediaQuery();
+  const { user } = useAuth();
 
   const headerLinks = {
     links: [
@@ -147,7 +149,9 @@ function MobileMenu(props: { links: { link: string; label: string; icon: string 
           {links.map((link) => (
             <Link key={link.label} style={{ padding: 15 }} to={link.link}>
               <Image src={link.icon} width={35} height={35} />
-            <Text fz="xs" tt="uppercase">{link.label}</Text>
+              <Text fz="xs" tt="uppercase">
+                {link.label}
+              </Text>
             </Link>
           ))}
         </SimpleGrid>

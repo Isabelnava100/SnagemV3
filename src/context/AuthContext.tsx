@@ -4,17 +4,21 @@ import LoadingSpinner from "../components/navigation/loading";
 import { AuthContextType, SpecificUser, User } from "../components/types/typesUsed";
 import { auth, db } from "./firebase";
 
-// return the user avatar from here
-const getInfo = async (uid: string): Promise<SpecificUser & { avatar?: string }> => {
+// return the user avatar and username from here
+export const getInfo = async (
+  uid: string
+): Promise<SpecificUser & { avatar?: string; username: string }> => {
   const { doc, getDoc } = await import("firebase/firestore");
 
   const user = await getDoc(doc(db, "users", uid));
   const userData = user.data();
+
   return {
     permissions: userData ? userData.permissions : "",
     badges: userData ? userData.badges : [],
     discordUID: userData ? userData.discordUID : "",
     avatar: userData?.avatar,
+    username: userData?.username,
   };
 };
 
@@ -28,12 +32,13 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
     const authConst = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const { uid, email, displayName } = user;
-        const { avatar, ...otherinfo } = await getInfo(uid);
+        const { avatar, username, ...otherinfo } = await getInfo(uid);
         setUser((prevState) => ({
           ...prevState,
           uid,
           email,
           displayName,
+          username,
           // return the user avatar
           avatar,
           otherinfo,

@@ -41,7 +41,7 @@ export default function Bookmarks() {
     );
 
   return (
-    <SimpleGrid cols={isOverLg ? 2 : 1}>
+    <SimpleGrid spacing={25} cols={isOverLg ? 2 : 1}>
       {sortedData.map((bookmark) => (
         <SingleBookmark key={bookmark.id} {...bookmark} />
       ))}

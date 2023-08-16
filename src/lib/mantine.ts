@@ -15,9 +15,10 @@ export const theme: MantineThemeOverride = {
       "#3B053A",
       "#2A0229",
     ],
-    pink: ["#E35C65", "#B1446D", "#7E2C75"],
+    pink: ["#E35C65", "#B1446D", "#7E2C75", "#912691"],
+    green: ["#22B573"],
     violet: ["#4D14C4"],
-    cyan: ["#12B7B6"],
+    cyan: ["#12B7B6", "#14B1B6"],
   },
   primaryColor: "brand",
   white: "#FFFFFF",
@@ -28,4 +29,5 @@ export const theme: MantineThemeOverride = {
     sm: 800,
     lg: 1200,
   },
+  fontFamily: "'Roboto', sans-serif",
 };

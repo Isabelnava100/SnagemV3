@@ -1,0 +1,32 @@
+{
+  "1": {
+    "Name": "New User",
+    "Label": "Shiny! Brand new.",
+    "Color1": "464C9A",
+    "Color2": "469A95"
+  },
+  "2": {
+    "Name": "Legacy",
+    "Label": "Present with us since gaia times.",
+    "Color1": "772976",
+    "Color2": "464C9A"
+  },
+  "3": {
+    "Name": "Admin",
+    "Label": "An administrator in the site.",
+    "Color1": "E54156",
+    "Color2": "F59135"
+  },
+  "4": {
+    "Name": "Supporter",
+    "Label": "Signed up for monthly donations.",
+    "Color1": "D022BF",
+    "Color2": "D42B4A"
+  },
+  "5": {
+    "Name": "Philanthropist",
+    "Label": "Thank you for your support in building the site!",
+    "Color1": "E0B20C",
+    "Color2": "BD633D"
+  }
+}

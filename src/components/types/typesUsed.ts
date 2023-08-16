@@ -140,6 +140,7 @@ export type User = {
   avatar?: string;
   displayName: string | null;
   otherinfo?: SpecificUser;
+  username: string;
 };
 //Database for Users
 
@@ -166,15 +167,12 @@ export interface Currencies {
   pokecoin: string;
 }
 
-export type Categories = "held items" | "pokeball" | "Special";
-
 export type Item = {
+  id: string;
   name: string;
-  category: Categories;
-  image_url?: string;
-  quantity: string;
-  box_id?: string;
-  action?: string;
+  category: string;
+  filePath: string;
+  quantity: number;
 };
 
 export interface Draft {
@@ -201,6 +199,7 @@ export interface Character {
   name: string;
   short_description: string;
   species: string;
+  pronouns: string;
   type: "None" | "Hybrid" | "Channeler";
   imageURL: string;
   createdAt: {
@@ -285,4 +284,20 @@ export interface Bookmark {
   send2discord: string;
   threadID: string;
   threadLocation: "Main-Forum" | "Side-Roleplay";
+}
+
+export interface AdminPokemonList {
+  id: string;
+  name?: string;
+  creator: string;
+  pokemons: string[];
+  public: boolean;
+  rule: "except" | "only";
+}
+
+export interface Settings {
+  directPingNotifications: boolean;
+  discordNotifications: boolean;
+  postsAndBookmarkedThreadsNotification: boolean;
+  siteNotifications: boolean;
 }

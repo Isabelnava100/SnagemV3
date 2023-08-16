@@ -1,12 +1,10 @@
-import { ActionIcon, Box, Button, Flex, Group, Image, Paper, Title } from "@mantine/core";
+import { Box, Flex, Paper } from "@mantine/core";
 import { useMediaQuery as useMediaQueryCore } from "@mantine/hooks";
 import { memo } from "react";
 import { Outlet } from "react-router-dom";
-import TeamSnagemLogoSrc from "./assets/images/team-snagem-logo.png";
 import { SideBar } from "./components/navigation/SideBar";
 import { useAuth } from "./context/AuthContext";
 import useMediaQuery from "./hooks/useMediaQuery";
-import { Bell, DirectRight } from "./icons";
 
 export const App = memo(() => {
   const { user } = useAuth();

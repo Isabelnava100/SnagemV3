@@ -2,6 +2,7 @@ import {
   ActionIcon,
   Avatar,
   Box,
+  Button,
   Flex,
   Group,
   Image,
@@ -24,8 +25,10 @@ import SectionWrapper, { ActionButton } from "../../../components/Dashboard/Sect
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { useAuth } from "../../../context/AuthContext";
+import { getItemImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
+  AdminAccessIcon,
   Bell,
   Bookmarks,
   Characters,
@@ -35,12 +38,13 @@ import {
   PokePesos,
   Pokemons,
   Profile,
+  SettingsIcon,
   SnagCoins,
   Tether,
 } from "../../../icons";
 import { getCurrencies, getItems } from "../../../queries/dashboard";
+import { handleLogout } from "../../auth/components/LogoutHandle";
 import "/src/assets/styles/dashboard.css";
-import {handleLogout} from "../../auth/components/LogoutHandle";
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -63,9 +67,14 @@ export function Dashboard() {
       <Stack spacing={isOverMd ? 30 : 10} w="100%">
         {isOverMd && (
           <Stack spacing={13}>
-            <Title order={2} color="white" size={40} transform="uppercase">
-              Snag Dashboard
-            </Title>
+            <Flex justify="space-between" align="center">
+              <Title order={2} color="white" size={40} transform="uppercase">
+                Snag Dashboard
+              </Title>
+              <Button className="self-start" variant="subtle" onClick={handleLogout}>
+                Logout
+              </Button>
+            </Flex>
             <Group>
               <Image src={Bell} alt="Bell icon" width={40} />
               <Text color="white" size={20}>
@@ -74,7 +83,6 @@ export function Dashboard() {
             </Group>
           </Stack>
         )}
-      <p onClick={handleLogout}>logout button</p>
         <Announcements />
         <ItemsAndCurrencySection />
         <TabsPanel />
@@ -130,20 +138,28 @@ type DashboardTabLink = {
   path: string;
   icon: string;
   label: string;
+  enabled: boolean;
 };
-
-const dashboardTabLinks: DashboardTabLink[] = [
-  { path: "", icon: Bookmarks, label: "Bookmarks" },
-  { path: "/Drafts", icon: Drafts, label: "Drafts" },
-  { path: "/Characters", icon: Characters, label: "Characters" },
-  { path: "/Pokemon", icon: Pokemons, label: "Pokemon" },
-  { path: "/Profile", icon: Profile, label: "Profile" },
-];
 
 function TabsPanel() {
   const location = useLocation();
   const currentPath = location.pathname;
   const { isOverMd } = useMediaQuery();
+  const { user } = useAuth();
+  const dashboardTabLinks: DashboardTabLink[] = [
+    { path: "/Bookmarks", icon: Bookmarks, label: "Bookmarks", enabled: true },
+    { path: "/Drafts", icon: Drafts, label: "Drafts", enabled: true },
+    { path: "/Characters", icon: Characters, label: "Characters", enabled: true },
+    { path: "/Pokemon", icon: Pokemons, label: "Pokemon", enabled: true },
+    { path: "/Profile", icon: Profile, label: "Profile", enabled: true },
+    { path: "/Settings", icon: SettingsIcon, label: "Settings", enabled: true },
+    {
+      path: "/Admin-Access",
+      icon: AdminAccessIcon,
+      label: "Admin Access",
+      enabled: user?.otherinfo?.permissions === "Admin",
+    },
+  ];
 
   return (
     <SectionWrapper
@@ -151,37 +167,39 @@ function TabsPanel() {
       customHeader={
         <Paper bg="#3C3A3C">
           <Flex sx={{ overflowY: "hidden" }} align="center" justify="start" gap={isOverMd ? 45 : 0}>
-            {dashboardTabLinks.map((link) => {
-              const linkPath = `/Dashboard${link.path}`;
-              const isActive = linkPath === currentPath;
-              return (
-                <Link
-                  style={{
-                    background: isActive
-                      ? "linear-gradient(180deg, #912691 28.65%, #4D14C4 89.06%)"
-                      : undefined,
-                    borderTopLeftRadius: 16,
-                    borderTopRightRadius: 16,
-                    paddingLeft: 25,
-                    paddingRight: 25,
-                    paddingTop: 10,
-                    paddingBottom: 10,
-                    textDecoration: "none",
-                  }}
-                  to={linkPath}
-                  key={link.path}
-                >
-                  <Group spacing={10}>
-                    <Image width={isOverMd ? 45 : 25} src={link.icon} alt={link.label} />
-                    {isActive && isOverMd && (
-                      <Text color="white" size={20} transform="uppercase">
-                        {link.label}
-                      </Text>
-                    )}
-                  </Group>
-                </Link>
-              );
-            })}
+            {dashboardTabLinks
+              .filter((link) => link.enabled)
+              .map((link) => {
+                const linkPath = `/Dashboard${link.path}`;
+                const isActive = currentPath.includes(linkPath);
+                return (
+                  <Link
+                    style={{
+                      background: isActive
+                        ? "linear-gradient(180deg, #912691 28.65%, #4D14C4 89.06%)"
+                        : undefined,
+                      borderTopLeftRadius: 16,
+                      borderTopRightRadius: 16,
+                      paddingLeft: 25,
+                      paddingRight: 25,
+                      paddingTop: 10,
+                      paddingBottom: 10,
+                      textDecoration: "none",
+                    }}
+                    to={linkPath}
+                    key={link.path}
+                  >
+                    <Group spacing={10}>
+                      <Image width={isOverMd ? 45 : 25} src={link.icon} alt={link.label} />
+                      {isActive && isOverMd && (
+                        <Text color="white" size={20} transform="uppercase">
+                          {link.label}
+                        </Text>
+                      )}
+                    </Group>
+                  </Link>
+                );
+              })}
           </Flex>
         </Paper>
       }
@@ -279,27 +297,36 @@ function MyItems() {
         }
         fallback={
           <ScrollArea
+            style={{ height: 260, width: "100%" }}
+            pb={20}
+            pr={20}
             sx={{
               background: `url(${ItemsBackground})`,
               backgroundSize: 250,
               backgroundRepeat: "no-repeat",
             }}
           >
-            <Flex
-              mah={260}
-              maw={500}
-              gap={25}
-              sx={{
-                flexWrap: "nowrap",
-              }}
-            >
-              {categories.map((categoryName) => (
+            <Flex h="100%" w="100%" gap={25} sx={{ flexWrap: "nowrap" }}>
+              {categories.sort().map((categoryName) => (
                 <Stack key={categoryName} miw={330}>
                   <Title order={3} size={isOverLg ? 24 : 20} sx={itemCommonStyle} bg="#7e2c75a1">
                     {categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}
                   </Title>
                   {data
                     ?.filter((item) => item.category === categoryName)
+                    // sort them in alphabetical order
+                    .sort((a, b) => {
+                      const nameA = a.name.toLowerCase();
+                      const nameB = b.name.toLowerCase();
+
+                      if (nameA < nameB) {
+                        return -1;
+                      }
+                      if (nameA > nameB) {
+                        return 1;
+                      }
+                      return 0;
+                    })
                     .map((item, index) => (
                       <Box
                         key={index}
@@ -309,7 +336,7 @@ function MyItems() {
                       >
                         <Flex w="100%" justify="space-between" align="center">
                           <Group px={18} py={10} spacing={8}>
-                            <Avatar src={item.image_url} alt={item.name} w={40} />
+                            <Avatar src={getItemImageURL(item.filePath)} alt={item.name} w={40} />
                             <Text color="white" size={16}>
                               {item.name}
                             </Text>
