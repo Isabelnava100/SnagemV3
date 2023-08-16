@@ -281,7 +281,9 @@ function BadgesCollection() {
       </Stack>
       <Flex wrap="wrap" gap={8}>
         {badgeData.map((badge, index) => {
-          const existingUserBadge = userBadges.find((userBadge) => userBadge.label === badge.name);
+          const existingUserBadge = userBadges.find(
+            (userBadge) => userBadge.label === badge.name && userBadge.enabled
+          );
           return (
             <Popover width={265} withinPortal position="bottom-start" shadow="md" key={index}>
               <Popover.Target>
