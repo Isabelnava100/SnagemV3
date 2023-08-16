@@ -17,11 +17,26 @@ import { Link } from "react-router-dom";
 import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLayout";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
-import { ArrowSwapIcon, CheckCircleIcon } from "../../../../icons";
+import { badgeData } from "../../../../data/badge";
+import { emojiData, getEmoteImageURL } from "../../../../data/emote";
+import { ArrowSwapIcon, CheckCircleIcon, CrossCircleIcon } from "../../../../icons";
 import { getBadges, getEmojis } from "../../../../queries/settings";
-import Emoji1Src from "/src/assets/emojis/emoji-1.png";
-import Emoji2Src from "/src/assets/emojis/emoji-2.png";
-import Emoji3Src from "/src/assets/emojis/emoji-3.png";
+
+function useGetBadgesQuery() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["get-badges"],
+    queryFn: async () => getBadges(user?.uid as string),
+  });
+}
+
+function useGetEmojisQuery() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["get-emojis"],
+    queryFn: async () => getEmojis(user?.uid as string),
+  });
+}
 
 export type BadgeTypes = "New User" | "Admin" | "Legacy";
 
@@ -70,11 +85,7 @@ function BadgesSectionWrapper(props: {
 }
 
 function Badges() {
-  const { user } = useAuth();
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["get-badges"],
-    queryFn: async () => getBadges(user?.uid as string),
-  });
+  const { data, isLoading, isError } = useGetBadgesQuery();
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const { formattedData } = data;
@@ -92,185 +103,168 @@ function Badges() {
 }
 
 function Emojis() {
-  const { user } = useAuth();
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["get-emojis"],
-    queryFn: async () => getEmojis(user?.uid as string),
-  });
+  const { data, isLoading, isError } = useGetEmojisQuery();
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
-  const emojis = data;
+  const emojiIds = data;
   return (
     <SimpleSectionWrapper>
       <Stack spacing={18}>
         <Title size={24} color="white" weight={400} order={3}>
           Your Emoji Collection
         </Title>
-        <Flex wrap="wrap">
-          {emojis.map((emojiUrl: string) => (
-            <div key={emojiUrl}>
-              <Image width={30} sx={{ objectFit: "cover" }} src={emojiUrl} alt={emojiUrl} />
-            </div>
-          ))}
+        <Flex gap={10} wrap="wrap">
+          {emojiIds.map((emojiId: string) => {
+            const emoji = emojiData.find((emojiObj) => emojiObj.id === emojiId);
+            if (!emoji) return <></>;
+            return (
+              <Flex
+                w={50}
+                h={50}
+                justify="center"
+                align="center"
+                bg="#3C3A3C"
+                sx={{ borderRadius: "100%", flexShrink: 0, border: "3px solid transparent" }}
+                key={emojiId}
+              >
+                <Image
+                  width={30}
+                  height={30}
+                  sx={{ objectFit: "cover" }}
+                  src={getEmoteImageURL(emoji?.Filename)}
+                  alt={emojiId}
+                />
+              </Flex>
+            );
+          })}
         </Flex>
       </Stack>
     </SimpleSectionWrapper>
   );
 }
 
-interface EmojiItem {
-  Name: string;
-  Description: string;
-  imageSrc: string;
-  Timeline: string;
-  GemCost: number;
-  CoinCost: number;
-}
-
-const emojiData: EmojiItem[] = [
-  {
-    Name: "Happy Espeon",
-    Description: "Commissioned from Seviyummy in 2022.",
-    imageSrc: Emoji1Src,
-    Timeline: new Date().toISOString(),
-    GemCost: 1,
-    CoinCost: 50,
-  },
-  {
-    Name: "Happy Espeon",
-    Description: "Commissioned from Seviyummy in 2022.",
-    imageSrc: Emoji2Src,
-    Timeline: new Date().toISOString(),
-    GemCost: 1,
-    CoinCost: 50,
-  },
-  {
-    Name: "Zoroark's Laugh",
-    Description: "Commissioned from Seviyummy in 2022.",
-    Timeline: new Date().toISOString(),
-    GemCost: 1,
-    CoinCost: 50,
-    imageSrc: Emoji3Src,
-  },
-];
-
 function EmojiCollection() {
+  const { data, isLoading, isError } = useGetEmojisQuery();
+  if (isLoading) return <SectionLoader />;
+  if (isError) return <></>;
+  const userEmojiIds = data;
   return (
     <Stack spacing={18}>
       <Title size={24} color="white" weight={400} order={3}>
         Collection of All Emojis
       </Title>
       <Flex wrap="wrap" gap={8}>
-        {emojiData.map((emoji, index) => (
-          <Popover width={265} withinPortal position="bottom-start" shadow="md" key={index}>
-            <Popover.Target>
-              <Flex
-                justify="center"
-                align="center"
-                bg="#3C3A3C"
-                sx={{
-                  borderRadius: "100%",
-                  width: 50,
-                  height: 50,
-                  cursor: "pointer",
-                  border: "3px solid",
-                  borderColor: "transparent",
-                }}
+        {emojiData.map((emoji, index) => {
+          const existingEmoji = userEmojiIds.find(
+            (userEmojiId: string) => userEmojiId === emoji.id
+          );
+          return (
+            <Popover width={265} withinPortal position="bottom-start" shadow="md" key={index}>
+              <Popover.Target>
+                <Flex
+                  justify="center"
+                  align="center"
+                  bg="#3C3A3C"
+                  sx={{
+                    borderRadius: "100%",
+                    width: 50,
+                    height: 50,
+                    cursor: "pointer",
+                    border: "3px solid",
+                    borderColor: "transparent",
+                  }}
+                >
+                  <Image
+                    src={getEmoteImageURL(emoji.Filename)}
+                    alt={emoji.Name}
+                    width={30}
+                    height={30}
+                  />
+                </Flex>
+              </Popover.Target>
+              <Popover.Dropdown
+                bg="#1E1D20"
+                sx={{ borderRadius: 22, border: "none", color: "white" }}
+                p={16}
               >
-                <Image src={emoji.imageSrc} alt={emoji.Name} width={30} height={30} />
-              </Flex>
-            </Popover.Target>
-            <Popover.Dropdown
-              bg="#1E1D20"
-              sx={{ borderRadius: 22, border: "none", color: "white" }}
-              p={16}
-            >
-              <Stack spacing={8}>
-                <Flex gap={10}>
-                  <Flex
-                    w={60}
-                    h={60}
-                    justify="center"
-                    align="center"
-                    sx={{
-                      borderRadius: "100%",
-                      border: "4px solid",
-                      borderColor: "white",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Image
-                      src={emoji.imageSrc}
-                      alt={emoji.Name}
-                      width={30}
-                      height={30}
-                      className="object-cover"
-                    />
+                <Stack spacing={8}>
+                  <Flex gap={10}>
+                    <Flex
+                      w={60}
+                      h={60}
+                      justify="center"
+                      align="center"
+                      bg="#3C3A3C"
+                      sx={{
+                        borderRadius: "100%",
+                        border: "4px solid",
+                        borderColor: existingEmoji ? "#22B573" : "white",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Image
+                        src={getEmoteImageURL(emoji.Filename)}
+                        alt={emoji.Name}
+                        width={30}
+                        height={30}
+                        className="object-cover"
+                      />
+                    </Flex>
+                    <Stack spacing={0}>
+                      <Title order={4} size={16} weight={500}>
+                        {emoji.Name}
+                      </Title>
+                      <Text size={12}>{emoji.Description}</Text>
+                    </Stack>
+                    <Box sx={{ flexShrink: 0 }}>
+                      {existingEmoji ? (
+                        <Image
+                          src={CheckCircleIcon}
+                          alt="Check circle icon"
+                          width={20}
+                          height={20}
+                        />
+                      ) : (
+                        <Image
+                          src={CrossCircleIcon}
+                          alt="Cross circle icon"
+                          width={20}
+                          height={20}
+                        />
+                      )}
+                    </Box>
                   </Flex>
                   <Stack spacing={0}>
-                    <Title order={4} size={16} weight={500}>
-                      {emoji.Name}
+                    <Title order={5} size={16} weight={600}>
+                      How to Obtain:
                     </Title>
-                    <Text size={12}>{emoji.Description}</Text>
+                    <List color="white" sx={{ fontSize: 16, color: "white", fontWeight: 400 }}>
+                      <List.Item>Join before 2025</List.Item>
+                      <List.Item>
+                        Buy for {emoji.CoinCost} Snag Coins in the{" "}
+                        <Anchor className="underline text-white" component={Link} to="/Shop">
+                          Marketplace
+                        </Anchor>
+                        .
+                      </List.Item>
+                      <List.Item>
+                        Buy for {emoji.GemCost} Gem in the{" "}
+                        <Anchor className="underline text-white inline" component={Link} to="/Shop">
+                          Credit shop
+                        </Anchor>
+                        .
+                      </List.Item>
+                    </List>
                   </Stack>
-                  <Box sx={{ flexShrink: 0 }}>
-                    <Image src={CheckCircleIcon} alt="Check circle icon" width={20} height={20} />
-                  </Box>
-                </Flex>
-                <Stack spacing={0}>
-                  <Title order={5} size={16} weight={600}>
-                    How to Obtain:
-                  </Title>
-                  <List color="white" sx={{ fontSize: 16, color: "white", fontWeight: 400 }}>
-                    <List.Item>Join before 2025</List.Item>
-                    <List.Item>
-                      Buy for {emoji.CoinCost} Snag Coins in the{" "}
-                      <Anchor className="underline text-white" component={Link} to="/Shop">
-                        Marketplace
-                      </Anchor>
-                      .
-                    </List.Item>
-                    <List.Item>
-                      Buy for {emoji.GemCost} Gem in the{" "}
-                      <Anchor className="underline text-white inline" component={Link} to="/Shop">
-                        Credit shop
-                      </Anchor>
-                      .
-                    </List.Item>
-                  </List>
                 </Stack>
-              </Stack>
-            </Popover.Dropdown>
-          </Popover>
-        ))}
+              </Popover.Dropdown>
+            </Popover>
+          );
+        })}
       </Flex>
     </Stack>
   );
 }
-
-interface BadgeItem {
-  name: string;
-  background: string;
-  description: string;
-}
-
-const badgeData: BadgeItem[] = [
-  {
-    name: "Legacy",
-    description: "“New User” Badges is enabled to anyone with less than 100 posts.",
-    background: "linear-gradient(90deg, #772976 0%, #464C9A 100%);",
-  },
-  {
-    name: "Admin",
-    description: "“Admin” Badges is enabled to anyone with less than 100 posts.",
-    background: "linear-gradient(90deg, #E54156 0%, #F59135 100%);",
-  },
-  {
-    name: "New User",
-    description: "“New User” Badges is enabled to anyone with less than 100 posts.",
-    background: "linear-gradient(90deg, #464C9A 0%, #469A95 100%);",
-  },
-];
 
 function BadgesCollection() {
   return (
