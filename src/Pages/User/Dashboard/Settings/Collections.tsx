@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
 import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLayout";
+import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
 import { badgeData } from "../../../../data/badge";
@@ -91,13 +92,23 @@ function Badges() {
   const { formattedData } = data;
   return (
     <Flex justify="space-between" align="center">
-      <BadgesSectionWrapper title="Badges Enabled" secondaryText="Max: 5" badges={formattedData} />
-      <Image src={ArrowSwapIcon} alt="Arrow swap icon" width={24} />
-      <BadgesSectionWrapper
-        title="Badges Disabled"
-        badges={formattedData}
-        showEnabledOnly={false}
-      />
+      {formattedData.length ? (
+        <>
+          <BadgesSectionWrapper
+            title="Badges Enabled"
+            secondaryText="Max: 5"
+            badges={formattedData}
+          />
+          <Image src={ArrowSwapIcon} alt="Arrow swap icon" width={24} />
+          <BadgesSectionWrapper
+            title="Badges Disabled"
+            badges={formattedData}
+            showEnabledOnly={false}
+          />
+        </>
+      ) : (
+        <EmptyMessage title="No badges" description="You currently have no badges" />
+      )}
     </Flex>
   );
 }
@@ -113,31 +124,35 @@ function Emojis() {
         <Title size={24} color="white" weight={400} order={3}>
           Your Emoji Collection
         </Title>
-        <Flex gap={10} wrap="wrap">
-          {emojiIds.map((emojiId: string) => {
-            const emoji = emojiData.find((emojiObj) => emojiObj.id === emojiId);
-            if (!emoji) return <></>;
-            return (
-              <Flex
-                w={50}
-                h={50}
-                justify="center"
-                align="center"
-                bg="#3C3A3C"
-                sx={{ borderRadius: "100%", flexShrink: 0, border: "3px solid transparent" }}
-                key={emojiId}
-              >
-                <Image
-                  width={30}
-                  height={30}
-                  sx={{ objectFit: "cover" }}
-                  src={getEmoteImageURL(emoji?.Filename)}
-                  alt={emojiId}
-                />
-              </Flex>
-            );
-          })}
-        </Flex>
+        {emojiIds.length ? (
+          <Flex gap={10} wrap="wrap">
+            {emojiIds.map((emojiId: string) => {
+              const emoji = emojiData.find((emojiObj) => emojiObj.id === emojiId);
+              if (!emoji) return <></>;
+              return (
+                <Flex
+                  w={50}
+                  h={50}
+                  justify="center"
+                  align="center"
+                  bg="#3C3A3C"
+                  sx={{ borderRadius: "100%", flexShrink: 0, border: "3px solid transparent" }}
+                  key={emojiId}
+                >
+                  <Image
+                    width={30}
+                    height={30}
+                    sx={{ objectFit: "cover" }}
+                    src={getEmoteImageURL(emoji?.Filename)}
+                    alt={emojiId}
+                  />
+                </Flex>
+              );
+            })}
+          </Flex>
+        ) : (
+          <EmptyMessage title="Empty" description="You haven't obtained any emojis yet" />
+        )}
       </Stack>
     </SimpleSectionWrapper>
   );
