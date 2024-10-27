@@ -20,7 +20,7 @@ export const HomePage = () => {
       <span>
       It is simple and easy to get started in the role-playing, based on Pokemon.
       </span>
-      <a href="/" className="button yellow">Read About Snagem2</a>
+      <a href="/" className="button yellow">Read About Snagem</a>
     </div>
     </div>
   );
