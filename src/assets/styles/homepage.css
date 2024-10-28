@@ -52,6 +52,7 @@
     text-decoration: none;
     font-weight: bold;
     border-radius: 50px;
+    font-size: 16px;
     position: relative;
     overflow: hidden;
     transition: color 0.4s ease;
@@ -96,10 +97,49 @@
 
   /*second module*/
 
-  .secondmodule{
-min-height:400px;
+  .secondmodule{margin:auto;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    flex-direction: column;width:auto; max-width:800px;
   }
-  .secondmodule h2 {font-size: 4em; font-weight: 400;
-color:white;line-height: 1.2em;}
-  .secondmodule h2 span {color:#FFD074;}
-  .secondmodule span{display:block;font-size: em;color:white;}
+  .innerHold2 {
+    background-size: min(50vw, 380px) auto;
+    background-repeat: no-repeat;
+    padding:100px 20px;width:100%;
+   }
+  .innerHold2 h2 {font-size: 4em; font-weight: 400;
+color:white;line-height: 1.1em;margin:0;}
+
+
+@media (max-width: 600px) {
+    .innerHold2 h2 {font-size: 3em;}
+
+}
+
+  .innerHold2 h2 span {color:#FFD074;}
+
+.oneM{
+    background-position: bottom right;
+    background-image: url('https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/site%2Fsleepingeevee.png?alt=media&token=72f49c9d-9479-441f-bae3-4191b18ba42f');
+}
+  .twoM{
+    background-position: bottom left;
+    background-image: url('https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/site%2Fhooh.png?alt=media&token=2e2e65d1-8078-4d2d-8dbb-77f68cf8c99e');
+    flex-direction: column;
+ display: flex;
+  justify-content: flex-end; 
+  align-items: flex-end;
+  }
+  .innerHold2 span.paragraph2{display:block;font-size: 1.4em;color:white;
+width:320px;margin:20px 0 26px 0;line-height: 1.4em;}
+
+span.red-text {color: #E54156!important; }
+.innerHold2 span.paragraph2 a.button {
+margin-top:28px;
+
+}
+.right-text {
+text-align: right;
+max-width:600px;
+}
