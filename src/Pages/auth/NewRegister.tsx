@@ -16,7 +16,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useCallback, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Gusers, PasswordRequirement, getStrength, requirements } from "./components/Components";
 import { registerUser } from "./components/RegisterHandle";
 
@@ -47,15 +47,21 @@ export function NewRegister() {
     },
 
     validate: {
-      email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email."),
-      username: (value) => (/^[a-zA-Z0-9-_]{3,23}$/.test(value) ? null : "Invalid username."),
-      confirmPassword: (value, values) =>
+      email: (value: string) => (/^\S+@\S+$/.test(value) ? null : "Invalid email."),
+      username: (value: string) => (/^[a-zA-Z0-9-_]{3,23}$/.test(value) ? null : "Invalid username."),
+      password: (value: string) => {
+        if (gaia === "No") return null;
+        if (value.length < 6) return "Password must include at least 6 characters.";
+        const isValid = requirements.every((req) => req.re.test(value));
+        return isValid ? null : "Password does not meet all requirements.";
+      },
+      confirmPassword: (value: string, values: any) =>
         value !== values.password && gaia === "Yes" ? "Passwords did not match." : null,
-      application: (value) =>
+      application: (value: string) =>
         value.length < 500 && gaia === "No"
           ? "Application must be at least 500 characters long."
           : null,
-      gaiaName: (value) =>
+      gaiaName: (value: string) =>
         gaia === "Yes" &&
         Gusers.findIndex((element) => {
           return element.toLowerCase() === value.toLowerCase();
@@ -65,12 +71,10 @@ export function NewRegister() {
     },
   });
 
-  const handleSubmitReg = useCallback(async () => {
-    let results;
+  const handleSubmitReg = useCallback(async (values: typeof form.values) => {
+    setWhenSubmit(true);
     try {
-      setWhenSubmit(true);
-      const values = form.values;
-      results = await registerUser(
+      const results = await registerUser(
         values.email,
         values.password,
         values.application,
@@ -78,22 +82,22 @@ export function NewRegister() {
         values.username
       );
 
-      return Promise.resolve(results);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      // console.log(results);
       if (results === "success") {
         navigate("/Login", { replace: true });
-        // window.location.reload();
       } else {
         if (results === "auth/email-already-in-use") {
           form.setErrors({ email: "Email already in use." });
-        }
-        if (results === "auth/invalid-email") {
+        } else if (results === "auth/invalid-email") {
           form.setErrors({ email: "Badly formatted email." });
+        } else {
+          form.setErrors({ email: "An unexpected error occurred. Please try again." });
         }
+        setWhenSubmit(false);
       }
+    } catch (err) {
+      console.error(err);
+      form.setErrors({ email: "A network error occurred." });
+      setWhenSubmit(false);
     }
   }, [form, navigate]);
 
@@ -110,7 +114,7 @@ export function NewRegister() {
       </Title>
       <Text color="dimmed" size="sm" align="center" mt={5}>
         Already have an account?{" "}
-        <Anchor<"a"> href="Login" size="sm">
+        <Anchor component={Link} to="/Login" size="sm">
           Go to login.
         </Anchor>
       </Text>

@@ -125,8 +125,9 @@ export default function AppRoutes() {
                     <Route path="/Register" element={<NewRegister />} />
                     <Route path="/Forgot" element={<ForgotPassword />} />
                     <Route path="/Reset" element={<ResetPW />} />
-                    <Route path="/Forum?/:forum" element={<MiniNavForum />}>
-                      <Route index element={<MainForum />} />
+                    <Route path="/Forum" element={<MiniNavForum />}>
+                      <Route index element={<Navigate to="Main-Forum" replace />} />
+                      <Route path=":forum" element={<MainForum />} />
                       <Route
                         path=":forum/new"
                         element={

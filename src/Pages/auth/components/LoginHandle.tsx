@@ -1,5 +1,5 @@
 import { FirebaseError } from "@firebase/util";
-import { browserLocalPersistence, setPersistence, signInWithEmailAndPassword } from "firebase/auth";
+import { browserLocalPersistence, browserSessionPersistence, setPersistence, signInWithEmailAndPassword } from "firebase/auth";
 import { User } from "../../../components/types/typesUsed";
 import { getInfo } from "../../../context/AuthContext";
 import { auth } from "../../../context/firebase";
@@ -12,45 +12,29 @@ export const handleSignIn = async (
 ) => {
   try {
     if (remember) {
-      //localStorage.setItem('token', token);
-      await setPersistence(auth, browserLocalPersistence).then(async () => {
-        await signInWithEmailAndPassword(auth, email2, password).then(async (result) => {
-          const { uid, email, displayName } = result.user;
-          try {
-            const otherinfo = await getInfo(uid);
-            setUser({
-              uid,
-              email,
-              displayName,
-              otherinfo,
-              username: otherinfo.username,
-            }); //set user
-          } finally {
-            return true;
-          }
-        }); //sign in
-      });
+      await setPersistence(auth, browserLocalPersistence);
     } else {
-      await signInWithEmailAndPassword(auth, email2, password).then(async (result) => {
-        const { uid, email, displayName } = result.user;
-        try {
-          const otherinfo = await getInfo(uid);
-          setUser({
-            uid,
-            email,
-            displayName,
-            otherinfo,
-            username: otherinfo.username,
-            avatar: otherinfo.avatar,
-          });
-        } finally {
-          return true;
-        }
-      }); //sign in
+      await setPersistence(auth, browserSessionPersistence);
     }
-  } catch (error: unknown) {
-    if (error instanceof FirebaseError) {
+    
+    const result = await signInWithEmailAndPassword(auth, email2, password);
+    const { uid, email, displayName } = result.user;
+    const otherinfo = await getInfo(uid);
+    
+    setUser({
+      uid,
+      email,
+      displayName,
+      otherinfo,
+      username: otherinfo.username,
+      avatar: otherinfo.avatar,
+    });
+    
+    return "success";
+  } catch (error: any) {
+    if (error?.code) {
       return error.code;
     }
+    return "error";
   }
-}; //sign in form
+};

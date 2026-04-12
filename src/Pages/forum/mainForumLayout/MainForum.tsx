@@ -18,8 +18,6 @@ export function MainForum() {
         setAllThreads(checkingThreads);
       } catch (err) {
         console.error(err);
-      } finally {
-        return Promise.resolve();
       }
     }
     fetchData();

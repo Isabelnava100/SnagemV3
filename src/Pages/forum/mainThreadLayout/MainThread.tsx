@@ -27,35 +27,26 @@ export function Threads() {
       if (Number.isNaN(Number(thethreadid))) {
         navigate("/Forum/");
         console.log("Thread ID is invalid.");
-        return true;
-      } else {
-        try {
-          await dataRun(Number(thethreadid), forum || "Main-Forum").then(async (resultsThread) => {
-            setThreadInfo(resultsThread);
-            await dataRun2(Number(thethreadid), forum || "Main-Forum").then((resultsPosts) => {
-              if (page === "last") {
-                onChangePG(Math.ceil(resultsPosts.length / postPerPage));
-                navigate(
-                  `/Forum/${forum}/thread/${thethreadid}/${Math.ceil(
-                    resultsPosts.length / postPerPage
-                  )}`
-                );
-                setAllPosts(resultsPosts);
-              } else {
-                setAllPosts(resultsPosts);
-              }
-              return Promise.resolve();
-            });
-          });
-        } catch (err) {
-          console.error(err);
-        } finally {
-          return Promise.resolve();
+        return;
+      }
+
+      try {
+        const resultsThread = await dataRun(Number(thethreadid), forum || "Main-Forum");
+        setThreadInfo(resultsThread);
+
+        const resultsPosts = await dataRun2(Number(thethreadid), forum || "Main-Forum");
+        if (page === "last") {
+          const lastPage = Math.ceil(resultsPosts.length / postPerPage);
+          onChangePG(lastPage);
+          navigate(`/Forum/${forum}/thread/${thethreadid}/${lastPage}`);
         }
+        setAllPosts(resultsPosts);
+      } catch (err) {
+        console.error("Error fetching thread data:", err);
       }
     }
     fetchData();
-  }, [thethreadid, currentPage]); //set to page
+  }, [thethreadid, currentPage, forum, navigate, page]); // full dependency array
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>

@@ -12,7 +12,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { handleSignIn } from "./components/LoginHandle"
 
@@ -50,29 +50,28 @@ export function Login() {
       </Title>
       <Text color="dimmed" size="sm" align="center" mt={5}>
         Do not have an account yet?{" "}
-        <Anchor<"a"> href="Register" size="sm">
+        <Anchor component={Link} to="/Register" size="sm">
           Apply to Join.
         </Anchor>
       </Text>
       <form
-        onSubmit={form.onSubmit((values) => {
+        onSubmit={form.onSubmit(async (values) => {
           setSub(true);
-          handleSignIn(values.email, values.password, values.remember, setUser).then((results) => {
-          // console.log(results);
-              if (results === "auth/user-not-found") {
-                form.setFieldError('email', 'Invalid email');
-              } else if (results === "auth/wrong-password") {
-                form.setFieldError('password', 'Invalid password');
-              } else if (results === "auth/too-many-requests") {
-                form.setFieldError('email', 'Too many attempts');
-              } else {
-                  navigate("/Dashboard");
-                  return true;
-              }
-              setSub(false);
-            
-            return;
-          });
+          const results = await handleSignIn(values.email, values.password, values.remember, setUser);
+          if (results === "auth/user-not-found" || results === "auth/invalid-credential" || results === "auth/invalid-email") {
+            form.setFieldError('email', 'Invalid email or password');
+            form.setFieldError('password', 'Invalid email or password');
+          } else if (results === "auth/wrong-password") {
+            form.setFieldError('password', 'Invalid password');
+          } else if (results === "auth/too-many-requests") {
+            form.setFieldError('email', 'Too many attempts');
+          } else if (results === "success") {
+            form.reset();
+            navigate("/Dashboard");
+          } else {
+            form.setFieldError('email', 'An unexpected error occurred');
+          }
+          setSub(false);
         })}
       >
         <Paper withBorder shadow="md" p={30} mt={30} radius="md" style={{ background: "#222125" }}>
@@ -95,7 +94,7 @@ export function Login() {
           <Group position="apart" mt="md">
             <Checkbox label="Remember me" {...form.getInputProps("remember")} />
             <div></div>
-            <Anchor<"a"> href="Forgot" size="sm">
+            <Anchor component={Link} to="/Forgot" size="sm">
               Forgot password?
             </Anchor>
           </Group>

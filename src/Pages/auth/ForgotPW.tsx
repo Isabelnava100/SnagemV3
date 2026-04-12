@@ -12,7 +12,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "tabler-icons-react";
 import { auth } from "../../context/firebase";
 import "/src/assets/styles/authentication.css";
@@ -69,7 +69,7 @@ export function ForgotPassword() {
             {...form.getInputProps("email")}
           />
           <Group position="apart" mt="lg" className="controlsAuth">
-            <Anchor<"a"> href="Login" color="dimmed" size="sm" className="controlAuth">
+            <Anchor component={Link} to="/Login" color="dimmed" size="sm" className="controlAuth">
               <Center inline>
                 <ArrowLeft size={12} />
                 <Box ml={5}>Back to login page</Box>

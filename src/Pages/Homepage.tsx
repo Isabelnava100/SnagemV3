@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import "/src/assets/styles/homepage.css";
 
 export const HomePage = () => {
@@ -8,8 +9,8 @@ export const HomePage = () => {
               <h1>The Snagem Guild</h1>
               <h2>Ready to start your journey?</h2>
               <div className="button-container">
-              <a href="/" className="red button">Discover What We Do</a>
-              <a href="/Forum/Main-Forum" className="purple button">Go to the Forums</a>
+              <Link to="/" className="red button">Discover What We Do</Link>
+              <Link to="/Forum/Main-Forum" className="purple button">Go to the Forums</Link>
               </div>
            </div>
 
@@ -21,7 +22,7 @@ export const HomePage = () => {
       <span className="paragraph2">
       It is simple and easy to get started in the role-playing, based on Pokemon.
       </span>
-      <a href="/" className="button yellow">Read About Snagem</a>
+      <Link to="/" className="button yellow">Read About Snagem</Link>
       </div>
 
 
@@ -29,7 +30,7 @@ export const HomePage = () => {
       <h2 className="right-text">Forums custom built <span className="red-text">for roleplay.</span></h2>
       <span className="paragraph2">
       We created this platform that adjusts to our needs and regularly update it with new features.
-      <a href="/" className="button red">See Anticipated Updates</a>
+      <Link to="/" className="button red">See Anticipated Updates</Link>
       </span>
       
       </div>

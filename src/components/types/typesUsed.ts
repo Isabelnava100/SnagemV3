@@ -144,8 +144,30 @@ export type User = {
 };
 //Database for Users
 
+/* 
+  ===========================================
+  SnagemGuild Native Permissions Architecture
+  ===========================================
+  - Director: Owner, can do anything.
+  - Admin: Able to edit some things and assist directors.
+  - Master User: Can access certain privileged parts of the site.
+  - Verified User: Basic user but verified identity.
+  - New User ("New"): User that has been accepted natively.
+  - Applicant: Applicants (cannot login).
+  - Disabled: Cannot view most of the site, cannot login.
+*/
+export enum UserRoles {
+  Director = "Director",
+  Admin = "Admin",
+  Master = "Master",
+  Verified = "Verified",
+  New = "New",
+  Applicant = "Applicant",
+  Disabled = "Disabled",
+}
+
 export type SpecificUser = {
-  permissions: string;
+  permissions: UserRoles | string;
   badges: string[];
   discordUID?: string;
 };
