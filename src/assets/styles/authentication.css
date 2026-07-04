@@ -1,19 +1,37 @@
-.paperBGAuth {
-    background: "#222125";
+.authCard {
+  margin: 40px auto;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #1b1a1e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
 }
-.titleAuth {
-    font-size: 26px;
-    font-weight: 900;
-  } 
-  
-  @media (max-width: 576px) {
-    .controlsAuth {
-      flex-direction: column-reverse;
-    }
-  
-    .controlAuth {
-      width: 100%;
-      text-align: center;
-    }
+
+.authCardHeader {
+  background: linear-gradient(90deg, #912691 0%, #474d9b 45%, #14e0de 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 20px;
+  text-align: center;
+  padding: 10px 16px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.authCardBody {
+  padding: 28px 32px 32px 32px;
+}
+
+.authEevee {
+  max-width: 260px;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 576px) {
+  .authCard {
+    margin: 20px 10px;
   }
-  
+  .authCardBody {
+    padding: 20px 16px 24px 16px;
+  }
+}

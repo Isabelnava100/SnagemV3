@@ -4,7 +4,6 @@ import {
   Container,
   Grid,
   Group,
-  Paper,
   PasswordInput,
   Popover,
   Progress,
@@ -12,11 +11,11 @@ import {
   Text,
   TextInput,
   Textarea,
-  Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useCallback, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { AuthCard, warmGradient } from "./components/AuthCard";
 import { Gusers, PasswordRequirement, getStrength, requirements } from "./components/Components";
 import { registerUser } from "./components/RegisterHandle";
 
@@ -102,24 +101,8 @@ export function NewRegister() {
   }, [form, navigate]);
 
   return (
-    <Container size={840} my={40}>
-      <Title
-        ta="center"
-        sx={(theme) => ({
-          fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-          fontWeight: 900,
-        })}
-      >
-        Apply to Join
-      </Title>
-      <Text color="dimmed" size="sm" ta="center" mt={5}>
-        Already have an account?{" "}
-        <Anchor component={Link} to="/Login" size="sm">
-          Go to login.
-        </Anchor>
-      </Text>
-
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md" style={{ background: "#222125" }}>
+    <Container size={680} my={40}>
+      <AuthCard title="Apply to Join">
         <form
           data-netlify="true"
           name="newRegister"
@@ -130,19 +113,17 @@ export function NewRegister() {
             width: "100%",
           }}
         >
-          <Grid gap="sm" style={{ width: "100%" }}>
+          <Grid gap="xl" style={{ width: "100%" }}>
             <Grid.Col span={{ base: 12, xs: 6 }}>
               <TextInput
                 required
-                label="Email"
-                placeholder="Your@email.com"
+                label="Email Address"
                 {...form.getInputProps("email")}
               />
               <TextInput
                 required
                 mt="md"
                 label="Username"
-                placeholder="Username"
                 {...form.getInputProps("username")}
               />
 
@@ -158,13 +139,15 @@ export function NewRegister() {
                 label="Are you in the gaiaonline Snagem guild?"
                 required
               >
-                <Radio value="Yes" label="Yes" />
-                <Radio value="No" label="No" />
+                <Group mt={6} gap="md">
+                  <Radio value="Yes" label="Yes" />
+                  <Radio value="No" label="No" />
+                </Group>
               </Radio.Group>
               {gaia === "Yes" ? (
                 ""
               ) : (
-                <Text color="dimmed" size="sm" mt={5}>
+                <Text c="dimmed" size="sm" mt={5}>
                   Your registration will be accepted based on your application.{" "}
                   <Anchor<"a"> href="/Forum/1" size="sm" target="_blank">
                     {" "}
@@ -179,7 +162,6 @@ export function NewRegister() {
                   <TextInput
                     required
                     label="Gaiaonline Username"
-                    placeholder="Your gaiaonline username"
                     {...form.getInputProps("gaiaName")}
                   />
 
@@ -194,8 +176,7 @@ export function NewRegister() {
                         mt="md"
                         required
                         {...form.getInputProps("password")}
-                        label="Your password"
-                        placeholder="Your password"
+                        label="Password"
                         description="Should include letters in lower and uppercase, at least 1 number and at least 1 special symbol."
                         value={value}
                         onFocus={() => setPopoverOpened((o) => true)}
@@ -222,7 +203,6 @@ export function NewRegister() {
                   </Popover>
                   <PasswordInput
                     {...form.getInputProps("confirmPassword")}
-                    placeholder="Your Password again"
                     mt="md"
                     label="Confirm Password"
                     required
@@ -236,12 +216,14 @@ export function NewRegister() {
                     placeholder="Write your answer here."
                     description="With a character in mind write out a brief Roleplaying example based on a moment in your character's life. It can be a short story about where the grew up, why the decided to join Team Snagem or whatever you want. Just have it ending with them joining Team Snagem, or deciding to. Furthermore in this scenario reveal your character's starter Pokemon and a battle scene. The pokemon can be any first stage non-legendary Pokemon that still evolves."
                     label="Application"
+                    autosize
                     minRows={12}
+                    maxRows={18}
                     required
                   />
 
                   <Group justify="right">
-                    <Text size="xs">
+                    <Text size="xs" c="dimmed">
                       {refTextarea.current?.value.length ? refTextarea.current?.value.length : 0}{" "}
                       Characters
                     </Text>
@@ -249,15 +231,28 @@ export function NewRegister() {
                 </>
               )}
 
-              <Group justify="right" mt="md">
-                <Button type="submit" disabled={whensubmit}>
+              <Group justify="right" mt="xl">
+                <Button
+                  type="submit"
+                  size="lg"
+                  radius="md"
+                  variant="gradient"
+                  gradient={warmGradient}
+                  disabled={whensubmit}
+                >
                   Submit
                 </Button>
               </Group>
             </Grid.Col>
           </Grid>
         </form>
-      </Paper>
+      </AuthCard>
+      <Text c="dimmed" size="sm" ta="center" mt={5}>
+        Already have an account?{" "}
+        <Anchor component={Link} to="/Login" size="sm">
+          Go to login.
+        </Anchor>
+      </Text>
     </Container>
   );
 }

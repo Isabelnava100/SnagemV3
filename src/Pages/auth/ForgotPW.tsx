@@ -4,18 +4,15 @@ import {
   Button,
   Center,
   Container,
-  Group,
-  Paper,
-  Text,
+  Stack,
   TextInput,
-  Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "tabler-icons-react";
 import { auth } from "../../context/firebase";
-import "/src/assets/styles/authentication.css";
+import { AuthCard, warmGradient } from "./components/AuthCard";
 
 export function ForgotPassword() {
   const navigate = useNavigate();
@@ -48,39 +45,37 @@ export function ForgotPassword() {
   }
 
   return (
-    <Container size={460} my={30}>
-      <form
-        onSubmit={form.onSubmit((values) => {
-          resetPassword(values.email);
-        })}
-      >
-        <Title className="titleAuth" ta="center">
-          Forgot your password?
-        </Title>
-        <Text color="dimmed" size="sm" ta="center">
-          Enter your email to get a reset link.
-        </Text>
-
-        <Paper withBorder shadow="md" p={30} radius="md" mt="xl" className="paperBGAuth">
-          <TextInput
-            label="Your email"
-            placeholder="Your@email.com"
-            required
-            {...form.getInputProps("email")}
-          />
-          <Group justify="space-between" mt="lg" className="controlsAuth">
-            <Anchor component={Link} to="/Login" color="dimmed" size="sm" className="controlAuth">
-              <Center inline>
-                <ArrowLeft size={12} />
-                <Box ml={5}>Back to login page</Box>
-              </Center>
-            </Anchor>
-            <Button className="controlAuth" type="submit">
-              Reset password
+    <Container size={640} my={40}>
+      <AuthCard title="Enter your email to get a reset link.">
+        <form
+          onSubmit={form.onSubmit((values) => {
+            resetPassword(values.email);
+          })}
+        >
+          <Stack maw={340} mx="auto" gap="lg">
+            <TextInput
+              label="Email Address"
+              required
+              {...form.getInputProps("email")}
+            />
+            <Button
+              type="submit"
+              size="lg"
+              radius="md"
+              variant="gradient"
+              gradient={warmGradient}
+            >
+              Reset Password
             </Button>
-          </Group>
-        </Paper>
-      </form>
+          </Stack>
+          <Anchor component={Link} to="/Login" c="dimmed" size="sm" mt="xl" display="inline-block">
+            <Center inline>
+              <ArrowLeft size={14} />
+              <Box ml={5}>Back to the Login page</Box>
+            </Center>
+          </Anchor>
+        </form>
+      </AuthCard>
     </Container>
   );
 }

@@ -3,23 +3,30 @@ import {
   Button,
   Checkbox,
   Container,
+  Divider,
+  Grid,
   Group,
-  Paper,
   PasswordInput,
+  Stack,
   Text,
   TextInput,
-  Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { BrandGoogle } from "tabler-icons-react";
 import { useAuth } from "../../context/AuthContext";
-import { handleSignIn } from "./components/LoginHandle"
+import { AuthCard, coolGradient, warmGradient } from "./components/AuthCard";
+import { handleGoogleSignIn } from "./components/GoogleHandle";
+import { handleSignIn } from "./components/LoginHandle";
+
+const EEVEE_IMG =
+  "https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/site%2Fsleepingeevee.png?alt=media&token=72f49c9d-9479-441f-bae3-4191b18ba42f";
 
 export function Login() {
   const navigate = useNavigate();
-  const [value, setValue] = useState("");
   const [submitted, setSub] = useState(false);
+  const [googleError, setGoogleError] = useState("");
   const { setUser, user } = useAuth();
   const form = useForm({
     initialValues: {
@@ -32,77 +39,119 @@ export function Login() {
     },
   });
 
-
-
   useEffect(() => {
     if (user) {
       navigate("/Dashboard");
     }
   }, [user]);
 
+  const onGoogle = async () => {
+    setSub(true);
+    setGoogleError("");
+    const result = await handleGoogleSignIn(setUser);
+    if (result === "success") {
+      navigate("/Dashboard");
+    } else if (result === "pending") {
+      setGoogleError("Your application is still awaiting approval.");
+    } else if (result === "no-account") {
+      setGoogleError("No account matches that Google email. Apply to join first.");
+    } else if (result !== "auth/popup-closed-by-user" && result !== "auth/cancelled-popup-request") {
+      setGoogleError("Google sign-in failed. Please try again.");
+    }
+    setSub(false);
+  };
+
   return (
-    <Container size={420} my={40}>
-      <Title
-        ta="center"
-        sx={(theme) => ({ fontFamily: `Greycliff CF, ${theme.fontFamily}`, fontWeight: 900 })}
-      >
-        Welcome back!
-      </Title>
-      <Text color="dimmed" size="sm" ta="center" mt={5}>
-        Do not have an account yet?{" "}
-        <Anchor component={Link} to="/Register" size="sm">
-          Apply to Join.
-        </Anchor>
-      </Text>
-      <form
-        onSubmit={form.onSubmit(async (values) => {
-          setSub(true);
-          const results = await handleSignIn(values.email, values.password, values.remember, setUser);
-          if (results === "auth/user-not-found" || results === "auth/invalid-credential" || results === "auth/invalid-email") {
-            form.setFieldError('email', 'Invalid email or password');
-            form.setFieldError('password', 'Invalid email or password');
-          } else if (results === "auth/wrong-password") {
-            form.setFieldError('password', 'Invalid password');
-          } else if (results === "auth/too-many-requests") {
-            form.setFieldError('email', 'Too many attempts');
-          } else if (results === "success") {
-            form.reset();
-            navigate("/Dashboard");
-          } else {
-            form.setFieldError('email', 'An unexpected error occurred');
-          }
-          setSub(false);
-        })}
-      >
-        <Paper withBorder shadow="md" p={30} mt={30} radius="md" style={{ background: "#222125" }}>
-          <TextInput
-            label="Email"
-            placeholder="Your@email.com"
-            required
-            {...form.getInputProps("email")}
-          />
-<PasswordInput
-        mt="md"
-        required
-        {...form.getInputProps('password')}
-        error={form.errors.password}
-        label="Your password"
-        placeholder="Your password"
-        value={form.values.password}
-        onChange={(event) => form.setFieldValue('password', event.currentTarget.value)}
-      />
-          <Group justify="space-between" mt="md">
-            <Checkbox label="Remember me" {...form.getInputProps("remember")} />
-            <div></div>
-            <Anchor component={Link} to="/Forgot" size="sm">
-              Forgot password?
-            </Anchor>
-          </Group>
-          <Button type="submit" fullWidth mt="xl" disabled={submitted}>
-            {submitted ? "Loading..." : "Sign in"}
-          </Button>
-        </Paper>
-      </form>
+    <Container size={680} my={40}>
+      <AuthCard title="Access the Dashboard">
+        <form
+          onSubmit={form.onSubmit(async (values) => {
+            setSub(true);
+            const results = await handleSignIn(values.email, values.password, values.remember, setUser);
+            if (results === "auth/user-not-found" || results === "auth/invalid-credential" || results === "auth/invalid-email") {
+              form.setFieldError("email", "Invalid email or password");
+              form.setFieldError("password", "Invalid email or password");
+            } else if (results === "auth/wrong-password") {
+              form.setFieldError("password", "Invalid password");
+            } else if (results === "auth/too-many-requests") {
+              form.setFieldError("email", "Too many attempts");
+            } else if (results === "success") {
+              form.reset();
+              navigate("/Dashboard");
+            } else {
+              form.setFieldError("email", "An unexpected error occurred");
+            }
+            setSub(false);
+          })}
+        >
+          <Grid gap="xl" align="center">
+            <Grid.Col span={{ base: 12, xs: 7 }}>
+              <TextInput
+                label="Email Address"
+                required
+                {...form.getInputProps("email")}
+              />
+              <PasswordInput
+                mt="md"
+                required
+                label="Password"
+                {...form.getInputProps("password")}
+              />
+              <Group justify="space-between" mt={6}>
+                <Checkbox size="xs" label="Remember me" {...form.getInputProps("remember")} />
+                <Anchor component={Link} to="/Forgot" size="sm" c="dimmed">
+                  Forgot your password?
+                </Anchor>
+              </Group>
+              <Button
+                type="submit"
+                fullWidth
+                mt="xl"
+                size="lg"
+                radius="md"
+                variant="gradient"
+                gradient={warmGradient}
+                disabled={submitted}
+              >
+                {submitted ? "Loading..." : "LOG IN"}
+              </Button>
+              <Divider label="or" labelPosition="center" my="md" />
+              <Button
+                fullWidth
+                variant="default"
+                radius="md"
+                leftSection={<BrandGoogle size={18} />}
+                onClick={onGoogle}
+                disabled={submitted}
+              >
+                Continue with Google
+              </Button>
+              {googleError && (
+                <Text c="red" size="sm" mt="xs" ta="center">
+                  {googleError}
+                </Text>
+              )}
+            </Grid.Col>
+            <Grid.Col span={{ base: 12, xs: 5 }}>
+              <Stack align="center" gap="sm">
+                <img src={EEVEE_IMG} alt="Sleeping Eevee" className="authEevee" />
+                <Text size="sm" c="dimmed">
+                  Don&apos;t have an account yet?
+                </Text>
+                <Button
+                  component={Link}
+                  to="/Register"
+                  radius="xl"
+                  variant="gradient"
+                  gradient={coolGradient}
+                >
+                  Apply to Join
+                </Button>
+              </Stack>
+            </Grid.Col>
+          </Grid>
+        </form>
+      </AuthCard>
     </Container>
   );
 }

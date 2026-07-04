@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import {
-  PasswordInput, Paper, Title, Text,
+  PasswordInput,
   Container, Group, Button, Progress, Popover,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
@@ -12,7 +12,7 @@ import {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { confirmPasswordReset } from "firebase/auth";
 import { auth } from "../../context/firebase";
-import '/src/assets/styles/authentication.css';
+import { AuthCard, warmGradient } from "./components/AuthCard";
 
 export function ResetPW() {
   const [searchParams] = useSearchParams();
@@ -87,22 +87,8 @@ export function ResetPW() {
   };
 
   return (
-    <Container size={460} my={30}>
-      <Title className="titleAuth" ta="center">
-        Reset Your Password
-      </Title>
-      <Text color="dimmed" size="sm" ta="center">
-        Enter your new password.
-      </Text>
-
-      <Paper
-        withBorder
-        shadow="md"
-        p={30}
-        radius="md"
-        mt="xl"
-        className="paperBGAuth"
-      >
+    <Container size={640} my={40}>
+      <AuthCard title="Reset Your Password">
         <form onSubmit={form.onSubmit(handlePasswordReset)}>
           <PasswordInput
             mt="md"
@@ -142,13 +128,20 @@ export function ResetPW() {
             required
           />
 
-          <Group justify="space-between" mt="lg" className="controlsAuth">
-            <Button className="controlAuth" type="submit" disabled={submitted}>
-              {submitted ? "Updating..." : "Reset password"}
+          <Group justify="right" mt="xl">
+            <Button
+              type="submit"
+              size="lg"
+              radius="md"
+              variant="gradient"
+              gradient={warmGradient}
+              disabled={submitted}
+            >
+              {submitted ? "Updating..." : "Reset Password"}
             </Button>
           </Group>
         </form>
-      </Paper>
+      </AuthCard>
     </Container>
   );
 }
