@@ -1,0 +1,112 @@
+rules_version = '2';
+
+// SnagemV3 Firestore security rules. This is the REAL authorization layer —
+// the app's checks are UI only. See docs/PERMISSIONS.md.
+// Paste this whole file into Firebase console -> Firestore Database -> Rules.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function selfExists() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function self() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isAdmin() {
+      return selfExists() && self().permissions == 'Admin';
+    }
+    function hasCap(cap) {
+      return isAdmin() || (selfExists() && cap in self().get('capabilities', []));
+    }
+    // A field is "unchanged" if the incoming write keeps its current value.
+    function unchanged(field) {
+      return request.resource.data.get(field, null) == resource.data.get(field, null);
+    }
+
+    // ---- Approved members --------------------------------------------------
+    // permissions/capabilities/badges are Admin-only; a user may edit the rest
+    // of their own doc (settings, myBookmarks, profile fields, etc).
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();            // promotion from NewUsers is admin/console only
+      allow delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isSignedIn() && request.auth.uid == uid
+        && unchanged('permissions')
+        && unchanged('capabilities')
+        && unchanged('badges')
+      );
+
+      // Item bag: owner manages own; GiveItems (or Admin) may grant into any bag.
+      match /bag/items {
+        allow read: if request.auth.uid == uid || isAdmin();
+        allow write: if request.auth.uid == uid || hasCap('GiveItems');
+      }
+      // All other per-user data: owner (or admin) only.
+      match /bag/{doc} {
+        allow read, write: if request.auth.uid == uid || isAdmin();
+      }
+      match /bookmarks/{doc} {
+        allow read, write: if request.auth.uid == uid || isAdmin();
+      }
+      match /drafts/{doc} {
+        allow read, write: if request.auth.uid == uid || isAdmin();
+      }
+    }
+
+    // ---- Registration queue ------------------------------------------------
+    // Owner creates their own pending doc with permissions pinned to "New".
+    match /NewUsers/{uid} {
+      allow read: if request.auth.uid == uid || isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == uid
+                    && request.resource.data.permissions == 'New';
+      allow update, delete: if isAdmin();
+    }
+
+    // ---- Admin-managed shared data ----------------------------------------
+    match /admin/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasCap('ManageLists');
+    }
+
+    // ---- Discord link requests --------------------------------------------
+    match /tickets/{doc} {
+      allow read: if isAdmin();
+      allow write: if isSignedIn();
+    }
+
+    // ---- Append-only audit trail ------------------------------------------
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn()
+                    && request.resource.data.actorUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ---- Forums ------------------------------------------------------------
+    // NOTE: post edit/delete is admin-only until posts carry an ownerUid field
+    // (forum build plan rec 7). Once ownerUid exists, change the posts update/
+    // delete rule to: request.auth.uid == resource.data.ownerUid.
+    match /forum/{forum} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+
+      match /threads/{threadId} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn();
+        allow delete: if isAdmin();
+
+        match /posts/{postId} {
+          allow read: if isSignedIn();
+          allow create: if isSignedIn();
+          allow update, delete: if isAdmin();
+        }
+      }
+    }
+  }
+}
