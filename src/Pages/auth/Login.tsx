@@ -73,6 +73,8 @@ export function Login() {
               form.setFieldError("password", "Invalid password");
             } else if (results === "auth/too-many-requests") {
               form.setFieldError("email", "Too many attempts");
+            } else if (results === "pending") {
+              form.setFieldError("email", "Your application is still awaiting approval.");
             } else if (results === "success") {
               form.reset();
               navigate("/Dashboard");

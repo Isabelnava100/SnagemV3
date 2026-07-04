@@ -12,14 +12,16 @@ export const registerUser = async (
 ) => {
   const pwClean = application ? generatePassword() : "";
   const password = pwCheck || pwClean;
-  const where = application ? "NewUsers" : "users";
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    
+
     if (user) {
-      const whereRef = doc(db, where, user.uid);
+      // Every signup lands in the NewUsers approval queue; an admin promotes the
+      // doc to the "users" collection after review. Nothing writes to "users"
+      // from the client, so permissions can't be self-assigned at registration.
+      const whereRef = doc(db, "NewUsers", user.uid);
       await setDoc(whereRef, {
         application,
         email: user.email,

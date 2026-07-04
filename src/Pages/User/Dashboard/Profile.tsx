@@ -18,6 +18,7 @@ import { IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
 import { IconInfoCircle } from "@tabler/icons-react";
+import DOMPurify from "dompurify";
 import { v4 as uuid } from "uuid";
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
@@ -583,7 +584,8 @@ function RightSideContent() {
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 
-      await setDoc(docRef, { description: debounced }, { merge: true });
+      // Sanitize before persisting so stored HTML is safe for any render path
+      await setDoc(docRef, { description: DOMPurify.sanitize(debounced ?? "") }, { merge: true });
     } catch (err) {
       //
     }
