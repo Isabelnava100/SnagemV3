@@ -5,18 +5,16 @@ import {
   Box,
   Flex,
   Image,
-  MultiSelect,
-  MultiSelectProps,
   ScrollArea,
-  SelectItem,
   Stack,
+  TagsInput,
   Text,
   Title,
   Tooltip,
   type StackProps,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
-import { IconX } from "@tabler/icons";
+import { IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
 import { InfoCircle } from "tabler-icons-react";
@@ -64,7 +62,7 @@ export default function Profile() {
 function LeftSideContent() {
   const { isOverLg } = useMediaQuery();
   return (
-    <Stack w="100%" maw={isOverLg ? 450 : undefined} spacing={15}>
+    <Stack w="100%" maw={isOverLg ? 450 : undefined} gap={15}>
       <Avatars />
       <CoverBackgrounds />
       <Tags />
@@ -76,7 +74,7 @@ function Wrapper(props: { children: React.ReactNode } & StackProps) {
   const { isOverLg } = useMediaQuery();
   const { children, p = isOverLg ? 25 : 15, sx = { borderRadius: 22 }, ...restProps } = props;
   return (
-    <Stack bg="#403C43" p={p} {...restProps} sx={sx} spacing={5}>
+    <Stack bg="#403C43" p={p} {...restProps} sx={sx} gap={5}>
       {children}
     </Stack>
   );
@@ -86,7 +84,7 @@ function EmptyMessage(props: { message: string }) {
   const { message } = props;
   return (
     <Flex w="100%" py="xl" justify="center" align="center">
-      <Title color="white" order={3}>
+      <Title c="white" order={3}>
         {message}
       </Title>
     </Flex>
@@ -226,7 +224,7 @@ function Avatars() {
       />
       <Stack w="100%" maw="100%" sx={{ flex: 1, overflow: "hidden" }}>
         <Flex w="100%" justify="space-between" align="center">
-          <Text size={16} color="white">
+          <Text fz={16} color="white">
             Avatars
           </Text>
           <UploadAndCropImage
@@ -235,7 +233,7 @@ function Avatars() {
               <GradientButtonPrimary
                 disabled={isProcessing || !canUpload}
                 loading={isProcessing}
-                rightIcon={<Image src={Upload} />}
+                rightSection={<Image src={Upload} />}
               >
                 Upload
               </GradientButtonPrimary>
@@ -409,7 +407,7 @@ function CoverBackgrounds() {
     <Wrapper p={16}>
       <Stack>
         <Flex w="100%" justify="space-between" align="center">
-          <Text size={16} color="white">
+          <Text fz={16} color="white">
             Cover Background
           </Text>
           <UploadAndCropImage
@@ -418,7 +416,7 @@ function CoverBackgrounds() {
               <GradientButtonPrimary
                 disabled={isProcessing || !canUpload}
                 loading={isProcessing}
-                rightIcon={<Image src={Upload} />}
+                rightSection={<Image src={Upload} />}
               >
                 Upload
               </GradientButtonPrimary>
@@ -457,11 +455,11 @@ function CoverBackgrounds() {
                           {isActive && (
                             <div className="absolute bottom-0 left-0 w-full py-2">
                               <Text
-                                transform="uppercase"
-                                color="white"
-                                align="center"
-                                weight="bold"
-                                size={14}
+                                tt="uppercase"
+                                c="white"
+                                ta="center"
+                                fw="bold"
+                                fz={14}
                               >
                                 Selected
                               </Text>
@@ -498,17 +496,8 @@ function Tags() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [processing, setProcessing] = React.useState(false);
-  const [items, setItems] = useState<SelectItem[]>([]);
+  const [items, setItems] = useState<{ label: string; value: string }[]>([]);
   const [isFirstTime, setFirstTime] = useState(true);
-
-  const canAdd = items.length < 6;
-
-  const handleCreateTag: MultiSelectProps["onCreate"] = (query) => {
-    if (!canAdd) return;
-    const item: SelectItem = { label: query, value: query };
-    setItems((pre) => [...pre, item]);
-    return query;
-  };
 
   const addTag = async () => {
     if (isLoading) return;
@@ -552,7 +541,7 @@ function Tags() {
     <Wrapper p={16}>
       <Stack>
         <Flex align="start" justify="center">
-          <Text size={16} color="white">
+          <Text fz={16} color="white">
             Tags
           </Text>
           <Alert icon={<InfoCircle />} py={0} color="gray" bg="transparent" sx={{ flex: 1 }}>
@@ -560,15 +549,11 @@ function Tags() {
             page.
           </Alert>
         </Flex>
-        <MultiSelect
+        <TagsInput
           onChange={(values) => setItems(values.map((value) => ({ value, label: value })))}
-          data={items}
           disabled={processing}
           value={items.map((selectItem) => selectItem.value)}
-          creatable
-          searchable
-          getCreateLabel={(query) => `+ Add ${query}`}
-          onCreate={handleCreateTag}
+          maxTags={6}
         />
       </Stack>
     </Wrapper>
@@ -586,7 +571,7 @@ function RightSideContent() {
       setValue(editor.getHTML());
     },
   });
-  const { mutate, isLoading, isSuccess } = useMutation({
+  const { mutate, isPending: isLoading, isSuccess } = useMutation({
     mutationFn: () => saveChanges(),
   });
   const { user } = useAuth();
@@ -615,7 +600,7 @@ function RightSideContent() {
     <Stack sx={{ flex: 1 }}>
       <Wrapper sx={{ flex: 1, borderRadius: 22 }}>
         <Flex justify="space-between" align="center">
-          <Title color="white" order={2} size={24}>
+          <Title c="white" order={2} size={24}>
             Description
           </Title>
           {isLoading && <Text>Saving changes...</Text>}

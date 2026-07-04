@@ -1,4 +1,5 @@
 import { Button, Center, Stack, Text } from "@mantine/core";
+import type { JSX } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 

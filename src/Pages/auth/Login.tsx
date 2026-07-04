@@ -43,12 +43,12 @@ export function Login() {
   return (
     <Container size={420} my={40}>
       <Title
-        align="center"
+        ta="center"
         sx={(theme) => ({ fontFamily: `Greycliff CF, ${theme.fontFamily}`, fontWeight: 900 })}
       >
         Welcome back!
       </Title>
-      <Text color="dimmed" size="sm" align="center" mt={5}>
+      <Text color="dimmed" size="sm" ta="center" mt={5}>
         Do not have an account yet?{" "}
         <Anchor component={Link} to="/Register" size="sm">
           Apply to Join.
@@ -91,7 +91,7 @@ export function Login() {
         value={form.values.password}
         onChange={(event) => form.setFieldValue('password', event.currentTarget.value)}
       />
-          <Group position="apart" mt="md">
+          <Group justify="space-between" mt="md">
             <Checkbox label="Remember me" {...form.getInputProps("remember")} />
             <div></div>
             <Anchor component={Link} to="/Forgot" size="sm">

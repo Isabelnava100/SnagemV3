@@ -88,10 +88,10 @@ export function ResetPW() {
 
   return (
     <Container size={460} my={30}>
-      <Title className="titleAuth" align="center">
+      <Title className="titleAuth" ta="center">
         Reset Your Password
       </Title>
-      <Text color="dimmed" size="sm" align="center">
+      <Text color="dimmed" size="sm" ta="center">
         Enter your new password.
       </Text>
 
@@ -142,7 +142,7 @@ export function ResetPW() {
             required
           />
 
-          <Group position="apart" mt="lg" className="controlsAuth">
+          <Group justify="space-between" mt="lg" className="controlsAuth">
             <Button className="controlAuth" type="submit" disabled={submitted}>
               {submitted ? "Updating..." : "Reset password"}
             </Button>

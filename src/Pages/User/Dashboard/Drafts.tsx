@@ -11,7 +11,7 @@ import formatter from "../../../utils/date";
 
 export default function Drafts() {
   const { user } = useAuth();
-  const { data, isLoading, isError } = useQuery({
+  const { data, isPending: isLoading, isError } = useQuery({
     queryKey: ["get-drafts"],
     queryFn: () => getDrafts(user?.uid as string),
   });
@@ -42,7 +42,7 @@ function SingleDraft(props: Draft) {
         align="stretch"
       >
         <Stack py={10} px={18}>
-          <Title order={3} size={20} color="white">
+          <Title order={3} size={20} c="white">
             {props.title_thread}
           </Title>
         </Stack>
@@ -69,7 +69,7 @@ function SingleDraft(props: Draft) {
             <ActionIcon variant="transparent" size="xl">
               <Image src={Edit} alt="Draft icon" width={45} />
             </ActionIcon>
-            <Text align="end" color="white">
+            <Text ta="end" color="white">
               Draft saved at:
               <br />
               {formatter.format(new Date(props.date_saved.seconds))}

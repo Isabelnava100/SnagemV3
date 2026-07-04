@@ -49,7 +49,7 @@ export function BookmarkButton({ user,listofnotify,name}
     //if clicked on, check if user is logged in...
     //move all this to CSS
           <Button 
-          leftIcon={isBookmarked?<BookmarkOff/>:<Bookmark/>}
+          leftSection={isBookmarked?<BookmarkOff/>:<Bookmark/>}
           onClick={handleBookmarkClick}
           sx={(theme) => ({
             backgroundColor: 'color-primary', marginBottom: 12,

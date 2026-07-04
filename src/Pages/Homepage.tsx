@@ -35,6 +35,35 @@ export const HomePage = () => {
       
       </div>
     </div>
+
+    <div className="teammodule">
+      <h2>Meet the Team</h2>
+      <span className="paragraph3">
+      A lot of us have dedicated years to the story and we hope you join us along the way.
+      </span>
+      <img
+        className="teamGroupIMG"
+        src="https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/site%2Fteamgroup.png?alt=media&token=acde80c2-f735-45ac-a8a2-730b186090ea"
+        alt="Team Snagem members and their Pokemon"
+      />
+    </div>
+
+    <div className="ctamodule">
+      <h2>
+        <span className="lineOne">let&rsquo;s make</span>
+        <span className="lineTwo">great stories</span>
+        <span className="lineThree">
+          <Link to="/Register" className="button purple">Join the Team</Link>
+          together
+        </span>
+      </h2>
+    </div>
+
+    <div className="creditbar">
+      Credit: Seviyummy, Batsky
+      <br />
+      All artwork used on this site has proper licensed purchased, commissioned or drawn by our team.
+    </div>
     </div>
   );
 };

@@ -10,7 +10,7 @@ import {
 } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { RichTextEditor } from "@mantine/tiptap";
-import { IconPictureInPictureOn } from "@tabler/icons";
+import { IconPictureInPictureOn } from "@tabler/icons-react";
 import { Editor } from "@tiptap/react";
 import React from "react";
 import { z } from "zod";
@@ -75,7 +75,6 @@ export function UploadAndCropImage(props: CropImageModalProps) {
     <React.Fragment>
       {targetElement}
       <Modal
-        overflow="inside"
         opened={opened}
         onClose={close}
         withCloseButton={false}
@@ -83,20 +82,20 @@ export function UploadAndCropImage(props: CropImageModalProps) {
         size={500}
       >
         <Conditional
-          condition={!Boolean(imgSrc)}
+          condition={!imgSrc}
           component={
-            <Stack spacing={30}>
-              <Stack align="center" spacing="sm">
+            <Stack gap={30}>
+              <Stack align="center" gap="sm">
                 <Title order={2}>Upload Image</Title>
-                <Stack spacing={1} align="center">
+                <Stack gap={1} align="center">
                   <Text>Max width/height: 800px</Text>
                   <Text>Formats: GIF, PNG, JPG</Text>
                 </Stack>
               </Stack>
-              <Stack spacing="sm">
+              <Stack gap="sm">
                 <FileInput
                   onChange={handleFileSelect}
-                  placeholder="Choose a file"
+                  {...{ placeholder: "Choose a file" }}
                   accept=".png, .jpg, .gif"
                 />
                 <Divider label="Or" labelPosition="center" />

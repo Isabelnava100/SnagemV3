@@ -1,16 +1,15 @@
 import { Container, Group, Paper, SimpleGrid, Text, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { Link, RichTextEditor } from "@mantine/tiptap";
-import { IconColorPicker, IconStar } from "@tabler/icons";
+import { IconColorPicker, IconStar } from "@tabler/icons-react";
 import { Color } from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
-import Placeholder from "@tiptap/extension-placeholder";
-import SubScript from "@tiptap/extension-subscript";
+ import SubScript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import TextAlign from "@tiptap/extension-text-align";
-import TextStyle from "@tiptap/extension-text-style";
-import Underline from "@tiptap/extension-underline";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Placeholder } from "@tiptap/extensions";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useCallback, useEffect, useState } from "react";
@@ -30,10 +29,9 @@ export function NewPost() {
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       TextStyle,
       Color,
-      Underline,
       Placeholder.configure({ placeholder: "This is placeholder" }),
       Link,
       Image.configure({
@@ -130,13 +128,13 @@ export function NewPost() {
             <div className="formNewPost">
               {allThreads &&
                 allThreads.map((thread) => (
-                  <Text size="lg" weight={700} className="titleNewPost" key={thread.id}>
+                  <Text size="lg" fw={700} className="titleNewPost" key={thread.id}>
                     Make a Post on {thread.title}
                   </Text>
                 ))}
 
               <div className="fieldsNewPost">
-                <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+                <SimpleGrid cols={{ base: 1, sm: 2 }}>
                   <TextInput
                     label="Post As"
                     placeholder="Write the Name of your Character"
@@ -252,7 +250,7 @@ export function NewPost() {
                   <RichTextEditor.Content />
                 </RichTextEditor>
 
-                <Group position="right" mt="md">
+                <Group justify="right" mt="md">
                   <ButtonProgress formCheck={!formTheCheck} />
                 </Group>
               </div>

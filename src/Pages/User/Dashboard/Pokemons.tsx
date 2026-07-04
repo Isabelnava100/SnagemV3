@@ -10,15 +10,15 @@ import {
   Select,
   SimpleGrid,
   Stack,
-  Sx,
   Text,
   TextInput,
   Title,
   Tooltip,
 } from "@mantine/core";
+import type { EmotionSx as Sx } from "@mantine/emotion";
 import { UseFormReturnType, useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
-import { IconTrash, IconX } from "@tabler/icons";
+import { IconTrash, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -58,8 +58,8 @@ type EditTeamType = Omit<Team, "id" | "pokemons">;
 export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team }) {
   const { isSingleTeam = false, team = null } = props;
   const { isOverLg, isOverXs, isOverMd } = useMediaQuery();
-  const currentForm = useForm<Team | null>({
-    initialValues: team,
+  const currentForm = useForm<Team>({
+    initialValues: (team ?? undefined) as Team,
   });
 
   const loadTeamForEdit = (team: Team) => {
@@ -148,7 +148,7 @@ function useUpdateOrAddDocument(documentId?: string) {
 function Teams(props: EditingProps) {
   const { form, loadTeamForEdit, resetEditing } = props;
   const { user } = useAuth();
-  const { data, isLoading, isError } = useQuery({
+  const { data, isPending: isLoading, isError } = useQuery({
     queryKey: ["get-teams"],
     queryFn: () => getTeams(user?.uid as string),
   });
@@ -185,19 +185,13 @@ function DeleteTeam(props: { teamId: string }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { mutateAsync, isLoading } = useMutation({
+  const { mutateAsync, isPending: isLoading } = useMutation({
     mutationFn: async ({ teamId }: { teamId: string }) => {
-      const { setDoc, doc } = await import("firebase/firestore");
+      const { updateDoc, deleteField, doc } = await import("firebase/firestore");
       const { db } = await import("../../../context/firebase");
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "teams");
-      const {
-        rawData: { [teamId]: documentToBeDeleted, ...rest },
-      } = await getTeams(user?.uid as string);
-
-      await setDoc(docRef, {
-        ...rest,
-      });
+      await updateDoc(docRef, { [teamId]: deleteField() });
     },
   });
 
@@ -237,7 +231,7 @@ function DeleteTeam(props: { teamId: string }) {
 
 export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam?: boolean }) {
   const { team, form, loadTeamForEdit, resetEditing, isSingleTeam = false } = props;
-  const { mutateAsync, isLoading } = useUpdateOrAddDocument(team.id);
+  const { mutateAsync, isPending: isLoading } = useUpdateOrAddDocument(team.id);
   const { isOverLg } = useMediaQuery();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -290,7 +284,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
                 sx={{ whiteSpace: "normal" }}
                 order={3}
                 size={isOverLg ? 22 : 18}
-                color="white"
+                c="white"
               >
                 {team.team_name}
               </Title>
@@ -299,7 +293,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
           <Conditional
             condition={isEditing}
             component={
-              <Group noWrap spacing={0}>
+              <Group wrap="nowrap" gap={0}>
                 <Button
                   onClick={() => (isSingleTeam ? navigate("/Dashboard/Pokemon") : resetEditing())}
                   color="gray"
@@ -314,14 +308,14 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
               </Group>
             }
             fallback={
-              <Group noWrap>
+              <Group wrap="nowrap">
                 <DeleteTeam teamId={team.id} />
                 <GradientButtonPrimary
                   onClick={() =>
                     isOverLg ? loadTeamForEdit(team) : navigate(`/Dashboard/Pokemon/${team.id}`)
                   }
                   size="xs"
-                  rightIcon={<Image src={Edit2} />}
+                  rightSection={<Image src={Edit2} />}
                 >
                   Edit
                 </GradientButtonPrimary>
@@ -377,7 +371,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
 }
 
 function CreateNewTeam() {
-  const { mutateAsync, isLoading } = useUpdateOrAddDocument();
+  const { mutateAsync, isPending: isLoading } = useUpdateOrAddDocument();
   const queryClient = useQueryClient();
 
   const handleClick = async () => {
@@ -405,7 +399,7 @@ interface FilterState {
 function OwnedPokemons(props: EditingProps) {
   const { form } = props;
   const { user } = useAuth();
-  const { data, isLoading, isError } = useQuery({
+  const { data, isPending: isLoading, isError } = useQuery({
     queryKey: ["get-owned-pokemons"],
     queryFn: () => getOwnedPokemons(user?.uid as string),
   });
@@ -472,13 +466,13 @@ function OwnedPokemons(props: EditingProps) {
       <Stack>
         <Flex justify="space-between" align="center">
           <Group align="end">
-            <Title order={3} color="white" size={isOverLg ? 22 : 18}>
+            <Title order={3} c="white" size={isOverLg ? 22 : 18}>
               All Your Pokemon
             </Title>
           </Group>
           <Popover position="bottom-end" withinPortal withArrow>
             <Popover.Target>
-              <GradientButtonPrimary rightIcon={<Image src={FileSearch} />}>
+              <GradientButtonPrimary rightSection={<Image src={FileSearch} />}>
                 Adjust filters
               </GradientButtonPrimary>
             </Popover.Target>
@@ -538,7 +532,7 @@ function OwnedPokemons(props: EditingProps) {
 }
 
 const PokemonAvatar = React.forwardRef<
-  HTMLDivElement,
+  HTMLImageElement,
   { src?: string; alt?: string; sx?: Sx; onClick?: () => void }
 >((props, ref) => {
   const { src, alt, sx, onClick } = props;
@@ -609,7 +603,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
           sx={{ border: "4px solid white" }}
           bg="#909090"
         />
-        <Stack spacing={3}>
+        <Stack gap={3}>
           <Title order={3} size={16}>
             {pokemon.species} ({pokemon.gender})
           </Title>
@@ -703,7 +697,7 @@ function SinglePokemon(props: {
                 condition={isShowingDetails}
                 component={<PokemonDetails pokemon={pokemon} />}
                 fallback={
-                  <Group w="100%" spacing={5}>
+                  <Group w="100%" gap={5}>
                     <GradientButtonPrimary
                       onClick={() => {
                         handleAddPokemonToTeam();

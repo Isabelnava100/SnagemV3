@@ -1,4 +1,7 @@
 import { MantineProvider } from "@mantine/core";
+import "@mantine/core/styles.css";
+import { MantineEmotionProvider, emotionTransform } from "@mantine/emotion";
+import "@mantine/tiptap/styles.css";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./assets/styles/index.css";
 
@@ -85,9 +88,10 @@ const { default: Collections } = lazyImport(
 
 export default function AppRoutes() {
   return (
+    <MantineProvider theme={theme} defaultColorScheme="dark" stylesTransform={emotionTransform}>
+      <MantineEmotionProvider>
     <AuthContextProvider>
       <ForumProvider>
-        <MantineProvider theme={theme} withGlobalStyles withNormalizeCSS>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
               <React.Suspense fallback={<Loader />}>
@@ -152,8 +156,9 @@ export default function AppRoutes() {
               </React.Suspense>
             </BrowserRouter>
           </QueryClientProvider>
-        </MantineProvider>
       </ForumProvider>
     </AuthContextProvider>
+      </MantineEmotionProvider>
+    </MantineProvider>
   );
 }

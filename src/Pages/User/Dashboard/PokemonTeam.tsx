@@ -8,7 +8,7 @@ import Pokemons from "./Pokemons";
 export default function PokemonTeam() {
   const { teamId } = useParams();
   const { user } = useAuth();
-  const { isLoading, isError, data } = useQuery({
+  const { isPending: isLoading, isError, data } = useQuery({
     queryKey: ["get-team", teamId],
     queryFn: () => getTeam(user?.uid as string, teamId as string),
     enabled: !!teamId,

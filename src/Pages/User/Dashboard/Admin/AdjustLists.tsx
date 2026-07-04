@@ -19,7 +19,7 @@ import {
 } from "@mantine/core";
 import { UseFormReturnType, useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
-import { IconTrash } from "@tabler/icons";
+import { IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { v4 as uuid } from "uuid";
@@ -67,7 +67,7 @@ function useUpdateOrAddDocument(documentId?: string) {
 }
 
 function CreateList() {
-  const { mutateAsync, isLoading } = useUpdateOrAddDocument();
+  const { mutateAsync, isPending: isLoading } = useUpdateOrAddDocument();
   const queryClient = useQueryClient();
   const { isOverXs } = useMediaQuery();
 
@@ -92,7 +92,7 @@ function CreateList() {
 }
 
 export default function AdjustLists() {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isPending: isLoading, isError } = useQuery({
     queryKey: ["get-admin-pokemon-lists"],
     queryFn: getPokemonLists,
   });
@@ -115,7 +115,7 @@ export default function AdjustLists() {
   return (
     <Stack>
       <Flex gap="md" justify="space-between" align="center">
-        <Title color="white" order={2} size={isOverXs ? 24 : 18} weight={400}>
+        <Title c="white" order={2} size={isOverXs ? 24 : 18} fw={400}>
           Groups of Pokemon Encounter Limits
         </Title>
         <CreateList />
@@ -146,7 +146,7 @@ interface ItemProps extends React.ComponentPropsWithoutRef<"div"> {
 const CustomSelectItem = React.forwardRef<HTMLDivElement, ItemProps>(
   ({ image, label, ...others }: ItemProps, ref) => (
     <div ref={ref} {...others}>
-      <Group noWrap>
+      <Group wrap="nowrap">
         <Avatar size="lg" src={image} />
         <div>
           <Text size="lg" color="white">
@@ -177,7 +177,7 @@ function EditSingleListItem(props: {
   setEditing: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const { form, setEditing, list } = props;
-  const { mutateAsync, isLoading } = useUpdateOrAddDocument(list.id);
+  const { mutateAsync, isPending: isLoading } = useUpdateOrAddDocument(list.id);
   const queryClient = useQueryClient();
 
   const cancelEditing = () => {
@@ -199,14 +199,14 @@ function EditSingleListItem(props: {
   };
 
   return (
-    <Stack spacing={25} className="bg-[#57525B80] p-3 rounded-[8px] w-full text-white">
-      <Group position="apart">
+    <Stack gap={25} className="bg-[#57525B80] p-3 rounded-[8px] w-full text-white">
+      <Group justify="space-between">
         <TextInput
           className="flex-1"
           styles={{ input: { background: "#2E2D2E" } }}
           {...form.getInputProps("name")}
         />
-        <Group spacing={5}>
+        <Group gap={5}>
           <Button color="gray" variant="subtle" onClick={cancelEditing}>
             Cancel
           </Button>
@@ -235,9 +235,11 @@ function EditSingleListItem(props: {
               value: pokemon.slug,
               image: getPokemonImageURL(pokemon.slug),
             }))}
-            itemComponent={CustomSelectItem}
+            renderOption={({ option }) => (
+              <CustomSelectItem image={(option as any).image} label={option.label} />
+            )}
             rightSection={<></>}
-            nothingFound="No pokemon found"
+            nothingFoundMessage="No pokemon found"
             maxDropdownHeight={400}
             limit={20}
             searchable
@@ -258,8 +260,8 @@ function EditSingleListItem(props: {
           color="green.0"
         />
       </Group>
-      <Stack spacing={6}>
-        <Title weight={700} order={3} color="white" size={14} transform="uppercase">
+      <Stack gap={6}>
+        <Title fw={700} order={3} c="white" size={14} tt="uppercase">
           LIST OF POKEMON
         </Title>
         <Box p={20} sx={{ borderRadius: 22 }} w="100%" bg="#5A545F">
@@ -285,7 +287,7 @@ function DeleteSingleListItem(props: { itemId: string }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { mutateAsync, isLoading } = useMutation({
+  const { mutateAsync, isPending: isLoading } = useMutation({
     mutationFn: async ({ itemIdInput }: { itemIdInput: string }) => {
       const { setDoc, doc } = await import("firebase/firestore");
       const { db } = await import("../../../../context/firebase");
@@ -340,7 +342,7 @@ function DuplicateListItem(props: { listItem: AdminPokemonList }) {
   const {
     listItem: { id, ...values },
   } = props;
-  const { mutateAsync, isLoading } = useUpdateOrAddDocument();
+  const { mutateAsync, isPending: isLoading } = useUpdateOrAddDocument();
   const queryClient = useQueryClient();
   const handleDuplicateListItem = async () => {
     try {
@@ -355,7 +357,7 @@ function DuplicateListItem(props: { listItem: AdminPokemonList }) {
       loading={isLoading}
       onClick={handleDuplicateListItem}
       size="xs"
-      rightIcon={<Image src={DocumentCopyIcon} />}
+      rightSection={<Image src={DocumentCopyIcon} />}
     >
       Duplicate
     </GradientButtonPrimary>
@@ -373,11 +375,11 @@ function SingleListItem(props: { list: AdminPokemonList }) {
 
   return (
     <div className="bg-[#57525B80] p-3 rounded-[8px] grid grid-cols-4 w-full text-white">
-      <Stack align="start" spacing={10}>
-        <Text size={16}>{list.name || "Untitled"}</Text>
+      <Stack align="start" gap={10}>
+        <Text fz={16}>{list.name || "Untitled"}</Text>
         <DuplicateListItem listItem={list} />
       </Stack>
-      <Stack spacing={6} align="start">
+      <Stack gap={6} align="start">
         <Text>{list.creator}</Text>
         {list.public ? (
           <Badge color="green.0" variant="filled">
@@ -389,7 +391,7 @@ function SingleListItem(props: { list: AdminPokemonList }) {
           </Badge>
         )}
       </Stack>
-      <Stack w="100%" spacing={3}>
+      <Stack w="100%" gap={3}>
         <Conditional
           condition={list.rule === "only"}
           component={<Text>Only</Text>}
@@ -404,7 +406,7 @@ function SingleListItem(props: { list: AdminPokemonList }) {
             onClick={() => setEditing(true)}
             size="xs"
             radius="lg"
-            rightIcon={<Image src={Edit2} />}
+            rightSection={<Image src={Edit2} />}
           >
             Edit
           </GradientButtonPrimary>

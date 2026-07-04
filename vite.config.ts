@@ -7,11 +7,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ["react", "react-dom", "react-router-dom"],
-          mantine: ["@mantine/core", "@mantine/hooks", "@mantine/form"],
-          firebase: ["firebase/app", "firebase/auth", "firebase/firestore", "firebase/storage"],
-          tiptap: ["@tiptap/react", "@tiptap/starter-kit"],
+        manualChunks(id: string) {
+          if (!id.includes("node_modules")) return;
+          if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom)\//.test(id))
+            return "react";
+          if (id.includes("node_modules/@mantine/")) return "mantine";
+          if (/node_modules\/(@firebase|firebase)\//.test(id)) return "firebase";
+          if (/node_modules\/(@tiptap|prosemirror)/.test(id)) return "tiptap";
         },
       },
     },

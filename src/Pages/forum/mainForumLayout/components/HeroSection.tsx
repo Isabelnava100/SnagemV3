@@ -8,7 +8,7 @@ export function HeroText({ send }: { send: string | undefined }) {
   const { user } = useAuth();
   return (
     <Container style={{ background: "none" }}>
-      <Title order={1} color={"white"}>
+      <Title order={1} c={"white"}>
         Welcome to the{" "}
         <Text component="span" color={"#772976"} inherit>
           Snagem Forums

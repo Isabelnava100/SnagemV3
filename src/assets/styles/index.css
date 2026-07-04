@@ -1,15 +1,14 @@
 /* @import url("./fonts.css"); */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind 4: theme + utilities only, preflight intentionally excluded (was disabled in v3 config) */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@source "../../";
 
-@layer base {
-  :root {
-    --w: #fff;
-    --b: #3f3f3f;
-    --color-primary: #772976;
-    --color-secondary: #933592;
-  }
+:root {
+  --w: #fff;
+  --b: #3f3f3f;
+  --color-primary: #772976;
+  --color-secondary: #933592;
 }
 
 body {

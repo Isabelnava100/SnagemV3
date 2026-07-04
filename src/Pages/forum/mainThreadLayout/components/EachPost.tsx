@@ -1,19 +1,21 @@
 
-import { createStyles, Card, Image, Avatar, Text, Group, Badge } from '@mantine/core';
+import { Card, Image, Avatar, Text, Group, Badge } from '@mantine/core';
+import { createStyles } from '@mantine/emotion';
+import DOMPurify from 'dompurify';
 import { EachPostVisual } from '../../../../components/types/typesUsed'
 import { getColor1,getColor2 } from '../../../../components/user-forum/getColorBadges';
 import React from 'react';
 
-const useStyles = createStyles((theme) => ({
+const useStyles = createStyles((theme, _params, u) => ({
   all: {
     display: 'flex',
 
-    [theme.fn.smallerThan('sm')]: {
+    [u.smallerThan('sm')]: {
       flexDirection: 'column-reverse',
     },
   },
   card: {
-    backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[7] : theme.white,
+    backgroundColor: theme.colors.dark[7],
     margin:'0',
   },
   adjustmnets:{
@@ -38,13 +40,13 @@ const useStyles = createStyles((theme) => ({
     padding: 4,
     width:170,
     
-    [theme.fn.smallerThan('sm')]: {
+    [u.smallerThan('sm')]: {
       justifyContent:'end',
       width:'100%',
     },
   },
   avatarimg:{    
-    [theme.fn.smallerThan('sm')]: {
+    [u.smallerThan('sm')]: {
      display:'none',
     },
   },
@@ -55,7 +57,7 @@ const useStyles = createStyles((theme) => ({
     
   },
   minitext:{
-    [theme.fn.smallerThan('sm')]: {
+    [u.smallerThan('sm')]: {
       flexDirection:'column',      
       justifyContent:'end',
       width:'100%',
@@ -86,8 +88,8 @@ export function ArticleCardVertical({
         
         <div className={classes.body} >
         <Image src={image} height={140} width={140} mb="xs" className={classes.avatarimg} />
-        <Group spacing="xs"className={classes.minitext}>
-            <Group spacing="xs" noWrap> 
+        <Group gap="xs"className={classes.minitext}>
+            <Group gap="xs" wrap="nowrap"> 
               {/* <Avatar size={20} src={author.avatar} /> */}
               <Text size="xs" className={classes.longText}>{author.name} </Text>
             </Group>
@@ -109,14 +111,14 @@ export function ArticleCardVertical({
 
         <div className={classes.textArea}>
 
-            <Text color="dimmed" weight={700} size="xs"
+            <Text color="dimmed" fw={700} size="xs"
             className={classes.adjustmnets}
-            dangerouslySetInnerHTML={{ __html: bigText }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(bigText) }}
             >
           </Text>
 
          
-         <Group spacing="xs" noWrap mt="md" style={{alignSelf:'flex-end'}}>
+         <Group gap="xs" wrap="nowrap" mt="md" style={{alignSelf:'flex-end'}}>
          <Text size="lg" color="dimmed">
               [ {chara} ]
             </Text>

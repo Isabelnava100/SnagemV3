@@ -58,13 +58,13 @@ function BadgesSectionWrapper(props: {
   const disabledBadges = badges.filter((badge) => !badge.enabled);
   const displayedBadges = showEnabledOnly ? enabledBadges : disabledBadges;
   return (
-    <Stack spacing={12}>
+    <Stack gap={12}>
       <Group align="center">
-        <Title size={24} color="white" weight={400} order={3}>
+        <Title size={24} c="white" fw={400} order={3}>
           {title}
         </Title>
         {secondaryText && (
-          <Text color="rgba(255, 255, 255, 0.50)" size={16} weight={400}>
+          <Text c="rgba(255, 255, 255, 0.50)" fz={16} fw={400}>
             {secondaryText}
           </Text>
         )}
@@ -86,7 +86,7 @@ function BadgesSectionWrapper(props: {
 }
 
 function Badges() {
-  const { data, isLoading, isError } = useGetBadgesQuery();
+  const { data, isPending: isLoading, isError } = useGetBadgesQuery();
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const { formattedData } = data;
@@ -114,14 +114,14 @@ function Badges() {
 }
 
 function Emojis() {
-  const { data, isLoading, isError } = useGetEmojisQuery();
+  const { data, isPending: isLoading, isError } = useGetEmojisQuery();
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const emojiIds = data;
   return (
     <SimpleSectionWrapper>
-      <Stack spacing={18}>
-        <Title size={24} color="white" weight={400} order={3}>
+      <Stack gap={18}>
+        <Title size={24} c="white" fw={400} order={3}>
           Your Emoji Collection
         </Title>
         {emojiIds.length ? (
@@ -159,13 +159,13 @@ function Emojis() {
 }
 
 function EmojiCollection() {
-  const { data, isLoading, isError } = useGetEmojisQuery();
+  const { data, isPending: isLoading, isError } = useGetEmojisQuery();
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const userEmojiIds = data;
   return (
-    <Stack spacing={18}>
-      <Title size={24} color="white" weight={400} order={3}>
+    <Stack gap={18}>
+      <Title size={24} c="white" fw={400} order={3}>
         Collection of All Emojis
       </Title>
       <Flex wrap="wrap" gap={8}>
@@ -202,7 +202,7 @@ function EmojiCollection() {
                 sx={{ borderRadius: 22, border: "none", color: "white" }}
                 p={16}
               >
-                <Stack spacing={8}>
+                <Stack gap={8}>
                   <Flex gap={10}>
                     <Flex
                       w={60}
@@ -225,11 +225,11 @@ function EmojiCollection() {
                         className="object-cover"
                       />
                     </Flex>
-                    <Stack spacing={0}>
-                      <Title order={4} size={16} weight={500}>
+                    <Stack gap={0}>
+                      <Title order={4} size={16} fw={500}>
                         {emoji.Name}
                       </Title>
-                      <Text size={12}>{emoji.Description}</Text>
+                      <Text fz={12}>{emoji.Description}</Text>
                     </Stack>
                     <Box sx={{ flexShrink: 0 }}>
                       {existingEmoji ? (
@@ -249,8 +249,8 @@ function EmojiCollection() {
                       )}
                     </Box>
                   </Flex>
-                  <Stack spacing={0}>
-                    <Title order={5} size={16} weight={600}>
+                  <Stack gap={0}>
+                    <Title order={5} size={16} fw={600}>
                       How to Obtain:
                     </Title>
                     <List color="white" sx={{ fontSize: 16, color: "white", fontWeight: 400 }}>
@@ -282,14 +282,14 @@ function EmojiCollection() {
 }
 
 function BadgesCollection() {
-  const { data, isLoading, isError } = useGetBadgesQuery();
+  const { data, isPending: isLoading, isError } = useGetBadgesQuery();
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const { formattedData: userBadges } = data;
   return (
-    <Stack spacing={18}>
-      <Stack spacing={0}>
-        <Title size={24} color="white" weight={400} order={3}>
+    <Stack gap={18}>
+      <Stack gap={0}>
+        <Title size={24} c="white" fw={400} order={3}>
           Collection of All Badges
         </Title>
         <Text>Here&apos;s a list of all badges and how to obtain them.</Text>
@@ -325,20 +325,20 @@ function BadgesCollection() {
                 px={17}
               >
                 <Stack>
-                  <Text size={14} weight={500}>
+                  <Text fz={14} fw={500}>
                     {badge.description}
                   </Text>
                   <Flex justify="space-between" align="center">
                     {existingUserBadge ? (
                       <>
-                        <Text size={14} weight={500} color="#22B573">
+                        <Text fz={14} fw={500} c="#22B573">
                           You have this badge
                         </Text>
                         <Image src={CheckCircleIcon} alt="Check circle icon" width={20} />
                       </>
                     ) : (
                       <>
-                        <Text size={14} weight={500} color="#E35C65">
+                        <Text fz={14} fw={500} c="#E35C65">
                           You don&apos;t have this badge
                         </Text>
                         <Image src={CrossCircleIcon} alt="Cross circle icon" width={20} />

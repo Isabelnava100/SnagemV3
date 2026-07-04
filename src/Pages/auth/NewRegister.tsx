@@ -104,7 +104,7 @@ export function NewRegister() {
   return (
     <Container size={840} my={40}>
       <Title
-        align="center"
+        ta="center"
         sx={(theme) => ({
           fontFamily: `Greycliff CF, ${theme.fontFamily}`,
           fontWeight: 900,
@@ -112,7 +112,7 @@ export function NewRegister() {
       >
         Apply to Join
       </Title>
-      <Text color="dimmed" size="sm" align="center" mt={5}>
+      <Text color="dimmed" size="sm" ta="center" mt={5}>
         Already have an account?{" "}
         <Anchor component={Link} to="/Login" size="sm">
           Go to login.
@@ -130,8 +130,8 @@ export function NewRegister() {
             width: "100%",
           }}
         >
-          <Grid gutter="sm" style={{ width: "100%" }}>
-            <Grid.Col xs={6}>
+          <Grid gap="sm" style={{ width: "100%" }}>
+            <Grid.Col span={{ base: 12, xs: 6 }}>
               <TextInput
                 required
                 label="Email"
@@ -173,7 +173,7 @@ export function NewRegister() {
                 </Text>
               )}
             </Grid.Col>
-            <Grid.Col xs={6}>
+            <Grid.Col span={{ base: 12, xs: 6 }}>
               {gaia === "Yes" ? (
                 <>
                   <TextInput
@@ -186,7 +186,7 @@ export function NewRegister() {
                   <Popover
                     opened={popoverOpened}
                     onChange={setPopoverOpened}
-                    transition="pop"
+                    transitionProps={{ transition: "pop" }}
                     position="bottom-start"
                   >
                     <Popover.Target>
@@ -240,7 +240,7 @@ export function NewRegister() {
                     required
                   />
 
-                  <Group position="right">
+                  <Group justify="right">
                     <Text size="xs">
                       {refTextarea.current?.value.length ? refTextarea.current?.value.length : 0}{" "}
                       Characters
@@ -249,7 +249,7 @@ export function NewRegister() {
                 </>
               )}
 
-              <Group position="right" mt="md">
+              <Group justify="right" mt="md">
                 <Button type="submit" disabled={whensubmit}>
                   Submit
                 </Button>

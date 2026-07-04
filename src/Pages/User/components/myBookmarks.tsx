@@ -6,7 +6,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { db } from "../../../context/firebase";
 
 async function fetchMyBookmarks(user: User | undefined = undefined): Promise<myBookmarksInfo[]> {
-  let newData: myBookmarksInfo[] = [];
+  const newData: myBookmarksInfo[] = [];
   const colRef = doc(db, "users", `${user?.uid}`);
   const docSnap = await getDoc(colRef);
 

@@ -143,3 +143,91 @@ margin-top:28px;
 text-align: right;
 max-width:600px;
 }
+
+/*meet the team module*/
+
+.teammodule {
+  margin: auto;
+  max-width: 800px;
+  width: 100%;
+  padding: 100px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.teammodule h2 {
+  font-size: 4em;
+  font-weight: 400;
+  color: white;
+  line-height: 1.1em;
+  margin: 0;
+}
+.teammodule span.paragraph3 {
+  display: block;
+  font-size: 1.4em;
+  color: white;
+  max-width: 480px;
+  margin: 20px 0 40px 0;
+  line-height: 1.4em;
+}
+.teamGroupIMG {
+  width: 100%;
+  max-width: 700px;
+  height: auto;
+}
+
+/*join the team CTA module*/
+
+.ctamodule {
+  margin: auto;
+  max-width: 800px;
+  width: 100%;
+  padding: 80px 20px 120px 20px;
+}
+.ctamodule h2 {
+  display: flex;
+  flex-direction: column;
+  font-size: 5em;
+  font-weight: 700;
+  color: white;
+  line-height: 1.15em;
+  margin: 0;
+}
+.ctamodule .lineOne {
+  align-self: flex-start;
+}
+.ctamodule .lineTwo {
+  align-self: center;
+}
+.ctamodule .lineThree {
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+.ctamodule .lineThree a.button {
+  flex-shrink: 0;
+}
+
+/*artwork credit bar*/
+
+.creditbar {
+  width: 100%;
+  background-color: #772976;
+  color: white;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85em;
+  padding: 14px 20px;
+  line-height: 1.7em;
+}
+
+@media (max-width: 600px) {
+  .teammodule h2 {
+    font-size: 3em;
+  }
+  .ctamodule h2 {
+    font-size: 2.4em;
+  }
+}

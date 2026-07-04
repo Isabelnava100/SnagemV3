@@ -11,7 +11,7 @@ export default function LoadingSpinner() {
 }
 
 export function Loader() {
-  return <LoadingOverlay visible loader={<LoadingSpinner />} />;
+  return <LoadingOverlay visible loaderProps={{ children: <LoadingSpinner /> }} />;
 }
 
 export function SectionLoader() {

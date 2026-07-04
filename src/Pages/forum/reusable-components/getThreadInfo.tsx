@@ -11,7 +11,7 @@ export const dataRun = async (
   forum:string,
   // user: User | undefined = undefined,
 ): Promise<ThreadInformation[]> => { 
-  let newData: ThreadInformation[] = []; 
+  const newData: ThreadInformation[] = []; 
       //Option one where we are fetching data via thread uid end
 
       const colRef = doc(db, 'forum', `${forum}`, 'threads', `${thethreadid}`);

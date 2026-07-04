@@ -52,7 +52,7 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
   }, [setUser, user]);
 
   if (pending) {
-    return <LoadingOverlay visible={pending} loader={<LoadingSpinner />} />;
+    return <LoadingOverlay visible={pending} loaderProps={{ children: <LoadingSpinner /> }} />;
   }
 
   return <AuthContext.Provider value={{ user, setUser }}>{children}</AuthContext.Provider>;

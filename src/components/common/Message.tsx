@@ -9,7 +9,7 @@ export function EmptyMessage(props: {
   const { title, description, action } = props;
   return (
     <Stack py={5} w="100%">
-      <Stack spacing="xs">
+      <Stack gap="xs">
         {title && <Title order={3}>{title}</Title>}
         {description && (
           <Text color="white" size="md">

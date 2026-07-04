@@ -29,7 +29,7 @@ function TopHeader(props: { children: React.ReactNode }) {
       sx={{ background: "linear-gradient(90deg, #742D78 0%, #239DAD 100%)", borderRadius: 8 }}
       py={10}
     >
-      <Title color="white" transform="uppercase" order={3} size={14} weight={700}>
+      <Title c="white" tt="uppercase" order={3} fz={14} fw={700}>
         {props.children}
       </Title>
     </Box>
@@ -108,10 +108,10 @@ export default function Donate() {
   };
 
   return (
-    <Stack spacing={24}>
+    <Stack gap={24}>
       <Flex direction={isOverXl ? "row" : "column"} gap={10}>
         <Stack w="100%">
-          <Stack sx={{ flex: 1 }} spacing={7}>
+          <Stack sx={{ flex: 1 }} gap={7}>
             <TopHeader>Items to send</TopHeader>
             <MultiSelect
               radius="md"
@@ -123,7 +123,7 @@ export default function Donate() {
               placeholder="Search to add an item"
             />
           </Stack>
-          <Stack spacing={10}>
+          <Stack gap={10}>
             <div className="grid grid-cols-2">
               <div className="flex gap-1 items-center justify-start uppercase text-white font-[700]">
                 <Image
@@ -150,14 +150,14 @@ export default function Donate() {
                   <Stack>
                     {itemsToSendWithQty.map((item) => (
                       <div key={item.id} className="grid grid-cols-2 border-b-2 border-[#D9D9D9]">
-                        <Group spacing={5}>
+                        <Group gap={5}>
                           <Image
                             width={30}
                             className="object-cover"
                             src={getItemImageURL(item.filePath)}
                             alt={item.name}
                           />
-                          <Text size={16} weight={400} color="white">
+                          <Text fz={16} fw={400} c="white">
                             {item.name}
                           </Text>
                         </Group>
@@ -183,7 +183,7 @@ export default function Donate() {
             </SimpleSectionWrapper>
           </Stack>
         </Stack>
-        <Stack w="100%" sx={{ flexShrink: 0 }} maw={isOverXl ? 250 : undefined} spacing={7}>
+        <Stack w="100%" sx={{ flexShrink: 0 }} maw={isOverXl ? 250 : undefined} gap={7}>
           <TopHeader>To users</TopHeader>
           <MultiSelect
             disabled={isUsersLoading}
@@ -214,16 +214,16 @@ export default function Donate() {
 
       {/* Confirmation */}
       {showConfirmation && (
-        <Stack spacing={24}>
-          <Title order={2} color="white" size={24} weight={400}>
+        <Stack gap={24}>
+          <Title order={2} c="white" size={24} fw={400}>
             Confirm that you&apos;ll be sending these items to these users...
           </Title>
           <Flex direction={isOverXl ? "row" : "column"} gap={10}>
-            <Stack bg="#4C474F" sx={{ flex: 1, borderRadius: 8 }} spacing={0}>
+            <Stack bg="#4C474F" sx={{ flex: 1, borderRadius: 8 }} gap={0}>
               <TopHeader>Items to send</TopHeader>
-              <Stack p={8} spacing={16}>
+              <Stack p={8} gap={16}>
                 {uniqueCategoriesSelectedToSend.map((categoryName) => (
-                  <Stack spacing={7} key={categoryName}>
+                  <Stack gap={7} key={categoryName}>
                     <Text
                       px={14}
                       py={7}
@@ -231,8 +231,8 @@ export default function Donate() {
                       bg="rgba(96, 42, 90, 0.50)"
                       className="rounded-[22px]"
                       color="white"
-                      weight={400}
-                      size={14}
+                      fw={400}
+                      fz={14}
                     >
                       Category: {categoryName}
                     </Text>
@@ -241,7 +241,7 @@ export default function Donate() {
                         .filter((item) => item.category === categoryName)
                         .map((item) => (
                           <Box key={item.id}>
-                            <Group spacing={8}>
+                            <Group gap={8}>
                               <Image
                                 width={30}
                                 className="object-cover"
@@ -249,10 +249,10 @@ export default function Donate() {
                                 alt={item.name}
                               />
                               <Group>
-                                <Text size={16} color="white" weight={400}>
+                                <Text fz={16} c="white" fw={400}>
                                   {item.quantity}
                                 </Text>
-                                <Text size={16} color="white" weight={400}>
+                                <Text fz={16} c="white" fw={400}>
                                   {item.name}
                                 </Text>
                               </Group>
@@ -269,15 +269,15 @@ export default function Donate() {
               maw={isOverXl ? 250 : undefined}
               sx={{ borderRadius: 8, flexShrink: 0 }}
               bg="#4C474F"
-              spacing={0}
+              gap={0}
             >
               <TopHeader>To users</TopHeader>
               <Box p={8}>
-                <Stack spacing="xs">
+                <Stack gap="xs">
                   {toUsers?.map((user) => (
-                    <Group key={user.id} spacing={6}>
+                    <Group key={user.id} gap={6}>
                       <Avatar sx={{ borderRadius: "100%" }} />
-                      <Text color="white" size={16} weight={400} key={user.id}>
+                      <Text c="white" fz={16} fw={400} key={user.id}>
                         {user.username}
                       </Text>
                     </Group>

@@ -54,10 +54,10 @@ export function ForgotPassword() {
           resetPassword(values.email);
         })}
       >
-        <Title className="titleAuth" align="center">
+        <Title className="titleAuth" ta="center">
           Forgot your password?
         </Title>
-        <Text color="dimmed" size="sm" align="center">
+        <Text color="dimmed" size="sm" ta="center">
           Enter your email to get a reset link.
         </Text>
 
@@ -68,7 +68,7 @@ export function ForgotPassword() {
             required
             {...form.getInputProps("email")}
           />
-          <Group position="apart" mt="lg" className="controlsAuth">
+          <Group justify="space-between" mt="lg" className="controlsAuth">
             <Anchor component={Link} to="/Login" color="dimmed" size="sm" className="controlAuth">
               <Center inline>
                 <ArrowLeft size={12} />

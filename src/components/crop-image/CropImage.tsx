@@ -89,7 +89,7 @@ export default function CropImg(props: propsType) {
   }
 
   return (
-    <Stack spacing="xl">
+    <Stack gap="xl">
       <Stack align="center">
         <Title order={2}>Crop image</Title>
       </Stack>

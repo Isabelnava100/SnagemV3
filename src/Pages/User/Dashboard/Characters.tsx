@@ -16,7 +16,7 @@ import {
 } from "@mantine/core";
 import { UseFormReturnType, useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
-import { IconTrash } from "@tabler/icons";
+import { IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
@@ -35,7 +35,7 @@ import { getCharacters } from "../../../queries/dashboard";
 
 export default function Characters() {
   const { user } = useAuth();
-  const { isLoading, data, isError } = useQuery({
+  const { isPending: isLoading, data, isError } = useQuery({
     queryKey: ["get-characters"],
     queryFn: () => getCharacters(user?.uid as string),
     enabled: !!user,
@@ -95,7 +95,7 @@ function useUpdateOrAddDocument(documentId?: string) {
 }
 
 function CreateNewCharacter() {
-  const { mutateAsync, isLoading } = useUpdateOrAddDocument();
+  const { mutateAsync, isPending: isLoading } = useUpdateOrAddDocument();
   const queryClient = useQueryClient();
 
   const handleClick = async () => {
@@ -128,11 +128,11 @@ function InputWrapper(props: {
   return (
     <Paper w="100%" bg="#525151" py={3} px={7} radius={8}>
       <Flex align="center">
-        <Text w={65} size={14} lineClamp={1}>
+        <Text w={65} fz={14} lineClamp={1}>
           {title}:
         </Text>
         {!isEditing ? (
-          <Text lineClamp={1} size={18} color="white" px={2}>
+          <Text lineClamp={1} fz={18} color="white" px={2}>
             {form.values[name as keyof FormFields]?.toString()}
           </Text>
         ) : // Input for editing. It can also be a select input
@@ -176,7 +176,7 @@ function TextareaWrapper(props: {
   const value = form.values[name];
 
   return (
-    <Stack h="100%" p={8} sx={{ borderRadius: 8 }} bg="#525151" spacing={8}>
+    <Stack h="100%" p={8} sx={{ borderRadius: 8 }} bg="#525151" gap={8}>
       <Title order={3} size={14}>
         {title}
       </Title>
@@ -197,19 +197,13 @@ function DeleteCharacter(props: { characterId: string }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { mutateAsync, isLoading } = useMutation({
+  const { mutateAsync, isPending: isLoading } = useMutation({
     mutationFn: async ({ characterIdInput }: { characterIdInput: string }) => {
-      const { setDoc, doc } = await import("firebase/firestore");
+      const { updateDoc, deleteField, doc } = await import("firebase/firestore");
       const { db } = await import("../../../context/firebase");
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "characters");
-      const {
-        rawData: { [characterIdInput]: documentToBeDeleted, ...rest },
-      } = await getCharacters(user?.uid as string);
-
-      await setDoc(docRef, {
-        ...rest,
-      });
+      await updateDoc(docRef, { [characterIdInput]: deleteField() });
     },
   });
 
@@ -291,7 +285,7 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
     <UploadAndCropImage
       setStateAction={setFileBlob}
       target={
-        <GradientButtonPrimary loading={isProcessing} rightIcon={<Image src={Upload} />}>
+        <GradientButtonPrimary loading={isProcessing} rightSection={<Image src={Upload} />}>
           Upload
         </GradientButtonPrimary>
       }
@@ -304,7 +298,7 @@ function SingleCharacter(props: Character) {
   const form = useForm<FormFields>({
     initialValues: { ...props },
   });
-  const { mutateAsync, isLoading } = useUpdateOrAddDocument(props.id);
+  const { mutateAsync, isPending: isLoading } = useUpdateOrAddDocument(props.id);
   const { isOverSm } = useMediaQuery();
   const queryClient = useQueryClient();
 
@@ -331,7 +325,7 @@ function SingleCharacter(props: Character) {
       }}
     >
       <Flex sx={{ flexDirection: isOverSm ? "row" : "column" }} gap={40} w="100%" align="stretch">
-        <Stack spacing={19} align="center">
+        <Stack gap={19} align="center">
           <Avatar
             style={{ border: "4px solid #FFFFFF", borderRadius: "100%" }}
             w={150}
@@ -341,7 +335,7 @@ function SingleCharacter(props: Character) {
           />
           {isEditing && <UploadAvatar form={form} {...props} />}
         </Stack>
-        <Stack spacing={isOverSm ? 8 : 16} w="100%">
+        <Stack gap={isOverSm ? 8 : 16} w="100%">
           <Flex
             sx={{ flexDirection: isOverSm ? "row" : "column" }}
             justify="space-between"
@@ -351,7 +345,7 @@ function SingleCharacter(props: Character) {
             {isEditing ? (
               <TextInput {...form.getInputProps("name")} />
             ) : (
-              <Text size={24} color="white" bg="#2E2D2E" px={20} py={5} sx={{ borderRadius: 8 }}>
+              <Text fz={24} color="white" bg="#2E2D2E" px={20} py={5} sx={{ borderRadius: 8 }}>
                 {form.values.name}
               </Text>
             )}
@@ -360,7 +354,7 @@ function SingleCharacter(props: Character) {
                 <Group>
                   <DeleteCharacter characterId={props.id} />
                   <GradientButtonPrimary
-                    rightIcon={<Image src={Edit2} alt="Edit icon" />}
+                    rightSection={<Image src={Edit2} alt="Edit icon" />}
                     fullWidth={!isOverSm}
                     onClick={() => setEditing(true)}
                   >
@@ -388,7 +382,7 @@ function SingleCharacter(props: Character) {
             align="stretch"
             gap={8}
           >
-            <Stack w={isOverSm ? 220 : "100%"} spacing={8}>
+            <Stack w={isOverSm ? 220 : "100%"} gap={8}>
               <InputWrapper form={form} name="species" isEditing={isEditing} title="Species" />
               <InputWrapper
                 form={form}
@@ -403,7 +397,7 @@ function SingleCharacter(props: Character) {
               <InputWrapper form={form} name="birthday" isEditing={isEditing} title="Birthday" />
               <InputWrapper form={form} name="pronouns" isEditing={isEditing} title="Pronouns" />
             </Stack>
-            <Stack spacing={8} sx={{ flex: 1 }}>
+            <Stack gap={8} sx={{ flex: 1 }}>
               <TextareaWrapper
                 name="moveset"
                 isMoveSet

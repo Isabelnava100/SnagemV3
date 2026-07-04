@@ -1,4 +1,4 @@
-import { Button, Col, Grid, Title } from "@mantine/core";
+import { Button, Grid, Title } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { InfoOnThreadVisual } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
@@ -7,8 +7,8 @@ import { BookmarkButton } from "./BookmarkButton";
 export function FeaturesTitle({ info, forum }: InfoOnThreadVisual) {
   const { user } = useAuth();
   return (
-    <Grid gutter={20} style={{ padding: "16px 8px", background: "none" }}>
-      <Col span={12} p={0} sm={9} className="titleBox">
+    <Grid gap={20} style={{ padding: "16px 8px", background: "none" }}>
+      <Grid.Col span={{ base: 12, sm: 9 }} p={0} className="titleBox">
         <Title mb={1} order={1}>
           {info[0]["title"]}
         </Title>
@@ -19,8 +19,8 @@ export function FeaturesTitle({ info, forum }: InfoOnThreadVisual) {
             name={info[0]["title"]}
           />
         )}
-      </Col>
-      <Col span={12} p={0} sm={3} style={{ display: "flex", justifyContent: "end" }}>
+      </Grid.Col>
+      <Grid.Col span={{ base: 12, sm: 3 }} p={0} style={{ display: "flex", justifyContent: "end" }}>
         {user && (
           <Button
             variant="gradient"
@@ -35,7 +35,7 @@ export function FeaturesTitle({ info, forum }: InfoOnThreadVisual) {
             Make a New Post
           </Button>
         )}
-      </Col>
+      </Grid.Col>
     </Grid>
   );
 }

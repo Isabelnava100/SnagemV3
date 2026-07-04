@@ -1,4 +1,4 @@
-import { Group, Header, ScrollArea } from "@mantine/core";
+import { Box, Group, ScrollArea } from "@mantine/core";
 import { useState } from "react";
 import { Link, Outlet, useOutletContext, useParams } from "react-router-dom";
 import { NewForumInfo as links } from "../../../../components/types/typesUsed";
@@ -24,13 +24,13 @@ export function MiniNavForum() {
   ));
   return (
     <>
-      <Header height={40} className="headerMiniNav">
+      <Box component="header" h={40} className="headerMiniNav">
         <ScrollArea style={{ height: 46 }} offsetScrollbars scrollbarSize={6}>
           <div className="innerMiniNav">
-            <Group spacing={5}>{items}</Group>
+            <Group gap={5}>{items}</Group>
           </div>
         </ScrollArea>
-      </Header>
+      </Box>
 
       <Outlet context={{ active }} />
     </>

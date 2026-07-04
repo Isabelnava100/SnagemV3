@@ -9,11 +9,11 @@ import {
   Paper,
   ScrollArea,
   Stack,
-  Sx,
   Text,
   Title,
   useMantineTheme,
 } from "@mantine/core";
+import type { EmotionSx as Sx } from "@mantine/emotion";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
@@ -64,11 +64,11 @@ export function Dashboard() {
       py={isOverMd ? 30 : 10}
       px={isOverMd ? 75 : 5}
     >
-      <Stack spacing={isOverMd ? 30 : 10} w="100%">
+      <Stack gap={isOverMd ? 30 : 10} w="100%">
         {isOverMd && (
-          <Stack spacing={13}>
+          <Stack gap={13}>
             <Flex justify="space-between" align="center">
-              <Title order={2} color="white" size={40} transform="uppercase">
+              <Title order={2} c="white" size={40} tt="uppercase">
                 Snag Dashboard
               </Title>
               <Button className="self-start" variant="subtle" onClick={handleLogout}>
@@ -77,7 +77,7 @@ export function Dashboard() {
             </Flex>
             <Group>
               <Image src={Bell} alt="Bell icon" width={40} />
-              <Text color="white" size={20}>
+              <Text color="white" fz={20}>
                 Welcome, {user?.displayName}!
               </Text>
             </Group>
@@ -95,7 +95,7 @@ function ItemsAndCurrencySection() {
   const [currentTab, setCurrentTab] = useState<"items" | "currency">("items");
   const { isOverLg } = useMediaQuery();
   return (
-    <Stack spacing={13}>
+    <Stack gap={13}>
       {!isOverLg && (
         <Flex justify="end" align="center" gap={10}>
           <ActionIcon
@@ -189,10 +189,10 @@ function TabsPanel() {
                     to={linkPath}
                     key={link.path}
                   >
-                    <Group spacing={10}>
+                    <Group gap={10}>
                       <Image width={isOverMd ? 45 : 25} src={link.icon} alt={link.label} />
                       {isActive && isOverMd && (
-                        <Text color="white" size={20} transform="uppercase">
+                        <Text c="white" fz={20} tt="uppercase">
                           {link.label}
                         </Text>
                       )}
@@ -283,7 +283,7 @@ function MyItems() {
       title="Your Items"
     >
       <Conditional
-        condition={!Boolean(categories.length)}
+        condition={!categories.length}
         component={
           <Text color="white">
             You currently have no items!
@@ -335,14 +335,14 @@ function MyItems() {
                         sx={{ ...itemCommonStyle, overflow: "hidden" }}
                       >
                         <Flex w="100%" justify="space-between" align="center">
-                          <Group px={18} py={10} spacing={8}>
+                          <Group px={18} py={10} gap={8}>
                             <Avatar src={getItemImageURL(item.filePath)} alt={item.name} w={40} />
-                            <Text color="white" size={16}>
+                            <Text color="white" fz={16}>
                               {item.name}
                             </Text>
                           </Group>
                           <Box bg="#525151" py={10} px={20} sx={{ borderTopLeftRadius: 50 }}>
-                            <Text color="white" size={isOverLg ? 32 : 24}>
+                            <Text color="white" fz={isOverLg ? 32 : 24}>
                               x{item.quantity}
                             </Text>
                           </Box>
@@ -365,10 +365,10 @@ function Currency(props: { amount: string; name: string; color: string; icon: st
     <Paper bg={color} radius={8}>
       <Flex align="baseline" justify="start" px={10} py={5} gap={10}>
         <Image src={icon} mt={-100} alt="Icon" width={60} />
-        <Text color="white" size={32}>
+        <Text color="white" fz={32}>
           {amount.padStart(3, "0")}
         </Text>
-        <Text color="white" size={16}>
+        <Text color="white" fz={16}>
           {name}
         </Text>
       </Flex>
@@ -393,7 +393,7 @@ function MyCurrency() {
       style={{ width: isOverLg ? 345 : "100%" }}
       customHeader={
         <Flex pt={13} px={20} justify="end">
-          <Title order={4} size={14} color="white">
+          <Title order={4} size={14} c="white">
             Your Currency
           </Title>
         </Flex>

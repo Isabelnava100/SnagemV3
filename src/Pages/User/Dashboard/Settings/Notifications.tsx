@@ -30,7 +30,7 @@ function CreateNewDiscordTicket() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { mutateAsync, isLoading } = useMutation({
+  const { mutateAsync, isPending: isLoading } = useMutation({
     mutationKey: ["create-new-discord-ticket"],
     mutationFn: async () => {
       const { doc, setDoc } = await import("firebase/firestore");
@@ -94,7 +94,7 @@ export default function Notifications() {
   });
   const [debouncedValue] = useDebouncedValue(values, 100);
 
-  const { mutateAsync, isLoading: isProcessing } = useMutation({
+  const { mutateAsync, isPending: isProcessing } = useMutation({
     mutationKey: ["update-settings"],
     mutationFn: async ({ settingsInput }: { settingsInput: Settings }) => {
       const { doc, setDoc } = await import("firebase/firestore");

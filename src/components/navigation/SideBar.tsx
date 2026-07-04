@@ -63,7 +63,7 @@ function SingleLink(props: { label?: string; link?: string; icon: string }) {
             {/* <Text fz="xs" tt="uppercase" ta="center">{label}</Text> */}
           </Box>
           {!isUnder900 && (
-            <Text color="white" transform="uppercase" size={16}>
+            <Text c="white" tt="uppercase" fz={16}>
               {label}
             </Text>
           )}

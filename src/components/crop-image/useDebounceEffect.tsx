@@ -7,7 +7,7 @@ export function useDebounceEffect(
 ) {
     useEffect(() => {
         const t = setTimeout(() => {
-            // @ts-ignore
+            // @ts-expect-error legacy: fn args come from the deps array
             fn.apply(undefined, deps)
         }, waitTime)
 

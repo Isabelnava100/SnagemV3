@@ -1,19 +1,19 @@
 import { Pagination } from "@mantine/core";
+import type { JSX } from "react";
 import { PostsStructure } from "../../../../components/types/typesUsed";
 import { ArticleCardVertical } from "./EachPost";
 
 interface Props {
     currentPage: number;
     onChangePG: (page: number) => void;
-    allPosts:PostsStructure[];
-    postPerPage:number;
+    posts: PostsStructure[]; // already page-sized (fetched server-side)
+    totalPosts: number;
+    postPerPage: number;
   }
 
 export function PaginationWithEachPost(props:Props): JSX.Element {
-    const { currentPage, onChangePG,allPosts,postPerPage } = props;
-    const pagesCount = Math.ceil(allPosts.length / postPerPage);  
-    const start = (currentPage - 1) * postPerPage;  
-    const end = Math.min(currentPage * postPerPage, allPosts.length);
+    const { currentPage, onChangePG, posts, totalPosts, postPerPage } = props;
+    const pagesCount = Math.max(1, Math.ceil(totalPosts / postPerPage));
 
 return(
     <>
@@ -21,14 +21,11 @@ return(
     total={pagesCount}
     color="#772976"
     withEdges
-    page={currentPage}
+    value={currentPage}
     onChange={onChangePG}
     style={{ alignSelf: "end" }}
   />
-  {allPosts.length>0&&allPosts.map(
-    (apost, index) =>
-      index >= start &&
-      index + 1 <= end && (
+  {posts.map((apost) => (
         <ArticleCardVertical
         newkey={apost.id}
         key={apost.id}
@@ -41,14 +38,12 @@ return(
             badges: apost.badges,
           }}
         />
-        // <div key={apost.id}>test{apost.id}</div>
-      )
-  )}
+  ))}
   <Pagination
     total={pagesCount}
     color="#772976"
     withEdges
-    page={currentPage}
+    value={currentPage}
     onChange={onChangePG}
     style={{ alignSelf: "end" }}
   />

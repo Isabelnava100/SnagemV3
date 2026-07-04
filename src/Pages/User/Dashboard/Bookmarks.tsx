@@ -12,7 +12,7 @@ import DefaultCharacterAvatarSrc from "/src/assets/images/character-default.jpg"
 
 export default function Bookmarks() {
   const { user } = useAuth();
-  const { isLoading, data, isError, error } = useQuery({
+  const { isPending: isLoading, data, isError, error } = useQuery({
     queryKey: ["get-bookmarks"],
     queryFn: () => getBookmarks(user?.uid as string),
     enabled: !!user,
@@ -81,10 +81,10 @@ function SingleBookmark(props: Bookmark) {
       <Flex gap={15} pl="md" align="stretch">
         <BookmarkIcon color={color} />
         <Stack py="md" sx={{ flex: 1 }}>
-          <Title color="white" order={4} lineClamp={1}>
+          <Title c="white" order={4} lineClamp={1}>
             {title}
           </Title>
-          <Stack spacing={3}>
+          <Stack gap={3}>
             <Text>Latest post by: {user?.displayName}</Text>
             <Text size="xs" color="dimmed">
               {formatter.format(new Date(date.seconds))}

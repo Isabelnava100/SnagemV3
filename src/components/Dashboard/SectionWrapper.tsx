@@ -1,4 +1,4 @@
-import { Box, DefaultProps, Flex, Paper, Title } from "@mantine/core";
+import { Box, BoxProps, Flex, Paper, Title } from "@mantine/core";
 import React from "react";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { SectionLoader } from "../navigation/loading";
@@ -8,7 +8,7 @@ export default function SectionWrapper(props: {
   icon?: string;
   children: React.ReactNode;
   action?: React.ReactNode;
-  style?: DefaultProps["style"];
+  style?: BoxProps["style"];
   customHeader?: React.ReactNode;
   willFetchData?: boolean;
   isLoading?: boolean;
@@ -43,7 +43,7 @@ export default function SectionWrapper(props: {
             borderTopRightRadius: 16,
           }}
         >
-          <Title order={3} size={isOverSm ? 20 : 16} color="white">
+          <Title order={3} fz={isOverSm ? 20 : 16} c="white">
             {title}
           </Title>
           {action && action}

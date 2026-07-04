@@ -2,16 +2,15 @@ import { Container, Group, Paper, Select, Text, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, RichTextEditor } from "@mantine/tiptap";
-import { IconColorPicker } from "@tabler/icons";
+import { IconColorPicker } from "@tabler/icons-react";
 import { Color } from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import Mention from "@tiptap/extension-mention";
-import Placeholder from "@tiptap/extension-placeholder";
-import SubScript from "@tiptap/extension-subscript";
+ import SubScript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import TextAlign from "@tiptap/extension-text-align";
-import TextStyle from "@tiptap/extension-text-style";
-import Underline from "@tiptap/extension-underline";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Placeholder } from "@tiptap/extensions";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import React from "react";
@@ -83,11 +82,10 @@ export function NewTopic() {
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       TextStyle,
       CustomImage,
       Color,
-      Underline,
       Placeholder.configure({ placeholder: "This is placeholder" }),
       Link,
       Superscript,
@@ -164,7 +162,7 @@ export function NewTopic() {
         <Paper shadow="md" radius="lg">
           <div className="wrapperNewTopic">
             <div className="contactNewTopics">
-              <Text size="lg" weight={700} className="title2NewTopic" sx={{ color: "#fff" }}>
+              <Text size="lg" fw={700} className="title2NewTopic" sx={{ color: "#fff" }}>
                 Topic Information
               </Text>
 
@@ -194,7 +192,7 @@ export function NewTopic() {
             </div>
 
             <div className="formNewTopic">
-              <Text size="lg" weight={700} className="titleNewTopic">
+              <Text size="lg" fw={700} className="titleNewTopic">
                 First Post <sup className="text-red-600">*</sup>
               </Text>
 
@@ -327,7 +325,7 @@ export function NewTopic() {
                   <EmojiModal opened={opened} close={close} insertEmoji={insertEmoji} />
                   <RichTextEditor.Content />
                 </RichTextEditor>
-                <Group position="right" mt="md">
+                <Group justify="right" mt="md">
                   <ButtonProgress formCheck={!formTheCheck} />
                 </Group>
               </React.Suspense>

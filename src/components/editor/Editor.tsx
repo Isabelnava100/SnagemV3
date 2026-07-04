@@ -1,16 +1,15 @@
 import { useDisclosure } from "@mantine/hooks";
 import { Link, RichTextEditor } from "@mantine/tiptap";
-import { IconColorPicker } from "@tabler/icons";
+import { IconColorPicker } from "@tabler/icons-react";
 import { Color } from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import Mention from "@tiptap/extension-mention";
-import Placeholder from "@tiptap/extension-placeholder";
 import SubScript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import TextAlign from "@tiptap/extension-text-align";
-import TextStyle from "@tiptap/extension-text-style";
-import Underline from "@tiptap/extension-underline";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Placeholder } from "@tiptap/extensions";
 import { Editor as EditorType, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import React from "react";
@@ -53,11 +52,10 @@ const CustomImage = Image.extend({
 export function useRichTextEditor(options?: Partial<Omit<EditorType["options"], "extensions">>) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       TextStyle,
       CustomImage,
       Color,
-      Underline,
       Placeholder.configure({ placeholder: "This is placeholder" }),
       Link,
       Superscript,
