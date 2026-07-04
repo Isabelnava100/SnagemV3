@@ -116,12 +116,56 @@ Other storage:
 10. **Drafts** — manual save (Save Your Draft / Save Post Draft), multiple
     drafts allowed, resumable from Dashboard → Drafts.
 
-## Deferred (needs a Cloud Function pass)
+## Server-side integrity layer (Cloud Functions)
 
-Client-side generation of dice/randoms/encounters and client-side inventory
-decrements are forgeable by a hostile client. Firestore rules enforce
-author-only post edits, admin-only pinning and admin-only category creation,
-but write-once blocks, roll integrity, and transactional inventory/claim
-enforcement need a callable Cloud Function at publish time. Same for
-host-only thread-detail edits (currently any signed-in update passes rules
-because posters must bump denormalized activity fields).
+All game-relevant writes go through callable Cloud Functions in
+`functions/src/index.ts` (Admin SDK, transactional):
+
+| Callable             | Does                                                            |
+|----------------------|-----------------------------------------------------------------|
+| `rollDice`           | Server-rolls, stores in the thread's `pending/{uid}` doc         |
+| `rollRandom`         | Same for random numbers                                          |
+| `rollEncounter`      | Validates list/mode/allowance, increments `encounterClaims`      |
+| `publishForumPost`   | Validates restrictions/archived/edit-ownership, checks & decrements inventory, resolves catches into `bag/owned_pokemons`, attaches + consumes pending rolls, writes post + thread activity in one transaction |
+| `publishForumThread` | Enforces the category matrix + admin-only pinning, creates thread + first post |
+| `voteForumPoll`      | Validates the option, one vote per uid                           |
+| `setBossBattle`      | Host/admin only; start/end + system announcement post            |
+
+**Re-roll protection:** rolls are bound to the player's next post via
+`forum/{f}/threads/{t}/pending/{uid}` (read-own, function-written). Abandoning
+a draft does not discard a bad roll — the composer restores it on reload and
+`publishForumPost` consumes it.
+
+**Rules posture:** post create/update/delete and thread create are admin-only
+for clients (functions bypass rules). Clients keep two field-scoped thread
+write paths (bookmark `notifyviaDiscord`; host detail edits via
+`hostUid` + `diff().affectedKeys()`). Legacy threads without `hostUid` can
+only be host-managed by an admin.
+
+### Deploying
+
+Requires the Firebase CLI, the **Blaze plan** (Cloud Functions), and an
+account with access to the project:
+
+```
+npm i -g firebase-tools
+firebase login
+firebase use <your-project-id>      # the VITE_BACKEND_FIREBASE_PROJECT_ID value
+firebase deploy --only firestore:rules,functions
+```
+
+`firebase.json` wires both targets; functions build automatically on deploy.
+Deploy the rules and the functions together — the tightened rules assume the
+functions exist (clients can no longer write posts directly).
+
+### Still deferred
+
+- Post text length/content is validated server-side only loosely (size caps);
+  HTML is still sanitized at render time with DOMPurify, not at write time.
+- The dashboard's own `bag/*` writes (teams, characters, profile) remain
+  owner-writable by rules — the forum no longer depends on trusting them, but
+  a cheater could still hand-edit their inventory quantities; moving the whole
+  economy behind functions is a future pass.
+- Sequential thread ids come from a collection count outside the transaction
+  (same as the legacy app) — a simultaneous create could collide; harmless at
+  current scale but worth a counter doc later.

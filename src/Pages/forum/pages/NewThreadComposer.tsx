@@ -25,6 +25,7 @@ import { isAdmin } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getUsers } from "../../../queries/admin";
 import { creatableCategories } from "../config";
+import { callableMessage } from "../functionsClient";
 import { publishThread, saveDraft } from "../mutations";
 import { getDraft } from "../queries";
 import { EncounterConfig, PostCharacter, ThreadPoll } from "../types";
@@ -98,7 +99,6 @@ export default function NewThreadComposer() {
   const publishMutation = useMutation({
     mutationFn: async () => {
       const threadId = await publishThread({
-        user: user!,
         forum: categoryLink!,
         title: title.trim(),
         instructions,
@@ -114,7 +114,8 @@ export default function NewThreadComposer() {
       return threadId;
     },
     onSuccess: (threadId) => navigate(`/Forum/${categoryLink}/thread/${threadId}`),
-    onError: () => setError("Something went wrong publishing your thread. Try again."),
+    onError: (err) =>
+      setError(callableMessage(err, "Something went wrong publishing your thread. Try again.")),
   });
 
   const draftMutation = useMutation({

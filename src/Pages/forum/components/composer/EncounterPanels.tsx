@@ -1,10 +1,11 @@
 import { Button, Group, NumberInput, Radio, Select, Stack, Switch, Text } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { pokemonData } from "../../../../data/pokemon";
 import { getPokemonLists } from "../../../../queries/admin";
 import { DEFAULT_ENCOUNTERS_PER_USER } from "../../config";
+import { callRollEncounter, callableMessage } from "../../functionsClient";
 import { getEncounterLists, resolveListSlugs } from "../../queries";
 import { EncounterBlock, EncounterConfig, ForumThread } from "../../types";
 import { ForumPanel, ForumTextLink, GameResultText, PanelHint } from "../ui";
@@ -188,15 +189,26 @@ export function EncounterSetupPanel(props: {
  * encounter locks (board 20/21).
  */
 export function EncounterPostPanel(props: {
+  forum: string;
   thread: ForumThread;
   value: EncounterBlock | null;
   onChange: (encounter: EncounterBlock | null) => void;
   lockedEncounters?: EncounterBlock[];
 }) {
   const { user } = useAuth();
-  const { thread, value, onChange } = props;
+  const { forum, thread, value, onChange } = props;
   const [wantsEncounter, setWantsEncounter] = React.useState(false);
+  const [encounterError, setEncounterError] = React.useState("");
   const config = thread.encounterConfig;
+
+  // The server validates the list, allowance and mode, then binds the result
+  // to this player's next post in the thread — no client-side rolling.
+  const encounterMutation = useMutation({
+    mutationFn: (chosenSlug?: string) => callRollEncounter(forum, thread.id, chosenSlug),
+    onSuccess: (result) => onChange(result),
+    onError: (err) =>
+      setEncounterError(callableMessage(err, "The encounter roll failed — try again.")),
+  });
 
   // Resolve the host's lists (all signed-in users can read the list library).
   const { data: allLists } = useQuery({
@@ -215,17 +227,8 @@ export function EncounterPostPanel(props: {
   const pool = [...new Set([...resolveListSlugs(mainList), ...nonCatchSlugs])];
 
   const claimed = (thread.encounterClaims ?? {})[user?.uid ?? ""] ?? 0;
-  const remaining = Math.max(0, config.perUserLimit - claimed);
-
-  const makeBlock = (slug: string, mode: "roll" | "choose"): EncounterBlock => {
-    const info = pokemonData.find((p) => p.slug === slug);
-    return {
-      slug,
-      name: info?.name ?? slug,
-      mode,
-      catchable: !nonCatchSlugs.has(slug) && !thread.bossBattle?.active,
-    };
-  };
+  // The value being set means one claim was just consumed server-side.
+  const remaining = Math.max(0, config.perUserLimit - claimed - (value ? 1 : 0));
 
   return (
     <ForumPanel title="Encounters">
@@ -269,9 +272,10 @@ export function EncounterPostPanel(props: {
                   color="cyan.0"
                   w={160}
                   disabled={!pool.length}
+                  loading={encounterMutation.isPending}
                   onClick={() => {
-                    const slug = pool[Math.floor(Math.random() * pool.length)];
-                    onChange(makeBlock(slug, "roll"));
+                    setEncounterError("");
+                    encounterMutation.mutateAsync(undefined).catch(() => undefined);
                   }}
                 >
                   Roll an Encounter
@@ -287,12 +291,18 @@ export function EncounterPostPanel(props: {
                       (nonCatchSlugs.has(slug) ? " (cannot be caught)" : ""),
                   }))}
                   value={null}
-                  onChange={(slug) => slug && onChange(makeBlock(slug, "choose"))}
+                  disabled={encounterMutation.isPending}
+                  onChange={(slug) => {
+                    if (!slug) return;
+                    setEncounterError("");
+                    encounterMutation.mutateAsync(slug).catch(() => undefined);
+                  }}
                   size="xs"
                   w={260}
                   styles={{ input: { background: "#2E2D2E" } }}
                 />
               )}
+              {encounterError && <GameResultText>{encounterError}</GameResultText>}
             </>
           )}
         </Stack>

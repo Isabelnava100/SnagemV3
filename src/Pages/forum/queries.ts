@@ -97,6 +97,24 @@ export const getEncounterLists = async (username?: string): Promise<AdminPokemon
   return formattedData.filter((list) => list.public || (!!username && list.creator === username));
 };
 
+/**
+ * Server-rolled results waiting to attach to the user's next post in a thread
+ * (dice/random/encounter — see functions/src). Read-own, written by functions.
+ */
+export const getPendingActions = async (
+  forum: string,
+  threadId: string,
+  uid: string
+): Promise<{
+  dice?: import("./types").DiceBlock;
+  random?: import("./types").RandomBlock;
+  encounter?: import("./types").EncounterBlock;
+}> => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  const snap = await getDoc(doc(db, ...threadsPath(forum), threadId, "pending", uid));
+  return (snap.data() as any) ?? {};
+};
+
 /** A single saved draft (dashboard Drafts shape) for composer preloading. */
 export const getDraft = async (uid: string, draftId: string) => {
   const { doc, getDoc } = await import("firebase/firestore");

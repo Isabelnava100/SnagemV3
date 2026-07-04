@@ -132,10 +132,8 @@ export default function HostMenu() {
 
   const bossStartMutation = useMutation({
     mutationFn: async () => {
-      const info = pokemonData.find((p) => p.slug === bossSlug);
-      await startBossBattle(user!, forum, threadId!, {
+      await startBossBattle(forum, threadId!, {
         slug: bossSlug!,
-        name: info?.name ?? bossSlug!,
         description: bossDescription,
         excluded: bossExcluded,
       });
@@ -148,7 +146,7 @@ export default function HostMenu() {
   });
 
   const bossEndMutation = useMutation({
-    mutationFn: () => endBossBattle(user!, forum, threadId!, thread!.bossBattle!),
+    mutationFn: () => endBossBattle(forum, threadId!),
     onSuccess: () => {
       bossEndModal.close();
       invalidateThread();

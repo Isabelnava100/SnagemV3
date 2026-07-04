@@ -10,10 +10,12 @@ import {
   TextInput,
 } from "@mantine/core";
 import { IconMinus } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { v4 as uuid } from "uuid";
 import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
 import { DICE_TYPES } from "../../config";
+import { callRollDice, callRollRandom, callableMessage } from "../../functionsClient";
 import { DiceBlock, RandomBlock, ThreadPoll } from "../../types";
 import { ForumPanel, GameResultText } from "../ui";
 
@@ -25,10 +27,13 @@ function describeDice(d: DiceBlock): string {
 
 /**
  * Post Actions panel for the post composer: Roll Dice + Random Number.
- * Results generate on Roll and lock immediately — they publish with the post
- * and can never be re-rolled or edited (board 19/20/21).
+ * Rolls happen SERVER-SIDE (Cloud Function) and bind to your next post in the
+ * thread — they lock immediately, publish with the post and can never be
+ * re-rolled, even by abandoning the draft (board 19/20/21).
  */
 export function PostActionsPanel(props: {
+  forum: string;
+  threadId: string;
   dice: DiceBlock | null;
   onDice: (d: DiceBlock) => void;
   random: RandomBlock | null;
@@ -43,18 +48,30 @@ export function PostActionsPanel(props: {
   const [randomOn, setRandomOn] = React.useState(false);
   const [low, setLow] = React.useState<number>(1);
   const [high, setHigh] = React.useState<number>(100);
+  const [rollError, setRollError] = React.useState("");
+
+  const diceMutation = useMutation({
+    mutationFn: () => callRollDice(props.forum, props.threadId, Number(sides), count),
+    onSuccess: (result) => props.onDice(result),
+    onError: (err) => setRollError(callableMessage(err, "The dice roll failed — try again.")),
+  });
+
+  const randomMutation = useMutation({
+    mutationFn: () =>
+      callRollRandom(props.forum, props.threadId, Math.min(low, high), Math.max(low, high)),
+    onSuccess: (result) => props.onRandom(result),
+    onError: (err) => setRollError(callableMessage(err, "The roll failed — try again.")),
+  });
 
   const rollDice = () => {
     if (!sides || count < 1) return;
-    const n = Number(sides);
-    const results = Array.from({ length: count }, () => 1 + Math.floor(Math.random() * n));
-    props.onDice({ sides: n, count, results });
+    setRollError("");
+    diceMutation.mutateAsync().catch(() => undefined);
   };
 
   const rollRandom = () => {
-    const min = Math.min(low, high);
-    const max = Math.max(low, high);
-    props.onRandom({ min, max, result: min + Math.floor(Math.random() * (max - min + 1)) });
+    setRollError("");
+    randomMutation.mutateAsync().catch(() => undefined);
   };
 
   return (
@@ -110,7 +127,14 @@ export function PostActionsPanel(props: {
                     styles={{ input: { background: "#2E2D2E" } }}
                   />
                 </Group>
-                <Button size="xs" radius="xl" color="cyan.0" disabled={!sides} onClick={rollDice}>
+                <Button
+                  size="xs"
+                  radius="xl"
+                  color="cyan.0"
+                  disabled={!sides}
+                  loading={diceMutation.isPending}
+                  onClick={rollDice}
+                >
                   Roll
                 </Button>
               </Group>
@@ -162,13 +186,21 @@ export function PostActionsPanel(props: {
                     styles={{ input: { background: "#2E2D2E" } }}
                   />
                 </Group>
-                <Button size="xs" radius="xl" color="cyan.0" onClick={rollRandom}>
+                <Button
+                  size="xs"
+                  radius="xl"
+                  color="cyan.0"
+                  loading={randomMutation.isPending}
+                  onClick={rollRandom}
+                >
                   Roll
                 </Button>
               </Group>
             )}
           </Stack>
         )}
+
+        {rollError && <GameResultText>{rollError}</GameResultText>}
       </Stack>
     </ForumPanel>
   );

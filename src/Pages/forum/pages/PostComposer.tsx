@@ -11,15 +11,10 @@ import { useAuth } from "../../../context/AuthContext";
 import { getPokemonImageURL } from "../../../helpers";
 import { getItems } from "../../../queries/dashboard";
 import { queryClient } from "../../../lib/react-query";
-import { publishPost, publishPostEdits, saveDraft } from "../mutations";
-import { getDraft, getPost, getThread } from "../queries";
-import {
-  DiceBlock,
-  EncounterBlock,
-  PostBlocks,
-  PostCharacter,
-  RandomBlock,
-} from "../types";
+import { callableMessage } from "../functionsClient";
+import { publishPost, saveDraft } from "../mutations";
+import { getDraft, getPendingActions, getPost, getThread } from "../queries";
+import { DiceBlock, EncounterBlock, PostCharacter, RandomBlock } from "../types";
 import CharactersPanel from "../components/composer/CharactersPanel";
 import { EncounterPostPanel } from "../components/composer/EncounterPanels";
 import UseItemsPanel, {
@@ -31,13 +26,13 @@ import { ForumPanel, GameResultText, PanelHint } from "../components/ui";
 import { userMayPost } from "./ThreadView";
 import "../forum.css";
 
-const isBallCategory = (category: string) => category.toLowerCase().includes("ball");
-
 /**
  * Post composer — used both for a new reply (Publish Reply) and for editing an
  * existing post (Publish Edits). Core rule from the board: once an item,
  * encounter or action has been submitted it cannot be edited or changed;
  * before submitting everything can be added, edited or removed freely.
+ * Rolls/encounters come from the server and bind to this thread until
+ * published; publishing itself runs through a Cloud Function transaction.
  */
 export default function PostComposer(props: { mode: "new" | "edit" }) {
   const { mode } = props;
@@ -93,6 +88,20 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     enabled: !!user,
   });
 
+  // Server-rolled results already bound to this thread (e.g. after a page
+  // reload mid-compose) — they must attach to the next published post.
+  const { data: pending } = useQuery({
+    queryKey: ["forum-pending", forum, threadId, user?.uid],
+    queryFn: () => getPendingActions(forum, threadId!, user!.uid),
+    enabled: !!user && !!threadId,
+  });
+  React.useEffect(() => {
+    if (!pending) return;
+    if (pending.dice) setDice(pending.dice);
+    if (pending.random) setRandom(pending.random);
+    if (pending.encounter) setEncounter(pending.encounter);
+  }, [pending]);
+
   // Preload content when editing; prepend the quote when quoting.
   React.useEffect(() => {
     if (!editor || loadedEdit) return;
@@ -120,42 +129,6 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     !!thread?.bossBattle?.active &&
     !(thread.bossBattle.excluded ?? []).includes(user?.displayName ?? user?.username ?? "");
 
-  const buildNewBlocks = (): PostBlocks => {
-    const items = itemSelections
-      .map((selection) => {
-        const item = (inventory ?? []).find((i) => i.id === selection.itemId);
-        if (!item || selection.qty <= 0) return null;
-        return {
-          itemId: item.id,
-          name: item.name,
-          filePath: item.filePath,
-          qty: selection.qty,
-          ...(selection.note.trim() ? { note: selection.note.trim() } : {}),
-        };
-      })
-      .filter(Boolean) as PostBlocks["itemsUsed"];
-
-    const blocks: PostBlocks = {};
-    if (encounter) {
-      // Catch resolution: a ball used in the same post catches a catchable
-      // encounter (non-catchable and boss encounters can never be caught).
-      const ball = (items ?? []).find((item) => {
-        const inv = (inventory ?? []).find((i) => i.id === item.itemId);
-        return inv && isBallCategory(inv.category);
-      });
-      const caught = !!ball && encounter.catchable;
-      blocks.encounters = [{ ...encounter, caught }];
-      if (ball && caught) ball.caughtPokemon = encounter.name;
-    }
-    if (items?.length) blocks.itemsUsed = items;
-    if (dice) blocks.dice = [dice];
-    if (random) blocks.randoms = [random];
-    if (bossActive && thread?.bossBattle) {
-      blocks.boss = { slug: thread.bossBattle.slug, name: thread.bossBattle.name };
-    }
-    return blocks;
-  };
-
   const validate = (): string => {
     if (html.replace(/<[^>]*>/g, "").trim().length < 2) return "Write your post first.";
     for (const selection of itemSelections) {
@@ -168,43 +141,31 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
 
   const publishMutation = useMutation({
     mutationFn: async () => {
-      const added = buildNewBlocks();
-      if (mode === "edit" && editingPost) {
-        const merged: PostBlocks = {
-          encounters: [...(editingPost.blocks?.encounters ?? []), ...(added.encounters ?? [])],
-          itemsUsed: [...(editingPost.blocks?.itemsUsed ?? []), ...(added.itemsUsed ?? [])],
-          dice: [...(editingPost.blocks?.dice ?? []), ...(added.dice ?? [])],
-          randoms: [...(editingPost.blocks?.randoms ?? []), ...(added.randoms ?? [])],
-          ...(editingPost.blocks?.boss ? { boss: editingPost.blocks.boss } : {}),
-        };
-        await publishPostEdits({
-          user: user!,
-          forum,
-          threadId: threadId!,
-          postId: postId!,
-          html,
-          blocks: merged,
-          addedBlocks: added,
-        });
-      } else {
-        await publishPost({
-          user: user!,
-          forum,
-          threadId: threadId!,
-          characters,
-          html,
-          blocks: added,
-        });
-      }
+      await publishPost({
+        forum,
+        threadId: threadId!,
+        characters,
+        html,
+        items: itemSelections
+          .filter((s) => s.qty > 0)
+          .map((s) => ({
+            itemId: s.itemId,
+            qty: s.qty,
+            ...(s.note.trim() ? { note: s.note.trim() } : {}),
+          })),
+        ...(mode === "edit" ? { editPostId: postId } : {}),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["forum-thread", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["forum-posts-count", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["forum-posts", forum, threadId] });
+      queryClient.invalidateQueries({ queryKey: ["forum-pending", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["get-items", user?.uid] });
       navigate(`/Forum/${forum}/thread/${threadId}/last`);
     },
-    onError: () => setError("Something went wrong publishing. Try again."),
+    onError: (err) =>
+      setError(callableMessage(err, "Something went wrong publishing. Try again.")),
   });
 
   const draftMutation = useMutation({
@@ -279,6 +240,8 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
               ballsBlocked={bossActive}
             />
             <PostActionsPanel
+              forum={forum}
+              threadId={threadId!}
               dice={dice}
               onDice={setDice}
               random={random}
@@ -311,6 +274,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
             )}
 
             <EncounterPostPanel
+              forum={forum}
               thread={thread}
               value={encounter}
               onChange={setEncounter}

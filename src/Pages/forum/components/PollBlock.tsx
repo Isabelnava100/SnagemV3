@@ -29,7 +29,7 @@ export default function PollBlock(props: {
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (optionId: string) => {
       if (!user) return;
-      await votePoll(forum, threadId, user.uid, optionId);
+      await votePoll(forum, threadId, optionId);
     },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["forum-thread", forum, threadId] }),
