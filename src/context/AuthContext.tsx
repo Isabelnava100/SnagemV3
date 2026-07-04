@@ -1,5 +1,5 @@
 import { LoadingOverlay } from "@mantine/core";
-import { ReactNode, createContext, useContext, useEffect, useState } from "react";
+import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from "react";
 import LoadingSpinner from "../components/navigation/loading";
 import { AuthContextType, SpecificUser, User } from "../components/types/typesUsed";
 import { auth, db } from "./firebase";
@@ -29,33 +29,39 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<boolean>(true);
 
   useEffect(() => {
-    const authConst = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const { uid, email, displayName } = user;
-        const { avatar, username, ...otherinfo } = await getInfo(uid);
-        setUser((prevState) => ({
-          ...prevState,
-          uid,
-          email,
-          displayName,
-          username,
-          // return the user avatar
-          avatar,
-          otherinfo,
-        }));
-        setPending(false);
-      } else {
+    // Subscribe exactly once: a [user] dependency here re-subscribes on every
+    // setUser and loops onAuthStateChanged -> getInfo (a billed Firestore read) forever.
+    const authConst = auth.onAuthStateChanged(async (firebaseUser) => {
+      try {
+        if (firebaseUser) {
+          const { uid, email, displayName } = firebaseUser;
+          const { avatar, username, ...otherinfo } = await getInfo(uid);
+          setUser({ uid, email, displayName, username, avatar, otherinfo });
+        } else {
+          setUser(undefined);
+        }
+      } catch (error) {
+        // Profile read failed (offline/rules) but Firebase Auth IS signed in:
+        // keep a minimal user so guards don't render a false logged-out state.
+        if (firebaseUser) {
+          const { uid, email, displayName } = firebaseUser;
+          setUser((prev) => prev ?? { uid, email, displayName, username: displayName ?? "" });
+        }
+        console.error("Failed to load user profile", error);
+      } finally {
         setPending(false);
       }
     });
     return () => authConst();
-  }, [setUser, user]);
+  }, []);
+
+  const value = useMemo(() => ({ user, setUser }), [user]);
 
   if (pending) {
     return <LoadingOverlay visible={pending} loaderProps={{ children: <LoadingSpinner /> }} />;
   }
 
-  return <AuthContext.Provider value={{ user, setUser }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export { AuthContextProvider };

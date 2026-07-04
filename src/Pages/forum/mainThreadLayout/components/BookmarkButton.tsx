@@ -3,7 +3,7 @@ import { Button } from '@mantine/core';
 import { arrayRemove, arrayUnion, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Bookmark, BookmarkOff } from 'tabler-icons-react';
+import { IconBookmark, IconBookmarkOff } from '@tabler/icons-react';
 import { User } from '../../../../components/types/typesUsed';
 import { db } from '../../../../context/firebase';
 
@@ -49,7 +49,7 @@ export function BookmarkButton({ user,listofnotify,name}
     //if clicked on, check if user is logged in...
     //move all this to CSS
           <Button 
-          leftSection={isBookmarked?<BookmarkOff/>:<Bookmark/>}
+          leftSection={isBookmarked?<IconBookmarkOff/>:<IconBookmark/>}
           onClick={handleBookmarkClick}
           sx={(theme) => ({
             backgroundColor: 'color-primary', marginBottom: 12,

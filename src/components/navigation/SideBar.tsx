@@ -109,7 +109,8 @@ export const SideBar = () => {
         borderBottomRightRadius: isUnder900 ? 30 : 60,
         overflow: "auto",
         flexShrink: 0,
-        justifyContent: "center",
+        // "safe" falls back to flex-start when links overflow, keeping the first items reachable
+        justifyContent: "safe center",
       }}
     >
       {!isOverSm && <MobileMenu links={menuLinks} />}

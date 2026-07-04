@@ -43,7 +43,7 @@ export function ResetPW() {
       password: (val) => {
         if (val.length < 6) return "Password must include at least 6 characters.";
         const isValid = requirements.every((req) => req.re.test(val));
-        return isValid ? "Password does not meet all requirements." : null;
+        return isValid ? null : "Password does not meet all requirements.";
       },
       confirmPassword: (val, values) =>
         val !== values.password ? "Passwords did not match" : null,
@@ -90,22 +90,26 @@ export function ResetPW() {
     <Container size={640} my={40}>
       <AuthCard title="Reset Your Password">
         <form onSubmit={form.onSubmit(handlePasswordReset)}>
-          <PasswordInput
-            mt="md"
-            required
-            {...form.getInputProps("password")}
-            label="Your password"
-            placeholder="Your password"
-            description="Should include letters in lower and uppercase, at least 1 number and at least 1 special symbol."
-            value={value}
-            onFocus={() => handlePopoverChange(true)}
-            onBlur={() => handlePopoverChange(false)}
-            onChange={handleValueChange}
-          />
-          <Popover opened={popoverOpened} onChange={setPopoverOpened}>
-             <Popover.Target>
-               <div></div>
-             </Popover.Target>
+          <Popover
+            opened={popoverOpened}
+            onChange={setPopoverOpened}
+            position="bottom-start"
+            width="target"
+          >
+            <Popover.Target>
+              <PasswordInput
+                mt="md"
+                required
+                {...form.getInputProps("password")}
+                label="Your password"
+                placeholder="Your password"
+                description="Should include letters in lower and uppercase, at least 1 number and at least 1 special symbol."
+                value={value}
+                onFocus={() => handlePopoverChange(true)}
+                onBlur={() => handlePopoverChange(false)}
+                onChange={handleValueChange}
+              />
+            </Popover.Target>
             <Popover.Dropdown>
               <Progress
                 color={color}

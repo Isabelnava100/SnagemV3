@@ -1,7 +1,6 @@
 import {
   Anchor,
   Button,
-  Checkbox,
   Container,
   Divider,
   Grid,
@@ -14,7 +13,7 @@ import {
 import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BrandGoogle } from "tabler-icons-react";
+import { IconBrandGoogle } from "@tabler/icons-react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthCard, coolGradient, warmGradient } from "./components/AuthCard";
 import { handleGoogleSignIn } from "./components/GoogleHandle";
@@ -32,7 +31,6 @@ export function Login() {
     initialValues: {
       email: "",
       password: "",
-      remember: false,
     },
     validate: {
       email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email."),
@@ -67,7 +65,7 @@ export function Login() {
         <form
           onSubmit={form.onSubmit(async (values) => {
             setSub(true);
-            const results = await handleSignIn(values.email, values.password, values.remember, setUser);
+            const results = await handleSignIn(values.email, values.password, setUser);
             if (results === "auth/user-not-found" || results === "auth/invalid-credential" || results === "auth/invalid-email") {
               form.setFieldError("email", "Invalid email or password");
               form.setFieldError("password", "Invalid email or password");
@@ -85,7 +83,7 @@ export function Login() {
           })}
         >
           <Grid gap="xl" align="center">
-            <Grid.Col span={{ base: 12, xs: 7 }}>
+            <Grid.Col span={{ base: 12, sm: 7 }}>
               <TextInput
                 label="Email Address"
                 required
@@ -97,8 +95,7 @@ export function Login() {
                 label="Password"
                 {...form.getInputProps("password")}
               />
-              <Group justify="space-between" mt={6}>
-                <Checkbox size="xs" label="Remember me" {...form.getInputProps("remember")} />
+              <Group justify="right" mt={6}>
                 <Anchor component={Link} to="/Forgot" size="sm" c="dimmed">
                   Forgot your password?
                 </Anchor>
@@ -120,7 +117,7 @@ export function Login() {
                 fullWidth
                 variant="default"
                 radius="md"
-                leftSection={<BrandGoogle size={18} />}
+                leftSection={<IconBrandGoogle size={18} />}
                 onClick={onGoogle}
                 disabled={submitted}
               >
@@ -132,7 +129,7 @@ export function Login() {
                 </Text>
               )}
             </Grid.Col>
-            <Grid.Col span={{ base: 12, xs: 5 }}>
+            <Grid.Col span={{ base: 12, sm: 5 }}>
               <Stack align="center" gap="sm">
                 <img src={EEVEE_IMG} alt="Sleeping Eevee" className="authEevee" />
                 <Text size="sm" c="dimmed">

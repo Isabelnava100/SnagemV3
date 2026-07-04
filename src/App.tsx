@@ -16,7 +16,8 @@ export const App = memo(() => {
   return (
     <Box
       style={{
-        height: "100vh",
+        // 100dvh tracks mobile browser toolbars; 100vh is the fallback
+        height: "100dvh",
         width: "100%",
         maxWidth: 1920,
         overflow: "hidden",

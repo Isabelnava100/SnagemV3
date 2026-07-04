@@ -18,6 +18,7 @@ Live: snagemguild.com. Deploy: Netlify (`netlify.toml`, SPA redirect to index.ht
 - v9 prop names: `gap` not `spacing`, `justify` not `position`, `c` not `color` (Text/Title), `fw` not `weight`, `fz` for numeric font sizes, `leftSection`/`rightSection` not icons props, `wrap="nowrap"` not `noWrap`.
 - Dark theme only (`defaultColorScheme="dark"`, theme in `src/lib/mantine.ts` — palettes must be 10 shades).
 - Icons: `@tabler/icons-react` (NOT dead `@tabler/icons` v1) or existing `tabler-icons-react`.
+- **Everything must be mobile responsive.** Any new or edited UI must work at 375px width with no horizontal scroll: use Mantine responsive props (`span={{ base: 12, xs: 6 }}`, responsive style props), relative widths (`maw` + `w="100%"`) over fixed px, and verify at the mobile viewport before committing. Theme breakpoints: xs=480, sm=800 (`src/lib/mantine.ts`).
 
 ## Data & Firestore rules
 

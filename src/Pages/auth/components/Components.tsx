@@ -35,13 +35,14 @@ export const requirements = [
     return Math.max(100 - (100 / (requirements.length + 1)) * multiplier, 10);
   }
   
-  //Generate password for applicants
+  //Generate password for applicants — this is a real account password, so use a CSPRNG
   export function generatePassword() {
-    const length = 8,
-        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const length = 24,
+        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    const values = crypto.getRandomValues(new Uint32Array(length));
     let retVal = "";
-    for (let i = 0, n = charset.length; i < length; ++i) {
-        retVal += charset.charAt(Math.floor(Math.random() * n));
+    for (let i = 0; i < length; ++i) {
+        retVal += charset.charAt(values[i] % charset.length);
     }
     return retVal;
 }

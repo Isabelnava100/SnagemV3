@@ -17,7 +17,7 @@ import { useDebouncedValue } from "@mantine/hooks";
 import { IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
-import { InfoCircle } from "tabler-icons-react";
+import { IconInfoCircle } from "@tabler/icons-react";
 import { v4 as uuid } from "uuid";
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
@@ -544,7 +544,7 @@ function Tags() {
           <Text fz={16} color="white">
             Tags
           </Text>
-          <Alert icon={<InfoCircle />} py={0} color="gray" bg="transparent" sx={{ flex: 1 }}>
+          <Alert icon={<IconInfoCircle />} py={0} color="gray" bg="transparent" sx={{ flex: 1 }}>
             Maximum 6 tags allowed. These are used to make filtering and searching easy on the users
             page.
           </Alert>

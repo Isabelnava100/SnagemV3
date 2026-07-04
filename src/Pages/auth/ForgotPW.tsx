@@ -10,7 +10,7 @@ import {
 import { useForm } from "@mantine/form";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "tabler-icons-react";
+import { IconArrowLeft } from "@tabler/icons-react";
 import { auth } from "../../context/firebase";
 import { AuthCard, warmGradient } from "./components/AuthCard";
 
@@ -70,7 +70,7 @@ export function ForgotPassword() {
           </Stack>
           <Anchor component={Link} to="/Login" c="dimmed" size="sm" mt="xl" display="inline-block">
             <Center inline>
-              <ArrowLeft size={14} />
+              <IconArrowLeft size={14} />
               <Box ml={5}>Back to the Login page</Box>
             </Center>
           </Anchor>

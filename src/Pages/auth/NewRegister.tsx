@@ -114,7 +114,7 @@ export function NewRegister() {
           }}
         >
           <Grid gap="xl" style={{ width: "100%" }}>
-            <Grid.Col span={{ base: 12, xs: 6 }}>
+            <Grid.Col span={{ base: 12, sm: 6 }}>
               <TextInput
                 required
                 label="Email Address"
@@ -156,7 +156,7 @@ export function NewRegister() {
                 </Text>
               )}
             </Grid.Col>
-            <Grid.Col span={{ base: 12, xs: 6 }}>
+            <Grid.Col span={{ base: 12, sm: 6 }}>
               {gaia === "Yes" ? (
                 <>
                   <TextInput
@@ -170,6 +170,7 @@ export function NewRegister() {
                     onChange={setPopoverOpened}
                     transitionProps={{ transition: "pop" }}
                     position="bottom-start"
+                    width="target"
                   >
                     <Popover.Target>
                       <PasswordInput
