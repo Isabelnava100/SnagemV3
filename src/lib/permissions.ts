@@ -1,0 +1,43 @@
+import {
+  BASE_FORUM_VALUES,
+  Capability,
+  MASTER_FORUM_VALUES,
+  User,
+  UserRoles,
+} from "../components/types/typesUsed";
+
+// NOTE: every helper here is CLIENT-SIDE UI gating only. Real authorization must
+// be enforced by Firestore security rules (console-managed). See docs/PERMISSIONS.md.
+
+export function roleOf(user: User | undefined): string {
+  return user?.otherinfo?.permissions ?? "";
+}
+
+export function isAdmin(user: User | undefined): boolean {
+  return roleOf(user) === UserRoles.Admin;
+}
+
+// Admin implicitly has every capability; everyone else needs an explicit grant.
+export function hasCapability(user: User | undefined, cap: Capability): boolean {
+  if (isAdmin(user)) return true;
+  return user?.otherinfo?.capabilities?.includes(cap) ?? false;
+}
+
+// Forum "value" ids this user may see. Default-deny: unknown/absent roles get the
+// base set, Applicant/Disabled get nothing, Master (or the SeeMasterForums grant)
+// adds the master-only forum(s), Admin sees all.
+export function allowedForumValues(user: User | undefined): string[] {
+  const role = roleOf(user);
+  if (role === UserRoles.Applicant || role === UserRoles.Disabled) return [];
+  if (isAdmin(user)) return [...BASE_FORUM_VALUES, ...MASTER_FORUM_VALUES];
+
+  const values = new Set(BASE_FORUM_VALUES);
+  if (role === UserRoles.Master || hasCapability(user, Capability.SeeMasterForums)) {
+    MASTER_FORUM_VALUES.forEach((v) => values.add(v));
+  }
+  return [...values];
+}
+
+export function canAccessForum(user: User | undefined, forumValue: string): boolean {
+  return allowedForumValues(user).includes(forumValue);
+}

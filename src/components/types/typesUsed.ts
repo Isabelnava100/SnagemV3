@@ -72,6 +72,12 @@ export const NewForumInfo: ProviderForumSetup[] = [
 ];
 //replace all other with this
 
+// Forum-visibility model (default-DENY). Adjust these two lists to change access.
+// Master Mission (value "3") is the master-only forum unlocked by the Master role
+// or the SeeMasterForums capability; everything else is visible to any member.
+export const MASTER_FORUM_VALUES = ["3"];
+export const BASE_FORUM_VALUES = ["1", "2", "4", "5", "6"];
+
 export const badgesColors = [
   { color1: "red", color2: "yellow", label: "Test" },
   { color1: "blue", color2: "green", label: "Legacy" },
@@ -144,21 +150,36 @@ export type User = {
 };
 //Database for Users
 
-/* 
+/*
   ===========================================
-  SnagemGuild Native Permissions Architecture
+  SnagemGuild Permissions Architecture
   ===========================================
-  - Director: Owner, can do anything.
-  - Admin: Able to edit some things and assist directors.
-  - Master User: Can access certain privileged parts of the site.
-  - Verified User: Basic user but verified identity.
-  - New User ("New"): User that has been accepted natively.
-  - Applicant: Applicants (cannot login).
-  - Disabled: Cannot view most of the site, cannot login.
+  Two orthogonal axes (see docs/PERMISSIONS.md for the full model + roadmap):
+
+  1. ROLE (`permissions` field, exactly one per user) — trust tier + forum
+     visibility. Higher tiers see more forums; roles do NOT imply capabilities.
+       - Admin     : full control; manages roles and capabilities of others.
+       - Director   : functional role; powers come from granted capabilities,
+                      NOT from the role itself. Not automatically a Master.
+       - Master     : forum-visibility tier — unlocks the master-only forum(s).
+       - Verified   : standard trusted member.
+       - New        : freshly approved member.
+       - Applicant  : still in the NewUsers queue; cannot log in.
+       - Disabled   : access revoked; cannot log in.
+
+  2. CAPABILITIES (`capabilities` field, zero or more) — granular action grants
+     an Admin toggles per user (mainly for Directors). Admin has all implicitly.
+     Forum visibility and capabilities are independent: a Director can be granted
+     SeeMasterForums without becoming a Master, and vice-versa.
+
+  FUTURE: an Admin-only checklist on the Settings tab to toggle each Director's
+  capabilities. For now capabilities are set by hand in the Firestore console.
+  Real enforcement of all of this MUST live in Firestore security rules — every
+  check in this codebase is client-side UI only.
 */
 export enum UserRoles {
-  Director = "Director",
   Admin = "Admin",
+  Director = "Director",
   Master = "Master",
   Verified = "Verified",
   New = "New",
@@ -166,8 +187,17 @@ export enum UserRoles {
   Disabled = "Disabled",
 }
 
+// Granular, admin-grantable action permissions. Add new powers here.
+export enum Capability {
+  SeeMasterForums = "SeeMasterForums",
+  GiveItems = "GiveItems",
+  HostEvents = "HostEvents",
+  ManageLists = "ManageLists",
+}
+
 export type SpecificUser = {
   permissions: UserRoles | string;
+  capabilities?: Capability[];
   badges: string[];
   discordUID?: string;
 };

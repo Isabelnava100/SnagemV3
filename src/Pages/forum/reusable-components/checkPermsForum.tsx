@@ -1,23 +1,16 @@
 import {
   NewForumInfo as data,
   PermissionsForForum,
-  User
+  User,
 } from "../../../components/types/typesUsed";
+import { allowedForumValues } from "../../../lib/permissions";
 
-//This ensures that the forum location is available to the user.
-export const filteredData = ( 
+// Forums this user may see. Default-DENY via allowedForumValues (see lib/permissions):
+// base members get the standard forums, Master/SeeMasterForums adds the master-only
+// forum, Admin sees all, Applicant/Disabled see none.
+export const filteredData = (
   user: User | undefined = undefined
 ): Array<PermissionsForForum> => {
-  switch (user?.otherinfo?.permissions) {
-    case "Master":
-      return data.filter((item) => ["2", "3", "6"].includes(item.value));
-    case "Admin":
-      return data.filter((item) =>
-        ["1", "2", "3", "4", "5", "6"].includes(item.value)
-      );
-    case "User":
-      return data.filter((item) => ["2", "6"].includes(item.value));
-    default:
-      return data;
-  }
+  const allowed = allowedForumValues(user);
+  return data.filter((item) => allowed.includes(item.value));
 };

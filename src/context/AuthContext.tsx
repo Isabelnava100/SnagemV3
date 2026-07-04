@@ -15,6 +15,7 @@ export const getInfo = async (
 
   return {
     permissions: userData ? userData.permissions : "",
+    capabilities: userData?.capabilities ?? [],
     badges: userData ? userData.badges : [],
     discordUID: userData ? userData.discordUID : "",
     avatar: userData?.avatar,

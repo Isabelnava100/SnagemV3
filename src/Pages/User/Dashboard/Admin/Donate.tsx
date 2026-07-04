@@ -16,10 +16,14 @@ import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLa
 import { Conditional } from "../../../../components/common/Conditional";
 import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
 import { EmptyMessage } from "../../../../components/common/Message";
+import { Capability } from "../../../../components/types/typesUsed";
+import { useAuth } from "../../../../context/AuthContext";
 import { itemData } from "../../../../data/item";
 import { getItemImageURL } from "../../../../helpers";
 import useMediaQuery from "../../../../hooks/useMediaQuery";
 import { ItemIcon } from "../../../../icons";
+import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
+import { hasCapability } from "../../../../lib/permissions";
 import { getUsers } from "../../../../queries/admin";
 
 function TopHeader(props: { children: React.ReactNode }) {
@@ -70,6 +74,10 @@ export default function Donate() {
 
   const queryClient = useQueryClient();
   const { isOverXl } = useMediaQuery();
+  const { user } = useAuth();
+  // Admins have this implicitly; Directors need the GiveItems grant. The parent
+  // route is still Admin-only until the Director capability checklist ships.
+  const canGiveItems = hasCapability(user, Capability.GiveItems);
 
   const handleShowConfirmation = () => {
     if (itemsToSendWithQty.length > 0 && toUsers?.length > 0) {
@@ -78,13 +86,14 @@ export default function Donate() {
   };
 
   const handleConfirmAndSendItemsToUsers = async () => {
+    if (!canGiveItems) return;
     try {
       setSending(true);
       const { doc, setDoc, increment } = await import("firebase/firestore");
       const { db } = await import("../../../../context/firebase");
 
-      for (const user of toUsers) {
-        const docRef = doc(db, "users", user.id, "bag", "items");
+      for (const recipient of toUsers) {
+        const docRef = doc(db, "users", recipient.id, "bag", "items");
         for (const { id: itemId, ...item } of itemsToSendWithQty) {
           await setDoc(
             docRef,
@@ -92,6 +101,14 @@ export default function Donate() {
             { merge: true }
           );
         }
+        await logAuditEvent({
+          action: "items.grant",
+          ...actorFrom(user),
+          targetPath: `users/${recipient.id}`,
+          details: {
+            items: itemsToSendWithQty.map((i) => ({ id: i.id, quantity: i.quantity })),
+          },
+        });
       }
 
       setItemsToSendIds([]);
