@@ -69,6 +69,12 @@ export const NewForumInfo: ProviderForumSetup[] = [
     link: "Private",
     description: "Keep a record of your own quests and roleplays here.",
   },
+  {
+    value: "7",
+    label: "The Colosseum",
+    link: "The-Colosseum",
+    description: "Player vs environment battles.",
+  },
 ];
 //replace all other with this
 
@@ -76,7 +82,7 @@ export const NewForumInfo: ProviderForumSetup[] = [
 // Master Mission (value "3") is the master-only forum unlocked by the Master role
 // or the SeeMasterForums capability; everything else is visible to any member.
 export const MASTER_FORUM_VALUES = ["3"];
-export const BASE_FORUM_VALUES = ["1", "2", "4", "5", "6"];
+export const BASE_FORUM_VALUES = ["1", "2", "4", "5", "6", "7"];
 
 export const badgesColors = [
   { color1: "red", color2: "yellow", label: "Test" },

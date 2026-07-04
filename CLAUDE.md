@@ -46,7 +46,8 @@ Live: snagemguild.com. Deploy: Netlify (`netlify.toml`, SPA redirect to index.ht
 
 - Remaining `bun audit` findings are transitive; re-audit after major bumps.
 - Auth-gated pages (dashboard/editor/admin) migrated to Mantine 9 mechanically — visual QA pending a logged-in pass.
-- Forum posts load ALL posts per thread then paginate client-side (`getPosts.tsx`, `paginationPosts.tsx`) — needs `limit()` + `startAfter()` server-side pagination before threads get long.
-- Thread list filters `closed` client-side after `limit(200)` fetch (`getThreads.tsx`) — move to a `where("closed","==",...)` clause; requires a composite Firestore index (create in console first, then change the query).
+- Forum post pages still read from the top of the collection for middle pages (`src/Pages/forum/queries.ts` getPostsPage) — switch to `startAfter()` cursors before threads get long.
+- Thread list filters `closed`/pinned client-side after a `limit(200)` fetch (`src/Pages/forum/queries.ts` getThreadList) — move to `where`/`orderBy` clauses; requires a composite Firestore index (create in console first, then change the query).
+- Forum game layer (dice/randoms/encounters, inventory decrements, catch writes) generates results client-side — forgeable. Needs a callable Cloud Function at publish plus write-once block enforcement in rules; host-only thread edits are also client-gated only. See docs/FORUM.md "Deferred".
 - `getTeams()`/`getTeam()` always cascade an extra `getOwnedPokemons()` read (`src/queries/dashboard.ts`) — split so pokemon data is fetched once via its own cached query.
 - Discord notify endpoint (`VITE_BACKEND_DISCORD_BOT`, `src/Discord/NewPost.tsx`) is public in the bundle — anyone can spam it. Move behind an authenticated Cloud Function / rate-limited backend.

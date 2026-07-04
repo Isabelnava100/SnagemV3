@@ -1,0 +1,30 @@
+/* Forum v2 shared styles */
+
+.forum-post-body h1 { font-size: 26px; font-weight: bold; }
+.forum-post-body h2 { font-size: 20px; font-weight: bold; }
+.forum-post-body h3 { font-size: 16px; font-weight: bold; }
+.forum-post-body h4 { font-size: 14px; font-weight: bold; }
+.forum-post-body a { text-decoration: underline; color: #346cfd; }
+.forum-post-body img { max-width: 100%; }
+.forum-post-body blockquote {
+  border-left: 3px solid #762b77;
+  margin: 8px 0;
+  padding: 4px 12px;
+  color: #b9b3ba;
+}
+
+/* Sticky scroll-to-top (desktop) / skip-to-next-post (mobile) pills */
+.forum-scroll-pill {
+  position: fixed;
+  bottom: 24px;
+  z-index: 50;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #762b77 13.54%, #14b1b6 70.83%);
+}

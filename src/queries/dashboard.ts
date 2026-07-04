@@ -50,18 +50,27 @@ export const getDrafts = async (uid: string): Promise<Draft[]> => {
 };
 
 export const getBookmarks = async (uid: string) => {
-  const { doc, getDoc } = await import("firebase/firestore");
-  const data = (await getDoc(doc(db, "users", uid, "bookmarks", "Main-Forum"))).data() as Record<
-    string,
-    Bookmark
-  >;
-  if (!data) return { sortedData: [], rawData: {} };
-  const formattedData = Object.keys(data).map((key) => {
-    const character = data[key] as Bookmark;
-    return { ...character, id: key };
-  }) as Bookmark[];
+  // One doc per forum location, each a threadId-keyed map of bookmarks.
+  const { collection, getDocs } = await import("firebase/firestore");
+  const snapshot = await getDocs(collection(db, "users", uid, "bookmarks"));
+  const rawData: Record<string, Bookmark> = {};
+  const formattedData: Bookmark[] = [];
+  snapshot.forEach((docSnap) => {
+    const forumLink = docSnap.id;
+    const data = docSnap.data() as Record<string, Bookmark>;
+    Object.keys(data).forEach((threadId) => {
+      const bookmark = {
+        ...data[threadId],
+        id: `${forumLink}/${threadId}`,
+        threadID: data[threadId].threadID ?? threadId,
+        threadLocation: (data[threadId].threadLocation ?? forumLink) as Bookmark["threadLocation"],
+      };
+      rawData[bookmark.id] = bookmark;
+      formattedData.push(bookmark);
+    });
+  });
   const sortedData = formattedData.sort((a, b) => a.date.seconds - b.date.seconds);
-  return { sortedData, rawData: data };
+  return { sortedData, rawData };
 };
 
 export const getCharacters = async (uid: string) => {

@@ -1,5 +1,6 @@
 import { ActionIcon, Flex, Image, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Draft } from "../../../components/types/typesUsed";
@@ -66,13 +67,23 @@ function SingleDraft(props: Draft) {
             py={8}
             gap={isOverSm ? 10 : 15}
           >
-            <ActionIcon variant="transparent" size="xl">
+            <ActionIcon
+              variant="transparent"
+              size="xl"
+              component={Link}
+              to={
+                props.thread_id && props.thread_id !== "new-thread"
+                  ? `/Forum/${props.location_db}/thread/${props.thread_id}/post?draft=${props.id}`
+                  : `/Forum/${props.location_db || "Main-Forum"}/new?draft=${props.id}`
+              }
+              title="Continue this draft"
+            >
               <Image src={Edit} alt="Draft icon" width={45} />
             </ActionIcon>
             <Text ta="end" color="white">
               Draft saved at:
               <br />
-              {formatter.format(new Date(props.date_saved.seconds))}
+              {formatter.format(new Date(props.date_saved.seconds * 1000))}
             </Text>
           </Flex>
         </Stack>

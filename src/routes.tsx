@@ -19,23 +19,25 @@ const { ForgotPassword } = lazyImport(() => import("./Pages/auth/ForgotPW"), "Fo
 const { Login } = lazyImport(() => import("./Pages/auth/Login"), "Login");
 const { NewRegister } = lazyImport(() => import("./Pages/auth/NewRegister"), "NewRegister");
 const { ResetPW } = lazyImport(() => import("./Pages/auth/ResetPW"), "ResetPW");
-const { MainForum } = lazyImport(
-  () => import("./Pages/forum/mainForumLayout/MainForum"),
-  "MainForum"
+const { default: ForumIndex } = lazyImport(
+  () => import("./Pages/forum/pages/ForumIndex"),
+  "default"
 );
-const { MiniNavForum } = lazyImport(
-  () => import("./Pages/forum/mainForumLayout/components/MiniNavForum"),
-  "MiniNavForum"
+const { default: ThreadView } = lazyImport(
+  () => import("./Pages/forum/pages/ThreadView"),
+  "default"
 );
-const { Threads } = lazyImport(
-  () => import("./Pages/forum/mainThreadLayout/MainThread"),
-  "Threads"
+const { default: NewThreadComposer } = lazyImport(
+  () => import("./Pages/forum/pages/NewThreadComposer"),
+  "default"
 );
-const { NewPost } = lazyImport(() => import("./Pages/forum/newPost/NewPost"), "NewPost");
-const { NewTopic } = lazyImport(() => import("./Pages/forum/newTopics/NewTopic"), "NewTopic");
-const { ForumProvider } = lazyImport(
-  () => import("./Pages/forum/reusable-components/Provider"),
-  "ForumProvider"
+const { default: PostComposer } = lazyImport(
+  () => import("./Pages/forum/pages/PostComposer"),
+  "default"
+);
+const { default: HostMenu } = lazyImport(
+  () => import("./Pages/forum/pages/HostMenu"),
+  "default"
 );
 const { ErrorPage } = lazyImport(() => import("./components/navigation/error-page"), "ErrorPage");
 const { Protect } = lazyImport(() => import("./components/navigation/Protect"), "Protect");
@@ -91,7 +93,6 @@ export default function AppRoutes() {
     <MantineProvider theme={theme} defaultColorScheme="dark" stylesTransform={emotionTransform}>
       <MantineEmotionProvider>
     <AuthContextProvider>
-      <ForumProvider>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
               <React.Suspense fallback={<Loader />}>
@@ -129,23 +130,39 @@ export default function AppRoutes() {
                     <Route path="/Register" element={<NewRegister />} />
                     <Route path="/Forgot" element={<ForgotPassword />} />
                     <Route path="/Reset" element={<ResetPW />} />
-                    <Route path="/Forum" element={<MiniNavForum />}>
+                    <Route path="/Forum">
                       <Route index element={<Navigate to="Main-Forum" replace />} />
-                      <Route path=":forum" element={<MainForum />} />
+                      <Route path=":forum" element={<ForumIndex />} />
                       <Route
                         path=":forum/new"
                         element={
                           <Protect>
-                            <NewTopic />
+                            <NewThreadComposer />
                           </Protect>
                         }
                       />
-                      <Route path=":forum/thread/:id/:page?" element={<Threads />} />
+                      <Route path=":forum/thread/:id/:page?" element={<ThreadView />} />
                       <Route
                         path=":forum/thread/:id/post"
                         element={
                           <Protect>
-                            <NewPost />
+                            <PostComposer mode="new" />
+                          </Protect>
+                        }
+                      />
+                      <Route
+                        path=":forum/thread/:id/edit/:postId"
+                        element={
+                          <Protect>
+                            <PostComposer mode="edit" />
+                          </Protect>
+                        }
+                      />
+                      <Route
+                        path=":forum/thread/:id/host"
+                        element={
+                          <Protect>
+                            <HostMenu />
                           </Protect>
                         }
                       />
@@ -156,7 +173,6 @@ export default function AppRoutes() {
               </React.Suspense>
             </BrowserRouter>
           </QueryClientProvider>
-      </ForumProvider>
     </AuthContextProvider>
       </MantineEmotionProvider>
     </MantineProvider>

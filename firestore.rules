@@ -89,22 +89,42 @@ service cloud.firestore {
     }
 
     // ---- Forums ------------------------------------------------------------
-    // NOTE: post edit/delete is admin-only until posts carry an ownerUid field
-    // (forum build plan rec 7). Once ownerUid exists, change the posts update/
-    // delete rule to: request.auth.uid == resource.data.ownerUid.
+    // Threads carry denormalized activity fields (replyCount, lastPost,
+    // participants, encounterClaims, poll votes) that any signed-in poster
+    // must be able to bump, so thread update stays signed-in. Pinning and
+    // admin-only categories are enforced below; host-only edits (title,
+    // encounterConfig, bossBattle, archive) are enforced client-side today —
+    // tightening them per-field is deferred to a Cloud Function pass.
     match /forum/{forum} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
 
       match /threads/{threadId} {
         allow read: if isSignedIn();
-        allow create, update: if isSignedIn();
+        // Admin-only thread creation for Main Adventures, Events and The
+        // Colosseum (Events also allows the HostEvents capability). Only
+        // admins may create pinned threads anywhere.
+        allow create: if isSignedIn()
+                      && (request.resource.data.get('pinned', false) == false || isAdmin())
+                      && (
+                        (forum in ['Main-Forum', 'The-Colosseum'] && isAdmin())
+                        || (forum == 'Events' && hasCap('HostEvents'))
+                        || !(forum in ['Main-Forum', 'The-Colosseum', 'Events'])
+                      );
+        allow update: if isSignedIn()
+                      && (unchanged('pinned') || isAdmin());
         allow delete: if isAdmin();
 
         match /posts/{postId} {
           allow read: if isSignedIn();
-          allow create: if isSignedIn();
-          allow update, delete: if isAdmin();
+          allow create: if isSignedIn()
+                        && request.resource.data.get('ownerUid', request.auth.uid) == request.auth.uid;
+          // Authors edit their own posts; body is editable but published game
+          // blocks are locked in the UI (server-side write-once enforcement
+          // is deferred to the Cloud Function pass — see docs/FORUM.md).
+          allow update: if isAdmin()
+                        || (isSignedIn() && request.auth.uid == resource.data.get('ownerUid', ''));
+          allow delete: if isAdmin();
         }
       }
     }

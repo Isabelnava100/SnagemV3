@@ -73,11 +73,17 @@ function BookmarkIcon(props: { color: string }) {
 }
 
 function SingleBookmark(props: Bookmark) {
-  const { title, date, color } = props;
+  const { title, date, color, threadLocation, threadID } = props;
   const { isOverXs } = useMediaQuery();
   const { user } = useAuth();
   return (
-    <Paper radius={15} bg="rgba(62, 61, 61, 0.65)">
+    <Paper
+      radius={15}
+      bg="rgba(62, 61, 61, 0.65)"
+      component={Link}
+      to={`/Forum/${threadLocation}/thread/${threadID}/last`}
+      style={{ textDecoration: "none" }}
+    >
       <Flex gap={15} pl="md" align="stretch">
         <BookmarkIcon color={color} />
         <Stack py="md" sx={{ flex: 1 }}>
@@ -87,7 +93,7 @@ function SingleBookmark(props: Bookmark) {
           <Stack gap={3}>
             <Text>Latest post by: {user?.displayName}</Text>
             <Text size="xs" color="dimmed">
-              {formatter.format(new Date(date.seconds))}
+              {formatter.format(new Date(date.seconds * 1000))}
             </Text>
           </Stack>
         </Stack>
