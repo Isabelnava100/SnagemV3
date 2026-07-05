@@ -46,6 +46,7 @@ import {
 import { getCharacters, getCurrencies } from "../../../queries/dashboard";
 import { getNotifications, markNotificationsRead } from "../../../queries/game";
 import { RESET_READING_SCALE } from "../../../lib/readingSize";
+import { canAccessStaffArea, isAdmin } from "../../../lib/permissions";
 import { handleLogout } from "../../auth/components/LogoutHandle";
 import "/src/assets/styles/dashboard.css";
 
@@ -318,10 +319,12 @@ function TabsPanel() {
     { path: "/Profile", icon: Profile, label: "Profile", enabled: true },
     { path: "/Settings", icon: SettingsIcon, label: "Settings", enabled: true },
     {
+      // Admins get the full "Admin Access"; directors with a staff capability
+      // get a "Staff Tools" entry to the same area (with only their tools).
       path: "/Admin-Access",
       icon: AdminAccessIcon,
-      label: "Admin Access",
-      enabled: user?.otherinfo?.permissions === "Admin",
+      label: isAdmin(user) ? "Admin Access" : "Staff Tools",
+      enabled: canAccessStaffArea(user),
     },
   ];
 

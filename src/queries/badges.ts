@@ -69,6 +69,38 @@ export const DEFAULT_BADGES: BadgeDef[] = [
 const DEFAULT_IDS = new Set(DEFAULT_BADGES.map((b) => b.id));
 const ADMIN_BADGES_DOC = ["admin", "badges"] as const;
 
+/** The account fields the auto-assignment rules read. */
+export interface AutoBadgeUser {
+  permissions?: string;
+  capabilities?: string[];
+  /** "Yes" for members who joined via the GaiaOnline guild. */
+  isGaia?: string;
+}
+
+/**
+ * Which default badges a user auto-earns from their account status. These are
+ * derived (not stored), so they always reflect the user's current standing
+ * without any write:
+ *   - legacy    → GaiaOnline members (isGaia === "Yes")
+ *   - new-user  → applicants / brand-new accounts
+ *   - admin     → admins
+ *   - master    → anyone with staff standing (admin, Master/Director role, or
+ *                 any granted capability)
+ */
+export function autoBadgeIdsFor(info: AutoBadgeUser): string[] {
+  const role = info.permissions ?? "";
+  const caps = info.capabilities ?? [];
+  const ids = new Set<string>();
+
+  if (info.isGaia === "Yes") ids.add("legacy");
+  if (role === "Applicant" || role === "New") ids.add("new-user");
+  if (role === "Admin") ids.add("admin");
+  if (role === "Admin" || role === "Master" || role === "Director" || caps.length > 0) {
+    ids.add("master");
+  }
+  return [...ids];
+}
+
 type StoredBadge = { name: string; background: string; description?: string };
 
 /** All badges: the defaults (with any saved edits) plus custom badges. */

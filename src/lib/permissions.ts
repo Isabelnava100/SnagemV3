@@ -24,6 +24,23 @@ export function isMaster(user: User | undefined): boolean {
   return isAdmin(user) || roleOf(user) === UserRoles.Master;
 }
 
+// Capabilities that unlock a tool in the staff/admin area. A director holding
+// any of these sees the staff menu (with only their tools). Admins see all.
+export const STAFF_TAB_CAPABILITIES = [
+  Capability.ManageLists,
+  Capability.GiveItems,
+  Capability.ManageBadges,
+] as const;
+
+export function hasAnyStaffCapability(user: User | undefined): boolean {
+  return STAFF_TAB_CAPABILITIES.some((cap) => hasCapability(user, cap));
+}
+
+/** Whether the user can open the staff/admin area at all. */
+export function canAccessStaffArea(user: User | undefined): boolean {
+  return isAdmin(user) || hasAnyStaffCapability(user);
+}
+
 // Admin implicitly has every capability; everyone else needs an explicit grant.
 export function hasCapability(user: User | undefined, cap: Capability): boolean {
   if (isAdmin(user)) return true;

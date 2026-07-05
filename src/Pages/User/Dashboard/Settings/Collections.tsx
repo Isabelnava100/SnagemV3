@@ -20,7 +20,7 @@ import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
 import { emojiData, getEmoteImageURL } from "../../../../data/emote";
 import { ArrowSwapIcon, CheckCircleIcon, CrossCircleIcon } from "../../../../icons";
-import { getBadgeCatalog } from "../../../../queries/badges";
+import { autoBadgeIdsFor, getBadgeCatalog } from "../../../../queries/badges";
 import { getBadges, getEmojis } from "../../../../queries/settings";
 
 function useGetBadgesQuery() {
@@ -122,6 +122,56 @@ function BadgesSectionWrapper(props: {
             {showEnabledOnly ? "No badges inserted." : "Nothing here."}
           </Text>
         )}
+      </Flex>
+    </Stack>
+  );
+}
+
+/**
+ * Badges the user earns automatically from their account status (legacy, new
+ * user, admin, master). Derived — always current — and shown read-only above
+ * the toggleable badges.
+ */
+function AutoBadges() {
+  const { user } = useAuth();
+  const { data: catalog } = useQuery({ queryKey: ["badge-catalog"], queryFn: getBadgeCatalog });
+  const info = (user?.otherinfo ?? {}) as {
+    permissions?: string;
+    capabilities?: string[];
+    isGaia?: string;
+  };
+  const ids = autoBadgeIdsFor(info);
+  if (!ids.length || !catalog) return null;
+  const earned = catalog.filter((badge) => ids.includes(badge.id));
+  if (!earned.length) return null;
+
+  return (
+    <Stack gap={8}>
+      <Group gap={6} align="center">
+        <Title size={18} c="white" fw={400} order={4}>
+          Earned Automatically
+        </Title>
+        <Text c="rgba(255, 255, 255, 0.50)" fz={13}>
+          from your account status
+        </Text>
+      </Group>
+      <Flex gap={8} wrap="wrap">
+        {earned.map((badge) => (
+          <Badge
+            key={badge.id}
+            size="lg"
+            title={badge.description}
+            sx={{
+              background: badge.background,
+              color: "white",
+              textTransform: "none",
+              fontWeight: 400,
+              fontSize: 16,
+            }}
+          >
+            {badge.name}
+          </Badge>
+        ))}
       </Flex>
     </Stack>
   );
@@ -444,7 +494,10 @@ export default function Collections() {
   return (
     <Stack w="100%">
       <SimpleSectionWrapper>
-        <Badges />
+        <Stack gap={16}>
+          <AutoBadges />
+          <Badges />
+        </Stack>
       </SimpleSectionWrapper>
       <Emojis />
       <Stack align="end">
