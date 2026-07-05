@@ -43,7 +43,7 @@ function ParticipantAvatars(props: { thread: ForumThread }) {
         <Avatar key={i} src={participant.avatar || undefined} alt={`${participant.name ?? "User"} avatar`} size={26} radius="xl" />
       ))}
       {participants.length > 4 && (
-        <Avatar size={26} radius="xl">
+        <Avatar size={26} radius="xl" alt={`${participants.length - 4} more participants`}>
           +{participants.length - 4}
         </Avatar>
       )}
@@ -100,7 +100,12 @@ function ThreadRow(props: { thread: ForumThread; forum: string }) {
       style={{ textDecoration: "none" }}
     >
       <Group gap={8} wrap="nowrap">
-        <Avatar src={thread.lastPost.avatar || undefined} size={34} radius="xl" />
+        <Avatar
+          src={thread.lastPost.avatar || undefined}
+          alt={`${thread.lastPost.by ?? "User"} avatar`}
+          size={34}
+          radius="xl"
+        />
         <Stack gap={0}>
           <Text fz={11} c="dimmed">
             by <span style={{ color: FORUM_LINK_COLOR }}>{thread.lastPost.by}</span>
