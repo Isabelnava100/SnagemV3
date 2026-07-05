@@ -205,6 +205,7 @@ export enum Capability {
   ReviewRewards = "ReviewRewards",
   ManageSEO = "ManageSEO",
   ApproveImports = "ApproveImports",
+  HostMainForum = "HostMainForum",
 }
 
 export const CAPABILITY_INFO: Record<Capability, string> = {
@@ -217,6 +218,7 @@ export const CAPABILITY_INFO: Record<Capability, string> = {
   [Capability.ReviewRewards]: "Review and finalize thread-close rewards, including team XP",
   [Capability.ManageSEO]: "Edit the site's SEO settings (titles, descriptions, social share info)",
   [Capability.ApproveImports]: "Review and approve returning-member data imports (currency, items, Pokemon)",
+  [Capability.HostMainForum]: "Create threads in Main Adventures",
 };
 
 export type SpecificUser = {

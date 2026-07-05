@@ -49,9 +49,15 @@ const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100];
 const GEN_CAPS = [151, 251, 386, 493, 649, 721, 809, 898];
 const GEN_NAMES = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 
-// Thread-creation matrix (mirrors src/Pages/forum/config.ts)
-const ADMIN_CREATE_FORUMS = ["Main-Forum", "The-Colosseum", "Master-Mission"];
-const EVENT_FORUM = "Events";
+// Thread-creation matrix (mirrors src/Pages/forum/config.ts). Any forum not
+// listed here is open to any approved member (Side-Roleplay, The-Colosseum, ...).
+type CreatePolicy = "admin" | "main-host" | "event-host" | "master" | "none";
+const FORUM_CREATE_POLICY: Record<string, CreatePolicy> = {
+  "Main-Forum": "main-host",
+  Events: "event-host",
+  "Master-Mission": "master",
+  Quests: "none",
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -92,6 +98,24 @@ async function loadMember(uid: string): Promise<Member> {
 
 const isAdmin = (m: Member) => m.permissions === "Admin";
 const hasCap = (m: Member, cap: string) => isAdmin(m) || m.capabilities.includes(cap);
+
+/** Whether a member may create a thread in a forum (see FORUM_CREATE_POLICY). */
+function canCreateInForum(forum: string, member: Member): boolean {
+  switch (FORUM_CREATE_POLICY[forum]) {
+    case "none":
+      return false;
+    case "admin":
+      return isAdmin(member);
+    case "main-host":
+      return hasCap(member, "HostMainForum");
+    case "event-host":
+      return hasCap(member, "HostEvents");
+    case "master":
+      return isAdmin(member) || member.permissions === "Master";
+    default:
+      return true; // any approved member (loadMember already blocks Applicant/Disabled)
+  }
+}
 
 function threadRef(forum: string, threadId: string): DocumentReference {
   return db.doc(`forum/${forum}/threads/${threadId}`);
@@ -667,12 +691,9 @@ export const publishForumThread = onCall(async (request) => {
   const html = requireString(request.data?.html, "first post", 100_000);
   const member = await loadMember(uid);
 
-  // Thread-creation permission matrix.
-  if (ADMIN_CREATE_FORUMS.includes(forum) && !isAdmin(member)) {
-    throw new HttpsError("permission-denied", "Only admins can create threads here.");
-  }
-  if (forum === EVENT_FORUM && !hasCap(member, "HostEvents")) {
-    throw new HttpsError("permission-denied", "Only event hosts can create event threads.");
+  // Thread-creation permission matrix (mirrors src/Pages/forum/config.ts).
+  if (!canCreateInForum(forum, member)) {
+    throw new HttpsError("permission-denied", "You cannot create threads here.");
   }
   const pinned = !!request.data?.pinned && isAdmin(member);
 

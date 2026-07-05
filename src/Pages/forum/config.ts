@@ -1,6 +1,6 @@
 import { Capability, NewForumInfo, UserRoles } from "../../components/types/typesUsed";
 import type { User } from "../../components/types/typesUsed";
-import { hasCapability, isAdmin } from "../../lib/permissions";
+import { hasCapability, isAdmin, isMaster } from "../../lib/permissions";
 
 /** Design token: every text link inside the forum uses this color. */
 export const FORUM_LINK_COLOR = "#346CFD";
@@ -11,7 +11,13 @@ export const PANEL_GRADIENT = "linear-gradient(90.37deg, #762B77 6.76%, #17F1F0 
 /** Purple used for table headers / active pagination (existing forum accent). */
 export const FORUM_ACCENT = "#772976";
 
-export type CategoryCreatePolicy = "admin" | "any" | "event-host";
+export type CategoryCreatePolicy =
+  | "admin" // admins only
+  | "any" // any approved member
+  | "event-host" // admin or HostEvents
+  | "main-host" // admin or HostMainForum
+  | "master" // admin or Master-tier member
+  | "none"; // no one creates directly (started elsewhere)
 
 export interface ForumCategory {
   /** NewForumInfo.value: forum-visibility permission id */
@@ -37,8 +43,8 @@ export const FORUM_CATEGORIES: ForumCategory[] = [
     value: "1",
     link: "Main-Forum",
     label: "Main Adventures",
-    description: "This is where the roleplay happens. Hosted by admins.",
-    create: "admin",
+    description: "This is where the roleplay happens. Hosted by admins and directors.",
+    create: "main-host",
   },
   {
     value: "2",
@@ -51,8 +57,8 @@ export const FORUM_CATEGORIES: ForumCategory[] = [
     value: "4",
     link: "Quests",
     label: "Missions",
-    description: "Specific plots with variety options, picked up from the quests page.",
-    create: "any",
+    description: "Specific plots with variety options, launched from the Missions page.",
+    create: "none",
     questGated: true,
   },
   {
@@ -66,8 +72,8 @@ export const FORUM_CATEGORIES: ForumCategory[] = [
     value: "7",
     link: "The-Colosseum",
     label: "The Colosseum",
-    description: "Player vs environment battles.",
-    create: "admin",
+    description: "Player vs environment battles. Any user can create threads here.",
+    create: "any",
   },
 ];
 
@@ -77,7 +83,7 @@ export const MASTER_CATEGORY: ForumCategory = {
   link: "Master-Mission",
   label: "Master Mission",
   description: "Here is where master missions happen.",
-  create: "admin",
+  create: "master",
 };
 
 export function categoryByLink(link: string | undefined): ForumCategory | undefined {
@@ -96,10 +102,16 @@ export function categoryByLink(link: string | undefined): ForumCategory | undefi
 export function canCreateThread(user: User | undefined, category: ForumCategory): boolean {
   if (!user) return false;
   switch (category.create) {
+    case "none":
+      return false;
     case "admin":
       return isAdmin(user);
     case "event-host":
       return isAdmin(user) || hasCapability(user, Capability.HostEvents);
+    case "main-host":
+      return isAdmin(user) || hasCapability(user, Capability.HostMainForum);
+    case "master":
+      return isMaster(user);
     case "any":
     default:
       return user.otherinfo?.permissions !== UserRoles.Applicant
