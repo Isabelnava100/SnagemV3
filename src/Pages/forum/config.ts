@@ -72,8 +72,8 @@ export const FORUM_CATEGORIES: ForumCategory[] = [
     value: "7",
     link: "The-Colosseum",
     label: "The Colosseum",
-    description: "Player vs environment battles. Any user can create threads here.",
-    create: "any",
+    description: "Player vs environment battles. Hosted by admins and directors.",
+    create: "main-host",
   },
 ];
 

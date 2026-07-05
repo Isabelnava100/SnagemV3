@@ -135,6 +135,10 @@ export interface ForumThread {
   hostUid?: string;
   /** True when the thread's creator was an admin (XP applies immediately). */
   createdByAdmin?: boolean;
+  /** True when created by staff (admin or a hosting director). */
+  staffCreated?: boolean;
+  /** Staff choice: award XP instantly on posting, or only at the close review. */
+  xpAward?: "instant" | "onClose";
   /**
    * Non-admin threads accrue team-pokemon XP here (uid -> pokemonId -> stats)
    * until close, when it is reviewed and committed via finalizeThreadRewards.

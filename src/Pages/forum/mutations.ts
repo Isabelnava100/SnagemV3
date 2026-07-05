@@ -33,6 +33,7 @@ export interface PublishThreadInput {
   characters: PostCharacter[];
   html: string;
   xpConfig?: Record<string, number> | null;
+  xpAward?: "instant" | "onClose";
   attachSignature?: boolean;
 }
 
@@ -96,6 +97,9 @@ export interface ThreadDetailsUpdate {
   restricted?: boolean;
   allowedPosters?: string[];
   encounterConfig?: EncounterConfig | null;
+  /** Staff XP controls (server gates instant to staff-created threads). */
+  xpAward?: "instant" | "onClose";
+  xpConfig?: Record<string, number> | null;
 }
 
 /** Host-only (rules-enforced via hostUid) thread detail update. */
