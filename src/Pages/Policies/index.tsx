@@ -170,29 +170,175 @@ function Terms() {
   );
 }
 
+function RuleGroup(props: { title: string }) {
+  return (
+    <Title order={2} c="white" size={20} fw={700} mt={10}>
+      {props.title}
+    </Title>
+  );
+}
+
 function Conduct() {
   return (
-    <Stack gap={20}>
-      <PolicySection title="Be respectful">
+    <Stack gap={18}>
+      <Box c="rgba(255,255,255,0.75)" fz={14} style={{ lineHeight: 1.7 }}>
         <Text>
-          Treat everyone with courtesy. Harassment, hate speech, threats, and
-          personal attacks are not allowed. Disagreements happen; keep them civil.
+          Here you will find our rules on conduct and the limits that keep the
+          guild fair and welcoming. Our Terms of Use apply alongside these rules.
+          They can change at any time, so please check back now and then. Most of
+          the time we will let you know when something changes.
+        </Text>
+      </Box>
+
+      <RuleGroup title="Standard Rules" />
+
+      <PolicySection title="1. No flaming or spamming">
+        <Text>
+          Emotions can run high, but starting a flame war is never the way to
+          settle things. At the end of the day we are all people behind the
+          screen, so please stay civil. Spamming means posting nonsensical or off
+          topic content; we have places for that, like the OOC thread and our
+          Discord. Posting more than twice in a row is treated the same way, and
+          it is enforced in the main adventures and mission threads.
         </Text>
       </PolicySection>
-      <PolicySection title="Keep it appropriate">
+      <PolicySection title="2. Play fair">
         <Text>
-          Post content that fits a community that welcomes a wide range of ages.
-          No explicit, graphic, or illegal material, and no spam or advertising
-          without staff approval.
+          Roleplay is a two way street, and often a many way one. God-modding is
+          not allowed, and neither is controlling another person's character or
+          Pokemon without their consent, or making yourself or your Pokemon overly
+          powerful or lucky. Deciding that your attack automatically hits someone
+          else's character, or using several moves before anyone can react, are
+          examples of unfair play. Please do not use an excessive number of
+          attacks or Pokemon in a single post. If you think someone is playing
+          unfairly, contact the staff.
         </Text>
       </PolicySection>
-      <PolicySection title="Roleplay fairly">
+      <PolicySection title="3. Keep things to a PG-13 level">
         <Text>
-          Play in good faith: no metagaming, no controlling other members'
-          characters without permission, and follow the rules of each forum and
-          event. Staff decisions on in-game matters are final.
+          Keep everything appropriate for a PG-13 audience. Excessive profanity,
+          sexual content and extreme violence are our strictest limit. Because
+          this protects the whole community, you get one warning. After that we
+          may remove your access without further warning.
         </Text>
       </PolicySection>
+      <PolicySection title="4. Be active, but within your limits">
+        <Text>
+          We are relaxed about activity. Real life comes first, so never force
+          yourself to be here at the cost of work, school or rest. Since
+          characters can be tied up in a mission or team story, we only ask that
+          you let staff know if you will be away for a while.
+        </Text>
+      </PolicySection>
+      <PolicySection title="5. Obtaining items">
+        <Text>
+          Items must be bought or crafted in the Marketplace, or earned as rewards
+          from adventures, missions, events or mystery boxes. Items obtained any
+          other way are not allowed and will be removed, and coins or emblems may
+          be revoked as well.
+        </Text>
+      </PolicySection>
+
+      <RuleGroup title="Member-Specific Rules" />
+
+      <PolicySection title="6. New members and characters">
+        <Text>
+          A new member or character starts with a Pokemon at its earliest stage
+          that can then evolve normally. Mega Evolution does not count as a
+          starting form. A character may begin as a non-legendary hybrid or as a
+          channeler, but will not have abilities until they have completed the
+          right Master Missions.
+        </Text>
+      </PolicySection>
+      <PolicySection title="7. Personal character stories">
+        <Text>
+          By default, personal stories cannot involve key characters from the
+          games. We are usually happy to work with you on ideas like this, so
+          reach out to staff first.
+        </Text>
+      </PolicySection>
+      <PolicySection title="8. Profiles">
+        <Text>
+          Your dashboard keeps your characters, teams, Pokemon and currency for
+          you, so there is no separate listing to maintain by hand. Just keep your
+          character details and each Pokemon's species accurate and up to date so
+          everything can be referenced.
+        </Text>
+      </PolicySection>
+      <PolicySection title="9. Mission creation">
+        <Text>
+          Missions and team missions are usually created by staff. If you have an
+          idea for one, tell us; it might get used.
+        </Text>
+      </PolicySection>
+
+      <RuleGroup title="Pokemon Limitations and Rules" />
+
+      <PolicySection title="10. Obtaining and trading Pokemon">
+        <Text>
+          Unless staff say otherwise, a Pokemon is obtained during an adventure,
+          mission, event or encounter, and catching one uses the right kind of
+          ball. Eggs are provided and hatched by staff. Staff may rule an
+          acquisition illegitimate and revoke the Pokemon. Trading happens only
+          through the official swap, and a Pokemon can be traded only for another
+          Pokemon, never given or sold between members.
+        </Text>
+      </PolicySection>
+      <PolicySection title="11. Pokemon nicknames">
+        <Text>
+          If you nickname a Pokemon, we still need to know its exact species.
+          Record the species in your profile and mention it in your posts. If we
+          cannot tell the species, that Pokemon is not eligible for any evolution
+          method and, in extreme cases, may be treated as illegitimately obtained.
+        </Text>
+      </PolicySection>
+      <PolicySection title="12. Evolving and purifying Pokemon">
+        <Text>
+          Pokemon evolve by earning experience from your roleplay posts and
+          reaching the level their species evolves at, or by using the correct
+          evolution item, such as an evolution stone, from your bag. Shadow
+          Pokemon are purified in a similar way, by building Purification Points,
+          and also need the right item to finish purifying. Each Pokemon in your
+          dashboard shows what it needs to evolve.
+        </Text>
+      </PolicySection>
+      <PolicySection title="13. Abilities and moves">
+        <Text>
+          A Pokemon is caught with a single ability chosen from the ones it can
+          have, and that choice is locked once you set it in your profile. An
+          Ability Capsule lets a Pokemon carry a second ability, but only one of
+          the two can be active in a given mission. Hybrids follow the same
+          ability rules but cannot use the Ability Capsule.
+        </Text>
+      </PolicySection>
+      <PolicySection title="Metronome">
+        <Text>
+          Metronome is random and should be played that way. It should not chain
+          into a perfect combo like Hurricane into Thunder into Explosion. It
+          cannot trigger Sketch, moves that belong only to legendary Pokemon such
+          as Sacred Fire or Shadow Force, or any move Metronome cannot normally
+          call.
+        </Text>
+      </PolicySection>
+      <PolicySection title="Sketch">
+        <Text>
+          Sketch can copy up to ten moves total, and Smeargle must actually see a
+          move before copying it. Sketched moves cannot be removed or replaced,
+          cannot copy Transform or moves exclusive to legendary Pokemon, and
+          should be listed in your profile.
+        </Text>
+      </PolicySection>
+      <PolicySection title="Teleport">
+        <Text>
+          We allow Teleport, but we are not fond of it because it is easy to
+          abuse. Outside of GRAY's Claydol, please avoid it without a good reason.
+          Many important places use Ebonite, made from crushed Dark Gems, to block
+          teleportation, and Kalos uses a teleport scrambler that makes the move a
+          very bad idea.
+        </Text>
+      </PolicySection>
+
+      <RuleGroup title="About these rules" />
       <PolicySection title="Fan project notice">
         <Text>
           Snagem Guild is a non-commercial, fan-made community. Pokemon and
@@ -205,10 +351,10 @@ function Conduct() {
 }
 
 const TABS = [
+  { value: "conduct", label: "Community Rules", content: <Conduct /> },
   { value: "privacy", label: "Privacy Policy", content: <Privacy /> },
   { value: "cookies", label: "Cookies & Cache", content: <Cookies /> },
   { value: "terms", label: "Terms of Use", content: <Terms /> },
-  { value: "conduct", label: "Community Rules", content: <Conduct /> },
 ];
 
 export default function Policies() {
@@ -216,7 +362,7 @@ export default function Policies() {
   const [searchParams, setSearchParams] = useSearchParams();
   // Allow deep links like /Policies?tab=conduct (the forum links here for rules).
   const requested = searchParams.get("tab");
-  const active = TABS.some((t) => t.value === requested) ? requested : "privacy";
+  const active = TABS.some((t) => t.value === requested) ? requested : TABS[0].value;
 
   return (
     <Container size="md" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
