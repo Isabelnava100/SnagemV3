@@ -1,12 +1,29 @@
-import { Stack, Switch, Text, TextInput, Textarea, Title } from "@mantine/core";
+import {
+  Badge,
+  Button,
+  Divider,
+  Group,
+  Popover,
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+  Textarea,
+  Title,
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { IconTrash } from "@tabler/icons-react";
 import React from "react";
 import { v4 as uuid } from "uuid";
 import GradientButtonPrimary from "../../../../components/common/GradientButton";
+import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import {
   Announcement,
+  deleteAnnouncement,
   getAnnouncement,
+  getAnnouncementHistory,
   saveAnnouncement,
 } from "../../../../queries/announcements";
 
@@ -23,7 +40,7 @@ export default function Announcements() {
   });
 
   const [form, setForm] = React.useState<Announcement | null>(null);
-  const [saved, setSaved] = React.useState(false);
+  const [sent, setSent] = React.useState(false);
 
   React.useEffect(() => {
     if (isPending || form) return;
@@ -38,15 +55,16 @@ export default function Announcements() {
       await saveAnnouncement({ ...form, id: uuid() });
     },
     onSuccess: () => {
-      setSaved(true);
+      setSent(true);
       queryClient.invalidateQueries({ queryKey: ["announcement"] });
+      queryClient.invalidateQueries({ queryKey: ["announcement-history"] });
     },
   });
 
   if (isPending || !form) return <SectionLoader />;
 
   const setField = (field: keyof Announcement, value: string | boolean) => {
-    setSaved(false);
+    setSent(false);
     setForm({ ...form, [field]: value } as Announcement);
   };
 
@@ -92,9 +110,9 @@ export default function Announcements() {
         onChange={(e) => setField("active", e.currentTarget.checked)}
         styles={{ label: { color: "white" } }}
       />
-      {saved && (
-        <Text fz={13} c="green.0">
-          Announcement saved.
+      {sent && (
+        <Text fz={13} c="green.0" fw={600}>
+          Announcement Sent!
         </Text>
       )}
       <GradientButtonPrimary
@@ -106,6 +124,145 @@ export default function Announcements() {
       >
         Save Announcement
       </GradientButtonPrimary>
+
+      <Divider my={8} color="#3C3A3C" />
+      <AnnouncementHistory liveId={data?.id ?? null} />
     </Stack>
+  );
+}
+
+/** Log of everything sent previously, with a delete/cancel action per entry. */
+function AnnouncementHistory(props: { liveId: string | null }) {
+  const { data: history, isPending } = useQuery({
+    queryKey: ["announcement-history"],
+    queryFn: getAnnouncementHistory,
+  });
+
+  return (
+    <Stack gap={10}>
+      <Title order={3} size={16} c="white" fw={700} tt="uppercase">
+        Sent Announcements
+      </Title>
+      {isPending ? (
+        <SectionLoader />
+      ) : !history || history.length === 0 ? (
+        <EmptyMessage
+          title="No announcements yet"
+          description="Announcements you send will show up here."
+        />
+      ) : (
+        <Stack gap={8}>
+          {history.map((item) => (
+            <HistoryRow key={item.id} item={item} isLive={item.id === props.liveId} />
+          ))}
+        </Stack>
+      )}
+    </Stack>
+  );
+}
+
+function HistoryRow(props: { item: Announcement; isLive: boolean }) {
+  const { item, isLive } = props;
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await deleteAnnouncement(item.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcement"] });
+      queryClient.invalidateQueries({ queryKey: ["announcement-history"] });
+    },
+  });
+
+  const sentOn =
+    typeof item.savedAt === "number"
+      ? new Date(item.savedAt).toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      : null;
+
+  return (
+    <Group
+      align="flex-start"
+      justify="space-between"
+      wrap="nowrap"
+      gap={8}
+      p={12}
+      style={{ background: "#1E1D2080", borderRadius: 8 }}
+    >
+      <Stack gap={4} style={{ minWidth: 0 }}>
+        <Group gap={8} wrap="nowrap">
+          <Text fz={15} fw={600} c="white" lineClamp={1}>
+            {item.title || "Untitled"}
+          </Text>
+          {isLive && item.active ? (
+            <Badge color="green.0" variant="filled" size="sm">
+              Live
+            </Badge>
+          ) : null}
+        </Group>
+        <Text fz={13} c="dimmed" lineClamp={2}>
+          {item.body}
+        </Text>
+        {sentOn && (
+          <Text fz={11} c="dimmed">
+            Sent {sentOn}
+          </Text>
+        )}
+      </Stack>
+      <DeleteConfirm
+        isLive={isLive}
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutateAsync()}
+      />
+    </Group>
+  );
+}
+
+function DeleteConfirm(props: { isLive: boolean; loading: boolean; onConfirm: () => void }) {
+  const [opened, { open, close }] = useDisclosure(false);
+  return (
+    <Popover withArrow position="bottom-end" opened={opened} onClose={close}>
+      <Popover.Target>
+        <Button
+          size="xs"
+          variant="subtle"
+          color="red"
+          onClick={open}
+          leftSection={<IconTrash size={16} />}
+          style={{ flexShrink: 0 }}
+        >
+          Delete
+        </Button>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <Stack gap={10}>
+          <Text fz={13}>
+            {props.isLive
+              ? "This is live on dashboards. Deleting will also remove the banner. Continue?"
+              : "Delete this announcement from the history?"}
+          </Text>
+          <Group gap={8}>
+            <Button
+              size="xs"
+              color="red"
+              loading={props.loading}
+              onClick={() => {
+                props.onConfirm();
+                close();
+              }}
+            >
+              {props.isLive ? "Delete & Cancel" : "Delete"}
+            </Button>
+            <Button size="xs" color="gray" variant="light" onClick={close}>
+              Keep
+            </Button>
+          </Group>
+        </Stack>
+      </Popover.Dropdown>
+    </Popover>
   );
 }

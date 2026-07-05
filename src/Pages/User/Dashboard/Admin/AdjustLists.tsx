@@ -10,7 +10,6 @@ import {
   Image,
   MultiSelect,
   Popover,
-  ScrollArea,
   Select,
   Stack,
   Text,
@@ -34,7 +33,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import { pokemonData } from "../../../../data/pokemon";
 import { getPokemonImageURL } from "../../../../helpers";
 import useMediaQuery from "../../../../hooks/useMediaQuery";
-import { DocumentCopyIcon, Edit2, Polygon5Icon } from "../../../../icons";
+import { DocumentCopyIcon, Edit2 } from "../../../../icons";
 import { getPokemonLists } from "../../../../queries/admin";
 
 function useUpdateOrAddDocument(documentId?: string) {
@@ -120,20 +119,19 @@ export default function AdjustLists() {
         </Title>
         <CreateList />
       </Flex>
-      <ScrollArea>
-        <div className="grid grid-cols-4 py-2 w-full min-w-[800px]">
-          <span className="text-start text-white uppercase font-[700] text-sm">Name</span>
-          <span className="text-start text-white uppercase font-[700] text-sm">Created by</span>
-          <span className="text-start text-white uppercase font-[700] text-sm">
-            List of Pokemon
-          </span>
-        </div>
-        <div className="flex flex-col gap-2 w-full">
-          {formattedData.map((list) => (
-            <SingleListItem list={list} key={list.id} />
-          ))}
-        </div>
-      </ScrollArea>
+      {/* Header row is desktop-only; mobile cards are self-labeled. */}
+      <div className="hidden lg:grid grid-cols-4 py-2 w-full">
+        <span className="text-start text-white uppercase font-[700] text-sm">Name</span>
+        <span className="text-start text-white uppercase font-[700] text-sm">Created by</span>
+        <span className="text-start text-white uppercase font-[700] text-sm">
+          List of Pokemon
+        </span>
+      </div>
+      <div className="flex flex-col gap-2 w-full">
+        {formattedData.map((list) => (
+          <SingleListItem list={list} key={list.id} />
+        ))}
+      </div>
     </Stack>
   );
 }
@@ -219,7 +217,6 @@ function EditSingleListItem(props: {
         <Select
           {...form.getInputProps("rule")}
           placeholder="Select"
-          rightSection={<Image width={15} src={Polygon5Icon} />}
           data={[
             { value: "only", label: "Only" },
             { value: "except", label: "All Except" },
@@ -374,12 +371,20 @@ function SingleListItem(props: { list: AdminPokemonList }) {
   if (isEditing) return <EditSingleListItem list={list} form={form} setEditing={setEditing} />;
 
   return (
-    <div className="bg-[#1E1D2080] p-3 rounded-[8px] grid grid-cols-4 w-full text-white">
-      <Stack align="start" gap={10}>
-        <Text fz={16}>{list.name || "Untitled"}</Text>
+    <div className="bg-[#1E1D2080] p-3 rounded-[8px] flex flex-col gap-3 lg:grid lg:grid-cols-4 lg:gap-0 lg:items-start w-full text-white">
+      {/* Name + duplicate */}
+      <Stack align="start" gap={8}>
+        <Text fz={16} fw={600}>
+          {list.name || "Untitled"}
+        </Text>
         <DuplicateListItem listItem={list} />
       </Stack>
-      <Stack gap={6} align="start">
+
+      {/* Created by + visibility */}
+      <Group gap={8} align="center">
+        <Text fz={13} c="dimmed" className="lg:hidden">
+          Created by
+        </Text>
         <Text>{list.creator}</Text>
         {list.public ? (
           <Badge color="green.0" variant="filled">
@@ -390,28 +395,32 @@ function SingleListItem(props: { list: AdminPokemonList }) {
             Private List
           </Badge>
         )}
-      </Stack>
-      <Stack w="100%" gap={3}>
-        <Conditional
-          condition={list.rule === "only"}
-          component={<Text>Only</Text>}
-          fallback={<Text>All Except</Text>}
-        />
+      </Group>
+
+      {/* Rule + pokemon list */}
+      <Stack w="100%" gap={4}>
+        <Text fz={13} c="dimmed">
+          {list.rule === "only" ? "Only these pokemon" : "All except these pokemon"}
+        </Text>
         <PokemonList pokemons={list.pokemons} />
       </Stack>
-      <Stack align="end">
-        <Group>
-          <DeleteSingleListItem itemId={list.id} />
-          <GradientButtonPrimary
-            onClick={() => setEditing(true)}
-            size="xs"
-            radius="lg"
-            rightSection={<Image src={Edit2} />}
-          >
-            Edit
-          </GradientButtonPrimary>
-        </Group>
-      </Stack>
+
+      {/* Actions */}
+      <Group gap={8} justify="flex-start" className="lg:justify-end">
+        <DeleteSingleListItem itemId={list.id} />
+        <GradientButtonPrimary
+          onClick={() => setEditing(true)}
+          size="xs"
+          radius="lg"
+          rightSection={
+            <span style={{ width: 14, height: 14, display: "inline-flex" }}>
+              <Image src={Edit2} w="100%" h="100%" fit="contain" />
+            </span>
+          }
+        >
+          Edit
+        </GradientButtonPrimary>
+      </Group>
     </div>
   );
 }

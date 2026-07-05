@@ -5,6 +5,13 @@
   padding: 0.1rem 0.3rem;
 }
 
+/* Rich text editor content area is always at least 300px tall, sitewide.
+   .ProseMirror is the editable region of every Tiptap instance (rendered
+   posts use .forum-post-body, so they're unaffected). */
+.ProseMirror {
+  min-height: 300px;
+}
+
 .ProseMirror > * + * {
   margin-top: 0.75em;
 }

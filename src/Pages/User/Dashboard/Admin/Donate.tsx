@@ -145,13 +145,11 @@ export default function Donate() {
           <Stack gap={10}>
             <div className="grid grid-cols-2">
               <div className="flex gap-1 items-center justify-start uppercase text-white font-[700]">
-                <Image
-                  src={ItemIcon}
-                  alt="Donate items"
-                  width={24}
-                  height={24}
-                  className="object-cover"
-                />
+                {/* Fixed box + fit=contain: Mantine 9 Image ignores numeric
+                    width/height, so constrain the box to size the icon. */}
+                <Box w={24} h={24} style={{ flexShrink: 0 }}>
+                  <Image src={ItemIcon} alt="Donate items" w="100%" h="100%" fit="contain" />
+                </Box>
                 <span>Items</span>
               </div>
               <div className="uppercase text-end text-white font-[700]">Qty to give</div>
@@ -170,12 +168,15 @@ export default function Donate() {
                     {itemsToSendWithQty.map((item) => (
                       <div key={item.id} className="grid grid-cols-2 border-b-2 border-[#D9D9D9]">
                         <Group gap={5}>
-                          <Image
-                            width={30}
-                            className="object-cover"
-                            src={getItemImageURL(item.filePath)}
-                            alt={item.name}
-                          />
+                          <Box w={30} h={30} style={{ flexShrink: 0 }}>
+                            <Image
+                              w="100%"
+                              h="100%"
+                              fit="contain"
+                              src={getItemImageURL(item.filePath)}
+                              alt={item.name}
+                            />
+                          </Box>
                           <Text fz={16} fw={400} c="white">
                             {item.name}
                           </Text>
@@ -261,12 +262,15 @@ export default function Donate() {
                         .map((item) => (
                           <Box key={item.id}>
                             <Group gap={8}>
-                              <Image
-                                width={30}
-                                className="object-cover"
-                                src={getItemImageURL(item.filePath)}
-                                alt={item.name}
-                              />
+                              <Box w={30} h={30} style={{ flexShrink: 0 }}>
+                                <Image
+                                  w="100%"
+                                  h="100%"
+                                  fit="contain"
+                                  src={getItemImageURL(item.filePath)}
+                                  alt={item.name}
+                                />
+                              </Box>
                               <Group>
                                 <Text fz={16} c="white" fw={400}>
                                   {item.quantity}
