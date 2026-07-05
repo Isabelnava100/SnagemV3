@@ -696,7 +696,7 @@ function SinglePokemon(props: {
   form: TeamForm;
 }) {
   const { pokemon, isEditing, isOwned = false, form } = props;
-  const [opened, { open, close }] = useDisclosure(false);
+  const [opened, { toggle, close }] = useDisclosure(false);
   const isAlreadyInTeam = React.useMemo(() => {
     return form.values?.pokemon_ids.includes(pokemon.id);
   }, [form.values?.pokemon_ids]);
