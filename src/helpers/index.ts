@@ -32,8 +32,12 @@ for (const [path, url] of Object.entries(gen9Modules)) {
   GEN9_SPRITE_BY_SLUG[slug] = url;
 }
 
-export const getPokemonImageURL = (slug: string) => {
-  return GEN9_SPRITE_BY_SLUG[slug] ?? `${POKESPRITE_CDN}/pokemon-gen8/shiny/${slug}.png`;
+export const getPokemonImageURL = (slug: string, shiny = false) => {
+  // Bundled Gen 9 sprites are the regular set; a shiny Gen 9 set can be added
+  // later (until then a shiny Gen 9 species falls back to its regular sprite).
+  const local = GEN9_SPRITE_BY_SLUG[slug];
+  if (local) return local;
+  return `${POKESPRITE_CDN}/pokemon-gen8/${shiny ? "shiny" : "regular"}/${slug}.png`;
 };
 
 // Neutral Pokeball shown while a sprite is missing (e.g. Gen 9 species until a

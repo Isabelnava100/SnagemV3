@@ -185,7 +185,7 @@ export default function PublicProfile() {
               {featuredPokemon && (
                 <Stack gap={4} align="center">
                   <Avatar
-                    src={getPokemonImageURL(featuredPokemon.image_slug)}
+                    src={getPokemonImageURL(featuredPokemon.image_slug, featuredPokemon.shiny)}
                     alt={`${featuredPokemon.name ?? "Pokemon"} sprite`}
                     size={72}
                     radius="xl"
@@ -205,7 +205,7 @@ export default function PublicProfile() {
                     {teamSprites.slice(0, 6).map((p) => (
                       <Avatar
                         key={p.id}
-                        src={getPokemonImageURL(p.image_slug)}
+                        src={getPokemonImageURL(p.image_slug, p.shiny)}
                         alt={`${p.name ?? "Pokemon"} sprite`}
                         size={26}
                         radius="xl"

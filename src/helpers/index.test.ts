@@ -15,9 +15,14 @@ describe("excludeProperties", () => {
 });
 
 describe("getPokemonImageURL", () => {
-  it("builds a pokesprite shiny URL from a slug", () => {
+  it("builds a pokesprite regular URL from a slug by default", () => {
     expect(getPokemonImageURL("pikachu")).toBe(
-      "http://raw.githubusercontent.com/msikma/pokesprite/master/pokemon-gen8/shiny/pikachu.png"
+      "https://cdn.jsdelivr.net/gh/msikma/pokesprite@master/pokemon-gen8/regular/pikachu.png"
+    );
+  });
+  it("builds a pokesprite shiny URL when shiny", () => {
+    expect(getPokemonImageURL("pikachu", true)).toBe(
+      "https://cdn.jsdelivr.net/gh/msikma/pokesprite@master/pokemon-gen8/shiny/pikachu.png"
     );
   });
 });
@@ -25,7 +30,7 @@ describe("getPokemonImageURL", () => {
 describe("getItemImageURL", () => {
   it("builds an item sprite URL from a file path", () => {
     expect(getItemImageURL("ball/poke.png")).toBe(
-      "http://raw.githubusercontent.com/msikma/pokesprite/master/items/ball/poke.png"
+      "https://cdn.jsdelivr.net/gh/msikma/pokesprite@master/items/ball/poke.png"
     );
   });
 });

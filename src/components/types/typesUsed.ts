@@ -344,6 +344,8 @@ export interface OwnedPokemon {
   shadow?: number;
   /** Character whose box this Pokemon lives in. Unset = shared/unassigned. */
   characterId?: string;
+  /** True for a shiny Pokemon: swaps its sprite to the shiny variant. */
+  shiny?: boolean;
 }
 
 export type Profile = Partial<{
