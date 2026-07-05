@@ -57,6 +57,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const [error, setError] = React.useState("");
   const [draftMessage, setDraftMessage] = React.useState("");
   const [attachSignature, setAttachSignature] = React.useState(true);
+  const [attackBoss, setAttackBoss] = React.useState(false);
   const [loadedEdit, setLoadedEdit] = React.useState(false);
 
   const editor = useRichTextEditor({
@@ -177,6 +178,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
             ...(s.note.trim() ? { note: s.note.trim() } : {}),
           })),
         attachSignature,
+        ...(mode === "new" && attackBoss ? { attackBoss: true } : {}),
         ...(mode === "edit" ? { editPostId: postId } : {}),
       });
     },
@@ -303,6 +305,28 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                     <PanelHint>Balls cannot be used while the boss battle is active.</PanelHint>
                   </Stack>
                 </Flex>
+                {mode === "new" && (
+                  <Checkbox
+                    mt={10}
+                    label="Attack the boss with this post"
+                    color="green.0"
+                    checked={attackBoss}
+                    onChange={(e) => setAttackBoss(e.currentTarget.checked)}
+                    styles={{ label: { color: "white", fontSize: 14 } }}
+                  />
+                )}
+                {mode === "new" && (
+                  <PanelHint>
+                    {(() => {
+                      const b = thread.bossBattle;
+                      const done = b.attackPosts ?? 0;
+                      const need = b.requiredPosts ?? 0;
+                      return need
+                        ? `The boss takes ${need} attack posts to defeat. Progress: ${done}/${need}.`
+                        : "Check this to add your attack toward defeating the boss.";
+                    })()}
+                  </PanelHint>
+                )}
               </ForumPanel>
             )}
 

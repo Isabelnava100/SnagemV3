@@ -656,7 +656,37 @@ export const publishForumPost = onCall(async (request) => {
         type: "user",
         blocks,
       });
-      tx.update(tRef, activityUpdate(member, now, { replyCount: FieldValue.increment(1) }));
+
+      // Attacking the boss: opt-in per post, only when a boss is active for
+      // this player. Attack posts total across everyone until the boss is down.
+      const attackBoss = request.data?.attackBoss === true;
+      const bossExtra: Record<string, unknown> = {};
+      let bossDefeated = false;
+      if (attackBoss && bossActiveForUser) {
+        const boss = thread.bossBattle;
+        const required = Number(boss.requiredPosts) || Infinity;
+        const next = (Number(boss.attackPosts) || 0) + 1;
+        bossExtra["bossBattle.attackPosts"] = FieldValue.increment(1);
+        if (next >= required) {
+          bossExtra["bossBattle.active"] = false;
+          bossDefeated = true;
+        }
+      }
+      tx.update(
+        tRef,
+        activityUpdate(member, now, { replyCount: FieldValue.increment(1), ...bossExtra })
+      );
+      if (bossDefeated) {
+        tx.create(tRef.collection("posts").doc(), {
+          ...authorFields(member),
+          character: "",
+          characters: [],
+          text: "",
+          timePosted: now,
+          type: "boss_end",
+          blocks: { boss: { slug: thread.bossBattle.slug, name: thread.bossBattle.name } },
+        });
+      }
       resultPostId = newPostRef!.id;
     }
 
@@ -1366,6 +1396,27 @@ export const setBossBattle = onCall(async (request) => {
   }
   const member = await loadMember(uid);
 
+  // Posts needed to defeat the boss, by its battle stage (client-derived from
+  // the public dex; the count itself comes from admin/battle_config).
+  const rawStage = String(request.data?.stage ?? "stage2");
+  const bossStage = ["stage1", "stage2", "stage3", "legendary"].includes(rawStage)
+    ? rawStage
+    : "stage2";
+  const DEFAULT_BOSS_COSTS: Record<string, number> = {
+    stage1: 5,
+    stage2: 10,
+    stage3: 15,
+    legendary: 20,
+  };
+  let bossRequiredPosts = DEFAULT_BOSS_COSTS[bossStage];
+  if (action === "start") {
+    const cfg = (await db.doc("admin/battle_config").get()).data();
+    const configured = Number(cfg?.boss?.[bossStage]);
+    if (Number.isFinite(configured) && configured > 0) {
+      bossRequiredPosts = Math.min(200, configured);
+    }
+  }
+
   let participantsToNotify: string[] = [];
   let bossName = "";
   await db.runTransaction(async (tx) => {
@@ -1395,6 +1446,9 @@ export const setBossBattle = onCall(async (request) => {
         description,
         excluded,
         startedAt: now,
+        stage: bossStage,
+        requiredPosts: bossRequiredPosts,
+        attackPosts: 0,
       };
       bossName = info.name;
       participantsToNotify = Object.keys(thread.participants ?? {}).filter((p) => p !== uid);

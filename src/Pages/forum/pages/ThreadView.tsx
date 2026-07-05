@@ -1,12 +1,16 @@
 import {
+  Avatar,
+  Box,
   Container,
   Flex,
   Group,
   Pagination,
+  Progress,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
+import { getPokemonImageURL } from "../../../helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -44,6 +48,38 @@ export function userMayPost(thread: ForumThread | null | undefined, user: Return
   if (!thread.restricted) return true;
   const name = user.displayName ?? user.username;
   return (thread.allowedPosters ?? []).includes(name);
+}
+
+/** Pinned banner shown at the top of a thread while a boss battle is active. */
+function BossBanner(props: { boss: NonNullable<ForumThread["bossBattle"]> }) {
+  const { boss } = props;
+  const need = boss.requiredPosts ?? 0;
+  const done = Math.min(boss.attackPosts ?? 0, need || Infinity);
+  const remaining = need ? Math.max(0, need - done) : 0;
+  const healthPct = need ? Math.max(0, Math.round(((need - done) / need) * 100)) : 100;
+
+  return (
+    <Box
+      mt={12}
+      p={12}
+      style={{ background: "#3a1f22", border: "1px solid #7a2b2b", borderRadius: 10 }}
+    >
+      <Group gap={12} wrap="nowrap" align="center">
+        <Avatar src={getPokemonImageURL(boss.slug)} alt={`${boss.name} sprite`} size={52} radius="xl" bg="#2b2a2b" />
+        <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
+          <Text fz={14} c="white" fw={700}>
+            Boss Battle: {boss.name}
+          </Text>
+          <Progress value={healthPct} color="red.6" size="lg" radius="xl" striped animated />
+          <Text fz={12} c="dimmed">
+            {need
+              ? `${remaining} of ${need} attack posts left to defeat it.`
+              : "Check people's posts to wear it down."}
+          </Text>
+        </Stack>
+      </Group>
+    </Box>
+  );
 }
 
 export default function ThreadView() {
@@ -135,6 +171,8 @@ export default function ThreadView() {
         {thread.title}
         {thread.closed ? " (Archived)" : ""}
       </Title>
+
+      {thread.bossBattle?.active && <BossBanner boss={thread.bossBattle} />}
 
       <Flex justify="space-between" align="center" mt={14} gap={10} wrap="wrap">
         <Pagination

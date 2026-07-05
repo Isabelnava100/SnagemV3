@@ -40,6 +40,8 @@ export const callPublishPost = (input: {
   items: Array<{ itemId: string; qty: number; note?: string }>;
   editPostId?: string;
   attachSignature?: boolean;
+  /** Opt-in: this post attacks the active boss. */
+  attackBoss?: boolean;
 }) => call<{ postId: string }>("publishForumPost", input);
 
 export const callPublishThread = (input: {
@@ -104,4 +106,6 @@ export const callSetBossBattle = (input: {
   slug?: string;
   description?: string;
   excluded?: string[];
+  /** Battle stage of the boss; server reads the post count from config. */
+  stage?: string;
 }) => call<{ ok: boolean }>("setBossBattle", input);

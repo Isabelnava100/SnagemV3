@@ -28,7 +28,9 @@ import { useAuth } from "../../../context/AuthContext";
 import { actorFrom, logAuditEvent } from "../../../lib/auditLog";
 import { pokemonData } from "../../../data/pokemon";
 import { getPokemonImageURL } from "../../../helpers";
+import { battleStage } from "../../../lib/battleStage";
 import { hasCapability, isAdmin } from "../../../lib/permissions";
+import { getPokemonLists } from "../../../queries/admin";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getUsers } from "../../../queries/admin";
 import {
@@ -37,7 +39,7 @@ import {
   startBossBattle,
   updateThreadDetails,
 } from "../mutations";
-import { getThread } from "../queries";
+import { getThread, resolveListSlugs } from "../queries";
 import { EncounterConfig } from "../types";
 import { EncounterSetupPanel } from "../components/composer/EncounterPanels";
 import { ConfirmModal, ForumPanel, GameResultText, PanelHint } from "../components/ui";
@@ -105,6 +107,24 @@ export default function HostMenu() {
     .filter(Boolean)
     .map((username) => ({ value: username, label: username }));
 
+  // Boss options come from the encounter list(s) set on this thread. If none is
+  // set yet, the full dex is offered so a boss can still be picked.
+  const { data: pokemonLists } = useQuery({
+    queryKey: ["get-admin-pokemon-lists"],
+    queryFn: getPokemonLists,
+  });
+  const bossPool = React.useMemo(() => {
+    const cfg = encounterConfig;
+    const lists = pokemonLists?.formattedData ?? [];
+    const ids = [cfg?.listId, cfg?.nonCatchable?.listId].filter(Boolean) as string[];
+    const slugs = new Set<string>();
+    ids.forEach((id) => resolveListSlugs(lists.find((l) => l.id === id)).forEach((s) => slugs.add(s)));
+    const source = slugs.size
+      ? pokemonData.filter((p) => slugs.has(p.slug))
+      : pokemonData;
+    return source.map((p) => ({ value: p.slug, label: p.name }));
+  }, [encounterConfig, pokemonLists]);
+
   const invalidateThread = () =>
     queryClient.invalidateQueries({ queryKey: ["forum-thread", forum, threadId] });
 
@@ -157,10 +177,12 @@ export default function HostMenu() {
 
   const bossStartMutation = useMutation({
     mutationFn: async () => {
+      const dex = Number(pokemonData.find((p) => p.slug === bossSlug)?.idx ?? 0);
       await startBossBattle(forum, threadId!, {
         slug: bossSlug!,
         description: bossDescription,
         excluded: bossExcluded,
+        stage: battleStage(dex),
       });
     },
     onSuccess: () => {
@@ -337,9 +359,9 @@ export default function HostMenu() {
               <Stack gap={10}>
                 <PanelHint>Select the boss for everyone to face.</PanelHint>
                 <Select
-                  placeholder="Select a Pokemon"
+                  placeholder="Select a Pokemon from the encounter list"
                   searchable
-                  data={pokemonData.map((p) => ({ value: p.slug, label: p.name }))}
+                  data={bossPool}
                   value={bossSlug}
                   onChange={setBossSlug}
                   limit={20}

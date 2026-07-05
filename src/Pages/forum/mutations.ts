@@ -51,6 +51,8 @@ export interface PublishPostInput {
   /** When set, edits that post (author-only, text + newly added blocks). */
   editPostId?: string;
   attachSignature?: boolean;
+  /** Opt-in: this post attacks the active boss. */
+  attackBoss?: boolean;
 }
 
 /**
@@ -73,7 +75,7 @@ export async function votePoll(
 export async function startBossBattle(
   forum: string,
   threadId: string,
-  boss: { slug: string; description: string; excluded: string[] }
+  boss: { slug: string; description: string; excluded: string[]; stage: string }
 ): Promise<void> {
   await callSetBossBattle({ forum, threadId, action: "start", ...boss });
 }
