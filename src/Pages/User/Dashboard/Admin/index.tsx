@@ -16,6 +16,7 @@ const ADMIN_TABS: { path: string; label: string; cap: Capability | null }[] = [
   { path: "Permissions", label: "Permissions & XP", cap: null },
   { path: "Mystery-Boxes", label: "Mystery Boxes", cap: Capability.ManageLists },
   { path: "Badges", label: "Badges", cap: Capability.ManageBadges },
+  { path: "SEO", label: "SEO", cap: Capability.ManageSEO },
 ];
 
 export default function AdminLayout() {

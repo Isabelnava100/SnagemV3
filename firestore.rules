@@ -88,7 +88,8 @@ service cloud.firestore {
     // Includes the badge catalog (admin/badges); ManageBadges may edit it.
     match /admin/{doc} {
       allow read: if isSignedIn();
-      allow write: if isAdmin() || hasCap('ManageLists') || hasCap('ManageBadges');
+      allow write: if isAdmin() || hasCap('ManageLists') || hasCap('ManageBadges')
+                   || hasCap('ManageSEO');
     }
 
     // ---- Discord link requests --------------------------------------------

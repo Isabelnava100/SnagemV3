@@ -1,6 +1,6 @@
 import { ActionIcon, Box, Drawer, Group, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconHome, IconX } from "@tabler/icons-react";
+import { IconFileText, IconHome, IconX } from "@tabler/icons-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { Activities, Forum, Marketplace, Menu, Quests, TeamSangem, Users } from "../../icons";
@@ -22,9 +22,66 @@ const ALL_LINKS: NavItem[] = [
   { link: "/Dashboard", label: "Snag", icon: TeamSangem },
 ];
 
-// The four primary destinations pinned to the mobile bottom bar; everything
-// else lives behind "More" so the bar stays thumb-friendly (app convention).
-const MOBILE_PRIMARY = ["Forum", "Missions", "Shop", "Snag"];
+// Only these two stay pinned to the main nav (the desktop rail and the mobile
+// bottom bar). Everything else lives behind "More" so the rail stays clean and
+// the bar stays thumb-friendly.
+const PRIMARY_LABELS = ["Forum", "Snag"];
+
+const primaryLinks = PRIMARY_LABELS.map((label) => ALL_LINKS.find((l) => l.label === label)!);
+const overflowLinks = ALL_LINKS.filter((l) => !PRIMARY_LABELS.includes(l.label));
+
+/* -------------------------------------------------------------------------- */
+/* Shared drawer grid (used by both the desktop and mobile "More" drawers)     */
+/* -------------------------------------------------------------------------- */
+
+function DrawerTile(props: { children: React.ReactNode }) {
+  return (
+    <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
+      {props.children}
+    </Stack>
+  );
+}
+
+function DrawerGrid({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+      <Link to="/" onClick={onNavigate} style={{ textDecoration: "none" }}>
+        <DrawerTile>
+          <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
+            <IconHome size={26} color="white" />
+          </Box>
+          <Text fz={11} c="white" tt="uppercase">
+            Home
+          </Text>
+        </DrawerTile>
+      </Link>
+      {overflowLinks.map((item) => (
+        <Link key={item.label} to={item.link} onClick={onNavigate} style={{ textDecoration: "none" }}>
+          <DrawerTile>
+            {/* Fixed box + fit=contain: Mantine 9 Image ignores numeric
+                width/height, so constrain the box to size the icon. */}
+            <Box style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Image src={item.icon} w="100%" h="100%" fit="contain" alt={item.label} />
+            </Box>
+            <Text fz={11} c="white" tt="uppercase">
+              {item.label}
+            </Text>
+          </DrawerTile>
+        </Link>
+      ))}
+      <Link to="/Policies" onClick={onNavigate} style={{ textDecoration: "none" }}>
+        <DrawerTile>
+          <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
+            <IconFileText size={26} color="white" />
+          </Box>
+          <Text fz={11} c="white" tt="uppercase">
+            Policies
+          </Text>
+        </DrawerTile>
+      </Link>
+    </Box>
+  );
+}
 
 /* -------------------------------------------------------------------------- */
 /* Desktop vertical sidebar                                                    */
@@ -64,6 +121,36 @@ function SingleLink(props: { label: string; link: string; icon: string }) {
         </Text>
       )}
     </NavLink>
+  );
+}
+
+// Desktop "More" trigger, styled to match SingleLink but opening the drawer.
+function MoreSideButton(props: { onClick: () => void }) {
+  const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
+  const { isOverSm } = useMediaQuery();
+  return (
+    <UnstyledButton
+      onClick={props.onClick}
+      style={{
+        display: "flex",
+        width: "100%",
+        flexDirection: "column",
+        paddingTop: 14,
+        paddingBottom: 14,
+        paddingLeft: isOverSm ? 30 : 20,
+        paddingRight: isOverSm ? 30 : 20,
+        gap: 8,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Image src={Menu} width={isUnder900 ? 44 : 100} height={isUnder900 ? 40 : 100} alt="More" />
+      {!isUnder900 && (
+        <Text c="white" tt="uppercase" fz={16}>
+          More
+        </Text>
+      )}
+    </UnstyledButton>
   );
 }
 
@@ -137,11 +224,6 @@ function MoreButton(props: { active: boolean; onClick: () => void }) {
 function MobileTabBar() {
   const [opened, { open, close }] = useDisclosure(false);
 
-  const primary = MOBILE_PRIMARY.map((label) => ALL_LINKS.find((l) => l.label === label)!).filter(
-    Boolean
-  );
-  const overflow = ALL_LINKS.filter((l) => !MOBILE_PRIMARY.includes(l.label));
-
   return (
     <>
       <Paper
@@ -157,7 +239,7 @@ function MobileTabBar() {
         }}
       >
         <Box style={{ display: "flex", alignItems: "stretch" }}>
-          {primary.map((item) => (
+          {primaryLinks.map((item) => (
             <TabButton key={item.label} item={item} />
           ))}
           <MoreButton active={opened} onClick={open} />
@@ -185,44 +267,17 @@ function MobileTabBar() {
         }}
       >
         <Stack gap={14}>
-        <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-          <Link to="/" onClick={close} style={{ textDecoration: "none" }}>
-            <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
-              <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-                <IconHome size={26} color="white" />
-              </Box>
-              <Text fz={11} c="white" tt="uppercase">
-                Home
-              </Text>
-            </Stack>
-          </Link>
-          {overflow.map((item) => (
-            <Link key={item.label} to={item.link} onClick={close} style={{ textDecoration: "none" }}>
-              <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
-                {/* Fixed box + fit=contain: Mantine 9 Image ignores numeric
-                    width/height, so constrain the box to size the icon. */}
-                <Box style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Image src={item.icon} w="100%" h="100%" fit="contain" alt={item.label} />
-                </Box>
-                <Text fz={11} c="white" tt="uppercase">
-                  {item.label}
-                </Text>
-              </Stack>
-            </Link>
-          ))}
-          {/* Profile lives under Users (the public-profile hub); Alerts/Logout
-              live in the dashboard header, so neither is a nav quick-link. */}
-        </Box>
-        {/* Controls sit at the bottom (Menu left, close right) to mirror the
-            bottom main nav, thumb-friendly, with the list right above. */}
-        <Group justify="space-between" align="center">
-          <Text fw={700} c="white">
-            Menu
-          </Text>
-          <ActionIcon variant="subtle" color="gray" onClick={close} aria-label="Close menu">
-            <IconX size={22} />
-          </ActionIcon>
-        </Group>
+          <DrawerGrid onNavigate={close} />
+          {/* Controls sit at the bottom (Menu left, close right) to mirror the
+              bottom main nav, thumb-friendly, with the list right above. */}
+          <Group justify="space-between" align="center">
+            <Text fw={700} c="white">
+              Menu
+            </Text>
+            <ActionIcon variant="subtle" color="gray" onClick={close} aria-label="Close menu">
+              <IconX size={22} />
+            </ActionIcon>
+          </Group>
         </Stack>
       </Drawer>
     </>
@@ -233,26 +288,51 @@ function MobileTabBar() {
 
 export const SideBar = () => {
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
+  const [opened, { open, close }] = useDisclosure(false);
 
   if (isUnder900) return <MobileTabBar />;
 
   return (
-    <Paper
-      style={RESET_READING_SCALE}
-      sx={{
-        display: "block",
-        width: "100%",
-        height: "100%",
-        borderTopRightRadius: 60,
-        borderBottomRightRadius: 60,
-        overflow: "auto",
-        flexShrink: 0,
-        justifyContent: "safe center",
-      }}
-    >
-      {ALL_LINKS.map((link) => (
-        <SingleLink {...link} key={link.label} />
-      ))}
-    </Paper>
+    <>
+      <Paper
+        style={RESET_READING_SCALE}
+        sx={{
+          display: "block",
+          width: "100%",
+          height: "100%",
+          borderTopRightRadius: 60,
+          borderBottomRightRadius: 60,
+          overflow: "auto",
+          flexShrink: 0,
+          justifyContent: "safe center",
+        }}
+      >
+        {primaryLinks.map((link) => (
+          <SingleLink {...link} key={link.label} />
+        ))}
+        <MoreSideButton onClick={open} />
+      </Paper>
+
+      <Drawer
+        opened={opened}
+        onClose={close}
+        position="left"
+        size={320}
+        withCloseButton={false}
+        styles={{ content: { background: "#1E1D20", "--mantine-scale": "1" }, body: { padding: 16 } }}
+      >
+        <Stack gap={14}>
+          <Group justify="space-between" align="center">
+            <Text fw={700} c="white">
+              Menu
+            </Text>
+            <ActionIcon variant="subtle" color="gray" onClick={close} aria-label="Close menu">
+              <IconX size={22} />
+            </ActionIcon>
+          </Group>
+          <DrawerGrid onNavigate={close} />
+        </Stack>
+      </Drawer>
+    </>
   );
 };

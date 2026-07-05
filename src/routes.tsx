@@ -101,6 +101,11 @@ const { default: AdminBadges } = lazyImport(
   () => import("./Pages/User/Dashboard/Admin/Badges"),
   "default"
 );
+const { default: AdminSEO } = lazyImport(
+  () => import("./Pages/User/Dashboard/Admin/SEO"),
+  "default"
+);
+const { default: Policies } = lazyImport(() => import("./Pages/Policies"), "default");
 
 const { default: Settings } = lazyImport(
   () => import("./Pages/User/Dashboard/Settings"),
@@ -159,6 +164,7 @@ export default function AppRoutes() {
                         <Route path="Permissions" element={<AdminPermissions />} />
                         <Route path="Mystery-Boxes" element={<AdminMysteryBoxes />} />
                         <Route path="Badges" element={<AdminBadges />} />
+                        <Route path="SEO" element={<AdminSEO />} />
                       </Route>
                       <Route path="Settings" element={<Settings />}>
                         <Route index element={<Navigate to="Notifications" />} />
@@ -175,6 +181,7 @@ export default function AppRoutes() {
                     <Route path="/Users/:username" element={<PublicProfile />} />
                     <Route path="/Activities" element={<ComingSoon module="Activities" />} />
                     <Route path="/Missions" element={<ComingSoon module="Missions" />} />
+                    <Route path="/Policies" element={<Policies />} />
                     <Route path="/Login" element={<Login />} />
                     <Route path="/Register" element={<NewRegister />} />
                     <Route path="/Forgot" element={<ForgotPassword />} />
