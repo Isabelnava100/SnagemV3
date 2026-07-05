@@ -1,7 +1,11 @@
-# SnagemV3 — Project Rules
+# SnagemV3 Project Rules
 
 Pokemon roleplay community site (forums, dashboard, character/team management).
 Live: snagemguild.com. Deploy: Netlify (`netlify.toml`, SPA redirect to index.html).
+
+## Writing style
+
+- NEVER use em dashes (—) anywhere: user-facing copy, UI text, descriptions, placeholders, docs, code comments, or commit messages. Rewrite with a comma, colon, period, parentheses, or by rephrasing, and fix grammar so the sentence reads correctly. This applies to all new writing and to any existing text you touch.
 
 ## Stack (upgraded July 2026 — keep these current)
 
