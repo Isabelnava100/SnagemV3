@@ -1,4 +1,8 @@
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db, firebase } from "../../../context/firebase";
 import { generatePassword } from "./Components";
@@ -58,6 +62,11 @@ export const registerUser = async (
       await updateProfile(user, {
         displayName: username,
       });
+
+      // Verify the email up front. Firebase sends a confirmation link; the
+      // account's verified state is visible to staff when reviewing the queue.
+      // Non-fatal: a mail hiccup should not block the application itself.
+      await sendEmailVerification(user).catch(() => undefined);
     }
 
     return "success";

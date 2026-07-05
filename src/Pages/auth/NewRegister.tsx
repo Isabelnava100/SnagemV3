@@ -1,4 +1,5 @@
 import {
+  Alert,
   Anchor,
   Button,
   Container,
@@ -8,16 +9,20 @@ import {
   Popover,
   Progress,
   Radio,
+  Stack,
   Text,
   TextInput,
   Textarea,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useCallback, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { AuthCard, warmGradient } from "./components/AuthCard";
 import { Gusers, PasswordRequirement, getStrength, requirements } from "./components/Components";
 import { registerUser } from "./components/RegisterHandle";
+
+/** Per-email local key for an in-progress application draft. */
+const draftKey = (email: string) => "snagem:appdraft:" + email.trim().toLowerCase();
 
 export function NewRegister() {
   const refRadio = useRef<HTMLInputElement>(null);
@@ -26,7 +31,9 @@ export function NewRegister() {
   const [value, setValue] = useState<string>("");
   const [whensubmit, setWhenSubmit] = useState<boolean>(false);
   const [gaia, setGaia] = useState<string>("No");
-  const navigate = useNavigate();
+  const [emailExists, setEmailExists] = useState<boolean>(false);
+  const [draftSaved, setDraftSaved] = useState<boolean>(false);
+  const [submitted, setSubmitted] = useState<boolean>(false);
   const strength = getStrength(value);
   const color = strength === 100 ? "teal" : strength > 50 ? "yellow" : "red";
 
@@ -70,6 +77,53 @@ export function NewRegister() {
     },
   });
 
+  const email = form.values.email;
+  const application = form.values.application;
+  const emailValid = /^\S+@\S+$/.test(email);
+  const canDraft = gaia === "No" && emailValid && !emailExists;
+
+  // A non-Gaia applicant's essay is long; auto-save it in this browser keyed by
+  // email so they can leave and come back. Skipped when an account already
+  // exists for the email (they should log in, not re-apply).
+  useEffect(() => {
+    if (gaia === "No" && emailValid) {
+      let active = true;
+      const t = setTimeout(async () => {
+        try {
+          const { fetchSignInMethodsForEmail } = await import("firebase/auth");
+          const { auth } = await import("../../context/firebase");
+          const methods = await fetchSignInMethodsForEmail(auth, email.trim());
+          if (active) setEmailExists(methods.length > 0);
+        } catch {
+          if (active) setEmailExists(false);
+        }
+      }, 500);
+      return () => {
+        active = false;
+        clearTimeout(t);
+      };
+    }
+    setEmailExists(false);
+  }, [email, emailValid, gaia]);
+
+  // Restore a saved draft when a fresh email is entered and the box is empty.
+  useEffect(() => {
+    if (!canDraft || application) return;
+    const saved = localStorage.getItem(draftKey(email));
+    if (saved) form.setFieldValue("application", saved);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, canDraft]);
+
+  // Persist the draft as they type.
+  useEffect(() => {
+    if (!canDraft || !application) return;
+    const t = setTimeout(() => {
+      localStorage.setItem(draftKey(email), application);
+      setDraftSaved(true);
+    }, 600);
+    return () => clearTimeout(t);
+  }, [application, email, canDraft]);
+
   const handleSubmitReg = useCallback(async (values: typeof form.values) => {
     setWhenSubmit(true);
     try {
@@ -82,7 +136,8 @@ export function NewRegister() {
       );
 
       if (results === "success") {
-        navigate("/Login", { replace: true });
+        localStorage.removeItem(draftKey(values.email));
+        setSubmitted(true);
       } else {
         if (results === "auth/email-already-in-use") {
           form.setErrors({ email: "Email already in use." });
@@ -102,7 +157,29 @@ export function NewRegister() {
       form.setErrors({ email: "A network error occurred." });
       setWhenSubmit(false);
     }
-  }, [form, navigate]);
+  }, [form]);
+
+  if (submitted) {
+    return (
+      <Container size={560} my={40}>
+        <AuthCard title="Check your email">
+          <Stack gap={10}>
+            <Alert color="teal" title="Application received">
+              We sent a verification link to <b>{form.values.email}</b>. Open it to confirm your
+              email address. {gaia === "No" ? "Our team will review your application" : "Our team will review your account"}{" "}
+              once your email is verified.
+            </Alert>
+            <Text c="dimmed" size="sm">
+              Did not get it? Check your spam folder. You can close this page.
+            </Text>
+            <Anchor component={Link} to="/Login" size="sm">
+              Go to login
+            </Anchor>
+          </Stack>
+        </AuthCard>
+      </Container>
+    );
+  }
 
   return (
     <Container size={680} my={40}>
@@ -124,6 +201,15 @@ export function NewRegister() {
                 label="Email Address"
                 {...form.getInputProps("email")}
               />
+              {emailExists && (
+                <Text c="yellow" size="xs" mt={4}>
+                  An account already exists for this email.{" "}
+                  <Anchor component={Link} to="/Login" size="xs">
+                    Log in instead
+                  </Anchor>
+                  .
+                </Text>
+              )}
               <TextInput
                 required
                 mt="md"
@@ -227,7 +313,14 @@ export function NewRegister() {
                     required
                   />
 
-                  <Group justify="right">
+                  <Group justify="space-between">
+                    {canDraft && draftSaved ? (
+                      <Text size="xs" c="teal">
+                        Draft saved to this browser
+                      </Text>
+                    ) : (
+                      <span />
+                    )}
                     <Text size="xs" c="dimmed">
                       {refTextarea.current?.value.length ? refTextarea.current?.value.length : 0}{" "}
                       Characters
