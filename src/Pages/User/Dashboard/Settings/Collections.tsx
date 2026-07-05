@@ -21,6 +21,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import { emojiData, getEmoteImageURL } from "../../../../data/emote";
 import { ArrowSwapIcon, CheckCircleIcon, CrossCircleIcon } from "../../../../icons";
 import { autoBadgeIdsFor, getBadgeCatalog } from "../../../../queries/badges";
+import { getProfile } from "../../../../queries/dashboard";
 import { getBadges, getEmojis } from "../../../../queries/settings";
 
 function useGetBadgesQuery() {
@@ -151,12 +152,37 @@ function BadgesSectionWrapper(props: {
 
 /**
  * Badges the user earns automatically from their account status (legacy, new
- * user, admin, master). Derived — always current — and shown read-only above
- * the toggleable badges.
+ * user, admin, master). Derived — always current. Users can still hide any of
+ * them from public view; the hidden set lives on their own profile
+ * (bag/profile.hiddenAutoBadges, owner-writable).
  */
 function AutoBadges() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: catalog } = useQuery({ queryKey: ["badge-catalog"], queryFn: getBadgeCatalog });
+  const { data: profile } = useQuery({
+    queryKey: ["get-profile", user?.uid],
+    queryFn: () => getProfile(user!.uid),
+    enabled: !!user,
+  });
+
+  const hidden = new Set(
+    ((profile as { hiddenAutoBadges?: string[] } | undefined)?.hiddenAutoBadges ?? []) as string[]
+  );
+
+  const toggleHidden = useMutation({
+    mutationFn: async (badgeId: string) => {
+      const { doc, setDoc, arrayUnion, arrayRemove } = await import("firebase/firestore");
+      const { db } = await import("../../../../context/firebase");
+      await setDoc(
+        doc(db, "users", user!.uid, "bag", "profile"),
+        { hiddenAutoBadges: hidden.has(badgeId) ? arrayRemove(badgeId) : arrayUnion(badgeId) },
+        { merge: true }
+      );
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["get-profile", user?.uid] }),
+  });
+
   const info = (user?.otherinfo ?? {}) as {
     permissions?: string;
     capabilities?: string[];
@@ -178,15 +204,32 @@ function AutoBadges() {
         </Text>
       </Group>
       <Flex gap={8} wrap="wrap">
-        {earned.map((badge) => (
-          <BadgePill
-            key={badge.id}
-            label={badge.name}
-            background={badge.background}
-            title={badge.description}
-          />
-        ))}
+        {earned.map((badge) => {
+          const isHidden = hidden.has(badge.id);
+          return (
+            <BadgePill
+              key={badge.id}
+              label={badge.name}
+              background={badge.background}
+              title={
+                isHidden
+                  ? "Hidden from public view — click to show"
+                  : "Click to hide from public view"
+              }
+              onClick={() => toggleHidden.mutate(badge.id)}
+              style={{
+                cursor: "pointer",
+                opacity: isHidden ? 0.4 : 1,
+                filter: isHidden ? "grayscale(0.6)" : undefined,
+                textDecoration: isHidden ? "line-through" : undefined,
+              }}
+            />
+          );
+        })}
       </Flex>
+      <Text c="rgba(255, 255, 255, 0.50)" fz={12}>
+        Click a badge to hide it from your public profile (or show it again).
+      </Text>
     </Stack>
   );
 }
