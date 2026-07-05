@@ -4,6 +4,13 @@ import { useParams } from "react-router-dom";
 import { SectionLoader } from "../../components/navigation/loading";
 import { getColor1, getColor2 } from "../../components/user-forum/getColorBadges";
 import { db } from "../../context/firebase";
+import { getPokemonImageURL } from "../../helpers";
+import {
+  getCharacters,
+  getOwnedPokemons,
+  getProfile,
+  getTeamsRaw,
+} from "../../queries/dashboard";
 
 interface PublicUser {
   uid: string;
@@ -11,6 +18,9 @@ interface PublicUser {
   avatar?: string;
   permissions?: string;
   badges?: string[];
+  joinedAt?: { seconds: number };
+  discordName?: string;
+  discordPublic?: boolean;
 }
 
 const getPublicUser = async (username: string): Promise<PublicUser | null> => {
@@ -27,13 +37,24 @@ const getPublicUser = async (username: string): Promise<PublicUser | null> => {
     avatar: data.avatar,
     permissions: data.permissions,
     badges: (data.badges as string[]) ?? [],
+    joinedAt: data.joinedAt,
+    discordName: data.discordName,
+    discordPublic: !!data.discordPublic,
   };
 };
 
+function formatJoined(ts?: { seconds: number }): string {
+  if (!ts?.seconds) return "";
+  return new Date(ts.seconds * 1000).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+  });
+}
+
 /**
- * Public user profile (Q6) — placeholder scope: avatar, name, role and
- * inserted badges. Cover background, description, tags and collections join
- * once the public-profile design lands.
+ * Public user profile (Q6). Header + featured picks placeholder. Full visual
+ * design (cover, layout of characters/teams/collections) lands later; the
+ * data wiring is here so the design just needs styling.
  */
 export default function PublicProfile() {
   const { username } = useParams();
@@ -41,6 +62,29 @@ export default function PublicProfile() {
     queryKey: ["public-profile", username],
     queryFn: () => getPublicUser(username!),
     enabled: !!username,
+  });
+
+  const uid = profile?.uid;
+  // Featured picks + their source data (only fetched once the user resolves).
+  const { data: bagProfile } = useQuery({
+    queryKey: ["get-profile", uid],
+    queryFn: () => getProfile(uid!),
+    enabled: !!uid,
+  });
+  const { data: characters } = useQuery({
+    queryKey: ["get-characters", uid],
+    queryFn: () => getCharacters(uid!),
+    enabled: !!uid,
+  });
+  const { data: teams } = useQuery({
+    queryKey: ["get-teams", uid],
+    queryFn: () => getTeamsRaw(uid!),
+    enabled: !!uid,
+  });
+  const { data: owned } = useQuery({
+    queryKey: ["get-owned-pokemons", uid],
+    queryFn: () => getOwnedPokemons(uid!),
+    enabled: !!uid,
   });
 
   if (isPending) {
@@ -60,6 +104,16 @@ export default function PublicProfile() {
     );
   }
 
+  const featuredCharacter = characters?.sortedData.find(
+    (c) => c.id === bagProfile?.featuredCharacterId
+  );
+  const featuredTeam = teams?.find((t) => t.id === bagProfile?.featuredTeamId);
+  const featuredPokemon = owned?.sortedData.find((p) => p.id === bagProfile?.featuredPokemonId);
+  const teamSprites =
+    featuredTeam && owned
+      ? owned.sortedData.filter((p) => featuredTeam.pokemon_ids.includes(p.id))
+      : [];
+
   return (
     <Container size="sm" style={{ marginTop: 60, paddingBottom: 100 }}>
       <Stack align="center" gap={12}>
@@ -67,11 +121,25 @@ export default function PublicProfile() {
         <Title order={1} c="white" fw={400}>
           {profile.username}
         </Title>
-        {profile.permissions && (
-          <Badge variant="light" color="cyan.0" size="lg">
-            {profile.permissions}
-          </Badge>
+        <Group gap={8} justify="center">
+          {profile.permissions && (
+            <Badge variant="light" color="cyan.0" size="lg">
+              {profile.permissions}
+            </Badge>
+          )}
+          {profile.joinedAt?.seconds && (
+            <Text fz={12} c="dimmed">
+              Member since {formatJoined(profile.joinedAt)}
+            </Text>
+          )}
+        </Group>
+
+        {profile.discordPublic && profile.discordName && (
+          <Text fz={13} c="dimmed">
+            Discord: <span style={{ color: "#8C9EFF" }}>{profile.discordName}</span>
+          </Text>
         )}
+
         {!!profile.badges?.length && (
           <Group gap={6} justify="center">
             {profile.badges.map((badge) => (
@@ -85,7 +153,67 @@ export default function PublicProfile() {
             ))}
           </Group>
         )}
-        <Text fz={13} c="dimmed" ta="center" maw={380}>
+
+        {/* Featured picks — placeholder layout until the real design lands. */}
+        {(featuredCharacter || featuredTeam || featuredPokemon) && (
+          <Stack gap={10} w="100%" mt={10}>
+            <Text c="white" fw={600} ta="center">
+              Featured
+            </Text>
+            <Group justify="center" gap={20} wrap="wrap">
+              {featuredCharacter && (
+                <Stack gap={4} align="center">
+                  <Avatar src={featuredCharacter.imageURL || undefined} size={72} radius="xl" />
+                  <Text fz={12} c="white">
+                    {featuredCharacter.name}
+                  </Text>
+                  <Text fz={10} c="dimmed">
+                    Character
+                  </Text>
+                </Stack>
+              )}
+              {featuredPokemon && (
+                <Stack gap={4} align="center">
+                  <Avatar
+                    src={getPokemonImageURL(featuredPokemon.image_slug)}
+                    size={72}
+                    radius="xl"
+                    bg="#2b2a2b"
+                  />
+                  <Text fz={12} c="white">
+                    {featuredPokemon.name}
+                  </Text>
+                  <Text fz={10} c="dimmed">
+                    Pokemon
+                  </Text>
+                </Stack>
+              )}
+              {featuredTeam && (
+                <Stack gap={4} align="center">
+                  <Group gap={2}>
+                    {teamSprites.slice(0, 6).map((p) => (
+                      <Avatar
+                        key={p.id}
+                        src={getPokemonImageURL(p.image_slug)}
+                        size={26}
+                        radius="xl"
+                        bg="#2b2a2b"
+                      />
+                    ))}
+                  </Group>
+                  <Text fz={12} c="white">
+                    {featuredTeam.team_name || "Team"}
+                  </Text>
+                  <Text fz={10} c="dimmed">
+                    Team
+                  </Text>
+                </Stack>
+              )}
+            </Group>
+          </Stack>
+        )}
+
+        <Text fz={13} c="dimmed" ta="center" maw={380} mt={10}>
           Full public profiles — cover background, description, tags and collections — are on
           the way.
         </Text>

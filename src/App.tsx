@@ -38,12 +38,24 @@ export const App = memo(() => {
         }}
       >
         <nav
-          style={{
-            height: isUnder900 ? 82 : "auto",
-            maxHeight: "100%",
-            overflowY: "auto",
-            width: isUnder900 ? "100%" : hasLessHeight ? 120 : 150,
-          }}
+          style={
+            isUnder900
+              ? {
+                  // App-style bottom tab bar: fixed to the bottom edge, above content.
+                  position: "fixed",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  width: "100%",
+                  zIndex: 200,
+                }
+              : {
+                  height: "auto",
+                  maxHeight: "100%",
+                  overflowY: "auto",
+                  width: hasLessHeight ? 120 : 150,
+                }
+          }
         >
           <SideBar />
         </nav>
@@ -54,6 +66,8 @@ export const App = memo(() => {
             padding: isUnder900 ? 10 : undefined,
             paddingLeft: isUnder900 ? 10 : 75,
             paddingRight: isUnder900 ? 10 : 75,
+            // Clear the fixed bottom bar (bar height + home-indicator inset).
+            paddingBottom: isUnder900 ? "calc(74px + env(safe-area-inset-bottom))" : undefined,
             overflowX: "hidden",
           }}
         >

@@ -326,6 +326,10 @@ export type Profile = Partial<{
   cover_backgrounds: string[];
   description: string;
   tags: string[];
+  // Curated showcase picks for the public profile (ids into the user's bag).
+  featuredCharacterId: string;
+  featuredTeamId: string;
+  featuredPokemonId: string;
 }>;
 
 export const pokemonTypes = [

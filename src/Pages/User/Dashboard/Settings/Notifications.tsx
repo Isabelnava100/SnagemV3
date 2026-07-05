@@ -158,6 +158,95 @@ function NotificationsInbox() {
   );
 }
 
+/**
+ * Public Discord name toggle: users set a display Discord tag and choose
+ * whether it shows on their public profile. Stored on the user doc
+ * (discordName / discordPublic), self-writable.
+ */
+function DiscordPublicSettings() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data, isPending } = useQuery({
+    queryKey: ["discord-public", user?.uid],
+    queryFn: async () => {
+      const { doc, getDoc } = await import("firebase/firestore");
+      const { db } = await import("../../../../context/firebase");
+      const d = (await getDoc(doc(db, "users", user!.uid))).data();
+      return { discordName: (d?.discordName as string) ?? "", discordPublic: !!d?.discordPublic };
+    },
+    enabled: !!user,
+  });
+
+  const [name, setName] = React.useState("");
+  const [isPublic, setPublic] = React.useState(false);
+  const [loaded, setLoaded] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+
+  React.useEffect(() => {
+    if (data && !loaded) {
+      setName(data.discordName);
+      setPublic(data.discordPublic);
+      setLoaded(true);
+    }
+  }, [data, loaded]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const { doc, updateDoc } = await import("firebase/firestore");
+      const { db } = await import("../../../../context/firebase");
+      await updateDoc(doc(db, "users", user!.uid), {
+        discordName: name.trim().slice(0, 60),
+        discordPublic: isPublic,
+      });
+    },
+    onSuccess: () => {
+      setSaved(true);
+      queryClient.invalidateQueries({ queryKey: ["discord-public", user?.uid] });
+    },
+  });
+
+  if (isPending) return null;
+
+  return (
+    <Stack gap={8} p={12} sx={{ background: "#3C3A3C", borderRadius: 12 }}>
+      <Text c="white" fw={600} fz={14}>
+        Public Discord Name
+      </Text>
+      <TextInput
+        placeholder="e.g. veronica#1234"
+        value={name}
+        onChange={(e) => {
+          setSaved(false);
+          setName(e.currentTarget.value);
+        }}
+        styles={{ input: { background: "#2E2D2E", color: "white" } }}
+      />
+      <CustomSwitch
+        checked={isPublic}
+        onChange={(e) => {
+          setSaved(false);
+          setPublic(e.currentTarget.checked);
+        }}
+        label="Show my Discord name on my public profile"
+      />
+      {saved && (
+        <Text fz={13} c="green.0">
+          Saved.
+        </Text>
+      )}
+      <GradientButtonSecondary
+        size="xs"
+        radius="xl"
+        w="fit-content"
+        loading={saveMutation.isPending}
+        onClick={() => saveMutation.mutateAsync()}
+      >
+        Save Discord Settings
+      </GradientButtonSecondary>
+    </Stack>
+  );
+}
+
 export default function Notifications() {
   const { user } = useAuth();
   const [isFirstTime, setFirstTime] = React.useState(true);
@@ -235,6 +324,7 @@ export default function Notifications() {
             label="Enable Discord notifications"
           />
           {values.discordNotifications && <CreateNewDiscordTicket />}
+          <DiscordPublicSettings />
         </Stack>
         <CustomSwitch
           disabled={isProcessing}

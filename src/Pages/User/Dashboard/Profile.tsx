@@ -22,6 +22,7 @@ import DOMPurify from "dompurify";
 import { v4 as uuid } from "uuid";
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
+import FeaturedPicks from "./FeaturedPicks";
 import { UploadAndCropImage } from "../../../components/crop-image/UploadAndCropImage";
 import Editor, { useRichTextEditor } from "../../../components/editor/Editor";
 import { SectionLoader } from "../../../components/navigation/loading";
@@ -67,6 +68,7 @@ function LeftSideContent() {
       <Avatars />
       <CoverBackgrounds />
       <Tags />
+      <FeaturedPicks />
     </Stack>
   );
 }
@@ -82,7 +84,8 @@ function MobileSaveBar(props: { onSave: () => void }) {
     <Box
       sx={{
         position: "fixed",
-        bottom: 0,
+        // Sit just above the app bottom tab bar.
+        bottom: "calc(74px + env(safe-area-inset-bottom))",
         left: 0,
         right: 0,
         zIndex: 60,
