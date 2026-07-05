@@ -117,6 +117,51 @@ export const saveXPDefaults = async (defaults: XPDefaults): Promise<void> => {
   await setDoc(doc(db, "admin", "xp_defaults"), defaults);
 };
 
+// ---- Battle costs (admin/battle_config) ------------------------------------
+// Posts needed to defeat a boss / capture an encounter, by the target's battle
+// stage. Totalled across attackers for bosses; per capture-group for encounters.
+
+export interface StageCosts {
+  stage1: number;
+  stage2: number;
+  stage3: number;
+  legendary: number;
+}
+
+export interface BattleConfig {
+  boss: StageCosts;
+  encounter: StageCosts;
+}
+
+export const DEFAULT_BATTLE_CONFIG: BattleConfig = {
+  boss: { stage1: 5, stage2: 10, stage3: 15, legendary: 20 },
+  encounter: { stage1: 4, stage2: 7, stage3: 10, legendary: 13 },
+};
+
+const readStageCosts = (data: unknown, fallback: StageCosts): StageCosts => {
+  const d = (data ?? {}) as Partial<StageCosts>;
+  return {
+    stage1: Number(d.stage1) || fallback.stage1,
+    stage2: Number(d.stage2) || fallback.stage2,
+    stage3: Number(d.stage3) || fallback.stage3,
+    legendary: Number(d.legendary) || fallback.legendary,
+  };
+};
+
+export const getBattleConfig = async (): Promise<BattleConfig> => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  const data = (await getDoc(doc(db, "admin", "battle_config"))).data();
+  return {
+    boss: readStageCosts(data?.boss, DEFAULT_BATTLE_CONFIG.boss),
+    encounter: readStageCosts(data?.encounter, DEFAULT_BATTLE_CONFIG.encounter),
+  };
+};
+
+export const saveBattleConfig = async (config: BattleConfig): Promise<void> => {
+  const { doc, setDoc } = await import("firebase/firestore");
+  await setDoc(doc(db, "admin", "battle_config"), config);
+};
+
 // ---- Mystery boxes (admin/mystery_boxes) ------------------------------------
 
 export interface MysteryBoxPoolEntry {
