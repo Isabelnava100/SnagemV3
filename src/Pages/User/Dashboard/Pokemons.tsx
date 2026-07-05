@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Anchor,
   Avatar,
   Box,
   Button,
@@ -442,10 +443,20 @@ function CreateNewTeam() {
 }
 
 interface FilterState {
+  search: string;
   type1: PokemonTypes | "";
   type2: PokemonTypes | "";
   generation: PokemonGenerations | "";
+  gender: "" | "M" | "F";
 }
+
+const EMPTY_FILTERS: FilterState = {
+  search: "",
+  type1: "",
+  type2: "",
+  generation: "",
+  gender: "",
+};
 
 function OwnedPokemons(props: EditingProps) {
   const { form } = props;
@@ -454,128 +465,152 @@ function OwnedPokemons(props: EditingProps) {
     queryKey: ["get-owned-pokemons", user?.uid],
     queryFn: () => getOwnedPokemons(user?.uid as string),
   });
-  const [filteredData, setFilteredData] = React.useState<typeof sortedData>([]);
-  const [filterState, setFilterState] = React.useState<FilterState>({
-    generation: "",
-    type1: "",
-    type2: "",
-  });
+  const [filterState, setFilterState] = React.useState<FilterState>(EMPTY_FILTERS);
   const { isOverLg } = useMediaQuery();
 
-  // If one of the filter state has a value, means filter mode
-  const isFiltering = React.useMemo(() => {
-    const { generation, type1, type2 } = filterState;
-    return generation || type1 || type2;
-  }, [filterState]);
-
-  // Filter the date when the filter state changes
-  React.useEffect(() => {
-    const { generation, type1, type2 } = filterState;
-
-    if (generation === "" && type1 === "" && type2 === "") return;
-
-    const filteredSortedData = data?.sortedData.filter((data) => {
-      if (type1 && data.type1 !== type1) return false; // Filter out if type1 doesn't match
-      if (type2 && data.type2 !== type2) return false; // Filter out if type2 doesn't match
-      if (generation && data.generation !== generation) return false; // Filter out if generation doesn't match
-      return true; // Keep the Pokemon in the filtered array
-    });
-
-    setFilteredData(filteredSortedData || []);
-  }, [filterState]);
+  const activeFilterCount = React.useMemo(
+    () => Object.values(filterState).filter((v) => v !== "").length,
+    [filterState]
+  );
 
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
 
   const { sortedData } = data;
 
-  const displayedData = isFiltering ? filteredData : sortedData;
+  // Derive the displayed list from the filters (no effect/mirrored state, so a
+  // search-only filter works too).
+  const query = filterState.search.trim().toLowerCase();
+  const displayedData = sortedData.filter((pokemon) => {
+    if (filterState.type1 && pokemon.type1 !== filterState.type1) return false;
+    if (filterState.type2 && pokemon.type2 !== filterState.type2) return false;
+    if (filterState.generation && pokemon.generation !== filterState.generation) return false;
+    if (filterState.gender && pokemon.gender !== filterState.gender) return false;
+    if (query && !`${pokemon.name ?? ""} ${pokemon.species ?? ""}`.toLowerCase().includes(query))
+      return false;
+    return true;
+  });
 
-  // formatting them for the select field
-  const pokemonTypesFormatted = pokemonTypes.map((type) => ({
-    label: type,
-    value: type,
-  }));
-
+  const pokemonTypesFormatted = pokemonTypes.map((type) => ({ label: type, value: type }));
   const pokemonGenerationsFormatted = pokemonGenerations.map((generation) => ({
     label: generation,
     value: generation,
   }));
 
-  // exit filter mode
-  const resetFilters = () => {
-    setFilterState({
-      generation: "",
-      type1: "",
-      type2: "",
-    });
-    setFilteredData([]);
-  };
+  const resetFilters = () => setFilterState(EMPTY_FILTERS);
+
+  const darkInput = { input: { background: "#2E2D2E" }, label: { color: "white" } };
 
   return (
     <Box bg="#403C43" w="100%" p={20} sx={{ borderRadius: 20, overflow: "hidden" }}>
       <Stack>
-        <Flex justify="space-between" align="center">
+        <Flex justify="space-between" align="center" gap={8} wrap="wrap">
           <Group align="end">
             <Title order={3} c="white" size={isOverLg ? 22 : 18}>
               All Your Pokemon
             </Title>
           </Group>
-          <Popover position="bottom-end" withinPortal withArrow>
+          <Popover position="bottom-end" withinPortal withArrow shadow="md">
             <Popover.Target>
               <GradientButtonPrimary rightSection={<Image src={FileSearch} />}>
-                Adjust filters
+                {activeFilterCount ? `Filters (${activeFilterCount})` : "Adjust filters"}
               </GradientButtonPrimary>
             </Popover.Target>
-            <Popover.Dropdown maw="100%">
-              <Stack p="sm">
-                <Group>
-                  <Text color="white">Type:</Text>
-                  <Select
-                    value={filterState.type1}
-                    onChange={(value) =>
-                      setFilterState((pre) => ({ ...pre, type1: value as PokemonTypes }))
-                    }
-                    data={pokemonTypesFormatted}
-                    placeholder="Type 1"
-                  />
-                  <Select
-                    value={filterState.type2}
-                    onChange={(value) =>
-                      setFilterState((pre) => ({ ...pre, type2: value as PokemonTypes }))
-                    }
-                    data={pokemonTypesFormatted}
-                    placeholder="Type 2"
-                  />
-                </Group>
-                <Group>
-                  <Text color="white">Generation</Text>
-                  <Select
-                    value={filterState.generation}
-                    data={pokemonGenerationsFormatted}
-                    placeholder="Generation"
-                    onChange={(value) =>
-                      setFilterState((pre) => ({ ...pre, generation: value as PokemonGenerations }))
-                    }
-                  />
-                </Group>
-                <Button onClick={resetFilters} variant="subtle" size="xs" w="fit-content">
+            {/* Full-width stacked fields so the panel fits a phone screen. */}
+            <Popover.Dropdown bg="#1E1D20" p="md" w={280} maw="calc(100vw - 24px)">
+              <Stack gap={12}>
+                <TextInput
+                  label="Search by name or species"
+                  placeholder="e.g. Charmander"
+                  value={filterState.search}
+                  onChange={(e) =>
+                    setFilterState((pre) => ({ ...pre, search: e.currentTarget.value }))
+                  }
+                  styles={darkInput}
+                />
+                <Select
+                  label="Type 1"
+                  clearable
+                  value={filterState.type1 || null}
+                  onChange={(value) =>
+                    setFilterState((pre) => ({ ...pre, type1: (value ?? "") as PokemonTypes }))
+                  }
+                  data={pokemonTypesFormatted}
+                  placeholder="Any"
+                  styles={darkInput}
+                />
+                <Select
+                  label="Type 2"
+                  clearable
+                  value={filterState.type2 || null}
+                  onChange={(value) =>
+                    setFilterState((pre) => ({ ...pre, type2: (value ?? "") as PokemonTypes }))
+                  }
+                  data={pokemonTypesFormatted}
+                  placeholder="Any"
+                  styles={darkInput}
+                />
+                <Select
+                  label="Generation"
+                  clearable
+                  value={filterState.generation || null}
+                  data={pokemonGenerationsFormatted}
+                  placeholder="Any"
+                  onChange={(value) =>
+                    setFilterState((pre) => ({
+                      ...pre,
+                      generation: (value ?? "") as PokemonGenerations,
+                    }))
+                  }
+                  styles={darkInput}
+                />
+                <Select
+                  label="Gender"
+                  clearable
+                  value={filterState.gender || null}
+                  data={[
+                    { value: "M", label: "Male" },
+                    { value: "F", label: "Female" },
+                  ]}
+                  placeholder="Any"
+                  onChange={(value) =>
+                    setFilterState((pre) => ({ ...pre, gender: (value ?? "") as "M" | "F" }))
+                  }
+                  styles={darkInput}
+                />
+                <Anchor
+                  component="button"
+                  type="button"
+                  onClick={resetFilters}
+                  underline="always"
+                  c="#4DABF7"
+                  fz={14}
+                  fw={600}
+                  ta="center"
+                  style={{ opacity: activeFilterCount ? 1 : 0.5 }}
+                >
                   Clear filters
-                </Button>
+                </Anchor>
               </Stack>
             </Popover.Dropdown>
           </Popover>
         </Flex>
         <Flex sx={{ flexWrap: "wrap" }} gap={7}>
-          {displayedData.map((pokemon) => (
-            <SinglePokemon
-              form={form}
-              key={pokemon.id}
-              isOwned
-              pokemon={pokemon}
-              isEditing={!!form.values?.id}
-            />
-          ))}
+          {displayedData.length ? (
+            displayedData.map((pokemon) => (
+              <SinglePokemon
+                form={form}
+                key={pokemon.id}
+                isOwned
+                pokemon={pokemon}
+                isEditing={!!form.values?.id}
+              />
+            ))
+          ) : (
+            <Text fz={13} c="dimmed">
+              No pokemon match these filters.
+            </Text>
+          )}
         </Flex>
       </Stack>
     </Box>
