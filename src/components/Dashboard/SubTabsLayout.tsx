@@ -1,4 +1,4 @@
-import { Box, Flex, Stack, Text } from "@mantine/core";
+import { Box, Flex, ScrollArea, Stack, Text } from "@mantine/core";
 import React from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
@@ -19,54 +19,63 @@ export default function SubTabsLayout(props: {
   const location = useLocation();
   const currentPath = location.pathname;
 
+  const tabs = links.map((link, index) => {
+    const linkPath = `${parentRoutePath}/${link.path}`;
+    const isActive = currentPath.includes(linkPath);
+    return (
+      <Box
+        key={index}
+        component={Link}
+        to={linkPath}
+        sx={{
+          borderRadius: isOverLg ? 22 : 16,
+          flexShrink: 0,
+          background: isActive
+            ? "linear-gradient(90deg, #762B77 13.54%, #14B1B6 70.83%)"
+            : "rgba(119, 41, 118, 0.25)",
+          textDecoration: "none",
+          marginLeft: isOverLg ? (isActive ? 20 : 0) : undefined,
+        }}
+        h={isOverLg ? 59 : 44}
+        className="flex justify-start items-center px-4 duration-100"
+        w={isOverLg ? "100%" : undefined}
+      >
+        <Text
+          sx={{
+            fontSize: isOverLg ? 24 : 15,
+            fontWeight: 700,
+            lineHeight: "normal",
+            whiteSpace: "nowrap",
+            color: isActive ? "#FFFFFF" : "rgba(189, 110, 189, 0.55)",
+          }}
+        >
+          {link.label}
+        </Text>
+      </Box>
+    );
+  });
+
   return (
     <Flex
       direction={isOverLg ? "row" : "column"}
       w="100%"
       className="flex-nowrap"
-      gap={37}
+      gap={isOverLg ? 37 : 14}
       align="start"
     >
-      <Stack
-        w="100%"
-        maw={isOverLg ? 320 : undefined}
-        sx={{ flexShrink: 0, flexDirection: isOverLg ? "column" : "row" }}
-      >
-        {links.map((link, index) => {
-          const linkPath = `${parentRoutePath}/${link.path}`;
-          const isActive = currentPath.includes(linkPath);
-          return (
-            <Box
-              key={index}
-              component={Link}
-              to={linkPath}
-              sx={{
-                borderRadius: isOverLg ? 22 : 16,
-                flexShrink: 0,
-                background: isActive
-                  ? "linear-gradient(90deg, #762B77 13.54%, #14B1B6 70.83%)"
-                  : "rgba(119, 41, 118, 0.25)",
-                textDecoration: "none",
-                marginLeft: isOverLg ? (isActive ? 20 : 0) : undefined,
-              }}
-              h={59}
-              className="flex justify-start items-center px-6 duration-100"
-              w={isOverLg ? "100%" : undefined}
-            >
-              <Text
-                sx={{
-                  fontSize: isOverLg ? 24 : 20,
-                  fontWeight: 700,
-                  lineHeight: "normal",
-                  color: isActive ? "#FFFFFF" : "rgba(189, 110, 189, 0.25)",
-                }}
-              >
-                {link.label}
-              </Text>
-            </Box>
-          );
-        })}
-      </Stack>
+      {isOverLg ? (
+        <Stack w="100%" maw={320} sx={{ flexShrink: 0 }}>
+          {tabs}
+        </Stack>
+      ) : (
+        // Mobile: a horizontally scrollable segmented row so 3-5 sub-tabs
+        // never overflow the viewport or wrap awkwardly.
+        <ScrollArea type="never" scrollbarSize={0} w="100%">
+          <Flex gap={8} wrap="nowrap" pb={2}>
+            {tabs}
+          </Flex>
+        </ScrollArea>
+      )}
       {children}
     </Flex>
   );
