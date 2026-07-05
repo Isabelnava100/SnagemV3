@@ -132,6 +132,12 @@ export interface MysteryBoxPoolEntry {
 export interface MysteryBoxConfig {
   name: string;
   pool: MysteryBoxPoolEntry[];
+  /**
+   * Archived boxes can no longer be given out, but the config stays so members
+   * who already own a copy can still open it. Archived boxes are hidden from
+   * the admin's active list; opening is unaffected.
+   */
+  archived?: boolean;
 }
 
 export const getMysteryBoxes = async (): Promise<Record<string, MysteryBoxConfig>> => {

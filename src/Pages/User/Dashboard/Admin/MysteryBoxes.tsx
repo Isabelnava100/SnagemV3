@@ -2,6 +2,7 @@ import {
   ActionIcon,
   Avatar,
   Badge,
+  Button,
   Combobox,
   Group,
   Input,
@@ -160,6 +161,7 @@ export default function MysteryBoxes() {
   const [boxItemId, setBoxItemId] = React.useState<string | null>(null);
   const [boxName, setBoxName] = React.useState("");
   const [pool, setPool] = React.useState<MysteryBoxPoolEntry[]>([]);
+  const [archived, setArchived] = React.useState(false);
   const [loadedFor, setLoadedFor] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState("");
 
@@ -174,7 +176,8 @@ export default function MysteryBoxes() {
     setPool(boxes?.[boxItemId]?.pool ?? []);
     // Prefill the name from a saved box, else default to the item's own name.
     const itemName = itemData.find((i) => i.id === boxItemId)?.name ?? "";
-    setBoxName(boxes?.[boxItemId]?.name ?? itemName);
+    setBoxName(boxes?.[boxItemId]?.name || itemName);
+    setArchived(!!boxes?.[boxItemId]?.archived);
     setLoadedFor(boxItemId);
     setMessage("");
   }, [boxItemId, boxes, loadedFor]);
@@ -207,12 +210,12 @@ export default function MysteryBoxes() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await saveMysteryBox(boxItemId!, { name: boxName.trim(), pool });
+      await saveMysteryBox(boxItemId!, { name: boxName.trim(), pool, archived });
       await logAuditEvent({
         action: "mysterybox.edit",
         ...actorFrom(user),
         targetPath: `admin/mystery_boxes/${boxItemId}`,
-        details: { name: boxName.trim(), rewards: pool.length },
+        details: { name: boxName.trim(), rewards: pool.length, archived },
       });
     },
     onSuccess: () => {
@@ -221,10 +224,34 @@ export default function MysteryBoxes() {
     },
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: async (next: boolean) => {
+      await saveMysteryBox(boxItemId!, { name: boxName.trim(), pool, archived: next });
+      await logAuditEvent({
+        action: "mysterybox.edit",
+        ...actorFrom(user),
+        targetPath: `admin/mystery_boxes/${boxItemId}`,
+        details: { name: boxName.trim(), archived: next },
+      });
+      return next;
+    },
+    onSuccess: (next) => {
+      setArchived(next);
+      setMessage(
+        next
+          ? "Box archived. It can no longer be given out, but members who own one can still open it."
+          : "Box unarchived. It can be given out again."
+      );
+      queryClient.invalidateQueries({ queryKey: ["mystery-boxes"] });
+    },
+  });
+
   if (isPending) return <SectionLoader />;
 
   const totalWeight = pool.reduce((sum, entry) => sum + entry.weight, 0);
   const configuredIds = Object.keys(boxes ?? {});
+  const activeIds = configuredIds.filter((id) => !boxes?.[id]?.archived);
+  const archivedIds = configuredIds.filter((id) => boxes?.[id]?.archived);
 
   return (
     <Stack gap={12} maw={640}>
@@ -235,12 +262,12 @@ export default function MysteryBoxes() {
         Choose which item acts as a mystery box (its sprite is the box image), then configure the
         reward pool and drop rates. Players open boxes from Your Items on the dashboard.
       </Text>
-      {!!configuredIds.length && (
+      {!!activeIds.length && (
         <Group gap={6}>
           <Text fz={12} c="dimmed">
-            Configured boxes:
+            Active boxes:
           </Text>
-          {configuredIds.map((id) => (
+          {activeIds.map((id) => (
             <Badge
               key={id}
               variant="light"
@@ -248,7 +275,25 @@ export default function MysteryBoxes() {
               style={{ cursor: "pointer" }}
               onClick={() => setBoxItemId(id)}
             >
-              {boxes?.[id]?.name ?? id}
+              {boxes?.[id]?.name || id}
+            </Badge>
+          ))}
+        </Group>
+      )}
+      {!!archivedIds.length && (
+        <Group gap={6}>
+          <Text fz={12} c="dimmed">
+            Archived (still openable, not given out):
+          </Text>
+          {archivedIds.map((id) => (
+            <Badge
+              key={id}
+              variant="outline"
+              color="gray"
+              style={{ cursor: "pointer" }}
+              onClick={() => setBoxItemId(id)}
+            >
+              {boxes?.[id]?.name || id}
             </Badge>
           ))}
         </Group>
@@ -391,20 +436,40 @@ export default function MysteryBoxes() {
             like (they do not need to total 100).
           </Text>
 
+          {archived && (
+            <Text fz={12} c="orange.3">
+              This box is archived. It cannot be given out, but members who already own one can
+              still open it.
+            </Text>
+          )}
           {message && (
-            <Text fz={13} c="green.0">
+            <Text fz={13} c="green.0" role="status" aria-live="polite">
               {message}
             </Text>
           )}
-          <GradientButtonPrimary
-            radius="xl"
-            w="fit-content"
-            disabled={!pool.length || !boxName.trim()}
-            loading={saveMutation.isPending}
-            onClick={() => saveMutation.mutateAsync()}
-          >
-            Save Mystery Box
-          </GradientButtonPrimary>
+          <Group gap={10}>
+            <GradientButtonPrimary
+              radius="xl"
+              w="fit-content"
+              disabled={!pool.length || !boxName.trim()}
+              loading={saveMutation.isPending}
+              onClick={() => saveMutation.mutateAsync()}
+            >
+              Save Mystery Box
+            </GradientButtonPrimary>
+            {/* Archiving keeps the record so existing owners can still open it. */}
+            {boxes?.[boxItemId] && (
+              <Button
+                variant="light"
+                color={archived ? "cyan" : "orange"}
+                radius="xl"
+                loading={archiveMutation.isPending}
+                onClick={() => archiveMutation.mutate(!archived)}
+              >
+                {archived ? "Unarchive" : "Archive"}
+              </Button>
+            )}
+          </Group>
         </Stack>
       )}
     </Stack>

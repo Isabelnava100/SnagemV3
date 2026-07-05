@@ -82,11 +82,13 @@ export default function Items() {
                   .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
                   .map((item) => {
                     const box = isMysteryBox(item.id, item.name, item.category);
+                    // Show the admin's custom box name to players when set.
+                    const displayName = boxConfigs?.[item.id]?.name || item.name;
                     return (
                       <Box
                         key={item.id}
                         bg="#3e3d3dba"
-                        onClick={box ? () => setMysteryItem({ id: item.id, name: item.name }) : undefined}
+                        onClick={box ? () => setMysteryItem({ id: item.id, name: displayName }) : undefined}
                         style={{
                           borderRadius: 12,
                           overflow: "hidden",
@@ -95,9 +97,9 @@ export default function Items() {
                       >
                         <Flex w="100%" justify="space-between" align="center">
                           <Group px={14} py={8} gap={8} wrap="nowrap">
-                            <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={36} />
+                            <Avatar src={getItemImageURL(item.filePath)} alt={displayName} size={36} />
                             <Text c="white" fz={15} lineClamp={1}>
-                              {item.name}
+                              {displayName}
                             </Text>
                           </Group>
                           <Box bg="#525151" py={8} px={18} style={{ borderTopLeftRadius: 40, flexShrink: 0 }}>
