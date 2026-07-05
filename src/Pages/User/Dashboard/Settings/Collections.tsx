@@ -141,7 +141,7 @@ function Badges() {
 
   return (
     <Stack gap={8}>
-      <Flex justify="space-between" align="center">
+      <Flex justify="space-between" align="flex-start" gap={12}>
         {formattedData.length ? (
           <>
             <BadgesSectionWrapper
@@ -151,7 +151,19 @@ function Badges() {
               onToggle={toggle}
               toggling={toggleMutation.isPending}
             />
-            <Image src={ArrowSwapIcon} alt="Arrow swap icon" width={24} />
+            <Box
+              mt={6}
+              style={{
+                width: 28,
+                height: 28,
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Image src={ArrowSwapIcon} alt="Swap" w="100%" h="100%" fit="contain" />
+            </Box>
             <BadgesSectionWrapper
               title="Badges Disabled"
               badges={formattedData}

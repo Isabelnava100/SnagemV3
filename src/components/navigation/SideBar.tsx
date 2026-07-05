@@ -191,8 +191,10 @@ function MobileTabBar() {
           {overflow.map((item) => (
             <Link key={item.label} to={item.link} onClick={close} style={{ textDecoration: "none" }}>
               <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
-                <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-                  <Image src={item.icon} width={26} height={26} alt={item.label} />
+                {/* Fixed box + fit=contain: Mantine 9 Image ignores numeric
+                    width/height, so constrain the box to size the icon. */}
+                <Box style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Image src={item.icon} w="100%" h="100%" fit="contain" alt={item.label} />
                 </Box>
                 <Text fz={11} c="white" tt="uppercase">
                   {item.label}
