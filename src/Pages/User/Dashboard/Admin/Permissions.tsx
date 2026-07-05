@@ -24,7 +24,18 @@ import { CAPABILITY_INFO, Capability } from "../../../../components/types/typesU
 import { useAuth } from "../../../../context/AuthContext";
 import { db } from "../../../../context/firebase";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
-import { XPDefaults, XP_STAT_FIELDS, getXPDefaults, saveXPDefaults } from "../../../../queries/game";
+import {
+  BattleConfig,
+  DEFAULT_BATTLE_CONFIG,
+  StageCosts,
+  XPDefaults,
+  XP_STAT_FIELDS,
+  getBattleConfig,
+  getXPDefaults,
+  saveBattleConfig,
+  saveXPDefaults,
+} from "../../../../queries/game";
+import { BATTLE_STAGE_LABEL, BattleStage } from "../../../../lib/battleStage";
 import { getLevelingCurve, saveLevelingCurve } from "../../../../queries/leveling";
 import { DEFAULT_XP_CURVE, MAX_LEVEL, setActiveCurve } from "../../../../lib/leveling";
 
@@ -366,6 +377,102 @@ function LevelingCurveSection() {
   );
 }
 
+const STAGE_KEYS: BattleStage[] = ["stage1", "stage2", "stage3", "legendary"];
+
+function BattleCostsSection() {
+  const queryClient = useQueryClient();
+  const { data, isPending } = useQuery({ queryKey: ["battle-config"], queryFn: getBattleConfig });
+  const [form, setForm] = React.useState<BattleConfig | null>(null);
+  const [saved, setSaved] = React.useState(false);
+
+  React.useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data, form]);
+
+  const saveMutation = useMutation({
+    mutationFn: () => saveBattleConfig(form!),
+    onSuccess: () => {
+      setSaved(true);
+      queryClient.invalidateQueries({ queryKey: ["battle-config"] });
+    },
+  });
+
+  if (isPending || !form) return <SectionLoader />;
+
+  const setCost = (group: "boss" | "encounter", stage: BattleStage, value: number) => {
+    setSaved(false);
+    setForm({
+      ...form,
+      [group]: { ...form[group], [stage]: Math.max(1, value) } as StageCosts,
+    });
+  };
+
+  const Table = (props: { group: "boss" | "encounter"; label: string; hint: string }) => (
+    <Stack gap={8} maw={560}>
+      <Title order={3} c="white" size={16} fw={600}>
+        {props.label}
+      </Title>
+      <Text fz={12} c="dimmed">
+        {props.hint}
+      </Text>
+      <SimpleGrid cols={{ base: 2, xs: 4 }} spacing={10}>
+        {STAGE_KEYS.map((stage) => (
+          <Stack gap={2} key={stage}>
+            <Text fz={11} c="dimmed">
+              {BATTLE_STAGE_LABEL[stage]}
+            </Text>
+            <NumberInput
+              value={form[props.group][stage]}
+              onChange={(v) => setCost(props.group, stage, Number(v) || 0)}
+              min={1}
+              styles={{ input: { background: "#2E2D2E" } }}
+            />
+          </Stack>
+        ))}
+      </SimpleGrid>
+    </Stack>
+  );
+
+  return (
+    <Stack gap={14}>
+      <Title order={2} c="white" size={24} fw={400}>
+        Battle Costs
+      </Title>
+      <Text fz={13} c="dimmed">
+        How many posts it takes to defeat a boss or capture an encounter, by the
+        target's evolution stage. Boss posts are totalled across everyone
+        attacking; encounter posts are counted per capture. Defaults are{" "}
+        {STAGE_KEYS.map((s) => DEFAULT_BATTLE_CONFIG.boss[s]).join(" / ")} for
+        bosses and {STAGE_KEYS.map((s) => DEFAULT_BATTLE_CONFIG.encounter[s]).join(" / ")}{" "}
+        for encounters.
+      </Text>
+      <Table
+        group="boss"
+        label="Boss defeat (posts)"
+        hint="Attack posts needed to take a boss down."
+      />
+      <Table
+        group="encounter"
+        label="Encounter capture (posts)"
+        hint="Posts needed before a rolled encounter can be caught."
+      />
+      {saved && (
+        <Text fz={13} c="green.0" role="status" aria-live="polite">
+          Battle costs saved.
+        </Text>
+      )}
+      <GradientButtonPrimary
+        radius="xl"
+        w="fit-content"
+        loading={saveMutation.isPending}
+        onClick={() => saveMutation.mutateAsync()}
+      >
+        Save Battle Costs
+      </GradientButtonPrimary>
+    </Stack>
+  );
+}
+
 export default function Permissions() {
   return (
     <Stack gap={20}>
@@ -374,6 +481,8 @@ export default function Permissions() {
       <XPDefaultsSection />
       <Divider color="#4a464a" />
       <LevelingCurveSection />
+      <Divider color="#4a464a" />
+      <BattleCostsSection />
       <Divider color="#4a464a" />
       <ActivityLog title="Staff activity log" max={80} />
     </Stack>
