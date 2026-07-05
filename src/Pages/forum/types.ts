@@ -115,6 +115,12 @@ export interface BossBattle {
   /** Usernames excluded (they are battling outside the boss's area). */
   excluded: string[];
   startedAt?: FireTimestamp;
+  /** Battle stage (stage1/stage2/stage3/legendary), sizes the health bar. */
+  stage?: string;
+  /** Attack posts needed to defeat the boss (from admin/battle_config). */
+  requiredPosts?: number;
+  /** Attack posts landed so far, totalled across everyone. */
+  attackPosts?: number;
 }
 
 export interface ThreadParticipant {
