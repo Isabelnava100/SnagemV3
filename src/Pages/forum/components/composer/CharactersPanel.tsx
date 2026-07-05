@@ -50,15 +50,19 @@ export default function CharactersPanel(props: {
     [rawTeams, owned]
   );
 
-  const teamOptions = React.useMemo(
-    () =>
-      (teams?.sortedData ?? []).map((team) => ({
-        value: team.id,
-        label: `${team.team_name || "Unnamed team"}: ${team.pokemons
-          .map((p) => p.name)
-          .slice(0, 4)
-          .join(", ")}${team.pokemons.length > 4 ? "..." : ""}`,
-      })),
+  // Teams available to a given character: its own plus any shared (no
+  // characterId) team, so existing teams keep working after the split.
+  const teamOptionsFor = React.useCallback(
+    (characterId: string) =>
+      (teams?.sortedData ?? [])
+        .filter((team) => !team.characterId || team.characterId === characterId)
+        .map((team) => ({
+          value: team.id,
+          label: `${team.team_name || "Unnamed team"}: ${team.pokemons
+            .map((p) => p.name)
+            .slice(0, 4)
+            .join(", ")}${team.pokemons.length > 4 ? "..." : ""}`,
+        })),
     [teams]
   );
 
@@ -156,11 +160,13 @@ export default function CharactersPanel(props: {
                     </Text>
                     <Select
                       placeholder="Select the team to use"
-                      data={teamOptions}
+                      data={teamOptionsFor(character.id)}
                       value={picked.teamId ?? null}
                       onChange={(teamId) => pickTeam(character.id, teamId)}
                       clearable
                       size="xs"
+                      nothingFoundMessage="No teams for this character yet"
+                      searchable
                       styles={{ input: { background: "#2E2D2E" } }}
                     />
                     {!!picked.pokemon.length && (
