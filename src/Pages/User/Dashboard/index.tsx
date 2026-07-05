@@ -5,10 +5,12 @@ import {
   Group,
   Image,
   Paper,
+  Popover,
   ScrollArea,
   Stack,
   Text,
   Title,
+  UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -40,7 +42,7 @@ import {
   markAnnouncementRead,
 } from "../../../queries/announcements";
 import { getCharacters, getCurrencies } from "../../../queries/dashboard";
-import { getNotifications } from "../../../queries/game";
+import { getNotifications, markNotificationsRead } from "../../../queries/game";
 import { handleLogout } from "../../auth/components/LogoutHandle";
 import "/src/assets/styles/dashboard.css";
 
@@ -109,41 +111,85 @@ function DashboardHeader() {
   );
 }
 
-/** Bell with unread count; clicking opens the notification inbox (Q7). */
+/** Bell with unread count; opens a popover of recent notifications (Q7). */
 function NotificationBell() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: notifications } = useQuery({
     queryKey: ["notifications", user?.uid],
     queryFn: () => getNotifications(user!.uid),
     enabled: !!user,
   });
   const unread = (notifications ?? []).filter((n) => !n.read).length;
+
+  const openRead = () => {
+    const ids = (notifications ?? []).filter((n) => !n.read).map((n) => n.id);
+    if (ids.length && user) {
+      markNotificationsRead(user.uid, ids).then(() =>
+        queryClient.invalidateQueries({ queryKey: ["notifications", user.uid] })
+      );
+    }
+  };
+
   return (
-    <Link to="/Dashboard/Settings/Notifications" style={{ position: "relative" }}>
-      <Image src={Bell} alt="Notifications" width={40} />
-      {unread > 0 && (
-        <Box
-          sx={{
-            position: "absolute",
-            top: -4,
-            right: -6,
-            background: "#E35C65",
-            color: "white",
-            borderRadius: "100%",
-            minWidth: 20,
-            height: 20,
-            fontSize: 11,
-            fontWeight: 700,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "0 4px",
-          }}
-        >
-          {unread > 9 ? "9+" : unread}
-        </Box>
-      )}
-    </Link>
+    <Popover width={300} position="bottom-end" withArrow shadow="md" onOpen={openRead}>
+      <Popover.Target>
+        <UnstyledButton style={{ position: "relative", lineHeight: 0 }}>
+          <Image src={Bell} alt="Notifications" width={40} />
+          {unread > 0 && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: -4,
+                right: -6,
+                background: "#E35C65",
+                color: "white",
+                borderRadius: "100%",
+                minWidth: 20,
+                height: 20,
+                fontSize: 11,
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "0 4px",
+              }}
+            >
+              {unread > 9 ? "9+" : unread}
+            </Box>
+          )}
+        </UnstyledButton>
+      </Popover.Target>
+      <Popover.Dropdown bg="#1E1D20" p={8}>
+        <Text c="white" fw={700} fz={14} mb={6} px={4}>
+          Notifications
+        </Text>
+        {notifications?.length ? (
+          <ScrollArea.Autosize mah={320}>
+            <Stack gap={4}>
+              {notifications.map((n) => (
+                <Text
+                  key={n.id}
+                  component={Link}
+                  to={n.link || "/Dashboard"}
+                  fz={13}
+                  c="gray.3"
+                  px={8}
+                  py={6}
+                  style={{ borderRadius: 8, background: "#3C3A3C", textDecoration: "none" }}
+                >
+                  {n.text}
+                </Text>
+              ))}
+            </Stack>
+          </ScrollArea.Autosize>
+        ) : (
+          <Text fz={13} c="dimmed" ta="center" py={16}>
+            You have no notifications yet.
+          </Text>
+        )}
+      </Popover.Dropdown>
+    </Popover>
   );
 }
 

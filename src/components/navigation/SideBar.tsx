@@ -1,6 +1,6 @@
 import { Box, Drawer, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconBell, IconLogout, IconUser } from "@tabler/icons-react";
+import { IconBell, IconLogout } from "@tabler/icons-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
@@ -81,7 +81,8 @@ function TabButton(props: { item: NavItem }) {
   const isActive = location.pathname === "/" ? item.link === "/" : location.pathname.startsWith(base);
   return (
     <NavLink to={item.link} style={{ textDecoration: "none", flex: 1 }}>
-      <Stack gap={2} align="center" justify="center" py={6}>
+      {/* gap 4 = +2px between icon and name; pb 4 = -2px below the name. */}
+      <Stack gap={4} align="center" justify="center" pt={6} pb={4}>
         <Box
           style={{
             display: "flex",
@@ -109,7 +110,7 @@ function TabButton(props: { item: NavItem }) {
 function MoreButton(props: { active: boolean; onClick: () => void }) {
   return (
     <UnstyledButton onClick={props.onClick} style={{ flex: 1 }}>
-      <Stack gap={2} align="center" justify="center" py={6}>
+      <Stack gap={4} align="center" justify="center" pt={6} pb={4}>
         <Box
           style={{
             display: "flex",
@@ -180,7 +181,9 @@ function MobileTabBar() {
           {overflow.map((item) => (
             <Link key={item.label} to={item.link} onClick={close} style={{ textDecoration: "none" }}>
               <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
-                <Image src={item.icon} width={30} height={30} alt={item.label} />
+                <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
+                  <Image src={item.icon} width={26} height={26} alt={item.label} />
+                </Box>
                 <Text fz={11} c="white" tt="uppercase">
                   {item.label}
                 </Text>
@@ -189,21 +192,17 @@ function MobileTabBar() {
           ))}
           {user && (
             <>
-              <Link to="/Dashboard/Profile" onClick={close} style={{ textDecoration: "none" }}>
-                <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
-                  <IconUser size={30} color="white" />
-                  <Text fz={11} c="white" tt="uppercase">
-                    Profile
-                  </Text>
-                </Stack>
-              </Link>
+              {/* Profile lives under Users (the public-profile hub), so it's
+                  intentionally not a separate quick-link here. */}
               <Link
                 to="/Dashboard/Settings/Notifications"
                 onClick={close}
                 style={{ textDecoration: "none" }}
               >
                 <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
-                  <IconBell size={30} color="white" />
+                  <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
+                    <IconBell size={26} color="white" />
+                  </Box>
                   <Text fz={11} c="white" tt="uppercase">
                     Alerts
                   </Text>
@@ -216,7 +215,9 @@ function MobileTabBar() {
                 }}
               >
                 <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
-                  <IconLogout size={30} color="white" />
+                  <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
+                    <IconLogout size={26} color="white" />
+                  </Box>
                   <Text fz={11} c="white" tt="uppercase">
                     Logout
                   </Text>

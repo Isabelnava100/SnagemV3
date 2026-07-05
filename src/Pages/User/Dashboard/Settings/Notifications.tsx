@@ -102,7 +102,14 @@ function NotificationsInbox() {
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.uid] }),
   });
 
-  if (isPending || !notifications?.length) return null;
+  if (isPending) return null;
+  if (!notifications?.length) {
+    return (
+      <Text fz={13} c="dimmed" mb={10}>
+        You have no notifications yet.
+      </Text>
+    );
+  }
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
