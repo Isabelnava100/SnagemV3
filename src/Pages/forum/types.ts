@@ -172,6 +172,25 @@ export interface ForumThread {
   privateTo?: Array<string | null | undefined>;
 }
 
+/**
+ * The full new-thread composer state saved with a draft so a returning author
+ * restores every setting (title/body live in the draft's own fields). Stored
+ * under Draft.settings; all fields optional so older drafts still load.
+ */
+export interface ComposerDraftSettings {
+  categoryLink?: string | null;
+  tags?: string[];
+  instructions?: string;
+  pinned?: boolean;
+  restricted?: boolean;
+  allowedPosters?: string[];
+  characters?: PostCharacter[];
+  encounterConfig?: EncounterConfig | null;
+  poll?: ThreadPoll | null;
+  xpOverride?: Record<string, number> | null;
+  attachSignature?: boolean;
+}
+
 /** Composer draft of one game-action set before publish (all editable until then). */
 export interface ComposerBlocksState {
   encounter?: EncounterBlock | null;

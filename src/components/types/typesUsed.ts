@@ -269,6 +269,12 @@ export interface Draft {
   long_text: string;
   thread_id: string;
   title_thread: string;
+  /**
+   * Full new-thread composer state (category, tags, restrictions, characters,
+   * encounters, poll, XP overrides) so a saved roleplay draft restores every
+   * setting, not just the title and body. Shape: ComposerDraftSettings.
+   */
+  settings?: Record<string, unknown>;
 }
 
 export interface Character {

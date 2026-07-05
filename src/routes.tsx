@@ -111,6 +111,7 @@ const { default: AdminImports } = lazyImport(
 );
 const { default: Onboarding } = lazyImport(() => import("./Pages/User/Onboarding"), "default");
 const { default: Policies } = lazyImport(() => import("./Pages/Policies"), "default");
+const { default: Library } = lazyImport(() => import("./Pages/Library"), "default");
 
 const { default: Settings } = lazyImport(
   () => import("./Pages/User/Dashboard/Settings"),
@@ -196,6 +197,7 @@ export default function AppRoutes() {
                       }
                     />
                     <Route path="/Policies" element={<Policies />} />
+                    <Route path="/Library" element={<Library />} />
                     <Route path="/Login" element={<Login />} />
                     <Route path="/Register" element={<NewRegister />} />
                     <Route path="/Forgot" element={<ForgotPassword />} />

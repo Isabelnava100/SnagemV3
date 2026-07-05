@@ -60,6 +60,19 @@ export function canGiveRewards(user: User | undefined): boolean {
   );
 }
 
+/**
+ * Whether the user may pin a thread to the top and adjust its XP settings.
+ * Admins plus directors who host the staff forums (Main Adventures / Events).
+ * Regular members never see these controls.
+ */
+export function canCurateThreads(user: User | undefined): boolean {
+  return (
+    isAdmin(user) ||
+    hasCapability(user, Capability.HostMainForum) ||
+    hasCapability(user, Capability.HostEvents)
+  );
+}
+
 // Forum "value" ids this user may see. Default-deny: unknown/absent roles get the
 // base set, Applicant/Disabled get nothing, Master (or the SeeMasterForums grant)
 // adds the master-only forum(s), Admin sees all.

@@ -185,6 +185,8 @@ export interface SaveDraftInput {
   title: string;
   characterNames: string;
   html: string;
+  /** Full composer state (ComposerDraftSettings) so every setting is restored. */
+  settings?: Record<string, unknown>;
 }
 
 export const MAX_DRAFTS = 60;
@@ -213,6 +215,10 @@ export async function saveDraft(input: SaveDraftInput): Promise<number> {
     long_text: input.html,
     thread_id: input.threadId,
     title_thread: input.title,
+    // JSON round-trip strips undefined so Firestore accepts the nested state.
+    ...(input.settings
+      ? { settings: JSON.parse(JSON.stringify(input.settings)) }
+      : {}),
   });
   return count + 1;
 }
