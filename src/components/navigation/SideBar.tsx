@@ -1,8 +1,7 @@
 import { ActionIcon, Box, Drawer, Group, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconBell, IconHome, IconX } from "@tabler/icons-react";
+import { IconHome, IconX } from "@tabler/icons-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { Activities, Forum, Marketplace, Menu, Quests, TeamSangem, Users } from "../../icons";
 import { RESET_READING_SCALE } from "../../lib/readingSize";
@@ -136,7 +135,6 @@ function MoreButton(props: { active: boolean; onClick: () => void }) {
 }
 
 function MobileTabBar() {
-  const { user } = useAuth();
   const [opened, { open, close }] = useDisclosure(false);
 
   const primary = MOBILE_PRIMARY.map((label) => ALL_LINKS.find((l) => l.label === label)!).filter(
@@ -212,25 +210,8 @@ function MobileTabBar() {
               </Stack>
             </Link>
           ))}
-          {user && (
-            // Profile lives under Users (the public-profile hub), and Logout
-            // moved to the dashboard header (next to the welcome) to avoid an
-            // accidental misclick in the nav.
-            <Link
-              to="/Dashboard/Settings/Notifications"
-              onClick={close}
-              style={{ textDecoration: "none" }}
-            >
-              <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
-                <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-                  <IconBell size={26} color="white" />
-                </Box>
-                <Text fz={11} c="white" tt="uppercase">
-                  Alerts
-                </Text>
-              </Stack>
-            </Link>
-          )}
+          {/* Profile lives under Users (the public-profile hub); Alerts/Logout
+              live in the dashboard header, so neither is a nav quick-link. */}
         </Box>
         {/* Controls sit at the bottom (Menu left, close right) to mirror the
             bottom main nav — thumb-friendly, with the list right above. */}
