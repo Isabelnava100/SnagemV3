@@ -366,90 +366,6 @@ function LevelingCurveSection() {
   );
 }
 
-function BookmarkMigrationSection() {
-  const { user } = useAuth();
-  const [preview, setPreview] = React.useState(true);
-  const [result, setResult] = React.useState<{
-    usersWithLegacy: number;
-    migrated: number;
-    skipped: number;
-    dryRun: boolean;
-    samples: string[];
-  } | null>(null);
-  const [error, setError] = React.useState("");
-
-  const migrate = useMutation({
-    mutationFn: async () => {
-      const { callMigrateLegacyBookmarks } = await import("../../../forum/functionsClient");
-      return callMigrateLegacyBookmarks(preview);
-    },
-    onSuccess: (r) => {
-      setResult(r);
-      if (!r.dryRun) {
-        logAuditEvent({
-          action: "bookmarks.migrate_legacy",
-          ...actorFrom(user),
-          details: { migrated: r.migrated, skipped: r.skipped, users: r.usersWithLegacy },
-        });
-      }
-    },
-    onError: (e) => setError((e as Error).message || "Migration failed."),
-  });
-
-  return (
-    <Stack gap={8}>
-      <Title order={3} c="white" size={18} fw={600}>
-        Legacy bookmarks
-      </Title>
-      <Text fz={13} c="dimmed">
-        Old bookmarks were stored in a different format and no longer show on the
-        Bookmarks page. This converts them into the current format. Run the
-        preview first to see the counts, then uncheck preview to write.
-      </Text>
-      <Checkbox
-        label="Preview only (do not write)"
-        color="green.0"
-        checked={preview}
-        onChange={(e) => setPreview(e.currentTarget.checked)}
-        styles={{ label: { color: "white", fontSize: 13 } }}
-      />
-      <Group>
-        <GradientButtonPrimary
-          radius="xl"
-          loading={migrate.isPending}
-          onClick={() => {
-            setError("");
-            setResult(null);
-            migrate.mutateAsync().catch(() => undefined);
-          }}
-        >
-          {preview ? "Preview migration" : "Migrate bookmarks"}
-        </GradientButtonPrimary>
-      </Group>
-      {error && (
-        <Text fz={13} c="red.4" role="status" aria-live="polite">
-          {error}
-        </Text>
-      )}
-      {result && (
-        <Stack gap={4} role="status" aria-live="polite">
-          <Text fz={13} c="green.0">
-            {result.dryRun ? "Preview: " : "Done: "}
-            {result.migrated} bookmark(s) from {result.usersWithLegacy} member(s)
-            {result.skipped ? `, ${result.skipped} couldn't be parsed` : ""}
-            {result.dryRun ? " would be migrated." : " migrated."}
-          </Text>
-          {!!result.samples.length && (
-            <Text fz={11} c="dimmed">
-              Sample legacy entries: {result.samples.slice(0, 4).join("  |  ")}
-            </Text>
-          )}
-        </Stack>
-      )}
-    </Stack>
-  );
-}
-
 export default function Permissions() {
   return (
     <Stack gap={20}>
@@ -458,8 +374,6 @@ export default function Permissions() {
       <XPDefaultsSection />
       <Divider color="#4a464a" />
       <LevelingCurveSection />
-      <Divider color="#4a464a" />
-      <BookmarkMigrationSection />
       <Divider color="#4a464a" />
       <ActivityLog title="Staff activity log" max={80} />
     </Stack>
