@@ -134,6 +134,8 @@ export default function NewThreadComposer() {
   const validate = (): string => {
     if (!title.trim() || title.trim().length < 2) return "Give your thread a title.";
     if (!categoryLink) return "Pick a category for your thread.";
+    if (!characters.length) return "Select at least one character.";
+    if (characters.some((c) => !c.teamId)) return "Select a team for each character.";
     if (html.replace(/<[^>]*>/g, "").trim().length < 2) return "Write your first post.";
     if (encounterConfig && !encounterConfig.listId)
       return "Pick an encounter list, or turn encounters off.";
@@ -394,6 +396,10 @@ export default function NewThreadComposer() {
               onChange={(e) => setAttachSignature(e.currentTarget.checked)}
               styles={{ label: { color: "white", fontSize: 13 } }}
             />
+            <Text fz={12} c="dimmed">
+              Your roleplay rewards will be sent over after the thread is closed
+              and approved by an admin.
+            </Text>
 
             {error && <GameResultText>{error}</GameResultText>}
             {draftMessage && (

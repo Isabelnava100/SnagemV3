@@ -249,7 +249,7 @@ export default function ThreadView() {
           value={Math.min(currentPage, lastPageNum)}
           onChange={changePage}
           color={FORUM_ACCENT}
-          size="sm"
+          size={isOverSm ? "sm" : "md"}
           withEdges
         />
         <Group gap={8} wrap="wrap">
@@ -322,7 +322,7 @@ export default function ThreadView() {
           value={Math.min(currentPage, lastPageNum)}
           onChange={changePage}
           color={FORUM_ACCENT}
-          size="sm"
+          size={isOverSm ? "sm" : "md"}
           withEdges
         />
       </Flex>
