@@ -697,22 +697,19 @@ function SinglePokemon(props: {
 }) {
   const { pokemon, isEditing, isOwned = false, form } = props;
   const [opened, { open, close }] = useDisclosure(false);
-  const [isShowingDetails, setShowingDetails] = React.useState(false);
   const isAlreadyInTeam = React.useMemo(() => {
     return form.values?.pokemon_ids.includes(pokemon.id);
   }, [form.values?.pokemon_ids]);
 
+  // Only the owned list while editing can add to the team.
+  const canAddToTeam = Boolean(isOwned && isEditing);
+
   const handleAddPokemonToTeam = () => {
-    if (!form.values || !isOwned || !isEditing) return;
+    if (!form.values || !canAddToTeam) return;
     if (!form.values.pokemon_ids.includes(pokemon.id)) {
       form.setFieldValue("pokemon_ids", [...form.values.pokemon_ids, pokemon.id]);
       form.setFieldValue("pokemons", [...form.values.pokemons, pokemon]);
     }
-  };
-
-  const closePopover = () => {
-    close();
-    setShowingDetails(false);
   };
 
   return (
@@ -726,75 +723,51 @@ function SinglePokemon(props: {
       h={60}
       sx={{
         borderRadius: "100%",
+        // Selected (already in team) = white so it reads clearly; open = purple;
+        // otherwise the dashed-pink "addable" outline.
         border: isEditing
-          ? `1px solid ${opened ? "#762B77" : isAlreadyInTeam ? "#4821C3" : "#DB5866"}`
+          ? `${isAlreadyInTeam ? 2 : 1}px solid ${
+              opened ? "#762B77" : isAlreadyInTeam ? "#FFFFFF" : "#DB5866"
+            }`
           : undefined,
         flexShrink: 0,
       }}
     >
-      <Conditional
-        condition={Boolean(isEditing && isOwned)}
-        fallback={<PokemonAvatar src={getPokemonImageURL(pokemon.image_slug)} alt={pokemon.name} />}
-        /**
-         * A popover to show up two options (view and select). The view option will change the contents within the popover dropdown
-         * Meaning it will remove the two buttons from the dropdown and render the pokemon details instead
-         */
-        component={
-          <Popover
-            opened={opened}
-            position="top"
-            onClose={closePopover}
-            styles={{
-              dropdown: isShowingDetails
-                ? undefined
-                : { background: "transparent", border: "none", boxShadow: "none" },
-            }}
-          >
-            <Popover.Target>
-              <PokemonAvatar
-                src={getPokemonImageURL(pokemon.image_slug)}
-                onClick={open}
-                alt={pokemon.name}
-                sx={{ cursor: "pointer" }}
-              />
-            </Popover.Target>
-            <Popover.Dropdown
-              bg={isShowingDetails ? "#1E1D20" : undefined}
-              sx={{ borderRadius: isShowingDetails ? 22 : undefined }}
-              p={isShowingDetails ? 16 : undefined}
-              w="100%"
-              maw={250}
-            >
-              {/*  */}
-              <Conditional
-                condition={isShowingDetails}
-                component={<PokemonDetails pokemon={pokemon} />}
-                fallback={
-                  <Group w="100%" gap={5}>
-                    <GradientButtonPrimary
-                      onClick={() => {
-                        handleAddPokemonToTeam();
-                        closePopover();
-                      }}
-                      radius="xl"
-                      size="xs"
-                    >
-                      Select
-                    </GradientButtonPrimary>
-                    <GradientButtonPrimary
-                      onClick={() => setShowingDetails(true)}
-                      radius="xl"
-                      size="xs"
-                    >
-                      View
-                    </GradientButtonPrimary>
-                  </Group>
-                }
-              />
-            </Popover.Dropdown>
-          </Popover>
-        }
-      />
+      {/* Every pokemon opens an info popover on click (species, catch date,
+          game stats). The owned list while editing also gets an Add-to-Team
+          button so team-building still works from the same popover. */}
+      <Popover opened={opened} position="top" onClose={close} withArrow shadow="md">
+        <Popover.Target>
+          <PokemonAvatar
+            src={getPokemonImageURL(pokemon.image_slug)}
+            onClick={open}
+            alt={pokemon.name}
+            sx={{ cursor: "pointer" }}
+          />
+        </Popover.Target>
+        <Popover.Dropdown bg="#1E1D20" sx={{ borderRadius: 22 }} p={16} w="100%" maw={280}>
+          <Stack gap={12}>
+            <PokemonDetails pokemon={pokemon} />
+            {canAddToTeam &&
+              (isAlreadyInTeam ? (
+                <Text fz={12} c="dimmed">
+                  Already in this team.
+                </Text>
+              ) : (
+                <GradientButtonPrimary
+                  onClick={() => {
+                    handleAddPokemonToTeam();
+                    close();
+                  }}
+                  radius="xl"
+                  size="xs"
+                >
+                  Add to Team
+                </GradientButtonPrimary>
+              ))}
+          </Stack>
+        </Popover.Dropdown>
+      </Popover>
       {/* This option is not shown in owned pokemons. Only in team pokemons to remove a pokemon from team */}
       <RemovePokemonFromTeam
         form={form}
