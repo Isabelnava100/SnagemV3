@@ -71,6 +71,42 @@ function LeftSideContent() {
   );
 }
 
+/**
+ * Mobile-only fixed bottom bar (board annotation 15): tapping it scrolls to
+ * the save button at the bottom of the form and saves the description.
+ */
+function MobileSaveBar(props: { onSave: () => void }) {
+  const { isOverSm } = useMediaQuery();
+  if (isOverSm) return null;
+  return (
+    <Box
+      sx={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 60,
+        padding: 10,
+        background: "#1E1D20",
+        borderTop: "1px solid #3C3A3C",
+      }}
+    >
+      <GradientButtonPrimary
+        fullWidth
+        radius="xl"
+        onClick={() => {
+          document
+            .getElementById("profile-save-anchor")
+            ?.scrollIntoView({ behavior: "smooth", block: "end" });
+          props.onSave();
+        }}
+      >
+        Save Your Changes
+      </GradientButtonPrimary>
+    </Box>
+  );
+}
+
 function Wrapper(props: { children: React.ReactNode } & StackProps) {
   const { isOverLg } = useMediaQuery();
   const { children, p = isOverLg ? 25 : 15, sx = { borderRadius: 22 }, ...restProps } = props;
@@ -600,7 +636,7 @@ function RightSideContent() {
 
   return (
     <Stack sx={{ flex: 1 }}>
-      <Wrapper sx={{ flex: 1, borderRadius: 22 }}>
+      <Wrapper id="profile-save-anchor" sx={{ flex: 1, borderRadius: 22 }}>
         <Flex justify="space-between" align="center">
           <Title c="white" order={2} size={24}>
             Description
@@ -611,7 +647,13 @@ function RightSideContent() {
         <Box sx={{ borderRadius: 12, overflow: "hidden" }}>
           <Editor editor={editor} />
         </Box>
+        <Box>
+          <GradientButtonPrimary onClick={() => mutate()} loading={isLoading}>
+            Save Your Changes
+          </GradientButtonPrimary>
+        </Box>
       </Wrapper>
+      <MobileSaveBar onSave={() => mutate()} />
     </Stack>
   );
 }

@@ -6,6 +6,7 @@ import {
   Flex,
   Group,
   Image,
+  Modal,
   Paper,
   ScrollArea,
   Stack,
@@ -14,7 +15,7 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import type { EmotionSx as Sx } from "@mantine/emotion";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { Link } from "react-router-dom";
@@ -42,13 +43,18 @@ import {
   SnagCoins,
   Tether,
 } from "../../../icons";
-import { getCurrencies, getItems } from "../../../queries/dashboard";
+import {
+  getAnnouncement,
+  getReadAnnouncements,
+  markAnnouncementRead,
+} from "../../../queries/announcements";
+import { getCharacters, getCurrencies, getItems } from "../../../queries/dashboard";
 import { handleLogout } from "../../auth/components/LogoutHandle";
 import "/src/assets/styles/dashboard.css";
 
 export function Dashboard() {
   const { user } = useAuth();
-  const { isOverMd } = useMediaQuery();
+  const { isOverMd, isOverXl } = useMediaQuery();
 
   return (
     <Paper
@@ -60,7 +66,8 @@ export function Dashboard() {
         backgroundPosition: "top",
         backgroundRepeat: "no-repeat",
       }}
-      mih="100%"
+      // Board rule: 900px-1440px viewports keep the main module >= 1200px tall.
+      mih={isOverMd && !isOverXl ? 1200 : "100%"}
       py={isOverMd ? 30 : 10}
       px={isOverMd ? 75 : 5}
     >
@@ -212,6 +219,35 @@ function TabsPanel() {
 function Announcements() {
   const { isOverMd, isOverLg } = useMediaQuery();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Admin-managed announcement takes priority; the create-your-first-character
+  // welcome shows as the fallback while the user has no characters yet.
+  const { data: announcement } = useQuery({
+    queryKey: ["announcement"],
+    queryFn: getAnnouncement,
+  });
+  const { data: readIds } = useQuery({
+    queryKey: ["announcement-read", user?.uid],
+    queryFn: () => getReadAnnouncements(user!.uid),
+    enabled: !!user,
+  });
+  const { data: characters } = useQuery({
+    queryKey: ["get-characters", user?.uid],
+    queryFn: () => getCharacters(user!.uid),
+    enabled: !!user,
+  });
+
+  const markRead = useMutation({
+    mutationFn: async () => {
+      if (!user || !announcement) return;
+      await markAnnouncementRead(user.uid, announcement.id);
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["announcement-read", user?.uid] }),
+  });
+
   const handleClick = () => {
     const nestedElement = document.querySelector("#app-layout-main");
     if (nestedElement) {
@@ -221,11 +257,24 @@ function Announcements() {
       }, 500);
     }
   };
+
+  const adminAnnouncementVisible =
+    !!announcement?.active && !!announcement.id && !(readIds ?? []).includes(announcement.id);
+  const showWelcome = !adminAnnouncementVisible && characters !== undefined
+    ? characters.sortedData.length === 0
+    : false;
+
+  if (!adminAnnouncementVisible && !showWelcome) return null;
+
   return (
     <SectionWrapper
       title="Important Announcement!"
       style={{ overflow: "visible" }}
-      action={<ActionButton action={() => {}}>Mark as Read</ActionButton>}
+      action={
+        adminAnnouncementVisible ? (
+          <ActionButton action={() => markRead.mutateAsync()}>Mark as Read</ActionButton>
+        ) : undefined
+      }
     >
       <Flex direction="row-reverse" justify="space-between">
         {isOverLg && (
@@ -233,31 +282,55 @@ function Announcements() {
             <Image src={PokemonImage} alt="Sylveon" />
           </Box>
         )}
-        <Stack sx={{ flex: 1 }}>
-          <Text>
-            Welcome to the Snagem Guild! We truly appreciate your stay.
-            <br />
-            It looks like you haven&apos;t created a character yet.
-            <br />
-            Please go here to create a character and start your journey with Snagem!
-          </Text>
-          <Box>
-            <GradientButtonPrimary onClick={handleClick} fullWidth={!isOverMd}>
-              Create Your First Character
-            </GradientButtonPrimary>
-          </Box>
-        </Stack>
+        {adminAnnouncementVisible && announcement ? (
+          <Stack sx={{ flex: 1 }}>
+            <Text fw={600} color="white">
+              {announcement.title}
+            </Text>
+            <Text style={{ whiteSpace: "pre-line" }}>{announcement.body}</Text>
+            {announcement.ctaLabel && announcement.ctaUrl && (
+              <Box>
+                <GradientButtonPrimary
+                  onClick={() => navigate(announcement.ctaUrl!)}
+                  fullWidth={!isOverMd}
+                >
+                  {announcement.ctaLabel}
+                </GradientButtonPrimary>
+              </Box>
+            )}
+          </Stack>
+        ) : (
+          <Stack sx={{ flex: 1 }}>
+            <Text>
+              Welcome to the Snagem Guild! We truly appreciate your stay.
+              <br />
+              It looks like you haven&apos;t created a character yet.
+              <br />
+              Please go here to create a character and start your journey with Snagem!
+            </Text>
+            <Box>
+              <GradientButtonPrimary onClick={handleClick} fullWidth={!isOverMd}>
+                Create Your First Character
+              </GradientButtonPrimary>
+            </Box>
+          </Stack>
+        )}
       </Flex>
     </SectionWrapper>
   );
 }
 
+/** Mystery-box items open a pop-up on click; contents are deferred (board 3). */
+const isMysteryBox = (name: string, category: string) =>
+  /mystery|box/i.test(name) || /mystery|box/i.test(category);
+
 function MyItems() {
   const { user } = useAuth();
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["get-items"],
+    queryKey: ["get-items", user?.uid],
     queryFn: () => getItems(user?.uid as string),
   });
+  const [mysteryItem, setMysteryItem] = useState<string | null>(null);
   const { isOverLg } = useMediaQuery();
 
   // no duplicate category
@@ -332,7 +405,16 @@ function MyItems() {
                         key={index}
                         p={0}
                         bg="#3e3d3dba"
-                        sx={{ ...itemCommonStyle, overflow: "hidden" }}
+                        onClick={
+                          isMysteryBox(item.name, item.category)
+                            ? () => setMysteryItem(item.name)
+                            : undefined
+                        }
+                        sx={{
+                          ...itemCommonStyle,
+                          overflow: "hidden",
+                          cursor: isMysteryBox(item.name, item.category) ? "pointer" : undefined,
+                        }}
                       >
                         <Flex w="100%" justify="space-between" align="center">
                           <Group px={18} py={10} gap={8}>
@@ -355,6 +437,18 @@ function MyItems() {
           </ScrollArea>
         }
       />
+      {/* Mystery box pop-up stub — opening mechanics land later. */}
+      <Modal
+        opened={!!mysteryItem}
+        onClose={() => setMysteryItem(null)}
+        title={<Text fw={700}>{mysteryItem}</Text>}
+        centered
+        radius={12}
+      >
+        <Text fz={14}>
+          Something is rattling inside... Opening mystery boxes is coming soon!
+        </Text>
+      </Modal>
     </SectionWrapper>
   );
 }
@@ -379,8 +473,8 @@ function Currency(props: { amount: string; name: string; color: string; icon: st
 function MyCurrency() {
   const theme = useMantineTheme();
   const { user } = useAuth();
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["get-currencies"],
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["get-currencies", user?.uid],
     queryFn: () => getCurrencies(user?.uid as string),
   });
   const { isOverLg } = useMediaQuery();
@@ -412,7 +506,7 @@ function MyCurrency() {
           name="Gengar Coin"
           color={theme.colors.pink[1]}
         />
-        <Currency icon={SnagCoins} amount="000" name="Snag Gems" color={theme.colors.pink[0]} />
+        <Currency icon={SnagCoins} amount="000" name="Snag Emblems" color={theme.colors.pink[0]} />
       </Stack>
     </SectionWrapper>
   );

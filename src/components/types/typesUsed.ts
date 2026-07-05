@@ -295,6 +295,13 @@ export interface OwnedPokemon {
   species: string;
   type1: string;
   type2?: string;
+  /** Provenance: set by the forum catch flow (publishForumPost). */
+  caughtIn?: {
+    forum: string;
+    threadId: string;
+    postId: string;
+    threadTitle?: string;
+  };
 }
 
 export type Profile = Partial<{
@@ -341,7 +348,13 @@ export interface Bookmark {
   };
   send2discord: string;
   threadID: string;
-  threadLocation: "Main-Forum" | "Side-Roleplay";
+  threadLocation: string;
+  /** Thread's last post at bookmark time (denormalized for the card). */
+  latestPostBy?: string;
+  latestPostAt?: {
+    seconds: number;
+    nanoseconds: number;
+  };
 }
 
 export interface AdminPokemonList {

@@ -11,7 +11,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
 import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLayout";
@@ -26,7 +26,7 @@ import { getBadges, getEmojis } from "../../../../queries/settings";
 function useGetBadgesQuery() {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["get-badges"],
+    queryKey: ["get-badges", user?.uid],
     queryFn: async () => getBadges(user?.uid as string),
   });
 }
@@ -34,9 +34,35 @@ function useGetBadgesQuery() {
 function useGetEmojisQuery() {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["get-emojis"],
+    queryKey: ["get-emojis", user?.uid],
     queryFn: async () => getEmojis(user?.uid as string),
   });
+}
+
+/**
+ * Insert/disable a badge. Runs through the setBadgeEnabled Cloud Function,
+ * which validates ownership + the max-5 rule and syncs the enabled set into
+ * users/{uid}.badges (what forum post cards display).
+ */
+function useToggleBadgeMutation() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [error, setError] = React.useState("");
+  const mutation = useMutation({
+    mutationFn: async ({ label, enabled }: { label: string; enabled: boolean }) => {
+      const { callSetBadgeEnabled } = await import("../../../forum/functionsClient");
+      await callSetBadgeEnabled(label, enabled);
+    },
+    onSuccess: () => {
+      setError("");
+      queryClient.invalidateQueries({ queryKey: ["get-badges", user?.uid] });
+    },
+    onError: async (err) => {
+      const { callableMessage } = await import("../../../forum/functionsClient");
+      setError(callableMessage(err, "Could not update the badge — try again."));
+    },
+  });
+  return { ...mutation, error };
 }
 
 export type BadgeTypes = "New User" | "Admin" | "Legacy";
@@ -52,8 +78,10 @@ function BadgesSectionWrapper(props: {
   secondaryText?: string;
   badges: Badge[];
   showEnabledOnly?: boolean;
+  onToggle: (badge: Badge) => void;
+  toggling: boolean;
 }) {
-  const { title, secondaryText, badges, showEnabledOnly = true } = props;
+  const { title, secondaryText, badges, showEnabledOnly = true, onToggle, toggling } = props;
   const enabledBadges = badges.filter((badge) => badge.enabled);
   const disabledBadges = badges.filter((badge) => !badge.enabled);
   const displayedBadges = showEnabledOnly ? enabledBadges : disabledBadges;
@@ -69,17 +97,31 @@ function BadgesSectionWrapper(props: {
           </Text>
         )}
       </Group>
-      <Flex gap={17}>
+      <Flex gap={17} wrap="wrap">
         {displayedBadges.map((badge) => (
           <Badge
             key={badge.label}
             bg={badge.background}
-            sx={{ color: "white", textTransform: "none", fontWeight: 400, fontSize: 16 }}
+            sx={{
+              color: "white",
+              textTransform: "none",
+              fontWeight: 400,
+              fontSize: 16,
+              cursor: toggling ? "wait" : "pointer",
+              opacity: toggling ? 0.6 : 1,
+            }}
             size="lg"
+            title={badge.enabled ? "Click to disable" : "Click to insert"}
+            onClick={() => !toggling && onToggle(badge)}
           >
             {badge.label}
           </Badge>
         ))}
+        {!displayedBadges.length && (
+          <Text fz={13} c="dimmed">
+            {showEnabledOnly ? "No badges inserted." : "Nothing here."}
+          </Text>
+        )}
       </Flex>
     </Stack>
   );
@@ -87,29 +129,47 @@ function BadgesSectionWrapper(props: {
 
 function Badges() {
   const { data, isPending: isLoading, isError } = useGetBadgesQuery();
+  const toggleMutation = useToggleBadgeMutation();
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const { formattedData } = data;
+
+  const toggle = (badge: Badge) =>
+    toggleMutation
+      .mutateAsync({ label: badge.label, enabled: !badge.enabled })
+      .catch(() => undefined);
+
   return (
-    <Flex justify="space-between" align="center">
-      {formattedData.length ? (
-        <>
-          <BadgesSectionWrapper
-            title="Badges Enabled"
-            secondaryText="Max: 5"
-            badges={formattedData}
-          />
-          <Image src={ArrowSwapIcon} alt="Arrow swap icon" width={24} />
-          <BadgesSectionWrapper
-            title="Badges Disabled"
-            badges={formattedData}
-            showEnabledOnly={false}
-          />
-        </>
-      ) : (
-        <EmptyMessage title="No badges" description="You currently have no badges" />
+    <Stack gap={8}>
+      <Flex justify="space-between" align="center">
+        {formattedData.length ? (
+          <>
+            <BadgesSectionWrapper
+              title="Badges Enabled"
+              secondaryText="Max: 5 — click a badge to move it"
+              badges={formattedData}
+              onToggle={toggle}
+              toggling={toggleMutation.isPending}
+            />
+            <Image src={ArrowSwapIcon} alt="Arrow swap icon" width={24} />
+            <BadgesSectionWrapper
+              title="Badges Disabled"
+              badges={formattedData}
+              showEnabledOnly={false}
+              onToggle={toggle}
+              toggling={toggleMutation.isPending}
+            />
+          </>
+        ) : (
+          <EmptyMessage title="No badges" description="You currently have no badges" />
+        )}
+      </Flex>
+      {toggleMutation.error && (
+        <Text fz={13} c="#E35C65">
+          {toggleMutation.error}
+        </Text>
       )}
-    </Flex>
+    </Stack>
   );
 }
 

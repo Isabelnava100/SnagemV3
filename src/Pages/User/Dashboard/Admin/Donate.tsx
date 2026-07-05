@@ -154,7 +154,7 @@ export default function Donate() {
               </div>
               <div className="uppercase text-end text-white font-[700]">Qty to give</div>
             </div>
-            <SimpleSectionWrapper borderRadius={8} bg="#57525B">
+            <SimpleSectionWrapper borderRadius={8} bg="#1E1D20">
               <Conditional
                 condition={!itemsToSendWithQty.length}
                 component={

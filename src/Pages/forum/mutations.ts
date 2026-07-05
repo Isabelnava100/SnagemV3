@@ -130,7 +130,16 @@ export async function addBookmark(
     date: { nt: now, seconds: Math.floor(now / 1000) },
     send2discord: user.otherinfo?.discordUID ?? "",
     threadID: thread.id,
-    threadLocation: forum as Bookmark["threadLocation"],
+    threadLocation: forum,
+    ...(thread.lastPost
+      ? {
+          latestPostBy: thread.lastPost.by,
+          latestPostAt: {
+            seconds: thread.lastPost.at?.seconds ?? Math.floor(now / 1000),
+            nanoseconds: 0,
+          },
+        }
+      : {}),
   };
   await setDoc(
     doc(db, "users", user.uid, "bookmarks", forum),

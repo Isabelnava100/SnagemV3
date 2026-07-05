@@ -40,6 +40,7 @@ const { default: HostMenu } = lazyImport(
   "default"
 );
 const { ErrorPage } = lazyImport(() => import("./components/navigation/error-page"), "ErrorPage");
+const { default: ComingSoon } = lazyImport(() => import("./Pages/ComingSoon"), "default");
 const { Protect } = lazyImport(() => import("./components/navigation/Protect"), "Protect");
 const { AuthContextProvider } = lazyImport(
   () => import("./context/AuthContext"),
@@ -72,6 +73,10 @@ const { default: AdjustLists } = lazyImport(
 );
 const { default: Donate } = lazyImport(
   () => import("./Pages/User/Dashboard/Admin/Donate"),
+  "default"
+);
+const { default: AdminAnnouncements } = lazyImport(
+  () => import("./Pages/User/Dashboard/Admin/Announcements"),
   "default"
 );
 
@@ -118,6 +123,7 @@ export default function AppRoutes() {
                         <Route index element={<Navigate to="Adjust-Lists" />} />
                         <Route path="Adjust-Lists" element={<AdjustLists />} />
                         <Route path="Donate" element={<Donate />} />
+                        <Route path="Announcements" element={<AdminAnnouncements />} />
                       </Route>
                       <Route path="Settings" element={<Settings />}>
                         <Route index element={<Navigate to="Notifications" />} />
@@ -126,6 +132,11 @@ export default function AppRoutes() {
                       </Route>
                       <Route path="*" element={<Navigate to="" />} />
                     </Route>
+                    {/* Designed-but-unbuilt sidebar modules get a friendly placeholder. */}
+                    <Route path="/Shop" element={<ComingSoon module="The Marketplace" />} />
+                    <Route path="/Users" element={<ComingSoon module="The Users directory" />} />
+                    <Route path="/Activities" element={<ComingSoon module="Activities" />} />
+                    <Route path="/Missions" element={<ComingSoon module="Missions" />} />
                     <Route path="/Login" element={<Login />} />
                     <Route path="/Register" element={<NewRegister />} />
                     <Route path="/Forgot" element={<ForgotPassword />} />

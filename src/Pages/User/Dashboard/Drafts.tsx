@@ -1,4 +1,4 @@
-import { ActionIcon, Flex, Image, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import { ActionIcon, Badge, Flex, Image, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { EmptyMessage } from "../../../components/common/Message";
@@ -13,7 +13,7 @@ import formatter from "../../../utils/date";
 export default function Drafts() {
   const { user } = useAuth();
   const { data, isPending: isLoading, isError } = useQuery({
-    queryKey: ["get-drafts"],
+    queryKey: ["get-drafts", user?.uid],
     queryFn: () => getDrafts(user?.uid as string),
   });
   const { isOverLg } = useMediaQuery();
@@ -42,10 +42,17 @@ function SingleDraft(props: Draft) {
         sx={{ flexDirection: isOverSm ? "row" : "column" }}
         align="stretch"
       >
-        <Stack py={10} px={18}>
+        <Stack py={10} px={18} gap={6}>
           <Title order={3} size={20} c="white">
             {props.title_thread}
           </Title>
+          <Badge
+            w="fit-content"
+            variant="light"
+            color={props.thread_id && props.thread_id !== "new-thread" ? "cyan.0" : "pink.0"}
+          >
+            {props.thread_id && props.thread_id !== "new-thread" ? "Post draft" : "Thread draft"}
+          </Badge>
         </Stack>
         <Stack
           bg={props.color}

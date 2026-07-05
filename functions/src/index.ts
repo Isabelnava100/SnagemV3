@@ -429,6 +429,10 @@ export const publishForumPost = onCall(async (request) => {
       );
     });
 
+    // The post id must be known before the catch write so the caught pokemon
+    // can carry its provenance (which thread/post it was caught in).
+    const newPostRef = editPostId ? undefined : tRef.collection("posts").doc();
+
     if (encounter?.caught) {
       const info = catalogBySlug.get(encounter.slug);
       const idx = Number(info?.idx ?? 0);
@@ -446,6 +450,12 @@ export const publishForumPost = onCall(async (request) => {
             regiondex: "",
             species: encounter.name,
             type1: "Unknown",
+            caughtIn: {
+              forum,
+              threadId,
+              postId: editPostId ?? newPostRef!.id,
+              threadTitle: (thread.title as string) ?? "",
+            },
           },
         },
         { merge: true }
@@ -466,8 +476,7 @@ export const publishForumPost = onCall(async (request) => {
       tx.update(editSnap.ref, { text: html, blocks: merged, editedAt: now });
       resultPostId = editPostId;
     } else {
-      const newPostRef = tRef.collection("posts").doc();
-      tx.create(newPostRef, {
+      tx.create(newPostRef!, {
         ...authorFields(member),
         character: characters.map((c) => c.name).join(", "),
         characters,
@@ -477,7 +486,7 @@ export const publishForumPost = onCall(async (request) => {
         blocks,
       });
       tx.update(tRef, activityUpdate(member, now, { replyCount: FieldValue.increment(1) }));
-      resultPostId = newPostRef.id;
+      resultPostId = newPostRef!.id;
     }
 
     if (pendingSnap.exists) tx.delete(pRef);
@@ -593,6 +602,53 @@ export const publishForumThread = onCall(async (request) => {
   await batch.commit();
 
   return { threadId };
+});
+
+// ---------------------------------------------------------------------------
+// Badges
+// ---------------------------------------------------------------------------
+
+const MAX_ENABLED_BADGES = 5;
+
+/**
+ * Toggle a badge between inserted (displayed) and disabled. Ownership lives in
+ * users/{uid}/bag/badges (admin-granted, admin-write-only per rules); the
+ * enabled set syncs into users/{uid}.badges, which forum post cards snapshot
+ * at publish time. Max 5 badges may be enabled at once.
+ */
+export const setBadgeEnabled = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const label = requireString(request.data?.label, "badge", 100);
+  const enabled = !!request.data?.enabled;
+  await loadMember(uid);
+
+  const badgeBagRef = db.doc(`users/${uid}/bag/badges`);
+  const userRef = db.doc(`users/${uid}`);
+
+  await db.runTransaction(async (tx) => {
+    const bagSnap = await tx.get(badgeBagRef);
+    // Tuple shape: Record<key, [label, background, enabled]>
+    const bag = (bagSnap.data() as Record<string, [string, string, boolean]>) ?? {};
+    const entry = Object.entries(bag).find(([, tuple]) => tuple[0] === label);
+    if (!entry) throw new HttpsError("permission-denied", "You do not own that badge.");
+    const [key, tuple] = entry;
+
+    const enabledCount = Object.values(bag).filter((t) => t[2]).length;
+    if (enabled && !tuple[2] && enabledCount >= MAX_ENABLED_BADGES) {
+      throw new HttpsError(
+        "failed-precondition",
+        `You can only display ${MAX_ENABLED_BADGES} badges at once.`
+      );
+    }
+
+    bag[key] = [tuple[0], tuple[1], enabled];
+    tx.update(badgeBagRef, { [key]: bag[key] });
+    tx.update(userRef, {
+      badges: Object.values(bag).filter((t) => t[2]).map((t) => t[0]),
+    });
+  });
+
+  return { ok: true };
 });
 
 // ---------------------------------------------------------------------------

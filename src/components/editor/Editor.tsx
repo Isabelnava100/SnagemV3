@@ -54,7 +54,8 @@ export function useRichTextEditor(options?: Partial<Omit<EditorType["options"], 
     extensions: [
       StarterKit.configure({ link: false }),
       TextStyle,
-      CustomImage,
+      // inline so custom emotes sit within the text flow
+      CustomImage.configure({ inline: true }),
       Color,
       Placeholder.configure({ placeholder: "This is placeholder" }),
       Link,

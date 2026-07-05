@@ -21,7 +21,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconTrash, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 import PokemonImage from "../../../assets/images/sylveon.svg";
 import { Conditional } from "../../../components/common/Conditional";
@@ -42,7 +42,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { excludeProperties, getPokemonImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
-import { getOwnedPokemons, getTeams } from "../../../queries/dashboard";
+import { getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
 import formatter from "../../../utils/date";
 
 type TeamForm = UseFormReturnType<Team | null>;
@@ -148,16 +148,21 @@ function useUpdateOrAddDocument(documentId?: string) {
 function Teams(props: EditingProps) {
   const { form, loadTeamForEdit, resetEditing } = props;
   const { user } = useAuth();
-  const { data, isPending: isLoading, isError } = useQuery({
-    queryKey: ["get-teams"],
-    queryFn: () => getTeams(user?.uid as string),
+  // Two cached queries instead of the old teams->owned cascade (one read each).
+  const { data: rawTeams, isPending: isLoading, isError } = useQuery({
+    queryKey: ["get-teams", user?.uid],
+    queryFn: () => getTeamsRaw(user?.uid as string),
+  });
+  const { data: owned } = useQuery({
+    queryKey: ["get-owned-pokemons", user?.uid],
+    queryFn: () => getOwnedPokemons(user?.uid as string),
   });
   const { isOverLg } = useMediaQuery();
 
-  if (isLoading) return <SectionLoader />;
+  if (isLoading || !owned) return <SectionLoader />;
   if (isError) return <></>;
 
-  const { sortedData } = data;
+  const sortedData = hydrateTeams(rawTeams ?? [], owned.sortedData);
 
   return (
     <Stack align="end" w="100%" maw={isOverLg ? 455 : undefined}>
@@ -400,7 +405,7 @@ function OwnedPokemons(props: EditingProps) {
   const { form } = props;
   const { user } = useAuth();
   const { data, isPending: isLoading, isError } = useQuery({
-    queryKey: ["get-owned-pokemons"],
+    queryKey: ["get-owned-pokemons", user?.uid],
     queryFn: () => getOwnedPokemons(user?.uid as string),
   });
   const [filteredData, setFilteredData] = React.useState<typeof sortedData>([]);
@@ -607,10 +612,21 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
           <Title order={3} size={16}>
             {pokemon.species} ({pokemon.gender})
           </Title>
-          <Text>{formatter.format(new Date(pokemon.date_caught.seconds))}</Text>
+          <Text>Caught {formatter.format(new Date(pokemon.date_caught.seconds * 1000))}</Text>
         </Stack>
       </Group>
-      <Stack></Stack>
+      {/* Provenance: written by the forum catch flow (publishForumPost). */}
+      {pokemon.caughtIn && (
+        <Text fz={13}>
+          Caught in{" "}
+          <Link
+            to={`/Forum/${pokemon.caughtIn.forum}/thread/${pokemon.caughtIn.threadId}/last`}
+            style={{ color: "#346CFD" }}
+          >
+            {pokemon.caughtIn.threadTitle || "this thread"}
+          </Link>
+        </Text>
+      )}
     </Stack>
   );
 }

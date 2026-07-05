@@ -199,7 +199,7 @@ function EditSingleListItem(props: {
   };
 
   return (
-    <Stack gap={25} className="bg-[#57525B80] p-3 rounded-[8px] w-full text-white">
+    <Stack gap={25} className="bg-[#1E1D2080] p-3 rounded-[8px] w-full text-white">
       <Group justify="space-between">
         <TextInput
           className="flex-1"
@@ -374,7 +374,7 @@ function SingleListItem(props: { list: AdminPokemonList }) {
   if (isEditing) return <EditSingleListItem list={list} form={form} setEditing={setEditing} />;
 
   return (
-    <div className="bg-[#57525B80] p-3 rounded-[8px] grid grid-cols-4 w-full text-white">
+    <div className="bg-[#1E1D2080] p-3 rounded-[8px] grid grid-cols-4 w-full text-white">
       <Stack align="start" gap={10}>
         <Text fz={16}>{list.name || "Untitled"}</Text>
         <DuplicateListItem listItem={list} />

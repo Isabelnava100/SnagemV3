@@ -36,7 +36,7 @@ import { getCharacters } from "../../../queries/dashboard";
 export default function Characters() {
   const { user } = useAuth();
   const { isPending: isLoading, data, isError } = useQuery({
-    queryKey: ["get-characters"],
+    queryKey: ["get-characters", user?.uid],
     queryFn: () => getCharacters(user?.uid as string),
     enabled: !!user,
   });
@@ -211,7 +211,7 @@ function DeleteCharacter(props: { characterId: string }) {
     try {
       await mutateAsync({ characterIdInput: characterId });
       close();
-      await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
+      await queryClient.invalidateQueries({ queryKey: ["get-characters", user?.uid] });
     } catch (err) {
       //
     }

@@ -108,7 +108,12 @@ export const getOwnedPokemons = async (uid: string) => {
   return { sortedData, rawData: data };
 };
 
-export const getTeams = async (uid: string) => {
+/**
+ * Teams WITHOUT the owned-pokemon cascade: one doc read. Combine with a
+ * (cached) getOwnedPokemons query via hydrateTeams — previously every teams
+ * read silently re-fetched the whole owned_pokemons doc as well.
+ */
+export const getTeamsRaw = async (uid: string): Promise<Team[]> => {
   const { doc, getDoc } = await import("firebase/firestore");
 
   const data = (await getDoc(doc(db, "users", uid, "bag", "teams"))).data() as Record<
@@ -116,45 +121,22 @@ export const getTeams = async (uid: string) => {
     Omit<Team, "id">
   >;
 
-  if (!data) return { sortedData: [], rawData: {} };
-
-  const { sortedData: ownedPokemons } = await getOwnedPokemons(uid);
+  if (!data) return [];
 
   const formattedData = Object.keys(data).map((key) => {
     const team = data[key] as Omit<Team, "id">;
-
-    const teamPokemons = ownedPokemons.filter((pokemon) => team.pokemon_ids.includes(pokemon.id));
-
-    return { ...team, id: key, pokemons: teamPokemons };
+    return { ...team, id: key, pokemons: [] };
   }) as Team[];
 
-  const sortedData = formattedData.sort((a, b) => a.created_at.seconds - b.created_at.seconds);
-
-  return { sortedData, rawData: data };
+  return formattedData.sort((a, b) => a.created_at.seconds - b.created_at.seconds);
 };
 
-export const getTeam = async (uid: string, teamId: string) => {
-  const { doc, getDoc } = await import("firebase/firestore");
-
-  const data = (await getDoc(doc(db, "users", uid, "bag", "teams"))).data() as Record<
-    string,
-    Omit<Team, "id">
-  >;
-
-  const { sortedData: ownedPokemons } = await getOwnedPokemons(uid);
-
-  const formattedData = Object.keys(data).map((key) => {
-    const team = data[key] as Omit<Team, "id">;
-
-    const teamPokemons = ownedPokemons.filter((pokemon) => team.pokemon_ids.includes(pokemon.id));
-
-    return { ...team, id: key, pokemons: teamPokemons };
-  }) as Team[];
-
-  const team = formattedData.find((teamData) => teamData.id === teamId);
-
-  return { team };
-};
+/** Fill each team's pokemons from an already-fetched owned-pokemon list. */
+export const hydrateTeams = (teams: Team[], ownedPokemons: OwnedPokemon[]): Team[] =>
+  teams.map((team) => ({
+    ...team,
+    pokemons: ownedPokemons.filter((pokemon) => team.pokemon_ids.includes(pokemon.id)),
+  }));
 
 export const getProfile = async (uid: string) => {
   const { doc, getDoc } = await import("firebase/firestore");

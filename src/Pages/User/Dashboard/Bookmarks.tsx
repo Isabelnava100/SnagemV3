@@ -1,19 +1,21 @@
-import { Avatar, Flex, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
+import { ActionIcon, Avatar, Flex, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import { IconTrash } from "@tabler/icons-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Bookmark } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import useMediaQuery from "../../../hooks/useMediaQuery";
+import { removeBookmark } from "../../forum/mutations";
 import { getBookmarks } from "../../../queries/dashboard";
 import formatter from "../../../utils/date";
 import DefaultCharacterAvatarSrc from "/src/assets/images/character-default.jpg";
 
 export default function Bookmarks() {
   const { user } = useAuth();
-  const { isPending: isLoading, data, isError, error } = useQuery({
-    queryKey: ["get-bookmarks"],
+  const { isPending: isLoading, data, isError } = useQuery({
+    queryKey: ["get-bookmarks", user?.uid],
     queryFn: () => getBookmarks(user?.uid as string),
     enabled: !!user,
   });
@@ -73,17 +75,44 @@ function BookmarkIcon(props: { color: string }) {
 }
 
 function SingleBookmark(props: Bookmark) {
-  const { title, date, color, threadLocation, threadID } = props;
+  const { title, date, color, threadLocation, threadID, latestPostBy, latestPostAt } = props;
   const { isOverXs } = useMediaQuery();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const removeMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) return;
+      await removeBookmark(user, threadLocation, threadID);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["get-bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["forum-bookmarks"] });
+    },
+  });
+
   return (
     <Paper
       radius={15}
       bg="rgba(62, 61, 61, 0.65)"
       component={Link}
       to={`/Forum/${threadLocation}/thread/${threadID}/last`}
-      style={{ textDecoration: "none" }}
+      style={{ textDecoration: "none", position: "relative" }}
     >
+      <ActionIcon
+        color="red"
+        variant="subtle"
+        title="Remove bookmark"
+        loading={removeMutation.isPending}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          removeMutation.mutateAsync();
+        }}
+        style={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}
+      >
+        <IconTrash size={18} />
+      </ActionIcon>
       <Flex gap={15} pl="md" align="stretch">
         <BookmarkIcon color={color} />
         <Stack py="md" sx={{ flex: 1 }}>
@@ -91,9 +120,9 @@ function SingleBookmark(props: Bookmark) {
             {title}
           </Title>
           <Stack gap={3}>
-            <Text>Latest post by: {user?.displayName}</Text>
+            <Text>Latest post by: {latestPostBy ?? "—"}</Text>
             <Text size="xs" color="dimmed">
-              {formatter.format(new Date(date.seconds * 1000))}
+              {formatter.format(new Date((latestPostAt?.seconds ?? date.seconds) * 1000))}
             </Text>
           </Stack>
         </Stack>

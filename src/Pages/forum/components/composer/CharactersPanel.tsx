@@ -4,7 +4,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../../context/AuthContext";
 import { getPokemonImageURL } from "../../../../helpers";
-import { getCharacters, getTeams } from "../../../../queries/dashboard";
+import {
+  getCharacters,
+  getOwnedPokemons,
+  getTeamsRaw,
+  hydrateTeams,
+} from "../../../../queries/dashboard";
 import { PostCharacter } from "../../types";
 import { ForumPanel, ForumTextLink, PanelHint } from "../ui";
 
@@ -27,11 +32,20 @@ export default function CharactersPanel(props: {
     queryFn: () => getCharacters(user!.uid),
     enabled: !!user,
   });
-  const { data: teams } = useQuery({
+  const { data: rawTeams } = useQuery({
     queryKey: ["get-teams", user?.uid],
-    queryFn: () => getTeams(user!.uid),
+    queryFn: () => getTeamsRaw(user!.uid),
     enabled: !!user,
   });
+  const { data: owned } = useQuery({
+    queryKey: ["get-owned-pokemons", user?.uid],
+    queryFn: () => getOwnedPokemons(user!.uid),
+    enabled: !!user,
+  });
+  const teams = React.useMemo(
+    () => ({ sortedData: hydrateTeams(rawTeams ?? [], owned?.sortedData ?? []) }),
+    [rawTeams, owned]
+  );
 
   const teamOptions = React.useMemo(
     () =>

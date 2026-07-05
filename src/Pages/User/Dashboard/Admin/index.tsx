@@ -8,6 +8,7 @@ export default function AdminLayout() {
   const adminTabLinks = [
     { path: "Adjust-Lists", label: "Adjust Lists" },
     { path: "Donate", label: "Give Items to Users" },
+    { path: "Announcements", label: "Announcements" },
   ];
   const { user } = useAuth();
   if (user?.otherinfo?.permissions !== "Admin") {

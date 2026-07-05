@@ -55,6 +55,10 @@ export const callPublishThread = (input: {
 export const callVotePoll = (forum: string, threadId: string, optionId: string) =>
   call<{ ok: boolean }>("voteForumPoll", { forum, threadId, optionId });
 
+/** Toggle a badge's inserted/disabled state (ownership + max-5 validated server-side). */
+export const callSetBadgeEnabled = (label: string, enabled: boolean) =>
+  call<{ ok: boolean }>("setBadgeEnabled", { label, enabled });
+
 export const callSetBossBattle = (input: {
   forum: string;
   threadId: string;

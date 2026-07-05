@@ -13,15 +13,17 @@ export function excludeProperties<T, K extends keyof T>(
   return result;
 }
 
+// Sprites are served from the jsDelivr CDN mirror of pokesprite over https:
+// proper cache headers + HTTP/2 instead of plain-http raw.githubusercontent
+// (the old URLs were the main cause of slow sprite loading).
+const POKESPRITE_CDN = "https://cdn.jsdelivr.net/gh/msikma/pokesprite@master";
+
 export const getPokemonImageURL = (slug: string) => {
-  const url = "http://raw.githubusercontent.com/msikma/pokesprite/master/pokemon-gen8/shiny";
-  const extension = "png";
-  return `${url}/${slug}.${extension}`;
+  return `${POKESPRITE_CDN}/pokemon-gen8/shiny/${slug}.png`;
 };
 
 export const getItemImageURL = (filePath: string) => {
-  const url = "http://raw.githubusercontent.com/msikma/pokesprite/master/items";
-  return `${url}/${filePath}`;
+  return `${POKESPRITE_CDN}/items/${filePath}`;
 };
 
 export const getPokemonName = (slug: string) => {
