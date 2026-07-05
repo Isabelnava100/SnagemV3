@@ -67,6 +67,35 @@ function encounterRequiredFromConfig(cfg: FirebaseFirestore.DocumentData | undef
 const GEN_CAPS = [151, 251, 386, 493, 649, 721, 809, 898];
 const GEN_NAMES = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 
+// Modern main-series full-odds shiny rate. Every Pokemon obtained through a
+// random means (a caught encounter, and future eggs/mystery boxes) rolls this.
+const SHINY_ODDS = 4096;
+const rollShiny = (): boolean => randomInt(SHINY_ODDS) === 0;
+
+/** Build an owned-pokemon doc value from a slug (shared by catch + grants). */
+function buildOwnedPokemon(
+  slug: string,
+  now: Date,
+  opts: { shiny?: boolean; characterId?: string; caughtIn?: Record<string, unknown> } = {}
+): Record<string, unknown> {
+  const info = catalogBySlug.get(slug);
+  const idx = Number(info?.idx ?? 0);
+  return {
+    date_caught: { nt: now.getTime(), seconds: Math.floor(now.getTime() / 1000) },
+    gender: randomInt(2) === 0 ? "M" : "F",
+    generation: generationFor(String(idx || "")),
+    image_slug: slug,
+    name: info?.name ?? slug,
+    pokedex: String(idx || ""),
+    regiondex: "",
+    species: info?.name ?? slug,
+    type1: "Unknown",
+    shiny: !!opts.shiny,
+    ...(opts.characterId ? { characterId: opts.characterId } : {}),
+    ...(opts.caughtIn ? { caughtIn: opts.caughtIn } : {}),
+  };
+}
+
 // Thread-creation matrix (mirrors src/Pages/forum/config.ts). Any forum not
 // listed here is open to any approved member (Side-Roleplay, The-Colosseum, ...).
 type CreatePolicy = "admin" | "main-host" | "event-host" | "master" | "none";
@@ -622,31 +651,20 @@ export const publishForumPost = onCall(async (request) => {
     const newPostRef = editPostId ? undefined : tRef.collection("posts").doc();
 
     if (encounter?.caught) {
-      const info = catalogBySlug.get(encounter.slug);
-      const idx = Number(info?.idx ?? 0);
-      const genIndex = GEN_CAPS.findIndex((cap) => idx <= cap);
+      // Any caught Pokemon rolls for shiny at the standard full-odds rate.
       tx.set(
         ownedRef,
         {
-          [randomUUID()]: {
-            date_caught: { nt: now.getTime(), seconds: Math.floor(now.getTime() / 1000) },
-            gender: randomInt(2) === 0 ? "M" : "F",
-            generation: `Generation ${GEN_NAMES[genIndex === -1 ? 7 : genIndex]}`,
-            image_slug: encounter.slug,
-            name: encounter.name,
-            pokedex: String(idx || ""),
-            regiondex: "",
-            species: encounter.name,
-            type1: "Unknown",
-            // Assign to the character the encounter was rolled for, if any.
-            ...(encounterForCharacter ? { characterId: encounterForCharacter } : {}),
+          [randomUUID()]: buildOwnedPokemon(encounter.slug, now, {
+            shiny: rollShiny(),
+            characterId: encounterForCharacter || undefined,
             caughtIn: {
               forum,
               threadId,
               postId: editPostId ?? newPostRef!.id,
               threadTitle: (thread.title as string) ?? "",
             },
-          },
+          }),
         },
         { merge: true }
       );
@@ -912,6 +930,8 @@ export const publishForumThread = onCall(async (request) => {
 interface RewardEntry {
   items?: Array<{ itemId: string; name: string; filePath: string; qty: number }>;
   currencies?: Partial<Record<CurrencyKey, number>>;
+  /** New Pokemon to grant to the recipient (optionally shiny). */
+  pokemon?: Array<{ slug: string; name?: string; shiny?: boolean }>;
   /** Reviewed per-pokemon XP to commit to the recipient's owned pokemon. */
   pokemonXp?: Record<
     string,
@@ -956,8 +976,19 @@ export const finalizeThreadRewards = onCall(async (request) => {
       })
     );
 
+    const rewardNow = new Date();
     entries.forEach(([targetUid, entry]) => {
       let received = false;
+      // Granted Pokemon (optionally shiny), one owned-pokemon doc each.
+      (entry.pokemon ?? []).forEach((p) => {
+        if (!p?.slug || !catalogBySlug.get(p.slug)) return;
+        tx.set(
+          db.doc(`users/${targetUid}/bag/owned_pokemons`),
+          { [randomUUID()]: buildOwnedPokemon(p.slug, rewardNow, { shiny: !!p.shiny }) },
+          { merge: true }
+        );
+        received = true;
+      });
       (entry.items ?? []).forEach((item) => {
         if (!item.itemId || !(item.qty > 0)) return;
         tx.set(
@@ -1069,6 +1100,49 @@ export const grantCurrency = onCall(async (request) => {
     type: "currency",
     text: `You received ${amount} ${currency === "pokecoin" ? "Poke Coins" : currency === "gengarcoin" ? "Gengar Coins" : "Snag Emblems"}!`,
     link: "/Dashboard",
+  });
+
+  return { ok: true };
+});
+
+/** Grant a Pokemon (optionally shiny) to users. Admins / GiveItems directors. */
+export const grantPokemon = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!hasCap(member, "GiveItems")) {
+    throw new HttpsError("permission-denied", "You cannot grant Pokemon.");
+  }
+  const slug = requireString(request.data?.slug, "pokemon", 100);
+  if (!catalogBySlug.get(slug)) throw new HttpsError("invalid-argument", "Unknown pokemon.");
+  const shiny = request.data?.shiny === true;
+  const userIds = (Array.isArray(request.data?.userIds) ? request.data.userIds : [])
+    .slice(0, 100)
+    .map((u: unknown) => String(u));
+  if (!userIds.length) throw new HttpsError("invalid-argument", "Pick at least one user.");
+
+  const now = new Date();
+  const batch = db.batch();
+  userIds.forEach((targetUid: string) => {
+    batch.set(
+      db.doc(`users/${targetUid}/bag/owned_pokemons`),
+      { [randomUUID()]: buildOwnedPokemon(slug, now, { shiny }) },
+      { merge: true }
+    );
+  });
+  await batch.commit();
+
+  const name = catalogBySlug.get(slug)?.name ?? slug;
+  await db.collection("auditLogs").add({
+    action: "pokemon.grant",
+    actorUid: uid,
+    actorName: member.username,
+    details: { slug, name, shiny, userIds },
+    createdAt: now,
+  });
+  await notifyUsers(userIds, {
+    type: "pokemon",
+    text: `You received a ${shiny ? "shiny " : ""}${name}!`,
+    link: "/Dashboard/Pokemon",
   });
 
   return { ok: true };

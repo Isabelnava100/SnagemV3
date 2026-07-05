@@ -2,6 +2,7 @@ import {
   Avatar,
   Box,
   Button,
+  Checkbox,
   Flex,
   Group,
   Image,
@@ -21,7 +22,8 @@ import { EmptyMessage } from "../../../../components/common/Message";
 import { Capability } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
 import { itemData } from "../../../../data/item";
-import { getItemImageURL } from "../../../../helpers";
+import { pokemonData } from "../../../../data/pokemon";
+import { getItemImageURL, getPokemonImageURL } from "../../../../helpers";
 import useMediaQuery from "../../../../hooks/useMediaQuery";
 import { ItemIcon } from "../../../../icons";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
@@ -352,6 +354,91 @@ export default function Donate() {
       )}
 
       <GiveCurrencySection />
+      <GivePokemonSection />
+    </Stack>
+  );
+}
+
+/**
+ * Grant a Pokemon (optionally shiny) directly to users. Admins / GiveItems
+ * directors. Runs through the grantPokemon Cloud Function.
+ */
+function GivePokemonSection() {
+  const { data: users } = useQuery({ queryKey: ["get-users"], queryFn: getUsers });
+  const [userIds, setUserIds] = React.useState<string[]>([]);
+  const [slug, setSlug] = React.useState<string | null>(null);
+  const [shiny, setShiny] = React.useState(false);
+  const [message, setMessage] = React.useState("");
+
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: async () => {
+      const { callGrantPokemon } = await import("../../../forum/functionsClient");
+      await callGrantPokemon(userIds, slug!, shiny);
+    },
+    onSuccess: () => {
+      setUserIds([]);
+      setSlug(null);
+      setShiny(false);
+      setMessage("Pokemon sent!");
+    },
+    onError: async (err) => {
+      const { callableMessage } = await import("../../../forum/functionsClient");
+      setMessage(callableMessage(err, "Sending failed. Try again."));
+    },
+  });
+
+  return (
+    <Stack gap={10} mt={20}>
+      <Title order={2} c="white" size={24} fw={400}>
+        Give Pokemon to Users
+      </Title>
+      <Flex gap={10} wrap="wrap" align="center">
+        <MultiSelect
+          radius="md"
+          searchable
+          data={users?.map((u) => ({ label: u.username, value: u.id })) || []}
+          value={userIds}
+          onChange={setUserIds}
+          placeholder="Search to add users"
+          limit={20}
+          w={260}
+        />
+        <Select
+          radius="md"
+          searchable
+          data={pokemonData.map((p) => ({ value: p.slug, label: p.name }))}
+          value={slug}
+          onChange={setSlug}
+          placeholder="Search a Pokemon"
+          limit={20}
+          w={220}
+        />
+        {slug && (
+          <Avatar src={getPokemonImageURL(slug, shiny)} alt={slug} size={40} radius="xl" />
+        )}
+        <Checkbox
+          label="Shiny"
+          color="green.0"
+          checked={shiny}
+          onChange={(e) => setShiny(e.currentTarget.checked)}
+        />
+        <GradientButtonSecondary
+          radius="lg"
+          disabled={!userIds.length || !slug}
+          loading={isPending}
+          onClick={() => {
+            setMessage("");
+            mutateAsync();
+          }}
+        >
+          Send Pokemon
+        </GradientButtonSecondary>
+      </Flex>
+      {message && (
+        <Text fz={13} c={message === "Pokemon sent!" ? "green.0" : "#E35C65"}>
+          {message}
+        </Text>
+      )}
     </Stack>
   );
 }
