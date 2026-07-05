@@ -159,35 +159,14 @@ export const deleteBadge = async (id: string, removeFromUsers = false): Promise<
   if (DEFAULT_IDS.has(id)) throw new Error("Default badges can't be deleted.");
   const { doc, updateDoc, deleteField } = await import("firebase/firestore");
   await updateDoc(doc(db, ...ADMIN_BADGES_DOC), { [id]: deleteField() });
-  if (removeFromUsers) await removeBadgeFromAllUsers(id);
-};
-
-/**
- * Strip a badge from every user who owns it. Reads each user's badge bag so we
- * only write to holders. Also best-effort clears the enabled-display label on
- * the user doc (an admin-only field, so a ManageBadges director's write there
- * is expected to fail and is ignored; the bag removal is what matters).
- */
-const removeBadgeFromAllUsers = async (badgeId: string): Promise<void> => {
-  const { collection, getDocs, doc, getDoc, updateDoc, deleteField, arrayRemove } = await import(
-    "firebase/firestore"
-  );
-  const usersSnap = await getDocs(collection(db, "users"));
-  await Promise.all(
-    usersSnap.docs.map(async (u) => {
-      const bagRef = doc(db, "users", u.id, "bag", "badges");
-      const bagSnap = await getDoc(bagRef);
-      const bag = bagSnap.data() as Record<string, [string, string, boolean]> | undefined;
-      const tuple = bag?.[badgeId];
-      if (!tuple) return;
-      await updateDoc(bagRef, { [badgeId]: deleteField() });
-      try {
-        await updateDoc(doc(db, "users", u.id), { badges: arrayRemove(tuple[0]) });
-      } catch {
-        /* director can't write users.badges; the bag removal already applied */
-      }
-    })
-  );
+  if (removeFromUsers) {
+    // Full cleanup (bag + enabled-display list on every owner's user doc) runs
+    // through a Cloud Function so ManageBadges directors get it too, not just
+    // admins (directors can't write another member's user doc from the client).
+    const { getFunctions, httpsCallable } = await import("firebase/functions");
+    await import("../context/firebase");
+    await httpsCallable(getFunctions(), "removeBadgeFromUsers")({ badgeId: id });
+  }
 };
 
 /** Assign a badge (disabled by default; the user enables it themselves). */

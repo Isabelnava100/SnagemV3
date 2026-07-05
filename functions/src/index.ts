@@ -1041,6 +1041,60 @@ export const openMysteryBox = onCall(async (request) => {
 const MAX_ENABLED_BADGES = 5;
 
 /**
+ * Remove a badge from every member who owns it. Runs with the Admin SDK so a
+ * ManageBadges director (who cannot write another member's user doc from the
+ * client) still gets a full cleanup: the badge is dropped from each owner's
+ * bag AND from the enabled-display list on their user doc. Called when a badge
+ * is deleted with "also remove from users".
+ */
+export const removeBadgeFromUsers = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!hasCap(member, "ManageBadges")) {
+    throw new HttpsError("permission-denied", "You cannot manage badges.");
+  }
+  const badgeId = requireString(request.data?.badgeId, "badge", 128);
+
+  const usersSnap = await db.collection("users").get();
+  let removed = 0;
+  let batch = db.batch();
+  let ops = 0;
+  const flush = async () => {
+    if (ops > 0) {
+      await batch.commit();
+      batch = db.batch();
+      ops = 0;
+    }
+  };
+
+  for (const userDoc of usersSnap.docs) {
+    const bagRef = db.doc(`users/${userDoc.id}/bag/badges`);
+    const bagSnap = await bagRef.get();
+    const bag = (bagSnap.data() as Record<string, [string, string, boolean]>) ?? {};
+    const tuple = bag[badgeId];
+    if (!tuple) continue;
+
+    batch.update(bagRef, { [badgeId]: FieldValue.delete() });
+    // Keep the denormalized display list in sync (remove by label).
+    batch.set(userDoc.ref, { badges: FieldValue.arrayRemove(tuple[0]) }, { merge: true });
+    removed += 1;
+    ops += 2;
+    if (ops >= 400) await flush();
+  }
+  await flush();
+
+  await db.collection("auditLogs").add({
+    action: "badge.removeFromAll",
+    actorUid: uid,
+    actorName: member.username,
+    details: { badgeId, removed },
+    createdAt: new Date(),
+  });
+
+  return { ok: true, removed };
+});
+
+/**
  * Toggle a badge between inserted (displayed) and disabled. Ownership lives in
  * users/{uid}/bag/badges (admin-granted, admin-write-only per rules); the
  * enabled set syncs into users/{uid}.badges, which forum post cards snapshot
