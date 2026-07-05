@@ -55,11 +55,22 @@ interface EditingProps {
 
 type EditTeamType = Omit<Team, "id" | "pokemons">;
 
+// A blank team so useForm never gets undefined initialValues (which crashes
+// the whole page under Mantine 9) — an empty id keeps it out of "editing" mode.
+const EMPTY_TEAM: Team = {
+  id: "",
+  pokemon_ids: [],
+  pokemons: [],
+  team_name: "",
+  times_battled: "0",
+  created_at: { nt: 0, seconds: 0 },
+};
+
 export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team }) {
   const { isSingleTeam = false, team = null } = props;
   const { isOverLg, isOverXs, isOverMd } = useMediaQuery();
   const currentForm = useForm<Team>({
-    initialValues: (team ?? undefined) as Team,
+    initialValues: team ?? EMPTY_TEAM,
   });
 
   const loadTeamForEdit = (team: Team) => {

@@ -27,7 +27,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { hasCapability, isAdmin } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getUsers } from "../../../queries/admin";
-import { getXPDefaults } from "../../../queries/game";
+import { XPDefaults, XP_STAT_FIELDS, getXPDefaults } from "../../../queries/game";
 import { creatableCategories } from "../config";
 import { callableMessage } from "../functionsClient";
 import {
@@ -68,10 +68,7 @@ export default function NewThreadComposer() {
   const [error, setError] = React.useState("");
   const [draftMessage, setDraftMessage] = React.useState("");
   const [attachSignature, setAttachSignature] = React.useState(true);
-  const [xpOverride, setXpOverride] = React.useState<{
-    perPost: number;
-    minPostLength: number;
-  } | null>(null);
+  const [xpOverride, setXpOverride] = React.useState<XPDefaults | null>(null);
   const canAdjustXP = isAdmin(user) || hasCapability(user, Capability.AdjustXP);
 
   // Site-wide XP defaults, shown as the panel's starting values.
@@ -133,7 +130,7 @@ export default function NewThreadComposer() {
         encounterConfig,
         characters,
         html,
-        xpConfig: canAdjustXP ? xpOverride : null,
+        xpConfig: canAdjustXP && xpOverride ? { ...xpOverride } : null,
         attachSignature,
       });
       return threadId;
@@ -294,39 +291,39 @@ export default function NewThreadComposer() {
             {canAdjustXP && (
               <ForumPanel title="XP Settings">
                 <PanelHint>
-                  Experience awarded to each team pokemon per qualifying post. Defaults:{" "}
-                  {xpDefaults?.perPost ?? 0} XP, minimum {xpDefaults?.minPostLength ?? 0}{" "}
-                  characters.
+                  Points each team pokemon earns per qualifying post in this thread. Leave as the
+                  site defaults or override per stat.
                 </PanelHint>
-                <Group gap={12}>
-                  <Group gap={6}>
-                    <Text fz={12} c="white">
-                      XP per post:
-                    </Text>
-                    <NumberInput
-                      value={xpOverride?.perPost ?? xpDefaults?.perPost ?? 0}
-                      onChange={(v) =>
-                        setXpOverride({
-                          perPost: Math.max(0, Number(v) || 0),
-                          minPostLength:
-                            xpOverride?.minPostLength ?? xpDefaults?.minPostLength ?? 0,
-                        })
-                      }
-                      min={0}
-                      w={90}
-                      size="xs"
-                      styles={{ input: { background: "#2E2D2E" } }}
-                    />
-                  </Group>
-                  <Group gap={6}>
+                <Stack gap={8}>
+                  {XP_STAT_FIELDS.map((stat) => (
+                    <Group gap={6} key={stat.key} justify="space-between" maw={280}>
+                      <Text fz={12} c="white">
+                        {stat.label} per post:
+                      </Text>
+                      <NumberInput
+                        value={(xpOverride ?? xpDefaults)?.[stat.key] ?? 0}
+                        onChange={(v) =>
+                          setXpOverride({
+                            ...((xpOverride ?? xpDefaults) as XPDefaults),
+                            [stat.key]: Math.max(0, Number(v) || 0),
+                          })
+                        }
+                        min={0}
+                        w={90}
+                        size="xs"
+                        styles={{ input: { background: "#2E2D2E" } }}
+                      />
+                    </Group>
+                  ))}
+                  <Group gap={6} justify="space-between" maw={280}>
                     <Text fz={12} c="white">
                       Minimum post length:
                     </Text>
                     <NumberInput
-                      value={xpOverride?.minPostLength ?? xpDefaults?.minPostLength ?? 0}
+                      value={(xpOverride ?? xpDefaults)?.minPostLength ?? 0}
                       onChange={(v) =>
                         setXpOverride({
-                          perPost: xpOverride?.perPost ?? xpDefaults?.perPost ?? 0,
+                          ...((xpOverride ?? xpDefaults) as XPDefaults),
                           minPostLength: Math.max(0, Number(v) || 0),
                         })
                       }
@@ -336,7 +333,7 @@ export default function NewThreadComposer() {
                       styles={{ input: { background: "#2E2D2E" } }}
                     />
                   </Group>
-                </Group>
+                </Stack>
               </ForumPanel>
             )}
           </Stack>

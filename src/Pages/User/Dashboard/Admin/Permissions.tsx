@@ -5,6 +5,7 @@ import {
   Group,
   NumberInput,
   Select,
+  SimpleGrid,
   Stack,
   Text,
   Title,
@@ -19,7 +20,7 @@ import { CAPABILITY_INFO, Capability } from "../../../../components/types/typesU
 import { useAuth } from "../../../../context/AuthContext";
 import { db } from "../../../../context/firebase";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
-import { getXPDefaults, saveXPDefaults } from "../../../../queries/game";
+import { XPDefaults, XP_STAT_FIELDS, getXPDefaults, saveXPDefaults } from "../../../../queries/game";
 
 /**
  * Admin checklist for Director powers (Q5): pick a member, toggle each
@@ -165,23 +166,27 @@ function CapabilityChecklist() {
 function XPDefaultsSection() {
   const queryClient = useQueryClient();
   const { data, isPending } = useQuery({ queryKey: ["xp-defaults"], queryFn: getXPDefaults });
-  const [perPost, setPerPost] = React.useState<number | null>(null);
-  const [minLength, setMinLength] = React.useState<number | null>(null);
+  const [form, setForm] = React.useState<XPDefaults | null>(null);
   const [saved, setSaved] = React.useState(false);
 
+  React.useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data, form]);
+
   const saveMutation = useMutation({
-    mutationFn: () =>
-      saveXPDefaults({
-        perPost: perPost ?? data?.perPost ?? 0,
-        minPostLength: minLength ?? data?.minPostLength ?? 0,
-      }),
+    mutationFn: () => saveXPDefaults(form!),
     onSuccess: () => {
       setSaved(true);
       queryClient.invalidateQueries({ queryKey: ["xp-defaults"] });
     },
   });
 
-  if (isPending) return <SectionLoader />;
+  if (isPending || !form) return <SectionLoader />;
+
+  const setField = (key: keyof XPDefaults, value: number) => {
+    setSaved(false);
+    setForm({ ...form, [key]: Math.max(0, value) });
+  };
 
   return (
     <Stack gap={10} maw={560}>
@@ -189,42 +194,38 @@ function XPDefaultsSection() {
         XP Defaults
       </Title>
       <Text fz={13} c="dimmed">
-        Every new thread starts with these values: experience awarded to each team pokemon per
-        post, and the minimum post length that qualifies. Admins and AdjustXP directors can
-        override them per thread when creating it.
+        Every new thread starts with these values: how many Experience, Friendship, Purification
+        and Shadow points each team pokemon earns per qualifying post, plus the minimum post
+        length that qualifies. Admins and AdjustXP directors can override them per thread.
       </Text>
-      <Group gap={12}>
-        <Group gap={6}>
-          <Text fz={13} c="white">
-            XP per post:
-          </Text>
-          <NumberInput
-            value={perPost ?? data?.perPost ?? 0}
-            onChange={(v) => {
-              setSaved(false);
-              setPerPost(Math.max(0, Number(v) || 0));
-            }}
-            min={0}
-            w={100}
-            styles={{ input: { background: "#2E2D2E" } }}
-          />
-        </Group>
-        <Group gap={6}>
+      <SimpleGrid cols={{ base: 1, xs: 2 }} spacing={12}>
+        {XP_STAT_FIELDS.map((stat) => (
+          <Group gap={6} key={stat.key} justify="space-between">
+            <Text fz={13} c="white">
+              {stat.label} per post:
+            </Text>
+            <NumberInput
+              value={form[stat.key]}
+              onChange={(v) => setField(stat.key, Number(v) || 0)}
+              min={0}
+              w={100}
+              styles={{ input: { background: "#2E2D2E" } }}
+            />
+          </Group>
+        ))}
+        <Group gap={6} justify="space-between">
           <Text fz={13} c="white">
             Minimum post length:
           </Text>
           <NumberInput
-            value={minLength ?? data?.minPostLength ?? 0}
-            onChange={(v) => {
-              setSaved(false);
-              setMinLength(Math.max(0, Number(v) || 0));
-            }}
+            value={form.minPostLength}
+            onChange={(v) => setField("minPostLength", Number(v) || 0)}
             min={0}
             w={100}
             styles={{ input: { background: "#2E2D2E" } }}
           />
         </Group>
-      </Group>
+      </SimpleGrid>
       {saved && (
         <Text fz={13} c="green.0">
           Defaults saved.

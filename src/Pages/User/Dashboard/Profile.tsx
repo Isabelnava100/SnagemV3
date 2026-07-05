@@ -74,36 +74,26 @@ function LeftSideContent() {
 }
 
 /**
- * Mobile-only fixed bottom bar (board annotation 15): tapping it scrolls to
- * the save button at the bottom of the form and saves the description.
+ * Sticky save bar: stays pinned to the bottom of the description column via
+ * CSS `position: sticky` (in-flow, no fixed overlap), so there's a single,
+ * always-reachable save action while editing.
  */
-function MobileSaveBar(props: { onSave: () => void }) {
-  const { isOverSm } = useMediaQuery();
-  if (isOverSm) return null;
+function StickySaveBar(props: { onSave: () => void; loading?: boolean }) {
   return (
     <Box
       sx={{
-        position: "fixed",
-        // Sit just above the app bottom tab bar.
-        bottom: "calc(74px + env(safe-area-inset-bottom))",
-        left: 0,
-        right: 0,
-        zIndex: 60,
-        padding: 10,
-        background: "#1E1D20",
-        borderTop: "1px solid #3C3A3C",
+        position: "sticky",
+        bottom: 8,
+        zIndex: 5,
+        marginTop: 8,
+        padding: 8,
+        borderRadius: 16,
+        background: "rgba(30, 29, 32, 0.92)",
+        backdropFilter: "blur(4px)",
+        border: "1px solid #3C3A3C",
       }}
     >
-      <GradientButtonPrimary
-        fullWidth
-        radius="xl"
-        onClick={() => {
-          document
-            .getElementById("profile-save-anchor")
-            ?.scrollIntoView({ behavior: "smooth", block: "end" });
-          props.onSave();
-        }}
-      >
+      <GradientButtonPrimary fullWidth radius="xl" loading={props.loading} onClick={props.onSave}>
         Save Your Changes
       </GradientButtonPrimary>
     </Box>
@@ -650,13 +640,8 @@ function RightSideContent() {
         <Box sx={{ borderRadius: 12, overflow: "hidden" }}>
           <Editor editor={editor} />
         </Box>
-        <Box>
-          <GradientButtonPrimary onClick={() => mutate()} loading={isLoading}>
-            Save Your Changes
-          </GradientButtonPrimary>
-        </Box>
+        <StickySaveBar onSave={() => mutate()} loading={isLoading} />
       </Wrapper>
-      <MobileSaveBar onSave={() => mutate()} />
     </Stack>
   );
 }

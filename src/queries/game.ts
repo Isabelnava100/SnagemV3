@@ -72,15 +72,32 @@ export const markNotificationsRead = async (uid: string, ids: string[]): Promise
 // ---- XP defaults (admin/xp_defaults) ---------------------------------------
 
 export interface XPDefaults {
-  perPost: number;
+  experiencePerPost: number;
+  friendshipPerPost: number;
+  purificationPerPost: number;
+  shadowPerPost: number;
   minPostLength: number;
+  /** All fields are numeric — lets it pass as a plain number map to the callable. */
+  [key: string]: number;
 }
+
+/** The four awardable stats + labels, shared by the admin + composer XP UIs. */
+export const XP_STAT_FIELDS = [
+  { key: "experiencePerPost", label: "Experience" },
+  { key: "friendshipPerPost", label: "Friendship" },
+  { key: "purificationPerPost", label: "Purification" },
+  { key: "shadowPerPost", label: "Shadow" },
+] as const;
 
 export const getXPDefaults = async (): Promise<XPDefaults> => {
   const { doc, getDoc } = await import("firebase/firestore");
   const data = (await getDoc(doc(db, "admin", "xp_defaults"))).data();
   return {
-    perPost: Number(data?.perPost) || 0,
+    // Back-compat: an old `perPost` value maps to experience.
+    experiencePerPost: Number(data?.experiencePerPost ?? data?.perPost) || 0,
+    friendshipPerPost: Number(data?.friendshipPerPost) || 0,
+    purificationPerPost: Number(data?.purificationPerPost) || 0,
+    shadowPerPost: Number(data?.shadowPerPost) || 0,
     minPostLength: Number(data?.minPostLength) || 0,
   };
 };

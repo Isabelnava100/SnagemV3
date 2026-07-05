@@ -59,6 +59,19 @@ export default function MysteryBoxes() {
     []
   );
 
+  // Visual option: show the item's sprite next to its name in the dropdown.
+  const renderItemOption = ({ option }: { option: { value: string; label: string } }) => {
+    const item = itemData.find((i) => i.id === option.value);
+    return (
+      <Group gap={8} wrap="nowrap">
+        {item && <Avatar src={getItemImageURL(item.filePath)} size={26} />}
+        <Text fz={14} c="white">
+          {option.label}
+        </Text>
+      </Group>
+    );
+  };
+
   React.useEffect(() => {
     if (!boxItemId || loadedFor === boxItemId) return;
     setPool(boxes?.[boxItemId]?.pool ?? []);
@@ -140,8 +153,18 @@ export default function MysteryBoxes() {
         searchable
         limit={20}
         data={itemOptions}
+        renderOption={renderItemOption}
+        leftSection={
+          boxItemId ? (
+            <Avatar
+              src={getItemImageURL(itemData.find((i) => i.id === boxItemId)?.filePath ?? "")}
+              size={22}
+            />
+          ) : undefined
+        }
         value={boxItemId}
         onChange={setBoxItemId}
+        maxDropdownHeight={320}
         styles={{ input: { background: "#2E2D2E" } }}
       />
 
@@ -213,6 +236,8 @@ export default function MysteryBoxes() {
               searchable={entryKind === "item"}
               limit={20}
               data={entryKind === "item" ? itemOptions : CURRENCY_OPTIONS}
+              renderOption={entryKind === "item" ? renderItemOption : undefined}
+              maxDropdownHeight={320}
               value={entryRef}
               onChange={setEntryRef}
               w={200}

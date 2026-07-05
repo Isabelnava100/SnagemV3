@@ -256,24 +256,31 @@ function TabsPanel() {
                           : undefined,
                         borderTopLeftRadius: 16,
                         borderTopRightRadius: 16,
-                        paddingLeft: isOverMd ? 20 : 14,
-                        paddingRight: isOverMd ? 20 : 14,
-                        paddingTop: 10,
-                        paddingBottom: 10,
+                        paddingLeft: isOverMd ? 18 : 10,
+                        paddingRight: isOverMd ? 18 : 10,
+                        paddingTop: 8,
+                        paddingBottom: 6,
                         textDecoration: "none",
                         flexShrink: 0,
                       }}
                       to={linkPath}
                       key={link.path}
                     >
-                      <Group gap={10} wrap="nowrap">
-                        <Image width={isOverMd ? 40 : 26} src={link.icon} alt={link.label} />
-                        {isActive && isOverMd && (
-                          <Text c="white" fz={20} tt="uppercase">
-                            {link.label}
-                          </Text>
-                        )}
-                      </Group>
+                      {/* Icon + a tiny always-on label so the current tab is
+                          identifiable at a glance (like the bottom nav). */}
+                      <Stack gap={2} align="center" justify="center">
+                        <Image width={isOverMd ? 38 : 26} src={link.icon} alt={link.label} />
+                        <Text
+                          fz={isOverMd ? 12 : 9}
+                          fw={isActive ? 700 : 500}
+                          tt="uppercase"
+                          ta="center"
+                          c={isActive ? "white" : "rgba(255,255,255,0.6)"}
+                          style={{ whiteSpace: "nowrap", lineHeight: 1 }}
+                        >
+                          {link.label}
+                        </Text>
+                      </Stack>
                     </Link>
                   );
                 })}

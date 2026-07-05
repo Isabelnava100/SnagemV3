@@ -1,6 +1,19 @@
-import { ActionIcon, Avatar, Flex, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import {
+  ActionIcon,
+  Avatar,
+  Button,
+  Flex,
+  Group,
+  Paper,
+  Popover,
+  SimpleGrid,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react";
 import { Link } from "react-router-dom";
 import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
@@ -80,12 +93,15 @@ function SingleBookmark(props: Bookmark) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const [confirmOpened, setConfirmOpened] = React.useState(false);
+
   const removeMutation = useMutation({
     mutationFn: async () => {
       if (!user) return;
       await removeBookmark(user, threadLocation, threadID);
     },
     onSuccess: () => {
+      setConfirmOpened(false);
       queryClient.invalidateQueries({ queryKey: ["get-bookmarks"] });
       queryClient.invalidateQueries({ queryKey: ["forum-bookmarks"] });
     },
@@ -99,24 +115,61 @@ function SingleBookmark(props: Bookmark) {
       to={`/Forum/${threadLocation}/thread/${threadID}/last`}
       style={{ textDecoration: "none", position: "relative" }}
     >
-      <ActionIcon
-        color="red"
-        variant="subtle"
-        title="Remove bookmark"
-        loading={removeMutation.isPending}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          removeMutation.mutateAsync();
-        }}
-        style={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}
+      {/* Delete with a confirmation step, in a popover anchored to the trash. */}
+      <Popover
+        opened={confirmOpened}
+        onChange={setConfirmOpened}
+        position="bottom-end"
+        withArrow
+        shadow="md"
       >
-        <IconTrash size={18} />
-      </ActionIcon>
+        <Popover.Target>
+          <ActionIcon
+            color="red"
+            variant="filled"
+            title="Remove bookmark"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setConfirmOpened((o) => !o);
+            }}
+            style={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}
+          >
+            <IconTrash size={16} />
+          </ActionIcon>
+        </Popover.Target>
+        <Popover.Dropdown
+          bg="#1E1D20"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <Stack gap={8}>
+            <Text c="white" fz={14}>
+              Remove this bookmark?
+            </Text>
+            <Group gap={8} justify="flex-end">
+              <Button size="xs" color="gray" variant="light" onClick={() => setConfirmOpened(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="xs"
+                color="red"
+                loading={removeMutation.isPending}
+                onClick={() => removeMutation.mutateAsync()}
+              >
+                Remove
+              </Button>
+            </Group>
+          </Stack>
+        </Popover.Dropdown>
+      </Popover>
       <Flex gap={15} pl="md" align="stretch">
         <BookmarkIcon color={color} />
-        <Stack py="md" sx={{ flex: 1 }}>
-          <Title c="white" order={4} lineClamp={1}>
+        {/* pr clears the absolute trash icon so the title never runs under it. */}
+        <Stack py="md" pr={44} sx={{ flex: 1 }}>
+          <Title c="white" order={4} lineClamp={2}>
             {title}
           </Title>
           <Stack gap={3}>

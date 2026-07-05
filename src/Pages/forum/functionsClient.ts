@@ -52,7 +52,7 @@ export const callPublishThread = (input: {
   poll: unknown;
   encounterConfig: unknown;
   /** Applied server-side only for admins / AdjustXP directors. */
-  xpConfig?: { perPost: number; minPostLength: number } | null;
+  xpConfig?: Record<string, number> | null;
   attachSignature?: boolean;
 }) => call<{ threadId: string }>("publishForumThread", input);
 

@@ -32,7 +32,7 @@ export interface PublishThreadInput {
   encounterConfig: EncounterConfig | null;
   characters: PostCharacter[];
   html: string;
-  xpConfig?: { perPost: number; minPostLength: number } | null;
+  xpConfig?: Record<string, number> | null;
   attachSignature?: boolean;
 }
 

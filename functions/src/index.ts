@@ -198,6 +198,37 @@ function addCurrencyString(current: unknown, amount: number): string {
 const CURRENCY_KEYS = ["pokecoin", "gengarcoin", "snagemblem"] as const;
 type CurrencyKey = (typeof CURRENCY_KEYS)[number];
 
+// The four pokemon stats awarded per qualifying post: config key (on the
+// thread's xpConfig / admin defaults) -> pokemon doc field.
+const XP_STATS = [
+  { cfg: "experiencePerPost", field: "experience" },
+  { cfg: "friendshipPerPost", field: "friendship" },
+  { cfg: "purificationPerPost", field: "purification" },
+  { cfg: "shadowPerPost", field: "shadow" },
+] as const;
+
+interface XpConfig {
+  experiencePerPost: number;
+  friendshipPerPost: number;
+  purificationPerPost: number;
+  shadowPerPost: number;
+  minPostLength: number;
+}
+
+/** Clamp + backfill an XP config from raw admin/thread data (legacy `perPost` = experience). */
+function normalizeXpConfig(raw: unknown): XpConfig {
+  const data = (raw ?? {}) as Record<string, unknown>;
+  const num = (v: unknown, max = 100_000) =>
+    Math.min(max, Math.max(0, Math.trunc(Number(v)) || 0));
+  return {
+    experiencePerPost: num(data.experiencePerPost ?? data.perPost, 10_000),
+    friendshipPerPost: num(data.friendshipPerPost, 10_000),
+    purificationPerPost: num(data.purificationPerPost, 10_000),
+    shadowPerPost: num(data.shadowPerPost, 10_000),
+    minPostLength: num(data.minPostLength),
+  };
+}
+
 function authorFields(member: Member) {
   return {
     owner: member.username,
@@ -423,16 +454,18 @@ export const publishForumPost = onCall(async (request) => {
     }
 
     // XP: pokemon on the teams brought into this post earn the thread's
-    // per-post experience, if the post meets the minimum length (Q5).
-    const xpConfig = thread.xpConfig as { perPost?: number; minPostLength?: number } | undefined;
+    // per-post stats (experience/friendship/purification/shadow), if the post
+    // meets the minimum length (Q5).
+    const xpConfig = normalizeXpConfig(thread.xpConfig);
     const strippedLength = html.replace(/<[^>]*>/g, "").trim().length;
     const teamIds = characters.map((c: any) => c.teamId).filter(Boolean) as string[];
+    const anyStat = XP_STATS.some((s) => (xpConfig[s.cfg] ?? 0) > 0);
     let xpPokemonIds: string[] = [];
     if (
       !editPostId &&
       teamIds.length &&
-      (xpConfig?.perPost ?? 0) > 0 &&
-      strippedLength >= (xpConfig?.minPostLength ?? 0)
+      anyStat &&
+      strippedLength >= (xpConfig.minPostLength ?? 0)
     ) {
       const teamsSnap = await tx.get(teamsRef);
       const teams = (teamsSnap.data() as Record<string, { pokemon_ids?: string[] }>) ?? {};
@@ -532,12 +565,16 @@ export const publishForumPost = onCall(async (request) => {
     }
 
     if (xpPokemonIds.length) {
-      const xpUpdates: Record<string, { experience: ReturnType<typeof FieldValue.increment> }> =
-        {};
+      const xpUpdates: Record<string, Record<string, ReturnType<typeof FieldValue.increment>>> = {};
       xpPokemonIds.forEach((pokeId) => {
-        xpUpdates[pokeId] = { experience: FieldValue.increment(xpConfig!.perPost!) };
+        const inc: Record<string, ReturnType<typeof FieldValue.increment>> = {};
+        XP_STATS.forEach((stat) => {
+          const amount = xpConfig[stat.cfg] ?? 0;
+          if (amount > 0) inc[stat.field] = FieldValue.increment(amount);
+        });
+        if (Object.keys(inc).length) xpUpdates[pokeId] = inc;
       });
-      tx.set(ownedRef, xpUpdates, { merge: true });
+      if (Object.keys(xpUpdates).length) tx.set(ownedRef, xpUpdates, { merge: true });
     }
 
     let resultPostId: string;
@@ -659,22 +696,13 @@ export const publishForumThread = onCall(async (request) => {
   }
 
   // XP settings: site defaults from admin/xp_defaults; admins and directors
-  // with the AdjustXP capability may override per thread (Q5).
+  // with the AdjustXP capability may override per thread (Q5). Awards cover
+  // all four pokemon stats (experience/friendship/purification/shadow).
   const defaultsSnap = await db.doc("admin/xp_defaults").get();
-  const defaults = defaultsSnap.data() ?? {};
-  let xpConfig = {
-    perPost: Math.max(0, Math.trunc(Number(defaults.perPost)) || 0),
-    minPostLength: Math.max(0, Math.trunc(Number(defaults.minPostLength)) || 0),
-  };
+  let xpConfig = normalizeXpConfig(defaultsSnap.data());
   const xpOverride = request.data?.xpConfig;
   if (xpOverride && (isAdmin(member) || hasCap(member, "AdjustXP"))) {
-    xpConfig = {
-      perPost: Math.min(10_000, Math.max(0, Math.trunc(Number(xpOverride.perPost)) || 0)),
-      minPostLength: Math.min(
-        100_000,
-        Math.max(0, Math.trunc(Number(xpOverride.minPostLength)) || 0)
-      ),
-    };
+    xpConfig = normalizeXpConfig(xpOverride);
   }
 
   const threadsCol = db.collection(`forum/${forum}/threads`);
