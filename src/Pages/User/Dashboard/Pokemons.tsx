@@ -39,7 +39,7 @@ import {
   pokemonTypes,
 } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
-import { excludeProperties, getPokemonImageURL } from "../../../helpers";
+import { containsBlockedWord, excludeProperties, getPokemonImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
 import { getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
@@ -255,8 +255,21 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
   const slotsRemainingRow1 = MAX_SLOTS_IN_A_ROW - firstRow.length;
   const slotsRemainingRow2 = MAX_SLOTS_IN_A_ROW - lastRow.length;
 
+  const [nameError, setNameError] = React.useState("");
+
   const handleSave = async () => {
     if (!form.values) return;
+    // Team naming rules (Q4): max 20 chars, no blocked words.
+    const name = (form.values.team_name ?? "").trim();
+    if (name.length > 20) {
+      setNameError("Team names are capped at 20 characters.");
+      return;
+    }
+    if (containsBlockedWord(name)) {
+      setNameError("That team name isn't allowed — pick something else.");
+      return;
+    }
+    setNameError("");
     try {
       await mutateAsync({ values: excludeProperties(form.values, ["id", "pokemons"]) });
       await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
@@ -280,6 +293,8 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
               <TextInput
                 size="sm"
                 maw={isOverLg ? undefined : 100}
+                maxLength={20}
+                error={nameError || undefined}
                 {...form.getInputProps("team_name")}
               />
             }
@@ -375,11 +390,22 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
   );
 }
 
+const MAX_TEAMS = 100;
+const TEAM_WARNING_AT = 90;
+
 function CreateNewTeam() {
   const { mutateAsync, isPending: isLoading } = useUpdateOrAddDocument();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  // Team cap (Q4): 100 max, warning from 90 (shares the cached teams query).
+  const { data: rawTeams } = useQuery({
+    queryKey: ["get-teams", user?.uid],
+    queryFn: () => getTeamsRaw(user?.uid as string),
+  });
+  const teamCount = rawTeams?.length ?? 0;
 
   const handleClick = async () => {
+    if (teamCount >= MAX_TEAMS) return;
     try {
       await mutateAsync({});
       await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
@@ -389,9 +415,22 @@ function CreateNewTeam() {
   };
 
   return (
-    <GradientButtonSecondary onClick={handleClick} loading={isLoading}>
-      Create a New Team
-    </GradientButtonSecondary>
+    <Stack gap={4} align="end">
+      {teamCount >= TEAM_WARNING_AT && (
+        <Text fz={12} c="#E35C65">
+          {teamCount >= MAX_TEAMS
+            ? `You've reached the ${MAX_TEAMS}-team limit — delete a team to make room.`
+            : `${teamCount}/${MAX_TEAMS} teams — you're getting close to the limit.`}
+        </Text>
+      )}
+      <GradientButtonSecondary
+        onClick={handleClick}
+        loading={isLoading}
+        disabled={teamCount >= MAX_TEAMS}
+      >
+        Create a New Team
+      </GradientButtonSecondary>
+    </Stack>
   );
 }
 
@@ -627,6 +666,13 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
           </Link>
         </Text>
       )}
+      {/* Game stats: experience accrues from forum posting (thread xpConfig). */}
+      <Stack gap={2}>
+        <Text fz={12}>Experience pts: {pokemon.experience ?? 0}</Text>
+        <Text fz={12}>Friendship pts: {pokemon.friendship ?? 0}</Text>
+        <Text fz={12}>Purification pts: {pokemon.purification ?? 0}</Text>
+        <Text fz={12}>Shadow pts: {pokemon.shadow ?? 0}</Text>
+      </Stack>
     </Stack>
   );
 }

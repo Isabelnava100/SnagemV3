@@ -153,6 +153,8 @@ export default function Editor(props: { editor: EditorType | null }) {
 
         <RichTextEditor.ControlsGroup>
           <RichTextEditor.Blockquote />
+          <RichTextEditor.Code />
+          <RichTextEditor.CodeBlock />
           <RichTextEditor.Hr />
           <RichTextEditor.BulletList />
           <RichTextEditor.OrderedList />

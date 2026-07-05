@@ -1,5 +1,17 @@
-import { ActionIcon, Badge, Flex, Image, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
+import {
+  ActionIcon,
+  Badge,
+  Flex,
+  Group,
+  Image,
+  Paper,
+  SimpleGrid,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react";
 import { Link } from "react-router-dom";
 import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
@@ -25,11 +37,76 @@ export default function Drafts() {
     return <EmptyMessage title="No drafts" description="You currently have no drafts created" />;
 
   return (
-    <SimpleGrid cols={isOverLg ? 2 : 1}>
-      {data.map((draft) => (
-        <SingleDraft key={draft.id} {...draft} />
-      ))}
-    </SimpleGrid>
+    <Stack>
+      <DraftsHeader count={data.length} />
+      <SimpleGrid cols={isOverLg ? 2 : 1}>
+        {data.map((draft) => (
+          <SingleDraft key={draft.id} {...draft} />
+        ))}
+      </SimpleGrid>
+    </Stack>
+  );
+}
+
+/** Draft limits (Q3): 60 max, warning from 55, clear-all offered from 40. */
+function DraftsHeader(props: { count: number }) {
+  const { count } = props;
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = React.useState(false);
+
+  const clearMutation = useMutation({
+    mutationFn: async () => {
+      const { deleteAllDrafts } = await import("../../forum/mutations");
+      await deleteAllDrafts(user!.uid);
+    },
+    onSuccess: () => {
+      setConfirming(false);
+      queryClient.invalidateQueries({ queryKey: ["get-drafts", user?.uid] });
+    },
+  });
+
+  return (
+    <Flex justify="space-between" align="center" gap={10} wrap="wrap">
+      <Text c={count >= 55 ? "#E35C65" : "dimmed"} fz={13}>
+        {count}/60 drafts
+        {count >= 60
+          ? " — you're at the limit; delete drafts to save new ones."
+          : count >= 55
+            ? " — you'll run out of draft space soon."
+            : ""}
+      </Text>
+      {count >= 40 &&
+        (confirming ? (
+          <Group gap={6}>
+            <Text fz={13} c="white">
+              Delete ALL {count} drafts?
+            </Text>
+            <ActionIcon
+              variant="light"
+              color="red"
+              loading={clearMutation.isPending}
+              onClick={() => clearMutation.mutateAsync()}
+              title="Yes, delete all"
+            >
+              ✓
+            </ActionIcon>
+            <ActionIcon variant="light" color="gray" onClick={() => setConfirming(false)} title="Cancel">
+              ✕
+            </ActionIcon>
+          </Group>
+        ) : (
+          <Text
+            fz={13}
+            c="#E35C65"
+            td="underline"
+            style={{ cursor: "pointer" }}
+            onClick={() => setConfirming(true)}
+          >
+            Clear all drafts
+          </Text>
+        ))}
+    </Flex>
   );
 }
 

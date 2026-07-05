@@ -80,10 +80,10 @@ function AuthorPopover(props: {
             <Text fz={13} fw={600} c="white">
               {post.owner}
             </Text>
-            <ForumTextLink component={Link} to="/Dashboard/Profile">
+            <ForumTextLink component={Link} to={`/Users/${post.owner}`}>
               View Profile
             </ForumTextLink>
-            <ForumTextLink component={Link} to="/Dashboard/Settings/Collections">
+            <ForumTextLink component={Link} to={`/Users/${post.owner}`}>
               View Collections
             </ForumTextLink>
             <ForumTextLink

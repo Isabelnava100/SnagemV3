@@ -49,6 +49,7 @@ import {
   markAnnouncementRead,
 } from "../../../queries/announcements";
 import { getCharacters, getCurrencies, getItems } from "../../../queries/dashboard";
+import { getNotifications } from "../../../queries/game";
 import { handleLogout } from "../../auth/components/LogoutHandle";
 import "/src/assets/styles/dashboard.css";
 
@@ -83,7 +84,7 @@ export function Dashboard() {
               </Button>
             </Flex>
             <Group>
-              <Image src={Bell} alt="Bell icon" width={40} />
+              <NotificationBell />
               <Text color="white" fz={20}>
                 Welcome, {user?.displayName}!
               </Text>
@@ -95,6 +96,44 @@ export function Dashboard() {
         <TabsPanel />
       </Stack>
     </Paper>
+  );
+}
+
+/** Bell with unread count; clicking opens the notification inbox (Q7). */
+function NotificationBell() {
+  const { user } = useAuth();
+  const { data: notifications } = useQuery({
+    queryKey: ["notifications", user?.uid],
+    queryFn: () => getNotifications(user!.uid),
+    enabled: !!user,
+  });
+  const unread = (notifications ?? []).filter((n) => !n.read).length;
+  return (
+    <Link to="/Dashboard/Settings/Notifications" style={{ position: "relative" }}>
+      <Image src={Bell} alt="Notifications" width={40} />
+      {unread > 0 && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: -4,
+            right: -6,
+            background: "#E35C65",
+            color: "white",
+            borderRadius: "100%",
+            minWidth: 20,
+            height: 20,
+            fontSize: 11,
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 4px",
+          }}
+        >
+          {unread > 9 ? "9+" : unread}
+        </Box>
+      )}
+    </Link>
   );
 }
 
@@ -320,18 +359,21 @@ function Announcements() {
   );
 }
 
-/** Mystery-box items open a pop-up on click; contents are deferred (board 3). */
-const isMysteryBox = (name: string, category: string) =>
-  /mystery|box/i.test(name) || /mystery|box/i.test(category);
-
 function MyItems() {
   const { user } = useAuth();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["get-items", user?.uid],
     queryFn: () => getItems(user?.uid as string),
   });
-  const [mysteryItem, setMysteryItem] = useState<string | null>(null);
+  // Items configured as mystery boxes (admin/mystery_boxes) open a pop-up.
+  const { data: boxConfigs } = useQuery({
+    queryKey: ["mystery-boxes"],
+    queryFn: async () => (await import("../../../queries/game")).getMysteryBoxes(),
+  });
+  const [mysteryItem, setMysteryItem] = useState<{ id: string; name: string } | null>(null);
   const { isOverLg } = useMediaQuery();
+  const isMysteryBox = (itemId: string, name: string, category: string) =>
+    !!boxConfigs?.[itemId] || /mystery|box/i.test(name) || /mystery|box/i.test(category);
 
   // no duplicate category
   const categories = useMemo(() => {
@@ -406,14 +448,16 @@ function MyItems() {
                         p={0}
                         bg="#3e3d3dba"
                         onClick={
-                          isMysteryBox(item.name, item.category)
-                            ? () => setMysteryItem(item.name)
+                          isMysteryBox(item.id, item.name, item.category)
+                            ? () => setMysteryItem({ id: item.id, name: item.name })
                             : undefined
                         }
                         sx={{
                           ...itemCommonStyle,
                           overflow: "hidden",
-                          cursor: isMysteryBox(item.name, item.category) ? "pointer" : undefined,
+                          cursor: isMysteryBox(item.id, item.name, item.category)
+                            ? "pointer"
+                            : undefined,
                         }}
                       >
                         <Flex w="100%" justify="space-between" align="center">
@@ -437,19 +481,87 @@ function MyItems() {
           </ScrollArea>
         }
       />
-      {/* Mystery box pop-up stub — opening mechanics land later. */}
-      <Modal
-        opened={!!mysteryItem}
+      <MysteryBoxModal
+        item={mysteryItem}
+        openable={!!mysteryItem && !!boxConfigs?.[mysteryItem.id]}
         onClose={() => setMysteryItem(null)}
-        title={<Text fw={700}>{mysteryItem}</Text>}
-        centered
-        radius={12}
-      >
-        <Text fz={14}>
-          Something is rattling inside... Opening mystery boxes is coming soon!
-        </Text>
-      </Modal>
+      />
     </SectionWrapper>
+  );
+}
+
+/**
+ * Mystery box pop-up: if the admin configured this item as a box, it can be
+ * opened (server-side weighted roll via openMysteryBox); otherwise a teaser.
+ */
+function MysteryBoxModal(props: {
+  item: { id: string; name: string } | null;
+  openable: boolean;
+  onClose: () => void;
+}) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [result, setResult] = useState<string>("");
+  const [error, setError] = useState<string>("");
+
+  const openMutation = useMutation({
+    mutationFn: async () => {
+      const { callOpenMysteryBox } = await import("../../forum/functionsClient");
+      return callOpenMysteryBox(props.item!.id);
+    },
+    onSuccess: ({ reward }) => {
+      setResult(`The box pops open... you got ${reward.qty}x ${reward.name}!`);
+      queryClient.invalidateQueries({ queryKey: ["get-items", user?.uid] });
+      queryClient.invalidateQueries({ queryKey: ["get-currencies", user?.uid] });
+    },
+    onError: async (err) => {
+      const { callableMessage } = await import("../../forum/functionsClient");
+      setError(callableMessage(err, "The box would not open — try again."));
+    },
+  });
+
+  const close = () => {
+    setResult("");
+    setError("");
+    props.onClose();
+  };
+
+  return (
+    <Modal
+      opened={!!props.item}
+      onClose={close}
+      title={<Text fw={700}>{props.item?.name}</Text>}
+      centered
+      radius={12}
+    >
+      {result ? (
+        <Text fz={15} c="green.0">
+          {result}
+        </Text>
+      ) : (
+        <Stack gap={10}>
+          <Text fz={14}>Something is rattling inside...</Text>
+          {props.openable ? (
+            <GradientButtonPrimary
+              radius="xl"
+              loading={openMutation.isPending}
+              onClick={() => openMutation.mutateAsync()}
+            >
+              Open the Box
+            </GradientButtonPrimary>
+          ) : (
+            <Text fz={13} c="dimmed">
+              This box cannot be opened yet — an admin still needs to fill it.
+            </Text>
+          )}
+          {error && (
+            <Text fz={13} c="#E35C65">
+              {error}
+            </Text>
+          )}
+        </Stack>
+      )}
+    </Modal>
   );
 }
 

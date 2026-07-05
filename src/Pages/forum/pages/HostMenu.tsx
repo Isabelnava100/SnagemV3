@@ -23,10 +23,11 @@ import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
 import { SectionLoader } from "../../../components/navigation/loading";
+import { Capability } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import { pokemonData } from "../../../data/pokemon";
 import { getPokemonImageURL } from "../../../helpers";
-import { isAdmin } from "../../../lib/permissions";
+import { hasCapability, isAdmin } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getUsers } from "../../../queries/admin";
 import {
@@ -124,9 +125,14 @@ export default function HostMenu() {
   const archiveMutation = useMutation({
     mutationFn: () => setThreadArchived(forum, threadId!, !thread?.closed),
     onSuccess: () => {
+      const justArchived = !thread?.closed;
       archiveModal.close();
       invalidateThread();
       queryClient.invalidateQueries({ queryKey: ["forum-threads", forum] });
+      // Closing a thread opens the rewards flow for reward granters (Q1).
+      if (justArchived && hasCapability(user, Capability.GiveItems)) {
+        navigate(`/Forum/${forum}/thread/${threadId}/rewards`);
+      }
     },
   });
 

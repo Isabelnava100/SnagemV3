@@ -2,36 +2,33 @@ import { ReactRenderer } from '@tiptap/react'
 import tippy from 'tippy.js'
 import MentionList from './MentionList'
 
+// Real member usernames for the @mention dropdown (replaces the Tiptap demo
+// placeholder list). Fetched once per session and cached module-level.
+let cachedUsernames = null
+let loading = null
+
+async function loadUsernames() {
+  if (cachedUsernames) return cachedUsernames
+  if (!loading) {
+    loading = import('../../queries/admin')
+      .then(({ getUsers }) => getUsers())
+      .then((users) => {
+        cachedUsernames = users.map((u) => u.username).filter(Boolean).sort()
+        return cachedUsernames
+      })
+      .catch(() => {
+        cachedUsernames = []
+        return cachedUsernames
+      })
+  }
+  return loading
+}
+
 export default {
-  items: ({ query }) => {
-    return [
-      'Lea Thompson',
-      'Cyndi Lauper',
-      'Tom Cruise',
-      'Madonna',
-      'Jerry Hall',
-      'Joan Collins',
-      'Winona Ryder',
-      'Christina Applegate',
-      'Alyssa Milano',
-      'Molly Ringwald',
-      'Ally Sheedy',
-      'Debbie Harry',
-      'Olivia Newton-John',
-      'Elton John',
-      'Michael J. Fox',
-      'Axl Rose',
-      'Emilio Estevez',
-      'Ralph Macchio',
-      'Rob Lowe',
-      'Jennifer Grey',
-      'Mickey Rourke',
-      'John Cusack',
-      'Matthew Broderick',
-      'Justine Bateman',
-      'Lisa Bonet',
-    ]
-      .filter(item => item.toLowerCase().startsWith(query.toLowerCase()))
+  items: async ({ query }) => {
+    const usernames = await loadUsernames()
+    return usernames
+      .filter((item) => item.toLowerCase().startsWith(query.toLowerCase()))
       .slice(0, 5)
   },
 

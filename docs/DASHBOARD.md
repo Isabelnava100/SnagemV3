@@ -44,8 +44,43 @@ Forum linkage details live in docs/FORUM.md.
 The badge toggle and pokemon provenance need the updated Cloud Functions and
 rules: `firebase deploy --only firestore:rules,functions`.
 
-## Open product questions (blocking the remaining scope)
+## Economy & game systems (built from the answered product questions)
 
-See the current build discussion — currencies economy, badge earn rules,
-draft retention countdown, team caps, mystery box contents, public profile
-route, notification triggers/channels.
+- **Rewards on thread close (Q1)** — archiving a thread routes reward
+  granters (Admin / `GiveItems`) to `/Forum/{forum}/thread/{id}/rewards`:
+  participants list, bulk add-to-everyone, per-user adjustments with
+  removable chips, Save Progress (persists to `rewardSessions/{forum}__{id}`),
+  Clear All + Finalize behind confirmations. `finalizeThreadRewards` applies
+  items/currencies transactionally (currency strings parsed/re-stringified),
+  audit-logs, notifies recipients, and locks the session. The same flow will
+  later close activities. Direct grants: Donate page gained a Give Currency
+  section (`grantCurrency` callable).
+- **XP engine (Q5)** — site defaults in `admin/xp_defaults` (edited in
+  Admin → Permissions & XP); threads snapshot an `xpConfig {perPost,
+  minPostLength}` at creation (overridable by Admin / `AdjustXP`);
+  `publishForumPost` awards experience to every pokemon on the teams brought
+  into a qualifying post. Stats show in the pokemon detail popover.
+- **Director permissions checklist (Q5)** — Admin → Permissions & XP: pick a
+  member, toggle capabilities (`SeeMasterForums, GiveItems, HostEvents,
+  ManageLists, AdjustXP`), audit-logged.
+- **Notifications (Q7)** — `users/{uid}/notifications` written by functions:
+  bookmarked-thread posts (via `watcherUids`), @mentions (data-id parse),
+  boss battle starts, reward/currency grants. Inbox in Settings →
+  Notifications + unread bell badge on the dashboard. Discord channel
+  deferred until account linking.
+- **Drafts (Q3)** — consumed on publish, 60 cap, warning at 55, clear-all
+  from 40 (in the Drafts tab).
+- **Teams (Q4)** — 100 cap, warning at 90, names ≤20 chars with a basic
+  blocked-word filter (`helpers.containsBlockedWord`).
+- **Public profile (Q6)** — placeholder `/Users/:username` (avatar, name,
+  role, inserted badges); forum profile popover links there.
+- **Mystery boxes (Q8)** — Admin → Mystery Boxes: pick the catalog item that
+  acts as the box, build a weighted item/currency pool; `openMysteryBox`
+  decrements the box and rolls server-side; the Your Items pop-up opens
+  configured boxes. Custom uploaded box art deferred.
+- **Editor Gaia-parity** — @mention dropdown now suggests real members
+  (was the Tiptap demo celebrity list), code/code-block controls added,
+  owned guild emotes in the emoji picker as inline images.
+
+Still open: badge earn automation (Q2 — grows with activities), draft
+deletion countdown display, full public profile design, Discord delivery.

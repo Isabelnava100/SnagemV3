@@ -39,6 +39,14 @@ const { default: HostMenu } = lazyImport(
   () => import("./Pages/forum/pages/HostMenu"),
   "default"
 );
+const { default: ThreadRewards } = lazyImport(
+  () => import("./Pages/forum/pages/ThreadRewards"),
+  "default"
+);
+const { default: PublicProfile } = lazyImport(
+  () => import("./Pages/User/PublicProfile"),
+  "default"
+);
 const { ErrorPage } = lazyImport(() => import("./components/navigation/error-page"), "ErrorPage");
 const { default: ComingSoon } = lazyImport(() => import("./Pages/ComingSoon"), "default");
 const { Protect } = lazyImport(() => import("./components/navigation/Protect"), "Protect");
@@ -77,6 +85,14 @@ const { default: Donate } = lazyImport(
 );
 const { default: AdminAnnouncements } = lazyImport(
   () => import("./Pages/User/Dashboard/Admin/Announcements"),
+  "default"
+);
+const { default: AdminPermissions } = lazyImport(
+  () => import("./Pages/User/Dashboard/Admin/Permissions"),
+  "default"
+);
+const { default: AdminMysteryBoxes } = lazyImport(
+  () => import("./Pages/User/Dashboard/Admin/MysteryBoxes"),
   "default"
 );
 
@@ -124,6 +140,8 @@ export default function AppRoutes() {
                         <Route path="Adjust-Lists" element={<AdjustLists />} />
                         <Route path="Donate" element={<Donate />} />
                         <Route path="Announcements" element={<AdminAnnouncements />} />
+                        <Route path="Permissions" element={<AdminPermissions />} />
+                        <Route path="Mystery-Boxes" element={<AdminMysteryBoxes />} />
                       </Route>
                       <Route path="Settings" element={<Settings />}>
                         <Route index element={<Navigate to="Notifications" />} />
@@ -135,6 +153,7 @@ export default function AppRoutes() {
                     {/* Designed-but-unbuilt sidebar modules get a friendly placeholder. */}
                     <Route path="/Shop" element={<ComingSoon module="The Marketplace" />} />
                     <Route path="/Users" element={<ComingSoon module="The Users directory" />} />
+                    <Route path="/Users/:username" element={<PublicProfile />} />
                     <Route path="/Activities" element={<ComingSoon module="Activities" />} />
                     <Route path="/Missions" element={<ComingSoon module="Missions" />} />
                     <Route path="/Login" element={<Login />} />
@@ -174,6 +193,14 @@ export default function AppRoutes() {
                         element={
                           <Protect>
                             <HostMenu />
+                          </Protect>
+                        }
+                      />
+                      <Route
+                        path=":forum/thread/:id/rewards"
+                        element={
+                          <Protect>
+                            <ThreadRewards />
                           </Protect>
                         }
                       />

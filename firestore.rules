@@ -66,6 +66,12 @@ service cloud.firestore {
       match /drafts/{doc} {
         allow read, write: if request.auth.uid == uid || isAdmin();
       }
+      // In-app notifications: created by Cloud Functions only; the owner can
+      // read them, mark them read, and delete them.
+      match /notifications/{noteId} {
+        allow read, update, delete: if request.auth.uid == uid || isAdmin();
+        allow create: if false;
+      }
     }
 
     // ---- Registration queue ------------------------------------------------
@@ -87,6 +93,14 @@ service cloud.firestore {
     match /tickets/{doc} {
       allow read: if isAdmin();
       allow write: if isSignedIn();
+    }
+
+    // ---- Thread-close reward sessions ---------------------------------------
+    // Draft state for awarding money/items when a thread closes. Only reward
+    // granters (GiveItems / Admin) can see or edit; applying the rewards goes
+    // through the finalizeThreadRewards Cloud Function.
+    match /rewardSessions/{sessionId} {
+      allow read, write: if hasCap('GiveItems');
     }
 
     // ---- Append-only audit trail ------------------------------------------
@@ -116,7 +130,7 @@ service cloud.firestore {
         allow update: if isAdmin()
           || (isSignedIn()
               && request.resource.data.diff(resource.data).affectedKeys()
-                   .hasOnly(['notifyviaDiscord']))
+                   .hasOnly(['notifyviaDiscord', 'watcherUids']))
           || (isSignedIn()
               && request.auth.uid == resource.data.get('hostUid', '')
               && request.resource.data.diff(resource.data).affectedKeys()

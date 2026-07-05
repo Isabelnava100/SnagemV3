@@ -194,12 +194,22 @@ export enum UserRoles {
 }
 
 // Granular, admin-grantable action permissions. Add new powers here.
+// Admins toggle these per Director in Dashboard > Admin > Permissions.
 export enum Capability {
   SeeMasterForums = "SeeMasterForums",
   GiveItems = "GiveItems",
   HostEvents = "HostEvents",
   ManageLists = "ManageLists",
+  AdjustXP = "AdjustXP",
 }
+
+export const CAPABILITY_INFO: Record<Capability, string> = {
+  [Capability.SeeMasterForums]: "See the master-only forums",
+  [Capability.GiveItems]: "Give items/currency and award thread-close rewards",
+  [Capability.HostEvents]: "Create threads in the Events category",
+  [Capability.ManageLists]: "Manage encounter lists, announcements and mystery boxes",
+  [Capability.AdjustXP]: "Adjust per-thread XP settings",
+};
 
 export type SpecificUser = {
   permissions: UserRoles | string;
@@ -223,6 +233,7 @@ export interface myBookmarksInfo {
 export interface Currencies {
   gengarcoin: string;
   pokecoin: string;
+  snagemblem?: string;
 }
 
 export type Item = {
@@ -302,6 +313,11 @@ export interface OwnedPokemon {
     postId: string;
     threadTitle?: string;
   };
+  /** Earned via forum posting (xpConfig); the rest are admin-adjusted. */
+  experience?: number;
+  friendship?: number;
+  purification?: number;
+  shadow?: number;
 }
 
 export type Profile = Partial<{

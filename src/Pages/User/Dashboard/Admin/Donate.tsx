@@ -6,11 +6,13 @@ import {
   Group,
   Image,
   MultiSelect,
+  NumberInput,
+  Select,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLayout";
 import { Conditional } from "../../../../components/common/Conditional";
@@ -322,6 +324,113 @@ export default function Donate() {
             </GradientButtonSecondary>
           </Group>
         </Stack>
+      )}
+
+      <GiveCurrencySection />
+    </Stack>
+  );
+}
+
+/**
+ * Direct currency grants (Q1): admins / GiveItems directors add money to
+ * users. Runs through the grantCurrency Cloud Function (string-safe math,
+ * audit log, in-app notification to recipients).
+ */
+function GiveCurrencySection() {
+  const { data: users } = useQuery({ queryKey: ["get-users"], queryFn: getUsers });
+  const [userIds, setUserIds] = React.useState<string[]>([]);
+  const [currency, setCurrency] = React.useState<string>("pokecoin");
+  const [amount, setAmount] = React.useState<number>(1);
+  const [confirming, setConfirming] = React.useState(false);
+  const [message, setMessage] = React.useState("");
+
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: async () => {
+      const { callGrantCurrency } = await import("../../../forum/functionsClient");
+      await callGrantCurrency(userIds, currency, amount);
+    },
+    onSuccess: () => {
+      setConfirming(false);
+      setUserIds([]);
+      setMessage("Currency sent!");
+    },
+    onError: async (err) => {
+      const { callableMessage } = await import("../../../forum/functionsClient");
+      setConfirming(false);
+      setMessage(callableMessage(err, "Sending failed — try again."));
+    },
+  });
+
+  const currencyLabel =
+    currency === "pokecoin" ? "Poke Coins" : currency === "gengarcoin" ? "Gengar Coins" : "Snag Emblems";
+
+  return (
+    <Stack gap={10} mt={20}>
+      <Title order={2} c="white" size={24} fw={400}>
+        Give Currency to Users
+      </Title>
+      <Flex gap={10} wrap="wrap" align="center">
+        <MultiSelect
+          radius="md"
+          searchable
+          data={users?.map((u) => ({ label: u.username, value: u.id })) || []}
+          value={userIds}
+          onChange={setUserIds}
+          placeholder="Search to add users"
+          limit={20}
+          w={260}
+        />
+        <Select
+          data={[
+            { value: "pokecoin", label: "Poke Coin" },
+            { value: "gengarcoin", label: "Gengar Coin" },
+            { value: "snagemblem", label: "Snag Emblems" },
+          ]}
+          value={currency}
+          onChange={(v) => setCurrency(v ?? "pokecoin")}
+          w={150}
+        />
+        <NumberInput
+          value={amount}
+          onChange={(v) => setAmount(Math.max(1, Number(v) || 1))}
+          min={1}
+          w={100}
+        />
+        {confirming ? (
+          <Group gap={6}>
+            <Text fz={13} c="white">
+              Send {amount} {currencyLabel} to {userIds.length} user
+              {userIds.length === 1 ? "" : "s"}?
+            </Text>
+            <Button size="xs" color="gray" variant="light" onClick={() => setConfirming(false)}>
+              Cancel
+            </Button>
+            <GradientButtonSecondary
+              size="xs"
+              radius="lg"
+              loading={isPending}
+              onClick={() => mutateAsync()}
+            >
+              Confirm
+            </GradientButtonSecondary>
+          </Group>
+        ) : (
+          <GradientButtonSecondary
+            radius="lg"
+            disabled={!userIds.length}
+            onClick={() => {
+              setMessage("");
+              setConfirming(true);
+            }}
+          >
+            Send Currency
+          </GradientButtonSecondary>
+        )}
+      </Flex>
+      {message && (
+        <Text fz={13} c={message === "Currency sent!" ? "green.0" : "#E35C65"}>
+          {message}
+        </Text>
       )}
     </Stack>
   );

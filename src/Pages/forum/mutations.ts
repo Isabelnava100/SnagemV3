@@ -32,6 +32,7 @@ export interface PublishThreadInput {
   encounterConfig: EncounterConfig | null;
   characters: PostCharacter[];
   html: string;
+  xpConfig?: { perPost: number; minPostLength: number } | null;
 }
 
 /** Creates the thread and its first post server-side; the creator becomes host. */
@@ -146,11 +147,14 @@ export async function addBookmark(
     { [thread.id]: bookmark },
     { merge: true }
   );
-  if (user.otherinfo?.discordUID) {
-    await updateDoc(doc(db, ...threadDocPath(forum, thread.id)), {
-      notifyviaDiscord: arrayUnion(user.otherinfo.discordUID),
-    });
-  }
+  // watcherUids powers in-app "new post in bookmarked thread" notifications;
+  // notifyviaDiscord stays for the (optional, later) Discord channel.
+  await updateDoc(doc(db, ...threadDocPath(forum, thread.id)), {
+    watcherUids: arrayUnion(user.uid),
+    ...(user.otherinfo?.discordUID
+      ? { notifyviaDiscord: arrayUnion(user.otherinfo.discordUID) }
+      : {}),
+  });
 }
 
 export async function removeBookmark(
@@ -164,11 +168,12 @@ export async function removeBookmark(
     { [threadId]: deleteField() },
     { merge: true }
   );
-  if (user.otherinfo?.discordUID) {
-    await updateDoc(doc(db, ...threadDocPath(forum, threadId)), {
-      notifyviaDiscord: arrayRemove(user.otherinfo.discordUID),
-    });
-  }
+  await updateDoc(doc(db, ...threadDocPath(forum, threadId)), {
+    watcherUids: arrayRemove(user.uid),
+    ...(user.otherinfo?.discordUID
+      ? { notifyviaDiscord: arrayRemove(user.otherinfo.discordUID) }
+      : {}),
+  });
 }
 
 export interface SaveDraftInput {
@@ -180,11 +185,24 @@ export interface SaveDraftInput {
   html: string;
 }
 
-/** Saves into users/{uid}/drafts with the shape the dashboard Drafts page reads. */
-export async function saveDraft(input: SaveDraftInput): Promise<void> {
-  const { addDoc, collection } = await import("firebase/firestore");
+export const MAX_DRAFTS = 60;
+export const DRAFT_WARNING_AT = 55;
+
+/**
+ * Saves into users/{uid}/drafts (dashboard Drafts shape). Enforces the
+ * 60-draft cap; returns the new count so composers can warn from 55 (Q3).
+ */
+export async function saveDraft(input: SaveDraftInput): Promise<number> {
+  const { addDoc, collection, getCountFromServer } = await import("firebase/firestore");
+  const draftsCol = collection(db, "users", input.user.uid, "drafts");
+  const count = (await getCountFromServer(draftsCol)).data().count;
+  if (count >= MAX_DRAFTS) {
+    throw new Error(
+      `You've reached the ${MAX_DRAFTS}-draft limit — delete some drafts from your dashboard first.`
+    );
+  }
   const now = Date.now();
-  await addDoc(collection(db, "users", input.user.uid, "drafts"), {
+  await addDoc(draftsCol, {
     category: input.forum,
     character_name: input.characterNames,
     color: "#762B77",
@@ -194,6 +212,20 @@ export async function saveDraft(input: SaveDraftInput): Promise<void> {
     thread_id: input.threadId,
     title_thread: input.title,
   });
+  return count + 1;
+}
+
+/** A draft is consumed (deleted) once a post is published from it (Q3). */
+export async function deleteDraft(uid: string, draftId: string): Promise<void> {
+  const { deleteDoc, doc } = await import("firebase/firestore");
+  await deleteDoc(doc(db, "users", uid, "drafts", draftId)).catch(() => undefined);
+}
+
+/** Clear-all for the Drafts tab (offered from 40 drafts up). */
+export async function deleteAllDrafts(uid: string): Promise<void> {
+  const { collection, deleteDoc, getDocs } = await import("firebase/firestore");
+  const snap = await getDocs(collection(db, "users", uid, "drafts"));
+  await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
 }
 
 /**

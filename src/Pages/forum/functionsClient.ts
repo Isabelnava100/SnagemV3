@@ -50,6 +50,8 @@ export const callPublishThread = (input: {
   allowedPosters: string[];
   poll: unknown;
   encounterConfig: unknown;
+  /** Applied server-side only for admins / AdjustXP directors. */
+  xpConfig?: { perPost: number; minPostLength: number } | null;
 }) => call<{ threadId: string }>("publishForumThread", input);
 
 export const callVotePoll = (forum: string, threadId: string, optionId: string) =>
@@ -58,6 +60,21 @@ export const callVotePoll = (forum: string, threadId: string, optionId: string) 
 /** Toggle a badge's inserted/disabled state (ownership + max-5 validated server-side). */
 export const callSetBadgeEnabled = (label: string, enabled: boolean) =>
   call<{ ok: boolean }>("setBadgeEnabled", { label, enabled });
+
+/** Apply a thread-close reward session to all recipients (GiveItems cap). */
+export const callFinalizeRewards = (sessionId: string) =>
+  call<{ ok: boolean; recipients: number }>("finalizeThreadRewards", { sessionId });
+
+/** Direct currency grant to users (GiveItems cap). */
+export const callGrantCurrency = (userIds: string[], currency: string, amount: number) =>
+  call<{ ok: boolean }>("grantCurrency", { userIds, currency, amount });
+
+/** Open one mystery box; server rolls the reward. */
+export const callOpenMysteryBox = (itemId: string) =>
+  call<{ reward: { kind: string; name: string; qty: number; filePath: string } }>(
+    "openMysteryBox",
+    { itemId }
+  );
 
 export const callSetBossBattle = (input: {
   forum: string;

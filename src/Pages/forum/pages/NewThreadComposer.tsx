@@ -5,6 +5,7 @@ import {
   Grid,
   Group,
   MultiSelect,
+  NumberInput,
   Radio,
   Select,
   Stack,
@@ -20,13 +21,21 @@ import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
 import Editor, { useRichTextEditor } from "../../../components/editor/Editor";
+import { Capability } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
-import { isAdmin } from "../../../lib/permissions";
+import { hasCapability, isAdmin } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getUsers } from "../../../queries/admin";
+import { getXPDefaults } from "../../../queries/game";
 import { creatableCategories } from "../config";
 import { callableMessage } from "../functionsClient";
-import { publishThread, saveDraft } from "../mutations";
+import {
+  DRAFT_WARNING_AT,
+  MAX_DRAFTS,
+  deleteDraft,
+  publishThread,
+  saveDraft,
+} from "../mutations";
 import { getDraft } from "../queries";
 import { EncounterConfig, PostCharacter, ThreadPoll } from "../types";
 import CharactersPanel from "../components/composer/CharactersPanel";
@@ -56,7 +65,19 @@ export default function NewThreadComposer() {
   const [poll, setPoll] = React.useState<ThreadPoll | null>(null);
   const [html, setHtml] = React.useState("");
   const [error, setError] = React.useState("");
-  const [draftSaved, setDraftSaved] = React.useState(false);
+  const [draftMessage, setDraftMessage] = React.useState("");
+  const [xpOverride, setXpOverride] = React.useState<{
+    perPost: number;
+    minPostLength: number;
+  } | null>(null);
+  const canAdjustXP = isAdmin(user) || hasCapability(user, Capability.AdjustXP);
+
+  // Site-wide XP defaults, shown as the panel's starting values.
+  const { data: xpDefaults } = useQuery({
+    queryKey: ["xp-defaults"],
+    queryFn: getXPDefaults,
+    enabled: canAdjustXP,
+  });
 
   const editor = useRichTextEditor({
     onUpdate: ({ editor: e }) => setHtml(e.getHTML()),
@@ -110,17 +131,21 @@ export default function NewThreadComposer() {
         encounterConfig,
         characters,
         html,
+        xpConfig: canAdjustXP ? xpOverride : null,
       });
       return threadId;
     },
-    onSuccess: (threadId) => navigate(`/Forum/${categoryLink}/thread/${threadId}`),
+    onSuccess: async (threadId) => {
+      if (draftId && user) await deleteDraft(user.uid, draftId);
+      navigate(`/Forum/${categoryLink}/thread/${threadId}`);
+    },
     onError: (err) =>
       setError(callableMessage(err, "Something went wrong publishing your thread. Try again.")),
   });
 
   const draftMutation = useMutation({
     mutationFn: async () => {
-      await saveDraft({
+      return saveDraft({
         user: user!,
         forum: categoryLink ?? "Main-Forum",
         threadId: "new-thread",
@@ -129,7 +154,14 @@ export default function NewThreadComposer() {
         html,
       });
     },
-    onSuccess: () => setDraftSaved(true),
+    onSuccess: (count) =>
+      setDraftMessage(
+        count >= DRAFT_WARNING_AT
+          ? `Draft saved — heads up, you have ${count}/${MAX_DRAFTS} drafts. You'll run out soon.`
+          : "Draft saved — find it under Dashboard → Drafts."
+      ),
+    onError: (err) =>
+      setDraftMessage((err as Error).message || "Could not save the draft."),
   });
 
   const handlePublish = () => {
@@ -253,6 +285,57 @@ export default function NewThreadComposer() {
             </ForumPanel>
 
             <PollBuilderPanel value={poll} onChange={setPoll} />
+
+            {/* XP settings: admins / AdjustXP directors may override the site
+                defaults per thread (Q5). */}
+            {canAdjustXP && (
+              <ForumPanel title="XP Settings">
+                <PanelHint>
+                  Experience awarded to each team pokemon per qualifying post. Defaults:{" "}
+                  {xpDefaults?.perPost ?? 0} XP, minimum {xpDefaults?.minPostLength ?? 0}{" "}
+                  characters.
+                </PanelHint>
+                <Group gap={12}>
+                  <Group gap={6}>
+                    <Text fz={12} c="white">
+                      XP per post:
+                    </Text>
+                    <NumberInput
+                      value={xpOverride?.perPost ?? xpDefaults?.perPost ?? 0}
+                      onChange={(v) =>
+                        setXpOverride({
+                          perPost: Math.max(0, Number(v) || 0),
+                          minPostLength:
+                            xpOverride?.minPostLength ?? xpDefaults?.minPostLength ?? 0,
+                        })
+                      }
+                      min={0}
+                      w={90}
+                      size="xs"
+                      styles={{ input: { background: "#2E2D2E" } }}
+                    />
+                  </Group>
+                  <Group gap={6}>
+                    <Text fz={12} c="white">
+                      Minimum post length:
+                    </Text>
+                    <NumberInput
+                      value={xpOverride?.minPostLength ?? xpDefaults?.minPostLength ?? 0}
+                      onChange={(v) =>
+                        setXpOverride({
+                          perPost: xpOverride?.perPost ?? xpDefaults?.perPost ?? 0,
+                          minPostLength: Math.max(0, Number(v) || 0),
+                        })
+                      }
+                      min={0}
+                      w={90}
+                      size="xs"
+                      styles={{ input: { background: "#2E2D2E" } }}
+                    />
+                  </Group>
+                </Group>
+              </ForumPanel>
+            )}
           </Stack>
         </Grid.Col>
 
@@ -265,9 +348,9 @@ export default function NewThreadComposer() {
             </ForumPanel>
 
             {error && <GameResultText>{error}</GameResultText>}
-            {draftSaved && (
+            {draftMessage && (
               <Text fz={13} c="green.0">
-                Draft saved — find it under Dashboard → Drafts.
+                {draftMessage}
               </Text>
             )}
 

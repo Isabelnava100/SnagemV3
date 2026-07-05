@@ -154,6 +154,48 @@ function sanitizeCharacters(input: unknown): any[] {
   }));
 }
 
+/** Fire-and-forget in-app notifications (users/{uid}/notifications). */
+async function notifyUsers(
+  uids: string[],
+  notification: { type: string; text: string; link: string }
+): Promise<void> {
+  const unique = [...new Set(uids)].filter(Boolean);
+  if (!unique.length) return;
+  const batch = db.batch();
+  const now = new Date();
+  unique.slice(0, 400).forEach((uid) => {
+    batch.create(db.collection(`users/${uid}/notifications`).doc(), {
+      ...notification,
+      read: false,
+      createdAt: now,
+    });
+  });
+  await batch.commit().catch(() => undefined); // never block the main action
+}
+
+/** Resolve @mention usernames (data-id attributes in Tiptap HTML) to uids. */
+async function mentionedUids(html: string, excludeUid: string): Promise<string[]> {
+  const names = [...new Set([...html.matchAll(/data-id="([^"]{1,60})"/g)].map((m) => m[1]))];
+  if (!names.length) return [];
+  const uids: string[] = [];
+  for (const chunk of [names.slice(0, 30)]) {
+    const snap = await db.collection("users").where("username", "in", chunk).get();
+    snap.forEach((docSnap) => {
+      if (docSnap.id !== excludeUid) uids.push(docSnap.id);
+    });
+  }
+  return uids;
+}
+
+/** Currency values are stored as STRINGS (legacy) — parse, add, restringify. */
+function addCurrencyString(current: unknown, amount: number): string {
+  const parsed = parseInt(String(current ?? "0"), 10);
+  return String((Number.isFinite(parsed) ? parsed : 0) + amount);
+}
+
+const CURRENCY_KEYS = ["pokecoin", "gengarcoin", "snagemblem"] as const;
+type CurrencyKey = (typeof CURRENCY_KEYS)[number];
+
 function authorFields(member: Member) {
   return {
     owner: member.username,
@@ -344,7 +386,9 @@ export const publishForumPost = onCall(async (request) => {
   const pRef = pendingRef(forum, threadId, uid);
   const bagRef = db.doc(`users/${uid}/bag/items`);
   const ownedRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  const teamsRef = db.doc(`users/${uid}/bag/teams`);
 
+  let threadForNotify: FirebaseFirestore.DocumentData | undefined;
   const postId = await db.runTransaction(async (tx) => {
     // -- reads (all before any write) --------------------------------------
     const [threadSnap, pendingSnap] = await Promise.all([tx.get(tRef), tx.get(pRef)]);
@@ -366,10 +410,31 @@ export const publishForumPost = onCall(async (request) => {
       }
     }
 
+    threadForNotify = thread;
+
     let bag: Record<string, any> = {};
     if (itemRequests.length) {
       const bagSnap = await tx.get(bagRef);
       bag = (bagSnap.data() as Record<string, any>) ?? {};
+    }
+
+    // XP: pokemon on the teams brought into this post earn the thread's
+    // per-post experience, if the post meets the minimum length (Q5).
+    const xpConfig = thread.xpConfig as { perPost?: number; minPostLength?: number } | undefined;
+    const strippedLength = html.replace(/<[^>]*>/g, "").trim().length;
+    const teamIds = characters.map((c: any) => c.teamId).filter(Boolean) as string[];
+    let xpPokemonIds: string[] = [];
+    if (
+      !editPostId &&
+      teamIds.length &&
+      (xpConfig?.perPost ?? 0) > 0 &&
+      strippedLength >= (xpConfig?.minPostLength ?? 0)
+    ) {
+      const teamsSnap = await tx.get(teamsRef);
+      const teams = (teamsSnap.data() as Record<string, { pokemon_ids?: string[] }>) ?? {};
+      xpPokemonIds = [
+        ...new Set(teamIds.flatMap((teamId) => teams[teamId]?.pokemon_ids ?? [])),
+      ];
     }
 
     // -- compute ------------------------------------------------------------
@@ -462,6 +527,15 @@ export const publishForumPost = onCall(async (request) => {
       );
     }
 
+    if (xpPokemonIds.length) {
+      const xpUpdates: Record<string, { experience: ReturnType<typeof FieldValue.increment> }> =
+        {};
+      xpPokemonIds.forEach((pokeId) => {
+        xpUpdates[pokeId] = { experience: FieldValue.increment(xpConfig!.perPost!) };
+      });
+      tx.set(ownedRef, xpUpdates, { merge: true });
+    }
+
     let resultPostId: string;
     if (editPostId && editSnap) {
       const prev = editSnap.data()!;
@@ -492,6 +566,23 @@ export const publishForumPost = onCall(async (request) => {
     if (pendingSnap.exists) tx.delete(pRef);
     return resultPostId;
   });
+
+  // Post-commit notifications: bookmark watchers + @mentions (Q7).
+  if (!editPostId && threadForNotify) {
+    const link = `/Forum/${forum}/thread/${threadId}/last`;
+    const title = (threadForNotify.title as string) ?? "the thread";
+    const watchers = ((threadForNotify.watcherUids as string[]) ?? []).filter((w) => w !== uid);
+    await notifyUsers(watchers, {
+      type: "bookmark_post",
+      text: `${member.username} posted in "${title}"`,
+      link,
+    });
+    const mentioned = await mentionedUids(html, uid).catch(() => [] as string[]);
+    await notifyUsers(
+      mentioned.filter((m) => !watchers.includes(m)),
+      { type: "mention", text: `${member.username} mentioned you in "${title}"`, link }
+    );
+  }
 
   return { postId };
 });
@@ -562,6 +653,25 @@ export const publishForumThread = onCall(async (request) => {
     };
   }
 
+  // XP settings: site defaults from admin/xp_defaults; admins and directors
+  // with the AdjustXP capability may override per thread (Q5).
+  const defaultsSnap = await db.doc("admin/xp_defaults").get();
+  const defaults = defaultsSnap.data() ?? {};
+  let xpConfig = {
+    perPost: Math.max(0, Math.trunc(Number(defaults.perPost)) || 0),
+    minPostLength: Math.max(0, Math.trunc(Number(defaults.minPostLength)) || 0),
+  };
+  const xpOverride = request.data?.xpConfig;
+  if (xpOverride && (isAdmin(member) || hasCap(member, "AdjustXP"))) {
+    xpConfig = {
+      perPost: Math.min(10_000, Math.max(0, Math.trunc(Number(xpOverride.perPost)) || 0)),
+      minPostLength: Math.min(
+        100_000,
+        Math.max(0, Math.trunc(Number(xpOverride.minPostLength)) || 0)
+      ),
+    };
+  }
+
   const threadsCol = db.collection(`forum/${forum}/threads`);
   const countSnap = await threadsCol.count().get();
   const threadId = String(countSnap.data().count + 1);
@@ -589,6 +699,7 @@ export const publishForumThread = onCall(async (request) => {
     encounterConfig,
     encounterClaims: {},
     bossBattle: null,
+    xpConfig,
   });
   batch.create(tRef.collection("posts").doc(), {
     ...authorFields(member),
@@ -602,6 +713,237 @@ export const publishForumThread = onCall(async (request) => {
   await batch.commit();
 
   return { threadId };
+});
+
+// ---------------------------------------------------------------------------
+// Rewards (thread close) & direct grants
+// ---------------------------------------------------------------------------
+
+interface RewardEntry {
+  items?: Array<{ itemId: string; name: string; filePath: string; qty: number }>;
+  currencies?: Partial<Record<CurrencyKey, number>>;
+}
+
+/**
+ * Applies a saved reward session (built on the thread-close rewards page) to
+ * every participant in one batch: items increment into bags, currencies are
+ * parsed-from-string, added, and re-stringified. GiveItems capability
+ * required; the session is marked finalized so it can't be applied twice.
+ */
+export const finalizeThreadRewards = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const sessionId = requireString(request.data?.sessionId, "session", 200);
+  const member = await loadMember(uid);
+  if (!hasCap(member, "GiveItems")) {
+    throw new HttpsError("permission-denied", "You cannot award rewards.");
+  }
+
+  const sessionRef = db.doc(`rewardSessions/${sessionId}`);
+  const recipients: string[] = [];
+
+  await db.runTransaction(async (tx) => {
+    const sessionSnap = await tx.get(sessionRef);
+    if (!sessionSnap.exists) throw new HttpsError("not-found", "Reward session not found.");
+    const session = sessionSnap.data()!;
+    if (session.finalized) {
+      throw new HttpsError("failed-precondition", "These rewards were already sent.");
+    }
+    const rewards = (session.rewards as Record<string, RewardEntry>) ?? {};
+    const entries = Object.entries(rewards).slice(0, 100);
+
+    // Reads first: currency docs for everyone getting currency.
+    const currencyReads = await Promise.all(
+      entries.map(async ([targetUid, entry]) => {
+        const hasCurrency = Object.values(entry.currencies ?? {}).some((v) => (v ?? 0) > 0);
+        if (!hasCurrency) return null;
+        const ref = db.doc(`users/${targetUid}/bag/currency`);
+        return { targetUid, ref, snap: await tx.get(ref) };
+      })
+    );
+
+    entries.forEach(([targetUid, entry]) => {
+      let received = false;
+      (entry.items ?? []).forEach((item) => {
+        if (!item.itemId || !(item.qty > 0)) return;
+        tx.set(
+          db.doc(`users/${targetUid}/bag/items`),
+          {
+            [item.itemId]: {
+              name: item.name,
+              filePath: item.filePath,
+              category: (item as any).category ?? "other-item",
+              quantity: FieldValue.increment(Math.trunc(item.qty)),
+            },
+          },
+          { merge: true }
+        );
+        received = true;
+      });
+      const read = currencyReads.find((r) => r?.targetUid === targetUid);
+      if (read) {
+        const current = read.snap.data() ?? {};
+        const update: Record<string, string> = {};
+        CURRENCY_KEYS.forEach((key) => {
+          const amount = Math.trunc(entry.currencies?.[key] ?? 0);
+          if (amount > 0) {
+            update[key] = addCurrencyString(current[key], amount);
+            received = true;
+          }
+        });
+        if (Object.keys(update).length) tx.set(read.ref, update, { merge: true });
+      }
+      if (received) recipients.push(targetUid);
+    });
+
+    tx.update(sessionRef, { finalized: true, finalizedBy: member.username, finalizedAt: new Date() });
+  });
+
+  await db.collection("auditLogs").add({
+    action: "rewards.finalize",
+    actorUid: uid,
+    actorName: member.username,
+    targetPath: `rewardSessions/${sessionId}`,
+    details: { recipients: recipients.length },
+    createdAt: new Date(),
+  });
+  await notifyUsers(recipients, {
+    type: "rewards",
+    text: "You received rewards from a closed thread!",
+    link: "/Dashboard",
+  });
+
+  return { ok: true, recipients: recipients.length };
+});
+
+/** Direct currency grant (Q1): Admin / GiveItems directors add money to users. */
+export const grantCurrency = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!hasCap(member, "GiveItems")) {
+    throw new HttpsError("permission-denied", "You cannot grant currency.");
+  }
+  const currency = request.data?.currency as CurrencyKey;
+  if (!CURRENCY_KEYS.includes(currency)) {
+    throw new HttpsError("invalid-argument", "Unknown currency.");
+  }
+  const amount = Math.trunc(Number(request.data?.amount));
+  if (!Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 1_000_000) {
+    throw new HttpsError("invalid-argument", "Invalid amount.");
+  }
+  const userIds = (Array.isArray(request.data?.userIds) ? request.data.userIds : [])
+    .slice(0, 100)
+    .map((u: unknown) => String(u));
+  if (!userIds.length) throw new HttpsError("invalid-argument", "Pick at least one user.");
+
+  await db.runTransaction(async (tx) => {
+    const refs = userIds.map((targetUid: string) => db.doc(`users/${targetUid}/bag/currency`));
+    const snaps = await Promise.all(refs.map((ref: DocumentReference) => tx.get(ref)));
+    snaps.forEach((snap: DocumentSnapshot, i: number) => {
+      tx.set(
+        refs[i],
+        { [currency]: addCurrencyString(snap.data()?.[currency], amount) },
+        { merge: true }
+      );
+    });
+  });
+
+  await db.collection("auditLogs").add({
+    action: "currency.grant",
+    actorUid: uid,
+    actorName: member.username,
+    details: { currency, amount, userIds },
+    createdAt: new Date(),
+  });
+  await notifyUsers(userIds, {
+    type: "currency",
+    text: `You received ${amount} ${currency === "pokecoin" ? "Poke Coins" : currency === "gengarcoin" ? "Gengar Coins" : "Snag Emblems"}!`,
+    link: "/Dashboard",
+  });
+
+  return { ok: true };
+});
+
+// ---------------------------------------------------------------------------
+// Mystery boxes
+// ---------------------------------------------------------------------------
+
+/**
+ * Opens one mystery box: validates ownership against the admin-configured
+ * pool (admin/mystery_boxes), decrements the box, picks a weighted-random
+ * reward server-side and grants it. Returns the reward for the reveal UI.
+ */
+export const openMysteryBox = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const boxItemId = requireString(request.data?.itemId, "box", 100);
+  const member = await loadMember(uid);
+
+  const configSnap = await db.doc("admin/mystery_boxes").get();
+  const config = (configSnap.data() ?? {})[boxItemId] as
+    | {
+        name: string;
+        pool: Array<{
+          kind: "item" | "currency";
+          refId: string;
+          name: string;
+          filePath?: string;
+          qty: number;
+          weight: number;
+        }>;
+      }
+    | undefined;
+  if (!config?.pool?.length) {
+    throw new HttpsError("failed-precondition", "This box cannot be opened yet.");
+  }
+
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+
+  const reward = await db.runTransaction(async (tx) => {
+    const [bagSnap, currencySnap] = await Promise.all([tx.get(bagRef), tx.get(currencyRef)]);
+    const owned = (bagSnap.data() ?? {})[boxItemId];
+    if (!owned || (owned.quantity ?? 0) < 1) {
+      throw new HttpsError("failed-precondition", "You do not have this box.");
+    }
+
+    const pool = config.pool.filter((entry) => entry.weight > 0 && entry.qty > 0);
+    const totalWeight = pool.reduce((sum, entry) => sum + entry.weight, 0);
+    let roll = randomInt(Math.max(1, Math.floor(totalWeight)));
+    let picked = pool[0];
+    for (const entry of pool) {
+      if (roll < entry.weight) {
+        picked = entry;
+        break;
+      }
+      roll -= entry.weight;
+    }
+
+    tx.set(bagRef, { [boxItemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
+    if (picked.kind === "currency") {
+      const key = picked.refId as CurrencyKey;
+      if (!CURRENCY_KEYS.includes(key)) throw new HttpsError("internal", "Bad box config.");
+      tx.set(
+        currencyRef,
+        { [key]: addCurrencyString(currencySnap.data()?.[key], picked.qty) },
+        { merge: true }
+      );
+    } else {
+      tx.set(
+        bagRef,
+        {
+          [picked.refId]: {
+            name: picked.name,
+            filePath: picked.filePath ?? "",
+            category: (picked as any).category ?? "other-item",
+            quantity: FieldValue.increment(Math.trunc(picked.qty)),
+          },
+        },
+        { merge: true }
+      );
+    }
+    return picked;
+  });
+
+  return { reward: { kind: reward.kind, name: reward.name, qty: reward.qty, filePath: reward.filePath ?? "" } };
 });
 
 // ---------------------------------------------------------------------------
@@ -685,6 +1027,8 @@ export const setBossBattle = onCall(async (request) => {
   }
   const member = await loadMember(uid);
 
+  let participantsToNotify: string[] = [];
+  let bossName = "";
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(threadRef(forum, threadId));
     const thread = assertOpenThread(snap);
@@ -713,6 +1057,8 @@ export const setBossBattle = onCall(async (request) => {
         excluded,
         startedAt: now,
       };
+      bossName = info.name;
+      participantsToNotify = Object.keys(thread.participants ?? {}).filter((p) => p !== uid);
       tx.update(
         threadRef(forum, threadId),
         activityUpdate(member, now, { replyCount: FieldValue.increment(1), bossBattle: boss })
@@ -749,6 +1095,14 @@ export const setBossBattle = onCall(async (request) => {
       });
     }
   });
+
+  if (participantsToNotify.length) {
+    await notifyUsers(participantsToNotify, {
+      type: "boss_battle",
+      text: `A boss battle against ${bossName} has started!`,
+      link: `/Forum/${forum}/thread/${threadId}/last`,
+    });
+  }
 
   return { ok: true };
 });

@@ -12,7 +12,13 @@ import { getPokemonImageURL } from "../../../helpers";
 import { getItems } from "../../../queries/dashboard";
 import { queryClient } from "../../../lib/react-query";
 import { callableMessage } from "../functionsClient";
-import { publishPost, saveDraft } from "../mutations";
+import {
+  DRAFT_WARNING_AT,
+  MAX_DRAFTS,
+  deleteDraft,
+  publishPost,
+  saveDraft,
+} from "../mutations";
 import { getDraft, getPendingActions, getPost, getThread } from "../queries";
 import { DiceBlock, EncounterBlock, PostCharacter, RandomBlock } from "../types";
 import CharactersPanel from "../components/composer/CharactersPanel";
@@ -49,7 +55,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const [random, setRandom] = React.useState<RandomBlock | null>(null);
   const [html, setHtml] = React.useState("");
   const [error, setError] = React.useState("");
-  const [draftSaved, setDraftSaved] = React.useState(false);
+  const [draftMessage, setDraftMessage] = React.useState("");
   const [loadedEdit, setLoadedEdit] = React.useState(false);
 
   const editor = useRichTextEditor({
@@ -156,12 +162,14 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
         ...(mode === "edit" ? { editPostId: postId } : {}),
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      if (draftId && user) await deleteDraft(user.uid, draftId);
       queryClient.invalidateQueries({ queryKey: ["forum-thread", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["forum-posts-count", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["forum-posts", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["forum-pending", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["get-items", user?.uid] });
+      queryClient.invalidateQueries({ queryKey: ["get-drafts", user?.uid] });
       navigate(`/Forum/${forum}/thread/${threadId}/last`);
     },
     onError: (err) =>
@@ -170,7 +178,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
 
   const draftMutation = useMutation({
     mutationFn: async () => {
-      await saveDraft({
+      return saveDraft({
         user: user!,
         forum,
         threadId: threadId ?? "",
@@ -179,7 +187,13 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
         html,
       });
     },
-    onSuccess: () => setDraftSaved(true),
+    onSuccess: (count) =>
+      setDraftMessage(
+        count >= DRAFT_WARNING_AT
+          ? `Draft saved — heads up, you have ${count}/${MAX_DRAFTS} drafts. You'll run out soon.`
+          : "Draft saved — find it under Dashboard → Drafts."
+      ),
+    onError: (err) => setDraftMessage((err as Error).message || "Could not save the draft."),
   });
 
   if (threadPending || !thread) {
@@ -286,9 +300,9 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
             </ForumPanel>
 
             {error && <GameResultText>{error}</GameResultText>}
-            {draftSaved && (
+            {draftMessage && (
               <Text fz={13} c="green.0">
-                Draft saved — find it under Dashboard → Drafts.
+                {draftMessage}
               </Text>
             )}
 

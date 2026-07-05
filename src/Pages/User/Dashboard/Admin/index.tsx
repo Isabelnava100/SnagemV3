@@ -9,6 +9,8 @@ export default function AdminLayout() {
     { path: "Adjust-Lists", label: "Adjust Lists" },
     { path: "Donate", label: "Give Items to Users" },
     { path: "Announcements", label: "Announcements" },
+    { path: "Permissions", label: "Permissions & XP" },
+    { path: "Mystery-Boxes", label: "Mystery Boxes" },
   ];
   const { user } = useAuth();
   if (user?.otherinfo?.permissions !== "Admin") {

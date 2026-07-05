@@ -1,13 +1,15 @@
-import { Box, Flex, Stack, Switch, TextInput, type SwitchProps } from "@mantine/core";
+import { Box, Flex, Stack, Switch, Text, TextInput, type SwitchProps } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+import { Link } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { Settings } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
+import { getNotifications, markNotificationsRead } from "../../../../queries/game";
 import { getSettings } from "../../../../queries/settings";
 
 interface CustomSwitchProps extends SwitchProps {}
@@ -77,6 +79,85 @@ function CreateNewDiscordTicket() {
   );
 }
 
+/**
+ * In-app notification inbox (Q7): bookmarked-thread posts, @mentions, boss
+ * battles, rewards and currency grants — produced by the Cloud Functions.
+ * Discord delivery is a later, optional channel once accounts are linked.
+ */
+function NotificationsInbox() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data: notifications, isPending } = useQuery({
+    queryKey: ["notifications", user?.uid],
+    queryFn: () => getNotifications(user!.uid),
+    enabled: !!user,
+  });
+
+  const markAllRead = useMutation({
+    mutationFn: async () => {
+      const unread = (notifications ?? []).filter((n) => !n.read).map((n) => n.id);
+      if (unread.length && user) await markNotificationsRead(user.uid, unread);
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.uid] }),
+  });
+
+  if (isPending || !notifications?.length) return null;
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  return (
+    <Stack gap={8} mb={10}>
+      <Flex justify="space-between" align="center">
+        <Text c="white" fw={600} fz={16}>
+          Inbox{unreadCount ? ` (${unreadCount} unread)` : ""}
+        </Text>
+        {unreadCount > 0 && (
+          <GradientButtonSecondary
+            size="xs"
+            radius="xl"
+            loading={markAllRead.isPending}
+            onClick={() => markAllRead.mutateAsync()}
+          >
+            Mark All Read
+          </GradientButtonSecondary>
+        )}
+      </Flex>
+      <Stack gap={4}>
+        {notifications.map((notification) => (
+          <Link
+            key={notification.id}
+            to={notification.link || "/Dashboard"}
+            style={{ textDecoration: "none" }}
+            onClick={() => {
+              if (!notification.read && user) {
+                markNotificationsRead(user.uid, [notification.id]).then(() =>
+                  queryClient.invalidateQueries({ queryKey: ["notifications", user.uid] })
+                );
+              }
+            }}
+          >
+            <Flex
+              px={10}
+              py={6}
+              gap={8}
+              align="center"
+              style={{
+                borderRadius: 8,
+                background: notification.read ? "#3C3A3C" : "#1E1D20",
+                borderLeft: notification.read ? undefined : "3px solid #17F1F0",
+              }}
+            >
+              <Text fz={13} c={notification.read ? "dimmed" : "white"}>
+                {notification.text}
+              </Text>
+            </Flex>
+          </Link>
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
+
 export default function Notifications() {
   const { user } = useAuth();
   const [isFirstTime, setFirstTime] = React.useState(true);
@@ -141,6 +222,7 @@ export default function Notifications() {
   return (
     <Box className="bg-[#403C43] max-w-full flex-1 overflow-auto p-4 rounded-[22px]">
       <Stack>
+        <NotificationsInbox />
         <CustomSwitch
           disabled={isProcessing}
           {...getInputProps("siteNotifications", { type: "checkbox" })}
