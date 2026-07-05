@@ -145,7 +145,7 @@ const CustomSelectItem = React.forwardRef<HTMLDivElement, ItemProps>(
   ({ image, label, ...others }: ItemProps, ref) => (
     <div ref={ref} {...others}>
       <Group wrap="nowrap">
-        <Avatar size="lg" src={image} />
+        <Avatar size="lg" src={image} alt={label} />
         <div>
           <Text size="lg" color="white">
             {label}
@@ -161,7 +161,7 @@ function PokemonList(props: { pokemons: string[] }) {
   return (
     <Flex wrap="wrap" gap={8}>
       {pokemons.map((pokemonSlug) => (
-        <Avatar key={pokemonSlug} src={getPokemonImageURL(pokemonSlug)} size="lg" />
+        <Avatar key={pokemonSlug} src={getPokemonImageURL(pokemonSlug)} alt={`${pokemonSlug} sprite`} size="lg" />
       ))}
     </Flex>
   );
@@ -354,7 +354,7 @@ function DuplicateListItem(props: { listItem: AdminPokemonList }) {
       loading={isLoading}
       onClick={handleDuplicateListItem}
       size="xs"
-      rightSection={<Image src={DocumentCopyIcon} />}
+      rightSection={<Image src={DocumentCopyIcon} alt="Duplicate" />}
     >
       Duplicate
     </GradientButtonPrimary>
@@ -414,7 +414,7 @@ function SingleListItem(props: { list: AdminPokemonList }) {
           radius="lg"
           rightSection={
             <span style={{ width: 14, height: 14, display: "inline-flex" }}>
-              <Image src={Edit2} w="100%" h="100%" fit="contain" />
+              <Image src={Edit2} alt="Edit" w="100%" h="100%" fit="contain" />
             </span>
           }
         >

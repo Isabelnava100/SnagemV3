@@ -188,6 +188,7 @@ function SingleBookmark(props: Bookmark) {
           >
             <Avatar
               size="xl"
+              alt={`${title} thread avatar`}
               sx={{ objectFit: "cover", borderRadius: "100%" }}
               src={DefaultCharacterAvatarSrc}
             />

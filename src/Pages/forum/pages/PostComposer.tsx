@@ -285,6 +285,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                 <Flex align="center" gap={10}>
                   <Avatar
                     src={getPokemonImageURL(thread.bossBattle.slug)}
+                    alt={`${thread.bossBattle.name} sprite`}
                     size={48}
                     radius="xl"
                   />

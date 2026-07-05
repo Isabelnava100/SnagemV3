@@ -58,7 +58,7 @@ const BookmarkModule: React.FC = () => {
   }, []);
   return (
     <div style={{ display: "flex", gap: 12, flexDirection: "column", alignItems: "center" }}>
-      <img src={myAvatar} alt="myavatarimage" height="100" width="100" />
+      <img src={myAvatar} alt="Your avatar" height="100" width="100" />
       <div style={{ textAlign: "center", width: "50%" }}>
         <Title order={5}>Select Your Avatar:</Title>
         <p style={{ margin: 0 }}>(Pending function)</p>

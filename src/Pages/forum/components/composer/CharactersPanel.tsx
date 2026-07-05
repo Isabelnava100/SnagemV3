@@ -107,7 +107,7 @@ export default function CharactersPanel(props: {
               </Text>
               <Group gap={6}>
                 {character.pokemon.map((p) => (
-                  <Avatar key={p.slug} src={getPokemonImageURL(p.slug)} size={34} radius="xl" bg="#2b2a2b" title={p.name} />
+                  <Avatar key={p.slug} src={getPokemonImageURL(p.slug)} alt={`${p.name} sprite`} size={34} radius="xl" bg="#2b2a2b" title={p.name} />
                 ))}
               </Group>
             </Stack>
@@ -162,6 +162,7 @@ export default function CharactersPanel(props: {
                           <Avatar
                             key={p.slug}
                             src={getPokemonImageURL(p.slug)}
+                            alt={`${p.name} sprite`}
                             size={34}
                             radius="xl"
                             bg="#2b2a2b"

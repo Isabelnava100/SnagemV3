@@ -117,7 +117,12 @@ export default function PublicProfile() {
   return (
     <Container size="sm" style={{ marginTop: 60, paddingBottom: 100 }}>
       <Stack align="center" gap={12}>
-        <Avatar src={profile.avatar || undefined} size={120} radius="100%" />
+        <Avatar
+          src={profile.avatar || undefined}
+          alt={`${profile.username ?? "User"} avatar`}
+          size={120}
+          radius="100%"
+        />
         <Title order={1} c="white" fw={400}>
           {profile.username}
         </Title>
@@ -163,7 +168,12 @@ export default function PublicProfile() {
             <Group justify="center" gap={20} wrap="wrap">
               {featuredCharacter && (
                 <Stack gap={4} align="center">
-                  <Avatar src={featuredCharacter.imageURL || undefined} size={72} radius="xl" />
+                  <Avatar
+                    src={featuredCharacter.imageURL || undefined}
+                    alt={`${featuredCharacter.name ?? "Character"} avatar`}
+                    size={72}
+                    radius="xl"
+                  />
                   <Text fz={12} c="white">
                     {featuredCharacter.name}
                   </Text>
@@ -176,6 +186,7 @@ export default function PublicProfile() {
                 <Stack gap={4} align="center">
                   <Avatar
                     src={getPokemonImageURL(featuredPokemon.image_slug)}
+                    alt={`${featuredPokemon.name ?? "Pokemon"} sprite`}
                     size={72}
                     radius="xl"
                     bg="#2b2a2b"
@@ -195,6 +206,7 @@ export default function PublicProfile() {
                       <Avatar
                         key={p.id}
                         src={getPokemonImageURL(p.image_slug)}
+                        alt={`${p.name ?? "Pokemon"} sprite`}
                         size={26}
                         radius="xl"
                         bg="#2b2a2b"

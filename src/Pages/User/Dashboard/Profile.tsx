@@ -265,7 +265,7 @@ function Avatars() {
               <GradientButtonPrimary
                 disabled={isProcessing || !canUpload}
                 loading={isProcessing}
-                rightSection={<Image src={Upload} />}
+                rightSection={<Image src={Upload} alt="Upload" />}
               >
                 Upload
               </GradientButtonPrimary>
@@ -456,7 +456,7 @@ function CoverBackgrounds() {
               <GradientButtonPrimary
                 disabled={isProcessing || !canUpload}
                 loading={isProcessing}
-                rightSection={<Image src={Upload} />}
+                rightSection={<Image src={Upload} alt="Upload" />}
               >
                 Upload
               </GradientButtonPrimary>

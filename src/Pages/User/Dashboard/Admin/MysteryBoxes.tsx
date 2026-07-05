@@ -69,7 +69,7 @@ export default function MysteryBoxes() {
     const item = itemData.find((i) => i.id === option.value);
     return (
       <Group gap={8} wrap="nowrap">
-        {item && <Avatar src={getItemImageURL(item.filePath)} size={26} />}
+        {item && <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={26} />}
         <Text fz={14} c="white">
           {option.label}
         </Text>
@@ -163,6 +163,7 @@ export default function MysteryBoxes() {
           boxItemId ? (
             <Avatar
               src={getItemImageURL(itemData.find((i) => i.id === boxItemId)?.filePath ?? "")}
+              alt={`${itemData.find((i) => i.id === boxItemId)?.name ?? "Box"} icon`}
               size={22}
             />
           ) : undefined
@@ -178,6 +179,7 @@ export default function MysteryBoxes() {
           <Group gap={8}>
             <Avatar
               src={getItemImageURL(itemData.find((i) => i.id === boxItemId)?.filePath ?? "")}
+              alt={`${itemData.find((i) => i.id === boxItemId)?.name ?? "Box"} icon`}
               size={34}
             />
             <Text c="white" fw={600}>
@@ -193,7 +195,7 @@ export default function MysteryBoxes() {
             {pool.map((entry, index) => (
               <Group key={index} gap={8}>
                 {entry.kind === "item" && entry.filePath && (
-                  <Avatar src={getItemImageURL(entry.filePath)} size={22} />
+                  <Avatar src={getItemImageURL(entry.filePath)} alt={entry.name} size={22} />
                 )}
                 <Text fz={13} c="white">
                   {entry.qty}x {entry.name}

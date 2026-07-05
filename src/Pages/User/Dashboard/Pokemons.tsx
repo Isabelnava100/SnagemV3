@@ -344,7 +344,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
                     isOverLg ? loadTeamForEdit(team) : navigate(`/Dashboard/Pokemon/${team.id}`)
                   }
                   size="xs"
-                  rightSection={<Image src={Edit2} />}
+                  rightSection={<Image src={Edit2} alt="Edit" />}
                 >
                   Edit
                 </GradientButtonPrimary>
@@ -513,7 +513,7 @@ function OwnedPokemons(props: EditingProps) {
           </Group>
           <Popover position="bottom-end" withinPortal withArrow shadow="md">
             <Popover.Target>
-              <GradientButtonPrimary rightSection={<Image src={FileSearch} />}>
+              <GradientButtonPrimary rightSection={<Image src={FileSearch} alt="Adjust filters" />}>
                 {activeFilterCount ? `Filters (${activeFilterCount})` : "Adjust filters"}
               </GradientButtonPrimary>
             </Popover.Target>
@@ -695,6 +695,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
       <Group>
         <Avatar
           src={getPokemonImageURL(pokemon.image_slug)}
+          alt={`${pokemon.name ?? pokemon.species ?? "Pokemon"} sprite`}
           w={60}
           h={60}
           radius="xl"

@@ -300,7 +300,7 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
     <UploadAndCropImage
       setStateAction={setFileBlob}
       target={
-        <GradientButtonPrimary loading={isProcessing} rightSection={<Image src={Upload} />}>
+        <GradientButtonPrimary loading={isProcessing} rightSection={<Image src={Upload} alt="Upload" />}>
           Upload
         </GradientButtonPrimary>
       }
@@ -347,6 +347,7 @@ function SingleCharacter(props: Character) {
             style={{ border: "4px solid #FFFFFF", borderRadius: "100%" }}
             w={150}
             src={form.values.imageURL || DefaultCharacterImage}
+            alt={`${form.values.name ?? "Character"} avatar`}
             h={150}
             sx={{ objectFit: "cover" }}
           />

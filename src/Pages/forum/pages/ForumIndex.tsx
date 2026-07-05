@@ -40,7 +40,7 @@ function ParticipantAvatars(props: { thread: ForumThread }) {
   return (
     <Avatar.Group spacing="xs">
       {participants.slice(0, 4).map((participant, i) => (
-        <Avatar key={i} src={participant.avatar || undefined} size={26} radius="xl" />
+        <Avatar key={i} src={participant.avatar || undefined} alt={`${participant.name ?? "User"} avatar`} size={26} radius="xl" />
       ))}
       {participants.length > 4 && (
         <Avatar size={26} radius="xl">

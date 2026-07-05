@@ -31,7 +31,12 @@ function CharacterStrip(props: { character: PostCharacter }) {
       bg="#3C3A3C"
       style={{ borderRadius: 10, flexShrink: 0 }}
     >
-      <Avatar src={character.imageURL || undefined} size={54} radius="xl" />
+      <Avatar
+        src={character.imageURL || undefined}
+        alt={`${character.name ?? "Character"} avatar`}
+        size={54}
+        radius="xl"
+      />
       <Stack gap={4}>
         <Text fz={14} c="white" fw={500}>
           {character.name}
@@ -76,7 +81,12 @@ function AuthorPopover(props: {
       </Popover.Target>
       <Popover.Dropdown bg="#282727" p={10}>
         <Group gap={10} wrap="nowrap" align="flex-start">
-          <Avatar src={post.avatar || undefined} size={46} radius="xl" />
+          <Avatar
+            src={post.avatar || undefined}
+            alt={`${post.owner ?? "User"} avatar`}
+            size={46}
+            radius="xl"
+          />
           <Stack gap={2}>
             <Text fz={13} fw={600} c="white">
               {post.owner}
@@ -112,7 +122,12 @@ export function GameBlocks(props: { post: ForumPost }) {
         <GameResultText>
           A boss encounter is present in this post... it&apos;s a {blocks.boss.name}!
         </GameResultText>
-        <Avatar src={getPokemonImageURL(blocks.boss.slug)} size={40} radius="xl" />
+        <Avatar
+          src={getPokemonImageURL(blocks.boss.slug)}
+          alt={`${blocks.boss.name} sprite`}
+          size={40}
+          radius="xl"
+        />
       </Flex>
     );
   }
@@ -125,7 +140,12 @@ export function GameBlocks(props: { post: ForumPost }) {
             : `An encounter has been chosen... it's a ${enc.name}!`}
           {!enc.catchable && " (It cannot be caught.)"}
         </GameResultText>
-        <Avatar src={getPokemonImageURL(enc.slug)} size={36} radius="xl" />
+        <Avatar
+          src={getPokemonImageURL(enc.slug)}
+          alt={`${enc.name} sprite`}
+          size={36}
+          radius="xl"
+        />
       </Flex>
     );
   });
@@ -137,7 +157,7 @@ export function GameBlocks(props: { post: ForumPost }) {
     const itemFilePath = catalog?.filePath ?? item.filePath;
     cards.push(
       <Flex key={`item${i}`} align="center" gap={8} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
-        <Avatar src={getItemImageURL(itemFilePath)} size={28} />
+        <Avatar src={getItemImageURL(itemFilePath)} alt={itemName} size={28} />
         <Stack gap={2}>
           <GameResultText>
             {item.qty > 1 ? `${item.qty}x ` : "A "}
@@ -191,7 +211,12 @@ function BossAnnouncement(props: { post: ForumPost }) {
   return (
     <Box p={16} mt={10} bg="#332f33" style={{ borderRadius: 10 }}>
       <Flex align="center" gap={12}>
-        <Avatar src={getPokemonImageURL(boss.slug)} size={64} radius="xl" />
+        <Avatar
+          src={getPokemonImageURL(boss.slug)}
+          alt={`${boss.name} sprite`}
+          size={64}
+          radius="xl"
+        />
         <Stack gap={4}>
           <GameResultText>
             {starting
@@ -236,7 +261,12 @@ export default function PostCard(props: {
         wrap="wrap"
       >
         <Group gap={8}>
-          <Avatar src={post.avatar || undefined} size={26} radius="xl" />
+          <Avatar
+            src={post.avatar || undefined}
+            alt={`${post.owner ?? "User"} avatar`}
+            size={26}
+            radius="xl"
+          />
           <AuthorPopover post={post} forum={forum} threadId={threadId} />
           {(post.badges ?? []).filter(Boolean).map((badge) => (
             <Badge

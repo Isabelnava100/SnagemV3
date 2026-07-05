@@ -32,7 +32,7 @@ export function UsedItemsPanel(props: { items: ItemUsedBlock[] }) {
       <Stack gap={6}>
         {props.items.map((item, i) => (
           <Group key={`${item.itemId}${i}`} gap={8}>
-            <Avatar src={getItemImageURL(item.filePath)} size={24} />
+            <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={24} />
             <Text fz={13} c="white">
               {item.name} x{item.qty}
             </Text>
@@ -113,7 +113,7 @@ export default function UseItemsPanel(props: {
                 <Stack key={item.id} gap={2}>
                   <Flex justify="space-between" align="center" gap={8}>
                     <Group gap={6} wrap="nowrap">
-                      <Avatar src={getItemImageURL(item.filePath)} size={22} />
+                      <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={22} />
                       <Text fz={13} c={blocked ? "dimmed" : "white"}>
                         {item.name} x{item.quantity}
                       </Text>

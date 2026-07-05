@@ -294,7 +294,7 @@ export default function HostMenu() {
                 <Text fz={18} c="white">
                   It&apos;s a Boss Battle!
                 </Text>
-                <Avatar src={getPokemonImageURL(activeBoss.slug)} size={72} radius="xl" />
+                <Avatar src={getPokemonImageURL(activeBoss.slug)} alt={`${activeBoss.name} sprite`} size={72} radius="xl" />
                 <GameResultText>
                   {activeBoss.name} is active
                   {activeBoss.excluded.length
@@ -322,7 +322,7 @@ export default function HostMenu() {
                   styles={{ input: { background: "#2E2D2E" } }}
                 />
                 {bossSlug && (
-                  <Avatar src={getPokemonImageURL(bossSlug)} size={64} radius="xl" />
+                  <Avatar src={getPokemonImageURL(bossSlug)} alt={`${bossSlug} sprite`} size={64} radius="xl" />
                 )}
                 <Textarea
                   label="Description"

@@ -39,7 +39,7 @@ function renderItemOption({ option }: { option: { value: string; label: string }
   const item = itemData.find((i) => i.id === option.value);
   return (
     <Group gap={8} wrap="nowrap">
-      {item && <Avatar src={getItemImageURL(item.filePath)} size={26} />}
+      {item && <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={26} />}
       <Text fz={14} c="white">
         {option.label}
       </Text>
@@ -320,7 +320,7 @@ export default function Donate() {
                 <Stack gap="xs">
                   {toUsers?.map((user) => (
                     <Group key={user.id} gap={6}>
-                      <Avatar sx={{ borderRadius: "100%" }} />
+                      <Avatar alt={`${user.username ?? "User"} avatar`} sx={{ borderRadius: "100%" }} />
                       <Text c="white" fz={16} fw={400} key={user.id}>
                         {user.username}
                       </Text>

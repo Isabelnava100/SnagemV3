@@ -277,7 +277,7 @@ export default function ThreadRewards() {
                   <Box key={uid} p={10} bg="#211f21" style={{ borderRadius: 10 }}>
                     <Flex justify="space-between" align="center" gap={8} wrap="wrap">
                       <Group gap={8}>
-                        <Avatar src={participant.avatar || undefined} size={30} radius="xl" />
+                        <Avatar src={participant.avatar || undefined} alt={`${participant.name ?? "User"} avatar`} size={30} radius="xl" />
                         <Text c="white" fz={14} fw={600}>
                           {participant.name}
                         </Text>
@@ -327,7 +327,7 @@ export default function ThreadRewards() {
                           variant="light"
                           color="pink.0"
                           leftSection={
-                            <Avatar src={getItemImageURL(item.filePath)} size={14} />
+                            <Avatar src={getItemImageURL(item.filePath)} alt={`${item.name ?? "Item"} icon`} size={14} />
                           }
                           rightSection={
                             <span

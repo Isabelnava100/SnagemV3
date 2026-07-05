@@ -91,7 +91,7 @@ export const App = memo(() => {
                 Welcome, {user?.displayName}
               </Title>
               <ActionIcon variant="transparent" size={35} h="auto">
-                <Image src={Bell} w={35} />
+                <Image src={Bell} alt="Notifications" w={35} />
               </ActionIcon>
             </Flex>
           ) : ( 
@@ -106,7 +106,7 @@ export const App = memo(() => {
                 variant="subtle"
                 sx={{ color: "#8C2595" }}
                 color="#8C2595"
-                rightIcon={<Image src={DirectRight} />}
+                rightIcon={<Image src={DirectRight} alt="Login" />}
               >
                 Login
               </Button>
