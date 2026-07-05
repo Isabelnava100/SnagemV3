@@ -20,6 +20,8 @@ import { pokemonData } from "../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "../../helpers";
 import { resolveListSlugs } from "../forum/queries";
 import { getPokemonLists } from "../../queries/admin";
+import FaqTab from "./faq";
+import MovesTab from "./moves";
 
 /**
  * Public data library. Any visitor (signed in or not) can browse the system's
@@ -223,7 +225,9 @@ function ListsTab() {
 const TABS = [
   { value: "pokedex", label: "Pokedex", content: <PokedexTab /> },
   { value: "items", label: "Items", content: <ItemsTab /> },
+  { value: "moves", label: "Moves", content: <MovesTab /> },
   { value: "lists", label: "Encounter Lists", content: <ListsTab /> },
+  { value: "faq", label: "FAQ", content: <FaqTab /> },
 ];
 
 export default function Library() {
