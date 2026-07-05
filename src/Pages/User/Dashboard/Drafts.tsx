@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Badge,
+  Box,
   Button,
   Flex,
   Group,
@@ -174,13 +175,18 @@ function DeleteDraft(props: { draftId: string }) {
 function SingleDraft(props: Draft) {
   const { isOverSm } = useMediaQuery();
   return (
-    <Paper bg="#3E3D3D" radius={15} py={0} sx={{ overflow: "hidden" }}>
+    <Paper bg="#3E3D3D" radius={15} py={0} pos="relative" sx={{ overflow: "hidden" }}>
+      {/* Delete pinned to the card's top-right corner. */}
+      <Box style={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}>
+        <DeleteDraft draftId={props.id} />
+      </Box>
       <Flex
         justify="space-between"
         sx={{ flexDirection: isOverSm ? "row" : "column" }}
         align="stretch"
       >
-        <Stack py={10} px={18} gap={6}>
+        {/* pr clears the absolute delete so the title never runs under it. */}
+        <Stack py={10} pl={18} pr={52} gap={6}>
           <Title order={3} size={20} c="white">
             {props.title_thread}
           </Title>
@@ -212,22 +218,19 @@ function SingleDraft(props: Draft) {
             py={8}
             gap={isOverSm ? 10 : 15}
           >
-            <Group gap={8} wrap="nowrap">
-              <ActionIcon
-                variant="transparent"
-                size="xl"
-                component={Link}
-                to={
-                  props.thread_id && props.thread_id !== "new-thread"
-                    ? `/Forum/${props.location_db}/thread/${props.thread_id}/post?draft=${props.id}`
-                    : `/Forum/${props.location_db || "Main-Forum"}/new?draft=${props.id}`
-                }
-                title="Continue this draft"
-              >
-                <Image src={Edit} alt="Draft icon" width={45} />
-              </ActionIcon>
-              <DeleteDraft draftId={props.id} />
-            </Group>
+            <ActionIcon
+              variant="transparent"
+              size="xl"
+              component={Link}
+              to={
+                props.thread_id && props.thread_id !== "new-thread"
+                  ? `/Forum/${props.location_db}/thread/${props.thread_id}/post?draft=${props.id}`
+                  : `/Forum/${props.location_db || "Main-Forum"}/new?draft=${props.id}`
+              }
+              title="Continue this draft"
+            >
+              <Image src={Edit} alt="Draft icon" width={45} />
+            </ActionIcon>
             <Text ta="end" c="#151515" fw={500}>
               Draft saved at:
               <br />
