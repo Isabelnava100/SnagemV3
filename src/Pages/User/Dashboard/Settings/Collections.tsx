@@ -494,19 +494,9 @@ function EmojiCollection() {
                     </Stack>
                     <Box sx={{ flexShrink: 0 }}>
                       {existingEmoji ? (
-                        <Image
-                          src={CheckCircleIcon}
-                          alt="Check circle icon"
-                          width={20}
-                          height={20}
-                        />
+                        <Image src={CheckCircleIcon} alt="Check circle icon" w={22} h={22} fit="contain" />
                       ) : (
-                        <Image
-                          src={CrossCircleIcon}
-                          alt="Cross circle icon"
-                          width={20}
-                          height={20}
-                        />
+                        <Image src={CrossCircleIcon} alt="Cross circle icon" w={22} h={22} fit="contain" />
                       )}
                     </Box>
                   </Flex>
@@ -586,14 +576,14 @@ function BadgesCollection() {
                         <Text fz={14} fw={500} c="#22B573">
                           You have this badge
                         </Text>
-                        <Image src={CheckCircleIcon} alt="Check circle icon" width={20} />
+                        <Image src={CheckCircleIcon} alt="Check circle icon" w={22} h={22} fit="contain" />
                       </>
                     ) : (
                       <>
                         <Text fz={14} fw={500} c="#E35C65">
                           You don&apos;t have this badge
                         </Text>
-                        <Image src={CrossCircleIcon} alt="Cross circle icon" width={20} />
+                        <Image src={CrossCircleIcon} alt="Cross circle icon" w={22} h={22} fit="contain" />
                       </>
                     )}
                   </Flex>
