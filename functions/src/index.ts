@@ -1498,6 +1498,62 @@ export const onImportSubmitted = onDocumentWritten("importRequests/{uid}", async
   });
 });
 
+/**
+ * One-off admin maintenance: normalize legacy forum threads so the post/roll
+ * flow (which expects `closed`, `restricted`, `allowedPosters`, `title`,
+ * `createdBy` and, for the host menu, `hostUid`) works on old data. Backfills
+ * `hostUid` from the creator's username. Only when `deleteBroken` is passed
+ * does it remove threads that have neither a title nor a creator (unusable
+ * shells). Everything else is a non-destructive merge. Admin only.
+ */
+export const repairLegacyThreads = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isAdmin(member)) throw new HttpsError("permission-denied", "Admins only.");
+  const deleteBroken = request.data?.deleteBroken === true;
+
+  // username -> uid, so legacy threads (no hostUid) can be linked to a creator.
+  const usersSnap = await db.collection("users").get();
+  const uidByUsername = new Map<string, string>();
+  usersSnap.forEach((d) => {
+    const uname = d.data().username;
+    if (typeof uname === "string" && uname) uidByUsername.set(uname, d.id);
+  });
+
+  let scanned = 0;
+  let normalized = 0;
+  let deleted = 0;
+  const forumRefs = await db.collection("forum").listDocuments();
+  for (const forumRef of forumRefs) {
+    const threadsSnap = await forumRef.collection("threads").get();
+    for (const threadDoc of threadsSnap.docs) {
+      scanned++;
+      const data = threadDoc.data();
+      const isBroken = !data.title && !data.createdBy;
+      if (isBroken && deleteBroken) {
+        await threadDoc.ref.delete();
+        deleted++;
+        continue;
+      }
+      const patch: Record<string, unknown> = {};
+      if (typeof data.closed !== "boolean") patch.closed = !!data.closed;
+      if (typeof data.restricted !== "boolean") patch.restricted = !!data.restricted;
+      if (!Array.isArray(data.allowedPosters)) patch.allowedPosters = [];
+      if (typeof data.title !== "string") patch.title = String(data.title ?? "Untitled thread");
+      if (typeof data.createdBy !== "string") patch.createdBy = String(data.createdBy ?? "");
+      if (!data.hostUid && typeof data.createdBy === "string") {
+        const resolved = uidByUsername.get(data.createdBy);
+        if (resolved) patch.hostUid = resolved;
+      }
+      if (Object.keys(patch).length) {
+        await threadDoc.ref.set(patch, { merge: true });
+        normalized++;
+      }
+    }
+  }
+  return { scanned, normalized, deleted };
+});
+
 /** Ping the reward-review group when a thread is closed (rewards may be due). */
 export const onThreadClosed = onDocumentUpdated(
   "forum/{forum}/threads/{threadId}",

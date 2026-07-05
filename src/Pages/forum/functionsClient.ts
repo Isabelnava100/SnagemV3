@@ -81,6 +81,12 @@ export const callOpenMysteryBox = (itemId: string) =>
     { itemId }
   );
 
+/** Admin maintenance: normalize (and optionally prune) legacy forum threads. */
+export const callRepairLegacyThreads = (deleteBroken: boolean) =>
+  call<{ scanned: number; normalized: number; deleted: number }>("repairLegacyThreads", {
+    deleteBroken,
+  });
+
 export const callSetBossBattle = (input: {
   forum: string;
   threadId: string;
