@@ -2,12 +2,17 @@ import {
   ActionIcon,
   Avatar,
   Badge,
+  Combobox,
   Group,
+  Input,
+  InputBase,
   NumberInput,
   Select,
   Stack,
   Text,
+  TextInput,
   Title,
+  useCombobox,
 } from "@mantine/core";
 import { IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,6 +36,112 @@ const CURRENCY_OPTIONS = [
 ];
 
 /**
+ * Controlled item combobox. Unlike a plain Select it stays open until an
+ * option is submitted (closeOnClickOutside is off), so on mobile you can
+ * scroll the list without a stray tap dismissing it. Tap the field again
+ * or press Escape to close without choosing.
+ */
+function ItemPicker({
+  value,
+  onChange,
+  placeholder,
+  size,
+  w,
+}: {
+  value: string | null;
+  onChange: (v: string) => void;
+  placeholder: string;
+  size?: string;
+  w?: number | string;
+}) {
+  const [opened, setOpened] = React.useState(false);
+  // Controlled open state: honor requests to open, ignore Mantine's
+  // auto-close on outside click/blur so scrolling the list on mobile can't
+  // dismiss it. It only closes on an explicit toggle or an option submit.
+  const combobox = useCombobox({
+    opened,
+    onOpenedChange: (o) => {
+      if (o) setOpened(true);
+    },
+  });
+  const [search, setSearch] = React.useState("");
+
+  const selected = value ? itemData.find((i) => i.id === value) : undefined;
+
+  const filtered = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const opts = itemData
+      .map((item) => ({ value: item.id, label: item.name, filePath: item.filePath }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    const list = q ? opts.filter((o) => o.label.toLowerCase().includes(q)) : opts;
+    return list.slice(0, 100);
+  }, [search]);
+
+  return (
+    <Combobox
+      store={combobox}
+      withinPortal
+      onOptionSubmit={(val) => {
+        onChange(val);
+        setSearch("");
+        setOpened(false);
+      }}
+    >
+      <Combobox.Target>
+        <InputBase
+          component="button"
+          type="button"
+          pointer
+          size={size}
+          w={w}
+          rightSection={<Combobox.Chevron />}
+          rightSectionPointerEvents="none"
+          leftSection={
+            selected ? (
+              <Avatar src={getItemImageURL(selected.filePath)} alt={`${selected.name} icon`} size={22} />
+            ) : undefined
+          }
+          onClick={() => setOpened((o) => !o)}
+          styles={{ input: { background: "#2E2D2E" } }}
+        >
+          {selected ? (
+            <Text fz={size === "xs" ? 12 : 14} c="white" truncate>
+              {selected.name}
+            </Text>
+          ) : (
+            <Input.Placeholder>{placeholder}</Input.Placeholder>
+          )}
+        </InputBase>
+      </Combobox.Target>
+
+      <Combobox.Dropdown>
+        <Combobox.Search
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          placeholder="Search items"
+        />
+        <Combobox.Options mah={320} style={{ overflowY: "auto" }}>
+          {filtered.length ? (
+            filtered.map((o) => (
+              <Combobox.Option value={o.value} key={o.value}>
+                <Group gap={8} wrap="nowrap">
+                  <Avatar src={getItemImageURL(o.filePath)} alt={o.label} size={26} />
+                  <Text fz={14} c="white">
+                    {o.label}
+                  </Text>
+                </Group>
+              </Combobox.Option>
+            ))
+          ) : (
+            <Combobox.Empty>No items found</Combobox.Empty>
+          )}
+        </Combobox.Options>
+      </Combobox.Dropdown>
+    </Combobox>
+  );
+}
+
+/**
  * Mystery box configuration (Q8): pick which catalog item acts as a box
  * (its sprite is the box image), then define the reward pool with drop
  * weights. Opening happens through the openMysteryBox Cloud Function.
@@ -44,6 +155,7 @@ export default function MysteryBoxes() {
   });
 
   const [boxItemId, setBoxItemId] = React.useState<string | null>(null);
+  const [boxName, setBoxName] = React.useState("");
   const [pool, setPool] = React.useState<MysteryBoxPoolEntry[]>([]);
   const [loadedFor, setLoadedFor] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState("");
@@ -54,32 +166,12 @@ export default function MysteryBoxes() {
   const [entryQty, setEntryQty] = React.useState(1);
   const [entryWeight, setEntryWeight] = React.useState(10);
 
-  // The catalog is ordered balls-first; sort alphabetically so browsing the
-  // dropdown (without searching) surfaces the whole catalog, not just balls.
-  const itemOptions = React.useMemo(
-    () =>
-      itemData
-        .map((item) => ({ value: item.id, label: item.name }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    []
-  );
-
-  // Visual option: show the item's sprite next to its name in the dropdown.
-  const renderItemOption = ({ option }: { option: { value: string; label: string } }) => {
-    const item = itemData.find((i) => i.id === option.value);
-    return (
-      <Group gap={8} wrap="nowrap">
-        {item && <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={26} />}
-        <Text fz={14} c="white">
-          {option.label}
-        </Text>
-      </Group>
-    );
-  };
-
   React.useEffect(() => {
     if (!boxItemId || loadedFor === boxItemId) return;
     setPool(boxes?.[boxItemId]?.pool ?? []);
+    // Prefill the name from a saved box, else default to the item's own name.
+    const itemName = itemData.find((i) => i.id === boxItemId)?.name ?? "";
+    setBoxName(boxes?.[boxItemId]?.name ?? itemName);
     setLoadedFor(boxItemId);
     setMessage("");
   }, [boxItemId, boxes, loadedFor]);
@@ -112,8 +204,7 @@ export default function MysteryBoxes() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const info = itemData.find((i) => i.id === boxItemId);
-      await saveMysteryBox(boxItemId!, { name: info?.name ?? boxItemId!, pool });
+      await saveMysteryBox(boxItemId!, { name: boxName.trim(), pool });
     },
     onSuccess: () => {
       setMessage("Box saved. It can now be opened.");
@@ -153,25 +244,10 @@ export default function MysteryBoxes() {
           ))}
         </Group>
       )}
-      <Select
+      <ItemPicker
         placeholder="Pick the box item (search the catalog)"
-        searchable
-        limit={100}
-        data={itemOptions}
-        renderOption={renderItemOption}
-        leftSection={
-          boxItemId ? (
-            <Avatar
-              src={getItemImageURL(itemData.find((i) => i.id === boxItemId)?.filePath ?? "")}
-              alt={`${itemData.find((i) => i.id === boxItemId)?.name ?? "Box"} icon`}
-              size={22}
-            />
-          ) : undefined
-        }
         value={boxItemId}
         onChange={setBoxItemId}
-        maxDropdownHeight={320}
-        styles={{ input: { background: "#2E2D2E" } }}
       />
 
       {boxItemId && (
@@ -186,6 +262,16 @@ export default function MysteryBoxes() {
               {itemData.find((i) => i.id === boxItemId)?.name}
             </Text>
           </Group>
+
+          <TextInput
+            label="Box name"
+            required
+            placeholder="Name shown to players (e.g. Starter Surprise Box)"
+            value={boxName}
+            onChange={(e) => setBoxName(e.currentTarget.value)}
+            maxLength={60}
+            styles={{ input: { background: "#2E2D2E" } }}
+          />
 
           {/* Pool */}
           <Text fz={13} fw={700} c="white" tt="uppercase">
@@ -238,19 +324,25 @@ export default function MysteryBoxes() {
               size="xs"
               styles={{ input: { background: "#2E2D2E" } }}
             />
-            <Select
-              placeholder={entryKind === "item" ? "Search items" : "Currency"}
-              searchable={entryKind === "item"}
-              limit={100}
-              data={entryKind === "item" ? itemOptions : CURRENCY_OPTIONS}
-              renderOption={entryKind === "item" ? renderItemOption : undefined}
-              maxDropdownHeight={320}
-              value={entryRef}
-              onChange={setEntryRef}
-              w={200}
-              size="xs"
-              styles={{ input: { background: "#2E2D2E" } }}
-            />
+            {entryKind === "item" ? (
+              <ItemPicker
+                placeholder="Search items"
+                value={entryRef}
+                onChange={setEntryRef}
+                size="xs"
+                w={200}
+              />
+            ) : (
+              <Select
+                placeholder="Currency"
+                data={CURRENCY_OPTIONS}
+                value={entryRef}
+                onChange={setEntryRef}
+                w={200}
+                size="xs"
+                styles={{ input: { background: "#2E2D2E" } }}
+              />
+            )}
             <Group gap={4}>
               <Text fz={12} c="white">
                 Qty:
@@ -282,6 +374,14 @@ export default function MysteryBoxes() {
             </GradientButtonSecondary>
           </Group>
 
+          <Text fz={12} c="dimmed">
+            Weight sets how common a reward is relative to the others, not a
+            percentage. A reward with weight 30 is picked three times as often as
+            one with weight 10. The badge next to each reward shows the resulting
+            chance once every weight is added up, so you can use any numbers you
+            like (they do not need to total 100).
+          </Text>
+
           {message && (
             <Text fz={13} c="green.0">
               {message}
@@ -290,7 +390,7 @@ export default function MysteryBoxes() {
           <GradientButtonPrimary
             radius="xl"
             w="fit-content"
-            disabled={!pool.length}
+            disabled={!pool.length || !boxName.trim()}
             loading={saveMutation.isPending}
             onClick={() => saveMutation.mutateAsync()}
           >

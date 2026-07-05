@@ -82,7 +82,8 @@ function useUpdateOrAddDocument(documentId?: string) {
             moveset: "",
             name: "No name",
             short_description: "",
-            species: "",
+            // Non-masters get the default species and can't change it.
+            species: "Human",
             pronouns: "",
             type: "None",
             imageURL: "",
@@ -99,10 +100,29 @@ function useUpdateOrAddDocument(documentId?: string) {
 function CreateNewCharacter() {
   const { mutateAsync, isPending: isLoading } = useUpdateOrAddDocument();
   const queryClient = useQueryClient();
+  const [name, setName] = useState("");
 
   const handleClick = async () => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
     try {
-      await mutateAsync({});
+      // A name is required up front; species defaults to "Human".
+      await mutateAsync({
+        values: {
+          age: "",
+          birthday: "",
+          height: "",
+          moveset: "",
+          name: trimmed,
+          short_description: "",
+          species: "Human",
+          pronouns: "",
+          type: "None",
+          imageURL: "",
+          createdAt: new Date(),
+        } as unknown as Omit<Character, "id">,
+      });
+      setName("");
       await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
     } catch (err) {
       //
@@ -110,9 +130,23 @@ function CreateNewCharacter() {
   };
 
   return (
-    <GradientButtonSecondary id="create-character-button" onClick={handleClick} loading={isLoading}>
-      Create a new Character
-    </GradientButtonSecondary>
+    <Group gap={8} align="flex-end" wrap="nowrap">
+      <TextInput
+        label="Character name"
+        placeholder="Name your character"
+        value={name}
+        onChange={(e) => setName(e.currentTarget.value)}
+        styles={{ label: { color: "white" } }}
+      />
+      <GradientButtonSecondary
+        id="create-character-button"
+        onClick={handleClick}
+        loading={isLoading}
+        disabled={!name.trim()}
+      >
+        Create a new Character
+      </GradientButtonSecondary>
+    </Group>
   );
 }
 
@@ -169,11 +203,14 @@ function TextareaWrapper(props: {
   name: keyof FormFields;
   isEditing: boolean;
   isMoveSet?: boolean;
+  /** When true the field is read-only even in edit mode (e.g. master-only). */
+  locked?: boolean;
 }) {
-  const { title, isEditing, isMoveSet = false, form, name } = props;
+  const { title, isEditing, isMoveSet = false, form, name, locked = false } = props;
   const characterType = form.values.type;
+  const editable = isEditing && !locked;
 
-  if (isEditing) {
+  if (editable) {
     if (isMoveSet) {
       if (characterType === "Channeler" || characterType === "Hybrid") {
         return <Textarea minRows={3} radius={8} label={title} {...form.getInputProps(name)} />;
@@ -189,9 +226,16 @@ function TextareaWrapper(props: {
 
   return (
     <Stack h="100%" p={8} sx={{ borderRadius: 8 }} bg="#525151" gap={8}>
-      <Title order={3} size={14}>
-        {title}
-      </Title>
+      <Group gap={6} justify="space-between" wrap="nowrap">
+        <Title order={3} size={14}>
+          {title}
+        </Title>
+        {isEditing && locked && (
+          <Text fz={11} c="dimmed" style={{ whiteSpace: "nowrap" }}>
+            Masters only
+          </Text>
+        )}
+      </Group>
       <Text color="white">
         {isMoveSet
           ? characterType === "Channeler" || characterType === "Hybrid"
@@ -256,6 +300,7 @@ function DeleteCharacter(props: { characterId: string }) {
 function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }) {
   const { id, form, ...character } = props;
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [fileBlob, setFileBlob] = useState<Blob>();
   const [isProcessing, setProcessing] = useState(false);
 
@@ -280,6 +325,17 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
 
       form.setFieldValue("imageURL", imagePublicURL);
 
+      // Persist right away so the image updates without needing a full edit +
+      // save (the upload button is always visible below the avatar).
+      const { doc, setDoc } = await import("firebase/firestore");
+      const { db } = await import("../../../context/firebase");
+      await setDoc(
+        doc(db, "users", user.uid, "bag", "characters"),
+        { [id]: { imageURL: imagePublicURL } },
+        { merge: true }
+      );
+      await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
+
       setFileBlob(undefined);
     } catch (err) {
       //
@@ -300,8 +356,13 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
     <UploadAndCropImage
       setStateAction={setFileBlob}
       target={
-        <GradientButtonPrimary loading={isProcessing} rightSection={<Image src={Upload} alt="Upload" />}>
-          Upload
+        <GradientButtonPrimary
+          size="xs"
+          radius="xl"
+          loading={isProcessing}
+          rightSection={<Image src={Upload} alt="Upload" />}
+        >
+          Change Image
         </GradientButtonPrimary>
       }
     />
@@ -351,7 +412,9 @@ function SingleCharacter(props: Character) {
             h={150}
             sx={{ objectFit: "cover" }}
           />
-          {isEditing && <UploadAvatar form={form} {...props} />}
+          {/* Always show the upload so it's clear the image can be changed;
+              it saves immediately, no need to be in edit mode. */}
+          <UploadAvatar form={form} {...props} />
         </Stack>
         <Stack gap={isOverSm ? 8 : 16} w="100%">
           <Flex
@@ -401,7 +464,13 @@ function SingleCharacter(props: Character) {
             gap={8}
           >
             <Stack w={isOverSm ? 220 : "100%"} gap={8}>
-              <InputWrapper form={form} name="species" isEditing={isEditing} title="Species" />
+              <InputWrapper
+                form={form}
+                name="species"
+                isEditing={isEditing}
+                locked={!canEditType}
+                title="Species"
+              />
               <InputWrapper
                 form={form}
                 name="type"
@@ -422,6 +491,7 @@ function SingleCharacter(props: Character) {
                 isMoveSet
                 form={form}
                 isEditing={isEditing}
+                locked={!canEditType}
                 title="Moveset"
               />
               <TextareaWrapper
