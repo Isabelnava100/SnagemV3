@@ -76,7 +76,11 @@ export const getBookmarks = async (uid: string) => {
       formattedData.push(bookmark);
     });
   });
-  const sortedData = formattedData.sort((a, b) => a.date.seconds - b.date.seconds);
+  // Guard the timestamp: one legacy bookmark without `date` must not throw and
+  // wipe the whole list.
+  const sortedData = formattedData.sort(
+    (a, b) => (a.date?.seconds ?? 0) - (b.date?.seconds ?? 0)
+  );
   return { sortedData, rawData };
 };
 
@@ -91,7 +95,11 @@ export const getCharacters = async (uid: string) => {
     const character = data[key] as Character;
     return { ...character, id: key };
   }) as Character[];
-  const sortedData = formattedData.sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
+  // Guard the timestamp: one legacy character without `createdAt` must not throw
+  // and hide every character.
+  const sortedData = formattedData.sort(
+    (a, b) => (a.createdAt?.seconds ?? 0) - (b.createdAt?.seconds ?? 0)
+  );
   return { sortedData, rawData: data };
 };
 

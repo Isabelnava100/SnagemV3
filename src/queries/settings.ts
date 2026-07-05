@@ -4,8 +4,9 @@ import { Settings } from "../components/types/typesUsed";
 export const getSettings = async (uid: string) => {
   const { getDoc, doc } = await import("firebase/firestore");
   const { db } = await import("../context/firebase");
-  const { settings } = (await getDoc(doc(db, "users", uid))).data() as {
-    settings: Settings | null;
+  // Default to {} so a missing user doc doesn't throw on destructure.
+  const { settings } = ((await getDoc(doc(db, "users", uid))).data() ?? {}) as {
+    settings?: Settings | null;
   };
 
   if (!settings) {

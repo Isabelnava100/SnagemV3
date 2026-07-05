@@ -235,7 +235,7 @@ function SingleDraft(props: Draft) {
             <Text ta="end" c="#151515" fw={500}>
               Draft saved at:
               <br />
-              {formatter.format(new Date(props.date_saved.seconds * 1000))}
+              {formatter.format(new Date((props.date_saved?.seconds ?? 0) * 1000))}
             </Text>
           </Flex>
         </Stack>
