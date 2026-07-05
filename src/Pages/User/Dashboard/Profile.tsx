@@ -29,11 +29,10 @@ import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Upload } from "../../../icons";
+import { STORAGE_FOLDERS, storagePath } from "../../../lib/storage";
 import { getProfile } from "../../../queries/dashboard";
 import DefaultAvatar from "/src/assets/images/character-default.jpg";
 
-const PROFILE_AVATARS_FOLDER_NAME = "profile-avatars";
-const COVER_BACKGROUNDS_FOLDER_NAME = "cover-backgrounds";
 
 function useProfileQuery() {
   const { user } = useAuth();
@@ -152,7 +151,10 @@ function Avatars() {
 
       const fileName = `${uuid()}.jpg`;
 
-      const storageRef = ref(storage, `${PROFILE_AVATARS_FOLDER_NAME}/${fileName}`);
+      const storageRef = ref(
+        storage,
+        storagePath(STORAGE_FOLDERS.profileAvatars, user?.uid as string, fileName)
+      );
 
       const res = await uploadBytes(storageRef, fileBlob);
 
@@ -202,10 +204,9 @@ function Avatars() {
       const { ref, deleteObject } = await import("firebase/storage");
       const { arrayRemove, doc, setDoc } = await import("firebase/firestore");
 
-      const httpsReference = storage.refFromURL(url);
-      const fileName = httpsReference.name;
-
-      const fileRef = ref(storage, `${PROFILE_AVATARS_FOLDER_NAME}/${fileName}`);
+      // Delete via the file's own full path (from its URL) so it works no
+      // matter which folder/nesting the file was uploaded under.
+      const fileRef = ref(storage, storage.refFromURL(url).fullPath);
 
       await deleteObject(fileRef);
 
@@ -349,7 +350,10 @@ function CoverBackgrounds() {
 
       const fileName = `${uuid()}.jpg`;
 
-      const storageRef = ref(storage, `${COVER_BACKGROUNDS_FOLDER_NAME}/${fileName}`);
+      const storageRef = ref(
+        storage,
+        storagePath(STORAGE_FOLDERS.coverBackgrounds, user?.uid as string, fileName)
+      );
 
       const res = await uploadBytes(storageRef, fileBlob);
 
@@ -405,10 +409,9 @@ function CoverBackgrounds() {
       const { ref, deleteObject } = await import("firebase/storage");
       const { arrayRemove, doc, setDoc } = await import("firebase/firestore");
 
-      const httpsReference = storage.refFromURL(url);
-      const fileName = httpsReference.name;
-
-      const fileRef = ref(storage, `${COVER_BACKGROUNDS_FOLDER_NAME}/${fileName}`);
+      // Delete via the file's own full path (from its URL) so it works no
+      // matter which folder/nesting the file was uploaded under.
+      const fileRef = ref(storage, storage.refFromURL(url).fullPath);
 
       await deleteObject(fileRef);
 

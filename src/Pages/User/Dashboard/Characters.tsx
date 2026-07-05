@@ -30,6 +30,7 @@ import { SectionLoader } from "../../../components/navigation/loading";
 import { Character, characterTypes } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import { isMaster } from "../../../lib/permissions";
+import { STORAGE_FOLDERS, storagePath } from "../../../lib/storage";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, Upload } from "../../../icons";
 import { getCharacters } from "../../../queries/dashboard";
@@ -254,11 +255,12 @@ function DeleteCharacter(props: { characterId: string }) {
 
 function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }) {
   const { id, form, ...character } = props;
+  const { user } = useAuth();
   const [fileBlob, setFileBlob] = useState<Blob>();
   const [isProcessing, setProcessing] = useState(false);
 
   const handleAvatarUpload = async () => {
-    if (!fileBlob) return;
+    if (!fileBlob || !user) return;
     try {
       setProcessing(true);
 
@@ -266,9 +268,11 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
       const { storage } = await import("../../../context/firebase");
 
       const fileName = `${uuid()}.jpg`;
-      const folder = "Avatars";
-
-      const storageRef = ref(storage, `${folder}/${fileName}`);
+      // Foldered + nested by uid so character media is easy to find/clean up.
+      const storageRef = ref(
+        storage,
+        storagePath(STORAGE_FOLDERS.characterAvatars, user.uid, fileName)
+      );
 
       const res = await uploadBytes(storageRef, fileBlob);
 
