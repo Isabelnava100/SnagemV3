@@ -12,6 +12,9 @@ import {
 } from "../../../../queries/dashboard";
 import { PostCharacter } from "../../types";
 import { ForumPanel, ForumTextLink, PanelHint } from "../ui";
+import { EvolveButton } from "../../../../components/pokemon/EvolveButton";
+import { canEverEvolve } from "../../../../lib/evolution";
+import { levelProgress } from "../../../../lib/leveling";
 
 /**
  * "Characters" composer panel: checkbox per character; checking one reveals a
@@ -171,6 +174,17 @@ export default function CharactersPanel(props: {
                         ))}
                       </Group>
                     )}
+                    {/* Evolve eligible party members without leaving the composer. */}
+                    {(teams?.sortedData.find((t) => t.id === picked.teamId)?.pokemons ?? [])
+                      .filter((m) => canEverEvolve(m))
+                      .map((m) => (
+                        <Group key={m.id} gap={8} wrap="nowrap" justify="space-between">
+                          <Text fz={12} c="white" truncate>
+                            {m.species} · Lv {levelProgress(m.experience ?? 0).level}
+                          </Text>
+                          <EvolveButton pokemon={m} compact />
+                        </Group>
+                      ))}
                   </Stack>
                 )}
               </Stack>

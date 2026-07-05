@@ -45,6 +45,7 @@ import { containsBlockedWord, excludeProperties, getPokemonImageURL } from "../.
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
 import { getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
+import { EvolveButton, LevelBar } from "../../../components/pokemon/EvolveButton";
 import formatter from "../../../utils/date";
 
 type TeamForm = UseFormReturnType<Team | null>;
@@ -723,6 +724,8 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
           </Link>
         </Text>
       )}
+      {/* Level is derived from experience; the bar shows progress to the next. */}
+      <LevelBar experience={pokemon.experience} />
       {/* Game stats: experience accrues from forum posting (thread xpConfig). */}
       <Stack gap={2}>
         <Text fz={12}>Experience pts: {pokemon.experience ?? 0}</Text>
@@ -730,6 +733,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         <Text fz={12}>Purification pts: {pokemon.purification ?? 0}</Text>
         <Text fz={12}>Shadow pts: {pokemon.shadow ?? 0}</Text>
       </Stack>
+      <EvolveButton pokemon={pokemon} />
     </Stack>
   );
 }
