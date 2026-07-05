@@ -51,22 +51,37 @@ interface MemberRow {
   username: string;
   permissions?: string;
   capabilities?: string[];
+  /** Which collection this member's doc lives in, so saves target it. */
+  source: "users" | "NewUsers";
 }
 
+/**
+ * Every member, from both the promoted `users` collection and the `NewUsers`
+ * queue (freshly registered / Gaia applicants), so the roles list shows
+ * everyone. A member present in both resolves to their `users` record.
+ */
 const getMembersWithRoles = async (): Promise<MemberRow[]> => {
   const { collection, getDocs } = await import("firebase/firestore");
-  const snap = await getDocs(collection(db, "users"));
-  return snap.docs
-    .map((docSnap) => {
-      const data = docSnap.data();
-      return {
-        id: docSnap.id,
-        username: (data.username as string) ?? "",
-        permissions: data.permissions as string,
-        capabilities: (data.capabilities as string[]) ?? [],
-      };
-    })
-    .filter((m) => m.username);
+  const [usersSnap, newSnap] = await Promise.all([
+    getDocs(collection(db, "users")),
+    getDocs(collection(db, "NewUsers")).catch(() => ({ docs: [] as never[] })),
+  ]);
+  const byId = new Map<string, MemberRow>();
+  const add = (id: string, data: Record<string, unknown>, source: "users" | "NewUsers") => {
+    const username = (data.username as string) ?? "";
+    if (!username) return;
+    byId.set(id, {
+      id,
+      username,
+      permissions: data.permissions as string,
+      capabilities: (data.capabilities as string[]) ?? [],
+      source,
+    });
+  };
+  // NewUsers first so a promoted `users` record wins on collision.
+  newSnap.docs.forEach((d) => add(d.id, d.data(), "NewUsers"));
+  usersSnap.docs.forEach((d) => add(d.id, d.data(), "users"));
+  return [...byId.values()].sort((a, b) => a.username.localeCompare(b.username));
 };
 
 function CapabilityChecklist() {
@@ -101,7 +116,7 @@ function CapabilityChecklist() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { doc, updateDoc } = await import("firebase/firestore");
-      await updateDoc(doc(db, "users", selectedId!), {
+      await updateDoc(doc(db, selected!.source, selectedId!), {
         capabilities: caps,
         ...(role ? { permissions: role } : {}),
       });
@@ -162,18 +177,21 @@ function CapabilityChecklist() {
           </Group>
           <Select
             label="Role"
-            description="Sets the member's trust tier. Admin grants full control; change it any time."
-            data={Object.values(UserRoles).map((r) => ({ value: r, label: r }))}
+            description="Sets the member's trust tier. Admin is granted directly in the database, not here."
+            data={[
+              ...Object.values(UserRoles)
+                .filter((r) => r !== UserRoles.Admin)
+                .map((r) => ({ value: r, label: r })),
+              // Show Admin as read-only only when the member already is one.
+              ...(selected.permissions === UserRoles.Admin
+                ? [{ value: UserRoles.Admin, label: "Admin (set in database)", disabled: true }]
+                : []),
+            ]}
             value={role || null}
             onChange={(v) => setRole(v ?? "")}
             allowDeselect={false}
             styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
           />
-          {role === UserRoles.Admin && selected.permissions !== UserRoles.Admin && (
-            <Text fz={12} c="#f0a500" role="status" aria-live="polite">
-              Heads up: Admin grants full control over every member and setting.
-            </Text>
-          )}
           {Object.values(Capability).map((capability) => (
             <Checkbox
               key={capability}

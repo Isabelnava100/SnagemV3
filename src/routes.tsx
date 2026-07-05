@@ -105,6 +105,10 @@ const { default: AdminSEO } = lazyImport(
   () => import("./Pages/User/Dashboard/Admin/SEO"),
   "default"
 );
+const { default: AdminApplicants } = lazyImport(
+  () => import("./Pages/User/Dashboard/Admin/Applicants"),
+  "default"
+);
 const { default: AdminImports } = lazyImport(
   () => import("./Pages/User/Dashboard/Admin/Imports"),
   "default"
@@ -167,6 +171,7 @@ export default function AppRoutes() {
                         <Route path="Adjust-Lists" element={<AdjustLists />} />
                         <Route path="Donate" element={<Donate />} />
                         <Route path="Announcements" element={<AdminAnnouncements />} />
+                        <Route path="Applicants" element={<AdminApplicants />} />
                         <Route path="Permissions" element={<AdminPermissions />} />
                         <Route path="Mystery-Boxes" element={<AdminMysteryBoxes />} />
                         <Route path="Badges" element={<AdminBadges />} />

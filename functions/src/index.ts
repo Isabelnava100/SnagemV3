@@ -1149,6 +1149,86 @@ export const grantPokemon = onCall(async (request) => {
 });
 
 // ---------------------------------------------------------------------------
+// New member approvals (NewUsers -> users)
+// ---------------------------------------------------------------------------
+
+const APPROVABLE_ROLES = ["New", "Verified", "Master", "Director"];
+
+/** Approve a NewUsers applicant: create their users doc and clear the queue. */
+export const approveNewUser = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isAdmin(member)) throw new HttpsError("permission-denied", "Admins only.");
+  const targetUid = requireString(request.data?.uid, "uid", 200);
+  const rawRole = String(request.data?.role ?? "New");
+  const role = APPROVABLE_ROLES.includes(rawRole) ? rawRole : "New";
+
+  const newRef = db.doc(`NewUsers/${targetUid}`);
+  const userRef = db.doc(`users/${targetUid}`);
+  const [newSnap, userSnap] = await Promise.all([newRef.get(), userRef.get()]);
+  if (!newSnap.exists) throw new HttpsError("not-found", "That applicant no longer exists.");
+  const data = newSnap.data()!;
+
+  // Create the promoted user doc (skip if one already exists to avoid clobber).
+  if (!userSnap.exists) {
+    await userRef.set({
+      username: data.username ?? "",
+      email: data.email ?? "",
+      permissions: role,
+      capabilities: [],
+      badges: Array.isArray(data.badges) ? data.badges : [],
+      isGaia: data.isGaia ?? "No",
+      ...(data.discordUID ? { discordUID: data.discordUID } : {}),
+      ...(data.avatar ? { avatar: data.avatar } : {}),
+      joinedAt:
+        data.joinedAt ?? { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 },
+    });
+  } else {
+    await userRef.set({ permissions: role }, { merge: true });
+  }
+  await newRef.delete();
+
+  await db.collection("auditLogs").add({
+    action: "user.approve",
+    actorUid: uid,
+    actorName: member.username,
+    details: { username: data.username, role, targetUid },
+    createdAt: new Date(),
+  });
+  await notifyUsers([targetUid], {
+    type: "approval",
+    text: "Your membership was approved. Welcome to Snagem Guild!",
+    link: "/Dashboard",
+  });
+
+  return { ok: true };
+});
+
+/** Reject / remove a NewUsers applicant from the queue. */
+export const rejectNewUser = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isAdmin(member)) throw new HttpsError("permission-denied", "Admins only.");
+  const targetUid = requireString(request.data?.uid, "uid", 200);
+  const note = String(request.data?.note ?? "").slice(0, 1000);
+
+  const newRef = db.doc(`NewUsers/${targetUid}`);
+  const snap = await newRef.get();
+  if (!snap.exists) return { ok: true };
+  await newRef.delete();
+
+  await db.collection("auditLogs").add({
+    action: "user.reject",
+    actorUid: uid,
+    actorName: member.username,
+    details: { username: snap.data()?.username, note, targetUid },
+    createdAt: new Date(),
+  });
+
+  return { ok: true };
+});
+
+// ---------------------------------------------------------------------------
 // Mystery boxes
 // ---------------------------------------------------------------------------
 
