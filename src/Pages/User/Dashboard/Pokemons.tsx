@@ -651,7 +651,9 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
           <Title order={3} size={16}>
             {pokemon.species} ({pokemon.gender})
           </Title>
-          <Text>Caught {formatter.format(new Date(pokemon.date_caught.seconds * 1000))}</Text>
+          {pokemon.date_caught?.seconds && (
+            <Text>Caught {formatter.format(new Date(pokemon.date_caught.seconds * 1000))}</Text>
+          )}
         </Stack>
       </Group>
       {/* Provenance: written by the forum catch flow (publishForumPost). */}

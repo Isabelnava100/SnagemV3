@@ -7,6 +7,7 @@ import "./assets/styles/index.css";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
+import { ErrorBoundary } from "./components/navigation/ErrorBoundary";
 import { Loader } from "./components/navigation/loading";
 import { theme } from "./lib/mantine";
 import { queryClient } from "./lib/react-query";
@@ -120,6 +121,7 @@ export default function AppRoutes() {
     <AuthContextProvider>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
+              <ErrorBoundary>
               <React.Suspense fallback={<Loader />}>
                 <Routes>
                   <Route path="/" element={<App />}>
@@ -214,6 +216,7 @@ export default function AppRoutes() {
                   </Route>
                 </Routes>
               </React.Suspense>
+              </ErrorBoundary>
             </BrowserRouter>
           </QueryClientProvider>
     </AuthContextProvider>

@@ -103,7 +103,9 @@ export const getOwnedPokemons = async (uid: string) => {
     return { ...character, id: key };
   }) as OwnedPokemon[];
 
-  const sortedData = formattedData.sort((a, b) => a.date_caught.seconds - b.date_caught.seconds);
+  const sortedData = formattedData.sort(
+    (a, b) => (a.date_caught?.seconds ?? 0) - (b.date_caught?.seconds ?? 0)
+  );
 
   return { sortedData, rawData: data };
 };
@@ -125,17 +127,20 @@ export const getTeamsRaw = async (uid: string): Promise<Team[]> => {
 
   const formattedData = Object.keys(data).map((key) => {
     const team = data[key] as Omit<Team, "id">;
-    return { ...team, id: key, pokemons: [] };
+    // Guard malformed docs so downstream render code never crashes.
+    return { ...team, id: key, pokemon_ids: team.pokemon_ids ?? [], pokemons: [] };
   }) as Team[];
 
-  return formattedData.sort((a, b) => a.created_at.seconds - b.created_at.seconds);
+  return formattedData.sort(
+    (a, b) => (a.created_at?.seconds ?? 0) - (b.created_at?.seconds ?? 0)
+  );
 };
 
 /** Fill each team's pokemons from an already-fetched owned-pokemon list. */
 export const hydrateTeams = (teams: Team[], ownedPokemons: OwnedPokemon[]): Team[] =>
   teams.map((team) => ({
     ...team,
-    pokemons: ownedPokemons.filter((pokemon) => team.pokemon_ids.includes(pokemon.id)),
+    pokemons: ownedPokemons.filter((pokemon) => (team.pokemon_ids ?? []).includes(pokemon.id)),
   }));
 
 export const getProfile = async (uid: string) => {
