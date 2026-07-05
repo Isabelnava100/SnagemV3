@@ -33,6 +33,7 @@ export interface PublishThreadInput {
   characters: PostCharacter[];
   html: string;
   xpConfig?: { perPost: number; minPostLength: number } | null;
+  attachSignature?: boolean;
 }
 
 /** Creates the thread and its first post server-side; the creator becomes host. */
@@ -49,6 +50,7 @@ export interface PublishPostInput {
   items: Array<{ itemId: string; qty: number; note?: string }>;
   /** When set, edits that post (author-only, text + newly added blocks). */
   editPostId?: string;
+  attachSignature?: boolean;
 }
 
 /**

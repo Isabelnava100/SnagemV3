@@ -36,6 +36,7 @@ export const callPublishPost = (input: {
   characters: PostCharacter[];
   items: Array<{ itemId: string; qty: number; note?: string }>;
   editPostId?: string;
+  attachSignature?: boolean;
 }) => call<{ postId: string }>("publishForumPost", input);
 
 export const callPublishThread = (input: {
@@ -52,6 +53,7 @@ export const callPublishThread = (input: {
   encounterConfig: unknown;
   /** Applied server-side only for admins / AdjustXP directors. */
   xpConfig?: { perPost: number; minPostLength: number } | null;
+  attachSignature?: boolean;
 }) => call<{ threadId: string }>("publishForumThread", input);
 
 export const callVotePoll = (forum: string, threadId: string, optionId: string) =>

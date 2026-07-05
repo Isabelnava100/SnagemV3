@@ -63,6 +63,7 @@ interface Member {
   badges: string[] | null;
   permissions: string;
   capabilities: string[];
+  signature: string;
 }
 
 function requireAuth(request: CallableRequest): string {
@@ -84,6 +85,7 @@ async function loadMember(uid: string): Promise<Member> {
     badges: (data.badges as string[]) ?? null,
     permissions: (data.permissions as string) ?? "",
     capabilities: (data.capabilities as string[]) ?? [],
+    signature: String(data.signature ?? "").slice(0, 10_000),
   };
 }
 
@@ -380,6 +382,8 @@ export const publishForumPost = onCall(async (request) => {
   const editPostId = request.data?.editPostId ? String(request.data.editPostId) : undefined;
   const characters = sanitizeCharacters(request.data?.characters);
   const itemRequests = readItemRequests(request.data?.items);
+  // Gaia-style signature: attached by default, snapshotted at publish time.
+  const attachSignature = request.data?.attachSignature !== false;
   const member = await loadMember(uid);
 
   const tRef = threadRef(forum, threadId);
@@ -555,6 +559,7 @@ export const publishForumPost = onCall(async (request) => {
         character: characters.map((c) => c.name).join(", "),
         characters,
         text: html,
+        signature: attachSignature ? member.signature : "",
         timePosted: now,
         type: "user",
         blocks,
@@ -706,6 +711,7 @@ export const publishForumThread = onCall(async (request) => {
     character: characters.map((c) => c.name).join(", "),
     characters,
     text: html,
+    signature: request.data?.attachSignature !== false ? member.signature : "",
     timePosted: now,
     type: "user",
     blocks: {},

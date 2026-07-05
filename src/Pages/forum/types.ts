@@ -79,6 +79,8 @@ export interface ForumPost {
   character: string;
   characters?: PostCharacter[];
   text: string;
+  /** Author's signature snapshot at publish time (Gaia-style, optional). */
+  signature?: string;
   timePosted: FireTimestamp;
   editedAt?: FireTimestamp;
   type?: PostType;

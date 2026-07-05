@@ -1,4 +1,4 @@
-import { Avatar, Container, Flex, Grid, Group, Stack, Text, Title } from "@mantine/core";
+import { Avatar, Checkbox, Container, Flex, Grid, Group, Stack, Text, Title } from "@mantine/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -56,6 +56,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const [html, setHtml] = React.useState("");
   const [error, setError] = React.useState("");
   const [draftMessage, setDraftMessage] = React.useState("");
+  const [attachSignature, setAttachSignature] = React.useState(true);
   const [loadedEdit, setLoadedEdit] = React.useState(false);
 
   const editor = useRichTextEditor({
@@ -159,6 +160,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
             qty: s.qty,
             ...(s.note.trim() ? { note: s.note.trim() } : {}),
           })),
+        attachSignature,
         ...(mode === "edit" ? { editPostId: postId } : {}),
       });
     },
@@ -298,6 +300,16 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
             <ForumPanel title="Write Your Post">
               <Editor editor={editor} />
             </ForumPanel>
+
+            {mode === "new" && (
+              <Checkbox
+                label="Attach Signature"
+                color="green.0"
+                checked={attachSignature}
+                onChange={(e) => setAttachSignature(e.currentTarget.checked)}
+                styles={{ label: { color: "white", fontSize: 13 } }}
+              />
+            )}
 
             {error && <GameResultText>{error}</GameResultText>}
             {draftMessage && (

@@ -293,6 +293,19 @@ export default function PostCard(props: {
               className="forum-post-body"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.text) }}
             />
+
+            {/* Gaia-style signature: snapshotted at publish, below a divider. */}
+            {post.signature && post.signature.replace(/<[^>]*>/g, "").trim().length > 0 && (
+              <Box mt={16} pt={10} style={{ borderTop: "1px solid #3C3A3C" }}>
+                <Text
+                  fz={12}
+                  c="gray.5"
+                  style={{ width: "100%", overflowWrap: "break-word" }}
+                  className="forum-post-body"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.signature) }}
+                />
+              </Box>
+            )}
           </>
         )}
       </Box>

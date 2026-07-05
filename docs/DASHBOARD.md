@@ -81,6 +81,12 @@ rules: `firebase deploy --only firestore:rules,functions`.
 - **Editor Gaia-parity** — @mention dropdown now suggests real members
   (was the Tiptap demo celebrity list), code/code-block controls added,
   owned guild emotes in the emoji picker as inline images.
+- **Signatures (Gaia-style)** — set in Settings → Signature (rich text +
+  live preview), stored on the user doc (`signature`, self-writable, world-
+  readable). Composers show an "Attach Signature" checkbox (on by default);
+  `publishForumPost`/`publishForumThread` snapshot the signature onto the
+  post at publish time, rendered under the post body below a divider.
+  YouTube embeds and post-style/say-mode controls are still deferred.
 
 Still open: badge earn automation (Q2 — grows with activities), draft
 deletion countdown display, full public profile design, Discord delivery.

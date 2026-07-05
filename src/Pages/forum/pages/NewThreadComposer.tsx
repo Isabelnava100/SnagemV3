@@ -1,5 +1,6 @@
 import {
   Box,
+  Checkbox,
   Container,
   Divider,
   Grid,
@@ -66,6 +67,7 @@ export default function NewThreadComposer() {
   const [html, setHtml] = React.useState("");
   const [error, setError] = React.useState("");
   const [draftMessage, setDraftMessage] = React.useState("");
+  const [attachSignature, setAttachSignature] = React.useState(true);
   const [xpOverride, setXpOverride] = React.useState<{
     perPost: number;
     minPostLength: number;
@@ -132,6 +134,7 @@ export default function NewThreadComposer() {
         characters,
         html,
         xpConfig: canAdjustXP ? xpOverride : null,
+        attachSignature,
       });
       return threadId;
     },
@@ -346,6 +349,14 @@ export default function NewThreadComposer() {
             <ForumPanel title="Write Your Post">
               <Editor editor={editor} />
             </ForumPanel>
+
+            <Checkbox
+              label="Attach Signature"
+              color="green.0"
+              checked={attachSignature}
+              onChange={(e) => setAttachSignature(e.currentTarget.checked)}
+              styles={{ label: { color: "white", fontSize: 13 } }}
+            />
 
             {error && <GameResultText>{error}</GameResultText>}
             {draftMessage && (
