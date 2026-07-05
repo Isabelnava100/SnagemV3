@@ -22,6 +22,19 @@ export const getPokemonImageURL = (slug: string) => {
   return `${POKESPRITE_CDN}/pokemon-gen8/shiny/${slug}.png`;
 };
 
+// Neutral Pokeball shown while a sprite is missing (e.g. Gen 9 species until a
+// matching pixel set is added). Use as the `fallbackSrc` on pokemon <Image>s.
+export const POKEMON_SPRITE_FALLBACK =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 100 100'>` +
+      `<circle cx='50' cy='50' r='46' fill='#f2f2f2' stroke='#2b2b2b' stroke-width='4'/>` +
+      `<path d='M4 50 a46 46 0 0 1 92 0 z' fill='#e35c65'/>` +
+      `<rect x='4' y='46' width='92' height='8' fill='#2b2b2b'/>` +
+      `<circle cx='50' cy='50' r='13' fill='#fff' stroke='#2b2b2b' stroke-width='5'/>` +
+    `</svg>`
+  );
+
 export const getItemImageURL = (filePath: string) => {
   return `${POKESPRITE_CDN}/items/${filePath}`;
 };
