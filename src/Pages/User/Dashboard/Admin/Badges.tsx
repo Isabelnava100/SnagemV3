@@ -1,7 +1,9 @@
 import {
+  ActionIcon,
   Badge,
   Box,
   Button,
+  Checkbox,
   ColorInput,
   Group,
   MultiSelect,
@@ -12,7 +14,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconTrash } from "@tabler/icons-react";
+import { IconTrash, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Popover } from "@mantine/core";
@@ -24,6 +26,7 @@ import { Capability } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
 import { hasCapability, isAdmin } from "../../../../lib/permissions";
 import {
+  AUTO_ASSIGNED_BADGE_IDS,
   BadgeDef,
   assignBadgeToUsers,
   deleteBadge,
@@ -38,6 +41,28 @@ const slugify = (name: string) =>
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+// Only real hex colors are allowed so the composed CSS background can never
+// break. Accepts #RGB or #RRGGBB.
+const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+const isHex = (value: string) => HEX_RE.test(value.trim());
+
+/**
+ * Build the CSS background from 1 to 3 hex stops. One color is solid; two or
+ * three make a left-to-right gradient with the stops spaced evenly.
+ */
+function buildBackground(colors: string[]): string {
+  const c = colors.map((x) => x.trim()).filter(isHex);
+  if (c.length <= 1) return c[0] ?? "#762B77";
+  if (c.length === 2) return `linear-gradient(90deg, ${c[0]} 0%, ${c[1]} 100%)`;
+  return `linear-gradient(90deg, ${c[0]} 0%, ${c[1]} 50%, ${c[2]} 100%)`;
+}
+
+/** Best-effort recovery of the hex stops from a saved background string. */
+function parseColors(background: string): string[] {
+  const found = background.match(/#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})/g) ?? [];
+  return found.slice(0, 3);
+}
 
 /**
  * A live preview of a badge. Rendered as a plain pill (not Mantine <Badge>,
@@ -77,23 +102,46 @@ export default function Badges() {
   // Editor form (used for both create and edit).
   const [editing, setEditing] = React.useState<BadgeDef | null>(null);
   const [name, setName] = React.useState("");
-  const [background, setBackground] = React.useState("#762B77");
+  // 1 to 3 hex stops. Index 0 is required; 1 and 2 extend it into a gradient.
+  const [colors, setColors] = React.useState<string[]>(["#762B77"]);
   const [description, setDescription] = React.useState("");
   const [message, setMessage] = React.useState("");
 
   const loadIntoForm = (badge: BadgeDef | null) => {
     setEditing(badge);
     setName(badge?.name ?? "");
-    setBackground(badge?.background ?? "#762B77");
+    const loaded = badge?.colors?.length
+      ? badge.colors
+      : badge
+      ? parseColors(badge.background)
+      : [];
+    setColors(loaded.length ? loaded.slice(0, 3) : ["#762B77"]);
     setDescription(badge?.description ?? "");
     setMessage("");
   };
+
+  const setColor = (index: number, value: string) => {
+    setColors((prev) => prev.map((c, i) => (i === index ? value : c)));
+  };
+  const addColor = () => setColors((prev) => (prev.length < 3 ? [...prev, "#239DAD"] : prev));
+  const removeColor = (index: number) =>
+    setColors((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+
+  const background = buildBackground(colors);
+  const allColorsValid = colors.every(isHex);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       const id = editing?.id ?? slugify(name);
       if (!id) throw new Error("Give the badge a name.");
-      await saveBadge({ id, name: name.trim(), background, description: description.trim() });
+      if (!colors.every(isHex)) throw new Error("Every color must be a valid hex value.");
+      await saveBadge({
+        id,
+        name: name.trim(),
+        background,
+        colors,
+        description: description.trim(),
+      });
     },
     onSuccess: () => {
       setMessage(editing ? "Badge updated." : "Badge created.");
@@ -128,29 +176,61 @@ export default function Badges() {
             </Button>
           )}
         </Group>
-        <Group align="flex-end" gap={10} wrap="wrap">
-          <TextInput
-            label="Name"
-            value={name}
-            onChange={(e) => setName(e.currentTarget.value)}
-            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-          />
-          <ColorInput
-            label="Background color"
-            value={background}
-            onChange={setBackground}
-            format="hex"
-            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-          />
-          <BadgePreview name={name} background={background} />
-        </Group>
-        {/* Advanced: defaults use gradients; allow a raw CSS background too. */}
         <TextInput
-          label="Background (CSS, optional, supports gradients)"
-          value={background}
-          onChange={(e) => setBackground(e.currentTarget.value)}
+          label="Name"
+          required
+          withAsterisk
+          value={name}
+          onChange={(e) => setName(e.currentTarget.value)}
+          maw={280}
           styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
         />
+
+        {/* Colors: 1 required (solid), 2 to 3 make an evenly spaced gradient. */}
+        <Stack gap={8}>
+          {colors.map((color, i) => (
+            <Group key={i} gap={8} align="flex-end" wrap="nowrap">
+              <ColorInput
+                label={i === 0 ? "Color 1 (required)" : `Color ${i + 1} (optional)`}
+                value={color}
+                onChange={(v) => setColor(i, v)}
+                format="hex"
+                withEyeDropper
+                error={color && !isHex(color) ? "Enter a valid hex, e.g. #A1B2C3" : undefined}
+                w={220}
+                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+              />
+              {i > 0 && (
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  mb={4}
+                  onClick={() => removeColor(i)}
+                  aria-label={`Remove color ${i + 1}`}
+                >
+                  <IconX size={16} />
+                </ActionIcon>
+              )}
+            </Group>
+          ))}
+          {colors.length < 3 && (
+            <Button size="xs" variant="light" w="fit-content" onClick={addColor}>
+              {colors.length === 1 ? "Add a second color (gradient)" : "Add a third color"}
+            </Button>
+          )}
+          <Text fz={12} c="dimmed">
+            One color is a solid badge. Two or three blend into a gradient, spaced
+            evenly. Use the swatch to pick a color if you do not have the hex code.
+          </Text>
+        </Stack>
+
+        <Group gap={10} align="center">
+          <Text fz={13} c="white">
+            Preview:
+          </Text>
+          <BadgePreview name={name} background={background} />
+        </Group>
+
         <TextInput
           label="Description (how to obtain)"
           value={description}
@@ -165,7 +245,7 @@ export default function Badges() {
         <GradientButtonPrimary
           radius="xl"
           w="fit-content"
-          disabled={!name.trim()}
+          disabled={!name.trim() || !allColorsValid}
           loading={saveMutation.isPending}
           onClick={() => saveMutation.mutateAsync()}
         >
@@ -222,25 +302,40 @@ function DeleteBadge(props: { id: string }) {
   const { id } = props;
   const queryClient = useQueryClient();
   const [opened, { open, close }] = useDisclosure(false);
+  const [removeFromUsers, setRemoveFromUsers] = React.useState(false);
   const mutation = useMutation({
-    mutationFn: async () => deleteBadge(id),
+    mutationFn: async () => deleteBadge(id, removeFromUsers),
     onSuccess: () => {
       close();
+      setRemoveFromUsers(false);
       queryClient.invalidateQueries({ queryKey: ["badge-catalog"] });
     },
   });
   return (
-    <Popover opened={opened} onChange={close} position="bottom-end" withArrow shadow="md">
+    <Popover
+      opened={opened}
+      onChange={(o) => (o ? open() : close())}
+      position="bottom-end"
+      withArrow
+      shadow="md"
+    >
       <Popover.Target>
         <Button size="xs" variant="subtle" color="red" leftSection={<IconTrash size={14} />} onClick={open}>
           Delete
         </Button>
       </Popover.Target>
       <Popover.Dropdown bg="#1E1D20">
-        <Stack gap={8}>
+        <Stack gap={10} maw={260}>
           <Text c="white" fz={14}>
-            Delete this badge? Users who have it keep their copy.
+            Delete this badge from the catalog?
           </Text>
+          <Checkbox
+            checked={removeFromUsers}
+            onChange={(e) => setRemoveFromUsers(e.currentTarget.checked)}
+            label="Also remove it from users who have it"
+            description="Leave unchecked to let current holders keep their copy."
+            styles={{ label: { color: "white" }, description: { color: "#9a989a" } }}
+          />
           <Group gap={8} justify="flex-end">
             <Button size="xs" color="gray" variant="light" onClick={close}>
               Cancel
@@ -255,7 +350,7 @@ function DeleteBadge(props: { id: string }) {
   );
 }
 
-/** Manually assign a badge to one or more users (auto-assignment is deferred). */
+/** Manually assign a badge to one or more users. */
 function AssignBadges(props: { catalog: BadgeDef[] }) {
   const { catalog } = props;
   const { data: users } = useQuery({ queryKey: ["get-all-users"], queryFn: getUsers });
@@ -263,9 +358,13 @@ function AssignBadges(props: { catalog: BadgeDef[] }) {
   const [userIds, setUserIds] = React.useState<string[]>([]);
   const [message, setMessage] = React.useState("");
 
+  // Admin, Master, New User and Legacy are handed out automatically from
+  // account status, so they can never be assigned by hand.
+  const assignable = catalog.filter((b) => !AUTO_ASSIGNED_BADGE_IDS.includes(b.id));
+
   const mutation = useMutation({
     mutationFn: async () => {
-      const badge = catalog.find((b) => b.id === badgeId);
+      const badge = assignable.find((b) => b.id === badgeId);
       if (!badge || !userIds.length) return;
       await assignBadgeToUsers(badge, userIds);
     },
@@ -282,13 +381,14 @@ function AssignBadges(props: { catalog: BadgeDef[] }) {
         Assign a badge to users
       </Text>
       <Text fz={12} c="dimmed">
-        Assigned badges arrive disabled. Each user enables them from Settings → Collections.
+        Assigned badges arrive disabled. Each user enables them from Settings, Collections.
+        Admin, Master, New User and Legacy are earned automatically and are not listed here.
       </Text>
       <Group align="flex-end" gap={10} wrap="wrap">
         <Select
           label="Badge"
           placeholder="Pick a badge"
-          data={catalog.map((b) => ({ value: b.id, label: b.name }))}
+          data={assignable.map((b) => ({ value: b.id, label: b.name }))}
           value={badgeId}
           onChange={(v) => {
             setMessage("");

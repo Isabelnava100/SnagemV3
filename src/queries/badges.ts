@@ -13,8 +13,10 @@ import { db } from "../context/firebase";
 export interface BadgeDef {
   id: string;
   name: string;
-  /** CSS background: a solid color or a gradient. */
+  /** CSS background: a solid color or a gradient, built from `colors`. */
   background: string;
+  /** The 1 to 3 hex stops the background was built from (for re-editing). */
+  colors?: string[];
   description?: string;
   /** Defaults can be edited but not deleted. */
   isDefault?: boolean;
@@ -69,6 +71,13 @@ export const DEFAULT_BADGES: BadgeDef[] = [
 const DEFAULT_IDS = new Set(DEFAULT_BADGES.map((b) => b.id));
 const ADMIN_BADGES_DOC = ["admin", "badges"] as const;
 
+/**
+ * Badges handed out automatically from account status (see autoBadgeIdsFor).
+ * These can never be assigned by hand: doing so would fight the derived logic,
+ * so the manual-assign UI hides them.
+ */
+export const AUTO_ASSIGNED_BADGE_IDS = ["admin", "master", "new-user", "legacy"];
+
 /** The account fields the auto-assignment rules read. */
 export interface AutoBadgeUser {
   permissions?: string;
@@ -101,7 +110,7 @@ export function autoBadgeIdsFor(info: AutoBadgeUser): string[] {
   return [...ids];
 }
 
-type StoredBadge = { name: string; background: string; description?: string };
+type StoredBadge = { name: string; background: string; description?: string; colors?: string[] };
 
 /** All badges: the defaults (with any saved edits) plus custom badges. */
 export const getBadgeCatalog = async (): Promise<BadgeDef[]> => {
@@ -116,6 +125,7 @@ export const getBadgeCatalog = async (): Promise<BadgeDef[]> => {
       id,
       name: v.name,
       background: v.background,
+      colors: v.colors,
       description: v.description,
       isDefault: DEFAULT_IDS.has(id),
     });
@@ -123,7 +133,7 @@ export const getBadgeCatalog = async (): Promise<BadgeDef[]> => {
   return [...merged.values()];
 };
 
-/** Create or edit a badge (name + background + optional description). */
+/** Create or edit a badge (name + colors/background + optional description). */
 export const saveBadge = async (badge: BadgeDef): Promise<void> => {
   const { doc, setDoc } = await import("firebase/firestore");
   await setDoc(
@@ -132,6 +142,7 @@ export const saveBadge = async (badge: BadgeDef): Promise<void> => {
       [badge.id]: {
         name: badge.name,
         background: badge.background,
+        colors: badge.colors ?? [],
         description: badge.description ?? "",
       },
     },
@@ -139,11 +150,44 @@ export const saveBadge = async (badge: BadgeDef): Promise<void> => {
   );
 };
 
-/** Delete a custom badge. Defaults can't be deleted. */
-export const deleteBadge = async (id: string): Promise<void> => {
+/**
+ * Delete a custom badge from the catalog. Defaults can't be deleted. When
+ * `removeFromUsers` is true, also strip the badge from everyone who owns it;
+ * otherwise holders keep their copy.
+ */
+export const deleteBadge = async (id: string, removeFromUsers = false): Promise<void> => {
   if (DEFAULT_IDS.has(id)) throw new Error("Default badges can't be deleted.");
   const { doc, updateDoc, deleteField } = await import("firebase/firestore");
   await updateDoc(doc(db, ...ADMIN_BADGES_DOC), { [id]: deleteField() });
+  if (removeFromUsers) await removeBadgeFromAllUsers(id);
+};
+
+/**
+ * Strip a badge from every user who owns it. Reads each user's badge bag so we
+ * only write to holders. Also best-effort clears the enabled-display label on
+ * the user doc (an admin-only field, so a ManageBadges director's write there
+ * is expected to fail and is ignored; the bag removal is what matters).
+ */
+const removeBadgeFromAllUsers = async (badgeId: string): Promise<void> => {
+  const { collection, getDocs, doc, getDoc, updateDoc, deleteField, arrayRemove } = await import(
+    "firebase/firestore"
+  );
+  const usersSnap = await getDocs(collection(db, "users"));
+  await Promise.all(
+    usersSnap.docs.map(async (u) => {
+      const bagRef = doc(db, "users", u.id, "bag", "badges");
+      const bagSnap = await getDoc(bagRef);
+      const bag = bagSnap.data() as Record<string, [string, string, boolean]> | undefined;
+      const tuple = bag?.[badgeId];
+      if (!tuple) return;
+      await updateDoc(bagRef, { [badgeId]: deleteField() });
+      try {
+        await updateDoc(doc(db, "users", u.id), { badges: arrayRemove(tuple[0]) });
+      } catch {
+        /* director can't write users.badges; the bag removal already applied */
+      }
+    })
+  );
 };
 
 /** Assign a badge (disabled by default; the user enables it themselves). */
