@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Alert,
   Box,
   Button,
   Flex,
@@ -45,6 +46,7 @@ import {
 } from "../../../queries/announcements";
 import { getCharacters, getCurrencies } from "../../../queries/dashboard";
 import { getNotifications, markNotificationsRead } from "../../../queries/game";
+import { getImportRequest } from "../../../queries/imports";
 import { RESET_READING_SCALE } from "../../../lib/readingSize";
 import { canAccessStaffArea, isAdmin } from "../../../lib/permissions";
 import { handleLogout } from "../../auth/components/LogoutHandle";
@@ -73,6 +75,7 @@ export function Dashboard() {
         <DashboardHeader />
         <CurrencyBar />
         <Announcements />
+        <ImportBanner />
         <TabsPanel />
       </Stack>
     </Paper>
@@ -124,6 +127,46 @@ function DashboardHeader() {
         </Text>
       </Group>
     </Stack>
+  );
+}
+
+/**
+ * Prompts returning Gaia members to restore their collection. Shows until they
+ * mark the import complete; a rejected/granted state nudges them back too.
+ */
+function ImportBanner() {
+  const { user } = useAuth();
+  const isGaia = user?.otherinfo?.isGaia === "Yes";
+  const { data: request } = useQuery({
+    queryKey: ["import-request", user?.uid],
+    queryFn: () => getImportRequest(user!.uid),
+    enabled: !!user && isGaia,
+  });
+
+  if (!isGaia) return null;
+  const status = request?.status;
+  if (status === "completed") return null;
+
+  const message =
+    status === "pending"
+      ? "Your import is waiting for staff approval."
+      : status === "rejected"
+      ? "Your import needs a small change before it can be approved."
+      : status === "granted"
+      ? "Your last import was approved. Add more or mark it complete."
+      : "Welcome back! Import your currency, items, and Pokemon from the Gaia guild.";
+
+  return (
+    <Alert color="grape" variant="light" title="Restore your collection">
+      <Group justify="space-between" align="center" wrap="wrap" gap={10}>
+        <Text fz={14} c="white">
+          {message}
+        </Text>
+        <Button component={Link} to="/Onboarding" size="xs" radius="xl" variant="white">
+          Open import
+        </Button>
+      </Group>
+    </Alert>
   );
 }
 

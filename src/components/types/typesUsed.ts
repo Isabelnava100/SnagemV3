@@ -204,6 +204,7 @@ export enum Capability {
   ManageBadges = "ManageBadges",
   ReviewRewards = "ReviewRewards",
   ManageSEO = "ManageSEO",
+  ApproveImports = "ApproveImports",
 }
 
 export const CAPABILITY_INFO: Record<Capability, string> = {
@@ -215,6 +216,7 @@ export const CAPABILITY_INFO: Record<Capability, string> = {
   [Capability.ManageBadges]: "Create/edit badges and assign them to users",
   [Capability.ReviewRewards]: "Review and finalize thread-close rewards, including team XP",
   [Capability.ManageSEO]: "Edit the site's SEO settings (titles, descriptions, social share info)",
+  [Capability.ApproveImports]: "Review and approve returning-member data imports (currency, items, Pokemon)",
 };
 
 export type SpecificUser = {
@@ -222,6 +224,8 @@ export type SpecificUser = {
   capabilities?: Capability[];
   badges: string[];
   discordUID?: string;
+  /** "Yes" for members who joined via the GaiaOnline guild. */
+  isGaia?: string;
 };
 //Extra details added about the user
 

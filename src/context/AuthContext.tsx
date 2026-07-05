@@ -18,6 +18,7 @@ export const getInfo = async (
     capabilities: userData?.capabilities ?? [],
     badges: userData ? userData.badges : [],
     discordUID: userData ? userData.discordUID : "",
+    isGaia: userData?.isGaia,
     avatar: userData?.avatar,
     username: userData?.username,
   };

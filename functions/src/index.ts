@@ -1082,6 +1082,181 @@ export const setBadgeEnabled = onCall(async (request) => {
 });
 
 // ---------------------------------------------------------------------------
+// Returning-member data imports (Gaia onboarding)
+// ---------------------------------------------------------------------------
+
+interface ImportPokemonInput {
+  species: string;
+  slug: string;
+  pokedex: string;
+  gender: string;
+  shiny: boolean;
+  experience: number;
+  friendship: number;
+  shadow: number;
+  purification: number;
+}
+interface ImportEntriesInput {
+  currency: { pokecoin?: number; gengarcoin?: number; snagemblem?: number };
+  items: Array<{ refId: string; name: string; filePath?: string; category?: string; qty: number }>;
+  pokemon: ImportPokemonInput[];
+}
+
+const clampInt = (v: unknown, min: number, max: number) => {
+  const n = Math.trunc(Number(v));
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, n));
+};
+
+function generationFor(pokedex: string): string {
+  const idx = Number(pokedex) || 0;
+  const gi = GEN_CAPS.findIndex((cap) => idx <= cap);
+  return `Generation ${GEN_NAMES[gi === -1 ? GEN_NAMES.length - 1 : gi]}`;
+}
+
+/**
+ * Approve a returning member's import and apply it to their bag. Reviewer
+ * (Admin / ApproveImports) passes the final entries (they may have edited
+ * them). Currency and items are incremented; each Pokemon is added as a new
+ * owned entry carrying its imported stats. The request is marked granted and
+ * its working entries cleared so the member can start another batch.
+ */
+export const approveImport = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!hasCap(member, "ApproveImports")) {
+    throw new HttpsError("permission-denied", "You cannot approve imports.");
+  }
+  const targetUid = requireString(request.data?.uid, "member", 128);
+  const entries = request.data?.entries as ImportEntriesInput | undefined;
+  if (!entries) throw new HttpsError("invalid-argument", "No entries to approve.");
+
+  const items = (Array.isArray(entries.items) ? entries.items : []).slice(0, 500);
+  const pokemon = (Array.isArray(entries.pokemon) ? entries.pokemon : []).slice(0, 500);
+  const currency = entries.currency ?? {};
+  const now = new Date();
+
+  const importDocRef = db.doc(`importRequests/${targetUid}`);
+  const currencyRef = db.doc(`users/${targetUid}/bag/currency`);
+  const itemsRef = db.doc(`users/${targetUid}/bag/items`);
+  const ownedRef = db.doc(`users/${targetUid}/bag/owned_pokemons`);
+
+  await db.runTransaction(async (tx) => {
+    const currencySnap = await tx.get(currencyRef);
+    const prev = currencySnap.data() ?? {};
+
+    // Currency
+    const currencyUpdate: Record<string, string> = {};
+    CURRENCY_KEYS.forEach((key) => {
+      const amount = clampInt((currency as Record<string, unknown>)[key], 0, 100_000_000);
+      if (amount > 0) currencyUpdate[key] = addCurrencyString(prev[key], amount);
+    });
+    if (Object.keys(currencyUpdate).length) tx.set(currencyRef, currencyUpdate, { merge: true });
+
+    // Items
+    const itemsUpdate: Record<string, unknown> = {};
+    items.forEach((it) => {
+      if (!it?.refId) return;
+      itemsUpdate[it.refId] = {
+        name: String(it.name ?? it.refId).slice(0, 120),
+        filePath: String(it.filePath ?? ""),
+        category: String(it.category ?? "other-item"),
+        quantity: FieldValue.increment(clampInt(it.qty, 1, 100_000)),
+      };
+    });
+    if (Object.keys(itemsUpdate).length) tx.set(itemsRef, itemsUpdate, { merge: true });
+
+    // Pokemon (one owned entry each)
+    const pokeUpdate: Record<string, unknown> = {};
+    pokemon.forEach((p) => {
+      if (!p?.slug && !p?.species) return;
+      pokeUpdate[randomUUID()] = {
+        date_caught: { nt: now.getTime(), seconds: Math.floor(now.getTime() / 1000) },
+        gender: p.gender === "F" ? "F" : "M",
+        generation: generationFor(p.pokedex),
+        image_slug: String(p.slug ?? ""),
+        name: String(p.species ?? "").slice(0, 60),
+        pokedex: String(p.pokedex ?? ""),
+        regiondex: "",
+        species: String(p.species ?? "").slice(0, 60),
+        type1: "Unknown",
+        shiny: !!p.shiny,
+        experience: clampInt(p.experience, 0, 100_000_000),
+        friendship: clampInt(p.friendship, 0, 255),
+        shadow: clampInt(p.shadow, 0, 100_000_000),
+        purification: clampInt(p.purification, 0, 100_000_000),
+        importedAt: { nt: now.getTime(), seconds: Math.floor(now.getTime() / 1000) },
+      };
+    });
+    if (Object.keys(pokeUpdate).length) tx.set(ownedRef, pokeUpdate, { merge: true });
+
+    // Mark granted; clear the working entries; append to history.
+    tx.set(
+      importDocRef,
+      {
+        status: "granted",
+        currency: { pokecoin: 0, gengarcoin: 0, snagemblem: 0 },
+        items: [],
+        pokemon: [],
+        reviewedAt: now.getTime(),
+        reviewedByName: member.username,
+        reviewerNote: "",
+        history: FieldValue.arrayUnion({
+          grantedAt: now.getTime(),
+          byName: member.username,
+          entries: { currency, items, pokemon },
+        }),
+      },
+      { merge: true }
+    );
+  });
+
+  await db.collection("auditLogs").add({
+    action: "import.approve",
+    actorUid: uid,
+    actorName: member.username,
+    details: { targetUid, items: items.length, pokemon: pokemon.length },
+    createdAt: now,
+  });
+  await notifyUsers([targetUid], {
+    type: "import",
+    text: "Your import was approved and added to your account!",
+    link: "/Onboarding",
+  });
+
+  return { ok: true };
+});
+
+/** Send an import back to the member with a note. */
+export const rejectImport = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!hasCap(member, "ApproveImports")) {
+    throw new HttpsError("permission-denied", "You cannot review imports.");
+  }
+  const targetUid = requireString(request.data?.uid, "member", 128);
+  const note = String(request.data?.note ?? "").slice(0, 1000);
+  const now = new Date();
+
+  await db.doc(`importRequests/${targetUid}`).set(
+    {
+      status: "rejected",
+      reviewerNote: note,
+      reviewedAt: now.getTime(),
+      reviewedByName: member.username,
+    },
+    { merge: true }
+  );
+  await notifyUsers([targetUid], {
+    type: "import",
+    text: "Your import needs a change before it can be approved. See the note in onboarding.",
+    link: "/Onboarding",
+  });
+
+  return { ok: true };
+});
+
+// ---------------------------------------------------------------------------
 // Polls & boss battles
 // ---------------------------------------------------------------------------
 

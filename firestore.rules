@@ -106,6 +106,18 @@ service cloud.firestore {
       allow read, write: if hasCap('GiveItems') || hasCap('ReviewRewards');
     }
 
+    // ---- Returning-member data imports (Gaia onboarding) -------------------
+    // The member builds and submits their own request; reviewers (Admin /
+    // ApproveImports) can read the queue. Applying the grant and any
+    // reviewer-side status change go through the approveImport / rejectImport
+    // Cloud Functions (Admin SDK), so clients never write another member's doc
+    // or their own bag here.
+    match /importRequests/{uid} {
+      allow read: if request.auth.uid == uid || isAdmin() || hasCap('ApproveImports');
+      allow create, update: if request.auth.uid == uid;
+      allow delete: if false;
+    }
+
     // ---- Append-only audit trail ------------------------------------------
     match /auditLogs/{logId} {
       allow read: if isAdmin();
