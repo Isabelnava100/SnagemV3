@@ -1,9 +1,21 @@
-import { Button, Group, NumberInput, Radio, Select, Stack, Switch, Text } from "@mantine/core";
+import {
+  Button,
+  Group,
+  MultiSelect,
+  NumberInput,
+  Progress,
+  Radio,
+  Select,
+  Stack,
+  Switch,
+  Text,
+} from "@mantine/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { pokemonData } from "../../../../data/pokemon";
 import { getPokemonLists } from "../../../../queries/admin";
+import { getCharacters } from "../../../../queries/dashboard";
 import { DEFAULT_ENCOUNTERS_PER_USER } from "../../config";
 import { callRollEncounter, callableMessage } from "../../functionsClient";
 import { getEncounterLists, resolveListSlugs } from "../../queries";
@@ -197,12 +209,21 @@ export function EncounterPostPanel(props: {
   const { forum, thread, value, onChange } = props;
   const [wantsEncounter, setWantsEncounter] = React.useState(false);
   const [encounterError, setEncounterError] = React.useState("");
+  const [forCharacterIds, setForCharacterIds] = React.useState<string[]>([]);
   const config = thread.encounterConfig;
+
+  // The roller's characters, so the encounter can be captured for specific ones.
+  const { data: characters } = useQuery({
+    queryKey: ["get-characters", user?.uid],
+    queryFn: () => getCharacters(user!.uid),
+    enabled: !!user && !!config?.enabled,
+  });
 
   // The server validates the list, allowance and mode, then binds the result
   // to this player's next post in the thread, no client-side rolling.
   const encounterMutation = useMutation({
-    mutationFn: (chosenSlug?: string) => callRollEncounter(forum, thread.id, chosenSlug),
+    mutationFn: (chosenSlug?: string) =>
+      callRollEncounter(forum, thread.id, chosenSlug, forCharacterIds),
     onSuccess: (result) => onChange(result),
     onError: (err) =>
       setEncounterError(callableMessage(err, "The encounter roll failed. Try again.")),
@@ -243,10 +264,27 @@ export function EncounterPostPanel(props: {
           The host has turned off new encounters in this thread.
         </Text>
       ) : value ? (
-        <GameResultText>
-          {value.mode === "roll" ? "You've rolled an encounter..." : "You've chosen an encounter..."}{" "}
-          {value.name}!{!value.catchable && " (It cannot be caught.)"}
-        </GameResultText>
+        <Stack gap={6}>
+          <GameResultText>
+            {value.mode === "roll" ? "You've rolled an encounter..." : "You've chosen an encounter..."}{" "}
+            {value.name}!{!value.catchable && " (It cannot be caught.)"}
+          </GameResultText>
+          {value.catchable && !!value.required && (
+            <Stack gap={4}>
+              <Progress
+                value={Math.min(100, Math.round(((value.progress ?? 0) / value.required) * 100))}
+                color="cyan.0"
+                size="lg"
+                radius="xl"
+              />
+              <Text fz={12} c="dimmed">
+                {(value.progress ?? 0) >= value.required
+                  ? "It's worn down. Use a Poke Ball in this post to catch it."
+                  : `Capture progress: ${value.progress ?? 0}/${value.required} posts. Keep posting to weaken it, then throw a ball.`}
+              </Text>
+            </Stack>
+          )}
+        </Stack>
       ) : remaining <= 0 ? (
         <Text fz={13} c="dimmed">
           You have no pokemon left to encounter on this thread.
@@ -263,6 +301,17 @@ export function EncounterPostPanel(props: {
               <Text fz={12} c="dimmed">
                 You have {remaining} pokemon left to encounter on this thread.
               </Text>
+              <MultiSelect
+                label="Catch it for (optional)"
+                description="Leave empty to catch it yourself; the caught Pokemon joins the chosen character's box."
+                placeholder="Any of your characters"
+                data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
+                value={forCharacterIds}
+                onChange={setForCharacterIds}
+                clearable
+                size="xs"
+                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+              />
               {config.mode === "roll" ? (
                 <Button
                   size="xs"
