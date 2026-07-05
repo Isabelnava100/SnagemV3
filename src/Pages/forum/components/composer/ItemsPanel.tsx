@@ -6,9 +6,11 @@ import {
   ScrollArea,
   Stack,
   Text,
-  Textarea,
+  TextInput,
 } from "@mantine/core";
+import { IconAlertTriangle } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
+import React from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { getItemImageURL } from "../../../../helpers";
 import { getItems } from "../../../../queries/dashboard";
@@ -56,6 +58,7 @@ export default function UseItemsPanel(props: {
 }) {
   const { user } = useAuth();
   const { value, onChange } = props;
+  const [search, setSearch] = React.useState("");
 
   const { data: inventory } = useQuery({
     queryKey: ["get-items", user?.uid],
@@ -76,15 +79,23 @@ export default function UseItemsPanel(props: {
     }
   };
 
-  const setNote = (itemId: string, note: string) => {
-    onChange(value.map((v) => (v.itemId === itemId ? { ...v, note } : v)));
-  };
-
   const items = inventory ?? [];
-  const selectedWithNote = value.filter((v) => {
-    const item = items.find((i) => i.id === v.itemId);
-    return item && !isBall(item.category);
-  });
+
+  const ownedItems = items.filter((item) => item.quantity > 0);
+  const q = search.trim().toLowerCase();
+  const shownItems = q
+    ? ownedItems.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          item.category.toLowerCase().includes(q)
+      )
+    : ownedItems;
+
+  // Items the player has chosen to use (qty > 0), for the confirmation summary.
+  const usedSummary = value
+    .filter((v) => v.qty > 0)
+    .map((v) => ({ selection: v, item: items.find((i) => i.id === v.itemId) }))
+    .filter((entry) => !!entry.item);
 
   return (
     <ForumPanel title="Use Items" mt={16}>
@@ -92,6 +103,14 @@ export default function UseItemsPanel(props: {
         The selection of certain items will open an additional menu below. Any used item cannot
         be recovered without admin intervention.
       </PanelHint>
+      <TextInput
+        placeholder="Search items by name or category"
+        value={search}
+        onChange={(e) => setSearch(e.currentTarget.value)}
+        size="xs"
+        mb={6}
+        styles={{ input: { background: "#2E2D2E" } }}
+      />
       <Flex justify="space-between" px={4} mb={4}>
         <Text fz={11} fw={700} c="white" tt="uppercase">
           Items
@@ -101,9 +120,9 @@ export default function UseItemsPanel(props: {
         </Text>
       </Flex>
       <ScrollArea.Autosize mah={180} bg="#211f21" style={{ borderRadius: 8 }}>
-        <Stack gap={2} p={6}>
-          {items
-            .filter((item) => item.quantity > 0)
+        {/* Extra right padding so the scrollbar never overlaps the qty steppers. */}
+        <Stack gap={2} pt={6} pb={6} pl={6} pr={16}>
+          {shownItems
             .map((item) => {
               const selection = value.find((v) => v.itemId === item.id);
               const qty = selection?.qty ?? 0;
@@ -142,35 +161,32 @@ export default function UseItemsPanel(props: {
                 </Stack>
               );
             })}
-          {!items.filter((i) => i.quantity > 0).length && (
+          {!shownItems.length && (
             <Text fz={13} c="dimmed" p={6}>
-              Your bag is empty.
+              {!ownedItems.length
+                ? "Your bag is empty."
+                : "No items match your search."}
             </Text>
           )}
         </Stack>
       </ScrollArea.Autosize>
 
-      {selectedWithNote.length > 0 && (
-        <Stack gap={8} mt={10}>
-          <Text fz={12} c="dimmed">
-            Choose how to use your item.
-          </Text>
-          {selectedWithNote.map((selection) => {
-            const item = items.find((i) => i.id === selection.itemId);
-            return (
-              <Textarea
-                key={selection.itemId}
-                label={item?.name}
-                placeholder={`Describe how ${item?.name ?? "this item"} is used in your post.`}
-                value={selection.note}
-                onChange={(e) => setNote(selection.itemId, e.currentTarget.value)}
-                autosize
-                minRows={2}
-                size="xs"
-                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-              />
-            );
-          })}
+      {usedSummary.length > 0 && (
+        <Stack gap={6} mt={10} p={10} bg="#211f21" style={{ borderRadius: 8 }}>
+          <Group gap={6} wrap="nowrap">
+            <IconAlertTriangle size={16} color="#f0a500" />
+            <Text fz={12} fw={700} c="white">
+              These items will be used up in your post
+            </Text>
+          </Group>
+          {usedSummary.map(({ selection, item }) => (
+            <Group key={selection.itemId} gap={8} wrap="nowrap">
+              <Avatar src={getItemImageURL(item!.filePath)} alt={item!.name} size={22} />
+              <Text fz={13} c="white">
+                {item!.name} x{selection.qty}
+              </Text>
+            </Group>
+          ))}
         </Stack>
       )}
     </ForumPanel>

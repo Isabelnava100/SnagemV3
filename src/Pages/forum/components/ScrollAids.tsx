@@ -6,24 +6,36 @@ import useMediaQuery from "../../../hooks/useMediaQuery";
  * Mobile: floating "SKIP TO NEXT POST" pill that anchors to the next post by
  * scroll position; on the last post it becomes scroll-to-top (board 11/12).
  */
+// A post counts as "below" the fold once its top clears the sticky header zone.
+const NEXT_POST_OFFSET = 130;
+
 export default function ScrollAids(props: { postAnchorIds: string[] }) {
   const { postAnchorIds } = props;
   const { isOverSm } = useMediaQuery();
-  const [nextAnchor, setNextAnchor] = React.useState<string | null>(null);
+  const [hasNext, setHasNext] = React.useState(false);
+
+  // Find the first post still below the current scroll position. Computed fresh
+  // (not read from stale state) so every tap advances, not just the first.
+  const findNextId = React.useCallback((): string | null => {
+    return (
+      postAnchorIds.find((id) => {
+        const el = document.getElementById(id);
+        return !!el && el.getBoundingClientRect().top > NEXT_POST_OFFSET;
+      }) ?? null
+    );
+  }, [postAnchorIds]);
 
   React.useEffect(() => {
     if (isOverSm) return;
-    const findNext = () => {
-      const next = postAnchorIds.find((id) => {
-        const el = document.getElementById(id);
-        return !!el && el.getBoundingClientRect().top > 120;
-      });
-      setNextAnchor(next ?? null);
+    const update = () => setHasNext(!!findNextId());
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
     };
-    findNext();
-    window.addEventListener("scroll", findNext, { passive: true });
-    return () => window.removeEventListener("scroll", findNext);
-  }, [isOverSm, postAnchorIds]);
+  }, [isOverSm, findNextId]);
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -41,11 +53,14 @@ export default function ScrollAids(props: { postAnchorIds: string[] }) {
       className="forum-scroll-pill"
       style={{ left: 16 }}
       onClick={() => {
-        if (!nextAnchor) return scrollToTop();
-        document.getElementById(nextAnchor)?.scrollIntoView({ behavior: "smooth" });
+        const nextId = findNextId();
+        if (!nextId) return scrollToTop();
+        document.getElementById(nextId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Reflect that a further post may now exist above the fold.
+        setHasNext(true);
       }}
     >
-      {nextAnchor ? "SKIP TO NEXT POST" : "SCROLL TO THE TOP"}
+      {hasNext ? "SKIP TO NEXT POST" : "SCROLL TO THE TOP"}
     </button>
   );
 }

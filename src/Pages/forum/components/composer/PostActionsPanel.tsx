@@ -95,6 +95,8 @@ export function PostActionsPanel(props: {
               label="Roll Dice"
               color="green.0"
               checked={diceOn}
+              // Once a roll is submitted it locks in, so it can't be unchecked.
+              disabled={diceMutation.isPending || diceMutation.isSuccess}
               onChange={(e) => setDiceOn(e.currentTarget.checked)}
               styles={{ label: { color: "white", fontSize: 14 } }}
             />
@@ -154,6 +156,8 @@ export function PostActionsPanel(props: {
               label="Random Number"
               color="green.0"
               checked={randomOn}
+              // Once generated it locks in, so it can't be unchecked.
+              disabled={randomMutation.isPending || randomMutation.isSuccess}
               onChange={(e) => setRandomOn(e.currentTarget.checked)}
               styles={{ label: { color: "white", fontSize: 14 } }}
             />

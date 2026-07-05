@@ -47,6 +47,32 @@ export function hasCapability(user: User | undefined, cap: Capability): boolean 
   return user?.otherinfo?.capabilities?.includes(cap) ?? false;
 }
 
+/**
+ * Whether the user may hand out thread-close rewards (items, currency, XP).
+ * Admins plus directors granted GiveItems or ReviewRewards. Used to gate the
+ * close-thread control and the rewards review flow (UI only; rules mirror it).
+ */
+export function canGiveRewards(user: User | undefined): boolean {
+  return (
+    isAdmin(user) ||
+    hasCapability(user, Capability.GiveItems) ||
+    hasCapability(user, Capability.ReviewRewards)
+  );
+}
+
+/**
+ * Whether the user may pin a thread to the top and adjust its XP settings.
+ * Admins plus directors who host the staff forums (Main Adventures / Events).
+ * Regular members never see these controls.
+ */
+export function canCurateThreads(user: User | undefined): boolean {
+  return (
+    isAdmin(user) ||
+    hasCapability(user, Capability.HostMainForum) ||
+    hasCapability(user, Capability.HostEvents)
+  );
+}
+
 // Forum "value" ids this user may see. Default-deny: unknown/absent roles get the
 // base set, Applicant/Disabled get nothing, Master (or the SeeMasterForums grant)
 // adds the master-only forum(s), Admin sees all.

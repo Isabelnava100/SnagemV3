@@ -185,6 +185,8 @@ export interface SaveDraftInput {
   title: string;
   characterNames: string;
   html: string;
+  /** Full composer state (ComposerDraftSettings) so every setting is restored. */
+  settings?: Record<string, unknown>;
 }
 
 export const MAX_DRAFTS = 60;
@@ -213,6 +215,10 @@ export async function saveDraft(input: SaveDraftInput): Promise<number> {
     long_text: input.html,
     thread_id: input.threadId,
     title_thread: input.title,
+    // JSON round-trip strips undefined so Firestore accepts the nested state.
+    ...(input.settings
+      ? { settings: JSON.parse(JSON.stringify(input.settings)) }
+      : {}),
   });
   return count + 1;
 }
@@ -231,25 +237,29 @@ export async function deleteAllDrafts(uid: string): Promise<void> {
 }
 
 /**
- * SubmitXP files an XP-review request into the tickets collection (readable by
- * admins). The XP accrual flow itself is still an open product question. See
- * docs/FORUM.md.
+ * Closes a thread (archives it, making it read-only) and, when the closer left
+ * a note about items/money/pokemon they roleplayed finding, files that note as
+ * an xp_reward ticket for an admin to review. The thread creator and admins
+ * can always close; reward-granting directors are permitted by the rules too.
  */
-export async function submitXP(
+export async function closeThread(
   user: User,
   forum: string,
   threadId: string,
   threadTitle: string,
   note: string
 ): Promise<void> {
-  const { addDoc, collection } = await import("firebase/firestore");
-  await addDoc(collection(db, "tickets"), {
-    type: "xp_submission",
-    actorUid: user.uid,
-    actorName: user.displayName ?? user.username,
-    threadPath: `Forum/${forum}/thread/${threadId}`,
-    threadTitle,
-    note,
-    createdAt: new Date(),
-  });
+  const { addDoc, collection, doc, updateDoc } = await import("firebase/firestore");
+  await updateDoc(doc(db, ...threadDocPath(forum, threadId)), { closed: true });
+  if (note) {
+    await addDoc(collection(db, "tickets"), {
+      type: "xp_reward",
+      actorUid: user.uid,
+      actorName: user.displayName ?? user.username,
+      threadPath: `Forum/${forum}/thread/${threadId}`,
+      threadTitle,
+      note,
+      createdAt: new Date(),
+    });
+  }
 }

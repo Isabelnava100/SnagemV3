@@ -1,6 +1,6 @@
 import { ActionIcon, Box, Drawer, Group, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconFileText, IconHome, IconX } from "@tabler/icons-react";
+import { IconBooks, IconFileText, IconHome, IconX } from "@tabler/icons-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { Activities, Forum, Marketplace, Menu, Quests, TeamSangem, Users } from "../../icons";
@@ -69,6 +69,16 @@ function DrawerGrid({ onNavigate }: { onNavigate: () => void }) {
           </DrawerTile>
         </Link>
       ))}
+      <Link to="/Library" onClick={onNavigate} style={{ textDecoration: "none" }}>
+        <DrawerTile>
+          <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
+            <IconBooks size={26} color="white" />
+          </Box>
+          <Text fz={11} c="white" tt="uppercase">
+            Library
+          </Text>
+        </DrawerTile>
+      </Link>
       <Link to="/Policies" onClick={onNavigate} style={{ textDecoration: "none" }}>
         <DrawerTile>
           <Box style={{ height: 30, display: "flex", alignItems: "center" }}>

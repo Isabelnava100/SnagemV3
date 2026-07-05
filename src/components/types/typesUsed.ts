@@ -205,6 +205,7 @@ export enum Capability {
   ReviewRewards = "ReviewRewards",
   ManageSEO = "ManageSEO",
   ApproveImports = "ApproveImports",
+  HostMainForum = "HostMainForum",
 }
 
 export const CAPABILITY_INFO: Record<Capability, string> = {
@@ -217,6 +218,7 @@ export const CAPABILITY_INFO: Record<Capability, string> = {
   [Capability.ReviewRewards]: "Review and finalize thread-close rewards, including team XP",
   [Capability.ManageSEO]: "Edit the site's SEO settings (titles, descriptions, social share info)",
   [Capability.ApproveImports]: "Review and approve returning-member data imports (currency, items, Pokemon)",
+  [Capability.HostMainForum]: "Create threads in Main Adventures",
 };
 
 export type SpecificUser = {
@@ -267,6 +269,12 @@ export interface Draft {
   long_text: string;
   thread_id: string;
   title_thread: string;
+  /**
+   * Full new-thread composer state (category, tags, restrictions, characters,
+   * encounters, poll, XP overrides) so a saved roleplay draft restores every
+   * setting, not just the title and body. Shape: ComposerDraftSettings.
+   */
+  settings?: Record<string, unknown>;
 }
 
 export interface Character {

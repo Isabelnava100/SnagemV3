@@ -24,7 +24,7 @@ import GradientButtonPrimary, {
 import Editor, { useRichTextEditor } from "../../../components/editor/Editor";
 import { Capability } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
-import { hasCapability, isAdmin } from "../../../lib/permissions";
+import { canCurateThreads, hasCapability, isAdmin } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getUsers } from "../../../queries/admin";
 import { XPDefaults, XP_STAT_FIELDS, getXPDefaults } from "../../../queries/game";
@@ -38,7 +38,7 @@ import {
   saveDraft,
 } from "../mutations";
 import { getDraft } from "../queries";
-import { EncounterConfig, PostCharacter, ThreadPoll } from "../types";
+import { ComposerDraftSettings, EncounterConfig, PostCharacter, ThreadPoll } from "../types";
 import CharactersPanel from "../components/composer/CharactersPanel";
 import { EncounterSetupPanel } from "../components/composer/EncounterPanels";
 import { PollBuilderPanel } from "../components/composer/PostActionsPanel";
@@ -70,6 +70,7 @@ export default function NewThreadComposer() {
   const [attachSignature, setAttachSignature] = React.useState(true);
   const [xpOverride, setXpOverride] = React.useState<XPDefaults | null>(null);
   const canAdjustXP = isAdmin(user) || hasCapability(user, Capability.AdjustXP);
+  const canPin = canCurateThreads(user);
 
   // Site-wide XP defaults, shown as the panel's starting values.
   const { data: xpDefaults } = useQuery({
@@ -104,8 +105,25 @@ export default function NewThreadComposer() {
       editor.commands.clearContent();
       setHtml("");
     }
+    // Restore the rest of the roleplay settings saved with this draft.
+    const s = draft.settings as ComposerDraftSettings | undefined;
+    if (s) {
+      if (s.categoryLink && categories.some((c) => c.link === s.categoryLink)) {
+        setCategoryLink(s.categoryLink);
+      }
+      if (s.tags) setTags(s.tags);
+      if (typeof s.instructions === "string") setInstructions(s.instructions);
+      if (typeof s.pinned === "boolean") setPinned(s.pinned);
+      if (typeof s.restricted === "boolean") setRestricted(s.restricted);
+      if (s.allowedPosters) setAllowedPosters(s.allowedPosters);
+      if (s.characters) setCharacters(s.characters);
+      if (s.encounterConfig !== undefined) setEncounterConfig(s.encounterConfig);
+      if (s.poll !== undefined) setPoll(s.poll);
+      if (s.xpOverride !== undefined) setXpOverride(s.xpOverride as XPDefaults | null);
+      if (typeof s.attachSignature === "boolean") setAttachSignature(s.attachSignature);
+    }
     setDraftLoaded(true);
-  }, [editor, draft, draftLoaded]);
+  }, [editor, draft, draftLoaded, categories]);
 
   const { data: allUsers } = useQuery({
     queryKey: ["forum-all-users"],
@@ -116,6 +134,8 @@ export default function NewThreadComposer() {
   const validate = (): string => {
     if (!title.trim() || title.trim().length < 2) return "Give your thread a title.";
     if (!categoryLink) return "Pick a category for your thread.";
+    if (!characters.length) return "Select at least one character.";
+    if (characters.some((c) => !c.teamId)) return "Select a team for each character.";
     if (html.replace(/<[^>]*>/g, "").trim().length < 2) return "Write your first post.";
     if (encounterConfig && !encounterConfig.listId)
       return "Pick an encounter list, or turn encounters off.";
@@ -131,7 +151,7 @@ export default function NewThreadComposer() {
         title: title.trim(),
         instructions,
         tags,
-        pinned: isAdmin(user) && pinned,
+        pinned: canPin && pinned,
         restricted,
         allowedPosters: restricted ? allowedPosters : [],
         poll,
@@ -153,6 +173,19 @@ export default function NewThreadComposer() {
 
   const draftMutation = useMutation({
     mutationFn: async () => {
+      const settings: ComposerDraftSettings = {
+        categoryLink,
+        tags,
+        instructions,
+        pinned,
+        restricted,
+        allowedPosters,
+        characters,
+        encounterConfig,
+        poll,
+        xpOverride,
+        attachSignature,
+      };
       return saveDraft({
         user: user!,
         forum: categoryLink ?? "Main-Forum",
@@ -160,6 +193,7 @@ export default function NewThreadComposer() {
         title: title.trim() || "Untitled thread",
         characterNames: characters.map((c) => c.name).join(", "),
         html,
+        settings: settings as unknown as Record<string, unknown>,
       });
     },
     onSuccess: (count) =>
@@ -202,7 +236,7 @@ export default function NewThreadComposer() {
 
                 <Box>
                   <PanelHint>Select where your thread will be located.</PanelHint>
-                  {isAdmin(user) && (
+                  {canPin && (
                     <Radio.Group
                       value={pinned ? "pin" : "nopin"}
                       onChange={(v) => setPinned(v === "pin")}
@@ -362,6 +396,10 @@ export default function NewThreadComposer() {
               onChange={(e) => setAttachSignature(e.currentTarget.checked)}
               styles={{ label: { color: "white", fontSize: 13 } }}
             />
+            <Text fz={12} c="dimmed">
+              Your roleplay rewards will be sent over after the thread is closed
+              and approved by an admin.
+            </Text>
 
             {error && <GameResultText>{error}</GameResultText>}
             {draftMessage && (

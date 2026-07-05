@@ -1,4 +1,5 @@
 import {
+  Box,
   Container,
   Flex,
   Group,
@@ -17,11 +18,14 @@ import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
 import { SectionLoader } from "../../../components/navigation/loading";
+import { Capability } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
-import { isAdmin } from "../../../lib/permissions";
+import { actorFrom, logAuditEvent } from "../../../lib/auditLog";
+import { canGiveRewards, hasCapability, isAdmin } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
+import { getXPDefaults } from "../../../queries/game";
 import { FORUM_ACCENT, POSTS_PER_PAGE } from "../config";
-import { addBookmark, removeBookmark, submitXP } from "../mutations";
+import { addBookmark, closeThread, removeBookmark } from "../mutations";
 import { getForumBookmarks, getPostsCount, getPostsPage, getThread } from "../queries";
 import { ForumThread } from "../types";
 import PollBlock from "../components/PollBlock";
@@ -49,56 +53,99 @@ export function userMayPost(thread: ForumThread | null | undefined, user: Return
   return (thread.allowedPosters ?? []).includes(name);
 }
 
-function SubmitXPModal(props: {
+function CloseThreadModal(props: {
   opened: boolean;
   onClose: () => void;
   forum: string;
   thread: ForumThread;
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [note, setNote] = React.useState("");
-  const [sent, setSent] = React.useState(false);
+
+  // Per-post XP default, shown as the estimate when one is configured.
+  const { data: xpDefaults } = useQuery({
+    queryKey: ["xp-defaults"],
+    queryFn: getXPDefaults,
+    enabled: props.opened,
+  });
+  const perPost = xpDefaults?.experiencePerPost ?? 0;
+
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async () => {
       if (!user) return;
-      await submitXP(user, props.forum, props.thread.id, props.thread.title, note);
+      await closeThread(
+        user,
+        props.forum,
+        props.thread.id,
+        props.thread.title,
+        note.trim()
+      );
+      await logAuditEvent({
+        action: "thread.close",
+        ...actorFrom(user),
+        targetPath: `forum/${props.forum}/threads/${props.thread.id}`,
+        details: { title: props.thread.title, forum: props.forum },
+      });
     },
-    onSuccess: () => setSent(true),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["forum-thread", props.forum, props.thread.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["forum-threads", props.forum] });
+      props.onClose();
+      // Reward granters go straight to the rewards review for this thread.
+      if (canGiveRewards(user)) {
+        navigate(`/Forum/${props.forum}/thread/${props.thread.id}/rewards`);
+      }
+    },
   });
 
   return (
     <Modal
       opened={props.opened}
       onClose={props.onClose}
-      title={<Text fw={700}>Submit XP</Text>}
+      title={<Text fw={700}>Close thread</Text>}
       centered
       radius={12}
     >
-      {sent ? (
-        <Text fz={14}>
-          Your XP submission was sent for review. An admin will process it soon.
+      <Stack gap={12}>
+        <Text fz={13} c="dimmed">
+          Closing this thread archives it: no new posts can be made and existing
+          posts can no longer be edited. If you roleplay finding a specific item,
+          money or pokemon, let us know for review.
         </Text>
-      ) : (
-        <Stack gap={10}>
-          <Text fz={13} c="dimmed">
-            Submit this thread for XP review. Tell the admins which posts/characters should
-            receive experience.
-          </Text>
-          <Textarea
-            placeholder="Notes for the reviewers (optional)"
-            value={note}
-            onChange={(e) => setNote(e.currentTarget.value)}
-            autosize
-            minRows={3}
-            styles={{ input: { background: "#2E2D2E" } }}
-          />
-          <Group justify="flex-end">
-            <GradientButtonPrimary radius="xl" loading={isPending} onClick={() => mutateAsync()}>
-              Submit XP
-            </GradientButtonPrimary>
-          </Group>
-        </Stack>
-      )}
+        {perPost > 0 && (
+          <Box p={10} style={{ background: "#2E2D2E", borderRadius: 8 }}>
+            <Text fz={13} c="white" fw={600}>
+              Estimated reward
+            </Text>
+            <Text fz={13} c="dimmed">
+              About {perPost} experience per qualifying post. An admin does the
+              final review before anything is assigned, so the final amount may
+              change.
+            </Text>
+          </Box>
+        )}
+        <Textarea
+          label="Rewards to review (optional)"
+          placeholder="Tell the reviewers about any items, money or pokemon you roleplayed finding."
+          value={note}
+          onChange={(e) => setNote(e.currentTarget.value)}
+          autosize
+          minRows={3}
+          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+        />
+        <Group justify="flex-end">
+          <GradientButtonSecondary radius="xl" variant="subtle" onClick={props.onClose}>
+            Cancel
+          </GradientButtonSecondary>
+          <GradientButtonPrimary radius="xl" loading={isPending} onClick={() => mutateAsync()}>
+            Close Thread
+          </GradientButtonPrimary>
+        </Group>
+      </Stack>
     </Modal>
   );
 }
@@ -110,7 +157,7 @@ export default function ThreadView() {
   const { user } = useAuth();
   const { isOverSm } = useMediaQuery();
   const queryClient = useQueryClient();
-  const [xpOpened, xpModal] = useDisclosure(false);
+  const [closeOpened, closeModal] = useDisclosure(false);
 
   const [currentPage, setCurrentPage] = React.useState<number>(
     isNumeric(page) ? Number(page) : 1
@@ -179,6 +226,8 @@ export default function ThreadView() {
 
   const host = userIsHost(thread, user);
   const mayPost = userMayPost(thread, user);
+  // The thread creator plus admins/directors who can hand out rewards may close.
+  const canClose = !!user && !thread.closed && (host || canGiveRewards(user));
   const lastPageNum = Math.max(1, Math.ceil((totalPosts ?? 0) / POSTS_PER_PAGE));
   const anchorIds = (posts ?? []).map((post) => `post-${post.id}`);
 
@@ -193,11 +242,6 @@ export default function ThreadView() {
         {thread.title}
         {thread.closed ? " (Archived)" : ""}
       </Title>
-      {user && (
-        <Text fz={14} c="white" fw={600} mt={4}>
-          Welcome, {user.displayName ?? user.username}!
-        </Text>
-      )}
 
       <Flex justify="space-between" align="center" mt={14} gap={10} wrap="wrap">
         <Pagination
@@ -205,13 +249,13 @@ export default function ThreadView() {
           value={Math.min(currentPage, lastPageNum)}
           onChange={changePage}
           color={FORUM_ACCENT}
-          size="sm"
+          size={isOverSm ? "sm" : "md"}
           withEdges
         />
         <Group gap={8} wrap="wrap">
-          {user && (
-            <GradientButtonSecondary radius="xl" size="xs" onClick={xpModal.open}>
-              Submit XP
+          {canClose && (
+            <GradientButtonSecondary radius="xl" size="xs" onClick={closeModal.open}>
+              Close Thread
             </GradientButtonSecondary>
           )}
           {host && (
@@ -266,6 +310,7 @@ export default function ThreadView() {
               forum={forum}
               threadId={thread.id}
               anchorId={`post-${post.id}`}
+              threadClosed={thread.closed}
             />
           ))
         )}
@@ -277,13 +322,13 @@ export default function ThreadView() {
           value={Math.min(currentPage, lastPageNum)}
           onChange={changePage}
           color={FORUM_ACCENT}
-          size="sm"
+          size={isOverSm ? "sm" : "md"}
           withEdges
         />
       </Flex>
 
       <ScrollAids postAnchorIds={anchorIds} />
-      <SubmitXPModal opened={xpOpened} onClose={xpModal.close} forum={forum} thread={thread} />
+      <CloseThreadModal opened={closeOpened} onClose={closeModal.close} forum={forum} thread={thread} />
     </Container>
   );
 }

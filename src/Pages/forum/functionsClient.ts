@@ -16,6 +16,9 @@ async function call<TResult>(name: string, data: unknown): Promise<TResult> {
 
 /** Extracts the server's human-readable message from a callable error. */
 export function callableMessage(error: unknown, fallback: string): string {
+  // Log the raw error so an "internal"/unexpected failure can be diagnosed from
+  // the browser console (the fallback text hides the useful detail otherwise).
+  if (typeof console !== "undefined") console.error("Callable error:", error);
   const message = (error as { message?: string })?.message;
   return message && !/internal/i.test(message) ? message : fallback;
 }
@@ -77,6 +80,12 @@ export const callOpenMysteryBox = (itemId: string) =>
     "openMysteryBox",
     { itemId }
   );
+
+/** Admin maintenance: normalize (and optionally prune) legacy forum threads. */
+export const callRepairLegacyThreads = (deleteBroken: boolean) =>
+  call<{ scanned: number; normalized: number; deleted: number }>("repairLegacyThreads", {
+    deleteBroken,
+  });
 
 export const callSetBossBattle = (input: {
   forum: string;

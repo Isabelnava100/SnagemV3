@@ -241,12 +241,17 @@ export default function PostCard(props: {
   forum: string;
   threadId: string;
   anchorId?: string;
+  /** Closed threads are read-only, so the edit control is hidden. */
+  threadClosed?: boolean;
 }) {
   const { post, forum, threadId } = props;
   const { user } = useAuth();
   const isSystem = post.type === "boss_start" || post.type === "boss_end";
   const canEdit =
-    !isSystem && !!user && (post.ownerUid ? post.ownerUid === user.uid : false);
+    !isSystem &&
+    !props.threadClosed &&
+    !!user &&
+    (post.ownerUid ? post.ownerUid === user.uid : false);
 
   return (
     <Card id={props.anchorId} withBorder radius="md" bg="#2b2a2b" mt={12} p={0}>

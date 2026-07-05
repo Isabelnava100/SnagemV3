@@ -147,6 +147,12 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     !(thread.bossBattle.excluded ?? []).includes(user?.displayName ?? user?.username ?? "");
 
   const validate = (): string => {
+    // Character + team are required on new posts (edit mode locks them, and
+    // legacy posts may predate teams, so don't block edits).
+    if (mode === "new") {
+      if (!characters.length) return "Select at least one character.";
+      if (characters.some((c) => !c.teamId)) return "Select a team for each character.";
+    }
     if (html.replace(/<[^>]*>/g, "").trim().length < 2) return "Write your post first.";
     for (const selection of itemSelections) {
       const item = (inventory ?? []).find((i) => i.id === selection.itemId);

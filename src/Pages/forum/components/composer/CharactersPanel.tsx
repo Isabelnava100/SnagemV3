@@ -150,8 +150,12 @@ export default function CharactersPanel(props: {
                 />
                 {picked && (
                   <Stack gap={6} pl={30}>
+                    <Text fz={11} c="dimmed">
+                      Select the team to use. Its Pokemon are the ones that earn
+                      experience and rewards from this post.
+                    </Text>
                     <Select
-                      placeholder="Bring a team along (optional)"
+                      placeholder="Select the team to use"
                       data={teamOptions}
                       value={picked.teamId ?? null}
                       onChange={(teamId) => pickTeam(character.id, teamId)}

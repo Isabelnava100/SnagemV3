@@ -6,11 +6,11 @@
  * The default curve is tuned for an average of 4 qualifying posts per week at
  * roughly 10 XP per post (the reference the numbers were balanced against; the
  * actual XP per post is set per thread). Against that pace:
- *   - Level 16  (a first evolution, e.g. Bulbasaur -> Ivysaur) ~1 month
- *   - Level 32  (a final evolution,  e.g. Ivysaur  -> Venusaur) ~6 months
- *   - Level 100 (cap) ~4 years
- * Levels stay near one post each until the final evolution, then get steadily
- * harder, so reaching the final form is easy but pushing past it is a grind.
+ *   - Level 16  (a first evolution) ~1 month
+ *   - Level 32  (a final evolution) ~5 months
+ *   - Level 40  ~9 months
+ *   - Past level 40 the cost grows EXPONENTIALLY, so pushing to level 100 is a
+ *     multi-year grind (the top levels each cost well over a hundred posts).
  *
  * Admins can override the whole table (stored at admin/leveling); DEFAULT_XP_CURVE
  * is only the fallback.
@@ -22,15 +22,15 @@ export const MAX_LEVEL = 100;
 export const REFERENCE_XP_PER_POST = 10;
 
 /**
- * Posts needed to climb from level L-1 to L under the default pace. A
- * piecewise-linear ramp: gentle to the first evolution, moderate to the final
- * evolution, then steep to level 100.
+ * Posts needed to climb from level L-1 to L under the default pace: gentle to
+ * the first evolution, a steeper ramp to level 40, then exponential growth so
+ * every level past 40 costs meaningfully more than the last.
  */
 function defaultPostsForLevel(level: number): number {
   if (level <= 1) return 0;
   if (level <= 16) return 0.5 + ((level - 2) / 14) * 1.0; // 0.5 -> 1.5 posts
-  if (level <= 32) return 2 + ((level - 17) / 15) * 7; // 2 -> 9 posts
-  return 9 + ((level - 33) / 67) * 5; // 9 -> 14 posts
+  if (level <= 40) return 2 + ((level - 17) / 23) * 8; // 2 -> 10 posts
+  return 10 * Math.pow(1.05, level - 40); // exponential after level 40
 }
 
 /**

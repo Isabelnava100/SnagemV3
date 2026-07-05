@@ -170,9 +170,7 @@ export function EncounterSetupPanel(props: {
         <Group justify="flex-end">
           <ForumTextLink
             component="a"
-            onClick={() =>
-              window.open("/Dashboard/Admin-Access/Adjust-Lists", "_blank", "noopener")
-            }
+            onClick={() => window.open("/Library?tab=lists", "_blank", "noopener")}
           >
             Open a new tab to view all lists here.
           </ForumTextLink>

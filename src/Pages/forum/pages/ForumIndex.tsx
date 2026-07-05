@@ -12,7 +12,6 @@ import {
   Text,
   TextInput,
   Title,
-  Tooltip,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
@@ -212,13 +211,8 @@ export default function ForumIndex() {
       <Flex justify="space-between" align="flex-start" gap={12} wrap="wrap">
         <Stack gap={4}>
           <Title order={1} fz={isOverSm ? 32 : 22} c="white" fw={400}>
-            Welcome to the Snagem Forums
+            Snagem Forums
           </Title>
-          {user && (
-            <Text fz={14} c="white" fw={600}>
-              Welcome, {user.displayName ?? user.username}!
-            </Text>
-          )}
         </Stack>
         <TextInput
           placeholder="Search the Forums..."
@@ -238,12 +232,14 @@ export default function ForumIndex() {
         <GradientButtonSecondary radius="xl" size="xs" onClick={() => navigate("/Dashboard/Bookmarks")}>
           View Your Bookmarks
         </GradientButtonSecondary>
-        {/* Forum rules will live in the library section (placeholder per the board). */}
-        <Tooltip label="The forum rules library is coming soon.">
-          <GradientButtonSecondary radius="xl" size="xs">
-            View Forum Rules
-          </GradientButtonSecondary>
-        </Tooltip>
+        {/* Forum rules point at the Community Rules tab of the public policies page. */}
+        <GradientButtonSecondary
+          radius="xl"
+          size="xs"
+          onClick={() => navigate("/Policies?tab=conduct")}
+        >
+          View Forum Rules
+        </GradientButtonSecondary>
         <GradientButtonSecondary
           radius="xl"
           size="xs"

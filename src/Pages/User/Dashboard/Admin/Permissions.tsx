@@ -366,6 +366,68 @@ function LevelingCurveSection() {
   );
 }
 
+function MaintenanceSection() {
+  const { user } = useAuth();
+  const [deleteBroken, setDeleteBroken] = React.useState(false);
+  const [result, setResult] = React.useState<string>("");
+
+  const repair = useMutation({
+    mutationFn: async () => {
+      const { callRepairLegacyThreads } = await import("../../../forum/functionsClient");
+      return callRepairLegacyThreads(deleteBroken);
+    },
+    onSuccess: (r) => {
+      setResult(
+        `Scanned ${r.scanned} threads. Normalized ${r.normalized}` +
+          (r.deleted ? `, deleted ${r.deleted} unusable.` : ".")
+      );
+      logAuditEvent({
+        action: "forum.repair_legacy",
+        ...actorFrom(user),
+        details: { ...r, deleteBroken },
+      });
+    },
+    onError: (e) => setResult((e as Error).message || "Repair failed."),
+  });
+
+  return (
+    <Stack gap={8}>
+      <Title order={3} c="white" size={18} fw={600}>
+        Forum maintenance
+      </Title>
+      <Text fz={13} c="dimmed">
+        Normalize old forum threads so posting, rolls and the host menu work on
+        legacy data. This backfills missing fields (and links each thread to its
+        creator). It never touches post content.
+      </Text>
+      <Checkbox
+        label="Also delete unusable threads (no title and no creator)"
+        color="red.0"
+        checked={deleteBroken}
+        onChange={(e) => setDeleteBroken(e.currentTarget.checked)}
+        styles={{ label: { color: "white", fontSize: 13 } }}
+      />
+      <Group>
+        <GradientButtonPrimary
+          radius="xl"
+          loading={repair.isPending}
+          onClick={() => {
+            setResult("");
+            repair.mutateAsync().catch(() => undefined);
+          }}
+        >
+          Repair legacy threads
+        </GradientButtonPrimary>
+      </Group>
+      {result && (
+        <Text fz={13} c="green.0" role="status" aria-live="polite">
+          {result}
+        </Text>
+      )}
+    </Stack>
+  );
+}
+
 export default function Permissions() {
   return (
     <Stack gap={20}>
@@ -374,6 +436,8 @@ export default function Permissions() {
       <XPDefaultsSection />
       <Divider color="#4a464a" />
       <LevelingCurveSection />
+      <Divider color="#4a464a" />
+      <MaintenanceSection />
       <Divider color="#4a464a" />
       <ActivityLog title="Staff activity log" max={80} />
     </Stack>

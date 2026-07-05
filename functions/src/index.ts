@@ -49,9 +49,15 @@ const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100];
 const GEN_CAPS = [151, 251, 386, 493, 649, 721, 809, 898];
 const GEN_NAMES = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 
-// Thread-creation matrix (mirrors src/Pages/forum/config.ts)
-const ADMIN_CREATE_FORUMS = ["Main-Forum", "The-Colosseum", "Master-Mission"];
-const EVENT_FORUM = "Events";
+// Thread-creation matrix (mirrors src/Pages/forum/config.ts). Any forum not
+// listed here is open to any approved member (Side-Roleplay, The-Colosseum, ...).
+type CreatePolicy = "admin" | "main-host" | "event-host" | "master" | "none";
+const FORUM_CREATE_POLICY: Record<string, CreatePolicy> = {
+  "Main-Forum": "main-host",
+  Events: "event-host",
+  "Master-Mission": "master",
+  Quests: "none",
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -92,6 +98,24 @@ async function loadMember(uid: string): Promise<Member> {
 
 const isAdmin = (m: Member) => m.permissions === "Admin";
 const hasCap = (m: Member, cap: string) => isAdmin(m) || m.capabilities.includes(cap);
+
+/** Whether a member may create a thread in a forum (see FORUM_CREATE_POLICY). */
+function canCreateInForum(forum: string, member: Member): boolean {
+  switch (FORUM_CREATE_POLICY[forum]) {
+    case "none":
+      return false;
+    case "admin":
+      return isAdmin(member);
+    case "main-host":
+      return hasCap(member, "HostMainForum");
+    case "event-host":
+      return hasCap(member, "HostEvents");
+    case "master":
+      return isAdmin(member) || member.permissions === "Master";
+    default:
+      return true; // any approved member (loadMember already blocks Applicant/Disabled)
+  }
+}
 
 function threadRef(forum: string, threadId: string): DocumentReference {
   return db.doc(`forum/${forum}/threads/${threadId}`);
@@ -667,12 +691,9 @@ export const publishForumThread = onCall(async (request) => {
   const html = requireString(request.data?.html, "first post", 100_000);
   const member = await loadMember(uid);
 
-  // Thread-creation permission matrix.
-  if (ADMIN_CREATE_FORUMS.includes(forum) && !isAdmin(member)) {
-    throw new HttpsError("permission-denied", "Only admins can create threads here.");
-  }
-  if (forum === EVENT_FORUM && !hasCap(member, "HostEvents")) {
-    throw new HttpsError("permission-denied", "Only event hosts can create event threads.");
+  // Thread-creation permission matrix (mirrors src/Pages/forum/config.ts).
+  if (!canCreateInForum(forum, member)) {
+    throw new HttpsError("permission-denied", "You cannot create threads here.");
   }
   const pinned = !!request.data?.pinned && isAdmin(member);
 
@@ -1475,6 +1496,62 @@ export const onImportSubmitted = onDocumentWritten("importRequests/{uid}", async
     text: "A returning member submitted an import for review.",
     link: "/Dashboard/Admin-Access/Imports",
   });
+});
+
+/**
+ * One-off admin maintenance: normalize legacy forum threads so the post/roll
+ * flow (which expects `closed`, `restricted`, `allowedPosters`, `title`,
+ * `createdBy` and, for the host menu, `hostUid`) works on old data. Backfills
+ * `hostUid` from the creator's username. Only when `deleteBroken` is passed
+ * does it remove threads that have neither a title nor a creator (unusable
+ * shells). Everything else is a non-destructive merge. Admin only.
+ */
+export const repairLegacyThreads = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isAdmin(member)) throw new HttpsError("permission-denied", "Admins only.");
+  const deleteBroken = request.data?.deleteBroken === true;
+
+  // username -> uid, so legacy threads (no hostUid) can be linked to a creator.
+  const usersSnap = await db.collection("users").get();
+  const uidByUsername = new Map<string, string>();
+  usersSnap.forEach((d) => {
+    const uname = d.data().username;
+    if (typeof uname === "string" && uname) uidByUsername.set(uname, d.id);
+  });
+
+  let scanned = 0;
+  let normalized = 0;
+  let deleted = 0;
+  const forumRefs = await db.collection("forum").listDocuments();
+  for (const forumRef of forumRefs) {
+    const threadsSnap = await forumRef.collection("threads").get();
+    for (const threadDoc of threadsSnap.docs) {
+      scanned++;
+      const data = threadDoc.data();
+      const isBroken = !data.title && !data.createdBy;
+      if (isBroken && deleteBroken) {
+        await threadDoc.ref.delete();
+        deleted++;
+        continue;
+      }
+      const patch: Record<string, unknown> = {};
+      if (typeof data.closed !== "boolean") patch.closed = !!data.closed;
+      if (typeof data.restricted !== "boolean") patch.restricted = !!data.restricted;
+      if (!Array.isArray(data.allowedPosters)) patch.allowedPosters = [];
+      if (typeof data.title !== "string") patch.title = String(data.title ?? "Untitled thread");
+      if (typeof data.createdBy !== "string") patch.createdBy = String(data.createdBy ?? "");
+      if (!data.hostUid && typeof data.createdBy === "string") {
+        const resolved = uidByUsername.get(data.createdBy);
+        if (resolved) patch.hostUid = resolved;
+      }
+      if (Object.keys(patch).length) {
+        await threadDoc.ref.set(patch, { merge: true });
+        normalized++;
+      }
+    }
+  }
+  return { scanned, normalized, deleted };
 });
 
 /** Ping the reward-review group when a thread is closed (rewards may be due). */

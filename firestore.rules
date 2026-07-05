@@ -164,7 +164,11 @@ service cloud.firestore {
               && request.auth.uid == resource.data.get('hostUid', '')
               && request.resource.data.diff(resource.data).affectedKeys()
                    .hasOnly(['title', 'instructions', 'tags', 'restricted',
-                             'allowedPosters', 'encounterConfig', 'closed']));
+                             'allowedPosters', 'encounterConfig', 'closed']))
+          // Reward-granting directors may close (archive) any thread: closed only.
+          || ((hasCap('GiveItems') || hasCap('ReviewRewards'))
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['closed']));
         allow delete: if isAdmin();
 
         // Posts are written exclusively by publishForumPost / setBossBattle.
