@@ -1554,6 +1554,82 @@ export const repairLegacyThreads = onCall(async (request) => {
   return { scanned, normalized, deleted };
 });
 
+/**
+ * One-off admin maintenance: migrate the legacy `users/{uid}.myBookmarks`
+ * array (strings shaped `where[<path>]name[<title>]`) into the current
+ * `users/{uid}/bookmarks/{forum}` threadId-keyed map so old bookmarks show up
+ * again. Non-destructive (merge writes, legacy field left intact). Pass
+ * `dryRun: true` (default) to only count/sample without writing. Admin only.
+ */
+export const migrateLegacyBookmarks = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isAdmin(member)) throw new HttpsError("permission-denied", "Admins only.");
+  const dryRun = request.data?.dryRun !== false; // default to preview
+
+  const KNOWN_FORUMS = [
+    "Main-Forum",
+    "Side-Roleplay",
+    "Master-Mission",
+    "Quests",
+    "Events",
+    "Private",
+    "The-Colosseum",
+  ];
+
+  let usersWithLegacy = 0;
+  let migrated = 0;
+  let skipped = 0;
+  const samples: string[] = [];
+
+  const usersSnap = await db.collection("users").get();
+  for (const userDoc of usersSnap.docs) {
+    const legacy = userDoc.data().myBookmarks;
+    if (!Array.isArray(legacy) || !legacy.length) continue;
+    usersWithLegacy++;
+    const discordUID = userDoc.data().discordUID ?? "";
+    const byForum: Record<string, Record<string, unknown>> = {};
+
+    for (const raw of legacy) {
+      if (typeof raw !== "string" || !raw.trim()) continue;
+      if (samples.length < 12) samples.push(raw);
+      const where = raw.match(/where\[(.*?)\]/)?.[1] ?? "";
+      const name = raw.match(/name\[(.*?)\]/)?.[1] ?? "";
+      const parts = where.split("/").filter(Boolean);
+      const forum = parts.find((p) => KNOWN_FORUMS.includes(p));
+      const afterThread = parts[parts.indexOf("thread") + 1];
+      const threadId =
+        (parts.indexOf("thread") >= 0 ? afterThread : undefined) ||
+        [...parts].reverse().find((p) => /^\d+$/.test(p)) ||
+        "";
+      if (!forum || !threadId) {
+        skipped++;
+        continue;
+      }
+      byForum[forum] = byForum[forum] ?? {};
+      byForum[forum][threadId] = {
+        title: name || "Bookmarked thread",
+        color: "#762B77",
+        date: { nt: 0, seconds: 0 }, // legacy bookmarks have no stored date
+        send2discord: discordUID,
+        threadID: threadId,
+        threadLocation: forum,
+      };
+    }
+
+    for (const [forum, entries] of Object.entries(byForum)) {
+      const count = Object.keys(entries).length;
+      if (!count) continue;
+      if (!dryRun) {
+        await db.doc(`users/${userDoc.id}/bookmarks/${forum}`).set(entries, { merge: true });
+      }
+      migrated += count;
+    }
+  }
+
+  return { usersWithLegacy, migrated, skipped, dryRun, samples };
+});
+
 /** Ping the reward-review group when a thread is closed (rewards may be due). */
 export const onThreadClosed = onDocumentUpdated(
   "forum/{forum}/threads/{threadId}",

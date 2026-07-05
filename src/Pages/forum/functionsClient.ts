@@ -87,6 +87,16 @@ export const callRepairLegacyThreads = (deleteBroken: boolean) =>
     deleteBroken,
   });
 
+/** Admin maintenance: migrate legacy myBookmarks[] into the bookmarks subcollection. */
+export const callMigrateLegacyBookmarks = (dryRun: boolean) =>
+  call<{
+    usersWithLegacy: number;
+    migrated: number;
+    skipped: number;
+    dryRun: boolean;
+    samples: string[];
+  }>("migrateLegacyBookmarks", { dryRun });
+
 export const callSetBossBattle = (input: {
   forum: string;
   threadId: string;
