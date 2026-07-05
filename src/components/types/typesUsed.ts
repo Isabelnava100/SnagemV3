@@ -342,6 +342,8 @@ export interface OwnedPokemon {
   friendship?: number;
   purification?: number;
   shadow?: number;
+  /** Character whose box this Pokemon lives in. Unset = shared/unassigned. */
+  characterId?: string;
 }
 
 export type Profile = Partial<{

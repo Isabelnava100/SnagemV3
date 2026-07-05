@@ -482,6 +482,8 @@ interface FilterState {
   type2: PokemonTypes | "";
   generation: PokemonGenerations | "";
   gender: "" | "M" | "F";
+  /** "" = all, "none" = unassigned, otherwise a character id. */
+  characterId: string;
 }
 
 const EMPTY_FILTERS: FilterState = {
@@ -490,6 +492,7 @@ const EMPTY_FILTERS: FilterState = {
   type2: "",
   generation: "",
   gender: "",
+  characterId: "",
 };
 
 function OwnedPokemons(props: EditingProps) {
@@ -501,6 +504,11 @@ function OwnedPokemons(props: EditingProps) {
   });
   const [filterState, setFilterState] = React.useState<FilterState>(EMPTY_FILTERS);
   const { isOverLg } = useMediaQuery();
+  const { data: characters } = useQuery({
+    queryKey: ["get-characters", user?.uid],
+    queryFn: () => getCharacters(user!.uid),
+    enabled: !!user,
+  });
 
   const activeFilterCount = React.useMemo(
     () => Object.values(filterState).filter((v) => v !== "").length,
@@ -520,6 +528,13 @@ function OwnedPokemons(props: EditingProps) {
     if (filterState.type2 && pokemon.type2 !== filterState.type2) return false;
     if (filterState.generation && pokemon.generation !== filterState.generation) return false;
     if (filterState.gender && pokemon.gender !== filterState.gender) return false;
+    if (filterState.characterId === "none" && pokemon.characterId) return false;
+    if (
+      filterState.characterId &&
+      filterState.characterId !== "none" &&
+      pokemon.characterId !== filterState.characterId
+    )
+      return false;
     if (query && !`${pokemon.name ?? ""} ${pokemon.species ?? ""}`.toLowerCase().includes(query))
       return false;
     return true;
@@ -609,6 +624,20 @@ function OwnedPokemons(props: EditingProps) {
                   placeholder="Any"
                   onChange={(value) =>
                     setFilterState((pre) => ({ ...pre, gender: (value ?? "") as "M" | "F" }))
+                  }
+                  styles={darkInput}
+                />
+                <Select
+                  label="Character"
+                  clearable
+                  value={filterState.characterId || null}
+                  data={[
+                    { value: "none", label: "Unassigned" },
+                    ...(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name })),
+                  ]}
+                  placeholder="Any character"
+                  onChange={(value) =>
+                    setFilterState((pre) => ({ ...pre, characterId: value ?? "" }))
                   }
                   styles={darkInput}
                 />
@@ -723,6 +752,25 @@ function RemovePokemonFromTeam(props: {
 
 function PokemonDetails(props: { pokemon: OwnedPokemon }) {
   const { pokemon } = props;
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data: characters } = useQuery({
+    queryKey: ["get-characters", user?.uid],
+    queryFn: () => getCharacters(user!.uid),
+    enabled: !!user,
+  });
+  const assign = useMutation({
+    mutationFn: async (characterId: string | null) => {
+      const { doc, setDoc } = await import("firebase/firestore");
+      const { db } = await import("../../../context/firebase");
+      await setDoc(
+        doc(db, "users", user!.uid, "bag", "owned_pokemons"),
+        { [pokemon.id]: { characterId: characterId ?? "" } },
+        { merge: true }
+      );
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["get-owned-pokemons", user?.uid] }),
+  });
   return (
     <Stack>
       <Group>
@@ -765,6 +813,17 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         <Text fz={12}>Purification pts: {pokemon.purification ?? 0}</Text>
         <Text fz={12}>Shadow pts: {pokemon.shadow ?? 0}</Text>
       </Stack>
+      <Select
+        label="Character"
+        placeholder="Unassigned"
+        size="xs"
+        clearable
+        data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
+        value={pokemon.characterId || null}
+        disabled={assign.isPending}
+        onChange={(value) => assign.mutateAsync(value)}
+        styles={{ input: { background: "#2E2D2E" } }}
+      />
       <EvolveButton pokemon={pokemon} />
     </Stack>
   );
