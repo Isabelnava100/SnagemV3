@@ -39,6 +39,8 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
           const { uid, email, displayName } = firebaseUser;
           const { avatar, username, ...otherinfo } = await getInfo(uid);
           setUser({ uid, email, displayName, username, avatar, otherinfo });
+          // Install the admin-configured XP curve for level displays.
+          import("../queries/leveling").then((m) => m.loadActiveCurve());
         } else {
           setUser(undefined);
         }

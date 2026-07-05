@@ -48,14 +48,26 @@ export const DEFAULT_XP_CURVE: number[] = (() => {
   return curve;
 })();
 
-/** Total XP needed to reach a given level under the provided (or default) curve. */
-export function xpForLevel(level: number, curve: number[] = DEFAULT_XP_CURVE): number {
+/**
+ * The curve the app currently uses. Defaults to DEFAULT_XP_CURVE and is replaced
+ * at startup with the admin-configured table (admin/leveling) if one exists, so
+ * every level display and evolution gate reflects the admin's settings.
+ */
+let ACTIVE_CURVE: number[] = DEFAULT_XP_CURVE;
+
+/** Install the admin-configured curve (call once on load). */
+export function setActiveCurve(curve: number[] | null | undefined): void {
+  ACTIVE_CURVE = curve && curve.length > 1 ? curve : DEFAULT_XP_CURVE;
+}
+
+/** Total XP needed to reach a given level under the active (or given) curve. */
+export function xpForLevel(level: number, curve: number[] = ACTIVE_CURVE): number {
   const clamped = Math.max(1, Math.min(MAX_LEVEL, Math.floor(level)));
   return curve[clamped] ?? 0;
 }
 
 /** The level a pokemon has reached for a given total XP (clamped 1..100). */
-export function levelForXp(xp: number, curve: number[] = DEFAULT_XP_CURVE): number {
+export function levelForXp(xp: number, curve: number[] = ACTIVE_CURVE): number {
   const total = Math.max(0, xp || 0);
   let level = 1;
   for (let l = 2; l <= MAX_LEVEL; l++) {
@@ -77,7 +89,7 @@ export interface LevelProgress {
 }
 
 /** Level plus progress toward the next level, for XP bars and labels. */
-export function levelProgress(xp: number, curve: number[] = DEFAULT_XP_CURVE): LevelProgress {
+export function levelProgress(xp: number, curve: number[] = ACTIVE_CURVE): LevelProgress {
   const total = Math.max(0, xp || 0);
   const level = levelForXp(total, curve);
   if (level >= MAX_LEVEL) {
