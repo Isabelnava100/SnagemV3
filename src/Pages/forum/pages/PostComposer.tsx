@@ -111,23 +111,33 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
 
   // Preload content when editing; prepend the quote when quoting.
   React.useEffect(() => {
-    if (!editor || loadedEdit) return;
+    if (!editor || editor.isDestroyed || loadedEdit) return;
+    // Tiptap 3 can throw parsing legacy/malformed stored HTML — guard every
+    // setContent so a bad draft/post can't crash the composer.
+    const load = (content: string): boolean => {
+      try {
+        editor.commands.setContent(content);
+        setHtml(editor.getHTML());
+        return true;
+      } catch {
+        editor.commands.clearContent();
+        setHtml("");
+        return true;
+      }
+    };
     if (mode === "edit" && editingPost) {
-      editor.commands.setContent(editingPost.text);
-      setHtml(editingPost.text);
+      load(editingPost.text);
       setCharacters(editingPost.characters ?? []);
       setLoadedEdit(true);
     }
     if (mode === "new" && quotedPost) {
-      editor.commands.setContent(
+      load(
         `<blockquote><strong>${quotedPost.owner} wrote:</strong>${quotedPost.text}</blockquote><p></p>`
       );
-      setHtml(editor.getHTML());
       setLoadedEdit(true);
     }
     if (mode === "new" && draft) {
-      editor.commands.setContent(draft.long_text || "");
-      setHtml(draft.long_text || "");
+      load(draft.long_text || "");
       setLoadedEdit(true);
     }
   }, [editor, editingPost, quotedPost, draft, mode, loadedEdit]);

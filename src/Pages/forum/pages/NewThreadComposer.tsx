@@ -92,10 +92,18 @@ export default function NewThreadComposer() {
     enabled: !!user && !!draftId,
   });
   React.useEffect(() => {
-    if (!editor || !draft || draftLoaded) return;
+    if (!editor || editor.isDestroyed || !draft || draftLoaded) return;
     if (draft.title_thread) setTitle(draft.title_thread);
-    editor.commands.setContent(draft.long_text || "");
-    setHtml(draft.long_text || "");
+    const content = draft.long_text || "";
+    // Tiptap 3 can throw parsing legacy/malformed draft HTML — never let that
+    // crash the composer; fall back to a clean editor so editing still works.
+    try {
+      editor.commands.setContent(content);
+      setHtml(content);
+    } catch {
+      editor.commands.clearContent();
+      setHtml("");
+    }
     setDraftLoaded(true);
   }, [editor, draft, draftLoaded]);
 
