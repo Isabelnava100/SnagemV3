@@ -44,7 +44,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { containsBlockedWord, excludeProperties, getPokemonImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
-import { getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
+import { getCharacters, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
 import { EvolveButton, LevelBar } from "../../../components/pokemon/EvolveButton";
 import formatter from "../../../utils/date";
 
@@ -250,6 +250,20 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
   const { isOverLg } = useMediaQuery();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Characters, so a team can be assigned to one (its Pokemon are that
+  // character's box). Teams with no character stay shared for compatibility.
+  const { data: characters } = useQuery({
+    queryKey: ["get-characters", user?.uid],
+    queryFn: () => getCharacters(user!.uid),
+    enabled: !!user,
+  });
+  const characterOptions = (characters?.sortedData ?? []).map((c) => ({
+    value: c.id,
+    label: c.name,
+  }));
+  const teamCharacterName = characters?.sortedData.find((c) => c.id === team.characterId)?.name;
 
   const isEditing = React.useMemo(() => {
     return form.values?.id === team.id;
@@ -353,6 +367,24 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
             }
           />
         </Flex>
+        {isEditing ? (
+          <Select
+            label="Character"
+            placeholder="Any character (shared)"
+            data={characterOptions}
+            clearable
+            size="xs"
+            w="100%"
+            {...form.getInputProps("characterId")}
+            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          />
+        ) : (
+          teamCharacterName && (
+            <Text fz={11} c="dimmed">
+              Character: {teamCharacterName}
+            </Text>
+          )
+        )}
         <Flex justify="center" w="100%" wrap="wrap" gap={7}>
           <SimpleGrid sx={{ flexShrink: 0 }} cols={3} spacing={7}>
             {firstRow.map((pokemon) => (

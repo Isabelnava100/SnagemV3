@@ -307,6 +307,12 @@ export interface Team {
     nt: number;
     seconds: number;
   };
+  /**
+   * Character this team belongs to. Optional for backward compatibility: a team
+   * with no characterId is shared and available to every one of the user's
+   * characters. New teams are assigned to a character in the dashboard.
+   */
+  characterId?: string;
 }
 
 export interface OwnedPokemon {
