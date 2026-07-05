@@ -75,6 +75,9 @@ function CapabilityChecklist() {
   const { data: members, isPending } = useQuery({
     queryKey: ["members-with-roles"],
     queryFn: getMembersWithRoles,
+    // Always refresh on open so a member who just joined shows up immediately.
+    refetchOnMount: "always",
+    staleTime: 0,
   });
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -137,7 +140,8 @@ function CapabilityChecklist() {
       <Select
         placeholder="Search for a member"
         searchable
-        limit={20}
+        limit={100}
+        nothingFoundMessage="No member found (try reloading if they just joined)"
         data={(members ?? []).map((m) => ({
           value: m.id,
           label: `${m.username}${m.permissions ? ` (${m.permissions})` : ""}`,
