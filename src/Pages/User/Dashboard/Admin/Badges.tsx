@@ -39,21 +39,28 @@ const slugify = (name: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-/** A live preview of a badge with the given name + background. */
+/**
+ * A live preview of a badge. Rendered as a plain pill (not Mantine <Badge>,
+ * which leaks its theme color at the rounded left cap) so the gradient is clean.
+ */
 function BadgePreview(props: { name: string; background: string }) {
   return (
-    <Badge
-      size="lg"
-      sx={{
+    <Box
+      style={{
         background: props.background,
         color: "white",
-        textTransform: "none",
-        fontWeight: 400,
         fontSize: 15,
+        fontWeight: 400,
+        lineHeight: 1,
+        padding: "7px 16px",
+        borderRadius: 999,
+        whiteSpace: "nowrap",
+        display: "inline-flex",
+        alignItems: "center",
       }}
     >
       {props.name || "Preview"}
-    </Badge>
+    </Box>
   );
 }
 

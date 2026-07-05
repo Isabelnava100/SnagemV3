@@ -1,9 +1,9 @@
 import {
   Anchor,
-  Badge,
   Box,
   Flex,
   Group,
+  HoverCard,
   Image,
   List,
   Popover,
@@ -73,6 +73,37 @@ export interface Badge {
   enabled: boolean;
 }
 
+/**
+ * A clean gradient pill. We render our own instead of Mantine's <Badge> because
+ * Mantine's Badge leaks its theme color at the rounded left cap (the "dot"),
+ * and here we always want a full gradient/solid background.
+ */
+const BadgePill = React.forwardRef<
+  HTMLDivElement,
+  { label: string; background: string } & React.ComponentPropsWithoutRef<"div">
+>(({ label, background, style, ...others }, ref) => (
+  <Box
+    ref={ref}
+    {...others}
+    style={{
+      background,
+      color: "white",
+      fontSize: 16,
+      fontWeight: 400,
+      lineHeight: 1,
+      padding: "7px 16px",
+      borderRadius: 999,
+      whiteSpace: "nowrap",
+      display: "inline-flex",
+      alignItems: "center",
+      userSelect: "none",
+      ...style,
+    }}
+  >
+    {label}
+  </Box>
+));
+
 function BadgesSectionWrapper(props: {
   title: string;
   secondaryText?: string;
@@ -99,23 +130,14 @@ function BadgesSectionWrapper(props: {
       </Group>
       <Flex gap={8} wrap="wrap">
         {displayedBadges.map((badge) => (
-          <Badge
+          <BadgePill
             key={badge.label}
-            bg={badge.background}
-            sx={{
-              color: "white",
-              textTransform: "none",
-              fontWeight: 400,
-              fontSize: 16,
-              cursor: toggling ? "wait" : "pointer",
-              opacity: toggling ? 0.6 : 1,
-            }}
-            size="lg"
+            label={badge.label}
+            background={badge.background}
             title={badge.enabled ? "Click to disable" : "Click to insert"}
             onClick={() => !toggling && onToggle(badge)}
-          >
-            {badge.label}
-          </Badge>
+            style={{ cursor: toggling ? "wait" : "pointer", opacity: toggling ? 0.6 : 1 }}
+          />
         ))}
         {!displayedBadges.length && (
           <Text fz={13} c="dimmed">
@@ -157,20 +179,12 @@ function AutoBadges() {
       </Group>
       <Flex gap={8} wrap="wrap">
         {earned.map((badge) => (
-          <Badge
+          <BadgePill
             key={badge.id}
-            size="lg"
+            label={badge.name}
+            background={badge.background}
             title={badge.description}
-            sx={{
-              background: badge.background,
-              color: "white",
-              textTransform: "none",
-              fontWeight: 400,
-              fontSize: 16,
-            }}
-          >
-            {badge.name}
-          </Badge>
+          />
         ))}
       </Flex>
     </Stack>
@@ -178,11 +192,32 @@ function AutoBadges() {
 }
 
 function Badges() {
+  const { user } = useAuth();
   const { data, isPending: isLoading, isError } = useGetBadgesQuery();
+  const { data: catalog } = useQuery({ queryKey: ["badge-catalog"], queryFn: getBadgeCatalog });
   const toggleMutation = useToggleBadgeMutation();
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const { formattedData } = data;
+
+  // Consolidate against the catalog: use each badge's canonical background (so
+  // "Admin" isn't two different colors), and drop badges the user already
+  // earns automatically (shown separately) so they don't appear twice.
+  const info = (user?.otherinfo ?? {}) as {
+    permissions?: string;
+    capabilities?: string[];
+    isGaia?: string;
+  };
+  const cat = catalog ?? [];
+  const autoNames = new Set(
+    cat.filter((b) => autoBadgeIdsFor(info).includes(b.id)).map((b) => b.name.toLowerCase())
+  );
+  const badges = formattedData
+    .filter((b) => !autoNames.has(b.label.toLowerCase()))
+    .map((b) => {
+      const match = cat.find((c) => c.name.toLowerCase() === b.label.toLowerCase());
+      return match ? { ...b, background: match.background } : b;
+    });
 
   const toggle = (badge: Badge) =>
     toggleMutation
@@ -192,12 +227,12 @@ function Badges() {
   return (
     <Stack gap={8}>
       <Flex justify="space-between" align="flex-start" gap={12}>
-        {formattedData.length ? (
+        {badges.length ? (
           <>
             <BadgesSectionWrapper
               title="Badges Enabled"
               secondaryText="Max: 5 — click a badge to move it"
-              badges={formattedData}
+              badges={badges}
               onToggle={toggle}
               toggling={toggleMutation.isPending}
             />
@@ -216,7 +251,7 @@ function Badges() {
             </Box>
             <BadgesSectionWrapper
               title="Badges Disabled"
-              badges={formattedData}
+              badges={badges}
               showEnabledOnly={false}
               onToggle={toggle}
               toggling={toggleMutation.isPending}
@@ -240,6 +275,13 @@ function Emojis() {
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const emojiIds = data;
+  // No per-user obtain data yet — show today as a temporary placeholder until
+  // the "how you earn emojis" flow ships with Activities.
+  const obtainedDate = new Date().toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
   return (
     <SimpleSectionWrapper>
       <Stack gap={18}>
@@ -250,25 +292,79 @@ function Emojis() {
           <Flex gap={10} wrap="wrap">
             {emojiIds.map((emojiId: string) => {
               const emoji = emojiData.find((emojiObj) => emojiObj.id === emojiId);
-              if (!emoji) return <></>;
+              if (!emoji) return null;
               return (
-                <Flex
-                  w={50}
-                  h={50}
-                  justify="center"
-                  align="center"
-                  bg="#3C3A3C"
-                  sx={{ borderRadius: "100%", flexShrink: 0, border: "3px solid transparent" }}
+                <HoverCard
                   key={emojiId}
+                  width={260}
+                  position="top"
+                  withArrow
+                  shadow="md"
+                  openDelay={80}
                 >
-                  <Image
-                    width={30}
-                    height={30}
-                    sx={{ objectFit: "cover" }}
-                    src={getEmoteImageURL(emoji?.Filename)}
-                    alt={emojiId}
-                  />
-                </Flex>
+                  <HoverCard.Target>
+                    <Flex
+                      w={50}
+                      h={50}
+                      justify="center"
+                      align="center"
+                      bg="#3C3A3C"
+                      sx={{
+                        borderRadius: "100%",
+                        flexShrink: 0,
+                        border: "3px solid transparent",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Image
+                        width={30}
+                        height={30}
+                        sx={{ objectFit: "cover" }}
+                        src={getEmoteImageURL(emoji.Filename)}
+                        alt={emoji.Name}
+                      />
+                    </Flex>
+                  </HoverCard.Target>
+                  <HoverCard.Dropdown
+                    bg="#1E1D20"
+                    sx={{ borderRadius: 22, border: "none", color: "white" }}
+                    p={16}
+                  >
+                    <Stack gap={8}>
+                      <Group gap={10} wrap="nowrap">
+                        <Flex
+                          w={48}
+                          h={48}
+                          justify="center"
+                          align="center"
+                          bg="#3C3A3C"
+                          sx={{ borderRadius: "100%", flexShrink: 0 }}
+                        >
+                          <Image
+                            width={30}
+                            height={30}
+                            src={getEmoteImageURL(emoji.Filename)}
+                            alt={emoji.Name}
+                          />
+                        </Flex>
+                        <Title order={4} size={16} fw={600}>
+                          {emoji.Name}
+                        </Title>
+                      </Group>
+                      <Stack gap={2}>
+                        <Text fz={12}>
+                          <b>Created:</b> {emoji.Description || "Snagem"}
+                        </Text>
+                        <Text fz={12}>
+                          <b>Obtained from:</b> Manually assigned
+                        </Text>
+                        <Text fz={12}>
+                          <b>Date obtained:</b> {obtainedDate}
+                        </Text>
+                      </Stack>
+                    </Stack>
+                  </HoverCard.Dropdown>
+                </HoverCard>
               );
             })}
           </Flex>
@@ -425,21 +521,11 @@ function BadgesCollection() {
           return (
             <Popover width={265} withinPortal position="bottom-start" shadow="md" key={index}>
               <Popover.Target>
-                <Badge
-                  size="lg"
-                  sx={{
-                    background: badge.background,
-                    color: "white",
-                    textTransform: "none",
-                    fontSize: 16,
-                    fontWeight: 400,
-                    paddingTop: 5,
-                    paddingBottom: 5,
-                    cursor: "pointer",
-                  }}
-                >
-                  {badge.name}
-                </Badge>
+                <BadgePill
+                  label={badge.name}
+                  background={badge.background}
+                  style={{ cursor: "pointer" }}
+                />
               </Popover.Target>
               <Popover.Dropdown
                 bg="#1E1D20"
@@ -495,8 +581,8 @@ export default function Collections() {
     <Stack w="100%">
       <SimpleSectionWrapper>
         <Stack gap={16}>
-          <AutoBadges />
           <Badges />
+          <AutoBadges />
         </Stack>
       </SimpleSectionWrapper>
       <Emojis />
