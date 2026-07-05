@@ -15,6 +15,7 @@ import React from "react";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../../components/common/GradientButton";
+import { ActivityLog } from "../../../../components/admin/ActivityLog";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { CAPABILITY_INFO, Capability } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
@@ -249,6 +250,8 @@ export default function Permissions() {
       <CapabilityChecklist />
       <Divider color="#4a464a" />
       <XPDefaultsSection />
+      <Divider color="#4a464a" />
+      <ActivityLog title="Staff activity log" max={80} />
     </Stack>
   );
 }

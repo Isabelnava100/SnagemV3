@@ -36,6 +36,7 @@ import {
 import { callFinalizeRewards, callableMessage } from "../functionsClient";
 import { getThread } from "../queries";
 import { ConfirmModal, ForumPanel, GameResultText, PanelHint } from "../components/ui";
+import { ActivityLog } from "../../../components/admin/ActivityLog";
 import "../forum.css";
 
 const CURRENCIES = [
@@ -479,6 +480,18 @@ export default function ThreadRewards() {
           </Flex>
         </>
       )}
+
+      <Box mt={24}>
+        <ActivityLog
+          title="Recent reward activity"
+          filter={(r) =>
+            r.action.startsWith("rewards") ||
+            r.action.startsWith("currency") ||
+            r.action.startsWith("items") ||
+            r.action === "thread.close"
+          }
+        />
+      </Box>
 
       <ConfirmModal
         opened={clearOpened}

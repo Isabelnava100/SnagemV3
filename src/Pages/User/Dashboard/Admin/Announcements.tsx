@@ -19,6 +19,8 @@ import { v4 as uuid } from "uuid";
 import GradientButtonPrimary from "../../../../components/common/GradientButton";
 import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
+import { useAuth } from "../../../../context/AuthContext";
+import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import {
   Announcement,
   deleteAnnouncement,
@@ -33,6 +35,7 @@ import {
  * state resets whenever the content changes.
  */
 export default function Announcements() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data, isPending } = useQuery({
     queryKey: ["announcement"],
@@ -53,6 +56,12 @@ export default function Announcements() {
     mutationFn: async () => {
       if (!form) return;
       await saveAnnouncement({ ...form, id: uuid() });
+      await logAuditEvent({
+        action: "announcement.edit",
+        ...actorFrom(user),
+        targetPath: "admin/announcements",
+        details: { title: form.title, active: form.active },
+      });
     },
     onSuccess: () => {
       setSent(true);

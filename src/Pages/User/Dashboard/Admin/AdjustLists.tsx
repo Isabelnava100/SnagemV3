@@ -30,6 +30,7 @@ import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { AdminPokemonList } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
+import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import { pokemonData } from "../../../../data/pokemon";
 import { getPokemonImageURL } from "../../../../helpers";
 import useMediaQuery from "../../../../hooks/useMediaQuery";
@@ -60,6 +61,12 @@ function useUpdateOrAddDocument(documentId?: string) {
         },
         { merge: true }
       );
+      await logAuditEvent({
+        action: "lists.edit",
+        ...actorFrom(user),
+        targetPath: "admin/pokemon_lists",
+        details: { list: values?.name, pokemon: values?.pokemons?.length },
+      });
     },
   });
   return mutation;

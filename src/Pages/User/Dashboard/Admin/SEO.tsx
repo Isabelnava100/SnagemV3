@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import GradientButtonPrimary from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
+import { useAuth } from "../../../../context/AuthContext";
+import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import { SEOSettings, getSEOSettings, saveSEOSettings } from "../../../../queries/seo";
 
 /**
@@ -12,6 +14,7 @@ import { SEOSettings, getSEOSettings, saveSEOSettings } from "../../../../querie
  * pass once the SEO approach is settled.
  */
 export default function SEO() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data, isPending } = useQuery({
     queryKey: ["seo-settings"],
@@ -30,6 +33,12 @@ export default function SEO() {
     mutationFn: async () => {
       if (!form) return;
       await saveSEOSettings(form);
+      await logAuditEvent({
+        action: "seo.edit",
+        ...actorFrom(user),
+        targetPath: "admin/seo",
+        details: { siteTitle: form.siteTitle },
+      });
     },
     onSuccess: () => {
       setSaved(true);

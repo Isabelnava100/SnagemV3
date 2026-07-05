@@ -14,6 +14,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconTrash } from "@tabler/icons-react";
 import React from "react";
+import { ActivityLog } from "../../../../components/admin/ActivityLog";
 import GradientButtonPrimary from "../../../../components/common/GradientButton";
 import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
@@ -66,6 +67,10 @@ export default function Imports() {
       {pending.map((req) => (
         <ReviewCard key={req.uid} req={req} username={nameFor(req.uid)} />
       ))}
+      <ActivityLog
+        title="Recent import activity"
+        filter={(r) => r.action.startsWith("import")}
+      />
     </Stack>
   );
 }

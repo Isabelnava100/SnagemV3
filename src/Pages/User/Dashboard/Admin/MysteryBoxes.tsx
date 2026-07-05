@@ -21,6 +21,8 @@ import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
+import { useAuth } from "../../../../context/AuthContext";
+import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import { itemData } from "../../../../data/item";
 import { getItemImageURL } from "../../../../helpers";
 import {
@@ -148,6 +150,7 @@ function ItemPicker({
  * Custom uploaded box art is deferred until boxes get their own art pipeline.
  */
 export default function MysteryBoxes() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: boxes, isPending } = useQuery({
     queryKey: ["mystery-boxes"],
@@ -205,6 +208,12 @@ export default function MysteryBoxes() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       await saveMysteryBox(boxItemId!, { name: boxName.trim(), pool });
+      await logAuditEvent({
+        action: "mysterybox.edit",
+        ...actorFrom(user),
+        targetPath: `admin/mystery_boxes/${boxItemId}`,
+        details: { name: boxName.trim(), rewards: pool.length },
+      });
     },
     onSuccess: () => {
       setMessage("Box saved. It can now be opened.");

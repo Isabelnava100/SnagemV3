@@ -24,6 +24,7 @@ import GradientButtonPrimary, {
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { Capability } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
+import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import { hasCapability, isAdmin } from "../../../../lib/permissions";
 import {
   AUTO_ASSIGNED_BADGE_IDS,
@@ -141,6 +142,12 @@ export default function Badges() {
         background,
         colors,
         description: description.trim(),
+      });
+      await logAuditEvent({
+        action: "badge.edit",
+        ...actorFrom(user),
+        targetPath: `admin/badges/${id}`,
+        details: { name: name.trim(), editing: !!editing },
       });
     },
     onSuccess: () => {

@@ -25,6 +25,7 @@ import GradientButtonPrimary, {
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Capability } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
+import { actorFrom, logAuditEvent } from "../../../lib/auditLog";
 import { pokemonData } from "../../../data/pokemon";
 import { getPokemonImageURL } from "../../../helpers";
 import { hasCapability, isAdmin } from "../../../lib/permissions";
@@ -123,7 +124,18 @@ export default function HostMenu() {
   });
 
   const archiveMutation = useMutation({
-    mutationFn: () => setThreadArchived(forum, threadId!, !thread?.closed),
+    mutationFn: async () => {
+      const closing = !thread?.closed;
+      await setThreadArchived(forum, threadId!, closing);
+      if (closing) {
+        await logAuditEvent({
+          action: "thread.close",
+          ...actorFrom(user),
+          targetPath: `forum/${forum}/threads/${threadId}`,
+          details: { title: thread?.title, forum },
+        });
+      }
+    },
     onSuccess: () => {
       const justArchived = !thread?.closed;
       archiveModal.close();
