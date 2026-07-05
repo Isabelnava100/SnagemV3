@@ -13,6 +13,7 @@ const ADMIN_TABS: { path: string; label: string; cap: Capability | null }[] = [
   { path: "Adjust-Lists", label: "Adjust Lists", cap: Capability.ManageLists },
   { path: "Donate", label: "Give Items to Users", cap: Capability.GiveItems },
   { path: "Announcements", label: "Announcements", cap: Capability.ManageLists },
+  { path: "Applicants", label: "Member Approvals", cap: null },
   { path: "Permissions", label: "Permissions & XP", cap: null },
   { path: "Mystery-Boxes", label: "Mystery Boxes", cap: Capability.ManageLists },
   { path: "Badges", label: "Badges", cap: Capability.ManageBadges },
