@@ -169,7 +169,7 @@ export default function Notifications() {
   });
   const [debouncedValue] = useDebouncedValue(values, 100);
 
-  const { mutateAsync, isPending: isProcessing } = useMutation({
+  const { mutateAsync } = useMutation({
     mutationKey: ["update-settings"],
     mutationFn: async ({ settingsInput }: { settingsInput: Settings }) => {
       const { doc, setDoc } = await import("firebase/firestore");
@@ -218,13 +218,11 @@ export default function Notifications() {
       <Stack>
         <NotificationsInbox />
         <CustomSwitch
-          disabled={isProcessing}
           {...getInputProps("siteNotifications", { type: "checkbox" })}
           label="Enable on-site notifications"
         />
         <Stack gap={8}>
           <CustomSwitch
-            disabled={isProcessing}
             {...getInputProps("discordNotifications", { type: "checkbox" })}
             label="Enable Discord notifications"
           />
@@ -234,12 +232,10 @@ export default function Notifications() {
           <DiscordPublicToggle />
         </Stack>
         <CustomSwitch
-          disabled={isProcessing}
           {...getInputProps("postsAndBookmarkedThreadsNotification", { type: "checkbox" })}
           label="Receive notifications for new posts on your bookmarked threads"
         />
         <CustomSwitch
-          disabled={isProcessing}
           {...getInputProps("directPingNotifications", { type: "checkbox" })}
           label="Receive notifications for direct pings"
         />

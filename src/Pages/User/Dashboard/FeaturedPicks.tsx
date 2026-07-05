@@ -1,11 +1,10 @@
-import { Avatar, Group, Select, Stack, Text, Title } from "@mantine/core";
+import { Select, Stack, Text, Title } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { db } from "../../../context/firebase";
-import { getPokemonImageURL } from "../../../helpers";
 import {
   getCharacters,
   getOwnedPokemons,
@@ -80,9 +79,6 @@ export default function FeaturedPicks() {
 
   if (!profile || !characters || !teams || !owned) return <SectionLoader />;
 
-  const selectedPokemon = owned.sortedData.find((p) => p.id === pokemon);
-  const selectedCharacter = characters.sortedData.find((c) => c.id === character);
-
   return (
     <Stack gap={12} p={16} sx={{ background: "#403C43", borderRadius: 22 }}>
       <Title order={2} c="white" size={22} fw={400}>
@@ -93,22 +89,18 @@ export default function FeaturedPicks() {
         profile. (The public layout is coming — this just sets what shows.)
       </Text>
 
-      <Group gap={12} align="center" wrap="nowrap">
-        <Avatar src={selectedCharacter?.imageURL || undefined} size={44} radius="xl" />
-        <Select
-          label="Featured Character"
-          placeholder="Pick a character"
-          clearable
-          data={characters.sortedData.map((c) => ({ value: c.id, label: c.name }))}
-          value={character}
-          onChange={(v) => {
-            setSaved(false);
-            setCharacter(v);
-          }}
-          w="100%"
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-        />
-      </Group>
+      <Select
+        label="Featured Character"
+        placeholder="Pick a character"
+        clearable
+        data={characters.sortedData.map((c) => ({ value: c.id, label: c.name }))}
+        value={character}
+        onChange={(v) => {
+          setSaved(false);
+          setCharacter(v);
+        }}
+        styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+      />
 
       <Select
         label="Featured Team"
@@ -123,29 +115,20 @@ export default function FeaturedPicks() {
         styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
       />
 
-      <Group gap={12} align="center" wrap="nowrap">
-        <Avatar
-          src={selectedPokemon ? getPokemonImageURL(selectedPokemon.image_slug) : undefined}
-          size={44}
-          radius="xl"
-          bg="#2b2a2b"
-        />
-        <Select
-          label="Featured Pokemon"
-          placeholder="Pick a pokemon"
-          clearable
-          searchable
-          limit={30}
-          data={owned.sortedData.map((p) => ({ value: p.id, label: `${p.name} (${p.gender})` }))}
-          value={pokemon}
-          onChange={(v) => {
-            setSaved(false);
-            setPokemon(v);
-          }}
-          w="100%"
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-        />
-      </Group>
+      <Select
+        label="Featured Pokemon"
+        placeholder="Pick a pokemon"
+        clearable
+        searchable
+        limit={30}
+        data={owned.sortedData.map((p) => ({ value: p.id, label: `${p.name} (${p.gender})` }))}
+        value={pokemon}
+        onChange={(v) => {
+          setSaved(false);
+          setPokemon(v);
+        }}
+        styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+      />
 
       {saved && (
         <Text fz={13} c="green.0">

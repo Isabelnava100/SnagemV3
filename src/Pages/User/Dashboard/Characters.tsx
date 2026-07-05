@@ -29,6 +29,7 @@ import { UploadAndCropImage } from "../../../components/crop-image/UploadAndCrop
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Character, characterTypes } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
+import { isMaster } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, Upload } from "../../../icons";
 import { getCharacters } from "../../../queries/dashboard";
@@ -123,18 +124,28 @@ function InputWrapper(props: {
   inputType?: "select" | "input";
   options?: string[];
   form: UseFormReturnType<FormFields>;
+  /** When true the field is read-only even in edit mode (e.g. master-only). */
+  locked?: boolean;
 }) {
-  const { title, isEditing, inputType = "input", options, name, form } = props;
+  const { title, isEditing, inputType = "input", options, name, form, locked = false } = props;
+  const editable = isEditing && !locked;
   return (
     <Paper w="100%" bg="#525151" py={3} px={7} radius={8}>
       <Flex align="center">
         <Text w={65} fz={14} lineClamp={1}>
           {title}:
         </Text>
-        {!isEditing ? (
-          <Text lineClamp={1} fz={18} color="white" px={2}>
-            {form.values[name as keyof FormFields]?.toString()}
-          </Text>
+        {!editable ? (
+          <Group gap={6} justify="space-between" wrap="nowrap" sx={{ flex: 1 }}>
+            <Text lineClamp={1} fz={18} color="white" px={2}>
+              {form.values[name as keyof FormFields]?.toString()}
+            </Text>
+            {isEditing && locked && (
+              <Text fz={11} c="dimmed" style={{ whiteSpace: "nowrap" }}>
+                Masters only
+              </Text>
+            )}
+          </Group>
         ) : // Input for editing. It can also be a select input
         inputType === "input" ? (
           <TextInput sx={{ flex: 1 }} radius={8} {...form.getInputProps(name)} />
@@ -298,6 +309,8 @@ function SingleCharacter(props: Character) {
   const form = useForm<FormFields>({
     initialValues: { ...props },
   });
+  const { user } = useAuth();
+  const canEditType = isMaster(user);
   const { mutateAsync, isPending: isLoading } = useUpdateOrAddDocument(props.id);
   const { isOverSm } = useMediaQuery();
   const queryClient = useQueryClient();
@@ -390,6 +403,7 @@ function SingleCharacter(props: Character) {
                 inputType="select"
                 options={characterTypes}
                 isEditing={isEditing}
+                locked={!canEditType}
                 title="Type"
               />
               <InputWrapper form={form} name="height" isEditing={isEditing} title="Height" />

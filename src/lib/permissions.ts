@@ -17,6 +17,13 @@ export function isAdmin(user: User | undefined): boolean {
   return roleOf(user) === UserRoles.Admin;
 }
 
+// Master tier (admins implicitly count). Gates master-only character fields
+// like "type". UI-only — see the note above; a Firestore rule is still needed
+// to truly stop a non-master from hand-editing their own character doc.
+export function isMaster(user: User | undefined): boolean {
+  return isAdmin(user) || roleOf(user) === UserRoles.Master;
+}
+
 // Admin implicitly has every capability; everyone else needs an explicit grant.
 export function hasCapability(user: User | undefined, cap: Capability): boolean {
   if (isAdmin(user)) return true;

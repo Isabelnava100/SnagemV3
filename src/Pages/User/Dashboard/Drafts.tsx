@@ -1,15 +1,19 @@
 import {
   ActionIcon,
   Badge,
+  Button,
   Flex,
   Group,
   Image,
   Paper,
+  Popover,
   SimpleGrid,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
@@ -110,6 +114,63 @@ function DraftsHeader(props: { count: number }) {
   );
 }
 
+/** Per-draft delete with a confirmation warning (drafts can't be recovered). */
+function DeleteDraft(props: { draftId: string }) {
+  const { draftId } = props;
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [opened, { open, close }] = useDisclosure(false);
+
+  const removeMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) return;
+      const { deleteDraft } = await import("../../forum/mutations");
+      await deleteDraft(user.uid, draftId);
+    },
+    onSuccess: () => {
+      close();
+      queryClient.invalidateQueries({ queryKey: ["get-drafts", user?.uid] });
+    },
+  });
+
+  return (
+    <Popover opened={opened} onChange={close} position="bottom-end" withArrow shadow="md">
+      <Popover.Target>
+        <ActionIcon
+          color="red"
+          variant="filled"
+          radius="xl"
+          size="lg"
+          title="Delete draft"
+          onClick={open}
+        >
+          <IconTrash size={18} />
+        </ActionIcon>
+      </Popover.Target>
+      <Popover.Dropdown bg="#1E1D20">
+        <Stack gap={8}>
+          <Text c="white" fz={14}>
+            Delete this draft? This can&apos;t be undone.
+          </Text>
+          <Group gap={8} justify="flex-end">
+            <Button size="xs" color="gray" variant="light" onClick={close}>
+              Cancel
+            </Button>
+            <Button
+              size="xs"
+              color="red"
+              loading={removeMutation.isPending}
+              onClick={() => removeMutation.mutateAsync()}
+            >
+              Delete
+            </Button>
+          </Group>
+        </Stack>
+      </Popover.Dropdown>
+    </Popover>
+  );
+}
+
 function SingleDraft(props: Draft) {
   const { isOverSm } = useMediaQuery();
   return (
@@ -151,19 +212,22 @@ function SingleDraft(props: Draft) {
             py={8}
             gap={isOverSm ? 10 : 15}
           >
-            <ActionIcon
-              variant="transparent"
-              size="xl"
-              component={Link}
-              to={
-                props.thread_id && props.thread_id !== "new-thread"
-                  ? `/Forum/${props.location_db}/thread/${props.thread_id}/post?draft=${props.id}`
-                  : `/Forum/${props.location_db || "Main-Forum"}/new?draft=${props.id}`
-              }
-              title="Continue this draft"
-            >
-              <Image src={Edit} alt="Draft icon" width={45} />
-            </ActionIcon>
+            <Group gap={8} wrap="nowrap">
+              <ActionIcon
+                variant="transparent"
+                size="xl"
+                component={Link}
+                to={
+                  props.thread_id && props.thread_id !== "new-thread"
+                    ? `/Forum/${props.location_db}/thread/${props.thread_id}/post?draft=${props.id}`
+                    : `/Forum/${props.location_db || "Main-Forum"}/new?draft=${props.id}`
+                }
+                title="Continue this draft"
+              >
+                <Image src={Edit} alt="Draft icon" width={45} />
+              </ActionIcon>
+              <DeleteDraft draftId={props.id} />
+            </Group>
             <Text ta="end" c="#151515" fw={500}>
               Draft saved at:
               <br />

@@ -6,6 +6,7 @@ import {
   Button,
   Flex,
   Group,
+  HoverCard,
   Image,
   Popover,
   Select,
@@ -621,17 +622,26 @@ const PokemonAvatar = React.forwardRef<
   HTMLImageElement,
   { src?: string; alt?: string; sx?: Sx; onClick?: () => void }
 >((props, ref) => {
-  // Spread the remaining props (Popover.Target/Tooltip inject aria + handlers).
+  // Spread the remaining props (HoverCard.Target/Tooltip inject aria + handlers).
   const { src, alt, sx, onClick, ...others } = props;
   return (
     <Image
       ref={ref}
       src={src || PokemonImage}
       onClick={onClick || undefined}
+      // Block the browser's long-press/right-click image menu so tapping a
+      // sprite reveals the info card instead of "Save Image…".
+      onContextMenu={(e) => e.preventDefault()}
+      draggable={false}
       alt={alt}
       w="100%"
       h="100%"
-      sx={{ objectFit: "cover", ...(sx || {}) }}
+      sx={{
+        objectFit: "cover",
+        userSelect: "none",
+        WebkitTouchCallout: "none",
+        ...(sx || {}),
+      }}
       {...others}
     />
   );
@@ -731,7 +741,6 @@ function SinglePokemon(props: {
   form: TeamForm;
 }) {
   const { pokemon, isEditing, isOwned = false, form } = props;
-  const [opened, { toggle, close }] = useDisclosure(false);
   const isAlreadyInTeam = React.useMemo(() => {
     return form.values?.pokemon_ids.includes(pokemon.id);
   }, [form.values?.pokemon_ids]);
@@ -758,29 +767,22 @@ function SinglePokemon(props: {
       h={60}
       sx={{
         borderRadius: "100%",
-        // Selected (already in team) = white so it reads clearly; open = purple;
-        // otherwise the dashed-pink "addable" outline.
+        // Selected (already in team) = white so it reads clearly; hover = purple.
         border: isEditing
-          ? `${isAlreadyInTeam ? 2 : 1}px solid ${
-              opened ? "#762B77" : isAlreadyInTeam ? "#FFFFFF" : "#DB5866"
-            }`
+          ? `${isAlreadyInTeam ? 2 : 1}px solid ${isAlreadyInTeam ? "#FFFFFF" : "#DB5866"}`
           : undefined,
+        "&:hover": isEditing ? { borderColor: "#762B77" } : undefined,
         flexShrink: 0,
       }}
     >
-      {/* Every pokemon opens an info popover on click (species, catch date,
-          game stats). The owned list while editing also gets an Add-to-Team
-          button so team-building still works from the same popover. */}
-      <Popover opened={opened} position="top" onClose={close} withArrow shadow="md">
-        <Popover.Target>
-          <PokemonAvatar
-            src={getPokemonImageURL(pokemon.image_slug)}
-            onClick={open}
-            alt={pokemon.name}
-            sx={{ cursor: "pointer" }}
-          />
-        </Popover.Target>
-        <Popover.Dropdown bg="#1E1D20" sx={{ borderRadius: 22 }} p={16} w="100%" maw={280}>
+      {/* Hover (not click) reveals the info card — species, catch date, game
+          stats. Clicking a sprite otherwise triggered the browser's image menu
+          on mobile. The owned list while editing gets an Add-to-Team button. */}
+      <HoverCard position="top" withArrow shadow="md" openDelay={80} closeDelay={100} width={280}>
+        <HoverCard.Target>
+          <PokemonAvatar src={getPokemonImageURL(pokemon.image_slug)} alt={pokemon.name} />
+        </HoverCard.Target>
+        <HoverCard.Dropdown bg="#1E1D20" sx={{ borderRadius: 22 }} p={16}>
           <Stack gap={12}>
             <PokemonDetails pokemon={pokemon} />
             {canAddToTeam &&
@@ -789,20 +791,13 @@ function SinglePokemon(props: {
                   Already in this team.
                 </Text>
               ) : (
-                <GradientButtonPrimary
-                  onClick={() => {
-                    handleAddPokemonToTeam();
-                    close();
-                  }}
-                  radius="xl"
-                  size="xs"
-                >
+                <GradientButtonPrimary onClick={handleAddPokemonToTeam} radius="xl" size="xs">
                   Add to Team
                 </GradientButtonPrimary>
               ))}
           </Stack>
-        </Popover.Dropdown>
-      </Popover>
+        </HoverCard.Dropdown>
+      </HoverCard>
       {/* This option is not shown in owned pokemons. Only in team pokemons to remove a pokemon from team */}
       <RemovePokemonFromTeam
         form={form}
