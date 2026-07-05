@@ -170,11 +170,20 @@ function MobileTabBar() {
         opened={opened}
         onClose={close}
         position="bottom"
-        size="auto"
+        size="100%"
         withCloseButton={false}
         styles={{
           content: { background: "#1E1D20", "--mantine-scale": "1" },
-          body: { padding: 16, paddingBottom: "calc(16px + env(safe-area-inset-bottom))" },
+          // Fill the sheet and push everything to the bottom so the grid sits
+          // just above the Menu/X row — mirroring the bottom main nav.
+          body: {
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+            minHeight: "100%",
+            padding: 16,
+            paddingBottom: "calc(16px + env(safe-area-inset-bottom))",
+          },
         }}
       >
         <Stack gap={14}>

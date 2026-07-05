@@ -66,17 +66,15 @@ export default function Bookmarks() {
 
 function BookmarkIcon(props: { color: string }) {
   const { color } = props;
-  const { isOverXs } = useMediaQuery();
   return (
+    // Small bookmark-flag icon (was a large 63x126 block); vertically centered.
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="63"
-      height="126"
+      width="18"
+      height="36"
       viewBox="0 0 63 126"
       fill="none"
-      style={{
-        marginTop: isOverXs ? -10 : 0,
-      }}
+      style={{ alignSelf: "center", flexShrink: 0 }}
     >
       <path
         id="Rectangle 179"
