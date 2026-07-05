@@ -1,5 +1,6 @@
 import { Box, Container, Stack, Tabs, Text, Title } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
+import { useSearchParams } from "react-router-dom";
 
 /**
  * Public policies hub. Anyone (signed in or not) can read these. Tabbed so we
@@ -212,6 +213,10 @@ const TABS = [
 
 export default function Policies() {
   const isMobile = useMediaQuery("(max-width: 800px)");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Allow deep links like /Policies?tab=conduct (the forum links here for rules).
+  const requested = searchParams.get("tab");
+  const active = TABS.some((t) => t.value === requested) ? requested : "privacy";
 
   return (
     <Container size="md" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
@@ -226,7 +231,10 @@ export default function Policies() {
       </Stack>
 
       <Tabs
-        defaultValue="privacy"
+        value={active}
+        onChange={(value) => {
+          if (value) setSearchParams({ tab: value }, { replace: true });
+        }}
         orientation={isMobile ? "horizontal" : "vertical"}
         variant="pills"
         color="grape"
