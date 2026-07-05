@@ -120,7 +120,7 @@ export default function Announcements() {
         styles={{ label: { color: "white" } }}
       />
       {sent && (
-        <Text fz={13} c="green.0" fw={600}>
+        <Text fz={13} c="green.0" fw={600} role="status" aria-live="polite">
           Announcement Sent!
         </Text>
       )}

@@ -22,6 +22,7 @@ import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Draft } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
+import { clickable } from "../../../lib/a11y";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit } from "../../../icons";
 import { getDrafts } from "../../../queries/dashboard";
@@ -106,7 +107,7 @@ function DraftsHeader(props: { count: number }) {
             c="#E35C65"
             td="underline"
             style={{ cursor: "pointer" }}
-            onClick={() => setConfirming(true)}
+            {...clickable(() => setConfirming(true))}
           >
             Clear all drafts
           </Text>

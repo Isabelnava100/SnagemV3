@@ -129,7 +129,7 @@ export default function SEO() {
       />
 
       {saved && (
-        <Text fz={13} c="green.0">
+        <Text fz={13} c="green.0" role="status" aria-live="polite">
           SEO settings saved.
         </Text>
       )}

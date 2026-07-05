@@ -82,10 +82,22 @@ export interface Badge {
 const BadgePill = React.forwardRef<
   HTMLDivElement,
   { label: string; background: string } & React.ComponentPropsWithoutRef<"div">
->(({ label, background, style, ...others }, ref) => (
+>(({ label, background, style, onClick, onKeyDown, ...others }, ref) => (
   <Box
     ref={ref}
     {...others}
+    onClick={onClick}
+    // Clickable pills (toggle a badge, open the info popover) must work by
+    // keyboard: expose a button role and activate on Enter/Space.
+    role={onClick ? "button" : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={(e) => {
+      if (onClick && (e.key === "Enter" || e.key === " ")) {
+        e.preventDefault();
+        onClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+      }
+      onKeyDown?.(e);
+    }}
     style={{
       background,
       color: "white",
@@ -98,6 +110,7 @@ const BadgePill = React.forwardRef<
       display: "inline-flex",
       alignItems: "center",
       userSelect: "none",
+      cursor: onClick ? "pointer" : undefined,
       ...style,
     }}
   >

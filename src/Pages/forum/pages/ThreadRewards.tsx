@@ -246,7 +246,7 @@ export default function ThreadRewards() {
 
       {finalized ? (
         <ForumPanel title="Rewards Sent" mt={16}>
-          <Text fz={14} c="green.0">
+          <Text fz={14} c="green.0" role="status" aria-live="polite">
             This thread&apos;s rewards were already finalized and delivered.
           </Text>
         </ForumPanel>

@@ -23,6 +23,7 @@ import GradientButtonPrimary, {
 } from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
+import { clickable } from "../../../../lib/a11y";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import { itemData } from "../../../../data/item";
 import { getItemImageURL } from "../../../../helpers";
@@ -274,7 +275,8 @@ export default function MysteryBoxes() {
               variant="light"
               color="cyan.0"
               style={{ cursor: "pointer" }}
-              onClick={() => setBoxItemId(id)}
+              aria-label={`Edit ${boxes?.[id]?.name || id}`}
+              {...clickable(() => setBoxItemId(id))}
             >
               {boxes?.[id]?.name || id}
             </Badge>
