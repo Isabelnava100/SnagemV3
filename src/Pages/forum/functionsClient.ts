@@ -82,6 +82,10 @@ export const callFinalizeRewards = (sessionId: string) =>
 export const callGrantCurrency = (userIds: string[], currency: string, amount: number) =>
   call<{ ok: boolean }>("grantCurrency", { userIds, currency, amount });
 
+/** Grant a Pokemon (optionally shiny) to users (GiveItems cap). */
+export const callGrantPokemon = (userIds: string[], slug: string, shiny: boolean) =>
+  call<{ ok: boolean }>("grantPokemon", { userIds, slug, shiny });
+
 /** Open one mystery box; server rolls the reward. */
 export const callOpenMysteryBox = (itemId: string) =>
   call<{ reward: { kind: string; name: string; qty: number; filePath: string } }>(

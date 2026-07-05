@@ -2,6 +2,8 @@ import {
   Avatar,
   Badge,
   Box,
+  Button,
+  Checkbox,
   Container,
   Divider,
   Flex,
@@ -23,6 +25,7 @@ import { SectionLoader } from "../../../components/navigation/loading";
 import { Capability } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import { itemData } from "../../../data/item";
+import { pokemonData } from "../../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL } from "../../../helpers";
 import { hasCapability } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
@@ -167,6 +170,15 @@ export default function ThreadRewards() {
             ],
       };
     });
+  };
+
+  const addPokemonTo = (uid: string, slug: string, shiny: boolean) => {
+    const info = pokemonData.find((p) => p.slug === slug);
+    if (!info) return;
+    updateEntry(uid, (entry) => ({
+      ...entry,
+      pokemon: [...(entry.pokemon ?? []), { slug, name: info.name, shiny }],
+    }));
   };
 
   const applyBulk = () => {
@@ -336,6 +348,7 @@ export default function ThreadRewards() {
                         }
                       />
                     </Flex>
+                    <PokemonAdd onAdd={(slug, shiny) => addPokemonTo(uid, slug, shiny)} />
                     {/* Current rewards as removable chips */}
                     <Group gap={6} mt={8}>
                       {CURRENCIES.filter((c) => entry.currencies[c.value] > 0).map((c) => (
@@ -385,7 +398,34 @@ export default function ThreadRewards() {
                           {item.qty}x {item.name}
                         </Badge>
                       ))}
+                      {(entry.pokemon ?? []).map((p, i) => (
+                        <Badge
+                          key={`${p.slug}-${i}`}
+                          variant="light"
+                          color="grape"
+                          leftSection={
+                            <Avatar src={getPokemonImageURL(p.slug, p.shiny)} alt={p.name} size={14} />
+                          }
+                          rightSection={
+                            <span
+                              style={{ cursor: "pointer" }}
+                              onClick={() =>
+                                updateEntry(uid, (e) => ({
+                                  ...e,
+                                  pokemon: (e.pokemon ?? []).filter((_, j) => j !== i),
+                                }))
+                              }
+                            >
+                              ✕
+                            </span>
+                          }
+                        >
+                          {p.shiny ? "Shiny " : ""}
+                          {p.name}
+                        </Badge>
+                      ))}
                       {!entry.items.length &&
+                        !(entry.pokemon ?? []).length &&
                         !CURRENCIES.some((c) => entry.currencies[c.value] > 0) && (
                           <Text fz={12} c="dimmed">
                             No rewards yet.
@@ -514,6 +554,50 @@ export default function ThreadRewards() {
         onClose={finalizeModal.close}
       />
     </Container>
+  );
+}
+
+function PokemonAdd(props: { onAdd: (slug: string, shiny: boolean) => void }) {
+  const [slug, setSlug] = React.useState<string | null>(null);
+  const [shiny, setShiny] = React.useState(false);
+  return (
+    <Group gap={8} mt={8} wrap="wrap" align="center">
+      <Select
+        placeholder="Give a Pokemon"
+        searchable
+        data={pokemonData.map((p) => ({ value: p.slug, label: p.name }))}
+        value={slug}
+        onChange={setSlug}
+        limit={20}
+        size="xs"
+        w={200}
+        styles={{ input: { background: "#2E2D2E" } }}
+      />
+      {slug && <Avatar src={getPokemonImageURL(slug, shiny)} alt={slug} size={26} radius="xl" />}
+      <Checkbox
+        label="Shiny"
+        size="xs"
+        color="green.0"
+        checked={shiny}
+        onChange={(e) => setShiny(e.currentTarget.checked)}
+        styles={{ label: { color: "white" } }}
+      />
+      <Button
+        size="xs"
+        radius="lg"
+        variant="light"
+        color="grape"
+        disabled={!slug}
+        onClick={() => {
+          if (!slug) return;
+          props.onAdd(slug, shiny);
+          setSlug(null);
+          setShiny(false);
+        }}
+      >
+        Add
+      </Button>
+    </Group>
   );
 }
 

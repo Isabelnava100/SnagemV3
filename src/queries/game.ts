@@ -19,6 +19,8 @@ export interface RewardPokemonXp {
 export interface RewardEntry {
   items: Array<{ itemId: string; name: string; filePath: string; category: string; qty: number }>;
   currencies: { pokecoin: number; gengarcoin: number; snagemblem: number };
+  /** New Pokemon to grant this recipient (optionally shiny). */
+  pokemon?: Array<{ slug: string; name: string; shiny?: boolean }>;
   /** Reviewed per-pokemon XP, seeded from the thread's pending ledger. */
   pokemonXp?: Record<string, RewardPokemonXp>;
 }

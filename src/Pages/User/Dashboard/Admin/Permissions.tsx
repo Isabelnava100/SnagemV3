@@ -20,7 +20,7 @@ import GradientButtonPrimary, {
 } from "../../../../components/common/GradientButton";
 import { ActivityLog } from "../../../../components/admin/ActivityLog";
 import { SectionLoader } from "../../../../components/navigation/loading";
-import { CAPABILITY_INFO, Capability } from "../../../../components/types/typesUsed";
+import { CAPABILITY_INFO, Capability, UserRoles } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
 import { db } from "../../../../context/firebase";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
@@ -79,6 +79,7 @@ function CapabilityChecklist() {
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [caps, setCaps] = React.useState<string[]>([]);
+  const [role, setRole] = React.useState<string>("");
   const [loadedFor, setLoadedFor] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState(false);
 
@@ -86,21 +87,35 @@ function CapabilityChecklist() {
   React.useEffect(() => {
     if (selected && loadedFor !== selected.id) {
       setCaps(selected.capabilities ?? []);
+      setRole(selected.permissions ?? "");
       setLoadedFor(selected.id);
       setSaved(false);
     }
   }, [selected, loadedFor]);
 
+  const roleChanged = !!selected && role !== (selected.permissions ?? "");
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { doc, updateDoc } = await import("firebase/firestore");
-      await updateDoc(doc(db, "users", selectedId!), { capabilities: caps });
+      await updateDoc(doc(db, "users", selectedId!), {
+        capabilities: caps,
+        ...(role ? { permissions: role } : {}),
+      });
       await logAuditEvent({
         action: "user.capability_change",
         ...actorFrom(user),
         targetPath: `users/${selectedId}`,
         details: { username: selected?.username, capabilities: caps },
       });
+      if (roleChanged) {
+        await logAuditEvent({
+          action: "user.role_change",
+          ...actorFrom(user),
+          targetPath: `users/${selectedId}`,
+          details: { username: selected?.username, from: selected?.permissions ?? "", to: role },
+        });
+      }
     },
     onSuccess: () => {
       setSaved(true);
@@ -113,11 +128,11 @@ function CapabilityChecklist() {
   return (
     <Stack gap={12} maw={560}>
       <Title order={2} c="white" size={24} fw={400}>
-        Director Permissions
+        Roles & Permissions
       </Title>
       <Text fz={13} c="dimmed">
-        Assign admin powers to a member in checklist form, or take them away. Admins implicitly
-        have every power.
+        Set a member's role (including temporarily promoting someone to Admin) and
+        toggle each director capability. Admins implicitly have every power.
       </Text>
       <Select
         placeholder="Search for a member"
@@ -141,6 +156,20 @@ function CapabilityChecklist() {
               {selected.permissions ?? "Member"}
             </Badge>
           </Group>
+          <Select
+            label="Role"
+            description="Sets the member's trust tier. Use Admin to temporarily grant full access, then set it back."
+            data={Object.values(UserRoles).map((r) => ({ value: r, label: r }))}
+            value={role || null}
+            onChange={(v) => setRole(v ?? "")}
+            allowDeselect={false}
+            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          />
+          {role === UserRoles.Admin && selected.permissions !== UserRoles.Admin && (
+            <Text fz={12} c="#f0a500" role="status" aria-live="polite">
+              Heads up: Admin grants full control over every member and setting.
+            </Text>
+          )}
           {Object.values(Capability).map((capability) => (
             <Checkbox
               key={capability}
