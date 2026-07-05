@@ -775,7 +775,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
     <Stack>
       <Group>
         <Avatar
-          src={getPokemonImageURL(pokemon.image_slug)}
+          src={getPokemonImageURL(pokemon.image_slug, pokemon.shiny)}
           alt={`${pokemon.name ?? pokemon.species ?? "Pokemon"} sprite`}
           w={60}
           h={60}
@@ -876,7 +876,7 @@ function SinglePokemon(props: {
           on mobile. The owned list while editing gets an Add-to-Team button. */}
       <HoverCard position="top" withArrow shadow="md" openDelay={80} closeDelay={100} width={280}>
         <HoverCard.Target>
-          <PokemonAvatar src={getPokemonImageURL(pokemon.image_slug)} alt={pokemon.name} />
+          <PokemonAvatar src={getPokemonImageURL(pokemon.image_slug, pokemon.shiny)} alt={pokemon.name} />
         </HoverCard.Target>
         <HoverCard.Dropdown bg="#1E1D20" sx={{ borderRadius: 22 }} p={16}>
           <Stack gap={12}>

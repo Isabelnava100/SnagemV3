@@ -32,6 +32,12 @@ export interface EncounterBlock {
   /** True when this encounter came from the host's non-catchable list or a boss. */
   catchable: boolean;
   caught?: boolean;
+  /** Capture: battle stage, posts required, and posts landed so far. */
+  stage?: string;
+  required?: number;
+  progress?: number;
+  /** Characters the encounter is being caught for (empty = any of the roller's). */
+  forCharacterIds?: string[];
 }
 
 export interface ItemUsedBlock {

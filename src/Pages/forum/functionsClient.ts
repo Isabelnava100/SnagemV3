@@ -29,8 +29,12 @@ export const callRollDice = (forum: string, threadId: string, sides: number, cou
 export const callRollRandom = (forum: string, threadId: string, min: number, max: number) =>
   call<RandomBlock>("rollRandom", { forum, threadId, min, max });
 
-export const callRollEncounter = (forum: string, threadId: string, chosenSlug?: string) =>
-  call<EncounterBlock>("rollEncounter", { forum, threadId, chosenSlug });
+export const callRollEncounter = (
+  forum: string,
+  threadId: string,
+  chosenSlug?: string,
+  forCharacterIds?: string[]
+) => call<EncounterBlock>("rollEncounter", { forum, threadId, chosenSlug, forCharacterIds });
 
 export const callPublishPost = (input: {
   forum: string;

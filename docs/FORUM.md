@@ -189,7 +189,16 @@ boss 5/10/15/20 and encounter 4/7/10/13.
   server-authoritative from config). Move stage derivation server-side by baking
   the evolution + legendary data into functions if abuse appears.
 
-### Encounter capture (PLANNED — Phase 4)
+### Encounter capture (SHIPPED — Phase 4, needs functions deploy + QA)
+Implemented: a stage-by-dex map (`functions/src/battleStages.json`) sizes each
+encounter's capture cost from `admin/battle_config`. A rolled catchable encounter
+persists in `pending/{uid}` and each qualifying post increments `progress`; a
+Poke Ball catches only once `progress >= required`. The roller can assign the
+encounter to one+ of their characters at roll time (`forCharacterIds`); the
+caught Pokemon lands in that character's box. Non-catchable encounters are
+consumed on the next post as before. Bosses stay defeat-only.
+
+Original spec (for reference):
 Rule (from the owner): rolling an encounter starts capture progress that fills
 over N posts by the encounter's stage. To catch, a participant must USE A
 POKEBALL (the ball is the catch action; posts weaken it). Progress is PERSONAL

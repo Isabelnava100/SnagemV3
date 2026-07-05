@@ -24,6 +24,7 @@ import {
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
 import { onDocumentUpdated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import pokemonJSON from "./pokemon.json";
+import battleStages from "./battleStages.json";
 
 initializeApp();
 const db = getFirestore();
@@ -46,6 +47,23 @@ const catalog: CatalogEntry[] = Object.values(pokemonJSON as Record<string, any>
 const catalogBySlug = new Map(catalog.map((p) => [p.slug, p]));
 
 const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100];
+
+// Battle stage of a species (baked map) and the posts needed to capture an
+// encounter of that stage (admin/battle_config, with defaults).
+const stageForDex = (idx: number): string =>
+  (battleStages as Record<string, string>)[String(idx)] ?? "stage2";
+const DEFAULT_ENCOUNTER_COSTS: Record<string, number> = {
+  stage1: 4,
+  stage2: 7,
+  stage3: 10,
+  legendary: 13,
+};
+function encounterRequiredFromConfig(cfg: FirebaseFirestore.DocumentData | undefined, stage: string): number {
+  const configured = Number(cfg?.encounter?.[stage]);
+  const fallback = DEFAULT_ENCOUNTER_COSTS[stage] ?? 7;
+  const value = Number.isFinite(configured) && configured > 0 ? configured : fallback;
+  return Math.max(1, Math.min(100, value));
+}
 const GEN_CAPS = [151, 251, 386, 493, 649, 721, 809, 898];
 const GEN_NAMES = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 
@@ -352,10 +370,16 @@ export const rollEncounter = onCall(async (request) => {
   const forum = requireString(request.data?.forum, "forum", 60);
   const threadId = requireString(request.data?.threadId, "threadId", 20);
   const chosenSlug = request.data?.chosenSlug ? String(request.data.chosenSlug) : undefined;
+  // Characters the roller is capturing this encounter for (their own). Empty =
+  // personal: any of the roller's posts count toward the capture.
+  const forCharacterIds = (Array.isArray(request.data?.forCharacterIds) ? request.data.forCharacterIds : [])
+    .slice(0, 6)
+    .map((c: unknown) => String(c).slice(0, 60));
   await loadMember(uid);
 
   const listsSnap = await db.doc("admin/pokemon_lists").get();
   const lists = (listsSnap.data() as Record<string, any>) ?? {};
+  const battleCfg = (await db.doc("admin/battle_config").get()).data();
 
   const encounter = await db.runTransaction(async (tx) => {
     const [threadSnap, pendingSnap] = await Promise.all([
@@ -394,11 +418,20 @@ export const rollEncounter = onCall(async (request) => {
       mode = "roll";
     }
 
+    const stage = stageForDex(Number(catalogBySlug.get(slug)?.idx ?? 0));
+    const required = encounterRequiredFromConfig(battleCfg, stage);
     const result = {
       slug,
       name: catalogBySlug.get(slug)?.name ?? slug,
       mode,
       catchable: !nonCatchSlugs.has(slug) && !thread.bossBattle?.active,
+      // Capture progress: it takes `required` qualifying posts before a ball
+      // can catch it. `forCharacterIds` restricts which posts count (empty =
+      // any of the roller's posts).
+      stage,
+      required,
+      progress: 0,
+      forCharacterIds,
     };
     tx.set(pendingRef(forum, threadId, uid), { encounter: result }, { merge: true });
     tx.update(threadRef(forum, threadId), {
@@ -541,9 +574,24 @@ export const publishForumPost = onCall(async (request) => {
 
     const pending = pendingSnap.data() ?? {};
     const encounter = pending.encounter ? { ...pending.encounter } : undefined;
+    let encounterCaught = false;
+    let encounterForCharacter = "";
     if (encounter) {
+      // Capture progress: a qualifying post weakens the encounter; a ball only
+      // catches once progress has reached the required number of posts.
+      const required = Number(encounter.required) || 1;
+      const forIds: string[] = Array.isArray(encounter.forCharacterIds)
+        ? encounter.forCharacterIds
+        : [];
+      encounterForCharacter = forIds[0] ?? "";
+      const postCharIds = characters.map((c: any) => c.id);
+      const qualifies = forIds.length === 0 || postCharIds.some((id: string) => forIds.includes(id));
+      let progress = Number(encounter.progress) || 0;
+      if (!editPostId && qualifies && progress < required) progress += 1;
+      encounter.progress = progress;
       const ball = itemsUsed.find((i) => i.isBall);
-      encounter.caught = !!ball && !!encounter.catchable;
+      encounter.caught = !!ball && !!encounter.catchable && progress >= required;
+      encounterCaught = !!encounter.caught;
       if (encounter.caught && ball) (ball as any).caughtPokemon = encounter.name;
     }
 
@@ -590,6 +638,8 @@ export const publishForumPost = onCall(async (request) => {
             regiondex: "",
             species: encounter.name,
             type1: "Unknown",
+            // Assign to the character the encounter was rolled for, if any.
+            ...(encounterForCharacter ? { characterId: encounterForCharacter } : {}),
             caughtIn: {
               forum,
               threadId,
@@ -695,7 +745,14 @@ export const publishForumPost = onCall(async (request) => {
       resultPostId = newPostRef!.id;
     }
 
-    if (pendingSnap.exists) tx.delete(pRef);
+    // Consume the per-post rolls. A catchable, uncaught encounter survives (with
+    // its new progress) so it can be weakened over several posts and caught
+    // later; non-catchable encounters are consumed as before.
+    if (!editPostId && encounter && encounter.catchable && !encounterCaught) {
+      tx.set(pRef, { encounter });
+    } else if (pendingSnap.exists) {
+      tx.delete(pRef);
+    }
     return resultPostId;
   });
 
