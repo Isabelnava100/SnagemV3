@@ -88,6 +88,10 @@ export function NewRegister() {
           form.setErrors({ email: "Email already in use." });
         } else if (results === "auth/invalid-email") {
           form.setErrors({ email: "Badly formatted email." });
+        } else if (results === "gaia-name-taken") {
+          form.setErrors({
+            gaiaName: "This Gaia username is already registered to another account.",
+          });
         } else {
           form.setErrors({ email: "An unexpected error occurred. Please try again." });
         }

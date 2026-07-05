@@ -84,6 +84,17 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ---- One-time Gaia usernames ------------------------------------------
+    // Each GaiaOnline guild name can back only ONE account. The doc id is the
+    // normalized name; it is create-once (updates denied), so a second signup
+    // with the same Gaia name fails at the rules layer. Registration writes it
+    // right after the auth account is made. Admins can free a claim.
+    match /gaiaClaims/{name} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
     // ---- Admin-managed shared data ----------------------------------------
     // Includes the badge catalog (admin/badges); ManageBadges may edit it.
     match /admin/{doc} {
