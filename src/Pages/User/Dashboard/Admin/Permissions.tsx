@@ -131,8 +131,8 @@ function CapabilityChecklist() {
         Roles & Permissions
       </Title>
       <Text fz={13} c="dimmed">
-        Set a member's role (including temporarily promoting someone to Admin) and
-        toggle each director capability. Admins implicitly have every power.
+        Set a member's role (including promoting someone to Admin) and toggle each
+        director capability. Admins implicitly have every power.
       </Text>
       <Select
         placeholder="Search for a member"
@@ -158,7 +158,7 @@ function CapabilityChecklist() {
           </Group>
           <Select
             label="Role"
-            description="Sets the member's trust tier. Use Admin to temporarily grant full access, then set it back."
+            description="Sets the member's trust tier. Admin grants full control; change it any time."
             data={Object.values(UserRoles).map((r) => ({ value: r, label: r }))}
             value={role || null}
             onChange={(v) => setRole(v ?? "")}
