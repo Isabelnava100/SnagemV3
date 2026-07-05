@@ -28,6 +28,25 @@ import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import { hasCapability } from "../../../../lib/permissions";
 import { getUsers } from "../../../../queries/admin";
 
+// The catalog is ordered balls-first; sort alphabetically so the dropdown
+// surfaces the whole catalog (not just balls) when browsing.
+const ITEM_SELECT_OPTIONS = itemData
+  .map((item) => ({ value: item.id, label: item.name }))
+  .sort((a, b) => a.label.localeCompare(b.label));
+
+// Show the item's sprite next to its (complete) name in the dropdown.
+function renderItemOption({ option }: { option: { value: string; label: string } }) {
+  const item = itemData.find((i) => i.id === option.value);
+  return (
+    <Group gap={8} wrap="nowrap">
+      {item && <Avatar src={getItemImageURL(item.filePath)} size={26} />}
+      <Text fz={14} c="white">
+        {option.label}
+      </Text>
+    </Group>
+  );
+}
+
 function TopHeader(props: { children: React.ReactNode }) {
   return (
     <Box
@@ -136,9 +155,11 @@ export default function Donate() {
               radius="md"
               value={itemsToSendIds}
               onChange={(value) => setItemsToSendIds(value)}
-              data={itemData.map((item) => ({ label: item.name, value: item.id }))}
+              data={ITEM_SELECT_OPTIONS}
+              renderOption={renderItemOption}
               searchable
-              limit={50}
+              limit={100}
+              maxDropdownHeight={320}
               placeholder="Search to add an item"
             />
           </Stack>
