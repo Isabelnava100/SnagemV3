@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Box,
   Button,
   Flex,
@@ -13,6 +14,7 @@ import {
   UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
+import { IconLogout } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { Link } from "react-router-dom";
@@ -82,10 +84,22 @@ function DashboardHeader() {
 
   if (!isOverMd) {
     return (
-      <Flex justify="space-between" align="center" px={4}>
-        <Text c="white" fw={700} fz={18} lineClamp={1}>
-          Welcome, {user?.displayName}!
-        </Text>
+      <Flex justify="space-between" align="center" px={4} gap={8}>
+        <Group gap={6} style={{ minWidth: 0 }} wrap="nowrap">
+          <Text c="white" fw={700} fz={18} lineClamp={1}>
+            Welcome, {user?.displayName}!
+          </Text>
+          {/* Logout lives here (not the nav) to avoid an accidental misclick. */}
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            onClick={handleLogout}
+            aria-label="Log out"
+            style={{ flexShrink: 0 }}
+          >
+            <IconLogout size={20} />
+          </ActionIcon>
+        </Group>
         <NotificationBell />
       </Flex>
     );
@@ -295,7 +309,7 @@ function TabsPanel() {
   const { isOverMd } = useMediaQuery();
   const { user } = useAuth();
   const dashboardTabLinks: DashboardTabLink[] = [
-    { path: "/Bookmarks", icon: Bookmarks, label: "FAVS", enabled: true },
+    { path: "/Bookmarks", icon: Bookmarks, label: "Bookmarks", enabled: true },
     { path: "/Drafts", icon: Drafts, label: "Drafts", enabled: true },
     { path: "/Items", icon: Tether, label: "Items", enabled: true },
     { path: "/Characters", icon: Characters, label: "Characters", enabled: true },

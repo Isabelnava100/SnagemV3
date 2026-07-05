@@ -1,11 +1,10 @@
-import { Box, Drawer, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
+import { ActionIcon, Box, Drawer, Group, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconBell, IconHome, IconLogout } from "@tabler/icons-react";
+import { IconBell, IconHome, IconX } from "@tabler/icons-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { Activities, Forum, Marketplace, Menu, Quests, TeamSangem, Users } from "../../icons";
-import { handleLogout } from "../../Pages/auth/components/LogoutHandle";
 import "/src/assets/styles/navigation.css";
 
 interface NavItem {
@@ -98,7 +97,7 @@ function TabButton(props: { item: NavItem }) {
           }}
         >
           {/* w/h (not width/height, which Mantine 9 ignores) size the icon. */}
-          <Image src={item.icon} w={20} h={20} fit="contain" alt={item.label} style={{ opacity: isActive ? 1 : 0.65 }} />
+          <Image src={item.icon} w={22} h={22} fit="contain" alt={item.label} style={{ opacity: isActive ? 1 : 0.65 }} />
         </Box>
         <Text fz={9} fw={isActive ? 700 : 500} c={isActive ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           {item.label}
@@ -125,7 +124,7 @@ function MoreButton(props: { active: boolean; onClick: () => void }) {
               : "transparent",
           }}
         >
-          <Image src={Menu} w={20} h={20} fit="contain" alt="More" style={{ opacity: props.active ? 1 : 0.65 }} />
+          <Image src={Menu} w={22} h={22} fit="contain" alt="More" style={{ opacity: props.active ? 1 : 0.65 }} />
         </Box>
         <Text fz={9} fw={props.active ? 700 : 500} c={props.active ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           More
@@ -170,14 +169,13 @@ function MobileTabBar() {
         onClose={close}
         position="bottom"
         size="auto"
-        withCloseButton
-        title={<Text fw={700}>Menu</Text>}
+        withCloseButton={false}
         styles={{
           content: { background: "#1E1D20" },
-          header: { background: "#1E1D20", color: "white" },
-          body: { paddingBottom: "calc(20px + env(safe-area-inset-bottom))" },
+          body: { padding: 16, paddingBottom: "calc(16px + env(safe-area-inset-bottom))" },
         }}
       >
+        <Stack gap={14}>
         <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
           <Link to="/" onClick={close} style={{ textDecoration: "none" }}>
             <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
@@ -204,41 +202,36 @@ function MobileTabBar() {
             </Link>
           ))}
           {user && (
-            <>
-              {/* Profile lives under Users (the public-profile hub), so it's
-                  intentionally not a separate quick-link here. */}
-              <Link
-                to="/Dashboard/Settings/Notifications"
-                onClick={close}
-                style={{ textDecoration: "none" }}
-              >
-                <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
-                  <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-                    <IconBell size={26} color="white" />
-                  </Box>
-                  <Text fz={11} c="white" tt="uppercase">
-                    Alerts
-                  </Text>
-                </Stack>
-              </Link>
-              <UnstyledButton
-                onClick={() => {
-                  close();
-                  handleLogout();
-                }}
-              >
-                <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
-                  <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-                    <IconLogout size={26} color="white" />
-                  </Box>
-                  <Text fz={11} c="white" tt="uppercase">
-                    Logout
-                  </Text>
-                </Stack>
-              </UnstyledButton>
-            </>
+            // Profile lives under Users (the public-profile hub), and Logout
+            // moved to the dashboard header (next to the welcome) to avoid an
+            // accidental misclick in the nav.
+            <Link
+              to="/Dashboard/Settings/Notifications"
+              onClick={close}
+              style={{ textDecoration: "none" }}
+            >
+              <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
+                <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
+                  <IconBell size={26} color="white" />
+                </Box>
+                <Text fz={11} c="white" tt="uppercase">
+                  Alerts
+                </Text>
+              </Stack>
+            </Link>
           )}
         </Box>
+        {/* Controls sit at the bottom (Menu left, close right) to mirror the
+            bottom main nav — thumb-friendly, with the list right above. */}
+        <Group justify="space-between" align="center">
+          <Text fw={700} c="white">
+            Menu
+          </Text>
+          <ActionIcon variant="subtle" color="gray" onClick={close} aria-label="Close menu">
+            <IconX size={22} />
+          </ActionIcon>
+        </Group>
+        </Stack>
       </Drawer>
     </>
   );

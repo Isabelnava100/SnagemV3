@@ -34,7 +34,6 @@ export default function SubTabsLayout(props: {
             ? "linear-gradient(90deg, #762B77 13.54%, #14B1B6 70.83%)"
             : "rgba(119, 41, 118, 0.25)",
           textDecoration: "none",
-          marginLeft: isOverLg ? (isActive ? 20 : 0) : undefined,
         }}
         h={isOverLg ? 59 : 44}
         className="flex justify-start items-center px-4 duration-100"
@@ -64,7 +63,7 @@ export default function SubTabsLayout(props: {
       align="start"
     >
       {isOverLg ? (
-        <Stack w="100%" maw={320} sx={{ flexShrink: 0 }}>
+        <Stack w="100%" maw={320} gap={12} sx={{ flexShrink: 0 }}>
           {tabs}
         </Stack>
       ) : (
