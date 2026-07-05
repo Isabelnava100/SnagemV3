@@ -35,7 +35,7 @@ export const requirements = [
     return Math.max(100 - (100 / (requirements.length + 1)) * multiplier, 10);
   }
   
-  //Generate password for applicants — this is a real account password, so use a CSPRNG
+  //Generate password for applicants. This is a real account password, so use a CSPRNG
   export function generatePassword() {
     const length = 24,
         charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";

@@ -9,7 +9,7 @@ function threadsPath(forum: string) {
 
 /**
  * One page-sized fetch of the newest threads for a category (both open and
- * archived — the archive toggle filters client-side so it flips instantly).
+ * archived; the archive toggle filters client-side so it flips instantly).
  * Server-side thread pagination stays deferred until a composite index exists
  * (see CLAUDE.md known deferred work).
  */
@@ -99,7 +99,7 @@ export const getEncounterLists = async (username?: string): Promise<AdminPokemon
 
 /**
  * Server-rolled results waiting to attach to the user's next post in a thread
- * (dice/random/encounter — see functions/src). Read-own, written by functions.
+ * (dice/random/encounter, see functions/src). Read-own, written by functions.
  */
 export const getPendingActions = async (
   forum: string,

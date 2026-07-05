@@ -28,7 +28,7 @@ function describeDice(d: DiceBlock): string {
 /**
  * Post Actions panel for the post composer: Roll Dice + Random Number.
  * Rolls happen SERVER-SIDE (Cloud Function) and bind to your next post in the
- * thread — they lock immediately, publish with the post and can never be
+ * thread. They lock immediately, publish with the post and can never be
  * re-rolled, even by abandoning the draft (board 19/20/21).
  */
 export function PostActionsPanel(props: {
@@ -53,14 +53,14 @@ export function PostActionsPanel(props: {
   const diceMutation = useMutation({
     mutationFn: () => callRollDice(props.forum, props.threadId, Number(sides), count),
     onSuccess: (result) => props.onDice(result),
-    onError: (err) => setRollError(callableMessage(err, "The dice roll failed — try again.")),
+    onError: (err) => setRollError(callableMessage(err, "The dice roll failed. Try again.")),
   });
 
   const randomMutation = useMutation({
     mutationFn: () =>
       callRollRandom(props.forum, props.threadId, Math.min(low, high), Math.max(low, high)),
     onSuccess: (result) => props.onRandom(result),
-    onError: (err) => setRollError(callableMessage(err, "The roll failed — try again.")),
+    onError: (err) => setRollError(callableMessage(err, "The roll failed. Try again.")),
   });
 
   const rollDice = () => {
@@ -86,7 +86,7 @@ export function PostActionsPanel(props: {
           </GameResultText>
         ))}
 
-        {/* Roll dice — locked as soon as it's rolled */}
+        {/* Roll dice, locked as soon as it's rolled */}
         {props.dice ? (
           <GameResultText>{describeDice(props.dice)}</GameResultText>
         ) : (
@@ -142,7 +142,7 @@ export function PostActionsPanel(props: {
           </Stack>
         )}
 
-        {/* Random number — locked as soon as it's generated */}
+        {/* Random number, locked as soon as it's generated */}
         {props.random ? (
           <GameResultText>
             A random number between {props.random.min} and {props.random.max} was generated...

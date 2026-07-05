@@ -7,7 +7,7 @@ import { auth, db } from "../../../context/firebase";
 export type SignInResult = "success" | "pending" | string;
 
 // Firebase's default browserLocalPersistence is shared across tabs and survives
-// restarts — per-tab session persistence made every new tab look logged out.
+// restarts; per-tab session persistence made every new tab look logged out.
 export const handleSignIn = async (
   email2: string,
   password: string,

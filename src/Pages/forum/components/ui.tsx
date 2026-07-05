@@ -41,7 +41,7 @@ export function PanelHint(props: { children: React.ReactNode }) {
   );
 }
 
-/** Text link in the forum link color (#346CFD) — annotation 1 on the board. */
+/** Text link in the forum link color (#346CFD), annotation 1 on the board. */
 export function ForumTextLink(props: {
   children: React.ReactNode;
   onClick?: () => void;

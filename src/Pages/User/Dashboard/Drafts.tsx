@@ -76,9 +76,9 @@ function DraftsHeader(props: { count: number }) {
       <Text c={count >= 55 ? "#E35C65" : "dimmed"} fz={13}>
         {count}/60 drafts
         {count >= 60
-          ? " — you're at the limit; delete drafts to save new ones."
+          ? ". You're at the limit; delete drafts to save new ones."
           : count >= 55
-            ? " — you'll run out of draft space soon."
+            ? ". You'll run out of draft space soon."
             : ""}
       </Text>
       {count >= 40 &&

@@ -95,7 +95,7 @@ export default function NewThreadComposer() {
     if (!editor || editor.isDestroyed || !draft || draftLoaded) return;
     if (draft.title_thread) setTitle(draft.title_thread);
     const content = draft.long_text || "";
-    // Tiptap 3 can throw parsing legacy/malformed draft HTML — never let that
+    // Tiptap 3 can throw parsing legacy/malformed draft HTML, so never let that
     // crash the composer; fall back to a clean editor so editing still works.
     try {
       editor.commands.setContent(content);
@@ -165,8 +165,8 @@ export default function NewThreadComposer() {
     onSuccess: (count) =>
       setDraftMessage(
         count >= DRAFT_WARNING_AT
-          ? `Draft saved — heads up, you have ${count}/${MAX_DRAFTS} drafts. You'll run out soon.`
-          : "Draft saved — find it under Dashboard → Drafts."
+          ? `Draft saved. Heads up, you have ${count}/${MAX_DRAFTS} drafts. You'll run out soon.`
+          : "Draft saved. Find it under Dashboard → Drafts."
       ),
     onError: (err) =>
       setDraftMessage((err as Error).message || "Could not save the draft."),

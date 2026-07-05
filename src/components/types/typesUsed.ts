@@ -162,25 +162,25 @@ export type User = {
   ===========================================
   Two orthogonal axes (see docs/PERMISSIONS.md for the full model + roadmap):
 
-  1. ROLE (`permissions` field, exactly one per user) — trust tier + forum
+  1. ROLE (`permissions` field, exactly one per user): trust tier + forum
      visibility. Higher tiers see more forums; roles do NOT imply capabilities.
        - Admin     : full control; manages roles and capabilities of others.
        - Director   : functional role; powers come from granted capabilities,
                       NOT from the role itself. Not automatically a Master.
-       - Master     : forum-visibility tier — unlocks the master-only forum(s).
+       - Master     : forum-visibility tier that unlocks the master-only forum(s).
        - Verified   : standard trusted member.
        - New        : freshly approved member.
        - Applicant  : still in the NewUsers queue; cannot log in.
        - Disabled   : access revoked; cannot log in.
 
-  2. CAPABILITIES (`capabilities` field, zero or more) — granular action grants
+  2. CAPABILITIES (`capabilities` field, zero or more): granular action grants
      an Admin toggles per user (mainly for Directors). Admin has all implicitly.
      Forum visibility and capabilities are independent: a Director can be granted
      SeeMasterForums without becoming a Master, and vice-versa.
 
   FUTURE: an Admin-only checklist on the Settings tab to toggle each Director's
   capabilities. For now capabilities are set by hand in the Firestore console.
-  Real enforcement of all of this MUST live in Firestore security rules — every
+  Real enforcement of all of this MUST live in Firestore security rules; every
   check in this codebase is client-side UI only.
 */
 export enum UserRoles {

@@ -44,7 +44,7 @@ import { userIsHost } from "./ThreadView";
 import "../forum.css";
 
 /**
- * Host Menu — visible only to the thread host (the first poster) and admins.
+ * Host Menu, visible only to the thread host (the first poster) and admins.
  * Edit forum details, manage encounters after creation (board 15/17), run
  * boss battles, and archive the thread. Archive and boss battle actions all
  * require confirmation modals (board 13/14).
@@ -298,7 +298,7 @@ export default function HostMenu() {
                 <GameResultText>
                   {activeBoss.name} is active
                   {activeBoss.excluded.length
-                    ? ` — excluded: ${activeBoss.excluded.join(", ")}`
+                    ? `, excluded: ${activeBoss.excluded.join(", ")}`
                     : ""}
                   .
                 </GameResultText>

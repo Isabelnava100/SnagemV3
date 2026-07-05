@@ -68,7 +68,7 @@ export default function Signature() {
       </Title>
       <Text fz={13} c="dimmed">
         Shown under your forum posts when &quot;Attach Signature&quot; is checked in the
-        composer. Keep it tasteful — hosts can ask you to change it.
+        composer. Keep it tasteful; hosts can ask you to change it.
       </Text>
       <Box sx={{ borderRadius: 12, overflow: "hidden" }}>
         <Editor editor={editor} />

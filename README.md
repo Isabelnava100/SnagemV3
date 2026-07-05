@@ -1,12 +1,12 @@
 # SnagemV3
 
-Pokemon roleplay community site for the Snagem Guild — forums, member dashboard, character and Pokemon team management. Live at [snagemguild.com](https://snagemguild.com).
+Pokemon roleplay community site for the Snagem Guild: forums, member dashboard, character and Pokemon team management. Live at [snagemguild.com](https://snagemguild.com).
 
 ## Stack
 
 - React 19 + TypeScript 6, built with Vite 8
 - Mantine 9 (UI) + Tailwind 4 (utility classes) + `@mantine/emotion` (`sx` support)
-- Firebase 12 — Auth, Firestore, Storage (config via `VITE_BACKEND_FIREBASE_*` env vars)
+- Firebase 12: Auth, Firestore, Storage (config via `VITE_BACKEND_FIREBASE_*` env vars)
 - @tanstack/react-query 5 for all data fetching
 - Tiptap 3 rich-text editor (forum posts, profiles)
 - Package manager: **bun**
@@ -42,5 +42,5 @@ npx netlify-cli deploy --prod # production
 
 ## Notes
 
-- `.env` is gitignored. Add new vars to `.env.example` too. All `VITE_*` vars are public in the bundle — never put secrets there.
-- Firestore security rules live in the Firebase console (project `snagemguild`) — keep them in sync when adding collections.
+- `.env` is gitignored. Add new vars to `.env.example` too. All `VITE_*` vars are public in the bundle. Never put secrets there.
+- Firestore security rules live in the Firebase console (project `snagemguild`). Keep them in sync when adding collections.

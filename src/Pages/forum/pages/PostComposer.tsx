@@ -33,7 +33,7 @@ import { userMayPost } from "./ThreadView";
 import "../forum.css";
 
 /**
- * Post composer — used both for a new reply (Publish Reply) and for editing an
+ * Post composer, used both for a new reply (Publish Reply) and for editing an
  * existing post (Publish Edits). Core rule from the board: once an item,
  * encounter or action has been submitted it cannot be edited or changed;
  * before submitting everything can be added, edited or removed freely.
@@ -96,7 +96,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   });
 
   // Server-rolled results already bound to this thread (e.g. after a page
-  // reload mid-compose) — they must attach to the next published post.
+  // reload mid-compose), they must attach to the next published post.
   const { data: pending } = useQuery({
     queryKey: ["forum-pending", forum, threadId, user?.uid],
     queryFn: () => getPendingActions(forum, threadId!, user!.uid),
@@ -112,7 +112,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   // Preload content when editing; prepend the quote when quoting.
   React.useEffect(() => {
     if (!editor || editor.isDestroyed || loadedEdit) return;
-    // Tiptap 3 can throw parsing legacy/malformed stored HTML — guard every
+    // Tiptap 3 can throw parsing legacy/malformed stored HTML, so guard every
     // setContent so a bad draft/post can't crash the composer.
     const load = (content: string): boolean => {
       try {
@@ -202,8 +202,8 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     onSuccess: (count) =>
       setDraftMessage(
         count >= DRAFT_WARNING_AT
-          ? `Draft saved — heads up, you have ${count}/${MAX_DRAFTS} drafts. You'll run out soon.`
-          : "Draft saved — find it under Dashboard → Drafts."
+          ? `Draft saved. Heads up, you have ${count}/${MAX_DRAFTS} drafts. You'll run out soon.`
+          : "Draft saved. Find it under Dashboard → Drafts."
       ),
     onError: (err) => setDraftMessage((err as Error).message || "Could not save the draft."),
   });

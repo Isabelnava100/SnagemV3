@@ -14,7 +14,7 @@ export const FORUM_ACCENT = "#772976";
 export type CategoryCreatePolicy = "admin" | "any" | "event-host";
 
 export interface ForumCategory {
-  /** NewForumInfo.value — forum-visibility permission id */
+  /** NewForumInfo.value: forum-visibility permission id */
   value: string;
   /** URL segment + Firestore doc id under /forum */
   link: string;

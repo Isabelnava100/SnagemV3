@@ -28,7 +28,7 @@ const CustomSwitch = React.forwardRef<HTMLInputElement, CustomSwitchProps>((prop
 
 /**
  * In-app notification inbox (Q7): bookmarked-thread posts, @mentions, boss
- * battles, rewards and currency grants — produced by the Cloud Functions.
+ * battles, rewards and currency grants, produced by the Cloud Functions.
  * Discord delivery is a later, optional channel once accounts are linked.
  */
 function NotificationsInbox() {
@@ -113,7 +113,7 @@ function NotificationsInbox() {
 }
 
 /**
- * "Show my Discord name publicly" — a plain toggle matching the other
+ * "Show my Discord name publicly": a plain toggle matching the other
  * switches. The Discord name is auto-grabbed once account linking ships;
  * this only controls whether it appears on the public profile. Stored on
  * the user doc (discordPublic), self-writable, saved on change.

@@ -29,7 +29,7 @@ export const registerUser = async (
         username,
         permissions: "New",
         badges: [],
-        // Join date — carried onto the user doc when an admin promotes them.
+        // Join date, carried onto the user doc when an admin promotes them.
         joinedAt: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 },
       });
       

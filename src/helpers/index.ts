@@ -33,8 +33,8 @@ export const getPokemonName = (slug: string) => {
 };
 
 // Basic profanity gate for user-provided names (team names etc). Checks word
-// boundaries plus common letter-swap evasions; intentionally conservative —
-// hosts/admins moderate the rest.
+// boundaries plus common letter-swap evasions; intentionally conservative.
+// Hosts/admins moderate the rest.
 const BLOCKED_WORDS = [
   "fuck", "shit", "bitch", "cunt", "asshole", "dick", "cock", "pussy",
   "nigger", "nigga", "faggot", "fag", "retard", "whore", "slut", "rape",

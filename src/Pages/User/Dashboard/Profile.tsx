@@ -274,7 +274,7 @@ function Avatars() {
         </Flex>
         {!canUpload && (
           <Text fz={12} c="#E35C65">
-            You&apos;ve reached the max of {MAX_ITEMS_COUNT} avatars — remove one before adding more.
+            You&apos;ve reached the max of {MAX_ITEMS_COUNT} avatars. Remove one before adding more.
           </Text>
         )}
         <Conditional
@@ -465,7 +465,7 @@ function CoverBackgrounds() {
         </Flex>
         {!canUpload && (
           <Text fz={12} c="#E35C65">
-            You&apos;ve reached the max of 6 cover backgrounds — remove one before adding more.
+            You&apos;ve reached the max of 6 cover backgrounds. Remove one before adding more.
           </Text>
         )}
         <Conditional

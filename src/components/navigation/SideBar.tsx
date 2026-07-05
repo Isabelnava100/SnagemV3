@@ -173,7 +173,7 @@ function MobileTabBar() {
         styles={{
           content: { background: "#1E1D20", "--mantine-scale": "1" },
           // Fill the sheet and push everything to the bottom so the grid sits
-          // just above the Menu/X row — mirroring the bottom main nav.
+          // just above the Menu/X row, mirroring the bottom main nav.
           body: {
             display: "flex",
             flexDirection: "column",
@@ -214,7 +214,7 @@ function MobileTabBar() {
               live in the dashboard header, so neither is a nav quick-link. */}
         </Box>
         {/* Controls sit at the bottom (Menu left, close right) to mirror the
-            bottom main nav — thumb-friendly, with the list right above. */}
+            bottom main nav, thumb-friendly, with the list right above. */}
         <Group justify="space-between" align="center">
           <Text fw={700} c="white">
             Menu

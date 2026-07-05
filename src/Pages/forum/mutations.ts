@@ -10,7 +10,7 @@ import { EncounterConfig, ForumThread, PostCharacter, ThreadPoll } from "./types
 
 /**
  * All game-relevant forum writes (threads, posts, rolls, votes, boss battles,
- * inventory effects) go through Cloud Functions — the server rolls, validates
+ * inventory effects) go through Cloud Functions. The server rolls, validates
  * allowances/quantities and writes transactionally, so a hostile client can't
  * forge results. Only low-stakes personal data (bookmarks, drafts, tickets)
  * and host-gated thread details are still written directly, backed by rules.
@@ -200,7 +200,7 @@ export async function saveDraft(input: SaveDraftInput): Promise<number> {
   const count = (await getCountFromServer(draftsCol)).data().count;
   if (count >= MAX_DRAFTS) {
     throw new Error(
-      `You've reached the ${MAX_DRAFTS}-draft limit — delete some drafts from your dashboard first.`
+      `You've reached the ${MAX_DRAFTS}-draft limit. Delete some drafts from your dashboard first.`
     );
   }
   const now = Date.now();
@@ -232,7 +232,7 @@ export async function deleteAllDrafts(uid: string): Promise<void> {
 
 /**
  * SubmitXP files an XP-review request into the tickets collection (readable by
- * admins). The XP accrual flow itself is still an open product question — see
+ * admins). The XP accrual flow itself is still an open product question. See
  * docs/FORUM.md.
  */
 export async function submitXP(

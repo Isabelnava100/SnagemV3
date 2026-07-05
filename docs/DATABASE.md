@@ -1,9 +1,9 @@
-# SnagemV3 — Firestore Database Map & Forum Build Plan
+# SnagemV3: Firestore Database Map & Forum Build Plan
 
 Reference for building the next modules. Firebase 12; compat init in
 `src/context/firebase.ts`, modular API everywhere else. Reads are supposed to go
-through react-query (`src/lib/react-query.ts`, staleTime 2 min / gcTime 10 min) —
-the dashboard obeys this, the **forum module does not yet**.
+through react-query (`src/lib/react-query.ts`, staleTime 2 min / gcTime 10 min).
+The dashboard obeys this, the **forum module does not yet**.
 
 > Firestore bills per document read. "Reads" below = billed document reads.
 > All authorization in the app is client-side UI only; the real gate is

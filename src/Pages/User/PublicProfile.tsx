@@ -159,7 +159,7 @@ export default function PublicProfile() {
           </Group>
         )}
 
-        {/* Featured picks — placeholder layout until the real design lands. */}
+        {/* Featured picks: placeholder layout until the real design lands. */}
         {(featuredCharacter || featuredTeam || featuredPokemon) && (
           <Stack gap={10} w="100%" mt={10}>
             <Text c="white" fw={600} ta="center">
@@ -226,7 +226,7 @@ export default function PublicProfile() {
         )}
 
         <Text fz={13} c="dimmed" ta="center" maw={380} mt={10}>
-          Full public profiles — cover background, description, tags and collections — are on
+          Full public profiles (cover background, description, tags and collections) are on
           the way.
         </Text>
       </Stack>

@@ -24,7 +24,7 @@ import { getMysteryBoxes } from "../../../queries/game";
 
 /**
  * Items tab (moved off the dashboard top block). Categories stack vertically
- * on mobile and lay out in a responsive grid on desktop — no more sideways
+ * on mobile and lay out in a responsive grid on desktop, no more sideways
  * scrolling. Mystery-box items open the reveal pop-up.
  */
 export default function Items() {
@@ -146,7 +146,7 @@ function MysteryBoxModal(props: {
     },
     onError: async (err) => {
       const { callableMessage } = await import("../../forum/functionsClient");
-      setError(callableMessage(err, "The box would not open — try again."));
+      setError(callableMessage(err, "The box would not open. Try again."));
     },
   });
 
@@ -181,7 +181,7 @@ function MysteryBoxModal(props: {
             </GradientButtonPrimary>
           ) : (
             <Text fz={13} c="dimmed">
-              This box cannot be opened yet — an admin still needs to fill it.
+              This box cannot be opened yet. An admin still needs to fill it.
             </Text>
           )}
           {error && (

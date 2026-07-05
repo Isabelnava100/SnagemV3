@@ -51,7 +51,7 @@ export default function CharactersPanel(props: {
     () =>
       (teams?.sortedData ?? []).map((team) => ({
         value: team.id,
-        label: `${team.team_name || "Unnamed team"} — ${team.pokemons
+        label: `${team.team_name || "Unnamed team"}: ${team.pokemons
           .map((p) => p.name)
           .slice(0, 4)
           .join(", ")}${team.pokemons.length > 4 ? "..." : ""}`,
@@ -178,7 +178,7 @@ export default function CharactersPanel(props: {
           })}
           {!characters?.sortedData.length && (
             <Text fz={13} c="dimmed">
-              You have no characters yet — create them from your dashboard.
+              You have no characters yet. Create them from your dashboard.
             </Text>
           )}
         </Stack>

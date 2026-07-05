@@ -17,7 +17,7 @@ export default function ComingSoon(props: { module: string }) {
         </Title>
         <Text c="dimmed" ta="center" maw={420}>
           This part of the guild is still under construction. In the meantime, the forums are
-          open — go start a roleplay!
+          open. Go start a roleplay!
         </Text>
         <GradientButtonSecondary radius="xl" onClick={() => navigate("/Forum/Main-Forum")}>
           Go to the Forums

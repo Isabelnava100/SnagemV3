@@ -39,7 +39,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
   }
 
   componentDidCatch(error: unknown) {
-    // A stale chunk after a deploy fixes itself with one hard reload — but
+    // A stale chunk after a deploy fixes itself with one hard reload, but
     // guard against a reload loop if the fetch keeps failing (e.g. offline).
     if (isChunkLoadError(error)) {
       const KEY = "snagem-chunk-reloaded";
@@ -78,7 +78,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
             Something went wrong on this page
           </Title>
           <Text c="dimmed" ta="center">
-            This one page hit an error — the rest of the site still works.
+            This one page hit an error. The rest of the site still works.
           </Text>
           {this.state.message && (
             <Text
