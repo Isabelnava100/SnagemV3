@@ -47,13 +47,14 @@ service cloud.firestore {
         allow read: if request.auth.uid == uid || isAdmin();
         allow write: if request.auth.uid == uid || hasCap('GiveItems');
       }
-      // Badge ownership is admin-granted and display state changes go through
-      // the setBadgeEnabled Cloud Function (which also syncs users.badges) —
-      // so badges are read-only for the owner. Note the generic bag rule
+      // Badge ownership is granted by staff and display state changes go
+      // through the setBadgeEnabled Cloud Function (which also syncs
+      // users.badges) — so badges are read-only for the owner. Admins and
+      // ManageBadges directors may assign/revoke. Note the generic bag rule
       // below excludes 'badges'; overlapping rules are OR'd in Firestore.
       match /bag/badges {
         allow read: if request.auth.uid == uid || isAdmin();
-        allow write: if isAdmin();
+        allow write: if isAdmin() || hasCap('ManageBadges');
       }
       // All other per-user data: owner (or admin) only.
       match /bag/{doc} {
@@ -84,9 +85,10 @@ service cloud.firestore {
     }
 
     // ---- Admin-managed shared data ----------------------------------------
+    // Includes the badge catalog (admin/badges); ManageBadges may edit it.
     match /admin/{doc} {
       allow read: if isSignedIn();
-      allow write: if isAdmin() || hasCap('ManageLists');
+      allow write: if isAdmin() || hasCap('ManageLists') || hasCap('ManageBadges');
     }
 
     // ---- Discord link requests --------------------------------------------

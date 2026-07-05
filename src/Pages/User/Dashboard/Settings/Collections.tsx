@@ -18,9 +18,9 @@ import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLa
 import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
-import { badgeData } from "../../../../data/badge";
 import { emojiData, getEmoteImageURL } from "../../../../data/emote";
 import { ArrowSwapIcon, CheckCircleIcon, CrossCircleIcon } from "../../../../icons";
+import { getBadgeCatalog } from "../../../../queries/badges";
 import { getBadges, getEmojis } from "../../../../queries/settings";
 
 function useGetBadgesQuery() {
@@ -97,7 +97,7 @@ function BadgesSectionWrapper(props: {
           </Text>
         )}
       </Group>
-      <Flex gap={17} wrap="wrap">
+      <Flex gap={8} wrap="wrap">
         {displayedBadges.map((badge) => (
           <Badge
             key={badge.label}
@@ -355,6 +355,7 @@ function EmojiCollection() {
 
 function BadgesCollection() {
   const { data, isPending: isLoading, isError } = useGetBadgesQuery();
+  const { data: catalog } = useQuery({ queryKey: ["badge-catalog"], queryFn: getBadgeCatalog });
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const { formattedData: userBadges } = data;
@@ -366,8 +367,8 @@ function BadgesCollection() {
         </Title>
         <Text>Here&apos;s a list of all badges and how to obtain them.</Text>
       </Stack>
-      <Flex wrap="wrap" gap={8}>
-        {badgeData.map((badge, index) => {
+      <Flex wrap="wrap" gap={6}>
+        {(catalog ?? []).map((badge, index) => {
           const existingUserBadge = userBadges.find(
             (userBadge) => userBadge.label === badge.name && userBadge.enabled
           );

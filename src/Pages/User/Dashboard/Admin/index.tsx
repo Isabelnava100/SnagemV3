@@ -11,6 +11,7 @@ export default function AdminLayout() {
     { path: "Announcements", label: "Announcements" },
     { path: "Permissions", label: "Permissions & XP" },
     { path: "Mystery-Boxes", label: "Mystery Boxes" },
+    { path: "Badges", label: "Badges" },
   ];
   const { user } = useAuth();
   if (user?.otherinfo?.permissions !== "Admin") {
