@@ -204,15 +204,15 @@ Build outline:
   existing catch write). Balls thrown early do not catch.
 - Ball type gates by stage/type per the FAQ table (see below) when we build it.
 
-### Per-character Pokemon boxes (PLANNED — Phase 5, architectural)
-Owner wants each character to own its own teams/boxes, and a post/thread to bring
-multiple characters + their teams. Today teams (`bag/teams`) and Pokemon
-(`bag/owned_pokemons`) are user-global. Options: (a) add `characterId` to each
-team/pokemon and filter by character everywhere; (b) move them under
-`bag/characters/{charId}/...`. Requires: a data migration (with a dry-run
-preview, like the thread/bookmark repairs), dashboard rework (Pokemon, Teams),
-the composer team picker filtered per character, and XP/reward writes keyed by
-character. Do this BEFORE deep encounter/reward work so those key off characters.
+### Per-character Pokemon boxes (SHIPPED — Phase 5)
+Chose option (a), backward compatible so no migration was needed: `Team` and
+`OwnedPokemon` gained an optional `characterId` (unset = shared/unassigned).
+- Dashboard team editor assigns a team to a character; team cards show it.
+- Pokemon detail assigns each Pokemon to a character; the box has a Character
+  filter (Any / Unassigned / each character).
+- Composer team picker lists only the selected character's teams (+ shared).
+Refinement TODO: the team's Pokemon picker does not yet restrict to the team's
+character's box; enforce that once teams are consistently assigned.
 
 ## FAQ-implied features to consider building
 Ported the guild FAQ + Shadow Pokemon FAQ into the Library (FAQ + Moves tabs).
