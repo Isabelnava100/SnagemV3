@@ -169,3 +169,65 @@ functions exist (clients can no longer write posts directly).
 - Sequential thread ids come from a collection count outside the transaction
   (same as the legacy app). A simultaneous create could collide; harmless at
   current scale but worth a counter doc later.
+
+## Boss battles & encounter capture (in progress)
+
+Battle stage of any species is derived in `src/lib/battleStage.ts`
+(stage1/stage2/stage3/legendary) from the baked evolution chains plus a
+legendary/mythical/UB/Paradox dex list. Post counts per stage live in
+`admin/battle_config` (editable in Admin > Permissions > Battle Costs), defaults
+boss 5/10/15/20 and encounter 4/7/10/13.
+
+### Boss battles (SHIPPED, needs functions deploy + QA)
+- Host menu boss picker is limited to the thread's encounter list(s).
+- `setBossBattle` stores stage + requiredPosts (from config) + attackPosts.
+- A post opts into attacking via a checkbox; `publishForumPost` increments the
+  shared `bossBattle.attackPosts`; reaching requiredPosts ends the battle and
+  posts a boss-end message. Bosses are NEVER caught.
+- Thread view pins a health-bar banner until the boss is down.
+- Hardening TODO: stage is client-derived and passed to setBossBattle (count is
+  server-authoritative from config). Move stage derivation server-side by baking
+  the evolution + legendary data into functions if abuse appears.
+
+### Encounter capture (PLANNED — Phase 4)
+Rule (from the owner): rolling an encounter starts capture progress that fills
+over N posts by the encounter's stage. To catch, a participant must USE A
+POKEBALL (the ball is the catch action; posts weaken it). Progress is PERSONAL
+by default, but at roll time the roller can assign the encounter to one or more
+of their own characters (shared among just those characters).
+Build outline:
+- Extend the pending-encounter record (forum/{f}/threads/{t}/pending/{uid}) with
+  a per-encounter `progress`/`required` and an `assignedCharacterIds` list set at
+  roll time in `rollEncounter`.
+- Each qualifying post by an assigned character increments progress; a ball used
+  once progress is full performs the catch in `publishForumPost` (reuse the
+  existing catch write). Balls thrown early do not catch.
+- Ball type gates by stage/type per the FAQ table (see below) when we build it.
+
+### Per-character Pokemon boxes (PLANNED — Phase 5, architectural)
+Owner wants each character to own its own teams/boxes, and a post/thread to bring
+multiple characters + their teams. Today teams (`bag/teams`) and Pokemon
+(`bag/owned_pokemons`) are user-global. Options: (a) add `characterId` to each
+team/pokemon and filter by character everywhere; (b) move them under
+`bag/characters/{charId}/...`. Requires: a data migration (with a dry-run
+preview, like the thread/bookmark repairs), dashboard rework (Pokemon, Teams),
+the composer team picker filtered per character, and XP/reward writes keyed by
+character. Do this BEFORE deep encounter/reward work so those key off characters.
+
+## FAQ-implied features to consider building
+Ported the guild FAQ + Shadow Pokemon FAQ into the Library (FAQ + Moves tabs).
+Mechanics the copy implies that are NOT built yet:
+- Ball-type catch rules (stage/type gating, Safari balls, Apricorn balls). Ties
+  directly into encounter capture (Phase 4).
+- Evolution methods beyond level/item: trade, held-item, environment, happiness,
+  move-based, regional-form. Today only level + item are modeled.
+- Evo Points vs Purification Points: Shadow state blocks XP and swaps to
+  purification; needs a `shadow`/`purification` flow + a Shadow Meter in combat.
+- Ability selection + Ability Capsule (one locked ability, optional second).
+- Mega Evolution / Z-Moves as Snag Machine upgrades.
+- Currencies: Snag Coins, Snag Emblems (+ pieces), Gengar Tokens as first-class
+  currencies with earn/spend flows (map onto the existing currency fields).
+- Trading (Poke Swap): trade-only, Pokemon-for-Pokemon, no gifting/selling.
+- Shiny / speak-human via Pokeblocks; eggs hatched by staff.
+- Rewards are per-member not per-character (already how thread rewards work).
+- Legendary caps (max 2/member, approval, Master/Cherish Ball) + banned list.
