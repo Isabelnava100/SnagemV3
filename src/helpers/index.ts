@@ -18,8 +18,22 @@ export function excludeProperties<T, K extends keyof T>(
 // (the old URLs were the main cause of slow sprite loading).
 const POKESPRITE_CDN = "https://cdn.jsdelivr.net/gh/msikma/pokesprite@master";
 
+// Gen 9 (#906-1025) is not in pokesprite, so those box sprites are bundled
+// locally (see src/assets/sprites/gen9). Vite inlines them as URLs at build
+// time, keyed by slug, and they take priority over the CDN.
+const gen9Modules = (import.meta as any).glob("../assets/sprites/gen9/*.png", {
+  eager: true,
+  query: "?url",
+  import: "default",
+}) as Record<string, string>;
+const GEN9_SPRITE_BY_SLUG: Record<string, string> = {};
+for (const [path, url] of Object.entries(gen9Modules)) {
+  const slug = path.split("/").pop()!.replace(/\.png$/, "");
+  GEN9_SPRITE_BY_SLUG[slug] = url;
+}
+
 export const getPokemonImageURL = (slug: string) => {
-  return `${POKESPRITE_CDN}/pokemon-gen8/shiny/${slug}.png`;
+  return GEN9_SPRITE_BY_SLUG[slug] ?? `${POKESPRITE_CDN}/pokemon-gen8/shiny/${slug}.png`;
 };
 
 // Neutral Pokeball shown while a sprite is missing (e.g. Gen 9 species until a
