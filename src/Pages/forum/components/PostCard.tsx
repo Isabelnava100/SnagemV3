@@ -15,6 +15,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { getColor1, getColor2 } from "../../../components/user-forum/getColorBadges";
 import { useAuth } from "../../../context/AuthContext";
+import { itemData } from "../../../data/item";
 import { getItemImageURL, getPokemonImageURL } from "../../../helpers";
 import { ForumPost, PostCharacter, formatFireTime } from "../types";
 import { ForumTextLink, GameResultText } from "./ui";
@@ -129,13 +130,18 @@ export function GameBlocks(props: { post: ForumPost }) {
     );
   });
   blocks.itemsUsed?.forEach((item, i) => {
+    // Resolve the display name + sprite from the canonical catalog by id so
+    // older posts (stored with raw slug names) show the full name too.
+    const catalog = itemData.find((c) => c.id === item.itemId);
+    const itemName = catalog?.name ?? item.name;
+    const itemFilePath = catalog?.filePath ?? item.filePath;
     cards.push(
       <Flex key={`item${i}`} align="center" gap={8} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
-        <Avatar src={getItemImageURL(item.filePath)} size={28} />
+        <Avatar src={getItemImageURL(itemFilePath)} size={28} />
         <Stack gap={2}>
           <GameResultText>
             {item.qty > 1 ? `${item.qty}x ` : "A "}
-            {item.name} has been used...
+            {itemName} has been used...
             {item.caughtPokemon && ` it successfully caught the ${item.caughtPokemon}!`}
           </GameResultText>
           {item.note && (

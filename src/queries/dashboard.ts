@@ -9,6 +9,7 @@ import {
   Team,
 } from "../components/types/typesUsed";
 import { db } from "../context/firebase";
+import { itemData } from "../data/item";
 
 export const getCurrencies = async (uid: string): Promise<Currencies> => {
   const { doc, getDoc } = await import("firebase/firestore");
@@ -23,13 +24,19 @@ export const getItems = async (uid: string): Promise<Item[]> => {
     Omit<Item, "id">
   >;
   if (!data) return [];
-  const formattedData = Object.keys(data).map((id) => ({
-    id,
-    name: data[id].name,
-    category: data[id].category,
-    quantity: data[id].quantity,
-    filePath: data[id].filePath,
-  })) as Item[];
+  // Always resolve the display name + sprite from the canonical catalog by id
+  // (older bag entries stored raw slug names / stale paths); fall back to the
+  // stored values for anything not in the catalog.
+  const formattedData = Object.keys(data).map((id) => {
+    const catalog = itemData.find((item) => item.id === id);
+    return {
+      id,
+      name: catalog?.name ?? data[id].name,
+      category: catalog?.category ?? data[id].category,
+      quantity: data[id].quantity,
+      filePath: catalog?.filePath ?? data[id].filePath,
+    };
+  }) as Item[];
   return formattedData;
 };
 
