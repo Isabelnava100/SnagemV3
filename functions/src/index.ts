@@ -460,7 +460,11 @@ export const publishForumPost = onCall(async (request) => {
     const strippedLength = html.replace(/<[^>]*>/g, "").trim().length;
     const teamIds = characters.map((c: any) => c.teamId).filter(Boolean) as string[];
     const anyStat = XP_STATS.some((s) => (xpConfig[s.cfg] ?? 0) > 0);
+    // Non-admin threads defer XP into a pending ledger reviewed at close.
+    // Legacy threads (no flag) keep the original immediate behavior.
+    const deferXp = thread.createdByAdmin === false;
     let xpPokemonIds: string[] = [];
+    let ownedForXp: Record<string, any> = {};
     if (
       !editPostId &&
       teamIds.length &&
@@ -472,6 +476,10 @@ export const publishForumPost = onCall(async (request) => {
       xpPokemonIds = [
         ...new Set(teamIds.flatMap((teamId) => teams[teamId]?.pokemon_ids ?? [])),
       ];
+      // Deferred accrual needs pokemon display names for the close-time review.
+      if (deferXp && xpPokemonIds.length) {
+        ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
+      }
     }
 
     // -- compute ------------------------------------------------------------
@@ -565,16 +573,38 @@ export const publishForumPost = onCall(async (request) => {
     }
 
     if (xpPokemonIds.length) {
-      const xpUpdates: Record<string, Record<string, ReturnType<typeof FieldValue.increment>>> = {};
-      xpPokemonIds.forEach((pokeId) => {
-        const inc: Record<string, ReturnType<typeof FieldValue.increment>> = {};
-        XP_STATS.forEach((stat) => {
-          const amount = xpConfig[stat.cfg] ?? 0;
-          if (amount > 0) inc[stat.field] = FieldValue.increment(amount);
+      if (deferXp) {
+        // Accrue per-pokemon XP into the thread's pending ledger (keyed by the
+        // posting user) for review + commit at close via finalizeThreadRewards.
+        const pending: Record<string, Record<string, unknown>> = {};
+        xpPokemonIds.forEach((pokeId) => {
+          const poke = ownedForXp[pokeId] ?? {};
+          const entry: Record<string, unknown> = {
+            name: poke.species ?? poke.name ?? pokeId,
+            slug: poke.image_slug ?? "",
+          };
+          XP_STATS.forEach((stat) => {
+            const amount = xpConfig[stat.cfg] ?? 0;
+            if (amount > 0) entry[stat.field] = FieldValue.increment(amount);
+          });
+          pending[pokeId] = entry;
         });
-        if (Object.keys(inc).length) xpUpdates[pokeId] = inc;
-      });
-      if (Object.keys(xpUpdates).length) tx.set(ownedRef, xpUpdates, { merge: true });
+        if (Object.keys(pending).length) {
+          tx.set(tRef, { pendingXp: { [uid]: pending } }, { merge: true });
+        }
+      } else {
+        // Admin-created (or legacy) threads: apply immediately to the pokemon.
+        const xpUpdates: Record<string, Record<string, ReturnType<typeof FieldValue.increment>>> = {};
+        xpPokemonIds.forEach((pokeId) => {
+          const inc: Record<string, ReturnType<typeof FieldValue.increment>> = {};
+          XP_STATS.forEach((stat) => {
+            const amount = xpConfig[stat.cfg] ?? 0;
+            if (amount > 0) inc[stat.field] = FieldValue.increment(amount);
+          });
+          if (Object.keys(inc).length) xpUpdates[pokeId] = inc;
+        });
+        if (Object.keys(xpUpdates).length) tx.set(ownedRef, xpUpdates, { merge: true });
+      }
     }
 
     let resultPostId: string;
@@ -716,6 +746,9 @@ export const publishForumThread = onCall(async (request) => {
     title,
     createdBy: member.username,
     hostUid: uid,
+    // Admin-created threads apply XP immediately; non-admin threads accrue XP
+    // into pendingXp for review + commit at close (see publishForumPost).
+    createdByAdmin: isAdmin(member),
     closed: false,
     private: false,
     pinned,
@@ -756,6 +789,11 @@ export const publishForumThread = onCall(async (request) => {
 interface RewardEntry {
   items?: Array<{ itemId: string; name: string; filePath: string; qty: number }>;
   currencies?: Partial<Record<CurrencyKey, number>>;
+  /** Reviewed per-pokemon XP to commit to the recipient's owned pokemon. */
+  pokemonXp?: Record<
+    string,
+    { experience?: number; friendship?: number; purification?: number; shadow?: number }
+  >;
 }
 
 /**
@@ -768,7 +806,7 @@ export const finalizeThreadRewards = onCall(async (request) => {
   const uid = requireAuth(request);
   const sessionId = requireString(request.data?.sessionId, "session", 200);
   const member = await loadMember(uid);
-  if (!hasCap(member, "GiveItems")) {
+  if (!hasCap(member, "GiveItems") && !hasCap(member, "ReviewRewards")) {
     throw new HttpsError("permission-denied", "You cannot award rewards.");
   }
 
@@ -825,6 +863,22 @@ export const finalizeThreadRewards = onCall(async (request) => {
           }
         });
         if (Object.keys(update).length) tx.set(read.ref, update, { merge: true });
+      }
+      // Reviewed team XP: commit the (possibly edited) per-pokemon stats.
+      if (entry.pokemonXp) {
+        const pokeUpdate: Record<string, Record<string, ReturnType<typeof FieldValue.increment>>> = {};
+        Object.entries(entry.pokemonXp).forEach(([pokeId, xp]) => {
+          const stats: Record<string, ReturnType<typeof FieldValue.increment>> = {};
+          (["experience", "friendship", "purification", "shadow"] as const).forEach((k) => {
+            const amount = Math.trunc((xp as any)?.[k] ?? 0);
+            if (amount > 0) stats[k] = FieldValue.increment(amount);
+          });
+          if (Object.keys(stats).length) pokeUpdate[pokeId] = stats;
+        });
+        if (Object.keys(pokeUpdate).length) {
+          tx.set(db.doc(`users/${targetUid}/bag/owned_pokemons`), pokeUpdate, { merge: true });
+          received = true;
+        }
       }
       if (received) recipients.push(targetUid);
     });

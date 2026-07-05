@@ -98,11 +98,11 @@ service cloud.firestore {
     }
 
     // ---- Thread-close reward sessions ---------------------------------------
-    // Draft state for awarding money/items when a thread closes. Only reward
-    // granters (GiveItems / Admin) can see or edit; applying the rewards goes
-    // through the finalizeThreadRewards Cloud Function.
+    // Draft state for awarding money/items/XP when a thread closes. Reward
+    // granters (GiveItems / Admin) and ReviewRewards directors can see or edit;
+    // applying the rewards goes through the finalizeThreadRewards Cloud Function.
     match /rewardSessions/{sessionId} {
-      allow read, write: if hasCap('GiveItems');
+      allow read, write: if hasCap('GiveItems') || hasCap('ReviewRewards');
     }
 
     // ---- Append-only audit trail ------------------------------------------

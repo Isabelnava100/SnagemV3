@@ -202,6 +202,7 @@ export enum Capability {
   ManageLists = "ManageLists",
   AdjustXP = "AdjustXP",
   ManageBadges = "ManageBadges",
+  ReviewRewards = "ReviewRewards",
 }
 
 export const CAPABILITY_INFO: Record<Capability, string> = {
@@ -211,6 +212,7 @@ export const CAPABILITY_INFO: Record<Capability, string> = {
   [Capability.ManageLists]: "Manage encounter lists, announcements and mystery boxes",
   [Capability.AdjustXP]: "Adjust per-thread XP settings",
   [Capability.ManageBadges]: "Create/edit badges and assign them to users",
+  [Capability.ReviewRewards]: "Review and finalize thread-close rewards, including team XP",
 };
 
 export type SpecificUser = {

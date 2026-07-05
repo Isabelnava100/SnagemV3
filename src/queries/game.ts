@@ -8,9 +8,19 @@ import { db } from "../context/firebase";
 
 // ---- Reward sessions (thread close) ---------------------------------------
 
+export interface RewardPokemonXp {
+  name?: string;
+  slug?: string;
+  experience: number;
+  friendship: number;
+  purification: number;
+  shadow: number;
+}
 export interface RewardEntry {
   items: Array<{ itemId: string; name: string; filePath: string; category: string; qty: number }>;
   currencies: { pokecoin: number; gengarcoin: number; snagemblem: number };
+  /** Reviewed per-pokemon XP, seeded from the thread's pending ledger. */
+  pokemonXp?: Record<string, RewardPokemonXp>;
 }
 
 export interface RewardSession {

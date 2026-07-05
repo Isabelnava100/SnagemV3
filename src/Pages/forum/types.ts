@@ -127,6 +127,26 @@ export interface ForumThread {
   title: string;
   createdBy: string;
   hostUid?: string;
+  /** True when the thread's creator was an admin (XP applies immediately). */
+  createdByAdmin?: boolean;
+  /**
+   * Non-admin threads accrue team-pokemon XP here (uid -> pokemonId -> stats)
+   * until close, when it is reviewed and committed via finalizeThreadRewards.
+   */
+  pendingXp?: Record<
+    string,
+    Record<
+      string,
+      {
+        name?: string;
+        slug?: string;
+        experience?: number;
+        friendship?: number;
+        purification?: number;
+        shadow?: number;
+      }
+    >
+  >;
   /** Archived flag (legacy field name). */
   closed: boolean;
   pinned?: boolean;
