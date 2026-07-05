@@ -146,7 +146,7 @@ export default function Badges() {
         </Group>
         {/* Advanced: defaults use gradients; allow a raw CSS background too. */}
         <TextInput
-          label="Background (CSS — optional, supports gradients)"
+          label="Background (CSS, optional, supports gradients)"
           value={background}
           onChange={(e) => setBackground(e.currentTarget.value)}
           styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
@@ -282,7 +282,7 @@ function AssignBadges(props: { catalog: BadgeDef[] }) {
         Assign a badge to users
       </Text>
       <Text fz={12} c="dimmed">
-        Assigned badges arrive disabled — each user enables them from Settings → Collections.
+        Assigned badges arrive disabled. Each user enables them from Settings → Collections.
       </Text>
       <Group align="flex-end" gap={10} wrap="wrap">
         <Select

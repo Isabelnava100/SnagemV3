@@ -35,7 +35,7 @@ function YesNo(props: {
 }
 
 /**
- * Encounters setup panel — used in the new-thread composer and the host menu
+ * Encounters setup panel, used in the new-thread composer and the host menu
  * ("may be edited later"). Lists come from the admin pokemon-list library.
  */
 export function EncounterSetupPanel(props: {
@@ -202,12 +202,12 @@ export function EncounterPostPanel(props: {
   const config = thread.encounterConfig;
 
   // The server validates the list, allowance and mode, then binds the result
-  // to this player's next post in the thread — no client-side rolling.
+  // to this player's next post in the thread, no client-side rolling.
   const encounterMutation = useMutation({
     mutationFn: (chosenSlug?: string) => callRollEncounter(forum, thread.id, chosenSlug),
     onSuccess: (result) => onChange(result),
     onError: (err) =>
-      setEncounterError(callableMessage(err, "The encounter roll failed — try again.")),
+      setEncounterError(callableMessage(err, "The encounter roll failed. Try again.")),
   });
 
   // Resolve the host's lists (all signed-in users can read the list library).

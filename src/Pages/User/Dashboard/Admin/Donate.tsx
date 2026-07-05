@@ -382,7 +382,7 @@ function GiveCurrencySection() {
     onError: async (err) => {
       const { callableMessage } = await import("../../../forum/functionsClient");
       setConfirming(false);
-      setMessage(callableMessage(err, "Sending failed — try again."));
+      setMessage(callableMessage(err, "Sending failed. Try again."));
     },
   });
 

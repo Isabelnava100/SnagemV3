@@ -60,7 +60,7 @@ function useToggleBadgeMutation() {
     },
     onError: async (err) => {
       const { callableMessage } = await import("../../../forum/functionsClient");
-      setError(callableMessage(err, "Could not update the badge — try again."));
+      setError(callableMessage(err, "Could not update the badge. Try again."));
     },
   });
   return { ...mutation, error };
@@ -152,7 +152,7 @@ function BadgesSectionWrapper(props: {
 
 /**
  * Badges the user earns automatically from their account status (legacy, new
- * user, admin, master). Derived — always current. Users can still hide any of
+ * user, admin, master). Derived, always current. Users can still hide any of
  * them from public view; the hidden set lives on their own profile
  * (bag/profile.hiddenAutoBadges, owner-writable).
  */
@@ -213,7 +213,7 @@ function AutoBadges() {
               background={badge.background}
               title={
                 isHidden
-                  ? "Hidden from public view — click to show"
+                  ? "Hidden from public view. Click to show"
                   : "Click to hide from public view"
               }
               onClick={() => toggleHidden.mutate(badge.id)}
@@ -274,7 +274,7 @@ function Badges() {
           <>
             <BadgesSectionWrapper
               title="Badges Enabled"
-              secondaryText="Max: 5 — click a badge to move it"
+              secondaryText="Max: 5. Click a badge to move it"
               badges={badges}
               onToggle={toggle}
               toggling={toggleMutation.isPending}
@@ -318,7 +318,7 @@ function Emojis() {
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   const emojiIds = data;
-  // No per-user obtain data yet — show today as a temporary placeholder until
+  // No per-user obtain data yet, so show today as a temporary placeholder until
   // the "how you earn emojis" flow ships with Activities.
   const obtainedDate = new Date().toLocaleDateString(undefined, {
     year: "numeric",

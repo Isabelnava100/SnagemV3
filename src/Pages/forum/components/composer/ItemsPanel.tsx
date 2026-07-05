@@ -136,7 +136,7 @@ export default function UseItemsPanel(props: {
                   )}
                   {overLimit && (
                     <GameResultText>
-                      You only have {item.quantity} of this item — lower the quantity.
+                      You only have {item.quantity} of this item. Lower the quantity.
                     </GameResultText>
                   )}
                 </Stack>

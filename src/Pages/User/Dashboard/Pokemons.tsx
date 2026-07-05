@@ -58,7 +58,7 @@ interface EditingProps {
 type EditTeamType = Omit<Team, "id" | "pokemons">;
 
 // A blank team so useForm never gets undefined initialValues (which crashes
-// the whole page under Mantine 9) — an empty id keeps it out of "editing" mode.
+// the whole page under Mantine 9). An empty id keeps it out of "editing" mode.
 const EMPTY_TEAM: Team = {
   id: "",
   pokemon_ids: [],
@@ -275,7 +275,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
       return;
     }
     if (containsBlockedWord(name)) {
-      setNameError("That team name isn't allowed — pick something else.");
+      setNameError("That team name isn't allowed. Pick something else.");
       return;
     }
     setNameError("");
@@ -428,8 +428,8 @@ function CreateNewTeam() {
       {teamCount >= TEAM_WARNING_AT && (
         <Text fz={12} c="#E35C65">
           {teamCount >= MAX_TEAMS
-            ? `You've reached the ${MAX_TEAMS}-team limit — delete a team to make room.`
-            : `${teamCount}/${MAX_TEAMS} teams — you're getting close to the limit.`}
+            ? `You've reached the ${MAX_TEAMS}-team limit. Delete a team to make room.`
+            : `${teamCount}/${MAX_TEAMS} teams. You're getting close to the limit.`}
         </Text>
       )}
       <GradientButtonSecondary
@@ -776,7 +776,7 @@ function SinglePokemon(props: {
         flexShrink: 0,
       }}
     >
-      {/* Hover (not click) reveals the info card — species, catch date, game
+      {/* Hover (not click) reveals the info card: species, catch date, game
           stats. Clicking a sprite otherwise triggered the browser's image menu
           on mobile. The owned list while editing gets an Add-to-Team button. */}
       <HoverCard position="top" withArrow shadow="md" openDelay={80} closeDelay={100} width={280}>

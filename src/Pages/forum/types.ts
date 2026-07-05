@@ -75,7 +75,7 @@ export interface ForumPost {
   ownerUid?: string;
   avatar?: string;
   badges: string[] | null;
-  /** Legacy display string (character names joined) — kept for old posts. */
+  /** Legacy display string (character names joined), kept for old posts. */
   character: string;
   characters?: PostCharacter[];
   text: string;

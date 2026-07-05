@@ -171,7 +171,7 @@ function SingleBookmark(props: Bookmark) {
             {title}
           </Title>
           <Stack gap={3}>
-            <Text>Latest post by: {latestPostBy ?? "—"}</Text>
+            <Text>Latest post by: {latestPostBy ?? "N/A"}</Text>
             <Text size="xs" color="dimmed">
               {formatter.format(new Date((latestPostAt?.seconds ?? date.seconds) * 1000))}
             </Text>

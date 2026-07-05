@@ -77,7 +77,7 @@ export interface XPDefaults {
   purificationPerPost: number;
   shadowPerPost: number;
   minPostLength: number;
-  /** All fields are numeric — lets it pass as a plain number map to the callable. */
+  /** All fields are numeric, so it can pass as a plain number map to the callable. */
   [key: string]: number;
 }
 

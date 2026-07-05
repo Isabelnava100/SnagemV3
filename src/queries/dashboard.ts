@@ -119,7 +119,7 @@ export const getOwnedPokemons = async (uid: string) => {
 
 /**
  * Teams WITHOUT the owned-pokemon cascade: one doc read. Combine with a
- * (cached) getOwnedPokemons query via hydrateTeams — previously every teams
+ * (cached) getOwnedPokemons query via hydrateTeams. Previously every teams
  * read silently re-fetched the whole owned_pokemons doc as well.
  */
 export const getTeamsRaw = async (uid: string): Promise<Team[]> => {

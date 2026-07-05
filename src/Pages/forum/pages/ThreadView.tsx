@@ -36,7 +36,7 @@ function isNumeric(n: unknown): boolean {
 export function userIsHost(thread: ForumThread | null | undefined, user: ReturnType<typeof useAuth>["user"]): boolean {
   if (!thread || !user) return false;
   if (thread.hostUid) return thread.hostUid === user.uid;
-  // Legacy threads have no hostUid — fall back to the creator's display name.
+  // Legacy threads have no hostUid. Fall back to the creator's display name.
   return thread.createdBy === (user.displayName ?? user.username);
 }
 

@@ -34,7 +34,7 @@ service firebase.storage {
     }
 
     // Everything else (emotes, item/pokemon sprites, legacy flat uploads):
-    // public read, managed through the console — no client writes.
+    // public read, managed through the console, no client writes.
     match /{allPaths=**} {
       allow read: if true;
       allow write: if false;

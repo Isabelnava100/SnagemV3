@@ -28,7 +28,7 @@ export default function Accessibility() {
       </Title>
       <Text fz={13} c="dimmed">
         Zoom is turned off so the site feels like an app. Use this to size the
-        reading text across the site — navigation stays compact. The minimum is 16px.
+        reading text across the site; navigation stays compact. The minimum is 16px.
       </Text>
 
       <SegmentedControl

@@ -1,10 +1,10 @@
-# Snagem — User Profile Data Reference (for AI prompting)
+# Snagem: User Profile Data Reference (for AI prompting)
 
 Machine-readable inventory of every user-specific field available for the
 public profile and elsewhere. Paste any section into another AI tool as
 context. Field paths are Firestore paths relative to a user's `uid`.
 
-Legend — `visibility`: public = safe to show anyone · private = never show ·
+Legend. `visibility`: public = safe to show anyone · private = never show ·
 opt-in = user/toggle controlled. `effort`: stored = read directly ·
 computed = needs a query/aggregation · new = needs a field added.
 
@@ -46,7 +46,7 @@ user_profile_schema:
       gated_by: users/{uid}.discordPublic == true
       effort: stored
 
-  profile_block:  # bag/profile doc — public-profile-only per design scope
+  profile_block:  # bag/profile doc: public-profile-only per design scope
     - key: cover_background
       path: users/{uid}/bag/profile.coverBG
       type: image_url
@@ -70,7 +70,7 @@ user_profile_schema:
       visibility: public
       effort: stored
 
-  featured_picks:  # bag/profile doc — curated showcase, ids into the user's bag
+  featured_picks:  # bag/profile doc: curated showcase, ids into the user's bag
     - key: featured_character_id
       path: users/{uid}/bag/profile.featuredCharacterId
       resolves_to: bag/characters[id]
@@ -99,7 +99,7 @@ user_profile_schema:
       visibility: public
       effort: stored
 
-  characters:  # bag/characters = Record<uuid, Character> — richest visual material
+  characters:  # bag/characters = Record<uuid, Character>, richest visual material
     path: users/{uid}/bag/characters
     visibility: public
     effort: stored

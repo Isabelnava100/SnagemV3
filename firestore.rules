@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// SnagemV3 Firestore security rules. This is the REAL authorization layer —
+// SnagemV3 Firestore security rules. This is the REAL authorization layer;
 // the app's checks are UI only. See docs/PERMISSIONS.md.
 // Paste this whole file into Firebase console -> Firestore Database -> Rules.
 
@@ -49,7 +49,7 @@ service cloud.firestore {
       }
       // Badge ownership is granted by staff and display state changes go
       // through the setBadgeEnabled Cloud Function (which also syncs
-      // users.badges) — so badges are read-only for the owner. Admins and
+      // users.badges), so badges are read-only for the owner. Admins and
       // ManageBadges directors may assign/revoke. Note the generic bag rule
       // below excludes 'badges'; overlapping rules are OR'd in Firestore.
       match /bag/badges {
@@ -140,8 +140,8 @@ service cloud.firestore {
                              'allowedPosters', 'encounterConfig', 'closed']));
         allow delete: if isAdmin();
 
-        // Posts are written exclusively by publishForumPost / setBossBattle —
-        // dice, randoms, encounters and item blocks are server-generated and
+        // Posts are written exclusively by publishForumPost / setBossBattle.
+        // Dice, randoms, encounters and item blocks are server-generated and
         // therefore write-once by construction.
         match /posts/{postId} {
           allow read: if isSignedIn();

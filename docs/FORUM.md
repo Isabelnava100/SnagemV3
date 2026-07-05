@@ -1,15 +1,15 @@
-# Forum system — build notes
+# Forum system: build notes
 
 Full play-by-post forum with the game layer from the July 2026 design board
 (flow diagram + Figma "Snagem" file). This documents the data model, the
 permission matrix, and the decisions taken on the board's open questions.
 
 Module layout: `src/Pages/forum/`
-- `config.ts` — categories + permission matrix, design tokens, page sizes
-- `types.ts` — thread/post/blocks data model
-- `queries.ts` / `mutations.ts` — all Firestore access (react-query everywhere)
-- `pages/` — ForumIndex, ThreadView, NewThreadComposer, PostComposer (new+edit), HostMenu
-- `components/` — PostCard (character strips, game blocks, profile popover),
+- `config.ts`: categories + permission matrix, design tokens, page sizes
+- `types.ts`: thread/post/blocks data model
+- `queries.ts` / `mutations.ts`: all Firestore access (react-query everywhere)
+- `pages/`: ForumIndex, ThreadView, NewThreadComposer, PostComposer (new+edit), HostMenu
+- `components/`: PostCard (character strips, game blocks, profile popover),
   PollBlock, ScrollAids, composer panels (characters, items, encounters, post actions)
 
 ## Categories
@@ -26,11 +26,11 @@ collections (no data migration). `The-Colosseum` (value `"7"`) is new.
 | The Colosseum     | `The-Colosseum` | Admins only                     |
 
 `Master-Mission` stays as a master-visibility tab (unchanged). `Private` is
-legacy — reachable by URL, not shown in tabs.
+legacy: reachable by URL, not shown in tabs.
 
 ## Data model
 
-`forum/{forum}/threads/{threadId}` — new fields are all optional at read time
+`forum/{forum}/threads/{threadId}`. New fields are all optional at read time
 so legacy threads keep rendering:
 
 ```
@@ -60,16 +60,16 @@ blocks{ encounters[{slug,name,mode,catchable,caught}],
 ```
 
 Other storage:
-- **Encounter lists** — reuses the admin list library `admin/pokemon_lists`
+- **Encounter lists**: reuses the admin list library `admin/pokemon_lists`
   (managed in Dashboard → Admin → Adjust Lists). Hosts pick any public list or
   their own; `rule: except` lists resolve against the full species catalog.
-- **Bookmarks** — `users/{uid}/bookmarks/{forumLink}` threadId-keyed map (the
+- **Bookmarks**: `users/{uid}/bookmarks/{forumLink}` threadId-keyed map (the
   model the dashboard already read). The old `users.myBookmarks` array write
   path was removed with the legacy BookmarkButton.
-- **Drafts** — `users/{uid}/drafts/*` in the existing dashboard Draft shape;
+- **Drafts**: `users/{uid}/drafts/*` in the existing dashboard Draft shape;
   composers link back via `?draft=<id>` (`thread_id: "new-thread"` for the
   thread composer).
-- **XP submissions** — `tickets` docs `{type: "xp_submission", ...}` (admin-read).
+- **XP submissions**: `tickets` docs `{type: "xp_submission", ...}` (admin-read).
 
 ## Game rules implemented
 
@@ -78,12 +78,12 @@ Other storage:
   the edit view shows published blocks read-only and only allows adding new
   ones plus editing text. Post text is editable by its author only (board 8).
 - **Encounters:** host picks list + mode (`roll` = random from list, `choose` =
-  search within list — board 16), per-player allowance shown and enforced via
+  search within list, board 16), per-player allowance shown and enforced via
   `encounterClaims`, host kill-switch (`disabled`, board 17). Non-catchable
   list entries and boss-battle encounters are flagged `catchable: false`.
 - **Catch resolution:** using a ball-category item in the same post as a
   catchable encounter catches it (deterministic) and adds the pokemon to
-  `bag/owned_pokemons` (type fields best-effort — species catalog has no
+  `bag/owned_pokemons` (type fields best-effort: species catalog has no
   type data). Balls are blocked while a boss battle is active for
   non-excluded players ("cannot be used in a team battle").
 - **Boss battles:** host starts/ends from the Host Menu, both behind
@@ -91,29 +91,29 @@ Other storage:
   action posts a system announcement card into the thread and non-excluded
   players' posts automatically carry the boss block.
 - **Polls:** one vote per user, stored on the thread doc; re-voting overwrites
-  (votes are changeable — open question 6 decision).
+  (votes are changeable: open question 6 decision).
 
 ## Decisions on the board's open questions
 
-1. **SubmitXP** — files an XP-review ticket (`tickets` collection) with an
+1. **SubmitXP**: files an XP-review ticket (`tickets` collection) with an
    optional note; admins process manually. Accrual mechanics still open.
-2. **Catch resolution** — ball item + catchable encounter in one post =
+2. **Catch resolution**: ball item + catchable encounter in one post =
    caught (see above). Hosts arbitrate narratively beyond that.
-3. **Encounter allowance** — per-user per-thread, set by the host
+3. **Encounter allowance**: per-user per-thread, set by the host
    (`perUserLimit`, default 3).
-4. **Boss lifecycle** — start → announcement + balls blocked; explicit End
+4. **Boss lifecycle**: start → announcement + balls blocked; explicit End
    action (confirmation modal) → end announcement. No HP/turn system yet.
-5. **Dice UX** — selection model: pick one die type + count (min 1), single
+5. **Dice UX**. Selection model: pick one die type + count (min 1), single
    Roll, locked after.
-6. **Polls** — votes changeable, one poll per thread, no closing flow yet.
-7. **Archived threads** — read-only; host (or admin) can unarchive from the
+6. **Polls**: votes changeable, one poll per thread, no closing flow yet.
+7. **Archived threads**: read-only; host (or admin) can unarchive from the
    Host Menu.
-8. **Post list** — pagination (6/page, server-side page fetch), matching the
+8. **Post list**: pagination (6/page, server-side page fetch), matching the
    design's pagination component.
-9. **Posting restrictions** — the host sets Allow Anyone / Limit Who Can Post
+9. **Posting restrictions**: the host sets Allow Anyone / Limit Who Can Post
    (username multi-select) at creation and can change it in the Host Menu.
    Everyone can still read.
-10. **Drafts** — manual save (Save Your Draft / Save Post Draft), multiple
+10. **Drafts**: manual save (Save Your Draft / Save Post Draft), multiple
     drafts allowed, resumable from Dashboard → Drafts.
 
 ## Server-side integrity layer (Cloud Functions)
@@ -133,7 +133,7 @@ All game-relevant writes go through callable Cloud Functions in
 
 **Re-roll protection:** rolls are bound to the player's next post via
 `forum/{f}/threads/{t}/pending/{uid}` (read-own, function-written). Abandoning
-a draft does not discard a bad roll — the composer restores it on reload and
+a draft does not discard a bad roll. The composer restores it on reload and
 `publishForumPost` consumes it.
 
 **Rules posture:** post create/update/delete and thread create are admin-only
@@ -155,7 +155,7 @@ firebase deploy --only firestore:rules,functions
 ```
 
 `firebase.json` wires both targets; functions build automatically on deploy.
-Deploy the rules and the functions together — the tightened rules assume the
+Deploy the rules and the functions together: the tightened rules assume the
 functions exist (clients can no longer write posts directly).
 
 ### Still deferred
@@ -163,9 +163,9 @@ functions exist (clients can no longer write posts directly).
 - Post text length/content is validated server-side only loosely (size caps);
   HTML is still sanitized at render time with DOMPurify, not at write time.
 - The dashboard's own `bag/*` writes (teams, characters, profile) remain
-  owner-writable by rules — the forum no longer depends on trusting them, but
+  owner-writable by rules. The forum no longer depends on trusting them, but
   a cheater could still hand-edit their inventory quantities; moving the whole
   economy behind functions is a future pass.
 - Sequential thread ids come from a collection count outside the transaction
-  (same as the legacy app) — a simultaneous create could collide; harmless at
+  (same as the legacy app). A simultaneous create could collide; harmless at
   current scale but worth a counter doc later.

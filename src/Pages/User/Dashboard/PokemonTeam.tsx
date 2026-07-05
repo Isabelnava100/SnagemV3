@@ -8,7 +8,7 @@ import Pokemons from "./Pokemons";
 export default function PokemonTeam() {
   const { teamId } = useParams();
   const { user } = useAuth();
-  // Shares the same cached queries as the Pokemon tab — no extra reads.
+  // Shares the same cached queries as the Pokemon tab, no extra reads.
   const { isPending: isLoading, isError, data: rawTeams } = useQuery({
     queryKey: ["get-teams", user?.uid],
     queryFn: () => getTeamsRaw(user?.uid as string),

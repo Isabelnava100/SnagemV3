@@ -1,5 +1,5 @@
 /**
- * Snagem forum — server-side integrity layer.
+ * Snagem forum server-side integrity layer.
  *
  * Everything a hostile client could forge happens here instead:
  * dice/random rolls, encounter rolls + allowances, inventory decrements,
@@ -7,7 +7,7 @@
  *
  * Rolls are BOUND to the player's next post in the thread: each roll is
  * stored in forum/{forum}/threads/{threadId}/pending/{uid} and consumed by
- * publishForumPost. You cannot re-roll by abandoning a draft — a pending
+ * publishForumPost. You cannot re-roll by abandoning a draft; a pending
  * result stays attached until it is published.
  *
  * Deploy: firebase deploy --only functions  (requires the Blaze plan)
@@ -189,7 +189,7 @@ async function mentionedUids(html: string, excludeUid: string): Promise<string[]
   return uids;
 }
 
-/** Currency values are stored as STRINGS (legacy) — parse, add, restringify. */
+/** Currency values are stored as STRINGS (legacy): parse, add, restringify. */
 function addCurrencyString(current: unknown, amount: number): string {
   const parsed = parseInt(String(current ?? "0"), 10);
   return String((Number.isFinite(parsed) ? parsed : 0) + amount);
@@ -248,7 +248,7 @@ function activityUpdate(member: Member, now: Date, extra: Record<string, unknown
 }
 
 // ---------------------------------------------------------------------------
-// Rolls — bound to the caller's next post in the thread
+// Rolls, bound to the caller's next post in the thread
 // ---------------------------------------------------------------------------
 
 export const rollDice = onCall(async (request) => {

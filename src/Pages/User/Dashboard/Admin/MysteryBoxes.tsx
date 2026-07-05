@@ -116,7 +116,7 @@ export default function MysteryBoxes() {
       await saveMysteryBox(boxItemId!, { name: info?.name ?? boxItemId!, pool });
     },
     onSuccess: () => {
-      setMessage("Box saved — it can now be opened.");
+      setMessage("Box saved. It can now be opened.");
       queryClient.invalidateQueries({ queryKey: ["mystery-boxes"] });
     },
   });
@@ -217,7 +217,7 @@ export default function MysteryBoxes() {
             ))}
             {!pool.length && (
               <Text fz={12} c="dimmed">
-                No rewards yet — add at least one below.
+                No rewards yet. Add at least one below.
               </Text>
             )}
           </Stack>

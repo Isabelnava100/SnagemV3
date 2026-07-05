@@ -108,7 +108,7 @@ function CapabilityChecklist() {
         limit={20}
         data={(members ?? []).map((m) => ({
           value: m.id,
-          label: `${m.username}${m.permissions ? ` — ${m.permissions}` : ""}`,
+          label: `${m.username}${m.permissions ? ` (${m.permissions})` : ""}`,
         }))}
         value={selectedId}
         onChange={setSelectedId}
@@ -129,7 +129,7 @@ function CapabilityChecklist() {
               key={capability}
               label={
                 <span>
-                  <b>{capability}</b> — {CAPABILITY_INFO[capability]}
+                  <b>{capability}</b>: {CAPABILITY_INFO[capability]}
                 </span>
               }
               color="green.0"

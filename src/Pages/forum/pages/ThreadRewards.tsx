@@ -154,7 +154,7 @@ export default function ThreadRewards() {
       if (session) await saveRewardSession(session);
     },
     onSuccess: () => {
-      setMessage("Progress saved — you can come back to finish later.");
+      setMessage("Progress saved. You can come back to finish later.");
       queryClient.invalidateQueries({ queryKey: ["reward-session", forum, threadId] });
     },
   });
@@ -173,7 +173,7 @@ export default function ThreadRewards() {
     },
     onError: (err) => {
       finalizeModal.close();
-      setMessage(callableMessage(err, "Finalizing failed — try again."));
+      setMessage(callableMessage(err, "Finalizing failed. Try again."));
     },
   });
 
@@ -201,7 +201,7 @@ export default function ThreadRewards() {
         Close &amp; Reward: {session.threadTitle}
       </Title>
       <Text fz={13} c="dimmed" mt={4}>
-        Award money and items to everyone who participated. Rewards are optional — you can also
+        Award money and items to everyone who participated. Rewards are optional. You can also
         finalize with none.
       </Text>
 

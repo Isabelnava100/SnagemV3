@@ -13,14 +13,14 @@ import { db } from "../context/firebase";
 export interface BadgeDef {
   id: string;
   name: string;
-  /** CSS background — a solid color or a gradient. */
+  /** CSS background: a solid color or a gradient. */
   background: string;
   description?: string;
   /** Defaults can be edited but not deleted. */
   isDefault?: boolean;
 }
 
-/** The six required badges. Auto-assignment is deferred — assign manually for now. */
+/** The six required badges. Auto-assignment is deferred: assign manually for now. */
 export const DEFAULT_BADGES: BadgeDef[] = [
   {
     id: "admin",

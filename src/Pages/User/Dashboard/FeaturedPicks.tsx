@@ -16,7 +16,7 @@ import {
  * Featured picks: a character, a team and a caught pokemon the user pins to
  * the top of their public profile. Stored on bag/profile as
  * featuredCharacterId / featuredTeamId / featuredPokemonId. This is the data
- * plumbing + a basic picker — the public rendering gets its real design later.
+ * plumbing + a basic picker. The public rendering gets its real design later.
  */
 export default function FeaturedPicks() {
   const { user } = useAuth();
@@ -86,7 +86,7 @@ export default function FeaturedPicks() {
       </Title>
       <Text fz={13} c="dimmed">
         Pick a character, a team and a caught pokemon to showcase at the top of your public
-        profile. (The public layout is coming — this just sets what shows.)
+        profile. (The public layout is coming; this just sets what shows.)
       </Text>
 
       <Select

@@ -94,7 +94,7 @@ async function main() {
     await Promise.all(orphans.map((f) => f.delete()));
     console.log(`Deleted ${orphans.length} orphaned files.`);
   } else if (!DELETE) {
-    console.log("Dry run — nothing deleted. Re-run with --delete to remove these.");
+    console.log("Dry run, nothing deleted. Re-run with --delete to remove these.");
   }
 }
 

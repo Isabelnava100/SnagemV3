@@ -1,6 +1,6 @@
 /**
  * Thin client for the forum's server-side integrity layer (Cloud Functions).
- * All game-relevant writes go through these callables — see functions/src.
+ * All game-relevant writes go through these callables. See functions/src.
  * The compat firebase init registers the default modular app, so
  * getFunctions() resolves it without extra wiring.
  */
