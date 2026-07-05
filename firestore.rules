@@ -130,8 +130,11 @@ service cloud.firestore {
     }
 
     // ---- Append-only audit trail ------------------------------------------
+    // Staff (admins and any director with a capability) can read the trail so
+    // it can render at the approval screens they work in.
     match /auditLogs/{logId} {
-      allow read: if isAdmin();
+      allow read: if isAdmin()
+                  || (selfExists() && self().get('capabilities', []).size() > 0);
       allow create: if isSignedIn()
                     && request.resource.data.actorUid == request.auth.uid;
       allow update, delete: if false;

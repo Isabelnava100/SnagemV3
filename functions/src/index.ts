@@ -22,6 +22,7 @@ import {
   Transaction,
 } from "firebase-admin/firestore";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
+import { onDocumentUpdated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import pokemonJSON from "./pokemon.json";
 
 initializeApp();
@@ -1423,3 +1424,72 @@ export const setBossBattle = onCall(async (request) => {
 
   return { ok: true };
 });
+
+// ---------------------------------------------------------------------------
+// Firestore triggers: staff pings + member permission notifications
+// ---------------------------------------------------------------------------
+
+/** Admins plus every member holding any of the given capabilities. */
+async function staffUidsWithCaps(caps: string[]): Promise<string[]> {
+  const uids = new Set<string>();
+  const admins = await db.collection("users").where("permissions", "==", "Admin").get();
+  admins.forEach((d) => uids.add(d.id));
+  for (const cap of caps) {
+    const snap = await db.collection("users").where("capabilities", "array-contains", cap).get();
+    snap.forEach((d) => uids.add(d.id));
+  }
+  return [...uids];
+}
+
+/**
+ * Tell a member when their role or capabilities change. Fires on any user-doc
+ * update, so it also catches changes made straight from the Firestore console.
+ */
+export const onMemberUpdated = onDocumentUpdated("users/{uid}", async (event) => {
+  const before = event.data?.before.data() ?? {};
+  const after = event.data?.after.data() ?? {};
+  const beforeCaps: string[] = before.capabilities ?? [];
+  const afterCaps: string[] = after.capabilities ?? [];
+  const added = afterCaps.filter((c: string) => !beforeCaps.includes(c));
+  const roleChanged = before.permissions !== after.permissions && !!after.permissions;
+  if (!added.length && !roleChanged) return;
+
+  const parts: string[] = [];
+  if (roleChanged) parts.push(`your role is now ${after.permissions}`);
+  if (added.length) parts.push(`new access: ${added.join(", ")}`);
+  await notifyUsers([event.params.uid], {
+    type: "permission",
+    text: `Your account permissions were updated (${parts.join("; ")}).`,
+    link: "/Dashboard",
+  });
+});
+
+/** Ping the ApproveImports group when a member submits an import for review. */
+export const onImportSubmitted = onDocumentWritten("importRequests/{uid}", async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  if (!after || after.status !== "pending" || before?.status === "pending") return;
+  const staff = await staffUidsWithCaps(["ApproveImports"]);
+  await notifyUsers(staff, {
+    type: "approval",
+    text: "A returning member submitted an import for review.",
+    link: "/Dashboard/Admin-Access/Imports",
+  });
+});
+
+/** Ping the reward-review group when a thread is closed (rewards may be due). */
+export const onThreadClosed = onDocumentUpdated(
+  "forum/{forum}/threads/{threadId}",
+  async (event) => {
+    const before = event.data?.before.data() ?? {};
+    const after = event.data?.after.data() ?? {};
+    if (before.closed || !after.closed) return; // only the false -> true edge
+    const staff = await staffUidsWithCaps(["GiveItems", "ReviewRewards"]);
+    const { forum, threadId } = event.params;
+    await notifyUsers(staff, {
+      type: "approval",
+      text: `A thread closed and may need reward review: ${after.title ?? threadId}`,
+      link: `/Forum/${forum}/thread/${threadId}/rewards`,
+    });
+  }
+);
