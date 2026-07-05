@@ -37,6 +37,40 @@ export function getEvolutionOptions(idx: number): EvolutionOption[] {
   return EVOLUTIONS[idx] ?? [];
 }
 
+/** Normalized names of every item used by an item/trade evolution. */
+export const EVOLUTION_ITEM_NAMES: Set<string> = (() => {
+  const set = new Set<string>();
+  Object.values(EVOLUTIONS).forEach((options) =>
+    options.forEach((o) => {
+      if ((o.method === "item" || o.method === "trade") && o.itemName) set.add(norm(o.itemName));
+    })
+  );
+  return set;
+})();
+
+/** True when a catalog item is used to evolve at least one species. */
+export function isEvolutionItem(itemName: string): boolean {
+  return EVOLUTION_ITEM_NAMES.has(norm(itemName));
+}
+
+/**
+ * Evolutions a specific owned pokemon can take using the given item. Honors a
+ * level gate if the evolution has one (most stone evolutions do not).
+ */
+export function evolutionOptionsWithItem(
+  poke: Pick<OwnedPokemon, "pokedex" | "experience">,
+  itemName: string
+): EvolutionOption[] {
+  const target = norm(itemName);
+  const level = levelForXp(poke.experience ?? 0);
+  return getEvolutionOptions(Number(poke.pokedex)).filter((o) => {
+    if ((o.method !== "item" && o.method !== "trade") || !o.itemName) return false;
+    if (norm(o.itemName) !== target) return false;
+    if (o.level && level < o.level) return false;
+    return true;
+  });
+}
+
 /** Does this pokemon have any evolutions at all (regardless of eligibility)? */
 export function canEverEvolve(poke: Pick<OwnedPokemon, "pokedex">): boolean {
   return getEvolutionOptions(Number(poke.pokedex)).length > 0;

@@ -18,6 +18,8 @@ import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { clickable } from "../../../lib/a11y";
+import { isEvolutionItem } from "../../../lib/evolution";
+import { EvolveItemModal } from "../../../components/pokemon/EvolveItemModal";
 import { getItemImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getItems } from "../../../queries/dashboard";
@@ -40,6 +42,7 @@ export default function Items() {
     queryFn: getMysteryBoxes,
   });
   const [mysteryItem, setMysteryItem] = React.useState<{ id: string; name: string } | null>(null);
+  const [evolveItem, setEvolveItem] = React.useState<{ id: string; name: string } | null>(null);
 
   const isMysteryBox = (itemId: string, name: string, category: string) =>
     !!boxConfigs?.[itemId] || /mystery|box/i.test(name) || /mystery|box/i.test(category);
@@ -83,22 +86,27 @@ export default function Items() {
                   .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
                   .map((item) => {
                     const box = isMysteryBox(item.id, item.name, item.category);
+                    const evoStone = !box && isEvolutionItem(item.name);
+                    const interactive = box || evoStone;
                     // Show the admin's custom box name to players when set.
                     const displayName = boxConfigs?.[item.id]?.name || item.name;
+                    const onUse = box
+                      ? () => setMysteryItem({ id: item.id, name: displayName })
+                      : () => setEvolveItem({ id: item.id, name: item.name });
                     return (
                       <Box
                         key={item.id}
                         bg="#3e3d3dba"
-                        {...(box
+                        {...(interactive
                           ? {
-                              ...clickable(() => setMysteryItem({ id: item.id, name: displayName })),
-                              "aria-label": `Open ${displayName}`,
+                              ...clickable(onUse),
+                              "aria-label": box ? `Open ${displayName}` : `Use ${item.name}`,
                             }
                           : {})}
                         style={{
                           borderRadius: 12,
                           overflow: "hidden",
-                          cursor: box ? "pointer" : undefined,
+                          cursor: interactive ? "pointer" : undefined,
                         }}
                       >
                         <Flex w="100%" justify="space-between" align="center">
@@ -128,6 +136,7 @@ export default function Items() {
         openable={!!mysteryItem && !!boxConfigs?.[mysteryItem.id]}
         onClose={() => setMysteryItem(null)}
       />
+      <EvolveItemModal item={evolveItem} onClose={() => setEvolveItem(null)} />
     </Stack>
   );
 }
