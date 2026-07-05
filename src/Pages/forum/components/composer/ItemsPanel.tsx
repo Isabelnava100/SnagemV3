@@ -6,9 +6,9 @@ import {
   ScrollArea,
   Stack,
   Text,
-  Textarea,
   TextInput,
 } from "@mantine/core";
+import { IconAlertTriangle } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useAuth } from "../../../../context/AuthContext";
@@ -79,15 +79,7 @@ export default function UseItemsPanel(props: {
     }
   };
 
-  const setNote = (itemId: string, note: string) => {
-    onChange(value.map((v) => (v.itemId === itemId ? { ...v, note } : v)));
-  };
-
   const items = inventory ?? [];
-  const selectedWithNote = value.filter((v) => {
-    const item = items.find((i) => i.id === v.itemId);
-    return item && !isBall(item.category);
-  });
 
   const ownedItems = items.filter((item) => item.quantity > 0);
   const q = search.trim().toLowerCase();
@@ -181,9 +173,12 @@ export default function UseItemsPanel(props: {
 
       {usedSummary.length > 0 && (
         <Stack gap={6} mt={10} p={10} bg="#211f21" style={{ borderRadius: 8 }}>
-          <Text fz={11} fw={700} c="white" tt="uppercase">
-            You will use
-          </Text>
+          <Group gap={6} wrap="nowrap">
+            <IconAlertTriangle size={16} color="#f0a500" />
+            <Text fz={12} fw={700} c="white">
+              These items will be used up in your post
+            </Text>
+          </Group>
           {usedSummary.map(({ selection, item }) => (
             <Group key={selection.itemId} gap={8} wrap="nowrap">
               <Avatar src={getItemImageURL(item!.filePath)} alt={item!.name} size={22} />
@@ -192,33 +187,6 @@ export default function UseItemsPanel(props: {
               </Text>
             </Group>
           ))}
-          <Text fz={11} c="dimmed">
-            Double-check this list. Used items cannot be recovered without admin help.
-          </Text>
-        </Stack>
-      )}
-
-      {selectedWithNote.length > 0 && (
-        <Stack gap={8} mt={10}>
-          <Text fz={12} c="dimmed">
-            Choose how to use your item.
-          </Text>
-          {selectedWithNote.map((selection) => {
-            const item = items.find((i) => i.id === selection.itemId);
-            return (
-              <Textarea
-                key={selection.itemId}
-                label={item?.name}
-                placeholder={`Describe how ${item?.name ?? "this item"} is used in your post.`}
-                value={selection.note}
-                onChange={(e) => setNote(selection.itemId, e.currentTarget.value)}
-                autosize
-                minRows={2}
-                size="xs"
-                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-              />
-            );
-          })}
         </Stack>
       )}
     </ForumPanel>
