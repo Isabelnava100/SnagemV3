@@ -41,6 +41,7 @@ import { getThread } from "../queries";
 import { EncounterConfig } from "../types";
 import { EncounterSetupPanel } from "../components/composer/EncounterPanels";
 import { ConfirmModal, ForumPanel, GameResultText, PanelHint } from "../components/ui";
+import CloseThreadModal from "../components/CloseThreadModal";
 import { userIsHost } from "./ThreadView";
 import "../forum.css";
 
@@ -75,9 +76,11 @@ export default function HostMenu() {
   const [bossDescription, setBossDescription] = React.useState("");
   const [bossExcluded, setBossExcluded] = React.useState<string[]>([]);
   const [saved, setSaved] = React.useState(false);
+  const [saveError, setSaveError] = React.useState("");
   const [loaded, setLoaded] = React.useState(false);
 
   const [archiveOpened, archiveModal] = useDisclosure(false);
+  const [closeOpened, closeModal] = useDisclosure(false);
   const [bossStartOpened, bossStartModal] = useDisclosure(false);
   const [bossEndOpened, bossEndModal] = useDisclosure(false);
 
@@ -120,6 +123,10 @@ export default function HostMenu() {
     onSuccess: () => {
       setSaved(true);
       invalidateThread();
+    },
+    onError: (e) => {
+      setSaved(false);
+      setSaveError((e as Error).message || "Could not save changes. Try again.");
     },
   });
 
@@ -286,9 +293,15 @@ export default function HostMenu() {
           </ForumPanel>
 
           <Group>
-            <GradientButtonSecondary radius="xl" size="sm" onClick={archiveModal.open}>
-              {thread.closed ? "Unarchive This Thread" : "Archive This Thread"}
-            </GradientButtonSecondary>
+            {thread.closed ? (
+              <GradientButtonSecondary radius="xl" size="sm" onClick={archiveModal.open}>
+                Reopen This Thread
+              </GradientButtonSecondary>
+            ) : (
+              <GradientButtonSecondary radius="xl" size="sm" onClick={closeModal.open}>
+                Close Thread
+              </GradientButtonSecondary>
+            )}
           </Group>
         </Stack>
 
@@ -377,8 +390,13 @@ export default function HostMenu() {
           </ForumPanel>
 
           {saved && (
-            <Text fz={13} c="green.0">
+            <Text fz={13} c="green.0" role="status" aria-live="polite">
               Changes saved.
+            </Text>
+          )}
+          {saveError && (
+            <Text fz={13} c="red.4" role="status" aria-live="polite">
+              {saveError}
             </Text>
           )}
           <Group justify="space-between">
@@ -394,7 +412,8 @@ export default function HostMenu() {
               loading={saveMutation.isPending}
               onClick={() => {
                 setSaved(false);
-                saveMutation.mutateAsync();
+                setSaveError("");
+                saveMutation.mutateAsync().catch(() => undefined);
               }}
             >
               Save Changes
@@ -405,16 +424,18 @@ export default function HostMenu() {
 
       <ConfirmModal
         opened={archiveOpened}
-        title={thread.closed ? "Unarchive this thread?" : "Archive this thread?"}
-        message={
-          thread.closed
-            ? "The thread will move back to the open thread list and posting will reopen."
-            : "Archived threads move behind the archived toggle on the forum index and become read-only."
-        }
-        confirmLabel={thread.closed ? "Unarchive Thread" : "Archive Thread"}
+        title="Reopen this thread?"
+        message="The thread will move back to the open thread list and posting will reopen."
+        confirmLabel="Reopen Thread"
         loading={archiveMutation.isPending}
         onConfirm={() => archiveMutation.mutateAsync()}
         onClose={archiveModal.close}
+      />
+      <CloseThreadModal
+        opened={closeOpened}
+        onClose={closeModal.close}
+        forum={forum}
+        thread={thread}
       />
       <ConfirmModal
         opened={bossStartOpened}
