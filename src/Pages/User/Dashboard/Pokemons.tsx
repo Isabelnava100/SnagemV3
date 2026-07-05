@@ -68,7 +68,7 @@ const EMPTY_TEAM: Team = {
 
 export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team }) {
   const { isSingleTeam = false, team = null } = props;
-  const { isOverLg, isOverXs, isOverMd } = useMediaQuery();
+  const { isOverLg, isOverXs } = useMediaQuery();
   const currentForm = useForm<Team>({
     initialValues: team ?? EMPTY_TEAM,
   });
@@ -84,14 +84,10 @@ export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team })
   return (
     <Flex
       sx={{
-        flexDirection:
-          /**
-           * Base "Column"
-           * Base - Md "Row"
-           * Md - Lg "Column"
-           * Lg - * "Row"
-           */
-          isOverXs ? (isOverMd ? (isOverLg ? "row" : "column") : "row") : "row",
+        // Side-by-side only on large screens; below that the panels stack
+        // vertically so neither the team editor nor "All Your Pokemon" gets
+        // squeezed on phones/tablets.
+        flexDirection: isOverLg ? "row" : "column",
       }}
       gap={15}
       align="start"

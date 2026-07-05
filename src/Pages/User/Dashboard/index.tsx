@@ -135,7 +135,11 @@ function NotificationBell() {
     <Popover width={300} position="bottom-end" withArrow shadow="md" onOpen={openRead}>
       <Popover.Target>
         <UnstyledButton style={{ position: "relative", lineHeight: 0 }}>
-          <Image src={Bell} alt="Notifications" width={40} />
+          {/* Fixed box + fit=contain: Mantine 9 Image ignores numeric width,
+              which rendered the bell full-size. */}
+          <Box style={{ width: 30, height: 30 }}>
+            <Image src={Bell} alt="Notifications" w="100%" h="100%" fit="contain" />
+          </Box>
           {unread > 0 && (
             <Box
               sx={{
@@ -193,39 +197,65 @@ function NotificationBell() {
   );
 }
 
-/** Compact currency chip: icon + amount + label, contained so it never breaks. */
+/**
+ * Compact currency chip: icon + amount + label, contained so it never breaks.
+ * The label is clamped to one line (it gets cut off on narrow phones), so the
+ * whole chip is tappable and opens a popover with the full name + amount.
+ */
 function CurrencyChip(props: { amount: string; name: string; color: string; icon: string }) {
+  const amount = props.amount.padStart(3, "0");
   return (
-    <Flex
-      bg={props.color}
-      align="center"
-      gap={8}
-      px={12}
-      py={8}
-      style={{ borderRadius: 12, flex: 1, minWidth: 0 }}
-    >
-      <Box
-        style={{
-          width: 34,
-          height: 34,
-          flexShrink: 0,
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Image src={props.icon} w={34} h={34} style={{ objectFit: "contain" }} alt={props.name} />
-      </Box>
-      <Stack gap={0} style={{ minWidth: 0 }}>
-        <Text c="white" fz={20} fw={700} lh={1.1}>
-          {props.amount.padStart(3, "0")}
-        </Text>
-        <Text c="white" fz={11} lineClamp={1}>
-          {props.name}
-        </Text>
-      </Stack>
-    </Flex>
+    <Popover position="bottom" withArrow shadow="md" width={180}>
+      <Popover.Target>
+        <UnstyledButton style={{ flex: 1, minWidth: 0 }}>
+          <Flex
+            bg={props.color}
+            align="center"
+            gap={8}
+            px={12}
+            py={8}
+            style={{ borderRadius: 12, minWidth: 0 }}
+          >
+            <Box
+              style={{
+                width: 34,
+                height: 34,
+                flexShrink: 0,
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Image src={props.icon} w={34} h={34} style={{ objectFit: "contain" }} alt={props.name} />
+            </Box>
+            <Stack gap={0} style={{ minWidth: 0 }}>
+              <Text c="white" fz={20} fw={700} lh={1.1}>
+                {amount}
+              </Text>
+              <Text c="white" fz={11} lineClamp={1}>
+                {props.name}
+              </Text>
+            </Stack>
+          </Flex>
+        </UnstyledButton>
+      </Popover.Target>
+      <Popover.Dropdown bg="#1E1D20" p={10}>
+        <Group gap={8} wrap="nowrap">
+          <Box style={{ width: 28, height: 28, flexShrink: 0 }}>
+            <Image src={props.icon} w="100%" h="100%" fit="contain" alt={props.name} />
+          </Box>
+          <Stack gap={0}>
+            <Text c="white" fw={700} fz={14}>
+              {props.name}
+            </Text>
+            <Text c="gray.4" fz={12}>
+              Balance: {amount}
+            </Text>
+          </Stack>
+        </Group>
+      </Popover.Dropdown>
+    </Popover>
   );
 }
 
@@ -265,7 +295,7 @@ function TabsPanel() {
   const { isOverMd } = useMediaQuery();
   const { user } = useAuth();
   const dashboardTabLinks: DashboardTabLink[] = [
-    { path: "/Bookmarks", icon: Bookmarks, label: "Bookmarks", enabled: true },
+    { path: "/Bookmarks", icon: Bookmarks, label: "FAVS", enabled: true },
     { path: "/Drafts", icon: Drafts, label: "Drafts", enabled: true },
     { path: "/Items", icon: Tether, label: "Items", enabled: true },
     { path: "/Characters", icon: Characters, label: "Characters", enabled: true },

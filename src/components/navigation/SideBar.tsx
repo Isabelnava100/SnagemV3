@@ -81,8 +81,8 @@ function TabButton(props: { item: NavItem }) {
   const isActive = location.pathname === "/" ? item.link === "/" : location.pathname.startsWith(base);
   return (
     <NavLink to={item.link} style={{ textDecoration: "none", flex: 1 }}>
-      {/* gap 4 = +2px between icon and name; pb 4 = -2px below the name. */}
-      <Stack gap={4} align="center" justify="center" pt={6} pb={4}>
+      {/* +4px padding above, +2px below the icon/name group. */}
+      <Stack gap={4} align="center" justify="center" pt={10} pb={6}>
         <Box
           style={{
             display: "flex",
@@ -97,7 +97,8 @@ function TabButton(props: { item: NavItem }) {
               : "transparent",
           }}
         >
-          <Image src={item.icon} width={24} height={24} alt={item.label} style={{ opacity: isActive ? 1 : 0.65 }} />
+          {/* w/h (not width/height, which Mantine 9 ignores) size the icon. */}
+          <Image src={item.icon} w={20} h={20} fit="contain" alt={item.label} style={{ opacity: isActive ? 1 : 0.65 }} />
         </Box>
         <Text fz={9} fw={isActive ? 700 : 500} c={isActive ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           {item.label}
@@ -110,7 +111,7 @@ function TabButton(props: { item: NavItem }) {
 function MoreButton(props: { active: boolean; onClick: () => void }) {
   return (
     <UnstyledButton onClick={props.onClick} style={{ flex: 1 }}>
-      <Stack gap={4} align="center" justify="center" pt={6} pb={4}>
+      <Stack gap={4} align="center" justify="center" pt={10} pb={6}>
         <Box
           style={{
             display: "flex",
@@ -124,7 +125,7 @@ function MoreButton(props: { active: boolean; onClick: () => void }) {
               : "transparent",
           }}
         >
-          <Image src={Menu} width={24} height={24} alt="More" style={{ opacity: props.active ? 1 : 0.65 }} />
+          <Image src={Menu} w={20} h={20} fit="contain" alt="More" style={{ opacity: props.active ? 1 : 0.65 }} />
         </Box>
         <Text fz={9} fw={props.active ? 700 : 500} c={props.active ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           More

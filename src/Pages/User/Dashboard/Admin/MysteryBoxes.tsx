@@ -54,8 +54,13 @@ export default function MysteryBoxes() {
   const [entryQty, setEntryQty] = React.useState(1);
   const [entryWeight, setEntryWeight] = React.useState(10);
 
+  // The catalog is ordered balls-first; sort alphabetically so browsing the
+  // dropdown (without searching) surfaces the whole catalog, not just balls.
   const itemOptions = React.useMemo(
-    () => itemData.map((item) => ({ value: item.id, label: item.name })),
+    () =>
+      itemData
+        .map((item) => ({ value: item.id, label: item.name }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
     []
   );
 
@@ -151,7 +156,7 @@ export default function MysteryBoxes() {
       <Select
         placeholder="Pick the box item (search the catalog)"
         searchable
-        limit={20}
+        limit={100}
         data={itemOptions}
         renderOption={renderItemOption}
         leftSection={
@@ -234,7 +239,7 @@ export default function MysteryBoxes() {
             <Select
               placeholder={entryKind === "item" ? "Search items" : "Currency"}
               searchable={entryKind === "item"}
-              limit={20}
+              limit={100}
               data={entryKind === "item" ? itemOptions : CURRENCY_OPTIONS}
               renderOption={entryKind === "item" ? renderItemOption : undefined}
               maxDropdownHeight={320}
