@@ -5,6 +5,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { Activities, Forum, Marketplace, Menu, Quests, TeamSangem, Users } from "../../icons";
+import { RESET_READING_SCALE } from "../../lib/readingSize";
 import "/src/assets/styles/navigation.css";
 
 interface NavItem {
@@ -146,6 +147,7 @@ function MobileTabBar() {
   return (
     <>
       <Paper
+        style={RESET_READING_SCALE}
         sx={{
           width: "100%",
           background: "#1E1D20",
@@ -171,7 +173,7 @@ function MobileTabBar() {
         size="auto"
         withCloseButton={false}
         styles={{
-          content: { background: "#1E1D20" },
+          content: { background: "#1E1D20", "--mantine-scale": "1" },
           body: { padding: 16, paddingBottom: "calc(16px + env(safe-area-inset-bottom))" },
         }}
       >
@@ -246,6 +248,7 @@ export const SideBar = () => {
 
   return (
     <Paper
+      style={RESET_READING_SCALE}
       sx={{
         display: "block",
         width: "100%",

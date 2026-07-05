@@ -45,6 +45,7 @@ import {
 } from "../../../queries/announcements";
 import { getCharacters, getCurrencies } from "../../../queries/dashboard";
 import { getNotifications, markNotificationsRead } from "../../../queries/game";
+import { RESET_READING_SCALE } from "../../../lib/readingSize";
 import { handleLogout } from "../../auth/components/LogoutHandle";
 import "/src/assets/styles/dashboard.css";
 
@@ -328,7 +329,7 @@ function TabsPanel() {
     <SectionWrapper
       title="Tabs"
       customHeader={
-        <Paper bg="#3C3A3C">
+        <Paper bg="#3C3A3C" style={RESET_READING_SCALE}>
           {/* Horizontally scrollable so the tabs never overlap or overflow the
               viewport on mobile. */}
           <ScrollArea type="never" scrollbarSize={0}>

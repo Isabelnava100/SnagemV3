@@ -3,6 +3,7 @@ import React from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import useMediaQuery from "../../hooks/useMediaQuery";
+import { RESET_READING_SCALE } from "../../lib/readingSize";
 
 interface Link {
   path: string;
@@ -63,13 +64,13 @@ export default function SubTabsLayout(props: {
       align="start"
     >
       {isOverLg ? (
-        <Stack w="100%" maw={320} gap={12} sx={{ flexShrink: 0 }}>
+        <Stack w="100%" maw={320} gap={12} style={RESET_READING_SCALE} sx={{ flexShrink: 0 }}>
           {tabs}
         </Stack>
       ) : (
         // Mobile: a horizontally scrollable segmented row so 3-5 sub-tabs
         // never overflow the viewport or wrap awkwardly.
-        <ScrollArea type="never" scrollbarSize={0} w="100%">
+        <ScrollArea type="never" scrollbarSize={0} w="100%" style={RESET_READING_SCALE}>
           <Flex gap={8} wrap="nowrap" pb={2}>
             {tabs}
           </Flex>

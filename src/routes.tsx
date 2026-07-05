@@ -114,6 +114,10 @@ const { default: Signature } = lazyImport(
   () => import("./Pages/User/Dashboard/Settings/Signature"),
   "default"
 );
+const { default: Accessibility } = lazyImport(
+  () => import("./Pages/User/Dashboard/Settings/Accessibility"),
+  "default"
+);
 
 export default function AppRoutes() {
   return (
@@ -156,6 +160,7 @@ export default function AppRoutes() {
                         <Route path="Notifications" element={<Notifications />} />
                         <Route path="Collections" element={<Collections />} />
                         <Route path="Signature" element={<Signature />} />
+                        <Route path="Accessibility" element={<Accessibility />} />
                       </Route>
                       <Route path="*" element={<Navigate to="" />} />
                     </Route>

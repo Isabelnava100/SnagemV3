@@ -6,6 +6,7 @@ export default function SettingsLayout() {
     { path: "Notifications", label: "Notifications" },
     { path: "Collections", label: "Collections" },
     { path: "Signature", label: "Signature" },
+    { path: "Accessibility", label: "Accessibility" },
   ];
   return (
     <SubTabsLayout links={settingsTabLinks} parentRoutePath="/Dashboard/Settings">
