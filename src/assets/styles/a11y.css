@@ -1,0 +1,46 @@
+/* Accessibility helpers: skip link, higher-contrast dimmed text, visible focus
+   rings, and larger touch targets. Applied globally. See CLAUDE.md. */
+
+/* "Dimmed" text was ~gray-6 which fell below AA contrast on the dark theme. */
+:root {
+  --mantine-color-dimmed: #b6b1bc;
+}
+
+/* Skip-to-content link: off-screen until it receives keyboard focus. */
+.skip-link {
+  position: fixed;
+  top: -60px;
+  left: 8px;
+  z-index: 1000;
+  padding: 10px 16px;
+  background: #772976;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 120ms ease;
+}
+.skip-link:focus {
+  top: 8px;
+  outline: 3px solid #fff;
+}
+
+/* Keep a clear focus ring for keyboard users, including custom clickables. */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #c79bd6;
+  outline-offset: 2px;
+}
+
+/* Larger tap targets on touch devices (WCAG 2.5.5, first pass). */
+@media (pointer: coarse) {
+  .mantine-Button-root {
+    min-height: 40px;
+  }
+  .mantine-ActionIcon-root {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}

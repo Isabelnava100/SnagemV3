@@ -24,6 +24,21 @@ Live: snagemguild.com. Deploy: Netlify (`netlify.toml`, SPA redirect to index.ht
 - Icons: `@tabler/icons-react` (NOT dead `@tabler/icons` v1) or existing `tabler-icons-react`.
 - **Everything must be mobile responsive.** Any new or edited UI must work at 375px width with no horizontal scroll: use Mantine responsive props (`span={{ base: 12, xs: 6 }}`, responsive style props), relative widths (`maw` + `w="100%"`) over fixed px, and verify at the mobile viewport before committing. Theme breakpoints: xs=480, sm=800 (`src/lib/mantine.ts`).
 
+## Accessibility rules
+
+Bake these in for every new/edited UI (a11y is a first-class requirement, not a follow-up):
+
+- **Keyboard-operable custom clickables.** Any `<Box>`/`<div>` with an `onClick` MUST be keyboard-operable: spread `clickable(fn)` from `src/lib/a11y.ts` (adds `role="button"`, `tabIndex`, Enter/Space) and give it an `aria-label`. Prefer a real `<Button>`/`UnstyledButton` when practical.
+- **Status messages** ("Saved", errors, "Draft saved") get `role="status" aria-live="polite"` so screen readers announce them.
+- **Form fields** must have a visible `label`, or an `aria-label` when only a placeholder is shown (search Selects, the `ItemPicker` combobox, note textareas). Mantine wires label/error/description automatically when you use its props, so use them.
+- **Contrast.** Do not hand-roll faint text like `rgba(255,255,255,0.5)`; use `c="dimmed"` (the token is contrast-tuned in `src/assets/styles/a11y.css`). Keep small text at AA (>= 4.5:1) on the dark theme.
+- **Touch targets** stay ~44px on mobile; coarse-pointer minimums are set globally in `a11y.css`. Don't shrink interactive controls below that on touch.
+- **Nav** uses react-router `NavLink`, which sets `aria-current="page"` on the active item; keep using it for nav.
+- **Skip link + landmark.** The app renders a `.skip-link` to `#main-content` (the `<main>` in `src/App.tsx`); keep one `<main>` and a logical heading order per page.
+- **Icons in `<Image>`**: numeric `width`/`height` are ignored by Mantine 9 (renders full-size). Use `w`/`h` + `fit="contain"`.
+- **Zoom**: pinch-zoom is off by default (app feel) but user-toggleable in Settings > Accessibility (`src/lib/viewportZoom.ts` flips the viewport meta). Never assume zoom is disabled.
+- Reading text size lives in Settings > Accessibility (`src/lib/readingSize.ts`); keep nav compact, size body copy.
+
 ## Data & Firestore rules
 
 - All reads go through react-query. Default `staleTime` 2 min / `gcTime` 10 min set in `src/lib/react-query.ts`. Don't refetch the same doc per component; share query keys.

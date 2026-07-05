@@ -25,6 +25,9 @@ export const App = memo(() => {
       mx="auto"
       p={0}
     >
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Flex
         sx={{
           flexDirection: isUnder900 ? "column" : "row",
@@ -79,7 +82,12 @@ export const App = memo(() => {
               overflowX: "hidden",
             }}
           >
-            <Box sx={{ width: "100%", height: "100%", overflowX: "hidden" }} id="app-layout-main">
+            <Box
+              component="main"
+              id="main-content"
+              tabIndex={-1}
+              sx={{ width: "100%", height: "100%", overflowX: "hidden", outline: "none" }}
+            >
               <Outlet />
             </Box>
           </Paper>

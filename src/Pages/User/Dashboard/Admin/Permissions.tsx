@@ -146,7 +146,7 @@ function CapabilityChecklist() {
             />
           ))}
           {saved && (
-            <Text fz={13} c="green.0">
+            <Text fz={13} c="green.0" role="status" aria-live="polite">
               Permissions saved.
             </Text>
           )}

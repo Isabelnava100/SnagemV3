@@ -1,4 +1,4 @@
-import { SegmentedControl, Stack, Text, Title } from "@mantine/core";
+import { Divider, SegmentedControl, Stack, Switch, Text, Title } from "@mantine/core";
 import React from "react";
 import {
   READING_SIZES,
@@ -6,19 +6,25 @@ import {
   getReadingSize,
   setReadingSize,
 } from "../../../../lib/readingSize";
+import { getZoomAllowed, setZoomAllowed } from "../../../../lib/viewportZoom";
 
 /**
- * Reading text size (accessibility). Pinch-zoom is disabled sitewide for an
- * app-like feel, so this is how users enlarge reading text. Navigation keeps
- * its compact size regardless. 16px is the minimum.
+ * Accessibility settings: reading text size and a pinch-to-zoom toggle. Zoom is
+ * off by default for an app-like feel, but members who need it can turn it on.
  */
 export default function Accessibility() {
   const [size, setSize] = React.useState<ReadingSize>(getReadingSize());
+  const [zoom, setZoom] = React.useState<boolean>(getZoomAllowed());
 
   const update = (value: string) => {
     const px = Number(value) as ReadingSize;
     setSize(px);
     setReadingSize(px);
+  };
+
+  const updateZoom = (allowed: boolean) => {
+    setZoom(allowed);
+    setZoomAllowed(allowed);
   };
 
   return (
@@ -27,8 +33,8 @@ export default function Accessibility() {
         Reading Text Size
       </Title>
       <Text fz={13} c="dimmed">
-        Zoom is turned off so the site feels like an app. Use this to size the
-        reading text across the site; navigation stays compact. The minimum is 16px.
+        Use this to size the reading text across the site; navigation stays compact.
+        The minimum is 16px.
       </Text>
 
       <SegmentedControl
@@ -50,6 +56,23 @@ export default function Accessibility() {
           text will look across the site.
         </Text>
       </Stack>
+
+      <Divider color="#4a464a" my={6} />
+
+      <Title order={2} size={24} c="white" fw={400}>
+        Pinch to Zoom
+      </Title>
+      <Text fz={13} c="dimmed">
+        Zoom is turned off by default so the site feels like an app. Turn it on if
+        you would like to pinch-zoom pages on your device. This takes effect right
+        away.
+      </Text>
+      <Switch
+        checked={zoom}
+        onChange={(e) => updateZoom(e.currentTarget.checked)}
+        label="Allow pinch to zoom"
+        styles={{ label: { color: "white" } }}
+      />
     </Stack>
   );
 }

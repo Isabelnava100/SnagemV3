@@ -195,7 +195,7 @@ export default function Onboarding() {
             />
 
             {message && (
-              <Text fz={13} c="green.0">
+              <Text fz={13} c="green.0" role="status" aria-live="polite">
                 {message}
               </Text>
             )}

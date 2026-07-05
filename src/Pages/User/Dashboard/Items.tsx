@@ -17,6 +17,7 @@ import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
+import { clickable } from "../../../lib/a11y";
 import { getItemImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getItems } from "../../../queries/dashboard";
@@ -88,7 +89,12 @@ export default function Items() {
                       <Box
                         key={item.id}
                         bg="#3e3d3dba"
-                        onClick={box ? () => setMysteryItem({ id: item.id, name: displayName }) : undefined}
+                        {...(box
+                          ? {
+                              ...clickable(() => setMysteryItem({ id: item.id, name: displayName })),
+                              "aria-label": `Open ${displayName}`,
+                            }
+                          : {})}
                         style={{
                           borderRadius: 12,
                           overflow: "hidden",

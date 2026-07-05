@@ -189,7 +189,12 @@ function ReviewCard(props: { req: ImportRequest & { uid: string }; username: str
         )}
 
         {message && (
-          <Text fz={13} c={message.startsWith("Could not") ? "#E35C65" : "green.0"}>
+          <Text
+            fz={13}
+            role="status"
+            aria-live="polite"
+            c={message.startsWith("Could not") ? "#E35C65" : "green.0"}
+          >
             {message}
           </Text>
         )}
@@ -203,6 +208,7 @@ function ReviewCard(props: { req: ImportRequest & { uid: string }; username: str
             Approve &amp; add
           </GradientButtonPrimary>
           <Textarea
+            aria-label="Reason for sending the import back"
             placeholder="Reason (sent to the member if you send it back)"
             value={note}
             onChange={(e) => setNote(e.currentTarget.value)}

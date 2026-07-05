@@ -97,6 +97,7 @@ function ItemPicker({
           pointer
           size={size}
           w={w}
+          aria-label={placeholder}
           rightSection={<Combobox.Chevron />}
           rightSectionPointerEvents="none"
           leftSection={
