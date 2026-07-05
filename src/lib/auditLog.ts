@@ -51,6 +51,57 @@ const ACTION_TITLES: Record<string, string> = {
 
 export const auditTitle = (action: string): string => ACTION_TITLES[action] ?? action;
 
+// Friendly labels for the detail keys stored on log entries.
+const DETAIL_LABELS: Record<string, string> = {
+  amount: "Amount",
+  currency: "Currency",
+  userIds: "Members",
+  targetUid: "Member",
+  username: "Member",
+  items: "Items",
+  pokemon: "Pokemon",
+  capabilities: "Permissions",
+  permissions: "Role",
+  removed: "Removed from",
+  badgeId: "Badge",
+  list: "List",
+  name: "Name",
+  title: "Thread",
+  forum: "Forum",
+  rewards: "Rewards",
+  active: "Showing now",
+  editing: "Updated existing",
+  siteTitle: "Site title",
+};
+
+const CURRENCY_NAMES: Record<string, string> = {
+  pokecoin: "Poke Coins",
+  gengarcoin: "Gengar Coins",
+  snagemblem: "Snag Emblems",
+};
+
+function formatDetailValue(key: string, value: unknown): string {
+  if (Array.isArray(value)) {
+    if (key === "userIds")
+      return `${value.length} member${value.length === 1 ? "" : "s"}`;
+    if (key === "capabilities") return value.length ? value.join(", ") : "none";
+    return `${value.length}`;
+  }
+  if (key === "currency" && typeof value === "string")
+    return CURRENCY_NAMES[value] ?? value;
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (value === null || value === undefined || value === "") return "not set";
+  return String(value);
+}
+
+/** Turn a log entry's raw details into plain, readable "Label: value" lines. */
+export function describeAuditDetails(details?: Record<string, unknown>): string[] {
+  if (!details) return [];
+  return Object.entries(details)
+    .filter(([, v]) => v !== undefined && v !== null && v !== "")
+    .map(([key, value]) => `${DETAIL_LABELS[key] ?? key}: ${formatDetailValue(key, value)}`);
+}
+
 export interface AuditRow extends AuditEntry {
   id: string;
   createdAt?: { seconds: number; nanoseconds: number };

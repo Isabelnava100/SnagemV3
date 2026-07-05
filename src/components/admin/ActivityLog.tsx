@@ -2,7 +2,7 @@ import { Anchor, Box, Group, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
-import { AuditRow, auditTitle, getAuditLogs } from "../../lib/auditLog";
+import { AuditRow, auditTitle, describeAuditDetails, getAuditLogs } from "../../lib/auditLog";
 import { SectionLoader } from "../navigation/loading";
 
 const dt = new Intl.DateTimeFormat(undefined, {
@@ -80,16 +80,13 @@ function LogRow(props: { row: AuditRow }) {
         )}
       </Group>
       {hasDetails && open && (
-        <Box mt={6} p={8} style={{ background: "#141316", borderRadius: 6, overflowX: "auto" }}>
-          <Text
-            component="pre"
-            fz={11}
-            c="dimmed"
-            style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}
-          >
-            {JSON.stringify(row.details, null, 2)}
-          </Text>
-        </Box>
+        <Stack gap={2} mt={6} p={10} style={{ background: "#141316", borderRadius: 6 }}>
+          {describeAuditDetails(row.details).map((line, i) => (
+            <Text key={i} fz={12} c="rgba(255,255,255,0.75)" style={{ wordBreak: "break-word" }}>
+              {line}
+            </Text>
+          ))}
+        </Stack>
       )}
     </Box>
   );
