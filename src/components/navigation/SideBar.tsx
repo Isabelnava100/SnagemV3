@@ -1,6 +1,6 @@
 import { Box, Drawer, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconBell, IconLogout } from "@tabler/icons-react";
+import { IconBell, IconHome, IconLogout } from "@tabler/icons-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
@@ -178,6 +178,16 @@ function MobileTabBar() {
         }}
       >
         <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          <Link to="/" onClick={close} style={{ textDecoration: "none" }}>
+            <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>
+              <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
+                <IconHome size={26} color="white" />
+              </Box>
+              <Text fz={11} c="white" tt="uppercase">
+                Home
+              </Text>
+            </Stack>
+          </Link>
           {overflow.map((item) => (
             <Link key={item.label} to={item.link} onClick={close} style={{ textDecoration: "none" }}>
               <Stack gap={6} align="center" py={12} style={{ background: "#3C3A3C", borderRadius: 12 }}>

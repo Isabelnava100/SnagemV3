@@ -590,7 +590,8 @@ const PokemonAvatar = React.forwardRef<
   HTMLImageElement,
   { src?: string; alt?: string; sx?: Sx; onClick?: () => void }
 >((props, ref) => {
-  const { src, alt, sx, onClick } = props;
+  // Spread the remaining props (Popover.Target/Tooltip inject aria + handlers).
+  const { src, alt, sx, onClick, ...others } = props;
   return (
     <Image
       ref={ref}
@@ -600,6 +601,7 @@ const PokemonAvatar = React.forwardRef<
       w="100%"
       h="100%"
       sx={{ objectFit: "cover", ...(sx || {}) }}
+      {...others}
     />
   );
 });

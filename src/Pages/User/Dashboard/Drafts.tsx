@@ -164,7 +164,7 @@ function SingleDraft(props: Draft) {
             >
               <Image src={Edit} alt="Draft icon" width={45} />
             </ActionIcon>
-            <Text ta="end" color="white">
+            <Text ta="end" c="#151515" fw={500}>
               Draft saved at:
               <br />
               {formatter.format(new Date(props.date_saved.seconds * 1000))}

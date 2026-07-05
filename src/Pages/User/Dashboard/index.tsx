@@ -313,9 +313,28 @@ function TabsPanel() {
                       key={link.path}
                     >
                       {/* Icon + a tiny always-on label so the current tab is
-                          identifiable at a glance (like the bottom nav). */}
+                          identifiable at a glance (like the bottom nav). The
+                          fixed box + fit=contain normalizes the icons so they
+                          all render the same visual size despite different SVG
+                          bounds. */}
                       <Stack gap={2} align="center" justify="center">
-                        <Image width={isOverMd ? 38 : 26} src={link.icon} alt={link.label} />
+                        <Box
+                          style={{
+                            width: isOverMd ? 30 : 24,
+                            height: isOverMd ? 30 : 24,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Image
+                            src={link.icon}
+                            alt={link.label}
+                            w="100%"
+                            h="100%"
+                            fit="contain"
+                          />
+                        </Box>
                         <Text
                           fz={isOverMd ? 12 : 9}
                           fw={isActive ? 700 : 500}

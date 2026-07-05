@@ -1,10 +1,9 @@
-import { Box, Flex, Stack, Switch, Text, TextInput, type SwitchProps } from "@mantine/core";
+import { Box, Flex, Stack, Switch, Text, type SwitchProps } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
-import { v4 as uuid } from "uuid";
 import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { Settings } from "../../../../components/types/typesUsed";
@@ -26,58 +25,6 @@ const CustomSwitch = React.forwardRef<HTMLInputElement, CustomSwitchProps>((prop
     />
   );
 });
-
-function CreateNewDiscordTicket() {
-  const [input, setInput] = React.useState("");
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-
-  const { mutateAsync, isPending: isLoading } = useMutation({
-    mutationKey: ["create-new-discord-ticket"],
-    mutationFn: async () => {
-      const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
-      const docRef = doc(db, "tickets", "discord");
-      await setDoc(
-        docRef,
-        {
-          [uuid()]: {
-            approved: false,
-            discord_name: input,
-            user_id: user?.uid,
-            username: user?.username,
-          },
-        },
-        { merge: true }
-      );
-    },
-  });
-
-  const handleClick = async () => {
-    if (!input.trim().length) return;
-    try {
-      await mutateAsync();
-      await queryClient.invalidateQueries({ queryKey: ["get-settings"] });
-      setInput("");
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  return (
-    <Flex gap="md">
-      <TextInput
-        onChange={(e) => setInput(e.target.value)}
-        value={input}
-        placeholder="Enter Your Discord Name Tag"
-        sx={{ flex: 1 }}
-      />
-      <GradientButtonSecondary loading={isLoading} onClick={handleClick}>
-        Submit for Review
-      </GradientButtonSecondary>
-    </Flex>
-  );
-}
 
 /**
  * In-app notification inbox (Q7): bookmarked-thread posts, @mentions, boss
@@ -166,11 +113,12 @@ function NotificationsInbox() {
 }
 
 /**
- * Public Discord name toggle: users set a display Discord tag and choose
- * whether it shows on their public profile. Stored on the user doc
- * (discordName / discordPublic), self-writable.
+ * "Show my Discord name publicly" — a plain toggle matching the other
+ * switches. The Discord name is auto-grabbed once account linking ships;
+ * this only controls whether it appears on the public profile. Stored on
+ * the user doc (discordPublic), self-writable, saved on change.
  */
-function DiscordPublicSettings() {
+function DiscordPublicToggle() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data, isPending } = useQuery({
@@ -179,78 +127,28 @@ function DiscordPublicSettings() {
       const { doc, getDoc } = await import("firebase/firestore");
       const { db } = await import("../../../../context/firebase");
       const d = (await getDoc(doc(db, "users", user!.uid))).data();
-      return { discordName: (d?.discordName as string) ?? "", discordPublic: !!d?.discordPublic };
+      return { discordPublic: !!d?.discordPublic };
     },
     enabled: !!user,
   });
 
-  const [name, setName] = React.useState("");
-  const [isPublic, setPublic] = React.useState(false);
-  const [loaded, setLoaded] = React.useState(false);
-  const [saved, setSaved] = React.useState(false);
-
-  React.useEffect(() => {
-    if (data && !loaded) {
-      setName(data.discordName);
-      setPublic(data.discordPublic);
-      setLoaded(true);
-    }
-  }, [data, loaded]);
-
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (next: boolean) => {
       const { doc, updateDoc } = await import("firebase/firestore");
       const { db } = await import("../../../../context/firebase");
-      await updateDoc(doc(db, "users", user!.uid), {
-        discordName: name.trim().slice(0, 60),
-        discordPublic: isPublic,
-      });
+      await updateDoc(doc(db, "users", user!.uid), { discordPublic: next });
     },
-    onSuccess: () => {
-      setSaved(true);
-      queryClient.invalidateQueries({ queryKey: ["discord-public", user?.uid] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["discord-public", user?.uid] }),
   });
 
   if (isPending) return null;
 
   return (
-    <Stack gap={8} p={12} sx={{ background: "#3C3A3C", borderRadius: 12 }}>
-      <Text c="white" fw={600} fz={14}>
-        Public Discord Name
-      </Text>
-      <TextInput
-        placeholder="e.g. veronica#1234"
-        value={name}
-        onChange={(e) => {
-          setSaved(false);
-          setName(e.currentTarget.value);
-        }}
-        styles={{ input: { background: "#2E2D2E", color: "white" } }}
-      />
-      <CustomSwitch
-        checked={isPublic}
-        onChange={(e) => {
-          setSaved(false);
-          setPublic(e.currentTarget.checked);
-        }}
-        label="Show my Discord name on my public profile"
-      />
-      {saved && (
-        <Text fz={13} c="green.0">
-          Saved.
-        </Text>
-      )}
-      <GradientButtonSecondary
-        size="xs"
-        radius="xl"
-        w="fit-content"
-        loading={saveMutation.isPending}
-        onClick={() => saveMutation.mutateAsync()}
-      >
-        Save Discord Settings
-      </GradientButtonSecondary>
-    </Stack>
+    <CustomSwitch
+      checked={!!data?.discordPublic}
+      onChange={(e) => saveMutation.mutate(e.currentTarget.checked)}
+      label="Show my Discord name on my public profile"
+    />
   );
 }
 
@@ -324,14 +222,16 @@ export default function Notifications() {
           {...getInputProps("siteNotifications", { type: "checkbox" })}
           label="Enable on-site notifications"
         />
-        <Stack>
+        <Stack gap={8}>
           <CustomSwitch
             disabled={isProcessing}
             {...getInputProps("discordNotifications", { type: "checkbox" })}
             label="Enable Discord notifications"
           />
-          {values.discordNotifications && <CreateNewDiscordTicket />}
-          <DiscordPublicSettings />
+          <Text fz={13} c="dimmed">
+            Discord coming soon.
+          </Text>
+          <DiscordPublicToggle />
         </Stack>
         <CustomSwitch
           disabled={isProcessing}

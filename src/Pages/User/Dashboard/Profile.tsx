@@ -456,59 +456,66 @@ function CoverBackgrounds() {
         <Conditional
           condition={!!data?.cover_backgrounds?.length}
           component={
-            <ScrollArea pb={20}>
+            <ScrollArea pb={12} offsetScrollbars>
               <Flex gap={12} sx={{ flexWrap: "nowrap" }}>
                 {data &&
                   data.cover_backgrounds &&
                   data.cover_backgrounds
-                    .filter(() => true)
+                    .slice()
                     .reverse()
                     .map((cover_background_url) => {
                       const isActive = data.coverBG === cover_background_url;
                       return (
-                        <div key={cover_background_url} className="relative">
-                          <Image
-                            onClick={() => handleSelectCoverImage(cover_background_url)}
-                            src={cover_background_url}
-                            sx={{
-                              borderWidth: isActive ? 4 : 2,
-                              borderColor: "white",
-                              borderStyle: "solid",
-                              borderRadius: 22,
-                              overflow: "hidden",
-                              objectFit: "cover",
-                              cursor: "pointer",
-                            }}
-                            width={160}
-                            h={92}
-                          />
+                        <Box
+                          key={cover_background_url}
+                          onClick={() => handleSelectCoverImage(cover_background_url)}
+                          sx={{
+                            position: "relative",
+                            flexShrink: 0,
+                            width: 180,
+                            height: 100,
+                            borderRadius: 12,
+                            overflow: "hidden",
+                            cursor: "pointer",
+                            border: isActive ? "3px solid #17F1F0" : "2px solid #5a545f",
+                            backgroundImage: `url(${cover_background_url})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                          }}
+                        >
                           {isActive && (
-                            <div className="absolute bottom-0 left-0 w-full py-2">
-                              <Text
-                                tt="uppercase"
-                                c="white"
-                                ta="center"
-                                fw="bold"
-                                fz={14}
-                              >
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                bottom: 0,
+                                left: 0,
+                                width: "100%",
+                                padding: "4px 0",
+                                background: "rgba(0,0,0,0.55)",
+                              }}
+                            >
+                              <Text tt="uppercase" c="white" ta="center" fw="bold" fz={12}>
                                 Selected
                               </Text>
-                            </div>
+                            </Box>
                           )}
-                          <div className="absolute top-0 right-0">
+                          <Box sx={{ position: "absolute", top: 4, right: 4 }}>
                             <Tooltip label="Remove">
                               <ActionIcon
-                                onClick={() => handleRemoveCoverImage(cover_background_url)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveCoverImage(cover_background_url);
+                                }}
                                 color="red"
                                 variant="filled"
                                 radius="xl"
-                                size="xs"
+                                size="sm"
                               >
-                                <IconX />
+                                <IconX size={14} />
                               </ActionIcon>
                             </Tooltip>
-                          </div>
-                        </div>
+                          </Box>
+                        </Box>
                       );
                     })}
               </Flex>

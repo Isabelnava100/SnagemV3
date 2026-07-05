@@ -4,6 +4,7 @@ import React from "react";
 interface State {
   hasError: boolean;
   isChunkError: boolean;
+  message: string;
 }
 
 /** True for the "stale bundle after a new deploy" dynamic-import failures. */
@@ -27,10 +28,14 @@ function isChunkLoadError(error: unknown): boolean {
  * recover screen with real navigation.
  */
 export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
-  state: State = { hasError: false, isChunkError: false };
+  state: State = { hasError: false, isChunkError: false, message: "" };
 
   static getDerivedStateFromError(error: unknown): State {
-    return { hasError: true, isChunkError: isChunkLoadError(error) };
+    return {
+      hasError: true,
+      isChunkError: isChunkLoadError(error),
+      message: (error as { message?: string })?.message ?? "Unknown error",
+    };
   }
 
   componentDidCatch(error: unknown) {
@@ -75,12 +80,24 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
           <Text c="dimmed" ta="center">
             This one page hit an error — the rest of the site still works.
           </Text>
+          {this.state.message && (
+            <Text
+              ff="monospace"
+              fz={12}
+              c="#E35C65"
+              ta="center"
+              maw={420}
+              style={{ wordBreak: "break-word" }}
+            >
+              {this.state.message}
+            </Text>
+          )}
           <Group>
             <Button
               variant="light"
               radius="xl"
               onClick={() => {
-                this.setState({ hasError: false, isChunkError: false });
+                this.setState({ hasError: false, isChunkError: false, message: "" });
                 window.history.back();
               }}
             >
@@ -89,7 +106,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
             <Button
               radius="xl"
               onClick={() => {
-                this.setState({ hasError: false, isChunkError: false });
+                this.setState({ hasError: false, isChunkError: false, message: "" });
                 window.location.assign("/Dashboard");
               }}
             >
