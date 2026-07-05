@@ -249,6 +249,7 @@ function Avatars() {
     >
       <Avatar
         src={user?.avatar || DefaultAvatar}
+        alt={`${user?.displayName ?? user?.username ?? "Your"} avatar`}
         w={100}
         h={100}
         sx={{ borderRadius: "100%", flexShrink: 0, border: "4px solid white" }}
@@ -293,6 +294,7 @@ function Avatars() {
                           <Avatar
                             onClick={() => handleSelectAvatar(avatarUrl)}
                             src={avatarUrl}
+                            alt="Saved avatar option"
                             w={60}
                             h={60}
                             radius="xl"
@@ -482,6 +484,8 @@ function CoverBackgrounds() {
                         <Box
                           key={cover_background_url}
                           onClick={() => handleSelectCoverImage(cover_background_url)}
+                          role="img"
+                          aria-label={isActive ? "Selected cover background" : "Cover background option"}
                           sx={{
                             position: "relative",
                             flexShrink: 0,

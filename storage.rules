@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// SnagemV3 Cloud Storage security rules. This is the REAL authorization layer
+// for uploaded media. Paste into Firebase console -> Storage -> Rules, or run
+// `firebase deploy --only storage`.
+//
+// Layout: user media lives under <folder>/<uid>/<file> (see src/lib/storage.ts).
+// Writes are owner-only, images only, capped at 5MB. Reads are public because
+// avatars/covers appear across the public forum + profiles, and sprites/emotes
+// are loaded by plain download URLs.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedInAs(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function isImageUnder5MB() {
+      return request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Per-user media: only the owner may write into their own uid folder.
+    match /profile-avatars/{uid}/{fileName} {
+      allow read: if true;
+      allow write: if signedInAs(uid) && isImageUnder5MB();
+    }
+    match /cover-backgrounds/{uid}/{fileName} {
+      allow read: if true;
+      allow write: if signedInAs(uid) && isImageUnder5MB();
+    }
+    match /character-avatars/{uid}/{fileName} {
+      allow read: if true;
+      allow write: if signedInAs(uid) && isImageUnder5MB();
+    }
+
+    // Everything else (emotes, item/pokemon sprites, legacy flat uploads):
+    // public read, managed through the console — no client writes.
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
