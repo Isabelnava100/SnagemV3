@@ -71,6 +71,11 @@ export default function NewThreadComposer() {
   const [xpOverride, setXpOverride] = React.useState<XPDefaults | null>(null);
   const canAdjustXP = isAdmin(user) || hasCapability(user, Capability.AdjustXP);
   const canPin = canCurateThreads(user);
+  // Staff-created roleplays choose when XP is served (instant vs at close) and
+  // whether to use the site default XP settings.
+  const canHostRoleplay = canCurateThreads(user);
+  const [xpAward, setXpAward] = React.useState<"instant" | "onClose">("instant");
+  const [useDefaultXp, setUseDefaultXp] = React.useState(true);
 
   // Site-wide XP defaults, shown as the panel's starting values.
   const { data: xpDefaults } = useQuery({
@@ -158,7 +163,8 @@ export default function NewThreadComposer() {
         encounterConfig,
         characters,
         html,
-        xpConfig: canAdjustXP && xpOverride ? { ...xpOverride } : null,
+        xpConfig: canAdjustXP && !useDefaultXp && xpOverride ? { ...xpOverride } : null,
+        ...(canHostRoleplay ? { xpAward } : {}),
         attachSignature,
       });
       return threadId;
@@ -328,10 +334,35 @@ export default function NewThreadComposer() {
 
             <PollBuilderPanel value={poll} onChange={setPoll} />
 
-            {/* XP settings: admins / AdjustXP directors may override the site
-                defaults per thread (Q5). */}
-            {canAdjustXP && (
-              <ForumPanel title="XP Settings">
+            {/* Reward settings: staff choose when XP is served; AdjustXP
+                directors may also override the per-stat amounts. */}
+            {(canHostRoleplay || canAdjustXP) && (
+              <ForumPanel title="Rewards & XP">
+                {canHostRoleplay && (
+                  <>
+                    <PanelHint>Choose when the experience rewards are given out.</PanelHint>
+                    <Radio.Group
+                      value={xpAward}
+                      onChange={(v) => setXpAward(v === "instant" ? "instant" : "onClose")}
+                    >
+                      <Stack gap={4}>
+                        <Radio value="instant" label="Award instantly as people post" color="pink.0" size="xs" />
+                        <Radio value="onClose" label="Award only after closing the thread" color="pink.0" size="xs" />
+                      </Stack>
+                    </Radio.Group>
+                    <Checkbox
+                      mt={8}
+                      mb={4}
+                      label="Use default settings for exp stuff"
+                      color="green.0"
+                      checked={useDefaultXp}
+                      onChange={(e) => setUseDefaultXp(e.currentTarget.checked)}
+                      styles={{ label: { color: "white", fontSize: 13 } }}
+                    />
+                  </>
+                )}
+                {canAdjustXP && !useDefaultXp && (
+                <>
                 <PanelHint>
                   Points each team pokemon earns per qualifying post in this thread. Leave as the
                   site defaults or override per stat.
@@ -376,6 +407,8 @@ export default function NewThreadComposer() {
                     />
                   </Group>
                 </Stack>
+                </>
+                )}
               </ForumPanel>
             )}
           </Stack>

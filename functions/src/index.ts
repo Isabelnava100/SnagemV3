@@ -57,6 +57,7 @@ const FORUM_CREATE_POLICY: Record<string, CreatePolicy> = {
   Events: "event-host",
   "Master-Mission": "master",
   Quests: "none",
+  "The-Colosseum": "main-host",
 };
 
 // ---------------------------------------------------------------------------
@@ -485,9 +486,13 @@ export const publishForumPost = onCall(async (request) => {
     const strippedLength = html.replace(/<[^>]*>/g, "").trim().length;
     const teamIds = characters.map((c: any) => c.teamId).filter(Boolean) as string[];
     const anyStat = XP_STATS.some((s) => (xpConfig[s.cfg] ?? 0) > 0);
-    // Non-admin threads defer XP into a pending ledger reviewed at close.
-    // Legacy threads (no flag) keep the original immediate behavior.
-    const deferXp = thread.createdByAdmin === false;
+    // XP is applied instantly only when a staff-created thread chose "instant";
+    // otherwise it accrues into pendingXp for the close review. Legacy threads
+    // (no xpAward) keep the original behavior keyed off createdByAdmin.
+    let deferXp: boolean;
+    if (thread.xpAward === "instant") deferXp = !(thread.staffCreated === true);
+    else if (thread.xpAward === "onClose") deferXp = true;
+    else deferXp = thread.createdByAdmin === false;
     let xpPokemonIds: string[] = [];
     let ownedForXp: Record<string, any> = {};
     if (
@@ -787,6 +792,12 @@ export const publishForumThread = onCall(async (request) => {
     xpConfig = normalizeXpConfig(xpOverride);
   }
 
+  // Only staff (admins or hosting directors) create roleplays that can award XP
+  // instantly; everyone else's threads always defer XP to the close review.
+  const staffCreated =
+    isAdmin(member) || hasCap(member, "HostMainForum") || hasCap(member, "HostEvents");
+  const xpAward = staffCreated && request.data?.xpAward === "instant" ? "instant" : "onClose";
+
   const threadsCol = db.collection(`forum/${forum}/threads`);
   const countSnap = await threadsCol.count().get();
   const threadId = String(countSnap.data().count + 1);
@@ -801,6 +812,9 @@ export const publishForumThread = onCall(async (request) => {
     // Admin-created threads apply XP immediately; non-admin threads accrue XP
     // into pendingXp for review + commit at close (see publishForumPost).
     createdByAdmin: isAdmin(member),
+    // staffCreated + xpAward drive the instant-vs-on-close XP choice.
+    staffCreated,
+    xpAward,
     closed: false,
     private: false,
     pinned,

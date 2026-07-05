@@ -58,6 +58,8 @@ export const callPublishThread = (input: {
   encounterConfig: unknown;
   /** Applied server-side only for admins / AdjustXP directors. */
   xpConfig?: Record<string, number> | null;
+  /** Staff-only: award XP instantly vs at close (server gates non-staff). */
+  xpAward?: "instant" | "onClose";
   attachSignature?: boolean;
 }) => call<{ threadId: string }>("publishForumThread", input);
 

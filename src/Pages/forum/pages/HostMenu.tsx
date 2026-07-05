@@ -1,6 +1,7 @@
 import {
   Avatar,
   Box,
+  Checkbox,
   Container,
   Divider,
   Flex,
@@ -33,6 +34,7 @@ import { hasCapability, isAdmin } from "../../../lib/permissions";
 import { getPokemonLists } from "../../../queries/admin";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getUsers } from "../../../queries/admin";
+import { getXPDefaults } from "../../../queries/game";
 import {
   endBossBattle,
   setThreadArchived,
@@ -66,8 +68,11 @@ export default function HostMenu() {
     queryFn: () => getThread(forum, threadId!),
     enabled: !!threadId,
   });
+  const { data: xpDefaults } = useQuery({ queryKey: ["xp-defaults"], queryFn: getXPDefaults });
 
   const [title, setTitle] = React.useState("");
+  const [xpAward, setXpAward] = React.useState<"instant" | "onClose">("instant");
+  const [useDefaultXp, setUseDefaultXp] = React.useState(true);
   const [pinned, setPinned] = React.useState(false);
   const [restricted, setRestricted] = React.useState(false);
   const [allowedPosters, setAllowedPosters] = React.useState<string[]>([]);
@@ -95,6 +100,7 @@ export default function HostMenu() {
     setTags(thread.tags ?? []);
     setInstructions(thread.instructions ?? "");
     setEncounterConfig(thread.encounterConfig ?? null);
+    setXpAward(thread.xpAward === "onClose" ? "onClose" : "instant");
     setLoaded(true);
   }, [thread, loaded]);
 
@@ -138,6 +144,14 @@ export default function HostMenu() {
         restricted,
         allowedPosters: restricted ? allowedPosters : [],
         encounterConfig,
+        // Staff-created threads control when XP is served; "use defaults"
+        // resets the per-post amounts to the current site defaults.
+        ...(thread!.staffCreated
+          ? {
+              xpAward,
+              ...(useDefaultXp && xpDefaults ? { xpConfig: { ...xpDefaults } } : {}),
+            }
+          : {}),
       });
     },
     onSuccess: () => {
@@ -313,6 +327,34 @@ export default function HostMenu() {
               />
             </Stack>
           </ForumPanel>
+
+          {thread.staffCreated && (
+            <ForumPanel title="Rewards & XP">
+              <PanelHint>Choose when the experience rewards are given out.</PanelHint>
+              <Radio.Group
+                value={xpAward}
+                onChange={(v) => setXpAward(v === "instant" ? "instant" : "onClose")}
+              >
+                <Stack gap={4}>
+                  <Radio value="instant" label="Award instantly as people post" color="pink.0" size="xs" />
+                  <Radio
+                    value="onClose"
+                    label="Award only after closing the thread"
+                    color="pink.0"
+                    size="xs"
+                  />
+                </Stack>
+              </Radio.Group>
+              <Checkbox
+                mt={10}
+                label="Use default settings for exp stuff"
+                color="green.0"
+                checked={useDefaultXp}
+                onChange={(e) => setUseDefaultXp(e.currentTarget.checked)}
+                styles={{ label: { color: "white", fontSize: 13 } }}
+              />
+            </ForumPanel>
+          )}
 
           <Group>
             {thread.closed ? (
