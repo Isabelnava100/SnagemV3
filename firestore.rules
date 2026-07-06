@@ -103,6 +103,13 @@ service cloud.firestore {
                    || hasCap('ManageSEO');
     }
 
+    // Sensitive integration config (Discord client secret, webhook URL). Admin
+    // only for BOTH read and write; the Cloud Functions read it via the Admin
+    // SDK, so no signed-in read is ever needed here.
+    match /adminSecrets/{doc} {
+      allow read, write: if isAdmin();
+    }
+
     // ---- Discord link requests --------------------------------------------
     match /tickets/{doc} {
       allow read: if isAdmin();
