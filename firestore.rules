@@ -56,6 +56,26 @@ service cloud.firestore {
         allow read: if request.auth.uid == uid || isAdmin();
         allow write: if isAdmin() || hasCap('ManageBadges');
       }
+      // Public-profile subset: any signed-in member may READ these to render the
+      // members directory and public profiles (see docs/PROFILE_DATA.md, which
+      // classifies these as public). Writes stay owner/admin. Currency, items,
+      // bookmarks, drafts and notifications remain private via the rules above/below.
+      match /bag/profile {
+        allow read: if isSignedIn();
+        allow write: if isAdmin() || request.auth.uid == uid;
+      }
+      match /bag/characters {
+        allow read: if isSignedIn();
+        allow write: if isAdmin() || request.auth.uid == uid;
+      }
+      match /bag/owned_pokemons {
+        allow read: if isSignedIn();
+        allow write: if isAdmin() || request.auth.uid == uid;
+      }
+      match /bag/teams {
+        allow read: if isSignedIn();
+        allow write: if isAdmin() || request.auth.uid == uid;
+      }
       // All other per-user data: owner (or admin) only.
       match /bag/{doc} {
         allow read: if request.auth.uid == uid || isAdmin();
