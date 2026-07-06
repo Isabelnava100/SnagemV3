@@ -136,6 +136,18 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // New-member starter onboarding. Same shape as importRequests: the member
+    // builds and submits their own request; reviewers (Admin / ApproveImports)
+    // read the queue. Creating the character and granting the starter, plus any
+    // reviewer-side status change, go through the approveStarter / rejectStarter
+    // Cloud Functions (Admin SDK), so clients never write another member's doc,
+    // their own bag, or their own characters here.
+    match /starterRequests/{uid} {
+      allow read: if request.auth.uid == uid || isAdmin() || hasCap('ApproveImports');
+      allow create, update: if request.auth.uid == uid;
+      allow delete: if false;
+    }
+
     // ---- Append-only audit trail ------------------------------------------
     // Staff (admins and any director with a capability) can read the trail so
     // it can render at the approval screens they work in.

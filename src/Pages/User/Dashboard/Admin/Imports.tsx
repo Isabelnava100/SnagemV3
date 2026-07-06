@@ -30,6 +30,14 @@ import {
   getPendingImports,
   rejectImport,
 } from "../../../../queries/imports";
+import {
+  StarterRequest,
+  approveStarter,
+  getPendingStarters,
+  rejectStarter,
+} from "../../../../queries/starter";
+import { getPokemonImageURL } from "../../../../helpers";
+import { Avatar } from "@mantine/core";
 
 const CURRENCY: { key: keyof ImportEntries["currency"]; label: string }[] = [
   { key: "pokecoin", label: "Poke Coins" },
@@ -46,16 +54,33 @@ export default function Imports() {
     queryFn: getPendingImports,
     enabled: canReview,
   });
+  const { data: starters, isPending: startersPending } = useQuery({
+    queryKey: ["pending-starters"],
+    queryFn: getPendingStarters,
+    enabled: canReview,
+  });
   const { data: users } = useQuery({ queryKey: ["get-all-users"], queryFn: getUsers });
 
   if (!canReview) return <Text c="white">You don&apos;t have permission to review imports.</Text>;
-  if (isPending || !pending) return <SectionLoader />;
+  if (isPending || !pending || startersPending) return <SectionLoader />;
 
   const nameFor = (uid: string) => users?.find((u) => u.id === uid)?.username ?? uid;
 
   return (
     <Stack gap={16} maw={720}>
       <Title order={2} c="white" size={24} fw={400}>
+        Starter approvals
+      </Title>
+      <Text fz={13} c="dimmed">
+        New members create their first character and pick a stage 1 starter. Approving creates the
+        character and grants the starter (assigned to it) in one step, or send it back with a note.
+      </Text>
+      {!starters?.length && <EmptyMessage title="No starters are waiting for review." />}
+      {(starters ?? []).map((req) => (
+        <StarterReviewCard key={req.uid} req={req} username={nameFor(req.uid)} />
+      ))}
+
+      <Title order={2} c="white" size={24} fw={400} mt={12}>
         Import approvals
       </Title>
       <Text fz={13} c="dimmed">
@@ -69,9 +94,116 @@ export default function Imports() {
       ))}
       <ActivityLog
         title="Recent import activity"
-        filter={(r) => r.action.startsWith("import")}
+        filter={(r) => r.action.startsWith("import") || r.action.startsWith("starter")}
       />
     </Stack>
+  );
+}
+
+function StarterReviewCard(props: { req: StarterRequest & { uid: string }; username: string }) {
+  const { req, username } = props;
+  const queryClient = useQueryClient();
+  const [note, setNote] = React.useState("");
+  const [message, setMessage] = React.useState("");
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["pending-starters"] });
+
+  const approve = useMutation({
+    mutationFn: () => approveStarter(req.uid),
+    onSuccess: () => {
+      setMessage("Approved. Character and starter added to the member's account.");
+      refresh();
+    },
+    onError: (e) => setMessage((e as Error).message || "Could not approve."),
+  });
+
+  const reject = useMutation({
+    mutationFn: () => rejectStarter(req.uid, note),
+    onSuccess: refresh,
+    onError: (e) => setMessage((e as Error).message || "Could not send it back."),
+  });
+
+  return (
+    <Paper p={16} radius={12} style={{ background: "#1E1D2080" }}>
+      <Stack gap={12}>
+        <Group justify="space-between">
+          <Text c="white" fw={600}>
+            {username}
+          </Text>
+          <Badge variant="light" color="yellow">
+            Pending
+          </Badge>
+        </Group>
+
+        <Text fz={13} c="white">
+          Character: {req.character?.name || "(no name)"}
+          {req.character?.pronouns ? ` (${req.character.pronouns})` : ""}
+        </Text>
+        {req.character?.short_description && (
+          <Text fz={13} c="dimmed">
+            {req.character.short_description}
+          </Text>
+        )}
+        {req.starter && (
+          <Group gap={8} wrap="nowrap">
+            <Avatar
+              src={getPokemonImageURL(req.starter.slug)}
+              alt={req.starter.species}
+              size={28}
+              imageProps={{ style: { imageRendering: "pixelated" } }}
+            />
+            <Text fz={13} c="white">
+              Starter: {req.starter.species} · {req.starter.gender}
+            </Text>
+          </Group>
+        )}
+        {req.note && (
+          <Text fz={13} c="dimmed">
+            Member note: {req.note}
+          </Text>
+        )}
+
+        {message && (
+          <Text
+            fz={13}
+            role="status"
+            aria-live="polite"
+            c={message.startsWith("Could not") ? "#E35C65" : "green.0"}
+          >
+            {message}
+          </Text>
+        )}
+
+        <Group gap={10} align="flex-end" wrap="wrap">
+          <GradientButtonPrimary
+            radius="xl"
+            loading={approve.isPending}
+            onClick={() => approve.mutateAsync().catch(() => undefined)}
+          >
+            Approve &amp; create
+          </GradientButtonPrimary>
+          <Textarea
+            aria-label="Reason for sending the starter back"
+            placeholder="Reason (sent to the member if you send it back)"
+            value={note}
+            onChange={(e) => setNote(e.currentTarget.value)}
+            autosize
+            minRows={1}
+            style={{ flex: 1, minWidth: 220 }}
+            styles={{ input: { background: "#2E2D2E" } }}
+          />
+          <Button
+            variant="light"
+            color="red"
+            loading={reject.isPending}
+            disabled={!note.trim()}
+            onClick={() => reject.mutateAsync().catch(() => undefined)}
+          >
+            Send back
+          </Button>
+        </Group>
+      </Stack>
+    </Paper>
   );
 }
 

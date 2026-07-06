@@ -42,53 +42,60 @@ function DrawerTile(props: { children: React.ReactNode }) {
   );
 }
 
+const DRAWER_COLUMNS = 3;
+
+/** One drawer tile's content: an icon element and its label. */
+interface DrawerEntry {
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const iconBox = (node: React.ReactNode) => (
+  <Box style={{ height: 30, display: "flex", alignItems: "center" }}>{node}</Box>
+);
+
+// The drawer opens from the bottom, so the links read from the bottom-right up
+// and to the left (nearest the thumb first). We build the tiles top-to-bottom,
+// then reverse and pad the empty cells to the front so the first link lands in
+// the bottom-right cell.
+const drawerEntries: DrawerEntry[] = [
+  { to: "/", label: "Home", icon: iconBox(<IconHome size={26} color="white" />) },
+  ...overflowLinks.map((item) => ({
+    to: item.link,
+    label: item.label,
+    // Fixed box + fit=contain: Mantine 9 Image ignores numeric width/height,
+    // so constrain the box to size the icon.
+    icon: (
+      <Box
+        style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <Image src={item.icon} w="100%" h="100%" fit="contain" alt={item.label} />
+      </Box>
+    ),
+  })),
+  { to: "/Library", label: "Library", icon: iconBox(<IconBooks size={26} color="white" />) },
+  { to: "/Policies", label: "Policies", icon: iconBox(<IconFileText size={26} color="white" />) },
+];
+
 function DrawerGrid({ onNavigate }: { onNavigate: () => void }) {
+  const spacers = (DRAWER_COLUMNS - (drawerEntries.length % DRAWER_COLUMNS)) % DRAWER_COLUMNS;
+  const ordered = [...drawerEntries].reverse();
   return (
     <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-      <Link to="/" onClick={onNavigate} style={{ textDecoration: "none" }}>
-        <DrawerTile>
-          <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-            <IconHome size={26} color="white" />
-          </Box>
-          <Text fz={11} c="white" tt="uppercase">
-            Home
-          </Text>
-        </DrawerTile>
-      </Link>
-      {overflowLinks.map((item) => (
-        <Link key={item.label} to={item.link} onClick={onNavigate} style={{ textDecoration: "none" }}>
+      {Array.from({ length: spacers }).map((_, i) => (
+        <Box key={`spacer-${i}`} aria-hidden />
+      ))}
+      {ordered.map((entry) => (
+        <Link key={entry.label} to={entry.to} onClick={onNavigate} style={{ textDecoration: "none" }}>
           <DrawerTile>
-            {/* Fixed box + fit=contain: Mantine 9 Image ignores numeric
-                width/height, so constrain the box to size the icon. */}
-            <Box style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Image src={item.icon} w="100%" h="100%" fit="contain" alt={item.label} />
-            </Box>
+            {entry.icon}
             <Text fz={11} c="white" tt="uppercase">
-              {item.label}
+              {entry.label}
             </Text>
           </DrawerTile>
         </Link>
       ))}
-      <Link to="/Library" onClick={onNavigate} style={{ textDecoration: "none" }}>
-        <DrawerTile>
-          <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-            <IconBooks size={26} color="white" />
-          </Box>
-          <Text fz={11} c="white" tt="uppercase">
-            Library
-          </Text>
-        </DrawerTile>
-      </Link>
-      <Link to="/Policies" onClick={onNavigate} style={{ textDecoration: "none" }}>
-        <DrawerTile>
-          <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-            <IconFileText size={26} color="white" />
-          </Box>
-          <Text fz={11} c="white" tt="uppercase">
-            Policies
-          </Text>
-        </DrawerTile>
-      </Link>
     </Box>
   );
 }

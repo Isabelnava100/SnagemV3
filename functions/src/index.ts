@@ -1681,6 +1681,163 @@ export const rejectImport = onCall(async (request) => {
 });
 
 // ---------------------------------------------------------------------------
+// Starter onboarding (new, non-Gaia members)
+// ---------------------------------------------------------------------------
+
+/**
+ * Approve a new member's starter request. This creates their first character
+ * and grants the chosen starter Pokemon (assigned to that character) in one
+ * step. The starter must be a "stage1" species (a base form that can still
+ * evolve and is not legendary); the pick is re-validated here so a tampered
+ * client cannot smuggle in a fully-evolved or legendary starter.
+ *
+ * Reviewer capability is ApproveImports (same reviewers who handle returning
+ * members). One approval per member; a granted request is not re-approvable.
+ */
+export const approveStarter = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!hasCap(member, "ApproveImports")) {
+    throw new HttpsError("permission-denied", "You cannot approve starters.");
+  }
+  const targetUid = requireString(request.data?.uid, "member", 128);
+
+  const reqRef = db.doc(`starterRequests/${targetUid}`);
+  const charsRef = db.doc(`users/${targetUid}/bag/characters`);
+  const ownedRef = db.doc(`users/${targetUid}/bag/owned_pokemons`);
+  const now = new Date();
+  const stamp = { nt: now.getTime(), seconds: Math.floor(now.getTime() / 1000) };
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(reqRef);
+    if (!snap.exists) throw new HttpsError("not-found", "No starter request to approve.");
+    const data = snap.data() as Record<string, any>;
+    if (data.status === "granted") {
+      throw new HttpsError("failed-precondition", "This starter was already granted.");
+    }
+
+    const character = data.character ?? {};
+    const starter = data.starter ?? {};
+    const name = String(character.name ?? "").trim().slice(0, 60);
+    if (!name) throw new HttpsError("invalid-argument", "The character needs a name.");
+
+    const slug = String(starter.slug ?? "");
+    const pokedex = String(starter.pokedex ?? "");
+    if (!slug || !pokedex) throw new HttpsError("invalid-argument", "No starter chosen.");
+    if (stageForDex(Number(pokedex)) !== "stage1") {
+      throw new HttpsError(
+        "invalid-argument",
+        "A starter must be a stage 1 Pokemon that can still evolve."
+      );
+    }
+
+    const characterId = randomUUID();
+    const pokemonId = randomUUID();
+
+    tx.set(
+      charsRef,
+      {
+        [characterId]: {
+          age: "",
+          birthday: "",
+          height: "",
+          moveset: "",
+          name,
+          short_description: String(character.short_description ?? "").slice(0, 500),
+          species: "Human",
+          pronouns: String(character.pronouns ?? "").slice(0, 40),
+          type: "None",
+          imageURL: "",
+          createdAt: stamp,
+        },
+      },
+      { merge: true }
+    );
+
+    tx.set(
+      ownedRef,
+      {
+        [pokemonId]: {
+          date_caught: stamp,
+          gender: starter.gender === "F" ? "F" : "M",
+          generation: generationFor(pokedex),
+          image_slug: slug,
+          name: String(starter.species ?? "").slice(0, 60),
+          pokedex,
+          regiondex: "",
+          species: String(starter.species ?? "").slice(0, 60),
+          type1: "Unknown",
+          shiny: rollShiny(),
+          experience: 0,
+          friendship: 0,
+          shadow: 0,
+          purification: 0,
+          characterId,
+          starterFor: characterId,
+        },
+      },
+      { merge: true }
+    );
+
+    tx.set(
+      reqRef,
+      {
+        status: "granted",
+        reviewedAt: now.getTime(),
+        reviewedByName: member.username,
+        reviewerNote: "",
+        grantedCharacterId: characterId,
+      },
+      { merge: true }
+    );
+  });
+
+  await db.collection("auditLogs").add({
+    action: "starter.approve",
+    actorUid: uid,
+    actorName: member.username,
+    details: { targetUid },
+    createdAt: now,
+  });
+  await notifyUsers([targetUid], {
+    type: "starter",
+    text: "Your starter was approved! Your first character and Pokemon are ready.",
+    link: "/Dashboard",
+  });
+
+  return { ok: true };
+});
+
+/** Send a starter request back to the member with a note. */
+export const rejectStarter = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!hasCap(member, "ApproveImports")) {
+    throw new HttpsError("permission-denied", "You cannot review starters.");
+  }
+  const targetUid = requireString(request.data?.uid, "member", 128);
+  const note = String(request.data?.note ?? "").slice(0, 1000);
+  const now = new Date();
+
+  await db.doc(`starterRequests/${targetUid}`).set(
+    {
+      status: "rejected",
+      reviewerNote: note,
+      reviewedAt: now.getTime(),
+      reviewedByName: member.username,
+    },
+    { merge: true }
+  );
+  await notifyUsers([targetUid], {
+    type: "starter",
+    text: "Your starter pick needs a change before it can be approved. See the note in onboarding.",
+    link: "/Onboarding",
+  });
+
+  return { ok: true };
+});
+
+// ---------------------------------------------------------------------------
 // Polls & boss battles
 // ---------------------------------------------------------------------------
 

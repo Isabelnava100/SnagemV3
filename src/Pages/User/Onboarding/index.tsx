@@ -41,6 +41,7 @@ import {
   submitImportRequest,
 } from "../../../queries/imports";
 import { downloadCsv, parseImportCsv } from "./csv";
+import StarterOnboarding from "./StarterOnboarding";
 
 const CURRENCY_LABELS: { key: keyof ImportEntries["currency"]; label: string }[] = [
   { key: "pokecoin", label: "Poke Coins" },
@@ -51,7 +52,18 @@ const CURRENCY_LABELS: { key: keyof ImportEntries["currency"]; label: string }[]
 const pokemonByName = new Map(pokemonData.map((p) => [p.name.toLowerCase(), p]));
 const itemByName = new Map(itemData.map((i) => [i.name.toLowerCase(), i]));
 
+/**
+ * Onboarding splits by member origin. Returning Gaia members restore their old
+ * collection (the import flow below). Brand-new members create their first
+ * character and pick a starter Pokemon (StarterOnboarding).
+ */
 export default function Onboarding() {
+  const { user } = useAuth();
+  const isGaia = user?.otherinfo?.isGaia === "Yes";
+  return isGaia ? <GaiaImport /> : <StarterOnboarding />;
+}
+
+function GaiaImport() {
   const { user } = useAuth();
   const uid = user?.uid;
   const queryClient = useQueryClient();

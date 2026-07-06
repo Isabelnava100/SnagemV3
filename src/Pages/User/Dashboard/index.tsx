@@ -47,6 +47,7 @@ import {
 import { getCharacters, getCurrencies } from "../../../queries/dashboard";
 import { getNotifications, markNotificationsRead } from "../../../queries/game";
 import { getImportRequest } from "../../../queries/imports";
+import { getStarterRequest } from "../../../queries/starter";
 import { RESET_READING_SCALE } from "../../../lib/readingSize";
 import { canAccessStaffArea, hasCapability, isAdmin } from "../../../lib/permissions";
 import { Capability } from "../../../components/types/typesUsed";
@@ -77,6 +78,7 @@ export function Dashboard() {
         <CurrencyBar />
         <Announcements />
         <ImportBanner />
+        <StarterBanner />
         <TabsPanel />
       </Stack>
     </Paper>
@@ -165,6 +167,45 @@ function ImportBanner() {
         </Text>
         <Button component={Link} to="/Onboarding" size="xs" radius="xl" variant="white">
           Open import
+        </Button>
+      </Group>
+    </Alert>
+  );
+}
+
+/**
+ * Prompts brand-new (non-Gaia) members to create their first character and pick
+ * a starter. Hidden once their starter is granted; a pending/rejected state
+ * keeps nudging them back.
+ */
+function StarterBanner() {
+  const { user } = useAuth();
+  const isGaia = user?.otherinfo?.isGaia === "Yes";
+  const { data: request } = useQuery({
+    queryKey: ["starter-request", user?.uid],
+    queryFn: () => getStarterRequest(user!.uid),
+    enabled: !!user && !isGaia,
+  });
+
+  if (isGaia) return null;
+  const status = request?.status;
+  if (status === "granted") return null;
+
+  const message =
+    status === "pending"
+      ? "Your starter is waiting for staff approval."
+      : status === "rejected"
+      ? "Your starter pick needs a small change before it can be approved."
+      : "Welcome! Create your first character and choose a starter Pokemon to get going.";
+
+  return (
+    <Alert color="teal" variant="light" title="Choose your starter">
+      <Group justify="space-between" align="center" wrap="wrap" gap={10}>
+        <Text fz={14} c="white">
+          {message}
+        </Text>
+        <Button component={Link} to="/Onboarding" size="xs" radius="xl" variant="white">
+          Open starter setup
         </Button>
       </Group>
     </Alert>
