@@ -58,13 +58,13 @@ export default function SEO() {
   return (
     <Stack gap={14} maw={640}>
       <Title order={2} c="white" size={24} fw={400}>
-        SEO Settings
+        SEO &amp; Search
       </Title>
       <Text fz={13} c="dimmed">
-        These are the site's default search and social-share details. They set the
-        browser tab title, the description that shows up in search results, and the
-        preview card people see when a link is shared. Page-specific overrides come
-        in a later update.
+        The site's default search and social-share details. They set the browser
+        tab title, the description that shows up in search results, and the preview
+        card people see when a link is shared. Page-specific overrides come in a
+        later update.
       </Text>
 
       <TextInput

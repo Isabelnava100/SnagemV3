@@ -101,8 +101,8 @@ const { default: AdminBadges } = lazyImport(
   () => import("./Pages/User/Dashboard/Admin/Badges"),
   "default"
 );
-const { default: AdminSEO } = lazyImport(
-  () => import("./Pages/User/Dashboard/Admin/SEO"),
+const { default: SiteSettings } = lazyImport(
+  () => import("./Pages/User/Dashboard/SiteSettings"),
   "default"
 );
 const { default: AdminApplicants } = lazyImport(
@@ -166,6 +166,7 @@ export default function AppRoutes() {
                       <Route path="Pokemon/:teamId" element={<PokemonTeam />} />
                       <Route path="Pokemon" element={<Pokemons />} />
                       <Route path="Profile" element={<Profile />} />
+                      <Route path="Site-Settings" element={<SiteSettings />} />
                       <Route path="Admin-Access" element={<Admin />}>
                         <Route index element={<Navigate to="Adjust-Lists" />} />
                         <Route path="Adjust-Lists" element={<AdjustLists />} />
@@ -175,7 +176,6 @@ export default function AppRoutes() {
                         <Route path="Permissions" element={<AdminPermissions />} />
                         <Route path="Mystery-Boxes" element={<AdminMysteryBoxes />} />
                         <Route path="Badges" element={<AdminBadges />} />
-                        <Route path="SEO" element={<AdminSEO />} />
                         <Route path="Imports" element={<AdminImports />} />
                       </Route>
                       <Route path="Settings" element={<Settings />}>

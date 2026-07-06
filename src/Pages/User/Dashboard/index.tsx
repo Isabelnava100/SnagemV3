@@ -48,7 +48,8 @@ import { getCharacters, getCurrencies } from "../../../queries/dashboard";
 import { getNotifications, markNotificationsRead } from "../../../queries/game";
 import { getImportRequest } from "../../../queries/imports";
 import { RESET_READING_SCALE } from "../../../lib/readingSize";
-import { canAccessStaffArea, isAdmin } from "../../../lib/permissions";
+import { canAccessStaffArea, hasCapability, isAdmin } from "../../../lib/permissions";
+import { Capability } from "../../../components/types/typesUsed";
 import { handleLogout } from "../../auth/components/LogoutHandle";
 import "/src/assets/styles/dashboard.css";
 
@@ -361,6 +362,13 @@ function TabsPanel() {
     { path: "/Pokemon", icon: Pokemons, label: "Pokemon", enabled: true },
     { path: "/Profile", icon: Profile, label: "Profile", enabled: true },
     { path: "/Settings", icon: SettingsIcon, label: "Settings", enabled: true },
+    {
+      // Site-wide settings (SEO, etc.). Admins and ManageSEO directors only.
+      path: "/Site-Settings",
+      icon: SettingsIcon,
+      label: "Site Settings",
+      enabled: isAdmin(user) || hasCapability(user, Capability.ManageSEO),
+    },
     {
       // Admins get the full "Admin Access"; directors with a staff capability
       // get a "Staff Tools" entry to the same area (with only their tools).
