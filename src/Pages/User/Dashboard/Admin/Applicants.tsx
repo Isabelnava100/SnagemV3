@@ -12,11 +12,13 @@ import {
   rejectNewUser,
 } from "../../../../queries/applicants";
 
-const ROLE_OPTIONS = ["New", "Verified", "Master", "Director"];
+// Approval always grants Verified. Higher tiers (Master, Director) are assigned
+// later through Admin > Permissions, not at approval time.
+const ROLE_OPTIONS = ["Verified"];
 
 function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () => void }) {
   const { applicant } = props;
-  const [role, setRole] = React.useState("New");
+  const [role, setRole] = React.useState("Verified");
   const [message, setMessage] = React.useState("");
 
   const approve = useMutation({
@@ -68,7 +70,7 @@ function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () => void 
           label="Approve as"
           data={ROLE_OPTIONS}
           value={role}
-          onChange={(v) => setRole(v ?? "New")}
+          onChange={(v) => setRole(v ?? "Verified")}
           size="xs"
           w={140}
           allowDeselect={false}
