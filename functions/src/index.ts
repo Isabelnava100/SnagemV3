@@ -22,7 +22,11 @@ import {
   Transaction,
 } from "firebase-admin/firestore";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
-import { onDocumentUpdated, onDocumentWritten } from "firebase-functions/v2/firestore";
+import {
+  onDocumentCreated,
+  onDocumentUpdated,
+  onDocumentWritten,
+} from "firebase-functions/v2/firestore";
 import pokemonJSON from "./pokemon.json";
 import battleStages from "./battleStages.json";
 
@@ -1227,6 +1231,95 @@ export const rejectNewUser = onCall(async (request) => {
 
   return { ok: true };
 });
+
+// ---------------------------------------------------------------------------
+// Discord: account linking (OAuth) + channel webhook notifications
+// ---------------------------------------------------------------------------
+
+async function discordConfig(): Promise<{ clientSecret: string; webhookUrl: string }> {
+  const data = (await db.doc("adminSecrets/discord").get()).data() ?? {};
+  return {
+    clientSecret: String(data.clientSecret ?? ""),
+    webhookUrl: String(data.webhookUrl ?? ""),
+  };
+}
+
+/**
+ * Complete the Discord OAuth code flow: exchange the code for the member's
+ * Discord identity and store it on their user doc. The client id is public
+ * (passed in), the client secret stays server-side in adminSecrets/discord.
+ */
+export const linkDiscord = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const code = requireString(request.data?.code, "code", 512);
+  const redirectUri = requireString(request.data?.redirectUri, "redirectUri", 512);
+  const clientId = requireString(request.data?.clientId, "clientId", 64);
+  const { clientSecret } = await discordConfig();
+  if (!clientSecret) {
+    throw new HttpsError("failed-precondition", "Discord is not configured yet.");
+  }
+
+  const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: redirectUri,
+    }),
+  });
+  if (!tokenRes.ok) throw new HttpsError("invalid-argument", "Discord authorization failed.");
+  const token = (await tokenRes.json()) as { access_token?: string };
+  if (!token.access_token) throw new HttpsError("invalid-argument", "Discord did not return a token.");
+
+  const meRes = await fetch("https://discord.com/api/users/@me", {
+    headers: { Authorization: `Bearer ${token.access_token}` },
+  });
+  if (!meRes.ok) throw new HttpsError("internal", "Could not read your Discord profile.");
+  const me = (await meRes.json()) as { id?: string; username?: string; global_name?: string };
+  if (!me.id) throw new HttpsError("internal", "Discord profile had no id.");
+
+  const discordUsername = me.global_name || me.username || "";
+  await db.doc(`users/${uid}`).set(
+    { discordUID: me.id, discordUsername },
+    { merge: true }
+  );
+  return { discordUID: me.id, discordUsername };
+});
+
+/** Remove a member's linked Discord account. */
+export const unlinkDiscord = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  await db.doc(`users/${uid}`).set(
+    { discordUID: FieldValue.delete(), discordUsername: FieldValue.delete() },
+    { merge: true }
+  );
+  return { ok: true };
+});
+
+/** Announce new roleplays to a Discord channel via the configured webhook. */
+export const onThreadCreatedDiscord = onDocumentCreated(
+  "forum/{forum}/threads/{threadId}",
+  async (event) => {
+    const data = event.data?.data();
+    if (!data || data.private) return;
+    const { webhookUrl } = await discordConfig();
+    if (!webhookUrl) return;
+    const { forum, threadId } = event.params;
+    const forumName = String(forum).replace(/-/g, " ");
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: `**New roleplay:** ${data.title ?? "Untitled"} in ${forumName} by ${data.createdBy ?? "a member"}\nhttps://snagemguild.com/Forum/${forum}/thread/${threadId}`,
+      }),
+    }).catch(() => undefined);
+  }
+);
 
 // ---------------------------------------------------------------------------
 // Mystery boxes

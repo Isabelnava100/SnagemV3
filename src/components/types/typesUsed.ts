@@ -226,6 +226,8 @@ export type SpecificUser = {
   capabilities?: Capability[];
   badges: string[];
   discordUID?: string;
+  /** Discord display name captured when the account was linked. */
+  discordUsername?: string;
   /** "Yes" for members who joined via the GaiaOnline guild. */
   isGaia?: string;
 };

@@ -1,15 +1,22 @@
-import { Box, Flex, Stack, Switch, Text, type SwitchProps } from "@mantine/core";
+import { Box, Button, Flex, Group, Stack, Switch, Text, type SwitchProps } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { Settings } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
 import { getNotifications, markNotificationsRead } from "../../../../queries/game";
 import { getSettings } from "../../../../queries/settings";
+import {
+  DISCORD_CLIENT_ID,
+  discordAuthorizeUrl,
+  getMyDiscord,
+  linkDiscord,
+  unlinkDiscord,
+} from "../../../../queries/discord";
 
 interface CustomSwitchProps extends SwitchProps {}
 
@@ -152,6 +159,97 @@ function DiscordPublicToggle() {
   );
 }
 
+/**
+ * "Connect Discord": runs the Discord OAuth flow. Clicking sends the member to
+ * Discord; on return we read the `code` query param, exchange it server-side
+ * (linkDiscord), and store their Discord id. Shows connected status + unlink.
+ */
+function ConnectDiscord() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [status, setStatus] = React.useState("");
+
+  const { data: link } = useQuery({
+    queryKey: ["my-discord", user?.uid],
+    queryFn: () => getMyDiscord(user!.uid),
+    enabled: !!user,
+  });
+
+  const linkMutation = useMutation({
+    mutationFn: (code: string) => linkDiscord(code),
+    onSuccess: (r) => {
+      setStatus(`Connected as ${r.discordUsername || "your Discord account"}.`);
+      queryClient.invalidateQueries({ queryKey: ["my-discord", user?.uid] });
+    },
+    onError: (e) => setStatus((e as Error).message || "Could not connect Discord."),
+  });
+
+  const unlinkMutation = useMutation({
+    mutationFn: unlinkDiscord,
+    onSuccess: () => {
+      setStatus("Disconnected.");
+      queryClient.invalidateQueries({ queryKey: ["my-discord", user?.uid] });
+    },
+  });
+
+  // Handle the OAuth redirect back from Discord (?code=...).
+  React.useEffect(() => {
+    const code = searchParams.get("code");
+    if (code && !linkMutation.isPending) {
+      linkMutation.mutateAsync(code).catch(() => undefined);
+      // Clean the code out of the URL so a refresh doesn't re-run it.
+      searchParams.delete("code");
+      searchParams.delete("state");
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const connected = !!link?.discordUID;
+
+  return (
+    <Stack gap={6}>
+      {connected ? (
+        <Group gap={10} wrap="wrap">
+          <Text fz={13} c="white">
+            Discord connected{link?.discordUsername ? ` as ${link.discordUsername}` : ""}.
+          </Text>
+          <Button
+            size="xs"
+            variant="light"
+            color="red"
+            loading={unlinkMutation.isPending}
+            onClick={() => unlinkMutation.mutateAsync()}
+          >
+            Disconnect
+          </Button>
+        </Group>
+      ) : DISCORD_CLIENT_ID ? (
+        <GradientButtonSecondary
+          radius="lg"
+          w="fit-content"
+          loading={linkMutation.isPending}
+          onClick={() => {
+            window.location.href = discordAuthorizeUrl();
+          }}
+        >
+          Connect Discord
+        </GradientButtonSecondary>
+      ) : (
+        <Text fz={13} c="dimmed">
+          Discord connecting is not set up yet.
+        </Text>
+      )}
+      {status && (
+        <Text fz={12} c="dimmed" role="status" aria-live="polite">
+          {status}
+        </Text>
+      )}
+    </Stack>
+  );
+}
+
 export default function Notifications() {
   const { user } = useAuth();
   const [isFirstTime, setFirstTime] = React.useState(true);
@@ -226,9 +324,7 @@ export default function Notifications() {
             {...getInputProps("discordNotifications", { type: "checkbox" })}
             label="Enable Discord notifications"
           />
-          <Text fz={13} c="dimmed">
-            Discord coming soon.
-          </Text>
+          <ConnectDiscord />
           <DiscordPublicToggle />
         </Stack>
         <CustomSwitch
