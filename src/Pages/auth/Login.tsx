@@ -75,6 +75,11 @@ export function Login() {
               form.setFieldError("email", "Too many attempts");
             } else if (results === "pending") {
               form.setFieldError("email", "Your application is still awaiting approval.");
+            } else if (results === "unlinked") {
+              form.setFieldError(
+                "email",
+                "This login isn't linked to a member profile yet. Contact an admin to finish setting up your account."
+              );
             } else if (results === "success") {
               form.reset();
               navigate("/Dashboard");

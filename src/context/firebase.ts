@@ -21,6 +21,11 @@ type Storage = firebase.storage.Storage;
 // type Firebase = typeof firebase;
 
 const auth: Auth = firebase.auth();
+// Pin local persistence explicitly (survives tab close/restart, shared across tabs).
+// It is the compat default, but pinning guards against a future SDK/default change
+// silently downgrading sessions and logging everyone out. Fire-and-forget: it settles
+// before any sign-in call resolves.
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => undefined);
 const db: Firestore = firebase.firestore();
 const storage: Storage = firebase.storage();
 

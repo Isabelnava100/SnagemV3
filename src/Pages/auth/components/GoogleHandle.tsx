@@ -19,13 +19,14 @@ export const handleGoogleSignIn = async (
     const { uid, email, displayName } = result.user;
 
     const otherinfo = await getInfo(uid);
-    if (otherinfo.username) {
+    // Gate on the users doc existing, not on username (imported members may lack it).
+    if (otherinfo.exists) {
       setUser({
         uid,
         email,
         displayName,
         otherinfo,
-        username: otherinfo.username,
+        username: otherinfo.username || displayName || "",
         avatar: otherinfo.avatar,
       });
       return "success";

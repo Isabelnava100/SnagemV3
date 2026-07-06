@@ -7,13 +7,18 @@ import { auth, db } from "./firebase";
 // return the user avatar and username from here
 export const getInfo = async (
   uid: string
-): Promise<SpecificUser & { avatar?: string; username: string }> => {
+): Promise<SpecificUser & { avatar?: string; username: string; exists: boolean }> => {
   const { doc, getDoc } = await import("firebase/firestore");
 
   const user = await getDoc(doc(db, "users", uid));
   const userData = user.data();
 
   return {
+    // `exists` distinguishes "approved/imported member" (has a users doc, even if
+    // the doc is missing a username) from "no profile at all". The login gate keys
+    // on this, not on username, so legacy/Gaia-imported members whose docs predate
+    // the username field are not force-signed-out. See docs/AUTH.md.
+    exists: user.exists(),
     permissions: userData ? userData.permissions : "",
     capabilities: userData?.capabilities ?? [],
     badges: userData ? userData.badges : [],
@@ -37,8 +42,10 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
       try {
         if (firebaseUser) {
           const { uid, email, displayName } = firebaseUser;
-          const { avatar, username, ...otherinfo } = await getInfo(uid);
-          setUser({ uid, email, displayName, username, avatar, otherinfo });
+          const { avatar, username, exists, ...otherinfo } = await getInfo(uid);
+          // Fall back to the auth displayName so imported members with a doc but no
+          // username field still render a name instead of a blank.
+          setUser({ uid, email, displayName, username: username || displayName || "", avatar, otherinfo });
           // Install the admin-configured XP curve for level displays.
           import("../queries/leveling").then((m) => m.loadActiveCurve());
         } else {
