@@ -2189,6 +2189,32 @@ function recycleUnits(category: string | undefined): number {
   return RECYCLE_HALF_CATEGORIES.has(c) ? 0.5 : 1;
 }
 
+// Cheap items (bought for 1 coin) are not recyclable, otherwise recycling would
+// mint coins for free. Bag entries carry no price, so build a itemId -> lowest
+// shop price index from the shops collection and cache it (shops rarely change).
+let cachedShopPrices: { map: Map<string, number>; at: number } | null = null;
+async function loadShopPrices(): Promise<Map<string, number>> {
+  const now = Date.now();
+  if (cachedShopPrices && now - cachedShopPrices.at < 300_000) return cachedShopPrices.map;
+  const shops = await db.collection("shops").get();
+  const map = new Map<string, number>();
+  shops.forEach((snap) => {
+    const data = snap.data();
+    const pools: ShopItem[] = [];
+    (data.sections ?? []).forEach((s: { items?: ShopItem[] }) =>
+      (s.items ?? []).forEach((it) => pools.push(it))
+    );
+    (data.rare_section?.pool ?? []).forEach((it: ShopItem) => pools.push(it));
+    pools.forEach((it) => {
+      if (!it?.itemId || typeof it.price !== "number") return;
+      const prev = map.get(it.itemId);
+      if (prev === undefined || it.price < prev) map.set(it.itemId, it.price);
+    });
+  });
+  cachedShopPrices = { map, at: now };
+  return map;
+}
+
 export const recycleItems = onCall(async (request) => {
   const uid = requireAuth(request);
   await loadMember(uid);
@@ -2199,6 +2225,7 @@ export const recycleItems = onCall(async (request) => {
 
   const bagRef = db.doc(`users/${uid}/bag/items`);
   const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const prices = await loadShopPrices();
 
   const result = await db.runTransaction(async (tx) => {
     const [bagSnap, curSnap] = await Promise.all([tx.get(bagRef), tx.get(currencyRef)]);
@@ -2213,19 +2240,19 @@ export const recycleItems = onCall(async (request) => {
 
     let removed = 0; // real items consumed
     let units = 0; // payout units (consumables count as half)
-    let excluded = 0; // items the shack refuses (e.g. medicine)
+    let excluded = 0; // items the shack refuses (medicine, 1-coin items)
     counts.forEach((want, id) => {
       const entry = bag[id];
       const take = Math.min(want, entry?.quantity ?? 0);
       if (take <= 0) return;
-      const per = recycleUnits(entry?.category);
-      if (per === 0) {
+      // Medicine, other excluded categories, and 1-coin items are not recyclable.
+      if (recycleUnits(entry?.category) === 0 || prices.get(id) === 1) {
         excluded += take; // do not consume or pay for excluded items
         return;
       }
       tx.set(bagRef, { [id]: { quantity: FieldValue.increment(-take) } }, { merge: true });
       removed += take;
-      units += take * per;
+      units += take * recycleUnits(entry?.category);
     });
 
     if (removed === 0) {

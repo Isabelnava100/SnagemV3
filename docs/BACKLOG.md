@@ -72,11 +72,11 @@ July 2026 build-out are marked (2026-07).
 
 - **Currency stored as strings** (2026-07). `bag/currency` values are strings; spend
   math uses parseInt server-side. Migrate to numbers before heavier economy math.
-- **Recycle 1-coin exclusion** (2026-07). `recycleItems` now enforces medicine exclusion
-  and consumable-half (see `functions/src/index.ts` RECYCLE_* sets, mirrored in
-  `src/Pages/Mall/index.tsx`), but the 1-coin-item exclusion is still deferred: bag
-  entries only store name/filePath/category/quantity, no price. Fix: store price on bag
-  items at buy/grant time, or load a price catalog server-side, then skip 1-coin items.
+- **Recycle rules** (2026-07). DONE. `recycleItems` enforces medicine exclusion,
+  consumable-half (RECYCLE_* sets), and the 1-coin-item exclusion (a cached itemId ->
+  lowest-shop-price index built from the shops collection; price === 1 items are refused).
+  The Mall preview is a non-authoritative estimate and does not know prices, so it may
+  slightly over-count 1-coin items; the server returns the real coin total.
 - **Candy -> Scent conversion** (2026-07). DONE. `convertCandyToScent` spends a Pokemon's
   Evo Points (experience) for Joy/Excite/Vivid Scents (4/6/8 each) with a UI in the Trash
   Shack. Scents have no catalog sprite yet, so they show a blank icon (see custom sprites).
