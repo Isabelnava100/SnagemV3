@@ -1,4 +1,4 @@
-import { Outlet } from "react-router";
+import { Outlet } from "react-router-dom";
 import SubTabsLayout from "../../../../components/Dashboard/SubTabsLayout";
 
 export default function SettingsLayout() {

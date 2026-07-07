@@ -1,6 +1,6 @@
 import { Box, Flex, ScrollArea, Stack, Text } from "@mantine/core";
 import React from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { RESET_READING_SCALE } from "../../lib/readingSize";

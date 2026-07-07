@@ -9,9 +9,6 @@ type Props = {
 
 export const Protect = ({ children }: Props) => {
   const { user } = useAuth();
-  // let {pathname} = useLocation();
-  // console.log(pathname);
-  // console.log(user?.otherinfo?.permissions);
 
   if (!user) {
     return (

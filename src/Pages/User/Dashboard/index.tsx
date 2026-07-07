@@ -17,7 +17,7 @@ import {
 } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import BackgroundImage from "../../../assets/images/dashboard-background.jpg";
 import PokemonImage from "../../../assets/images/sylveon.svg";
