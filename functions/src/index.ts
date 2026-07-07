@@ -21,6 +21,7 @@ import {
   getFirestore,
   Transaction,
 } from "firebase-admin/firestore";
+import { setGlobalOptions } from "firebase-functions/v2";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
 import {
   onDocumentCreated,
@@ -29,6 +30,13 @@ import {
 } from "firebase-functions/v2/firestore";
 import pokemonJSON from "./pokemon.json";
 import battleStages from "./battleStages.json";
+
+// Each 2nd-gen function is its own Cloud Run service that reserves CPU up to
+// maxInstances. With this many callables, the region's default reservation
+// blows the "Total allowable CPU per project per region" quota at deploy time.
+// This guild's traffic is tiny, so cap every function low; concurrency (80 per
+// instance by default) still handles far more than we will ever see.
+setGlobalOptions({ maxInstances: 5 });
 
 initializeApp();
 const db = getFirestore();
