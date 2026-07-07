@@ -31,12 +31,12 @@ import {
 import pokemonJSON from "./pokemon.json";
 import battleStages from "./battleStages.json";
 
-// Each 2nd-gen function is its own Cloud Run service that reserves CPU up to
-// maxInstances. With this many callables, the region's default reservation
-// blows the "Total allowable CPU per project per region" quota at deploy time.
-// This guild's traffic is tiny, so cap every function low; concurrency (80 per
-// instance by default) still handles far more than we will ever see.
-setGlobalOptions({ maxInstances: 5 });
+// Each 2nd-gen function is a Cloud Run service reserving CPU = maxInstances x cpu.
+// This project's regional CPU quota is capped at 20,000 milli vCPU (20 vCPU) and
+// is not currently raiseable, so all ~39 functions must fit inside it. cpu 0.25 x
+// maxInstances 1 = 250m each (~9,750m total), well under the cap with room to
+// spare. This guild's traffic is tiny; one instance at concurrency 80 is plenty.
+setGlobalOptions({ maxInstances: 1, cpu: 0.25 });
 
 initializeApp();
 const db = getFirestore();
