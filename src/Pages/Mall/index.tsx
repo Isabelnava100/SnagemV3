@@ -5,6 +5,7 @@ import {
   Checkbox,
   Container,
   Divider,
+  Flex,
   Group,
   Image,
   NumberInput,
@@ -15,12 +16,13 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { IconArrowLeft, IconShoppingBag } from "@tabler/icons-react";
+import { IconArrowLeft, IconLock, IconRefresh, IconShoppingBag, IconSparkles } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
+import { isMaster } from "../../lib/permissions";
 import { itemData } from "../../data/item";
 import { getItemImageURL } from "../../helpers";
 import { clickable } from "../../lib/a11y";
@@ -89,6 +91,48 @@ function recycleUnits(category: string | undefined): number {
 /** Recycle payout preview (an estimate, the server is authoritative). */
 function estimateRecyclePayout(units: number): number {
   return Math.floor(Math.max(0, units) * 1.2);
+}
+
+const RECYCLE_RATES: Array<[string, string]> = [
+  ["1 item", "1 coin"],
+  ["3 items", "3 coins"],
+  ["5 items", "6 coins"],
+  ["10 items", "12 coins"],
+  ["Nugget (alone)", "3 coins"],
+  ["Big Nugget (alone)", "5 coins"],
+  ["10 items + Big Nugget", "24 coins"],
+];
+
+const SCENT_RATES: Array<[string, string]> = [
+  ["4 Evo Points", "1 Joy Scent"],
+  ["6 Evo Points", "1 Excite Scent"],
+  ["8 Evo Points", "1 Vivid Scent"],
+];
+
+/** Reference rate card (label -> value rows). */
+function RatePanel(props: { title: string; rows: Array<[string, string]>; note: string; valueColor: string }) {
+  return (
+    <Box p="lg" style={{ flex: "1 1 0%", minWidth: 0, borderRadius: 16, background: "#141019", border: "1px solid #232028" }}>
+      <Text fz={13} fw={800} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
+        {props.title}
+      </Text>
+      <Stack gap={0}>
+        {props.rows.map(([label, value], i) => (
+          <Group key={label} justify="space-between" wrap="nowrap" py={10} style={{ borderTop: i ? "1px solid #232028" : undefined }}>
+            <Text fz={14} c="gray.3">
+              {label}
+            </Text>
+            <Text fz={14} fw={800} c={props.valueColor}>
+              {value}
+            </Text>
+          </Group>
+        ))}
+      </Stack>
+      <Text fz={12} c="dimmed" mt="md" pt="md" style={{ borderTop: "1px solid #232028" }}>
+        {props.note}
+      </Text>
+    </Box>
+  );
 }
 
 function StatusMessage(props: { children: React.ReactNode; color?: string }) {
@@ -250,73 +294,116 @@ function StoreBody(props: { shop: Shop; balance: number }) {
   };
 
   const sections = shop.sections ?? [];
+  const rare = shop.rare_section?.pool ?? [];
+
+  const ItemCard = (item: { itemId: string; price: number; description?: string }, rareCard = false) => {
+    const resolved = resolveItem(item.itemId);
+    const tooPoor = balance < item.price;
+    const busy = pendingId === item.itemId;
+    return (
+      <Box
+        key={item.itemId}
+        p="md"
+        style={{
+          borderRadius: 14,
+          background: rareCard ? "linear-gradient(160deg, #241d0e, #17151c)" : "#141019",
+          border: `1px solid ${rareCard ? "#5a4a2a" : "#232028"}`,
+        }}
+      >
+        <Group gap={12} wrap="nowrap" align="flex-start" mb={10}>
+          <Box
+            style={{
+              width: 44, height: 44, borderRadius: 10, flexShrink: 0, background: "#0e0c14",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >
+            <Image
+              src={resolved.filePath ? getItemImageURL(resolved.filePath) : undefined}
+              alt={resolved.name}
+              w={30}
+              h={30}
+              fit="contain"
+            />
+          </Box>
+          <Box style={{ minWidth: 0 }}>
+            <Text fz={15} fw={700} c="white" lineClamp={1}>
+              {resolved.name}
+            </Text>
+            <PriceBadge currency={shop.currency} value={item.price} />
+          </Box>
+        </Group>
+        {item.description && (
+          <Text fz={13} c="dimmed" mb={12} lineClamp={2}>
+            {item.description}
+          </Text>
+        )}
+        <Button
+          fullWidth
+          radius="md"
+          variant="gradient"
+          gradient={{ from: "grape", to: "indigo", deg: 90 }}
+          loading={busy}
+          disabled={busy || tooPoor}
+          onClick={() => buy(item.itemId, item.price)}
+          aria-label={`Buy ${resolved.name} for ${item.price} ${CURRENCY_LABEL[shop.currency]}`}
+        >
+          {tooPoor ? "Not enough" : "Buy"}
+        </Button>
+      </Box>
+    );
+  };
 
   return (
-    <Stack gap={20}>
+    <Stack gap="xl">
       {message && <StatusMessage>{message}</StatusMessage>}
       {error && <StatusMessage color="red">{error}</StatusMessage>}
 
-      {!sections.length && (
+      {!sections.length && !rare.length && (
         <Text c="dimmed">This vendor has nothing on the shelves right now.</Text>
       )}
 
       {sections.map((section) => (
-        <Stack key={section.title} gap={10}>
-          <Title order={3} c="white" fz={18}>
+        <Box key={section.title}>
+          <Text fz={13} fw={800} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
             {section.title}
-          </Title>
-          <SimpleGrid cols={{ base: 1, xs: 2, lg: 4 }} spacing="sm">
-            {section.items.map((item) => {
-              const resolved = resolveItem(item.itemId);
-              const tooPoor = balance < item.price;
-              const busy = pendingId === item.itemId;
-              return (
-                <Card
-                  key={item.itemId}
-                  withBorder
-                  radius="md"
-                  p={12}
-                  bg="#26252a"
-                >
-                  <Stack gap={8} align="center">
-                    <Image
-                      src={resolved.filePath ? getItemImageURL(resolved.filePath) : undefined}
-                      alt={resolved.name}
-                      w={40}
-                      h={40}
-                      fit="contain"
-                    />
-                    <Text fz={13} c="white" ta="center" lineClamp={2}>
-                      {resolved.name}
-                    </Text>
-                    {item.description && (
-                      <Text fz={11} c="dimmed" ta="center" lineClamp={3}>
-                        {item.description}
-                      </Text>
-                    )}
-                    <Text fz={13} fw={700} c="white">
-                      {item.price} {CURRENCY_LABEL[shop.currency]}
-                    </Text>
-                    <Button
-                      size="xs"
-                      fullWidth
-                      radius="md"
-                      loading={busy}
-                      disabled={busy || tooPoor}
-                      onClick={() => buy(item.itemId, item.price)}
-                      aria-label={`Buy ${resolved.name} for ${item.price} ${CURRENCY_LABEL[shop.currency]}`}
-                    >
-                      {tooPoor ? "Not enough" : "Buy"}
-                    </Button>
-                  </Stack>
-                </Card>
-              );
-            })}
+          </Text>
+          <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 5 }} spacing="md">
+            {section.items.map((item) => ItemCard(item))}
           </SimpleGrid>
-        </Stack>
+        </Box>
       ))}
+
+      {rare.length > 0 && (
+        <Box>
+          <Group justify="space-between" align="center" mb="md" wrap="wrap">
+            <Group gap={8}>
+              <IconSparkles size={16} color="#f5c518" />
+              <Text fz={13} fw={800} c="#f5c518" tt="uppercase" style={{ letterSpacing: 2 }}>
+                Today's Rare Wares
+              </Text>
+            </Group>
+            <Text fz={12} c="dimmed">
+              Refreshes in {rareRefreshLabel()}
+            </Text>
+          </Group>
+          <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 5 }} spacing="md">
+            {rare.map((item) => ItemCard(item, true))}
+          </SimpleGrid>
+        </Box>
+      )}
     </Stack>
   );
+}
+
+/** Time until the next daily rare-wares rotation (local midnight). */
+function rareRefreshLabel(): string {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(24, 0, 0, 0);
+  const mins = Math.max(0, Math.round((next.getTime() - now.getTime()) / 60000));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 /** kind "recycle": select bag items, see an estimate, recycle them for coins. */
@@ -372,7 +459,15 @@ function RecycleBody() {
   const bag = items ?? [];
 
   return (
-    <Stack gap={16}>
+    <Stack gap="xl">
+      {/* Rate reference tables (informational; the server is authoritative) */}
+      <Flex gap="lg" direction={{ base: "column", md: "row" }} align="stretch">
+        <RatePanel title="Items → Snag Coins" rows={RECYCLE_RATES} note="Consumables pay half (rounded down). Medicines excluded. Items bought for 1 coin can't be recycled." valueColor="#f5c518" />
+        <RatePanel title="Candy → Scents" rows={SCENT_RATES} note="Spends Evolution Points from your Pokemon to brew Scents." valueColor="#3bc9db" />
+      </Flex>
+
+      <Divider color="#232028" label="Bring your junk" labelPosition="center" />
+
       {message && <StatusMessage>{message}</StatusMessage>}
       {error && <StatusMessage color="red">{error}</StatusMessage>}
 
@@ -573,17 +668,17 @@ function CandyToScentPanel() {
 
 /** kind "tour": pick a biome, roll for an item. */
 const TOUR_AREAS = [
-  "Cool Canyon",
-  "Beautiful Meadow",
-  "Cute Forest",
-  "Clever Swamp",
-  "Tough Peak",
+  { name: "Cool Canyon", emoji: "🏜️" },
+  { name: "Beautiful Meadow", emoji: "🌼" },
+  { name: "Cute Forest", emoji: "🌲" },
+  { name: "Clever Swamp", emoji: "🐊" },
+  { name: "Tough Peak", emoji: "⛰️" },
 ];
 
 function TourBody() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [area, setArea] = React.useState<string>(TOUR_AREAS[0]);
+  const [area, setArea] = React.useState<string>(TOUR_AREAS[0].name);
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState("");
   const [result, setResult] = React.useState<{
@@ -612,55 +707,84 @@ function TourBody() {
   };
 
   return (
-    <Stack gap={16}>
-      <Text c="dimmed" fz={13}>
-        Pick a biome, then roll. Every fourth roll is free.
+    <Box>
+      <Text fz={13} fw={800} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
+        Pick a biome &middot; 2 Snag Coins per roll
       </Text>
-      <SimpleGrid cols={{ base: 1, xs: 2, lg: 5 }} spacing="sm">
-        {TOUR_AREAS.map((a) => {
-          const active = a === area;
-          return (
-            <Button
-              key={a}
-              variant={active ? "filled" : "light"}
-              color="grape"
-              radius="md"
-              onClick={() => setArea(a)}
-              aria-label={`Choose biome ${a}`}
-              aria-pressed={active}
-            >
-              {a}
-            </Button>
-          );
-        })}
-      </SimpleGrid>
+      <Flex gap="lg" direction={{ base: "column", md: "row" }} align="stretch">
+        <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
+          <SimpleGrid cols={{ base: 2, sm: 3, lg: 5 }} spacing="md">
+            {TOUR_AREAS.map((a) => {
+              const active = a.name === area;
+              return (
+                <Box
+                  key={a.name}
+                  {...clickable(() => setArea(a.name))}
+                  aria-label={`Choose biome ${a.name}`}
+                  aria-pressed={active}
+                  p="md"
+                  style={{
+                    borderRadius: 14,
+                    cursor: "pointer",
+                    textAlign: "center",
+                    background: active ? "linear-gradient(160deg, #1a8a9e, #16788a)" : "#141019",
+                    border: `1px solid ${active ? "#3bc9db" : "#232028"}`,
+                  }}
+                >
+                  <Text fz={30} mb={6}>
+                    {a.emoji}
+                  </Text>
+                  <Text fz={14} fw={700} c="white">
+                    {a.name}
+                  </Text>
+                </Box>
+              );
+            })}
+          </SimpleGrid>
+          <Text fz={12} c="dimmed" mt="md">
+            Every 4th roll is free &middot; roll a 7 for a bonus Rare Candy &middot; Apricorn picking: 6
+            coins per mature tree.
+          </Text>
+          {error && <StatusMessage color="red">{error}</StatusMessage>}
+        </Box>
 
-      <Button
-        radius="md"
-        loading={pending}
-        disabled={pending}
-        onClick={roll}
-        aria-label="Roll the tour for 2 Snag Coins"
-        maw={240}
-      >
-        Roll (2 Snag Coins)
-      </Button>
-
-      {error && <StatusMessage color="red">{error}</StatusMessage>}
-
-      {result && (
-        <Card withBorder radius="md" p={14} bg="#26252a" role="status" aria-live="polite">
-          <Group gap={12}>
-            <Image
-              src={result.item.filePath ? getItemImageURL(result.item.filePath) : undefined}
-              alt={result.item.name}
-              w={44}
-              h={44}
-              fit="contain"
-            />
-            <Box>
-              <Text fz={15} fw={700} c="white">
-                You found {result.item.name}
+        <Box
+          p="lg"
+          style={{ flex: "1 1 0%", minWidth: 0, maxWidth: 360, borderRadius: 16, background: "#141019", border: "1px solid #232028", textAlign: "center" }}
+        >
+          <Text fz={12} c="dimmed" tt="uppercase" mb={6} style={{ letterSpacing: 1 }}>
+            Selected biome
+          </Text>
+          <Text fz={22} fw={800} c="white" mb="md">
+            {area}
+          </Text>
+          <Box
+            style={{
+              width: 120, height: 120, margin: "0 auto 20px", borderRadius: 16,
+              background: "#0e0c14", border: "1px solid #232028",
+              display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+            }}
+            role="status"
+            aria-live="polite"
+          >
+            {result ? (
+              <Image
+                src={result.item.filePath ? getItemImageURL(result.item.filePath) : undefined}
+                alt={result.item.name}
+                w={72}
+                h={72}
+                fit="contain"
+              />
+            ) : (
+              <Text fz={40} c="dimmed">
+                ?
+              </Text>
+            )}
+          </Box>
+          {result && (
+            <Box mb="md">
+              <Text fz={14} fw={700} c="white">
+                {result.item.name}
               </Text>
               {result.bonusRareCandy && (
                 <Text fz={12} c="yellow">
@@ -673,10 +797,22 @@ function TourBody() {
                 </Text>
               )}
             </Box>
-          </Group>
-        </Card>
-      )}
-    </Stack>
+          )}
+          <Button
+            fullWidth
+            radius="xl"
+            variant="gradient"
+            gradient={{ from: "grape", to: "cyan", deg: 90 }}
+            loading={pending}
+            disabled={pending}
+            onClick={roll}
+            aria-label="Roll the tour for 2 Snag Coins"
+          >
+            Roll &mdash; 2 Coins
+          </Button>
+        </Box>
+      </Flex>
+    </Box>
   );
 }
 
@@ -715,46 +851,110 @@ function EvoBody() {
   const services: Array<{
     key: "unlock_restraints" | "unlock_potential" | "new_adaptations";
     title: string;
+    desc: string;
     price: string;
+    icon: React.ReactNode;
     payWith?: "pokecoin" | "snagemblem";
   }> = [
-    { key: "unlock_restraints", title: "Unlock Restraints", price: "1 Snag Emblem" },
-    { key: "unlock_potential", title: "Unlock Potential", price: "2 Snag Emblems" },
+    {
+      key: "unlock_restraints",
+      title: "Unlock Restraints",
+      desc: "Adds a new move / ability slot to your character.",
+      price: "1 Snag Emblem",
+      icon: <IconLock size={20} color="#c4b5fd" />,
+    },
+    {
+      key: "unlock_potential",
+      title: "Unlock Potential",
+      desc: "Learn an approved move or ability (needs an open slot).",
+      price: "2 Snag Emblems",
+      icon: <IconSparkles size={20} color="#c4b5fd" />,
+    },
     {
       key: "new_adaptations",
       title: "New Adaptations",
-      price: "25 Snag Coins or 2 Snag Emblems",
+      desc: "Swap out an existing ability for another.",
+      price: "2 Emblems / 25 Coins",
+      icon: <IconRefresh size={20} color="#c4b5fd" />,
       payWith: "snagemblem",
     },
   ];
 
+  const master = isMaster(user);
+
   return (
     <Stack gap={16}>
-      <TextInput
-        label="Character id"
-        placeholder="Enter the character id to apply this to"
-        value={characterId}
-        onChange={(e) => setCharacterId(e.currentTarget.value)}
-        aria-label="Character id"
-        maw={320}
-        w="100%"
-      />
+      <Box
+        p="md"
+        style={{ borderRadius: 12, background: "rgba(160,120,220,0.12)", border: "1px solid #3a3550" }}
+      >
+        <Text fz={13} c="rgba(255,255,255,0.85)">
+          <Text span fw={800} c="grape.3">
+            Eligibility:{" "}
+          </Text>
+          Hybrids and Channelers who have completed their first Master Mission. E.V.O. services are
+          limited to members with the Master role.
+        </Text>
+      </Box>
+
+      {!master ? (
+        <Box p="md" style={{ borderRadius: 12, background: "#161319", border: "1px solid #232028" }}>
+          <Text fz={14} c="dimmed">
+            You need the Master role to use E.V.O. Clear your first Master Mission and a director will
+            promote you, then come back to loosen your restraints.
+          </Text>
+        </Box>
+      ) : (
+        <>
+          <TextInput
+            label="Character id"
+            placeholder="Enter the character id to apply this to"
+            value={characterId}
+            onChange={(e) => setCharacterId(e.currentTarget.value)}
+            aria-label="Character id"
+            maw={320}
+            w="100%"
+          />
 
       {message && <StatusMessage>{message}</StatusMessage>}
       {error && <StatusMessage color="red">{error}</StatusMessage>}
 
-      <SimpleGrid cols={{ base: 1, xs: 2, lg: 4 }} spacing="sm">
+      <Stack gap={12}>
         {services.map((svc) => (
-          <Card key={svc.key} withBorder radius="md" p={14} bg="#26252a">
-            <Stack gap={10}>
-              <Text fz={15} fw={700} c="white">
-                {svc.title}
-              </Text>
-              <Text fz={12} c="dimmed">
+          <Group
+            key={svc.key}
+            justify="space-between"
+            wrap="nowrap"
+            gap="md"
+            p="md"
+            style={{ borderRadius: 14, background: "#141019", border: "1px solid #232028" }}
+          >
+            <Group gap={14} wrap="nowrap" style={{ minWidth: 0 }}>
+              <Box
+                style={{
+                  width: 46, height: 46, borderRadius: 12, flexShrink: 0, background: "#1a1530",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                {svc.icon}
+              </Box>
+              <Box style={{ minWidth: 0 }}>
+                <Text fz={16} fw={800} c="white">
+                  {svc.title}
+                </Text>
+                <Text fz={13} c="dimmed" lineClamp={2}>
+                  {svc.desc}
+                </Text>
+              </Box>
+            </Group>
+            <Group gap="md" wrap="nowrap" style={{ flexShrink: 0 }}>
+              <Text fz={14} fw={800} c="#f5c518" ta="right" style={{ whiteSpace: "nowrap" }}>
                 {svc.price}
               </Text>
               <Button
-                radius="md"
+                radius="xl"
+                variant="gradient"
+                gradient={{ from: "grape", to: "indigo", deg: 90 }}
                 loading={pending === svc.key}
                 disabled={pending === svc.key}
                 onClick={() => run(svc.key, svc.payWith)}
@@ -762,19 +962,144 @@ function EvoBody() {
               >
                 Purchase
               </Button>
-            </Stack>
-          </Card>
+            </Group>
+          </Group>
         ))}
-      </SimpleGrid>
+      </Stack>
+        </>
+      )}
     </Stack>
   );
 }
 
-function StorefrontView(props: {
-  shop: Shop;
-  balance: number;
-  onBack: () => void;
-}) {
+/* --------------------------- Storefront chrome --------------------------- */
+
+const STRIPES =
+  "repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 12px, transparent 12px, transparent 24px)";
+
+const KIND_STYLE: Record<string, { grad: string; accent: string }> = {
+  store: { grad: "linear-gradient(120deg, #3a2c14, #4a3a1a 60%, #241d0e)", accent: "#e0b000" },
+  recycle: { grad: "linear-gradient(120deg, #16301a, #1c3a22 60%, #0f2412)", accent: "#63e6be" },
+  tour: { grad: "linear-gradient(120deg, #0f2a30, #123a3a 60%, #0a2024)", accent: "#3bc9db" },
+  evo: { grad: "linear-gradient(120deg, #2a1545, #3a1d63 60%, #1c1030)", accent: "#b197fc" },
+};
+const kindStyle = (kind?: string) => KIND_STYLE[kind ?? "store"] ?? KIND_STYLE.store;
+
+const CURRENCY_BADGE: Record<Shop["currency"], { letter: string; color: string }> = {
+  pokecoin: { letter: "C", color: "#7c5cff" },
+  gengarcoin: { letter: "G", color: "#9775fa" },
+  snagemblem: { letter: "S", color: "#f06595" },
+};
+
+/** Small coin/price pill, e.g. "C 5". */
+function PriceBadge(props: { currency: Shop["currency"]; value: number | string }) {
+  const b = CURRENCY_BADGE[props.currency];
+  return (
+    <Group gap={6} wrap="nowrap">
+      <Box
+        style={{
+          width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: b.color,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        <Text fz={11} fw={800} c="#fff">
+          {b.letter}
+        </Text>
+      </Box>
+      <Text fz={14} fw={800} c="#f5c518">
+        {props.value}
+      </Text>
+    </Group>
+  );
+}
+
+/** Full-bleed per-shop header band, colored by shop kind. */
+function ShopHeader(props: { shop: Shop; balance: number; onBack: () => void }) {
+  const { shop } = props;
+  const ks = kindStyle(shop.kind);
+  const cb = CURRENCY_BADGE[shop.currency];
+  return (
+    <Box px={{ base: 16, sm: 40 }} pt={{ base: 16, sm: 20 }} pb={{ base: 20, sm: 28 }} style={{ background: `${STRIPES}, ${ks.grad}` }}>
+      <Container size="lg" px={0}>
+        <Button
+          radius="xl"
+          size="sm"
+          leftSection={<IconArrowLeft size={16} />}
+          onClick={props.onBack}
+          styles={{ root: { background: "rgba(0,0,0,0.3)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)" } }}
+          mb="lg"
+        >
+          The Snag Mall
+        </Button>
+        <Group justify="space-between" align="center" wrap="wrap" gap="md">
+          <Group gap="md" wrap="nowrap" style={{ minWidth: 0 }}>
+            <Box
+              style={{
+                width: 72, height: 72, borderRadius: 16, flexShrink: 0,
+                background: shop.npc_image
+                  ? `center / cover no-repeat url(${shop.npc_image})`
+                  : `${STRIPES}, ${ks.accent}33`,
+                border: `1px solid ${ks.accent}55`,
+              }}
+            />
+            <Box style={{ minWidth: 0 }}>
+              <Group gap={10} align="center" wrap="wrap">
+                <Text component="h1" c="white" fw={800} fz={{ base: 26, sm: 40 }} style={{ lineHeight: 1, margin: 0 }}>
+                  {shop.name}
+                </Text>
+                {shop.type && (
+                  <Text fz={12} fw={700} c="rgba(255,255,255,0.8)" px={10} py={4} style={{ borderRadius: 999, background: "rgba(0,0,0,0.35)" }}>
+                    {shop.type}
+                  </Text>
+                )}
+              </Group>
+              {shop.npc_name && (
+                <Text fz={14} c="rgba(255,255,255,0.7)" mt={6}>
+                  Kept by {shop.npc_name}
+                </Text>
+              )}
+            </Box>
+          </Group>
+          <Group gap={12} px={16} py={10} style={{ borderRadius: 14, background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <Box
+              style={{
+                width: 40, height: 40, borderRadius: "50%", flexShrink: 0, background: cb.color,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <Text fz={16} fw={800} c="#fff">
+                {cb.letter}
+              </Text>
+            </Box>
+            <Box>
+              <Text fz={22} fw={800} c="white" lh={1}>
+                {props.balance}
+              </Text>
+              <Text fz={11} c="rgba(255,255,255,0.7)" tt="uppercase" mt={2}>
+                your {CURRENCY_LABEL[shop.currency]}
+              </Text>
+            </Box>
+          </Group>
+        </Group>
+      </Container>
+    </Box>
+  );
+}
+
+/** Italic flavor intro panel (sanitized shop copy). */
+function FlavorCard(props: { html: string }) {
+  return (
+    <Box p="lg" style={{ borderRadius: 16, background: "#161319", border: "1px solid #232028" }}>
+      <Box
+        c="gray.4"
+        style={{ fontSize: 15, lineHeight: 1.6, fontStyle: "italic" }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(props.html) }}
+      />
+    </Box>
+  );
+}
+
+function StorefrontView(props: { shop: Shop; balance: number; onBack: () => void }) {
   const { shop } = props;
 
   let body: React.ReactNode;
@@ -793,35 +1118,15 @@ function StorefrontView(props: {
   }
 
   return (
-    <Stack gap={18}>
-      <Button
-        variant="subtle"
-        color="gray"
-        leftSection={<IconArrowLeft size={16} />}
-        onClick={props.onBack}
-        aria-label="Back to arcade"
-        maw={180}
-      >
-        Back to arcade
-      </Button>
-
-      <Stack gap={6}>
-        <Title order={1} c="white" fz={{ base: 24, sm: 30 }} fw={700}>
-          {shop.name}
-        </Title>
-        {shop.flavor_intro && (
-          <Box
-            c="dimmed"
-            style={{ fontSize: 14, lineHeight: 1.6 }}
-            dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(shop.flavor_intro),
-            }}
-          />
-        )}
-      </Stack>
-
-      {body}
-    </Stack>
+    <Box>
+      <ShopHeader shop={shop} balance={props.balance} onBack={props.onBack} />
+      <Container size="lg" py={{ base: 24, sm: 36 }} px={{ base: 16, sm: 24 }}>
+        <Stack gap="xl">
+          {shop.flavor_intro && <FlavorCard html={shop.flavor_intro} />}
+          {body}
+        </Stack>
+      </Container>
+    </Box>
   );
 }
 
@@ -895,6 +1200,14 @@ export default function Mall() {
   const snagCoins = currencies?.pokecoin ?? "0";
   const snagEmblems = currencies?.snagemblem ?? "0";
 
+  // An entered shop renders its own full-bleed header; the mall header only
+  // shows on the arcade landing.
+  if (activeShop) {
+    return (
+      <StorefrontView shop={activeShop} balance={balance} onBack={() => setActiveShopId(null)} />
+    );
+  }
+
   return (
     <Box>
       {/* Header band */}
@@ -931,12 +1244,6 @@ export default function Mall() {
       <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
         {shopsPending ? (
           <SectionLoader />
-        ) : activeShop ? (
-          <StorefrontView
-            shop={activeShop}
-            balance={balance}
-            onBack={() => setActiveShopId(null)}
-          />
         ) : (
           <ArcadeView shops={shopList} onEnter={(id) => setActiveShopId(id)} />
         )}

@@ -80,12 +80,13 @@ function DrawerTileIcon({ tile }: { tile: DrawerTileDef }) {
 
 const DRAWER_COLS = 3;
 
-function DrawerGrid({ onNavigate }: { onNavigate: () => void }) {
-  // Fill bottom-right first, running right-to-left then up. Reverse the DOM
-  // order, then pad the top row with blanks so Home always lands bottom-right
-  // no matter how many tiles there are.
-  const cells = [...DRAWER_TILES].reverse();
-  const leadEmpties = (DRAWER_COLS - (cells.length % DRAWER_COLS)) % DRAWER_COLS;
+function DrawerGrid({ onNavigate, bottomUp }: { onNavigate: () => void; bottomUp?: boolean }) {
+  // Mobile (bottomUp): fill bottom-right first, running right-to-left then up,
+  // so the most-used tiles sit closest to the thumb. Reverse the DOM order and
+  // pad the top row with blanks so Home always lands bottom-right. Desktop: keep
+  // normal top-left-to-bottom-right reading order (blanks trail at the end).
+  const cells = bottomUp ? [...DRAWER_TILES].reverse() : DRAWER_TILES;
+  const leadEmpties = bottomUp ? (DRAWER_COLS - (cells.length % DRAWER_COLS)) % DRAWER_COLS : 0;
   return (
     <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
       {Array.from({ length: leadEmpties }).map((_, i) => (
@@ -289,7 +290,7 @@ function MobileTabBar() {
         }}
       >
         <Stack gap={14}>
-          <DrawerGrid onNavigate={close} />
+          <DrawerGrid onNavigate={close} bottomUp />
           {/* Controls sit at the bottom (Menu left, close right) to mirror the
               bottom main nav, thumb-friendly, with the list right above. */}
           <Group justify="space-between" align="center">

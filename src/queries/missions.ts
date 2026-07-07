@@ -14,6 +14,8 @@ export interface Mission {
   special_item?: string;
   tier?: "Standard" | "Master" | "Exceptional" | "Story";
   emblem_eligible?: boolean;
+  /** Grader tip shown in the brief's Bonus box; optional narrative hook. */
+  bonus?: string;
   difficulty?: string;
   image?: string;
   active?: boolean;

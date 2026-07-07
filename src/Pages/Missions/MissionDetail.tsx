@@ -1,37 +1,26 @@
-import {
-  Badge,
-  Box,
-  Button,
-  Card,
-  Container,
-  Divider,
-  Group,
-  Stack,
-  Text,
-  TextInput,
-  Title,
-} from "@mantine/core";
-import { IconArrowLeft, IconCoin, IconStar } from "@tabler/icons-react";
+import { Box, Button, Container, Flex, Group, Stack, Text, TextInput } from "@mantine/core";
+import { IconArrowLeft, IconArrowRight, IconMapPin, IconSparkles } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
-import { getMission, Mission, submitMission } from "../../queries/missions";
+import { getMission, submitMission } from "../../queries/missions";
 
 /**
- * Full-page mission brief (the detail view behind a Mission Vault card). Members
- * read the story, objective, opposition, and rewards, then paste their Quests
- * thread link to send the run to a grader. Picking up and grading happen in the
- * forum, so this page only writes through the submitMission callable.
+ * Full-page mission brief (behind a Mission Vault card). A striped hero, a
+ * two-column body (Briefing + Objective/Opposition + Pokemon Rules on the left,
+ * Rewards + Bonus + pick-up on the right), and the grading submit form below.
+ * "Pick Up Mission" points members at the Quests forum to start their thread;
+ * rewards still flow through the submitMission callable once the run is graded.
  */
 
 const TIER_COLOR: Record<string, string> = {
-  Story: "grape",
-  Standard: "teal",
-  Master: "violet",
-  Exceptional: "orange",
+  Story: "#7C3AED",
+  Standard: "#12B886",
+  Master: "#7048E8",
+  Exceptional: "#E8590C",
 };
 
 const REWARD_LABEL: Record<string, string> = {
@@ -41,71 +30,116 @@ const REWARD_LABEL: Record<string, string> = {
   egg: "Pokemon Egg",
 };
 
-/** Normalize a string | string[] field into an array of lines. */
+const BRIEF_GRADIENT = "linear-gradient(90deg, #c026d3, #6366f1, #22d3ee)";
+const REWARD_GRADIENT = "linear-gradient(90deg, #f76b1c, #e0446b)";
+const HERO_STRIPES =
+  "repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 12px, transparent 12px, transparent 24px)";
+const HERO_GRADIENT = "linear-gradient(120deg, #3a1d63 0%, #2c2352 55%, #1c2a4a 100%)";
+
 function toLines(value?: string | string[]): string[] {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
 }
 
-function RewardChip(props: { label: string; dot?: string; icon?: React.ReactNode }) {
+/* --------------------------------- Panels ---------------------------------- */
+
+function Panel(props: { children: React.ReactNode; accent?: boolean }) {
   return (
-    <Group
-      gap={6}
-      wrap="nowrap"
-      bg="rgba(255,255,255,0.05)"
-      px={8}
-      py={4}
-      style={{ borderRadius: 8 }}
+    <Box
+      style={{
+        borderRadius: 14,
+        background: props.accent ? "#17151c" : "#161319",
+        border: "1px solid #232028",
+        overflow: "hidden",
+      }}
     >
+      {props.children}
+    </Box>
+  );
+}
+
+/** A card with a full-width gradient header bar. */
+function GradientPanel(props: { title: string; gradient: string; children: React.ReactNode }) {
+  return (
+    <Panel>
+      <Box px="md" py={10} style={{ background: props.gradient }}>
+        <Text fw={800} c="white" fz={15}>
+          {props.title}
+        </Text>
+      </Box>
+      <Box p="md">{props.children}</Box>
+    </Panel>
+  );
+}
+
+function LineList(props: { label: string; color: string; lines: string[] }) {
+  if (!props.lines.length) return null;
+  return (
+    <Panel>
+      <Box p="md">
+        <Text fz={11} fw={800} tt="uppercase" c={props.color} mb={10} style={{ letterSpacing: 1 }}>
+          {props.label}
+        </Text>
+        <Stack gap={8}>
+          {props.lines.map((line, i) => (
+            <Group key={i} gap={8} wrap="nowrap" align="flex-start">
+              <IconArrowRight size={14} color={props.color} style={{ marginTop: 3, flexShrink: 0 }} />
+              <Text fz={14} c="gray.4">
+                {line}
+              </Text>
+            </Group>
+          ))}
+        </Stack>
+      </Box>
+    </Panel>
+  );
+}
+
+function RewardRow(props: { icon: React.ReactNode; title: string; sub: string }) {
+  return (
+    <Group gap={12} wrap="nowrap" p={12} style={{ borderRadius: 10, background: "#0e0c14" }}>
       {props.icon}
-      {props.dot && (
-        <Box
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: props.dot,
-          }}
-        />
-      )}
-      <Text fz={12} c="white">
-        {props.label}
-      </Text>
+      <Box style={{ minWidth: 0 }}>
+        <Text fz={14} fw={700} c="white" lineClamp={1}>
+          {props.title}
+        </Text>
+        <Text fz={12} c="dimmed" lineClamp={1}>
+          {props.sub}
+        </Text>
+      </Box>
     </Group>
   );
 }
 
-function BackLink() {
+function CoinIcon() {
   return (
-    <Link
-      to="/Missions"
-      style={{ textDecoration: "none", width: "fit-content" }}
+    <Box
+      style={{
+        width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+        background: "#f5c518", display: "flex", alignItems: "center", justifyContent: "center",
+      }}
     >
-      <Group gap={6} wrap="nowrap" c="dimmed">
-        <IconArrowLeft size={16} />
-        <Text fz={13}>Back to missions</Text>
-      </Group>
-    </Link>
-  );
-}
-
-function LineSection(props: { title: string; lines: string[] }) {
-  if (!props.lines.length) return null;
-  return (
-    <Box>
-      <Text c="white" fw={600} fz={15} mb={6}>
-        {props.title}
+      <Text fz={15} fw={800} c="#3a2a05">
+        C
       </Text>
-      <Stack gap={3}>
-        {props.lines.map((line, i) => (
-          <Text key={i} c="gray.4" fz={14}>
-            {line}
-          </Text>
-        ))}
-      </Stack>
     </Box>
   );
 }
+
+function DotIcon({ color }: { color: string }) {
+  return (
+    <Box
+      style={{
+        width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+        background: "#1c1a26", display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+    >
+      <Box style={{ width: 12, height: 12, borderRadius: "50%", background: color }} />
+    </Box>
+  );
+}
+
+/* --------------------------------- Submit ---------------------------------- */
 
 function SubmitCard(props: { missionId: string }) {
   const { user } = useAuth();
@@ -113,72 +147,62 @@ function SubmitCard(props: { missionId: string }) {
   const [msg, setMsg] = React.useState("");
   const submit = useMutation({
     mutationFn: () => submitMission(props.missionId, threadLink.trim()),
-    onSuccess: () =>
-      setMsg("Sent to a grader. Watch your notifications for the reward."),
+    onSuccess: () => setMsg("Sent to a grader. Watch your notifications for the reward."),
     onError: (e) => setMsg((e as Error).message || "Could not submit. Try again."),
   });
 
   return (
-    <Card bg="#232122" radius="lg" withBorder p={{ base: 16, sm: 20 }}>
-      <Text c="white" fw={600} fz={16} mb={4}>
-        Submit for grading
-      </Text>
-      <Text c="dimmed" fz={13} mb={12}>
-        Play this mission out in a Quests forum thread, then paste the thread link
-        here to send it to a grader. Base pay is Snag Coins, write it well and the
-        grader tips extra.
-      </Text>
-
-      {!user ? (
-        <Text
-          c="dimmed"
-          fz={14}
-          role="status"
-          aria-live="polite"
-          py={8}
-        >
-          Sign in to submit this mission.
+    <Panel>
+      <Box p="md">
+        <Text c="white" fw={700} fz={16} mb={4}>
+          Already played it? Submit for grading
         </Text>
-      ) : (
-        <>
-          <TextInput
-            value={threadLink}
-            onChange={(e) => setThreadLink(e.currentTarget.value)}
-            placeholder="Link to your Quests thread"
-            aria-label="Link to your Quests thread"
-            mb={10}
-          />
-          <Button
-            fullWidth
-            loading={submit.isPending}
-            disabled={!threadLink.trim() || submit.isPending}
-            onClick={() => {
-              setMsg("");
-              submit.mutate();
-            }}
-          >
-            Submit for grading
-          </Button>
-          {msg && (
-            <Text
-              role="status"
-              aria-live="polite"
-              fz={13}
-              mt={8}
-              c={
-                /could not|error|not enough|cannot|invalid|fail/i.test(msg)
-                  ? "#E35C65"
-                  : "teal"
-              }
+        <Text c="dimmed" fz={13} mb={12}>
+          Paste your Quests thread link to send the finished run to a grader. Base pay is Snag Coins;
+          write it well and the grader tips extra.
+        </Text>
+        {!user ? (
+          <Text c="dimmed" fz={14} role="status" aria-live="polite" py={8}>
+            Sign in to submit this mission.
+          </Text>
+        ) : (
+          <>
+            <TextInput
+              value={threadLink}
+              onChange={(e) => setThreadLink(e.currentTarget.value)}
+              placeholder="Link to your Quests thread"
+              aria-label="Link to your Quests thread"
+              mb={10}
+            />
+            <Button
+              loading={submit.isPending}
+              disabled={!threadLink.trim() || submit.isPending}
+              onClick={() => {
+                setMsg("");
+                submit.mutate();
+              }}
             >
-              {msg}
-            </Text>
-          )}
-        </>
-      )}
-    </Card>
+              Submit for grading
+            </Button>
+            {msg && (
+              <Text
+                role="status"
+                aria-live="polite"
+                fz={13}
+                mt={8}
+                c={/could not|error|not enough|cannot|invalid|fail/i.test(msg) ? "#E35C65" : "teal"}
+              >
+                {msg}
+              </Text>
+            )}
+          </>
+        )}
+      </Box>
+    </Panel>
   );
 }
+
+/* ---------------------------------- Page ----------------------------------- */
 
 export default function MissionDetail() {
   const { id } = useParams();
@@ -190,29 +214,37 @@ export default function MissionDetail() {
 
   if (isPending) {
     return (
-      <Container size="md" py={{ base: 20, sm: 32 }} px={{ base: 16, sm: 24 }}>
-        <Stack gap={16}>
-          <BackLink />
-          <SectionLoader />
-        </Stack>
+      <Container size="lg" py={{ base: 20, sm: 32 }} px={{ base: 16, sm: 24 }}>
+        <SectionLoader />
       </Container>
     );
   }
 
   if (!mission) {
     return (
-      <Container size="md" py={{ base: 20, sm: 32 }} px={{ base: 16, sm: 24 }}>
+      <Container size="lg" py={{ base: 20, sm: 32 }} px={{ base: 16, sm: 24 }}>
         <Stack gap={16}>
-          <BackLink />
-          <Card bg="#232122" radius="lg" withBorder p={{ base: 20, sm: 28 }}>
-            <Title order={1} c="white" fz={{ base: 22, sm: 26 }} mb={8}>
-              Mission not found
-            </Title>
-            <Text c="dimmed" fz={14}>
-              This mission may have been retired or the link is out of date. Head
-              back to the Vault to pick another job.
-            </Text>
-          </Card>
+          <Button
+            component={Link}
+            to="/Missions"
+            variant="default"
+            radius="xl"
+            w="fit-content"
+            leftSection={<IconArrowLeft size={16} />}
+          >
+            All missions
+          </Button>
+          <Panel>
+            <Box p="lg">
+              <Text c="white" fw={800} fz={24} mb={8}>
+                Mission not found
+              </Text>
+              <Text c="dimmed" fz={14}>
+                This mission may have been retired or the link is out of date. Head back to the Vault
+                to pick another job.
+              </Text>
+            </Box>
+          </Panel>
         </Stack>
       </Container>
     );
@@ -220,126 +252,177 @@ export default function MissionDetail() {
 
   const objectives = toLines(mission.objective);
   const oppositions = toLines(mission.opposition);
-  const rewardLabel = mission.pokemon_reward
-    ? REWARD_LABEL[mission.pokemon_reward.kind]
-    : undefined;
-  const hasRewards =
-    !!mission.coins ||
-    !!rewardLabel ||
-    !!mission.special_item ||
-    !!mission.emblem_eligible ||
-    !!mission.pokemon_reward?.note;
+  const rewardLabel = mission.pokemon_reward ? REWARD_LABEL[mission.pokemon_reward.kind] : undefined;
+  const tierColor = mission.tier ? TIER_COLOR[mission.tier] ?? "#8a8399" : "#8a8399";
 
   return (
     <Box>
-      <Container size="md" pt={{ base: 16, sm: 24 }} px={{ base: 16, sm: 24 }}>
-        <BackLink />
-      </Container>
-
-      <Container size="md" py={{ base: 16, sm: 24 }} px={{ base: 16, sm: 24 }}>
-        <Stack gap={20}>
-          <Box
-            p={{ base: 20, sm: 32 }}
-            style={{
-              position: "relative",
-              borderRadius: 16,
-              overflow: "hidden",
-              background: mission.image
-                ? `linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.7) 100%), center / cover no-repeat url(${mission.image})`
-                : "linear-gradient(135deg,#3A2A4D 0%,#2C3E50 100%)",
-            }}
+      {/* Full-bleed striped hero */}
+      <Box
+        px={{ base: 16, sm: 40 }}
+        pt={{ base: 20, sm: 28 }}
+        pb={{ base: 24, sm: 36 }}
+        style={{ background: `${HERO_STRIPES}, ${HERO_GRADIENT}` }}
+      >
+        <Container size="lg" px={0}>
+          <Button
+            component={Link}
+            to="/Missions"
+            radius="xl"
+            size="sm"
+            leftSection={<IconArrowLeft size={16} />}
+            styles={{ root: { background: "rgba(0,0,0,0.3)", color: "#fff", border: "1px solid #4a4368" } }}
+            mb="lg"
           >
-            <Group gap={8} wrap="wrap" mb={12}>
-              {mission.tier && (
-                <Badge
-                  color={TIER_COLOR[mission.tier] ?? "gray"}
-                  variant="filled"
-                  size="sm"
-                >
-                  {mission.tier}
-                </Badge>
-              )}
-              {mission.emblem_eligible && (
-                <Badge
-                  color="yellow"
-                  variant="filled"
-                  size="sm"
-                  leftSection={<IconStar size={11} />}
-                >
-                  EMBLEM
-                </Badge>
-              )}
-            </Group>
-            <Title order={1} c="white" fw={700} fz={{ base: 26, sm: 34 }}>
-              {mission.title}
-            </Title>
+            All missions
+          </Button>
+
+          {mission.tier && (
+            <Text
+              display="inline-block"
+              fz={12}
+              fw={700}
+              c="#fff"
+              px={12}
+              py={4}
+              mb={12}
+              style={{ borderRadius: 999, background: tierColor }}
+            >
+              {mission.tier}
+            </Text>
+          )}
+          <Text component="h1" c="white" fw={800} fz={{ base: 30, sm: 44 }} style={{ lineHeight: 1.05, margin: 0 }}>
+            {mission.title}
+          </Text>
+          <Group gap={10} mt={12} wrap="wrap">
             {mission.location && (
-              <Text c="gray.3" fz={{ base: 13, sm: 15 }} mt={6}>
-                {mission.location}
+              <Group gap={4} wrap="nowrap">
+                <IconMapPin size={15} color="#f76b1c" />
+                <Text fz={14} c="gray.3">
+                  {mission.location}
+                </Text>
+              </Group>
+            )}
+            {mission.location && mission.times_taken != null && (
+              <Text c="dimmed" fz={14}>
+                &middot;
               </Text>
             )}
+            {mission.times_taken != null && (
+              <Text fz={14} c="gray.3">
+                Taken {mission.times_taken}&times;
+              </Text>
+            )}
+          </Group>
+        </Container>
+      </Box>
+
+      <Container size="lg" py={{ base: 20, sm: 32 }} px={{ base: 16, sm: 24 }}>
+        <Flex direction={{ base: "column", md: "row" }} gap="lg" align="stretch">
+          {/* Left column */}
+          <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
+            <Stack gap="md">
+              {mission.story && (
+                <GradientPanel title="Briefing" gradient={BRIEF_GRADIENT}>
+                  <Box
+                    fz={15}
+                    c="gray.3"
+                    style={{ lineHeight: 1.7 }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(mission.story) }}
+                  />
+                </GradientPanel>
+              )}
+
+              <Flex direction={{ base: "column", sm: "row" }} gap="md" align="stretch">
+                <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
+                  <LineList label="Objective" color="#51CF66" lines={objectives} />
+                </Box>
+                <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
+                  <LineList label="Opposition" color="#FF8787" lines={oppositions} />
+                </Box>
+              </Flex>
+
+              {mission.pokemon_note && (
+                <Panel>
+                  <Box p="md">
+                    <Text fz={11} fw={800} tt="uppercase" c="grape.3" mb={8} style={{ letterSpacing: 1 }}>
+                      Pokemon Rules
+                    </Text>
+                    <Text fz={14} c="gray.4">
+                      {mission.pokemon_note}
+                    </Text>
+                  </Box>
+                </Panel>
+              )}
+            </Stack>
           </Box>
 
-          {mission.story && (
-            <Box>
-              <Text c="white" fw={600} fz={15} mb={6}>
-                Story
-              </Text>
+          {/* Right column */}
+          <Box style={{ flex: "1 1 0%", minWidth: 0, maxWidth: 400 }}>
+            <Stack gap="md">
+              <GradientPanel title="Rewards" gradient={REWARD_GRADIENT}>
+                <Stack gap={10}>
+                  {!!mission.coins && (
+                    <RewardRow icon={<CoinIcon />} title={`${mission.coins} Snag Coins`} sub="base payout" />
+                  )}
+                  {rewardLabel && (
+                    <RewardRow
+                      icon={<DotIcon color="#e9ecef" />}
+                      title={rewardLabel}
+                      sub={mission.pokemon_reward?.note || "mission reward"}
+                    />
+                  )}
+                  {mission.special_item && (
+                    <RewardRow icon={<DotIcon color="#3B82F6" />} title={mission.special_item} sub="special item" />
+                  )}
+                  {mission.emblem_eligible && (
+                    <RewardRow icon={<DotIcon color="#f5c518" />} title="Snag Emblem Piece" sub="if eligible" />
+                  )}
+                  {!mission.coins && !rewardLabel && !mission.special_item && !mission.emblem_eligible && (
+                    <Text fz={13} c="dimmed">
+                      Rewards set by the grader.
+                    </Text>
+                  )}
+                </Stack>
+              </GradientPanel>
+
               <Box
-                fz={14}
-                c="gray.3"
-                style={{ lineHeight: 1.6 }}
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(mission.story),
-                }}
-              />
-            </Box>
-          )}
+                p="md"
+                style={{ borderRadius: 14, border: "1px solid #4a3fa0", background: "#1a1636" }}
+              >
+                <Group gap={6} mb={6}>
+                  <IconSparkles size={15} color="#b197fc" />
+                  <Text fz={12} fw={800} c="grape.3" tt="uppercase" style={{ letterSpacing: 0.5 }}>
+                    Bonus
+                  </Text>
+                </Group>
+                <Text fz={13} c="rgba(255,255,255,0.85)">
+                  {mission.bonus || "Write it well, make it fun to read, and the grader tips extra."}
+                </Text>
+              </Box>
 
-          <LineSection title="Objective" lines={objectives} />
-          <LineSection title="Opposition" lines={oppositions} />
-
-          {mission.pokemon_note && (
-            <Box>
-              <Text c="white" fw={600} fz={15} mb={6}>
-                Pokemon note
+              <Button
+                component={Link}
+                to="/Forum/Main-Forum"
+                variant="gradient"
+                gradient={{ from: "grape", to: "cyan", deg: 90 }}
+                radius="xl"
+                size="lg"
+                fullWidth
+              >
+                Pick Up Mission
+              </Button>
+              <Text fz={12} c="dimmed" ta="center">
+                Opens a new roleplay thread in the Quests forum. Play it out, then submit the thread
+                below for grading.
               </Text>
-              <Text c="gray.4" fz={14}>
-                {mission.pokemon_note}
-              </Text>
-            </Box>
-          )}
+            </Stack>
+          </Box>
+        </Flex>
 
-          {hasRewards && (
-            <Box>
-              <Text c="white" fw={600} fz={15} mb={8}>
-                Rewards
-              </Text>
-              <Group gap={8} wrap="wrap">
-                {!!mission.coins && (
-                  <RewardChip
-                    label={`${mission.coins} Snag Coins`}
-                    icon={<IconCoin size={14} color="#F5C842" />}
-                  />
-                )}
-                {rewardLabel && <RewardChip label={rewardLabel} dot="#8C2595" />}
-                {mission.special_item && (
-                  <RewardChip label={mission.special_item} dot="#3B82F6" />
-                )}
-                {mission.emblem_eligible && (
-                  <RewardChip label="Snag Emblem Piece" dot="#F5C842" />
-                )}
-                {mission.pokemon_reward?.note && (
-                  <RewardChip label={mission.pokemon_reward.note} />
-                )}
-              </Group>
-            </Box>
-          )}
-
-          <Divider />
-
+        <Box mt="lg">
           <SubmitCard missionId={mission.id} />
-        </Stack>
+        </Box>
       </Container>
     </Box>
   );

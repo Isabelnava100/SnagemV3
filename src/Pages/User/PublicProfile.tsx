@@ -12,7 +12,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { IconBrandDiscord } from "@tabler/icons-react";
+import { IconBrandDiscord, IconLock } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import { useParams } from "react-router-dom";
@@ -542,14 +542,24 @@ export default function PublicProfile() {
               )}
             </Card>
 
-            {/* Recent activity (best-effort placeholder) */}
+            {/* Recent activity: members-only. Logged-out visitors see a locked
+                placeholder; signed-in members see the section. */}
             <Card withBorder radius="md" p="md" bg="#1f1e20">
-              <Text fz={13} c="dimmed" tt="uppercase" fw={700} mb="sm">
-                Recent Activity
-              </Text>
-              <Text fz={13} c="dimmed">
-                No recent activity.
-              </Text>
+              <Group gap={6} mb="sm">
+                <Text fz={13} c="dimmed" tt="uppercase" fw={700}>
+                  Recent Activity
+                </Text>
+                {!viewer && <IconLock size={13} color="var(--mantine-color-dimmed)" />}
+              </Group>
+              {viewer ? (
+                <Text fz={13} c="dimmed">
+                  No recent activity.
+                </Text>
+              ) : (
+                <Text fz={13} c="dimmed">
+                  Sign in to see this member's recent activity.
+                </Text>
+              )}
             </Card>
 
             {/* Signature footer */}
