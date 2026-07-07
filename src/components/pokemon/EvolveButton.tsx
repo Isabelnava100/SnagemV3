@@ -39,7 +39,7 @@ export function EvolveButton(props: { pokemon: OwnedPokemon; compact?: boolean }
 
   const evolve = useMutation({
     mutationFn: (choice: (typeof options)[number]) =>
-      evolvePokemon(uid as string, pokemon.id, choice.option, choice.requiredItemId),
+      evolvePokemon(pokemon.id, choice.option.toIdx),
     onSuccess: () => {
       close();
       queryClient.invalidateQueries({ queryKey: ["get-owned-pokemons", uid] });

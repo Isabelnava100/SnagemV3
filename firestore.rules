@@ -42,10 +42,13 @@ service cloud.firestore {
         && unchanged('badges')
       );
 
-      // Item bag: owner manages own; GiveItems (or Admin) may grant into any bag.
+      // Item bag: spends/grants go through Cloud Functions (buy, craft, recycle,
+      // evolve, candy->scent, mystery box) which run with the Admin SDK. Direct
+      // client writes are limited to GiveItems/Admin grants (the Donate tool);
+      // owners can no longer hand-edit their own inventory quantities.
       match /bag/items {
         allow read: if request.auth.uid == uid || isAdmin();
-        allow write: if request.auth.uid == uid || hasCap('GiveItems');
+        allow write: if isAdmin() || hasCap('GiveItems');
       }
       // Badge ownership is granted by staff and display state changes go
       // through the setBadgeEnabled Cloud Function (which also syncs
@@ -68,9 +71,12 @@ service cloud.firestore {
         allow read: if isSignedIn();
         allow write: if isAdmin() || request.auth.uid == uid;
       }
+      // Owned Pokemon: caught, evolved, trained and character-assigned only via
+      // Cloud Functions (Admin SDK), so members cannot self-edit experience,
+      // species or shiny state. Member-readable for the directory/profiles.
       match /bag/owned_pokemons {
         allow read: if isSignedIn();
-        allow write: if isAdmin() || request.auth.uid == uid;
+        allow write: if isAdmin();
       }
       match /bag/teams {
         allow read: if isSignedIn();

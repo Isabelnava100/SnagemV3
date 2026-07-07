@@ -104,6 +104,9 @@ ${body}
 };
 `;
 fs.writeFileSync(new URL("../src/data/pokemon/evolutions.ts", import.meta.url), file);
+// Also emit a JSON copy the Cloud Functions bundle imports (server-authoritative
+// evolvePokemon validates against this). Keep the two in sync by regenerating.
+fs.writeFileSync(new URL("../functions/src/evolutions.json", import.meta.url), JSON.stringify(out));
 console.log("from-species with evolutions:", keys.length, "| options:", optionCount);
 console.log("gen9 sample sprigatito(906):", JSON.stringify(out[906]));
 console.log("gen9 quaxly(912):", JSON.stringify(out[912]));

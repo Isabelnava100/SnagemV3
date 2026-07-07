@@ -30,6 +30,7 @@ import {
 } from "firebase-functions/v2/firestore";
 import pokemonJSON from "./pokemon.json";
 import battleStages from "./battleStages.json";
+import evolutionsJSON from "./evolutions.json";
 
 // Each 2nd-gen function is a Cloud Run service reserving CPU = maxInstances x cpu.
 // This project's regional CPU quota is capped at 20,000 milli vCPU (20 vCPU) and
@@ -2595,6 +2596,154 @@ export const convertCandyToScent = onCall(async (request) => {
   });
 
   return { ok: true, scent: scentKey, qty, spent: totalCost, remaining };
+});
+
+// --- Evolution -------------------------------------------------------------
+// Server-authoritative evolution. The client only asks to evolve a Pokemon into
+// a target dex number; the function looks up the real evolution options, checks
+// the method's requirement (level / friendship / item), spends any item, and
+// applies the change. Mirrors src/lib/evolution.ts + src/lib/leveling.ts so the
+// gate matches what the trainer sees. owned_pokemons/items are function-only.
+interface EvoOption {
+  toIdx: number;
+  toName: string;
+  toSlug: string;
+  method: "level" | "item" | "friendship" | "trade" | "special";
+  level?: number;
+  itemName?: string;
+  friendship?: number;
+}
+const EVOLUTIONS = evolutionsJSON as Record<string, EvoOption[]>;
+
+// Leveling curve (ported from src/lib/leveling.ts). Level is derived from a
+// Pokemon's total experience; admins may override the table at admin/leveling.
+const MAX_LEVEL = 100;
+const REFERENCE_XP_PER_POST = 10;
+function defaultPostsForLevel(level: number): number {
+  if (level <= 1) return 0;
+  if (level <= 16) return 0.5 + ((level - 2) / 14) * 1.0;
+  if (level <= 40) return 2 + ((level - 17) / 23) * 8;
+  return 10 * Math.pow(1.05, level - 40);
+}
+const DEFAULT_XP_CURVE: number[] = (() => {
+  const curve = [0, 0];
+  let posts = 0;
+  for (let level = 2; level <= MAX_LEVEL; level++) {
+    posts += defaultPostsForLevel(level);
+    curve[level] = Math.round(posts * REFERENCE_XP_PER_POST);
+  }
+  return curve;
+})();
+async function loadLevelingCurve(): Promise<number[]> {
+  const stored = (await db.doc("admin/leveling").get()).data()?.curve as number[] | undefined;
+  return Array.isArray(stored) && stored.length > 1 ? stored : DEFAULT_XP_CURVE;
+}
+function levelForXp(xp: number, curve: number[]): number {
+  const total = Math.max(0, xp || 0);
+  let level = 1;
+  for (let l = 2; l <= MAX_LEVEL; l++) {
+    if (total >= (curve[l] ?? Infinity)) level = l;
+    else break;
+  }
+  return level;
+}
+// Match an evolution item name against a bag entry name, ignoring case/spacing.
+const normItemName = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+export const evolvePokemon = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
+  const toIdx = requireInt(request.data?.toIdx, "toIdx", 1, 1025);
+
+  const pokeRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const curve = await loadLevelingCurve();
+
+  const result = await db.runTransaction(async (tx) => {
+    // All reads first (Firestore requires reads before writes).
+    const [pokeSnap, bagSnap] = await Promise.all([tx.get(pokeRef), tx.get(bagRef)]);
+    const poke = (pokeSnap.data() ?? {}) as Record<
+      string,
+      { pokedex?: string; experience?: number; friendship?: number }
+    >;
+    const entry = poke[pokemonId];
+    if (!entry) throw new HttpsError("failed-precondition", "You do not own that Pokemon.");
+
+    const option = (EVOLUTIONS[String(Number(entry.pokedex ?? 0))] ?? []).find(
+      (o) => o.toIdx === toIdx
+    );
+    if (!option) {
+      throw new HttpsError("invalid-argument", "That Pokemon cannot evolve into that form.");
+    }
+
+    const level = levelForXp(Number(entry.experience ?? 0), curve);
+
+    if (option.method === "friendship") {
+      const need = option.friendship ?? 220;
+      if (Number(entry.friendship ?? 0) < need) {
+        throw new HttpsError("failed-precondition", `Raise friendship to ${need} first.`);
+      }
+    } else if (option.method === "item" || option.method === "trade") {
+      if (option.level && level < option.level) {
+        throw new HttpsError("failed-precondition", `Reach level ${option.level} first.`);
+      }
+      const bag = (bagSnap.data() ?? {}) as Record<string, { name?: string; quantity?: number }>;
+      const want = normItemName(option.itemName ?? "");
+      const bagItemId = Object.keys(bag).find(
+        (id) => normItemName(String(bag[id]?.name ?? id)) === want && (bag[id]?.quantity ?? 0) > 0
+      );
+      if (!bagItemId) {
+        throw new HttpsError("failed-precondition", `You need a ${option.itemName} to evolve this Pokemon.`);
+      }
+      tx.set(bagRef, { [bagItemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
+    } else {
+      const need = option.level ?? 1;
+      if (level < need) throw new HttpsError("failed-precondition", `Reach level ${need} first.`);
+    }
+
+    // Apply the evolution using the server's own target data.
+    tx.set(
+      pokeRef,
+      {
+        [pokemonId]: {
+          species: option.toName,
+          name: option.toName,
+          image_slug: option.toSlug,
+          pokedex: String(option.toIdx),
+        },
+      },
+      { merge: true }
+    );
+    return { toName: option.toName, toIdx: option.toIdx };
+  });
+
+  return { ok: true, ...result };
+});
+
+// --- Assign an owned Pokemon to one of the trainer's characters -------------
+// owned_pokemons is function-only, so this small write moves server-side too.
+export const assignPokemonCharacter = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
+  const characterId = String(request.data?.characterId ?? "").slice(0, 80);
+
+  const pokeRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  await db.runTransaction(async (tx) => {
+    const [pokeSnap, charSnap] = await Promise.all([
+      tx.get(pokeRef),
+      characterId ? tx.get(db.doc(`users/${uid}/bag/characters`)) : Promise.resolve(null),
+    ]);
+    const poke = (pokeSnap.data() ?? {}) as Record<string, unknown>;
+    if (!poke[pokemonId]) throw new HttpsError("failed-precondition", "You do not own that Pokemon.");
+    if (characterId) {
+      const chars = (charSnap?.data() ?? {}) as Record<string, unknown>;
+      if (!chars[characterId]) throw new HttpsError("invalid-argument", "That character does not exist.");
+    }
+    tx.set(pokeRef, { [pokemonId]: { characterId } }, { merge: true });
+  });
+  return { ok: true };
 });
 
 // --- Colosseum: adjust battle rankings (grader-gated) ----------------------

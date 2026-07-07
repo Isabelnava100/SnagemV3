@@ -105,12 +105,18 @@ July 2026 build-out are marked (2026-07).
   to bookmark watchers is wanted, add it to that secure server path (not a public URL).
 - **`getTeams()`/`getTeam()`** DONE. No cascading read remains: callers use `getTeamsRaw`
   plus a shared, cached `getOwnedPokemons` query and `hydrateTeams` (`src/queries/dashboard.ts`).
-- **Users can hand-edit their own `bag/*` inventory** (partly closed 2026-07). `bag/currency`
-  is now server/GiveItems-only (an explicit rule stops members minting coins). `bag/items`
-  and `bag/owned_pokemons` are STILL owner-writable because client-side flows write them
-  directly: `evolution.ts` (evolvePokemon decrements a spend item + rewrites the species)
-  and the dashboard Pokemon manager. Closing these means moving `evolvePokemon` (and the
-  owned-pokemon edits) into Cloud Functions, then flipping those rules to function-only.
+- **Users can hand-edit their own `bag/*` inventory** CLOSED (2026-07). `bag/currency`,
+  `bag/items`, and `bag/owned_pokemons` are all function/admin-only now. The last two
+  client write paths were migrated to callables: `evolvePokemon` (server looks up the real
+  evolution, checks the level/friendship/item gate, spends the item, applies the change)
+  and `assignPokemonCharacter` (owned-pokemon character assignment). Members can no longer
+  self-edit coins, item quantities, experience, species, or shiny state. `bag/items`
+  still allows GiveItems/Admin writes for the Donate grant tool.
+- **Six evolution items have no catalog row** (2026-07). Link Cable (gates most trade
+  evolutions: Alakazam, Machamp, Golem, Gengar), Metal Alloy, Syrupy Apple, Unremarkable
+  Teacup, Auspicious Armor, Malicious Armor. Those evolutions are already blocked in the
+  UI (the item is unobtainable), and the server matches. Add catalog rows + a source to
+  enable them. Same class as the missing recipe items.
 - **`bun audit`** clean as of 2026-07 (no vulnerabilities). Re-audit after major bumps.
 
 ## QA

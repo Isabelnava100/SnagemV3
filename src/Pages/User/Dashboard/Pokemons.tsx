@@ -45,6 +45,7 @@ import { containsBlockedWord, excludeProperties, getPokemonImageURL } from "../.
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
 import { getCharacters, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
+import { assignPokemonCharacter } from "../../../queries/evolution";
 import { EvolveButton, LevelBar } from "../../../components/pokemon/EvolveButton";
 import formatter from "../../../utils/date";
 
@@ -760,15 +761,8 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
     enabled: !!user,
   });
   const assign = useMutation({
-    mutationFn: async (characterId: string | null) => {
-      const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../context/firebase");
-      await setDoc(
-        doc(db, "users", user!.uid, "bag", "owned_pokemons"),
-        { [pokemon.id]: { characterId: characterId ?? "" } },
-        { merge: true }
-      );
-    },
+    mutationFn: (characterId: string | null) =>
+      assignPokemonCharacter(pokemon.id, characterId ?? ""),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["get-owned-pokemons", user?.uid] }),
   });
   return (

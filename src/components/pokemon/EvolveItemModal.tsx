@@ -48,7 +48,7 @@ export function EvolveItemModal(props: {
 
   const evolve = useMutation({
     mutationFn: (choice: { poke: OwnedPokemon; option: EvolutionOption }) =>
-      evolvePokemon(uid as string, choice.poke.id, choice.option, item!.id),
+      evolvePokemon(choice.poke.id, choice.option.toIdx),
     onSuccess: (_r, choice) => {
       setDone(`${choice.poke.species} evolved into ${choice.option.toName}!`);
       setExpanded(null);
