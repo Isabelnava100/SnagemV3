@@ -167,6 +167,39 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ---- Snag Mall / Missions catalogs ------------------------------------
+    // Read-only reference data for members. Seeded + edited by admins; all
+    // spend/write actions (buy, craft, recycle, tour, revive, grade) go through
+    // Cloud Functions with the Admin SDK, so clients never write these.
+    match /shops/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /recipes/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /missions/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Mission submissions + Master Mission requests: created and graded by
+    // Cloud Functions (Admin SDK). A member may read their own; graders/admins
+    // may read all. Direct client writes are denied.
+    match /missionSubmissions/{id} {
+      allow read: if isSignedIn()
+                  && (resource.data.submitterUid == request.auth.uid
+                      || isAdmin() || hasCap('ReviewRewards'));
+      allow write: if false;
+    }
+    match /masterMissionRequests/{id} {
+      allow read: if isSignedIn()
+                  && (resource.data.uid == request.auth.uid
+                      || isAdmin() || hasCap('ReviewRewards'));
+      allow write: if false;
+    }
+
     // ---- Forums ------------------------------------------------------------
     // All publishing (threads, posts, rolls, votes, boss battles, inventory
     // effects) goes through Cloud Functions (functions/src/index.ts), which

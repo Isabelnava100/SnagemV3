@@ -49,6 +49,9 @@ const { default: PublicProfile } = lazyImport(
   "default"
 );
 const { default: Users } = lazyImport(() => import("./Pages/User/Users"), "default");
+const { default: Missions } = lazyImport(() => import("./Pages/Missions"), "default");
+const { default: Mall } = lazyImport(() => import("./Pages/Mall"), "default");
+const { default: Research } = lazyImport(() => import("./Pages/Research"), "default");
 const { ErrorPage } = lazyImport(() => import("./components/navigation/error-page"), "ErrorPage");
 const { default: ComingSoon } = lazyImport(() => import("./Pages/ComingSoon"), "default");
 const { Protect } = lazyImport(() => import("./components/navigation/Protect"), "Protect");
@@ -189,11 +192,12 @@ export default function AppRoutes() {
                       <Route path="*" element={<Navigate to="" />} />
                     </Route>
                     {/* Designed-but-unbuilt sidebar modules get a friendly placeholder. */}
-                    <Route path="/Shop" element={<ComingSoon module="The Marketplace" />} />
+                    <Route path="/Shop" element={<Mall />} />
                     <Route path="/Users" element={<Users />} />
                     <Route path="/Users/:username" element={<PublicProfile />} />
                     <Route path="/Activities" element={<ComingSoon module="Activities" />} />
-                    <Route path="/Missions" element={<ComingSoon module="Missions" />} />
+                    <Route path="/Missions" element={<Missions />} />
+                    <Route path="/Research" element={<Research />} />
                     <Route
                       path="/Onboarding"
                       element={

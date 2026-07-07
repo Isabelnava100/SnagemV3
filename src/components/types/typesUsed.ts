@@ -248,6 +248,8 @@ export interface Currencies {
   gengarcoin: string;
   pokecoin: string;
   snagemblem?: string;
+  /** Mission-bonus pieces; every 3 grant one Snag Emblem. Cumulative count. */
+  snagEmblemPieces?: string;
 }
 
 export type Item = {

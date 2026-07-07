@@ -2018,3 +2018,403 @@ export const onThreadClosed = onDocumentUpdated(
     });
   }
 );
+
+// ===========================================================================
+// Snag Mall, Missions, and Research economy callables
+// All spend/write actions are server-side; the client never mutates currency
+// or inventory directly. See docs/SHOP_DATA.md, MISSIONS_DATA.md, RESEARCH_DATA.md.
+// ===========================================================================
+
+const isGrader = (m: Member) => isAdmin(m) || m.capabilities.includes("ReviewRewards");
+
+function requireInt(value: unknown, field: string, min: number, max: number): number {
+  const n = Math.trunc(Number(value));
+  if (!Number.isFinite(n) || n < min || n > max) {
+    throw new HttpsError("invalid-argument", `Invalid ${field}.`);
+  }
+  return n;
+}
+
+interface ShopItem {
+  itemId: string;
+  price: number;
+  name?: string;
+  filePath?: string;
+  category?: string;
+  stock?: number;
+}
+
+/** Add a purchased/crafted item into a bag/items doc (within a transaction). */
+function bagIncrement(
+  tx: FirebaseFirestore.Transaction,
+  bagRef: FirebaseFirestore.DocumentReference,
+  itemId: string,
+  meta: { name?: string; filePath?: string; category?: string },
+  qty: number
+) {
+  tx.set(
+    bagRef,
+    {
+      [itemId]: {
+        name: meta.name ?? itemId,
+        filePath: meta.filePath ?? "",
+        category: meta.category ?? "other-item",
+        quantity: FieldValue.increment(qty),
+      },
+    },
+    { merge: true }
+  );
+}
+
+// --- Snag Mall: buy an item -------------------------------------------------
+export const buyShopItem = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const shopId = requireString(request.data?.shopId, "shop", 80);
+  const itemId = requireString(request.data?.itemId, "item", 80);
+  const qty = requireInt(request.data?.qty ?? 1, "qty", 1, 99);
+
+  const shopSnap = await db.doc(`shops/${shopId}`).get();
+  const shop = shopSnap.data();
+  if (!shop) throw new HttpsError("not-found", "Shop not found.");
+  const currency = shop.currency as CurrencyKey;
+  if (!CURRENCY_KEYS.includes(currency)) throw new HttpsError("internal", "Bad shop currency.");
+
+  const pools: ShopItem[] = [];
+  (shop.sections ?? []).forEach((s: { items?: ShopItem[] }) =>
+    (s.items ?? []).forEach((it) => pools.push(it))
+  );
+  (shop.rare_section?.pool ?? []).forEach((it: ShopItem) => pools.push(it));
+  const item = pools.find((it) => it.itemId === itemId);
+  if (!item) throw new HttpsError("not-found", "That item is not sold here.");
+  const cost = Math.max(0, Math.trunc(item.price)) * qty;
+
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  await db.runTransaction(async (tx) => {
+    const curSnap = await tx.get(currencyRef);
+    const have = parseInt(String(curSnap.data()?.[currency] ?? "0"), 10) || 0;
+    if (have < cost) throw new HttpsError("failed-precondition", "You do not have enough currency.");
+    tx.set(currencyRef, { [currency]: String(have - cost) }, { merge: true });
+    bagIncrement(tx, bagRef, itemId, item, qty);
+  });
+
+  return { ok: true, spent: cost, currency };
+});
+
+// --- Snag Mall: Trash Shack recycling --------------------------------------
+export const recycleItems = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const itemIds: string[] = (Array.isArray(request.data?.itemIds) ? request.data.itemIds : [])
+    .slice(0, 200)
+    .map((x: unknown) => String(x));
+  if (!itemIds.length) throw new HttpsError("invalid-argument", "Select at least one item.");
+
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+
+  const coins = await db.runTransaction(async (tx) => {
+    const [bagSnap, curSnap] = await Promise.all([tx.get(bagRef), tx.get(currencyRef)]);
+    const bag = (bagSnap.data() ?? {}) as Record<string, { quantity?: number }>;
+
+    // Tally how many of each id are being recycled (capped by what is owned).
+    const counts = new Map<string, number>();
+    itemIds.forEach((id) => counts.set(id, (counts.get(id) ?? 0) + 1));
+    let removed = 0;
+    counts.forEach((want, id) => {
+      const owned = bag[id]?.quantity ?? 0;
+      const take = Math.min(want, owned);
+      if (take > 0) {
+        tx.set(bagRef, { [id]: { quantity: FieldValue.increment(-take) } }, { merge: true });
+        removed += take;
+      }
+    });
+    if (removed === 0) throw new HttpsError("failed-precondition", "You do not own those items.");
+
+    // Bulk-tier payout: floor(n * 1.2) matches the 1->1, 5->6, 10->12 table.
+    const payout = Math.floor(removed * 1.2);
+    tx.set(currencyRef, { pokecoin: addCurrencyString(curSnap.data()?.pokecoin, payout) }, { merge: true });
+    return payout;
+  });
+
+  return { ok: true, coins };
+});
+
+// --- Snag Mall: K&L Nature Tours (RNG roll) --------------------------------
+interface LootEntry { min: number; max: number; itemId: string; name?: string; filePath?: string; category?: string }
+export const rollTour = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const area = requireString(request.data?.area, "area", 40);
+
+  const cfgSnap = await db.doc("admin/kl_loot_tables").get();
+  const table = (cfgSnap.data() ?? {})[area] as LootEntry[] | undefined;
+  if (!table?.length) throw new HttpsError("failed-precondition", "That tour is not available.");
+
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const stateRef = db.doc(`users/${uid}/bag/tour_state`);
+  const COST = 2;
+
+  const result = await db.runTransaction(async (tx) => {
+    const [curSnap, stateSnap] = await Promise.all([tx.get(currencyRef), tx.get(stateRef)]);
+    const rolls = Number(stateSnap.data()?.rolls ?? 0);
+    const free = (rolls + 1) % 4 === 0; // every 4th roll is free
+    const have = parseInt(String(curSnap.data()?.pokecoin ?? "0"), 10) || 0;
+    if (!free && have < COST) throw new HttpsError("failed-precondition", "You need 2 Snag Coins to roll.");
+    if (!free) tx.set(currencyRef, { pokecoin: String(have - COST) }, { merge: true });
+
+    const roll = randomInt(1, 121); // 1..120
+    const entry = table.find((e) => roll >= e.min && roll <= e.max) ?? table[table.length - 1];
+    bagIncrement(tx, bagRef, entry.itemId, entry, 1);
+
+    const bonus = roll === 7; // lucky 7 also grants a Rare Candy
+    if (bonus) bagIncrement(tx, bagRef, "rare-candy", { name: "Rare Candy", category: "valuable" }, 1);
+
+    tx.set(stateRef, { rolls: FieldValue.increment(1) }, { merge: true });
+    return { item: { name: entry.name ?? entry.itemId, filePath: entry.filePath ?? "" }, bonusRareCandy: bonus, free };
+  });
+
+  return { ok: true, ...result };
+});
+
+// --- Snag Mall: Ambrosial Alchemy crafting ---------------------------------
+export const craftItem = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const recipeId = requireString(request.data?.recipeId, "recipe", 80);
+  const batch = requireInt(request.data?.batch ?? 1, "batch", 1, 20);
+
+  const recipeSnap = await db.doc(`recipes/${recipeId}`).get();
+  const recipe = recipeSnap.data();
+  if (!recipe) throw new HttpsError("not-found", "Recipe not found.");
+  if (batch > (recipe.max_batch ?? 1)) throw new HttpsError("invalid-argument", "Batch too large.");
+
+  const ingredients: Array<{ itemId: string; qty: number }> = recipe.ingredients ?? [];
+  const cost = recipe.cost ?? {};
+  const rate = Math.min(100, Math.max(0, Number(recipe.success_rate ?? 100)));
+
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+
+  const outcome = await db.runTransaction(async (tx) => {
+    const [bagSnap, curSnap] = await Promise.all([tx.get(bagRef), tx.get(currencyRef)]);
+    const bag = (bagSnap.data() ?? {}) as Record<string, { quantity?: number }>;
+    const cur = curSnap.data() ?? {};
+
+    for (const ing of ingredients) {
+      if ((bag[ing.itemId]?.quantity ?? 0) < ing.qty * batch) {
+        throw new HttpsError("failed-precondition", "You are missing ingredients.");
+      }
+    }
+    for (const key of CURRENCY_KEYS) {
+      const need = Number((cost as Record<string, number>)[key] ?? 0) * batch;
+      if (need > 0 && (parseInt(String(cur[key] ?? "0"), 10) || 0) < need) {
+        throw new HttpsError("failed-precondition", "You cannot afford the crafting cost.");
+      }
+    }
+
+    // Consume ingredients + currency up front (spent on failure too).
+    ingredients.forEach((ing) =>
+      tx.set(bagRef, { [ing.itemId]: { quantity: FieldValue.increment(-ing.qty * batch) } }, { merge: true })
+    );
+    CURRENCY_KEYS.forEach((key) => {
+      const spend = Number((cost as Record<string, number>)[key] ?? 0) * batch;
+      if (spend > 0) tx.set(currencyRef, { [key]: addCurrencyString(cur[key], -spend) }, { merge: true });
+    });
+
+    let successes = 0;
+    for (let i = 0; i < batch; i++) if (randomInt(1, 101) <= rate) successes++;
+    const failures = batch - successes;
+
+    if (successes > 0) {
+      bagIncrement(
+        tx,
+        bagRef,
+        recipe.output_item_id,
+        { name: recipe.output_name, filePath: recipe.output_filePath, category: recipe.output_category },
+        successes * (recipe.output_qty ?? 1)
+      );
+    }
+    if (failures > 0) {
+      bagIncrement(tx, bagRef, "mystery-pebble", { name: "Mystery Pebble", category: "valuable" }, failures);
+    }
+    return { successes, failures };
+  });
+
+  return { ok: true, ...outcome };
+});
+
+// --- Research: Fossil Revitalization ---------------------------------------
+export const reviveFossil = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const fossilItemId = requireString(request.data?.fossilItemId, "fossil", 80);
+
+  const cfgSnap = await db.doc("admin/research_config").get();
+  const cfg = cfgSnap.data() ?? {};
+  const slug = (cfg.fossilMap ?? {})[fossilItemId] as string | undefined;
+  if (!slug || !catalogBySlug.get(slug)) throw new HttpsError("failed-precondition", "That is not a revivable fossil.");
+  const fossilCost = Math.max(0, Math.trunc(Number(cfg.fossilCost ?? 5)));
+
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const pokeRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  const now = new Date();
+
+  await db.runTransaction(async (tx) => {
+    const [bagSnap, curSnap] = await Promise.all([tx.get(bagRef), tx.get(currencyRef)]);
+    const bag = (bagSnap.data() ?? {}) as Record<string, { quantity?: number }>;
+    if ((bag[fossilItemId]?.quantity ?? 0) < 1) throw new HttpsError("failed-precondition", "You do not have that fossil.");
+    const have = parseInt(String(curSnap.data()?.pokecoin ?? "0"), 10) || 0;
+    if (have < fossilCost) throw new HttpsError("failed-precondition", "Not enough Snag Coins.");
+
+    tx.set(bagRef, { [fossilItemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
+    tx.set(currencyRef, { pokecoin: String(have - fossilCost) }, { merge: true });
+    tx.set(pokeRef, { [randomUUID()]: buildOwnedPokemon(slug, now, {}) }, { merge: true });
+  });
+
+  const name = catalogBySlug.get(slug)?.name ?? slug;
+  return { ok: true, pokemon: { name, slug } };
+});
+
+// --- Missions: submit for grading ------------------------------------------
+export const submitMission = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const missionId = requireString(request.data?.missionId, "mission", 80);
+  const threadLink = requireString(request.data?.threadLink, "threadLink", 500);
+
+  const ref = await db.collection("missionSubmissions").add({
+    missionId,
+    submitterUid: uid,
+    submitterName: member.username,
+    threadLink,
+    status: "pending",
+    submittedAt: new Date(),
+  });
+  const staff = await staffUidsWithCaps(["ReviewRewards", "GiveItems"]);
+  await notifyUsers(staff, { type: "approval", text: `${member.username} submitted a mission for grading.`, link: "/Dashboard/Admin-Access" });
+  return { ok: true, id: ref.id };
+});
+
+// --- Missions: grade (grader-gated) ----------------------------------------
+export const gradeMission = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isGrader(member)) throw new HttpsError("permission-denied", "You cannot grade missions.");
+  const submissionId = requireString(request.data?.submissionId, "submission", 80);
+  const approve = request.data?.approve === true;
+  const awards = (request.data?.awards ?? {}) as { coins?: number; emblemPiece?: boolean; note?: string };
+
+  const subRef = db.doc(`missionSubmissions/${submissionId}`);
+  const subSnap = await subRef.get();
+  const sub = subSnap.data();
+  if (!sub) throw new HttpsError("not-found", "Submission not found.");
+  if (sub.status !== "pending") throw new HttpsError("failed-precondition", "Already graded.");
+
+  if (!approve) {
+    await subRef.set({ status: "rejected", gradedBy: member.username, gradedAt: new Date() }, { merge: true });
+    return { ok: true };
+  }
+
+  const targetUid = String(sub.submitterUid);
+  const coins = Math.max(0, Math.trunc(Number(awards.coins ?? 0)));
+  const currencyRef = db.doc(`users/${targetUid}/bag/currency`);
+  await db.runTransaction(async (tx) => {
+    const curSnap = await tx.get(currencyRef);
+    const cur = curSnap.data() ?? {};
+    const update: Record<string, string> = {};
+    if (coins > 0) update.pokecoin = addCurrencyString(cur.pokecoin, coins);
+    if (awards.emblemPiece) {
+      const pieces = (parseInt(String(cur.snagEmblemPieces ?? "0"), 10) || 0) + 1;
+      update.snagEmblemPieces = String(pieces);
+      if (pieces % 3 === 0) update.snagemblem = addCurrencyString(cur.snagemblem, 1);
+    }
+    if (Object.keys(update).length) tx.set(currencyRef, update, { merge: true });
+    tx.set(subRef, { status: "graded", gradedBy: member.username, gradedAt: new Date(), awarded: { coins, emblemPiece: !!awards.emblemPiece } }, { merge: true });
+  });
+  await notifyUsers([targetUid], { type: "reward", text: `Your mission was graded: +${coins} Snag Coins${awards.emblemPiece ? " and a Snag Emblem Piece" : ""}.`, link: "/Dashboard" });
+  return { ok: true };
+});
+
+// --- Research: Master Mission request + grant ------------------------------
+export const requestMasterMission = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const characterId = requireString(request.data?.characterId, "character", 80);
+  const type = requireString(request.data?.type, "type", 40);
+  const number = requireInt(request.data?.number ?? 1, "number", 1, 10);
+
+  const ref = await db.collection("masterMissionRequests").add({
+    uid,
+    username: member.username,
+    characterId,
+    type,
+    number,
+    status: "requested",
+    createdAt: new Date(),
+  });
+  const staff = await staffUidsWithCaps(["ReviewRewards"]);
+  await notifyUsers(staff, { type: "approval", text: `${member.username} requested a ${type} Master Mission.`, link: "/Dashboard/Admin-Access" });
+  return { ok: true, id: ref.id };
+});
+
+export const grantMasterMission = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isGrader(member)) throw new HttpsError("permission-denied", "You cannot grant missions.");
+  const requestId = requireString(request.data?.requestId, "request", 80);
+  const ability = requireString(request.data?.ability, "ability", 120);
+
+  const reqRef = db.doc(`masterMissionRequests/${requestId}`);
+  const reqSnap = await reqRef.get();
+  const req = reqSnap.data();
+  if (!req) throw new HttpsError("not-found", "Request not found.");
+  if (req.status === "complete") throw new HttpsError("failed-precondition", "Already granted.");
+
+  const researchRef = db.doc(`users/${req.uid}/bag/research`);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(researchRef);
+    const data = (snap.data() ?? {}) as Record<string, { types?: Array<{ type: string; missionsCompleted: number; abilities: string[] }> }>;
+    const entry = data[req.characterId] ?? { types: [] };
+    const types = entry.types ?? [];
+    let t = types.find((x) => x.type === req.type);
+    if (!t) { t = { type: req.type, missionsCompleted: 0, abilities: [] }; types.push(t); }
+    t.missionsCompleted = Math.min(10, (t.missionsCompleted ?? 0) + 1);
+    t.abilities = [...(t.abilities ?? []), ability];
+    tx.set(researchRef, { [req.characterId]: { ...entry, characterId: req.characterId, types } }, { merge: true });
+    tx.set(reqRef, { status: "complete", grantedBy: member.username, grantedAt: new Date(), ability }, { merge: true });
+  });
+  await notifyUsers([String(req.uid)], { type: "reward", text: `Master Mission complete: learned ${ability}.`, link: "/Research" });
+  return { ok: true };
+});
+
+// --- Snag Mall: E.V.O. move/ability studio ---------------------------------
+export const evoService = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const action = requireString(request.data?.action, "action", 40);
+  const characterId = requireString(request.data?.characterId, "character", 80);
+
+  const PRICES: Record<string, { currency: CurrencyKey; amount: number }> = {
+    unlock_restraints: { currency: "snagemblem", amount: 1 },
+    unlock_potential: { currency: "snagemblem", amount: 2 },
+    new_adaptations: { currency: "pokecoin", amount: 25 },
+  };
+  const price = PRICES[action];
+  if (!price) throw new HttpsError("invalid-argument", "Unknown service.");
+
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const evoRef = db.doc(`users/${uid}/bag/evo`);
+  await db.runTransaction(async (tx) => {
+    const curSnap = await tx.get(currencyRef);
+    const have = parseInt(String(curSnap.data()?.[price.currency] ?? "0"), 10) || 0;
+    if (have < price.amount) throw new HttpsError("failed-precondition", "You cannot afford that service.");
+    tx.set(currencyRef, { [price.currency]: String(have - price.amount) }, { merge: true });
+    const field = action === "unlock_restraints" ? "slots" : action === "unlock_potential" ? "moves" : "adaptations";
+    tx.set(evoRef, { [characterId]: { [field]: FieldValue.increment(1) } }, { merge: true });
+  });
+  return { ok: true };
+});
