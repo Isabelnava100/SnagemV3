@@ -56,3 +56,10 @@ export const playGame = (game: CasinoGame, bet: number, pick: number | "even" | 
 /** Buy a Shadow Lotto ticket (1 Gengar Token) for a number 1-50. */
 export const buyLottoTicket = (number: number) =>
   call<{ ok: boolean; number: number; jackpot: number }>("buyLottoTicket", { number });
+
+/** Draw the Shadow Lotto winner (graders/admins only). Splits the pot and resets it. */
+export const drawLotto = () =>
+  call<{ ok: boolean; drawn: number; winners: number; jackpot: number; share: number }>(
+    "drawLotto",
+    {}
+  );

@@ -1,3 +1,4 @@
+import type { QueryDocumentSnapshot } from "firebase/firestore";
 import { AdminPokemonList, Bookmark } from "../../components/types/typesUsed";
 import { db } from "../../context/firebase";
 import { pokemonData } from "../../data/pokemon";
@@ -49,6 +50,13 @@ export const getPostsCount = async (forum: string, threadId: string): Promise<nu
  * page queries in reverse with a small limit so deep threads never load from
  * the start; earlier pages read up to the requested page only.
  */
+// Forward-pagination cursor cache: the last document of each fetched page,
+// keyed by forum/thread/page. Lets the next page start right after it instead
+// of re-reading every earlier post (Firestore bills per document scanned).
+const pageCursors = new Map<string, QueryDocumentSnapshot>();
+const cursorKey = (forum: string, threadId: string, page: number) =>
+  `${forum}/${threadId}/${page}`;
+
 export const getPostsPage = async (
   forum: string,
   threadId: string,
@@ -56,23 +64,42 @@ export const getPostsPage = async (
   perPage: number,
   totalCount: number
 ): Promise<ForumPost[]> => {
-  const { collection, getDocs, limit, orderBy, query } = await import("firebase/firestore");
+  const { collection, getDocs, limit, orderBy, query, startAfter } = await import(
+    "firebase/firestore"
+  );
   const colRef = collection(db, ...threadsPath(forum), threadId, "posts");
   const lastPage = Math.max(1, Math.ceil(totalCount / perPage));
   const safePage = Math.min(Math.max(1, page), lastPage);
 
+  // Last page: read only the tail newest-first, then flip to chronological.
   if (safePage === lastPage) {
     const tailCount = totalCount - (lastPage - 1) * perPage || perPage;
     const snapshot = await getDocs(query(colRef, orderBy("timePosted", "desc"), limit(tailCount)));
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as ForumPost).reverse();
   }
 
-  const snapshot = await getDocs(
-    query(colRef, orderBy("timePosted", "asc"), limit(safePage * perPage))
-  );
-  return snapshot.docs
-    .map((d) => ({ id: d.id, ...d.data() }) as ForumPost)
-    .slice((safePage - 1) * perPage);
+  // If we hold the previous page's boundary cursor, start right after it and
+  // read a single page. Otherwise (a cold jump straight to a middle page) fall
+  // back to reading from the top, but still record the cursor for next time.
+  const prevCursor =
+    safePage > 1 ? pageCursors.get(cursorKey(forum, threadId, safePage - 1)) : undefined;
+
+  let docs;
+  if (safePage === 1 || prevCursor) {
+    const q = prevCursor
+      ? query(colRef, orderBy("timePosted", "asc"), startAfter(prevCursor), limit(perPage))
+      : query(colRef, orderBy("timePosted", "asc"), limit(perPage));
+    docs = (await getDocs(q)).docs;
+  } else {
+    const snapshot = await getDocs(
+      query(colRef, orderBy("timePosted", "asc"), limit(safePage * perPage))
+    );
+    docs = snapshot.docs.slice((safePage - 1) * perPage);
+  }
+
+  // Record this page's last doc so the following page can start after it.
+  if (docs.length) pageCursors.set(cursorKey(forum, threadId, safePage), docs[docs.length - 1]);
+  return docs.map((d) => ({ id: d.id, ...d.data() }) as ForumPost);
 };
 
 export const getPost = async (

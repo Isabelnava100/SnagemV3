@@ -2111,6 +2111,30 @@ export const buyShopItem = onCall(async (request) => {
 });
 
 // --- Snag Mall: Trash Shack recycling --------------------------------------
+// Item categories the Trash Shack will not buy back at all.
+const RECYCLE_EXCLUDED_CATEGORIES = new Set(["medicine"]);
+// Consumables recycle for half a unit each (keep in sync with the Mall UI copy).
+const RECYCLE_HALF_CATEGORIES = new Set([
+  "berry",
+  "battle-item",
+  "flute",
+  "mulch",
+  "incense",
+  "exp-candy",
+  "av-candy",
+  "poke-candy",
+  "curry-ingredient",
+  "mint",
+  "petal",
+  "roto",
+]);
+// Payout units for one item of a category: 0 = not recyclable, 0.5 = consumable.
+function recycleUnits(category: string | undefined): number {
+  const c = category ?? "other-item";
+  if (RECYCLE_EXCLUDED_CATEGORIES.has(c)) return 0;
+  return RECYCLE_HALF_CATEGORIES.has(c) ? 0.5 : 1;
+}
+
 export const recycleItems = onCall(async (request) => {
   const uid = requireAuth(request);
   await loadMember(uid);
@@ -2122,31 +2146,49 @@ export const recycleItems = onCall(async (request) => {
   const bagRef = db.doc(`users/${uid}/bag/items`);
   const currencyRef = db.doc(`users/${uid}/bag/currency`);
 
-  const coins = await db.runTransaction(async (tx) => {
+  const result = await db.runTransaction(async (tx) => {
     const [bagSnap, curSnap] = await Promise.all([tx.get(bagRef), tx.get(currencyRef)]);
-    const bag = (bagSnap.data() ?? {}) as Record<string, { quantity?: number }>;
+    const bag = (bagSnap.data() ?? {}) as Record<
+      string,
+      { quantity?: number; category?: string }
+    >;
 
     // Tally how many of each id are being recycled (capped by what is owned).
     const counts = new Map<string, number>();
     itemIds.forEach((id) => counts.set(id, (counts.get(id) ?? 0) + 1));
-    let removed = 0;
-    counts.forEach((want, id) => {
-      const owned = bag[id]?.quantity ?? 0;
-      const take = Math.min(want, owned);
-      if (take > 0) {
-        tx.set(bagRef, { [id]: { quantity: FieldValue.increment(-take) } }, { merge: true });
-        removed += take;
-      }
-    });
-    if (removed === 0) throw new HttpsError("failed-precondition", "You do not own those items.");
 
-    // Bulk-tier payout: floor(n * 1.2) matches the 1->1, 5->6, 10->12 table.
-    const payout = Math.floor(removed * 1.2);
+    let removed = 0; // real items consumed
+    let units = 0; // payout units (consumables count as half)
+    let excluded = 0; // items the shack refuses (e.g. medicine)
+    counts.forEach((want, id) => {
+      const entry = bag[id];
+      const take = Math.min(want, entry?.quantity ?? 0);
+      if (take <= 0) return;
+      const per = recycleUnits(entry?.category);
+      if (per === 0) {
+        excluded += take; // do not consume or pay for excluded items
+        return;
+      }
+      tx.set(bagRef, { [id]: { quantity: FieldValue.increment(-take) } }, { merge: true });
+      removed += take;
+      units += take * per;
+    });
+
+    if (removed === 0) {
+      throw new HttpsError(
+        "failed-precondition",
+        excluded > 0 ? "Those items cannot be recycled here." : "You do not own those items."
+      );
+    }
+
+    // Bulk-tier payout: floor(units * 1.2) keeps the 1->1, 5->6, 10->12 table
+    // for ordinary items; consumables contribute half a unit each.
+    const payout = Math.floor(units * 1.2);
     tx.set(currencyRef, { pokecoin: addCurrencyString(curSnap.data()?.pokecoin, payout) }, { merge: true });
-    return payout;
+    return { payout, removed, excluded };
   });
 
-  return { ok: true, coins };
+  return { ok: true, coins: result.payout, recycled: result.removed, excluded: result.excluded };
 });
 
 // --- Snag Mall: K&L Nature Tours (RNG roll) --------------------------------
@@ -2672,20 +2714,31 @@ export const drawLotto = onCall(async (request) => {
   const tickets = (Array.isArray(lotto.tickets) ? lotto.tickets : []) as Array<{ uid: string; number: number }>;
   const winners = [...new Set(tickets.filter((t) => t.number === drawn).map((t) => t.uid))];
 
+  // Split the jackpot evenly among winners. Any floor remainder is handed out
+  // one coin at a time to the earliest winners so the whole pot is always paid.
+  const share = winners.length ? Math.floor(jackpot / winners.length) : 0;
+  const remainder = winners.length ? jackpot - share * winners.length : 0;
+  const payoutFor = (index: number) => share + (index < remainder ? 1 : 0);
+
   const batch = db.batch();
-  for (const winnerUid of winners) {
-    const cRef = db.doc(`users/${winnerUid}/bag/currency`);
+  for (let i = 0; i < winners.length; i++) {
+    const cRef = db.doc(`users/${winners[i]}/bag/currency`);
     const cur = (await cRef.get()).data() ?? {};
-    batch.set(cRef, { gengarcoin: addCurrencyString(cur.gengarcoin, jackpot) }, { merge: true });
+    batch.set(cRef, { gengarcoin: addCurrencyString(cur.gengarcoin, payoutFor(i)) }, { merge: true });
   }
-  // Roll the jackpot over: winners split (here each gets full jackpot for simplicity),
-  // then reset to the base for the next week.
+  // Reset the pot to the base for the next week.
   const nextWeek = String(Date.now());
   batch.set(lottoRef, { drawNumber: drawn, jackpot: 100, ticketCount: 0, weekId: nextWeek, tickets: [] }, { merge: true });
   await batch.commit();
 
-  if (winners.length) {
-    await notifyUsers(winners, { type: "reward", text: `You won the Shadow Lotto! +${jackpot} Gengar Tokens.`, link: "/Casino" });
+  // Notify winners of their actual share (top winners get one extra coin from the remainder).
+  const topWinners = winners.slice(0, remainder);
+  const baseWinners = winners.slice(remainder);
+  if (topWinners.length) {
+    await notifyUsers(topWinners, { type: "reward", text: `You won the Shadow Lotto! +${share + 1} Gengar Tokens.`, link: "/Casino" });
   }
-  return { ok: true, drawn, winners: winners.length, jackpot };
+  if (baseWinners.length) {
+    await notifyUsers(baseWinners, { type: "reward", text: `You won the Shadow Lotto! +${share} Gengar Tokens.`, link: "/Casino" });
+  }
+  return { ok: true, drawn, winners: winners.length, jackpot, share };
 });

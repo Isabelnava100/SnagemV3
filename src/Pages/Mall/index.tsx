@@ -58,13 +58,32 @@ function resolveItem(itemId: string) {
   };
 }
 
-/** Simple recycle payout preview (an estimate, the server is authoritative). */
-function estimateRecyclePayout(count: number): number {
-  if (count <= 0) return 0;
-  if (count >= 10) return 12;
-  if (count >= 5) return 6;
-  if (count >= 3) return 3;
-  return count; // 1 -> 1, 2 -> 2 linear fallback
+// Recycle rules mirrored from functions/src/index.ts (keep the two in sync).
+const RECYCLE_EXCLUDED_CATEGORIES = new Set(["medicine"]);
+const RECYCLE_HALF_CATEGORIES = new Set([
+  "berry",
+  "battle-item",
+  "flute",
+  "mulch",
+  "incense",
+  "exp-candy",
+  "av-candy",
+  "poke-candy",
+  "curry-ingredient",
+  "mint",
+  "petal",
+  "roto",
+]);
+/** Payout units for one item of a category: 0 = not recyclable, 0.5 = consumable. */
+function recycleUnits(category: string | undefined): number {
+  const c = category ?? "other-item";
+  if (RECYCLE_EXCLUDED_CATEGORIES.has(c)) return 0;
+  return RECYCLE_HALF_CATEGORIES.has(c) ? 0.5 : 1;
+}
+
+/** Recycle payout preview (an estimate, the server is authoritative). */
+function estimateRecyclePayout(units: number): number {
+  return Math.floor(Math.max(0, units) * 1.2);
 }
 
 function StatusMessage(props: { children: React.ReactNode; color?: string }) {
@@ -315,7 +334,15 @@ function RecycleBody() {
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
 
-  const payout = estimateRecyclePayout(selected.length);
+  const selectedUnits = React.useMemo(
+    () =>
+      selected.reduce((sum, id) => {
+        const it = (items ?? []).find((b) => b.id === id);
+        return sum + recycleUnits(it?.category);
+      }, 0),
+    [selected, items]
+  );
+  const payout = estimateRecyclePayout(selectedUnits);
 
   const recycle = async () => {
     if (!selected.length) return;
@@ -349,42 +376,56 @@ function RecycleBody() {
       ) : (
         <>
           <Stack gap={6}>
-            {bag.map((item) => (
-              <Card
-                key={item.id}
-                withBorder
-                radius="md"
-                p={10}
-                bg="#26252a"
-                {...clickable(() => toggle(item.id))}
-                aria-label={`Toggle ${item.name} for recycling`}
-                style={{ cursor: "pointer" }}
-              >
-                <Group gap={10} wrap="nowrap">
-                  <Checkbox
-                    checked={selected.includes(item.id)}
-                    readOnly
-                    tabIndex={-1}
-                    aria-hidden
-                  />
-                  <Image
-                    src={item.filePath ? getItemImageURL(item.filePath) : undefined}
-                    alt={item.name}
-                    w={30}
-                    h={30}
-                    fit="contain"
-                  />
-                  <Box style={{ minWidth: 0, flex: 1 }}>
-                    <Text fz={13} c="white" lineClamp={1}>
-                      {item.name}
-                    </Text>
-                    <Text fz={10} c="dimmed" tt="capitalize">
-                      {item.category} x{item.quantity}
-                    </Text>
-                  </Box>
-                </Group>
-              </Card>
-            ))}
+            {bag.map((item) => {
+              const units = recycleUnits(item.category);
+              const recyclable = units > 0;
+              const hint = !recyclable ? "not recyclable" : units === 0.5 ? "half value" : null;
+              return (
+                <Card
+                  key={item.id}
+                  withBorder
+                  radius="md"
+                  p={10}
+                  bg="#26252a"
+                  {...(recyclable
+                    ? {
+                        ...clickable(() => toggle(item.id)),
+                        "aria-label": `Toggle ${item.name} for recycling`,
+                      }
+                    : { "aria-label": `${item.name} cannot be recycled` })}
+                  style={{
+                    cursor: recyclable ? "pointer" : "not-allowed",
+                    opacity: recyclable ? 1 : 0.5,
+                  }}
+                >
+                  <Group gap={10} wrap="nowrap">
+                    <Checkbox
+                      checked={recyclable && selected.includes(item.id)}
+                      readOnly
+                      disabled={!recyclable}
+                      tabIndex={-1}
+                      aria-hidden
+                    />
+                    <Image
+                      src={item.filePath ? getItemImageURL(item.filePath) : undefined}
+                      alt={item.name}
+                      w={30}
+                      h={30}
+                      fit="contain"
+                    />
+                    <Box style={{ minWidth: 0, flex: 1 }}>
+                      <Text fz={13} c="white" lineClamp={1}>
+                        {item.name}
+                      </Text>
+                      <Text fz={10} c="dimmed" tt="capitalize">
+                        {item.category} x{item.quantity}
+                        {hint ? ` · ${hint}` : ""}
+                      </Text>
+                    </Box>
+                  </Group>
+                </Card>
+              );
+            })}
           </Stack>
 
           <Card withBorder radius="md" p={12} bg="#181719">

@@ -15,10 +15,13 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { SectionLoader } from "../../components/navigation/loading";
+import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
+import { hasCapability } from "../../lib/permissions";
 import {
   buyLottoTicket,
   CasinoGame,
+  drawLotto,
   exchangeTokens,
   getCasinoConfig,
   getLottoState,
@@ -388,6 +391,28 @@ function ShadowLotto(props: { uid: string; tokens: number }) {
     },
   });
 
+  // Graders/admins draw the winner by hand (no scheduled job runs it).
+  const { user } = useAuth();
+  const canDraw = hasCapability(user, Capability.ReviewRewards);
+
+  const drawMutation = useMutation({
+    mutationFn: () => drawLotto(),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["lotto-state"] });
+      queryClient.invalidateQueries({ queryKey: ["my-casino", props.uid] });
+      queryClient.invalidateQueries({ queryKey: ["currencies", props.uid] });
+      setStatus({
+        color: "teal",
+        text: res.winners
+          ? `Drew #${res.drawn}. ${res.winners} winner(s) split the pot for ${res.share} Gengar Tokens each.`
+          : `Drew #${res.drawn}. No winning tickets this round.`,
+      });
+    },
+    onError: (err: unknown) => {
+      setStatus({ color: "red", text: err instanceof Error ? err.message : "The draw failed." });
+    },
+  });
+
   const jackpot = lotto.data?.jackpot;
   const ticket = mine.data?.lottoNumber;
   const disabled = mutation.isPending || props.tokens < 1;
@@ -430,6 +455,27 @@ function ShadowLotto(props: { uid: string; tokens: number }) {
         <Text fz={12} c="dimmed">
           You need at least 1 Gengar Token to buy a ticket.
         </Text>
+      )}
+      {canDraw && (
+        <Stack gap={4} mt={4}>
+          <Button
+            variant="light"
+            color="red"
+            onClick={() => {
+              setStatus(null);
+              drawMutation.mutate();
+            }}
+            loading={drawMutation.isPending}
+            disabled={drawMutation.isPending}
+            maw={220}
+            w="100%"
+          >
+            Draw winner (admin)
+          </Button>
+          <Text fz={11} c="dimmed">
+            Draws the number, splits the jackpot among matching tickets, and resets the pot.
+          </Text>
+        </Stack>
       )}
       {status && <StatusLine color={status.color}>{status.text}</StatusLine>}
     </GameCard>
