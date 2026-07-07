@@ -69,7 +69,17 @@ export const craftItem = (recipeId: string, batch: number) =>
   call<{ ok: boolean; successes: number; failures: number }>("craftItem", { recipeId, batch });
 
 export const recycleItems = (itemIds: string[]) =>
-  call<{ ok: boolean; coins: number }>("recycleItems", { itemIds });
+  call<{ ok: boolean; coins: number; recycled: number; excluded: number }>("recycleItems", {
+    itemIds,
+  });
+
+export type ScentKey = "joy" | "excite" | "vivid";
+/** Trash Shack: spend a Pokemon's Evo Points for aroma Scents (4/6/8 each). */
+export const convertCandyToScent = (pokemonId: string, scent: ScentKey, qty: number) =>
+  call<{ ok: boolean; scent: ScentKey; qty: number; spent: number; remaining: number }>(
+    "convertCandyToScent",
+    { pokemonId, scent, qty }
+  );
 
 export const rollTour = (area: string) =>
   call<{ ok: boolean; item: { name: string; filePath?: string }; bonusRareCandy: boolean; free: boolean }>(

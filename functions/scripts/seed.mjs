@@ -24,6 +24,7 @@ const titled = (raw, group) => {
   const t = raw.split(/[-_\s]+/).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
   if (group === "ball") return `${t} Ball`;
   if (group === "berry") return `${t} Berry`;
+  if (group === "apricorn") return `${t} Apricorn`;
   return t;
 };
 for (const k of Object.keys(itemJSON)) {
@@ -362,7 +363,14 @@ const shops = {
 // Recipes (Ambrosial Alchemy)
 // --------------------------------------------------------------------------
 const slugKey = (name) => norm(name).replace(/ /g, "-");
-const ing = (name, qty = 1) => ({ itemId: named(name, 0, "").itemId, qty });
+// Recipe ingredients must resolve to a REAL catalog itemId, otherwise no bag
+// item ever matches and the craft can never succeed. Record any name that
+// falls through to the synthetic fallback so SEED_CHECK can flag it.
+const unresolvedIngredients = new Set();
+const ing = (name, qty = 1) => {
+  if (!byDisplay.has(norm(name))) unresolvedIngredients.add(name);
+  return { itemId: named(name, 0, "").itemId, qty };
+};
 // R(outputName, cost, success, category, {max_batch, ingredients})
 const R = (outName, cost, success, category, opts = {}) => {
   const o = named(outName, 0, "");
@@ -725,6 +733,27 @@ async function run() {
   );
   process.exit(0);
 }
+// SEED_CHECK: validate recipe ingredient ids against the catalog without
+// touching Firebase (no credentials needed). Run: SEED_CHECK=1 node scripts/seed.mjs
+if (process.env.SEED_CHECK) {
+  // Ingredients that are themselves recipe outputs are obtainable by crafting.
+  // Their synthetic id is consistent on both sides, so the chain works even
+  // when the item has no catalog row (e.g. Shiny Pokeblock -> Prism Pokeblock).
+  const craftableOutputs = new Set(
+    Object.values(recipes).map((r) => norm(r.output_name))
+  );
+  const broken = [...unresolvedIngredients]
+    .filter((n) => !craftableOutputs.has(norm(n)))
+    .sort();
+  if (broken.length) {
+    console.error(`Recipe ingredients with no obtainable source (${broken.length}):`);
+    broken.forEach((n) => console.error(`  - ${n}`));
+    process.exit(1);
+  }
+  console.log("All recipe ingredients are obtainable (in catalog or craftable).");
+  process.exit(0);
+}
+
 run().catch((e) => {
   console.error(e);
   process.exit(1);

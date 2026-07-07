@@ -76,7 +76,17 @@ service cloud.firestore {
         allow read: if isSignedIn();
         allow write: if isAdmin() || request.auth.uid == uid;
       }
-      // All other per-user data: owner (or admin) only.
+      // Currency is money: written ONLY by the server (shop/casino/recycle/craft
+      // callables run with the Admin SDK, which bypasses rules) or by GiveItems
+      // grants. Never owner-writable, so members cannot mint their own coins.
+      // Without this explicit rule the generic bag rule below would let them.
+      match /bag/currency {
+        allow read: if request.auth.uid == uid || isAdmin();
+        allow write: if isAdmin() || hasCap('GiveItems');
+      }
+      // All other per-user data: owner (or admin) only. Note bag/items stays
+      // owner-writable because the client-side evolution flow decrements a spend
+      // item there; closing that fully means moving evolvePokemon to a callable.
       match /bag/{doc} {
         allow read: if request.auth.uid == uid || isAdmin();
         allow write: if isAdmin() || (request.auth.uid == uid && doc != 'badges');

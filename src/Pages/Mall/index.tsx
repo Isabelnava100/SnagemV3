@@ -4,8 +4,11 @@ import {
   Card,
   Checkbox,
   Container,
+  Divider,
   Group,
   Image,
+  NumberInput,
+  Select,
   SimpleGrid,
   Stack,
   Text,
@@ -13,7 +16,7 @@ import {
   Title,
 } from "@mantine/core";
 import { IconArrowLeft, IconShoppingBag } from "@tabler/icons-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
 import { SectionLoader } from "../../components/navigation/loading";
@@ -21,13 +24,15 @@ import { useAuth } from "../../context/AuthContext";
 import { itemData } from "../../data/item";
 import { getItemImageURL } from "../../helpers";
 import { clickable } from "../../lib/a11y";
-import { getCurrencies, getItems } from "../../queries/dashboard";
+import { getCurrencies, getItems, getOwnedPokemons } from "../../queries/dashboard";
 import {
   buyShopItem,
+  convertCandyToScent,
   evoService,
   getShops,
   recycleItems,
   rollTour,
+  ScentKey,
   Shop,
 } from "../../queries/mall";
 
@@ -450,6 +455,118 @@ function RecycleBody() {
           </Button>
         </>
       )}
+
+      <Divider my={4} label="Garbodor's other service" labelPosition="center" />
+      <CandyToScentPanel />
+    </Stack>
+  );
+}
+
+const SCENT_OPTIONS: { value: ScentKey; label: string; cost: number }[] = [
+  { value: "joy", label: "Joy Scent", cost: 4 },
+  { value: "excite", label: "Excite Scent", cost: 6 },
+  { value: "vivid", label: "Vivid Scent", cost: 8 },
+];
+
+/** Trash Shack: spend a Pokemon's Evo Points (experience) for aroma Scents. */
+function CandyToScentPanel() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [pokemonId, setPokemonId] = React.useState<string | null>(null);
+  const [scent, setScent] = React.useState<ScentKey>("joy");
+  const [qty, setQty] = React.useState<number>(1);
+  const [status, setStatus] = React.useState<{ color: string; text: string } | null>(null);
+
+  const { data: owned } = useQuery({
+    queryKey: ["get-owned-pokemons", user?.uid],
+    queryFn: () => getOwnedPokemons(user!.uid),
+    enabled: !!user?.uid,
+  });
+
+  const pokemons = owned?.sortedData ?? [];
+  const selectData = pokemons.map((p) => ({
+    value: p.id,
+    label: `${p.name} (${Math.floor(Number(p.experience ?? 0))} Evo Pts)`,
+  }));
+  const selected = pokemons.find((p) => p.id === pokemonId);
+  const cost = (SCENT_OPTIONS.find((s) => s.value === scent)?.cost ?? 0) * qty;
+  const have = Math.floor(Number(selected?.experience ?? 0));
+  const canConvert = !!pokemonId && qty >= 1 && have >= cost;
+
+  const mutation = useMutation({
+    mutationFn: () => convertCandyToScent(pokemonId!, scent, qty),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["get-owned-pokemons", user?.uid] });
+      queryClient.invalidateQueries({ queryKey: ["bag-items", user?.uid] });
+      setStatus({
+        color: "teal",
+        text: `Made ${res.qty} ${scent} scent${res.qty > 1 ? "s" : ""}. ${res.remaining} Evo Points left on that Pokemon.`,
+      });
+    },
+    onError: (err: unknown) => {
+      setStatus({ color: "red", text: err instanceof Error ? err.message : "Conversion failed." });
+    },
+  });
+
+  return (
+    <Stack gap={10}>
+      <Box>
+        <Text fz={14} c="white" fw={600}>
+          Candy to Scent
+        </Text>
+        <Text fz={12} c="dimmed">
+          Spend a Pokemon's Evo Points for an aroma Scent (Joy 4, Excite 6, Vivid 8 each).
+        </Text>
+      </Box>
+      <Select
+        label="Pokemon"
+        placeholder={pokemons.length ? "Choose a Pokemon" : "No Pokemon yet"}
+        data={selectData}
+        value={pokemonId}
+        onChange={setPokemonId}
+        searchable
+        maw={360}
+        w="100%"
+        disabled={!pokemons.length}
+      />
+      <Group gap={10} wrap="wrap" align="flex-end">
+        <Select
+          label="Scent"
+          data={SCENT_OPTIONS.map((s) => ({ value: s.value, label: `${s.label} (${s.cost})` }))}
+          value={scent}
+          onChange={(v) => v && setScent(v as ScentKey)}
+          allowDeselect={false}
+          w={180}
+        />
+        <NumberInput
+          label="Qty"
+          value={qty}
+          onChange={(v) => setQty(typeof v === "number" ? v : 1)}
+          min={1}
+          max={20}
+          w={90}
+        />
+      </Group>
+      <Text fz={12} c="dimmed">
+        Cost: {cost} Evo Points{selected ? ` · this Pokemon has ${have}` : ""}
+      </Text>
+      <Button
+        radius="md"
+        color="grape"
+        variant="light"
+        loading={mutation.isPending}
+        disabled={mutation.isPending || !canConvert}
+        onClick={() => {
+          setStatus(null);
+          mutation.mutate();
+        }}
+        maw={220}
+        w="100%"
+        aria-label="Convert Evo Points to a scent"
+      >
+        Convert
+      </Button>
+      {status && <StatusMessage color={status.color}>{status.text}</StatusMessage>}
     </Stack>
   );
 }

@@ -2545,6 +2545,58 @@ export const resetTrainingSession = onCall(async (request) => {
   return { ok: true };
 });
 
+// --- Trash Shack: convert a Pokemon's Evo Points into a Scent --------------
+// Garbodor spends Evolution (experience) points off one owned Pokemon and
+// hands back an aroma Scent. See docs/SHOP_DATA.md candy_to_scent.
+const SCENTS = {
+  joy: { cost: 4, itemId: "joy-scent", name: "Joy Scent" },
+  excite: { cost: 6, itemId: "excite-scent", name: "Excite Scent" },
+  vivid: { cost: 8, itemId: "vivid-scent", name: "Vivid Scent" },
+} as const;
+type ScentKey = keyof typeof SCENTS;
+
+export const convertCandyToScent = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
+  const scentKey = String(request.data?.scent ?? "") as ScentKey;
+  const scent = SCENTS[scentKey];
+  if (!scent) throw new HttpsError("invalid-argument", "Pick a Joy, Excite or Vivid Scent.");
+  const qty = requireInt(request.data?.qty ?? 1, "qty", 1, 20);
+  const totalCost = scent.cost * qty;
+
+  const pokeRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+
+  const remaining = await db.runTransaction(async (tx) => {
+    const pokeSnap = await tx.get(pokeRef);
+    const poke = (pokeSnap.data() ?? {}) as Record<string, { experience?: number }>;
+    const entry = poke[pokemonId];
+    if (!entry) throw new HttpsError("failed-precondition", "You do not own that Pokemon.");
+    const have = Number(entry.experience ?? 0);
+    if (have < totalCost) {
+      throw new HttpsError(
+        "failed-precondition",
+        `That Pokemon has ${have} Evo Points; ${qty} ${scent.name}${qty > 1 ? "s" : ""} cost ${totalCost}.`
+      );
+    }
+    tx.set(pokeRef, { [pokemonId]: { experience: FieldValue.increment(-totalCost) } }, { merge: true });
+    bagIncrement(tx, bagRef, scent.itemId, { name: scent.name, category: "other-item" }, qty);
+    return have - totalCost;
+  });
+
+  await db.collection("auditLogs").add({
+    action: "shop.candyToScent",
+    actorUid: uid,
+    actorName: member.username,
+    targetPath: `users/${uid}/bag/owned_pokemons`,
+    details: { pokemonId, scent: scentKey, qty, spentEvoPoints: totalCost },
+    createdAt: new Date(),
+  });
+
+  return { ok: true, scent: scentKey, qty, spent: totalCost, remaining };
+});
+
 // --- Colosseum: adjust battle rankings (grader-gated) ----------------------
 export const awardRankingPoints = onCall(async (request) => {
   const uid = requireAuth(request);

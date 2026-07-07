@@ -38,7 +38,6 @@
     "@tiptap/react": "^3",
     "@tiptap/starter-kit": "^3",
     "@tiptap/suggestion": "^3",
-    "axios": "^1.18.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.4.11",
     "firebase": "^12",
