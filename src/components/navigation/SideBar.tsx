@@ -19,6 +19,7 @@ const ALL_LINKS: NavItem[] = [
   { link: "/Missions", label: "Missions", icon: Quests },
   { link: "/Shop", label: "Shop", icon: Marketplace },
   { link: "/Research", label: "Research", icon: Marketplace },
+  { link: "/Casino", label: "Casino", icon: Activities },
   { link: "/Users", label: "Users", icon: Users },
   { link: "/Activities", label: "Activities", icon: Activities },
   { link: "/Forum/Main-Forum", label: "Forum", icon: Forum },

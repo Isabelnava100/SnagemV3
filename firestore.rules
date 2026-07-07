@@ -225,6 +225,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Casino: lotto state is member-readable (jackpot/draw); all writes (tickets,
+    // draws, exchanges, plays) go through server-side RNG Cloud Functions.
+    match /casino/{doc} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
     // ---- Forums ------------------------------------------------------------
     // All publishing (threads, posts, rolls, votes, boss battles, inventory
     // effects) goes through Cloud Functions (functions/src/index.ts), which

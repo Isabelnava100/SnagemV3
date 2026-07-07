@@ -2543,3 +2543,149 @@ export const grantChallengeStep = onCall(async (request) => {
   await notifyUsers([targetUid], { type: "reward", text: "You cleared a challenge stage!", link: "/Challenges" });
   return { ok: true };
 });
+
+// ===========================================================================
+// Casino (Darts' Ghastly Gambling). Gengar Tokens (gengarcoin) bought from
+// Snag Coins (pokecoin). ALL randomness is server-side. See docs/CASINO_DATA.md.
+// ===========================================================================
+
+// --- Buy/sell Gengar Tokens -------------------------------------------------
+export const exchangeTokens = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const direction = requireString(request.data?.direction, "direction", 8);
+  const amount = requireInt(request.data?.amount ?? 0, "amount", 1, 100000);
+
+  const cfgSnap = await db.doc("admin/casino_config").get();
+  const rate = Math.max(1, Math.trunc(Number(cfgSnap.data()?.exchangeRate ?? 2))); // Snag Coins per token
+
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const totals = await db.runTransaction(async (tx) => {
+    const cur = (await tx.get(currencyRef)).data() ?? {};
+    let poke = parseInt(String(cur.pokecoin ?? "0"), 10) || 0;
+    let geng = parseInt(String(cur.gengarcoin ?? "0"), 10) || 0;
+    if (direction === "buy") {
+      const cost = amount * rate;
+      if (poke < cost) throw new HttpsError("failed-precondition", "Not enough Snag Coins.");
+      poke -= cost;
+      geng += amount;
+    } else if (direction === "sell") {
+      // House keeps the spread: tokens cash out at 1 Snag Coin each.
+      if (geng < amount) throw new HttpsError("failed-precondition", "Not enough Gengar Tokens.");
+      geng -= amount;
+      poke += amount;
+    } else {
+      throw new HttpsError("invalid-argument", "Bad direction.");
+    }
+    tx.set(currencyRef, { pokecoin: String(poke), gengarcoin: String(geng) }, { merge: true });
+    return { pokecoin: poke, gengarcoin: geng };
+  });
+  return { ok: true, ...totals };
+});
+
+// --- Instant games (Hex Roulette, Dream Dice, Payback Pyramid) --------------
+export const playCasinoGame = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const game = requireString(request.data?.game, "game", 20);
+  const bet = requireInt(request.data?.bet ?? 1, "bet", 1, 5);
+  const pick = request.data?.pick;
+
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const result = await db.runTransaction(async (tx) => {
+    const cur = (await tx.get(currencyRef)).data() ?? {};
+    let geng = parseInt(String(cur.gengarcoin ?? "0"), 10) || 0;
+    if (geng < bet) throw new HttpsError("failed-precondition", "Not enough Gengar Tokens.");
+    geng -= bet; // stake taken up front
+
+    let win = false;
+    let roll: number | number[] = 0;
+    let payout = 0;
+
+    if (game === "hexRoulette") {
+      const n = requireInt(pick, "pick", 1, 36);
+      roll = randomInt(1, 37);
+      if (roll === n) { win = true; payout = Math.round(bet * 5.5); }
+    } else if (game === "dreamDice") {
+      const total = requireInt(pick, "pick", 2, 12);
+      const d1 = randomInt(1, 7);
+      const d2 = randomInt(1, 7);
+      roll = [d1, d2];
+      if (d1 + d2 === total) { win = true; payout = bet * (d1 === d2 ? 3 : 2); }
+    } else if (game === "paybackPyramid") {
+      if (pick !== "even" && pick !== "odd") throw new HttpsError("invalid-argument", "Pick even or odd.");
+      roll = randomInt(1, 5); // d4
+      const isEven = roll % 2 === 0;
+      if ((pick === "even") === isEven) { win = true; payout = bet * 2; }
+    } else {
+      throw new HttpsError("invalid-argument", "Unknown game.");
+    }
+
+    geng += payout; // stake already deducted; add winnings
+    tx.set(currencyRef, { gengarcoin: String(geng) }, { merge: true });
+    return { win, roll, payout, gengarcoin: geng };
+  });
+  return { ok: true, ...result };
+});
+
+// --- Shadow Lotto: buy a ticket --------------------------------------------
+export const buyLottoTicket = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const number = requireInt(request.data?.number ?? 0, "number", 1, 50);
+
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const lottoRef = db.doc("casino/lotto");
+  const myRef = db.doc(`users/${uid}/bag/casino`);
+
+  const out = await db.runTransaction(async (tx) => {
+    const [curSnap, lottoSnap] = await Promise.all([tx.get(currencyRef), tx.get(lottoRef)]);
+    const geng = parseInt(String(curSnap.data()?.gengarcoin ?? "0"), 10) || 0;
+    if (geng < 1) throw new HttpsError("failed-precondition", "A ticket costs 1 Gengar Token.");
+    const lotto = lottoSnap.data() ?? {};
+    const weekId = String(lotto.weekId ?? "current");
+
+    tx.set(currencyRef, { gengarcoin: String(geng - 1) }, { merge: true });
+    tx.set(lottoRef, {
+      jackpot: FieldValue.increment(1),
+      ticketCount: FieldValue.increment(1),
+      weekId,
+      tickets: FieldValue.arrayUnion({ uid, name: member.username, number, weekId }),
+    }, { merge: true });
+    tx.set(myRef, { lottoNumber: number, lottoWeekId: weekId }, { merge: true });
+    return { number, jackpot: (Number(lotto.jackpot ?? 100)) + 1 };
+  });
+  return { ok: true, ...out };
+});
+
+// --- Shadow Lotto: draw (grader/admin) -------------------------------------
+export const drawLotto = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isGrader(member)) throw new HttpsError("permission-denied", "You cannot draw the lotto.");
+
+  const lottoRef = db.doc("casino/lotto");
+  const lottoSnap = await lottoRef.get();
+  const lotto = lottoSnap.data() ?? {};
+  const drawn = randomInt(1, 51); // 1..50
+  const jackpot = Math.max(0, Math.trunc(Number(lotto.jackpot ?? 100)));
+  const tickets = (Array.isArray(lotto.tickets) ? lotto.tickets : []) as Array<{ uid: string; number: number }>;
+  const winners = [...new Set(tickets.filter((t) => t.number === drawn).map((t) => t.uid))];
+
+  const batch = db.batch();
+  for (const winnerUid of winners) {
+    const cRef = db.doc(`users/${winnerUid}/bag/currency`);
+    const cur = (await cRef.get()).data() ?? {};
+    batch.set(cRef, { gengarcoin: addCurrencyString(cur.gengarcoin, jackpot) }, { merge: true });
+  }
+  // Roll the jackpot over: winners split (here each gets full jackpot for simplicity),
+  // then reset to the base for the next week.
+  const nextWeek = String(Date.now());
+  batch.set(lottoRef, { drawNumber: drawn, jackpot: 100, ticketCount: 0, weekId: nextWeek, tickets: [] }, { merge: true });
+  await batch.commit();
+
+  if (winners.length) {
+    await notifyUsers(winners, { type: "reward", text: `You won the Shadow Lotto! +${jackpot} Gengar Tokens.`, link: "/Casino" });
+  }
+  return { ok: true, drawn, winners: winners.length, jackpot };
+});

@@ -30,6 +30,12 @@ export const getMissions = async (): Promise<Mission[]> => {
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.title.localeCompare(b.title));
 };
 
+export const getMission = async (id: string): Promise<Mission | null> => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  const snap = await getDoc(doc(db, "missions", id));
+  return snap.exists() ? ({ id: snap.id, ...(snap.data() as Omit<Mission, "id">) }) : null;
+};
+
 async function call<T>(name: string, data: unknown): Promise<T> {
   const { getFunctions, httpsCallable } = await import("firebase/functions");
   await import("../context/firebase");

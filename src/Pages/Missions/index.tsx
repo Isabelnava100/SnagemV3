@@ -4,24 +4,22 @@ import {
   Button,
   Card,
   Container,
-  Divider,
   Group,
-  Modal,
   SimpleGrid,
   Stack,
   Text,
   TextInput,
   Title,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import { IconCoin, IconSearch, IconStar } from "@tabler/icons-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
+import { Link } from "react-router-dom";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getCurrencies } from "../../queries/dashboard";
-import { getMissions, Mission, submitMission } from "../../queries/missions";
+import { getMissions, Mission } from "../../queries/missions";
 
 /**
  * Public Missions page (Mission Vault). Members browse always-available mission
@@ -140,7 +138,7 @@ function RewardChip(props: { label: string; dot?: string; icon?: React.ReactNode
   );
 }
 
-function MissionCard(props: { mission: Mission; onOpen: () => void }) {
+function MissionCard(props: { mission: Mission }) {
   const { mission } = props;
   const preview =
     htmlToText(mission.story) ||
@@ -232,7 +230,13 @@ function MissionCard(props: { mission: Mission; onOpen: () => void }) {
           <Text c="dimmed" fz={12}>
             Taken {mission.times_taken || 0}x
           </Text>
-          <Button size="xs" variant="light" color="grape" onClick={props.onOpen}>
+          <Button
+            component={Link}
+            to={`/Missions/${mission.id}`}
+            size="xs"
+            variant="light"
+            color="grape"
+          >
             View brief
           </Button>
         </Group>
@@ -241,178 +245,11 @@ function MissionCard(props: { mission: Mission; onOpen: () => void }) {
   );
 }
 
-function MissionModal(props: { mission: Mission | null; opened: boolean; onClose: () => void }) {
-  const { mission } = props;
-  const [threadLink, setThreadLink] = React.useState("");
-  const [msg, setMsg] = React.useState("");
-  const submit = useMutation({
-    mutationFn: () => submitMission(mission?.id ?? "", threadLink.trim()),
-    onSuccess: () => setMsg("Sent to a grader. Watch your notifications for the reward."),
-    onError: (e) => setMsg((e as Error).message || "Could not submit. Try again."),
-  });
-
-  // Reset the form whenever a different mission is opened.
-  React.useEffect(() => {
-    setThreadLink("");
-    setMsg("");
-  }, [mission?.id]);
-
-  if (!mission) return null;
-
-  const objectives = toLines(mission.objective);
-  const oppositions = toLines(mission.opposition);
-  const rewardLabel = mission.pokemon_reward
-    ? REWARD_LABEL[mission.pokemon_reward.kind]
-    : undefined;
-
-  return (
-    <Modal
-      opened={props.opened}
-      onClose={props.onClose}
-      title={
-        <Text c="white" fw={700} fz={18}>
-          {mission.title}
-        </Text>
-      }
-      size="lg"
-      radius="md"
-      centered
-    >
-      <Stack gap={16}>
-        {mission.location && (
-          <Text c="dimmed" fz={13}>
-            {mission.location}
-          </Text>
-        )}
-
-        {mission.story && (
-          <Box
-            fz={14}
-            c="gray.3"
-            style={{ lineHeight: 1.6 }}
-            dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(mission.story),
-            }}
-          />
-        )}
-
-        {!!objectives.length && (
-          <Box>
-            <Text c="white" fw={600} fz={14} mb={4}>
-              Objective
-            </Text>
-            <Stack gap={2}>
-              {objectives.map((line, i) => (
-                <Text key={i} c="gray.4" fz={13}>
-                  {line}
-                </Text>
-              ))}
-            </Stack>
-          </Box>
-        )}
-
-        {!!oppositions.length && (
-          <Box>
-            <Text c="white" fw={600} fz={14} mb={4}>
-              Opposition
-            </Text>
-            <Stack gap={2}>
-              {oppositions.map((line, i) => (
-                <Text key={i} c="gray.4" fz={13}>
-                  {line}
-                </Text>
-              ))}
-            </Stack>
-          </Box>
-        )}
-
-        {mission.pokemon_note && (
-          <Box>
-            <Text c="white" fw={600} fz={14} mb={4}>
-              Pokemon note
-            </Text>
-            <Text c="gray.4" fz={13}>
-              {mission.pokemon_note}
-            </Text>
-          </Box>
-        )}
-
-        <Box>
-          <Text c="white" fw={600} fz={14} mb={6}>
-            Rewards
-          </Text>
-          <Group gap={6} wrap="wrap">
-            {!!mission.coins && (
-              <RewardChip
-                label={`${mission.coins} Snag Coins`}
-                icon={<IconCoin size={13} color="#F5C842" />}
-              />
-            )}
-            {rewardLabel && <RewardChip label={rewardLabel} dot="#8C2595" />}
-            {mission.special_item && (
-              <RewardChip label={mission.special_item} dot="#3B82F6" />
-            )}
-            {mission.emblem_eligible && (
-              <RewardChip label="Snag Emblem Piece" dot="#F5C842" />
-            )}
-            {mission.pokemon_reward?.note && (
-              <RewardChip label={mission.pokemon_reward.note} />
-            )}
-          </Group>
-        </Box>
-
-        <Divider />
-
-        <Box>
-          <Text c="white" fw={600} fz={14} mb={4}>
-            Submit for grading
-          </Text>
-          <Text c="dimmed" fz={12} mb={8}>
-            Play this mission out in a Quests forum thread, then paste the thread
-            link here to send it to a grader. Base pay is Snag Coins, write it
-            well and the grader tips extra.
-          </Text>
-          <TextInput
-            value={threadLink}
-            onChange={(e) => setThreadLink(e.currentTarget.value)}
-            placeholder="Link to your Quests thread"
-            aria-label="Quests thread link"
-            mb={8}
-          />
-          <Button
-            fullWidth
-            loading={submit.isPending}
-            disabled={!threadLink.trim()}
-            onClick={() => {
-              setMsg("");
-              submit.mutate();
-            }}
-          >
-            Submit for grading
-          </Button>
-          {msg && (
-            <Text
-              role="status"
-              aria-live="polite"
-              fz={12}
-              mt={6}
-              c={/could not|error|not enough|cannot|invalid/i.test(msg) ? "#E35C65" : "teal"}
-            >
-              {msg}
-            </Text>
-          )}
-        </Box>
-      </Stack>
-    </Modal>
-  );
-}
 
 export default function Missions() {
   const { user } = useAuth();
   const [filter, setFilter] = React.useState<FilterKey>("all");
   const [search, setSearch] = React.useState("");
-  const [selected, setSelected] = React.useState<Mission | null>(null);
-  const [opened, { open, close }] = useDisclosure(false);
 
   const { data: missions, isPending } = useQuery({
     queryKey: ["missions"],
@@ -441,11 +278,6 @@ export default function Missions() {
       (m.location ?? "").toLowerCase().includes(q)
     );
   });
-
-  const openMission = (mission: Mission) => {
-    setSelected(mission);
-    open();
-  };
 
   return (
     <Box>
@@ -521,17 +353,11 @@ export default function Missions() {
         ) : (
           <SimpleGrid cols={{ base: 1, xs: 2, sm: 3, lg: 4 }} spacing="md">
             {shown.map((mission) => (
-              <MissionCard
-                key={mission.id}
-                mission={mission}
-                onOpen={() => openMission(mission)}
-              />
+              <MissionCard key={mission.id} mission={mission} />
             ))}
           </SimpleGrid>
         )}
       </Container>
-
-      <MissionModal mission={selected} opened={opened} onClose={close} />
     </Box>
   );
 }
