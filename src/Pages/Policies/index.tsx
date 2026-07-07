@@ -350,11 +350,40 @@ function Conduct() {
   );
 }
 
+function Credits() {
+  return (
+    <Stack gap={20}>
+      <Box c="rgba(255,255,255,0.75)" fz={14} style={{ lineHeight: 1.7 }}>
+        <Text>
+          All artwork used on this site is properly licensed, purchased,
+          commissioned, or drawn by our team. Thank you to everyone who helped
+          build Snagem Guild.
+        </Text>
+      </Box>
+
+      <PolicySection title="Art">
+        <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+          <li>Seviyummy (Pokemon art)</li>
+          <li>Batsky (Team art)</li>
+          <li>Dan (Menu icon designs)</li>
+        </ul>
+      </PolicySection>
+
+      <PolicySection title="Site build">
+        <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+          <li>inavaCL (Website build and management)</li>
+        </ul>
+      </PolicySection>
+    </Stack>
+  );
+}
+
 const TABS = [
   { value: "conduct", label: "Community Rules", content: <Conduct /> },
   { value: "privacy", label: "Privacy Policy", content: <Privacy /> },
   { value: "cookies", label: "Cookies & Cache", content: <Cookies /> },
   { value: "terms", label: "Terms of Use", content: <Terms /> },
+  { value: "credits", label: "Credits", content: <Credits /> },
 ];
 
 export default function Policies() {

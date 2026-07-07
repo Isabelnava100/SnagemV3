@@ -252,6 +252,14 @@ service cloud.firestore {
     match /tournaments/{id} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
+
+      // Sign-ups: a member creates/edits/deletes only their own entry
+      // (doc id == their uid); admins can manage any. Friend codes live here,
+      // under the tournament, not on the public profile.
+      match /signups/{uid} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin() || request.auth.uid == uid;
+      }
     }
     match /gymRegions/{id} {
       allow read: if isSignedIn();

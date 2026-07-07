@@ -75,7 +75,7 @@ export default function Imports() {
   );
 }
 
-function ReviewCard(props: { req: ImportRequest & { uid: string }; username: string }) {
+export function ReviewCard(props: { req: ImportRequest & { uid: string }; username: string }) {
   const { req, username } = props;
   const queryClient = useQueryClient();
   const [currency, setCurrency] = React.useState(req.currency);

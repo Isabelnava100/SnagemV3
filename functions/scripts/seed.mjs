@@ -599,26 +599,54 @@ const research_config = {
 // Colosseum: battle rankings, hall of fame, tournaments
 // --------------------------------------------------------------------------
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+// [username, points, wins, losses, streak, movement] — streak "W6"/"L1",
+// movement is the rank change since last update (+up, -down, 0 even).
 const rankingRows = [
-  ["Atlantis_Darts", 76], ["Blizzard120", 54], ["SubonicXP", 54], ["Darksol88", 30],
-  ["Ant", 22], ["RCCaughtem", 15], ["Dragon", 8], ["Kaya", 7],
+  ["SubonicXP", 214, 41, 8, "W6", 0],
+  ["DeoLux", 198, 37, 12, "W2", 1],
+  ["TerashiHz", 176, 33, 15, "L1", -1],
+  ["AiratheSwift", 154, 29, 14, "W3", 1],
+  ["MoniqueBrie", 141, 27, 16, "W1", 1],
+  ["AbsintheR", 122, 22, 19, "L2", -1],
 ];
 const battle_rankings = Object.fromEntries(
-  rankingRows.map(([username, points]) => [slug(username), { username, points }])
+  rankingRows.map(([username, points, wins, losses, streak, movement]) => [
+    slug(username),
+    { username, points, wins, losses, streak, movement },
+  ])
 );
 
 const hall_of_fame = {
-  "summer-cup-2020": { tournament_name: "Snagem Summer Cup", year: 2020, winner: "Atlantis_Darts", order: 1 },
-  "monotype-cup-2020": { tournament_name: "Snagem Monotype Cup", year: 2020, winner: "Darksol88", order: 2 },
-  "winter-cup-2021": { tournament_name: "Snagem Winter Cup", year: 2021, winner: "Blizzard120", order: 3 },
+  "summer-cup-2020": {
+    tournament_name: "Snagem Summer Cup", year: 2020, winner: "Atlantis_Darts", order: 1,
+    team: ["charizard", "blastoise", "venusaur", "dragonite", "snorlax", "greninja"],
+  },
+  "monotype-cup-2020": {
+    tournament_name: "Snagem Monotype Cup", year: 2020, winner: "Darksol88", order: 2,
+    team: ["umbreon", "houndoom", "absol", "weavile", "tyranitar", "gengar"],
+  },
+  "winter-cup-2021": {
+    tournament_name: "Snagem Winter Cup", year: 2021, winner: "Blizzard120", order: 3,
+    team: ["glaceon", "froslass", "froslass", "glalie", "weavile", "mamoswine"],
+  },
+  "spring-cup-2022": {
+    tournament_name: "Snagem Spring Cup", year: 2022, winner: "SubonicXP", order: 4,
+    team: ["garchomp", "lucario", "bronzong", "gyarados", "roserade", "empoleon"],
+  },
 };
+
+// Paldea Cup opens sign-ups and starts 6 days out from the seed run.
+const SIX_DAYS_MS = 6 * 24 * 60 * 60 * 1000;
+const paldeaStart = admin.firestore.Timestamp.fromMillis(Date.now() + SIX_DAYS_MS);
 
 const tournaments = {
   "paldea-cup": {
     name: "Team Snagem Paldea Cup",
     game_generation: "Gen 9 (Paldea)",
-    format: "Double elimination, singles, 6v6",
-    status: "upcoming",
+    format: "Double elimination, singles, 6v6, Terastallization allowed",
+    status: "open_signup",
+    start_date: paldeaStart,
+    capacity: 32,
     order: 1,
     rules:
       "<ul><li>Paldea Dex only, no legendaries or Paradox Pokemon (Charizard and Cinderace excluded).</li><li>No duplicate species.</li><li>No hacked or altered Pokemon (permanent disqualification).</li><li>Auto-loss if you KO your own last Pokemon via Self-Destruct, Explosion, Destiny Bond or Perish Song.</li><li>Terastallization allowed. The move Last Respects is banned.</li><li>Register one Battle Team at sign-up, no mid-tournament changes.</li></ul>",

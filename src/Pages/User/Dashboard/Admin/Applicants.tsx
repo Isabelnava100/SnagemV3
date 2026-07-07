@@ -16,7 +16,7 @@ import {
 // later through Admin > Permissions, not at approval time.
 const ROLE_OPTIONS = ["Verified"];
 
-function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () => void }) {
+export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () => void }) {
   const { applicant } = props;
   const [role, setRole] = React.useState("Verified");
   const [message, setMessage] = React.useState("");

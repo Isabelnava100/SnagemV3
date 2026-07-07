@@ -15,11 +15,19 @@ import {
   Table,
   Tabs,
   Text,
+  TextInput,
   Title,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
-import { IconBolt, IconFlame, IconTrophy } from "@tabler/icons-react";
+import {
+  IconBolt,
+  IconCaretDownFilled,
+  IconCaretUpFilled,
+  IconCheck,
+  IconFlame,
+  IconTrophy,
+} from "@tabler/icons-react";
 import React from "react";
 import { useAuth } from "../../context/AuthContext";
 import { SectionLoader } from "../../components/navigation/loading";
@@ -28,12 +36,19 @@ import {
   getHallOfFame,
   getRankings,
   getTournaments,
+  getTournamentSignups,
   getTrainingSession,
+  HallOfFameEntry,
   logTrainingPost,
+  RankingRow,
+  registerForTournament,
   resetTrainingSession,
+  Tournament,
+  TournamentSignup,
   TrainingSession,
+  withdrawFromTournament,
 } from "../../queries/colosseum";
-import { getOwnedPokemons } from "../../queries/dashboard";
+import { getOwnedPokemons, getTeamsRaw } from "../../queries/dashboard";
 
 /**
  * The Colosseum: the battle and training hub. Four sub-systems in one page:
@@ -312,52 +327,296 @@ function TrainingRoomTab() {
   );
 }
 
+/** Section heading shared across the redesigned tabs. */
+function SectionLabel({ children, mb = "sm" }: { children: React.ReactNode; mb?: string | number }) {
+  return (
+    <Text fz={13} fw={800} c="white" tt="uppercase" mb={mb} style={{ letterSpacing: 1 }}>
+      {children}
+    </Text>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Rankings
+// ---------------------------------------------------------------------------
+
+const AVATAR_COLORS = ["red", "blue", "green", "grape", "teal", "orange", "cyan", "pink", "indigo", "lime"];
+
+/** Deterministic avatar color so a player keeps the same circle every render. */
+function avatarColor(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+const RANK_COLORS = ["#f5c518", "#c9d1d9", "#cd7f32"]; // gold, silver, bronze for 1-3
+
+/** How-points-work panel content, mirrors docs/COLOSSEUM_DATA.md scoring. */
+const SCORING = [
+  { label: "Defeat a Pokemon", value: "+1", color: "cyan" },
+  { label: "Your Pokemon survives", value: "+1", color: "cyan" },
+  { label: "Win the battle", value: "+3", color: "green" },
+  { label: "Beat the champion", value: "+5", color: "yellow" },
+  { label: "Upset (per rank gap)", value: "+0.4", color: "violet" },
+  { label: "Tournament win", value: "+10", color: "yellow" },
+];
+
+function Movement({ value }: { value?: number }) {
+  if (!value) {
+    return (
+      <Text fz={12} c="dimmed" w={14} ta="center" aria-label="No change">
+        &ndash;
+      </Text>
+    );
+  }
+  const up = value > 0;
+  const Icon = up ? IconCaretUpFilled : IconCaretDownFilled;
+  return (
+    <Icon
+      size={13}
+      color={up ? "var(--mantine-color-teal-5)" : "var(--mantine-color-red-5)"}
+      aria-label={up ? "Moved up" : "Moved down"}
+    />
+  );
+}
+
+function StreakBadge({ streak }: { streak?: string }) {
+  if (!streak) return null;
+  const win = streak[0]?.toUpperCase() === "W";
+  return (
+    <Badge color={win ? "teal" : "red"} variant="light" radius="sm" size="sm">
+      {streak}
+    </Badge>
+  );
+}
+
+function StandingRow({
+  row,
+  rank,
+  showWL,
+  showStreak,
+}: {
+  row: RankingRow;
+  rank: number;
+  showWL: boolean;
+  showStreak: boolean;
+}) {
+  const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : "#8a8399";
+  return (
+    <Table.Tr>
+      <Table.Td>
+        <Group gap={8} wrap="nowrap">
+          <Text fz={20} fw={800} c={rankColor} style={{ fontVariantNumeric: "tabular-nums", minWidth: 22 }}>
+            {rank}
+          </Text>
+          <Movement value={row.movement} />
+        </Group>
+      </Table.Td>
+      <Table.Td>
+        <Group gap={10} wrap="nowrap">
+          <Box
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              background: `var(--mantine-color-${avatarColor(row.id)}-6)`,
+              flexShrink: 0,
+            }}
+          />
+          <Text fz={14} fw={700} c="white" lineClamp={1}>
+            {row.username || row.id}
+          </Text>
+        </Group>
+      </Table.Td>
+      {showWL && (
+        <Table.Td ta="center">
+          <Text fz={13} c="dimmed" style={{ fontVariantNumeric: "tabular-nums" }}>
+            {row.wins ?? 0}&ndash;{row.losses ?? 0}
+          </Text>
+        </Table.Td>
+      )}
+      {showStreak && (
+        <Table.Td ta="center">
+          <StreakBadge streak={row.streak} />
+        </Table.Td>
+      )}
+      <Table.Td ta="right">
+        <Text fz={18} fw={800} c="yellow.4" style={{ fontVariantNumeric: "tabular-nums" }}>
+          {row.points ?? 0}
+        </Text>
+      </Table.Td>
+    </Table.Tr>
+  );
+}
+
+function PointsPanel() {
+  return (
+    <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
+      <SectionLabel>How Points Work</SectionLabel>
+      <Stack gap={0}>
+        {SCORING.map((s, i) => (
+          <Group
+            key={s.label}
+            justify="space-between"
+            wrap="nowrap"
+            py={10}
+            style={{ borderTop: i ? "1px solid #2a2637" : undefined }}
+          >
+            <Text fz={13} c="gray.3">
+              {s.label}
+            </Text>
+            <Text fz={15} fw={800} c={`${s.color}.4`}>
+              {s.value}
+            </Text>
+          </Group>
+        ))}
+      </Stack>
+      <Text fz={11} c="dimmed" mt="sm" pt="sm" style={{ borderTop: "1px solid #2a2637" }}>
+        Points are entered by admins from reported battles, no self-scoring.
+      </Text>
+    </Card>
+  );
+}
+
 function RankingsTab() {
   const { data, isPending } = useQuery({
     queryKey: ["colosseum-rankings"],
     queryFn: getRankings,
   });
 
-  if (isPending) return <SectionLoader />;
-
   const rows = data ?? [];
-  if (!rows.length) {
-    return (
-      <Text fz={13} c="dimmed" py={24}>
-        No ranked players yet. Battle results will populate the ladder.
-      </Text>
-    );
-  }
-
   const showWL = rows.some((r) => r.wins != null || r.losses != null);
+  const showStreak = rows.some((r) => r.streak);
 
   return (
-    <Box style={{ overflowX: "auto" }}>
-      <Table striped highlightOnHover miw={360}>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Rank</Table.Th>
-            <Table.Th>Player</Table.Th>
-            <Table.Th ta="right">Points</Table.Th>
-            {showWL && <Table.Th ta="right">W / L</Table.Th>}
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {rows.map((row, i) => (
-            <Table.Tr key={row.id}>
-              <Table.Td fw={700}>#{i + 1}</Table.Td>
-              <Table.Td>{row.username || row.id}</Table.Td>
-              <Table.Td ta="right">{row.points ?? 0}</Table.Td>
-              {showWL && (
-                <Table.Td ta="right">
-                  {row.wins ?? 0} / {row.losses ?? 0}
-                </Table.Td>
-              )}
-            </Table.Tr>
-          ))}
-        </Table.Tbody>
-      </Table>
-    </Box>
+    <Flex direction={{ base: "column", md: "row" }} gap="lg" align="flex-start">
+      <Box style={{ flex: "2 1 0%", minWidth: 0, width: "100%" }}>
+        <SectionLabel>Competitive Standings</SectionLabel>
+        <Card
+          bg="#1c1a26"
+          radius="md"
+          p={0}
+          withBorder
+          style={{ borderColor: "#3a3550", overflow: "hidden" }}
+        >
+          {isPending ? (
+            <Box p="md">
+              <SectionLoader />
+            </Box>
+          ) : !rows.length ? (
+            <Text fz={13} c="dimmed" p="md">
+              No ranked players yet. Battle results will populate the ladder.
+            </Text>
+          ) : (
+            <Box style={{ overflowX: "auto" }}>
+              <Table verticalSpacing="sm" horizontalSpacing="md" miw={420} highlightOnHover>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>#</Table.Th>
+                    <Table.Th>Player</Table.Th>
+                    {showWL && <Table.Th ta="center">W&ndash;L</Table.Th>}
+                    {showStreak && <Table.Th ta="center">Streak</Table.Th>}
+                    <Table.Th ta="right">Pts</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {rows.map((row, i) => (
+                    <StandingRow
+                      key={row.id}
+                      row={row}
+                      rank={i + 1}
+                      showWL={showWL}
+                      showStreak={showStreak}
+                    />
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </Box>
+          )}
+        </Card>
+      </Box>
+
+      <Box style={{ flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: 360 }}>
+        <PointsPanel />
+      </Box>
+    </Flex>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hall of Fame
+// ---------------------------------------------------------------------------
+
+function ChampionCard({ entry }: { entry: HallOfFameEntry }) {
+  const team = entry.team ?? [];
+  return (
+    <Card
+      bg="#1c1a26"
+      radius="md"
+      p="lg"
+      withBorder
+      style={{ borderColor: "#3a3550", position: "relative", overflow: "hidden" }}
+    >
+      <IconTrophy
+        size={120}
+        color="#ffffff"
+        style={{ position: "absolute", top: -12, right: -12, opacity: 0.05, pointerEvents: "none" }}
+      />
+      <Group gap={14} wrap="nowrap" align="center" mb="md">
+        <Box
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 12,
+            background: "linear-gradient(135deg, #f9d423, #e6a817)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <IconTrophy size={28} color="#3a2a05" />
+        </Box>
+        <Box style={{ minWidth: 0 }}>
+          <Text fz={17} fw={800} c="white" tt="uppercase" lineClamp={1}>
+            {entry.tournament_name}
+          </Text>
+          <Text fz={13} fw={700} c="yellow.4" lineClamp={1}>
+            {entry.year != null ? `${entry.year} Champion` : "Champion"} . {entry.winner || "Unknown"}
+          </Text>
+        </Box>
+      </Group>
+
+      <Text fz={11} fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
+        Champion's Team
+      </Text>
+      <Group gap={8}>
+        {team.length ? (
+          team.map((slug, i) => (
+            <Box
+              key={`${slug}-${i}`}
+              style={{
+                width: 46,
+                height: 46,
+                borderRadius: 8,
+                background: "#15131d",
+                border: "1px solid #2a2637",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Image src={getPokemonImageURL(slug)} alt={slug} w={38} h={38} fit="contain" />
+            </Box>
+          ))
+        ) : (
+          <Text fz={12} c="dimmed">
+            Team roster not recorded.
+          </Text>
+        )}
+      </Group>
+    </Card>
   );
 }
 
@@ -379,42 +638,20 @@ function HallOfFameTab() {
   }
 
   return (
-    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-      {entries.map((entry) => (
-        <Card key={entry.id} bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-          <Group gap={8} mb={4} wrap="nowrap">
-            <IconTrophy size={18} color="var(--mantine-color-yellow-4)" />
-            <Text fz={15} fw={700} c="white" lineClamp={1}>
-              {entry.tournament_name}
-            </Text>
-          </Group>
-          {entry.year != null && (
-            <Text fz={12} c="dimmed">
-              {entry.year}
-            </Text>
-          )}
-          <Text fz={13} c="grape.3" mt={4}>
-            Champion: {entry.winner || "Unknown"}
-          </Text>
-          {!!entry.team?.length && (
-            <Group gap={6} mt="sm">
-              {entry.team.map((slug, i) => (
-                <Image
-                  key={`${slug}-${i}`}
-                  src={getPokemonImageURL(slug)}
-                  alt={slug}
-                  w={40}
-                  h={40}
-                  fit="contain"
-                />
-              ))}
-            </Group>
-          )}
-        </Card>
-      ))}
-    </SimpleGrid>
+    <>
+      <SectionLabel>Hall of Fame</SectionLabel>
+      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        {entries.map((entry) => (
+          <ChampionCard key={entry.id} entry={entry} />
+        ))}
+      </SimpleGrid>
+    </>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Tournaments
+// ---------------------------------------------------------------------------
 
 const STATUS_COLORS: Record<string, string> = {
   upcoming: "gray",
@@ -422,6 +659,325 @@ const STATUS_COLORS: Record<string, string> = {
   running: "grape",
   complete: "blue",
 };
+
+const PRIZE_ICON: Record<string, string> = {
+  "1st": "\u{1F947}",
+  "2nd": "\u{1F948}",
+  "3rd": "\u{1F949}",
+  participation: "\u{1F39F}\u{FE0F}",
+};
+const PRIZE_LABEL: Record<string, string> = {
+  "1st": "1st Place",
+  "2nd": "2nd Place",
+  "3rd": "3rd Place",
+  participation: "Participation",
+};
+
+/** Whole days until a start timestamp, 0 if already started, null if unset. */
+function daysUntil(ts?: { seconds: number }): number | null {
+  if (!ts?.seconds) return null;
+  const ms = ts.seconds * 1000 - Date.now();
+  if (ms <= 0) return 0;
+  return Math.ceil(ms / (24 * 60 * 60 * 1000));
+}
+
+function HeroStat({ value, label }: { value: string; label: string }) {
+  return (
+    <Box>
+      <Text fz={30} fw={800} c="white" lh={1}>
+        {value}
+      </Text>
+      <Text fz={10} c="dimmed" tt="uppercase" mt={4} style={{ letterSpacing: 1 }}>
+        {label}
+      </Text>
+    </Box>
+  );
+}
+
+function RulesCard({ html }: { html: string }) {
+  return (
+    <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
+      <SectionLabel>Rules</SectionLabel>
+      <Box
+        fz={13}
+        c="dimmed"
+        sx={{
+          "& ul": { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 },
+          "& li": { position: "relative", paddingLeft: 22, lineHeight: 1.5 },
+          "& li::before": {
+            content: '"\\A7"',
+            position: "absolute",
+            left: 0,
+            color: "var(--mantine-color-grape-4)",
+            fontWeight: 700,
+          },
+        }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+      />
+    </Card>
+  );
+}
+
+function PrizesCard({ prizes }: { prizes: Record<string, string[]> }) {
+  const order = ["1st", "2nd", "3rd", "participation"];
+  const keys = Object.keys(prizes).sort((a, b) => {
+    const ia = order.indexOf(a);
+    const ib = order.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+  return (
+    <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
+      <SectionLabel>Prizes</SectionLabel>
+      <Stack gap={0}>
+        {keys.map((k, i) => (
+          <Group
+            key={k}
+            gap={12}
+            wrap="nowrap"
+            align="flex-start"
+            py={12}
+            style={{ borderTop: i ? "1px solid #2a2637" : undefined }}
+          >
+            <Text fz={22} style={{ lineHeight: 1 }}>
+              {PRIZE_ICON[k] ?? "\u{1F3C5}"}
+            </Text>
+            <Box style={{ minWidth: 0 }}>
+              <Text fz={13} fw={700} c="white">
+                {PRIZE_LABEL[k] ?? k}
+              </Text>
+              <Text fz={12} c="dimmed">
+                {(prizes[k] ?? []).join(" . ")}
+              </Text>
+            </Box>
+          </Group>
+        ))}
+      </Stack>
+    </Card>
+  );
+}
+
+function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup[] }) {
+  const { user } = useAuth();
+  const uid = user?.uid;
+  const queryClient = useQueryClient();
+  const [friendCode, setFriendCode] = React.useState("");
+  const [teamId, setTeamId] = React.useState<string | null>(null);
+  const [status, setStatus] = React.useState("");
+
+  const { data: teams } = useQuery({
+    queryKey: ["teams-raw", uid],
+    queryFn: () => getTeamsRaw(uid as string),
+    enabled: !!uid,
+  });
+
+  const mine = signups.find((s) => s.id === uid);
+
+  React.useEffect(() => {
+    if (mine) {
+      setFriendCode(mine.friendCode ?? "");
+      setTeamId(mine.teamId ?? null);
+    }
+  }, [mine?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const registerMutation = useMutation({
+    mutationFn: () =>
+      registerForTournament({
+        tournamentId: t.id,
+        uid: uid as string,
+        username: user?.username,
+        friendCode: friendCode.trim(),
+        teamId: teamId as string,
+        teamName: teams?.find((tm) => tm.id === teamId)?.team_name,
+      }),
+    onSuccess: () => {
+      setStatus(mine ? "Registration updated." : "You are registered. Good luck!");
+      queryClient.invalidateQueries({ queryKey: ["tournament-signups", t.id] });
+    },
+    onError: () => setStatus("Could not register. Please try again."),
+  });
+
+  const withdrawMutation = useMutation({
+    mutationFn: () => withdrawFromTournament(t.id, uid as string),
+    onSuccess: () => {
+      setStatus("You have withdrawn.");
+      setFriendCode("");
+      setTeamId(null);
+      queryClient.invalidateQueries({ queryKey: ["tournament-signups", t.id] });
+    },
+    onError: () => setStatus("Could not withdraw. Please try again."),
+  });
+
+  const closed = t.status === "complete" || t.status === "running";
+  const canRegister = !!friendCode.trim() && !!teamId;
+
+  return (
+    <Card
+      radius="md"
+      p="md"
+      withBorder
+      style={{ borderColor: "#5a3fb0", background: "linear-gradient(160deg, #241a3d, #1a1626)" }}
+    >
+      <SectionLabel>Register</SectionLabel>
+      {!uid ? (
+        <Text fz={13} c="dimmed">
+          Sign in to register for this tournament.
+        </Text>
+      ) : closed ? (
+        <Text fz={13} c="dimmed">
+          Sign-ups for this event are closed.
+        </Text>
+      ) : (
+        <Stack gap="sm">
+          {mine && (
+            <Badge color="teal" variant="light" leftSection={<IconCheck size={12} />}>
+              Registered
+            </Badge>
+          )}
+          <TextInput
+            aria-label="Friend code"
+            placeholder="Friend code (SW-0000-0000-0000)"
+            value={friendCode}
+            onChange={(e) => setFriendCode(e.currentTarget.value)}
+          />
+          <Select
+            aria-label="Battle Team"
+            placeholder={teams?.length ? "Select a Battle Team" : "You have no Battle Teams"}
+            data={(teams ?? []).map((tm) => ({ value: tm.id, label: tm.team_name || "Unnamed team" }))}
+            value={teamId}
+            onChange={setTeamId}
+            disabled={!teams?.length}
+            nothingFoundMessage="No teams yet"
+            searchable
+          />
+          <Button
+            variant="gradient"
+            gradient={{ from: "grape", to: "cyan", deg: 90 }}
+            onClick={() => registerMutation.mutate()}
+            loading={registerMutation.isPending}
+            disabled={!canRegister}
+            fullWidth
+          >
+            {mine ? "Update Registration" : `Register for ${t.name}`}
+          </Button>
+          {mine && (
+            <Button
+              variant="subtle"
+              color="red"
+              size="compact-sm"
+              onClick={() => withdrawMutation.mutate()}
+              loading={withdrawMutation.isPending}
+            >
+              Withdraw
+            </Button>
+          )}
+          {status && (
+            <Text fz={12} c="grape.3" role="status" aria-live="polite">
+              {status}
+            </Text>
+          )}
+        </Stack>
+      )}
+    </Card>
+  );
+}
+
+function FeaturedTournament({ t }: { t: Tournament }) {
+  const { data: signups } = useQuery({
+    queryKey: ["tournament-signups", t.id],
+    queryFn: () => getTournamentSignups(t.id),
+  });
+  const registered = signups?.length ?? 0;
+  const days = daysUntil(t.start_date);
+  const statusColor = STATUS_COLORS[t.status ?? "upcoming"] ?? "gray";
+
+  return (
+    <Flex direction={{ base: "column", md: "row" }} gap="md" align="stretch">
+      <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
+        <Stack gap="md">
+          <Box
+            p={{ base: 20, sm: 28 }}
+            style={{
+              borderRadius: 14,
+              background: "linear-gradient(135deg, #2a1b4a 0%, #16213e 100%)",
+              border: "1px solid #3a3550",
+            }}
+          >
+            <Group gap={10} mb={12} wrap="wrap">
+              {t.status && (
+                <Badge color={statusColor} variant="filled" radius="sm" tt="uppercase">
+                  {t.status.replace(/_/g, " ")}
+                </Badge>
+              )}
+              {t.game_generation && (
+                <Text fz={12} c="dimmed">
+                  {t.game_generation}
+                </Text>
+              )}
+            </Group>
+            <Title order={2} c="white" fw={800} tt="uppercase" size={30} mb={8}>
+              {t.name}
+            </Title>
+            {t.format && (
+              <Text fz={13} c="dimmed" mb="lg">
+                {t.format}
+              </Text>
+            )}
+            <Group gap={40}>
+              {days != null && (
+                <HeroStat value={`${days} ${days === 1 ? "day" : "days"}`} label="Until Start" />
+              )}
+              <HeroStat value={`${registered} / ${t.capacity ?? "-"}`} label="Registered" />
+            </Group>
+          </Box>
+
+          {t.rules && <RulesCard html={t.rules} />}
+        </Stack>
+      </Box>
+
+      <Box style={{ flex: "1 1 0%", minWidth: 0, maxWidth: 380 }}>
+        <Stack gap="md">
+          {t.prizes && <PrizesCard prizes={t.prizes} />}
+          <RegisterCard t={t} signups={signups ?? []} />
+        </Stack>
+      </Box>
+    </Flex>
+  );
+}
+
+function CompactTournament({ t }: { t: Tournament }) {
+  const days = daysUntil(t.start_date);
+  return (
+    <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
+      <Group justify="space-between" wrap="nowrap" mb={6}>
+        <Text fz={16} fw={700} c="white" lineClamp={1}>
+          {t.name}
+        </Text>
+        {t.status && (
+          <Badge color={STATUS_COLORS[t.status] ?? "gray"} variant="light">
+            {t.status.replace(/_/g, " ")}
+          </Badge>
+        )}
+      </Group>
+      <Group gap="md">
+        {t.game_generation && (
+          <Text fz={12} c="dimmed">
+            {t.game_generation}
+          </Text>
+        )}
+        {t.format && (
+          <Text fz={12} c="dimmed">
+            {t.format}
+          </Text>
+        )}
+        {days != null && (
+          <Text fz={12} c="dimmed">
+            {days === 0 ? "Started" : `Starts in ${days}d`}
+          </Text>
+        )}
+      </Group>
+    </Card>
+  );
+}
 
 function TournamentsTab() {
   const { data, isPending } = useQuery({
@@ -440,79 +996,21 @@ function TournamentsTab() {
     );
   }
 
+  const [featured, ...rest] = tournaments;
+
   return (
-    <Stack gap="md">
-      {tournaments.map((t) => {
-        const startDate = t.start_date?.seconds
-          ? new Date(t.start_date.seconds * 1000).toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })
-          : null;
-        const prizeEntries = Object.entries(t.prizes ?? {});
-        return (
-          <Card key={t.id} bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-            <Group justify="space-between" wrap="nowrap" mb={6}>
-              <Text fz={16} fw={700} c="white" lineClamp={1}>
-                {t.name}
-              </Text>
-              {t.status && (
-                <Badge color={STATUS_COLORS[t.status] ?? "gray"} variant="light">
-                  {t.status.replace(/_/g, " ")}
-                </Badge>
-              )}
-            </Group>
-
-            <Group gap="md" mb="sm">
-              {t.game_generation && (
-                <Text fz={12} c="dimmed">
-                  {t.game_generation}
-                </Text>
-              )}
-              {t.format && (
-                <Text fz={12} c="dimmed">
-                  {t.format}
-                </Text>
-              )}
-              {startDate && (
-                <Text fz={12} c="dimmed">
-                  Starts {startDate}
-                </Text>
-              )}
-            </Group>
-
-            {t.rules && (
-              <Box
-                fz={13}
-                c="dimmed"
-                mb="sm"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t.rules) }}
-              />
-            )}
-
-            {!!prizeEntries.length && (
-              <Box>
-                <Text fz={12} fw={700} c="grape.3" tt="uppercase" mb={6}>
-                  Prizes
-                </Text>
-                <Stack gap={6}>
-                  {prizeEntries.map(([placement, rewards]) => (
-                    <Box key={placement}>
-                      <Text fz={12} fw={600} c="white" tt="capitalize">
-                        {placement.replace(/_/g, " ")}
-                      </Text>
-                      <Text fz={12} c="dimmed">
-                        {(rewards ?? []).join(", ")}
-                      </Text>
-                    </Box>
-                  ))}
-                </Stack>
-              </Box>
-            )}
-          </Card>
-        );
-      })}
+    <Stack gap="xl">
+      <FeaturedTournament t={featured} />
+      {rest.length > 0 && (
+        <Box>
+          <SectionLabel>More Events</SectionLabel>
+          <Stack gap="md">
+            {rest.map((t) => (
+              <CompactTournament key={t.id} t={t} />
+            ))}
+          </Stack>
+        </Box>
+      )}
     </Stack>
   );
 }

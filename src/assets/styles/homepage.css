@@ -48,6 +48,7 @@
   /* Base button styles */
         a.button {
             line-height: 1em;;
+    color: #fff !important;
     padding: 1.2em 2.5em;
     text-decoration: none;
     font-weight: bold;
@@ -110,12 +111,6 @@
    }
   .innerHold2 h2 {font-size: 4em; font-weight: 400;
 color:white;line-height: 1.1em;margin:0;}
-
-
-@media (max-width: 600px) {
-    .innerHold2 h2 {font-size: 3em;}
-
-}
 
   .innerHold2 h2 span {color:#FFD074;}
 
@@ -210,24 +205,91 @@ max-width:600px;
   flex-shrink: 0;
 }
 
-/*artwork credit bar*/
-
-.creditbar {
-  width: 100%;
-  background-color: #772976;
-  color: white;
-  text-align: center;
-  font-weight: 700;
-  font-size: 0.85em;
-  padding: 14px 20px;
-  line-height: 1.7em;
-}
-
 @media (max-width: 600px) {
+  /* Hero: kill the giant vertical padding that pushed the H1 way down */
+  .heroIMGcontainer {
+    padding: 96px 16px 72px;
+    background-position: center bottom;
+  }
+  .centered-container h1 {
+    font-size: 2.6em;
+  }
+  .centered-container h2 {
+    font-size: 1.15em;
+    margin-bottom: 12px;
+  }
+  .button-container {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75em;
+  }
+  .button-container a.button {
+    width: 100%;
+    text-align: center;
+    padding: 1em 1.5em;
+  }
+
+  /* Story modules: shrink the decorative art and drop it BELOW the copy so it
+     never sits on top of the text. Tighter padding all round. */
+  .innerHold2 {
+    padding: 40px 16px;
+    background-size: 130px auto;
+    background-position: center bottom;
+    padding-bottom: 150px;
+    text-align: center;
+  }
+  .innerHold2 h2 {
+    font-size: 2.3em;
+  }
+  .twoM {
+    align-items: stretch;
+  }
+  .right-text {
+    text-align: center;
+    max-width: 100%;
+  }
+  .innerHold2 span.paragraph2 {
+    width: 100%;
+    max-width: 100%;
+    font-size: 1.1em;
+    margin: 16px auto 28px;
+  }
+
+  /* Team + CTA: less padding, no overflow */
+  .teammodule {
+    padding: 56px 16px 16px;
+  }
   .teammodule h2 {
     font-size: 3em;
   }
+  .teammodule span.paragraph3 {
+    font-size: 1.1em;
+    margin: 16px 0 28px;
+  }
+  .ctamodule {
+    padding: 48px 16px 72px;
+  }
   .ctamodule h2 {
     font-size: 2.4em;
+    align-items: center;
+    text-align: center;
+    line-height: 1.3em;
+  }
+  .ctamodule .lineOne,
+  .ctamodule .lineTwo,
+  .ctamodule .lineThree {
+    align-self: center;
+  }
+  /* Stack the button under the copy (column-reverse keeps "together" above it)
+     so the row can't overflow off-screen. gap:0 + no margin keeps the three
+     text lines on an even rhythm; the button carries its own spacing. */
+  .ctamodule .lineThree {
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 0;
+    margin-top: 0;
+  }
+  .ctamodule .lineThree a.button {
+    margin-top: 0.7em;
   }
 }

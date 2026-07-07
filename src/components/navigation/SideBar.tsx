@@ -29,7 +29,7 @@ const ALL_LINKS: NavItem[] = [
 // Only these two stay pinned to the main nav (the desktop rail and the mobile
 // bottom bar). Everything else lives behind "More" so the rail stays clean and
 // the bar stays thumb-friendly.
-const PRIMARY_LABELS = ["Forum", "Snag"];
+const PRIMARY_LABELS = ["Forum", "Snag", "Shop"];
 
 const primaryLinks = PRIMARY_LABELS.map((label) => ALL_LINKS.find((l) => l.label === label)!);
 const overflowLinks = ALL_LINKS.filter((l) => !PRIMARY_LABELS.includes(l.label));
@@ -46,53 +46,61 @@ function DrawerTile(props: { children: React.ReactNode }) {
   );
 }
 
+// One tile in the drawer grid. `tabler` for the fixed Home/Library/Policies
+// icons, `img` for the overflow-link sprites.
+type DrawerTileDef = { link: string; label: string; tabler?: typeof IconHome; img?: string };
+
+// Importance order, top item first. The grid lays these out bottom-right first
+// (Home) and reads right-to-left then upward, so the most-used links sit
+// closest to the thumb.
+const DRAWER_TILES: DrawerTileDef[] = [
+  { link: "/", label: "Home", tabler: IconHome },
+  ...overflowLinks.map((l) => ({ link: l.link, label: l.label, img: l.icon })),
+  { link: "/Library", label: "Library", tabler: IconBooks },
+  { link: "/Policies", label: "Policies", tabler: IconFileText },
+];
+
+function DrawerTileIcon({ tile }: { tile: DrawerTileDef }) {
+  if (tile.tabler) {
+    const Icon = tile.tabler;
+    return (
+      <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
+        <Icon size={26} color="white" />
+      </Box>
+    );
+  }
+  // Fixed box + fit=contain: Mantine 9 Image ignores numeric width/height, so
+  // constrain the box to size the icon.
+  return (
+    <Box style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Image src={tile.img} w="100%" h="100%" fit="contain" alt={tile.label} />
+    </Box>
+  );
+}
+
+const DRAWER_COLS = 3;
+
 function DrawerGrid({ onNavigate }: { onNavigate: () => void }) {
+  // Fill bottom-right first, running right-to-left then up. Reverse the DOM
+  // order, then pad the top row with blanks so Home always lands bottom-right
+  // no matter how many tiles there are.
+  const cells = [...DRAWER_TILES].reverse();
+  const leadEmpties = (DRAWER_COLS - (cells.length % DRAWER_COLS)) % DRAWER_COLS;
   return (
     <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-      <Link to="/" onClick={onNavigate} style={{ textDecoration: "none" }}>
-        <DrawerTile>
-          <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-            <IconHome size={26} color="white" />
-          </Box>
-          <Text fz={11} c="white" tt="uppercase">
-            Home
-          </Text>
-        </DrawerTile>
-      </Link>
-      {overflowLinks.map((item) => (
-        <Link key={item.label} to={item.link} onClick={onNavigate} style={{ textDecoration: "none" }}>
+      {Array.from({ length: leadEmpties }).map((_, i) => (
+        <Box key={`empty-${i}`} aria-hidden />
+      ))}
+      {cells.map((tile) => (
+        <Link key={tile.label} to={tile.link} onClick={onNavigate} style={{ textDecoration: "none" }}>
           <DrawerTile>
-            {/* Fixed box + fit=contain: Mantine 9 Image ignores numeric
-                width/height, so constrain the box to size the icon. */}
-            <Box style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Image src={item.icon} w="100%" h="100%" fit="contain" alt={item.label} />
-            </Box>
+            <DrawerTileIcon tile={tile} />
             <Text fz={11} c="white" tt="uppercase">
-              {item.label}
+              {tile.label}
             </Text>
           </DrawerTile>
         </Link>
       ))}
-      <Link to="/Library" onClick={onNavigate} style={{ textDecoration: "none" }}>
-        <DrawerTile>
-          <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-            <IconBooks size={26} color="white" />
-          </Box>
-          <Text fz={11} c="white" tt="uppercase">
-            Library
-          </Text>
-        </DrawerTile>
-      </Link>
-      <Link to="/Policies" onClick={onNavigate} style={{ textDecoration: "none" }}>
-        <DrawerTile>
-          <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
-            <IconFileText size={26} color="white" />
-          </Box>
-          <Text fz={11} c="white" tt="uppercase">
-            Policies
-          </Text>
-        </DrawerTile>
-      </Link>
     </Box>
   );
 }

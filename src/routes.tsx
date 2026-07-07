@@ -83,46 +83,11 @@ const { default: PokemonTeam } = lazyImport(
   "default"
 );
 
-// Admin routes
-const { default: Admin } = lazyImport(() => import("./Pages/User/Dashboard/Admin"), "default");
-const { default: AdjustLists } = lazyImport(
-  () => import("./Pages/User/Dashboard/Admin/AdjustLists"),
-  "default"
-);
-const { default: Donate } = lazyImport(
-  () => import("./Pages/User/Dashboard/Admin/Donate"),
-  "default"
-);
-const { default: AdminAnnouncements } = lazyImport(
-  () => import("./Pages/User/Dashboard/Admin/Announcements"),
-  "default"
-);
-const { default: AdminPermissions } = lazyImport(
-  () => import("./Pages/User/Dashboard/Admin/Permissions"),
-  "default"
-);
-const { default: AdminMysteryBoxes } = lazyImport(
-  () => import("./Pages/User/Dashboard/Admin/MysteryBoxes"),
-  "default"
-);
-const { default: AdminBadges } = lazyImport(
-  () => import("./Pages/User/Dashboard/Admin/Badges"),
-  "default"
-);
+// Admin routes. All admin tools now live under the top-level /Admin page; the
+// individual tool components are imported directly there, not routed here.
+const { default: AdminPage } = lazyImport(() => import("./Pages/Admin"), "default");
 const { default: SiteSettings } = lazyImport(
   () => import("./Pages/User/Dashboard/SiteSettings"),
-  "default"
-);
-const { default: AdminApplicants } = lazyImport(
-  () => import("./Pages/User/Dashboard/Admin/Applicants"),
-  "default"
-);
-const { default: AdminGrading } = lazyImport(
-  () => import("./Pages/User/Dashboard/Admin/Grading"),
-  "default"
-);
-const { default: AdminImports } = lazyImport(
-  () => import("./Pages/User/Dashboard/Admin/Imports"),
   "default"
 );
 const { default: Onboarding } = lazyImport(() => import("./Pages/User/Onboarding"), "default");
@@ -179,18 +144,8 @@ export default function AppRoutes() {
                       <Route path="Pokemon" element={<Pokemons />} />
                       <Route path="Profile" element={<Profile />} />
                       <Route path="Site-Settings" element={<SiteSettings />} />
-                      <Route path="Admin-Access" element={<Admin />}>
-                        <Route index element={<Navigate to="Adjust-Lists" />} />
-                        <Route path="Adjust-Lists" element={<AdjustLists />} />
-                        <Route path="Donate" element={<Donate />} />
-                        <Route path="Announcements" element={<AdminAnnouncements />} />
-                        <Route path="Applicants" element={<AdminApplicants />} />
-                        <Route path="Grading" element={<AdminGrading />} />
-                        <Route path="Permissions" element={<AdminPermissions />} />
-                        <Route path="Mystery-Boxes" element={<AdminMysteryBoxes />} />
-                        <Route path="Badges" element={<AdminBadges />} />
-                        <Route path="Imports" element={<AdminImports />} />
-                      </Route>
+                      {/* Admin moved to the top-level /Admin page; old links redirect. */}
+                      <Route path="Admin-Access/*" element={<Navigate to="/Admin" replace />} />
                       <Route path="Settings" element={<Settings />}>
                         <Route index element={<Navigate to="Notifications" />} />
                         <Route path="Notifications" element={<Notifications />} />
@@ -202,6 +157,14 @@ export default function AppRoutes() {
                     </Route>
                     {/* Designed-but-unbuilt sidebar modules get a friendly placeholder. */}
                     <Route path="/Shop" element={<Mall />} />
+                    <Route
+                      path="/Admin"
+                      element={
+                        <Protect>
+                          <AdminPage />
+                        </Protect>
+                      }
+                    />
                     <Route path="/Users" element={<Users />} />
                     <Route path="/Users/:username" element={<PublicProfile />} />
                     <Route path="/Activities" element={<ComingSoon module="Activities" />} />

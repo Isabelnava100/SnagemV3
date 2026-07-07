@@ -347,6 +347,8 @@ type DashboardTabLink = {
   icon: string;
   label: string;
   enabled: boolean;
+  /** Link to `path` as-is (top-level), instead of under /Dashboard. */
+  absolute?: boolean;
 };
 
 function TabsPanel() {
@@ -372,7 +374,9 @@ function TabsPanel() {
     {
       // Admins get the full "Admin Access"; directors with a staff capability
       // get a "Staff Tools" entry to the same area (with only their tools).
-      path: "/Admin-Access",
+      // Lives at the top-level /Admin page now.
+      path: "/Admin",
+      absolute: true,
       icon: AdminAccessIcon,
       label: isAdmin(user) ? "Admin Access" : "Staff Tools",
       enabled: canAccessStaffArea(user),
@@ -391,7 +395,7 @@ function TabsPanel() {
               {dashboardTabLinks
                 .filter((link) => link.enabled)
                 .map((link) => {
-                  const linkPath = `/Dashboard${link.path}`;
+                  const linkPath = link.absolute ? link.path : `/Dashboard${link.path}`;
                   const isActive = currentPath.includes(linkPath);
                   return (
                     <Link

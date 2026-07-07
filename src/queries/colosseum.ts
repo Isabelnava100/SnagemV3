@@ -17,6 +17,10 @@ export interface RankingRow {
   points?: number;
   wins?: number;
   losses?: number;
+  /** Current run, e.g. "W6" or "L1". First char W/L drives the badge color. */
+  streak?: string;
+  /** Rank change since last update: positive up, negative down, 0/undefined even. */
+  movement?: number;
 }
 
 export interface HallOfFameEntry {
@@ -37,7 +41,19 @@ export interface Tournament {
   start_date?: { seconds: number };
   status?: "upcoming" | "open_signup" | "running" | "complete";
   prizes?: Record<string, string[]>;
+  /** Max entrants; the featured card shows registered / capacity. */
+  capacity?: number;
   order?: number;
+}
+
+/** One member's sign-up under tournaments/{id}/signups/{uid}. */
+export interface TournamentSignup {
+  id: string;
+  username?: string;
+  friendCode?: string;
+  teamId?: string;
+  teamName?: string;
+  createdAt?: { seconds: number };
 }
 
 export const getTrainingSession = async (uid: string): Promise<TrainingSession> => {
@@ -68,6 +84,38 @@ export const getTournaments = async (): Promise<Tournament[]> => {
   return snap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<Tournament, "id">) }))
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+};
+
+/** All sign-ups for a tournament (used for the registered count + own entry). */
+export const getTournamentSignups = async (tournamentId: string): Promise<TournamentSignup[]> => {
+  const { collection, getDocs } = await import("firebase/firestore");
+  const snap = await getDocs(collection(db, "tournaments", tournamentId, "signups"));
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<TournamentSignup, "id">) }));
+};
+
+/** Register the signed-in member for a tournament (writes their own signup doc). */
+export const registerForTournament = async (args: {
+  tournamentId: string;
+  uid: string;
+  username?: string;
+  friendCode: string;
+  teamId: string;
+  teamName?: string;
+}): Promise<void> => {
+  const { doc, setDoc, serverTimestamp } = await import("firebase/firestore");
+  await setDoc(doc(db, "tournaments", args.tournamentId, "signups", args.uid), {
+    username: args.username ?? "",
+    friendCode: args.friendCode,
+    teamId: args.teamId,
+    teamName: args.teamName ?? "",
+    createdAt: serverTimestamp(),
+  });
+};
+
+/** Withdraw the signed-in member's sign-up. */
+export const withdrawFromTournament = async (tournamentId: string, uid: string): Promise<void> => {
+  const { doc, deleteDoc } = await import("firebase/firestore");
+  await deleteDoc(doc(db, "tournaments", tournamentId, "signups", uid));
 };
 
 async function call<T>(name: string, data: unknown): Promise<T> {

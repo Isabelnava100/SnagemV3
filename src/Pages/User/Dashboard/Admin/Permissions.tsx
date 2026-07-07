@@ -84,7 +84,7 @@ const getMembersWithRoles = async (): Promise<MemberRow[]> => {
   return [...byId.values()].sort((a, b) => a.username.localeCompare(b.username));
 };
 
-function CapabilityChecklist() {
+export function CapabilityChecklist() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: members, isPending } = useQuery({
@@ -231,7 +231,7 @@ function CapabilityChecklist() {
   );
 }
 
-function XPDefaultsSection() {
+export function XPDefaultsSection() {
   const queryClient = useQueryClient();
   const { data, isPending } = useQuery({ queryKey: ["xp-defaults"], queryFn: getXPDefaults });
   const [form, setForm] = React.useState<XPDefaults | null>(null);
@@ -317,7 +317,7 @@ function XPDefaultsSection() {
  * a pokemon's earned experience through this table, so it also controls when
  * level-gated evolutions unlock. Changes apply to members after they reload.
  */
-function LevelingCurveSection() {
+export function LevelingCurveSection() {
   const queryClient = useQueryClient();
   const { data, isPending } = useQuery({ queryKey: ["leveling-curve"], queryFn: getLevelingCurve });
   const [curve, setCurve] = React.useState<number[] | null>(null);
@@ -430,7 +430,7 @@ function LevelingCurveSection() {
 
 const STAGE_KEYS: BattleStage[] = ["stage1", "stage2", "stage3", "legendary"];
 
-function BattleCostsSection() {
+export function BattleCostsSection() {
   const queryClient = useQueryClient();
   const { data, isPending } = useQuery({ queryKey: ["battle-config"], queryFn: getBattleConfig });
   const [form, setForm] = React.useState<BattleConfig | null>(null);

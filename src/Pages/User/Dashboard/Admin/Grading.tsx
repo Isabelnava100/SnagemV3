@@ -78,7 +78,7 @@ function SectionCard(props: { children: React.ReactNode }) {
   );
 }
 
-function SubmissionCard(props: { submission: PendingSubmission; onDone: () => void }) {
+export function SubmissionCard(props: { submission: PendingSubmission; onDone: () => void }) {
   const { submission } = props;
   const [coins, setCoins] = React.useState<number>(3);
   const [emblemPiece, setEmblemPiece] = React.useState(false);
@@ -192,7 +192,7 @@ function SubmissionCard(props: { submission: PendingSubmission; onDone: () => vo
   );
 }
 
-function MMRequestCard(props: { request: PendingMMRequest; onDone: () => void }) {
+export function MMRequestCard(props: { request: PendingMMRequest; onDone: () => void }) {
   const { request } = props;
   const [ability, setAbility] = React.useState("");
   const [message, setMessage] = React.useState("");
@@ -257,7 +257,7 @@ function MMRequestCard(props: { request: PendingMMRequest; onDone: () => void })
   );
 }
 
-function BattleRankingsForm() {
+export function BattleRankingsForm() {
   const [uid, setUid] = React.useState("");
   const [points, setPoints] = React.useState<number>(0);
   const [message, setMessage] = React.useState("");
@@ -326,7 +326,7 @@ function BattleRankingsForm() {
 
 const KIND_OPTIONS = ["badge", "trial", "grandTrial", "eliteFour", "champion"];
 
-function ChallengeStepForm() {
+export function ChallengeStepForm() {
   const [uid, setUid] = React.useState("");
   const [kind, setKind] = React.useState<string>("badge");
   const [region, setRegion] = React.useState("");

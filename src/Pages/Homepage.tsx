@@ -58,12 +58,6 @@ export const HomePage = () => {
         </span>
       </h2>
     </div>
-
-    <div className="creditbar">
-      Credit: Seviyummy, Batsky
-      <br />
-      All artwork used on this site has proper licensed purchased, commissioned or drawn by our team.
-    </div>
     </div>
   );
 };
