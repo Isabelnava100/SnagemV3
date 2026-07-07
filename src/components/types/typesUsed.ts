@@ -206,6 +206,7 @@ export enum Capability {
   ManageSEO = "ManageSEO",
   ApproveImports = "ApproveImports",
   HostMainForum = "HostMainForum",
+  ManageLore = "ManageLore",
 }
 
 export const CAPABILITY_INFO: Record<Capability, string> = {
@@ -219,6 +220,7 @@ export const CAPABILITY_INFO: Record<Capability, string> = {
   [Capability.ManageSEO]: "Edit the site's SEO settings (titles, descriptions, social share info)",
   [Capability.ApproveImports]: "Review and approve returning-member data imports (currency, items, Pokemon)",
   [Capability.HostMainForum]: "Create threads in Main Adventures",
+  [Capability.ManageLore]: "Create and edit the Lore Library (books and entries)",
 };
 
 export type SpecificUser = {

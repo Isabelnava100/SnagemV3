@@ -676,10 +676,33 @@ const islandTrials = Object.fromEntries([
 ]);
 
 // --------------------------------------------------------------------------
+// Lore Library book shells (docs/LORE_DATA.md, page 1 of the Gaia index).
+// Titles/types/order are known; entry bodies are migrated in-app by ManageLore
+// directors. The 9 missing type books (Fire, Grass, Electric, Ground, Rock,
+// Flying, Fighting, Ice, Steel) still need pulling logged in before seeding.
+// --------------------------------------------------------------------------
+const loreBook = (order, id, title, type, description) => [
+  id,
+  { order, title, type, description },
+];
+const TYPE_BOOKS = ["Dark", "Normal", "Fairy", "Water", "Psychic", "Ghost", "Dragon", "Bug", "Poison"];
+const loreBooks = Object.fromEntries([
+  loreBook(1, "story-so-far", "The Story So Far", "history", "The guild's continuous history, told in chronological arcs."),
+  loreBook(2, "compendium-of-entities", "Compendium of Entities of Interest", "compendium", "Bestiary and character roster of notable figures across the world."),
+  loreBook(3, "unique-objects-and-items", "Unique Objects and Items", "objects", "Lore for the world's one-of-a-kind artifacts and items."),
+  loreBook(4, "alternate-universe-snagems", "Alternate Universe Snagems", "other", "Snagems from parallel worlds."),
+  loreBook(5, "short-stories", "Short Stories", "short_stories", "Standalone tales, to be filed into books over time."),
+  ...TYPE_BOOKS.map((t, i) =>
+    loreBook(10 + i, `book-of-${t.toLowerCase()}`, `Book of ${t}`, "type_book", `Mythology, places, and cultures of ${t}-type lore.`)
+  ),
+]);
+
+// --------------------------------------------------------------------------
 // Write everything
 // --------------------------------------------------------------------------
 async function run() {
   const batch = db.batch();
+  for (const [id, data] of Object.entries(loreBooks)) batch.set(db.doc(`loreBooks/${id}`), data, { merge: true });
   for (const [id, data] of Object.entries(shops)) batch.set(db.doc(`shops/${id}`), data, { merge: true });
   for (const [id, data] of Object.entries(recipes)) batch.set(db.doc(`recipes/${id}`), data, { merge: true });
   for (const [id, data] of Object.entries(missions)) batch.set(db.doc(`missions/${id}`), data, { merge: true });

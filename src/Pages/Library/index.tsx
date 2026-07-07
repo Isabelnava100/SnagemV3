@@ -21,6 +21,7 @@ import { getItemImageURL, getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "..
 import { resolveListSlugs } from "../forum/queries";
 import { getPokemonLists } from "../../queries/admin";
 import FaqTab from "./faq";
+import LoreTab from "./lore";
 import MovesTab from "./moves";
 
 /**
@@ -227,6 +228,7 @@ const TABS = [
   { value: "items", label: "Items", content: <ItemsTab /> },
   { value: "moves", label: "Moves", content: <MovesTab /> },
   { value: "lists", label: "Encounter Lists", content: <ListsTab /> },
+  { value: "lore", label: "Lore", content: <LoreTab /> },
   { value: "faq", label: "FAQ", content: <FaqTab /> },
 ];
 

@@ -61,6 +61,15 @@ export function canGiveRewards(user: User | undefined): boolean {
 }
 
 /**
+ * Whether the user may create and edit the Lore Library. Admins plus directors
+ * granted ManageLore. Gates the Lore tab's editing controls (UI only; the
+ * Firestore rules mirror this on loreBooks/loreEntries writes).
+ */
+export function canManageLore(user: User | undefined): boolean {
+  return isAdmin(user) || hasCapability(user, Capability.ManageLore);
+}
+
+/**
  * Whether the user may pin a thread to the top and adjust its XP settings.
  * Admins plus directors who host the staff forums (Main Adventures / Events).
  * Regular members never see these controls.

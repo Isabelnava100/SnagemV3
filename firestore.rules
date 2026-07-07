@@ -184,6 +184,17 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Lore Library: worldbuilding content, member-readable. Edited by admins or
+    // directors granted ManageLore (mirrors canManageLore in the app).
+    match /loreBooks/{id} {
+      allow read: if isSignedIn();
+      allow write: if hasCap('ManageLore');
+    }
+    match /loreEntries/{id} {
+      allow read: if isSignedIn();
+      allow write: if hasCap('ManageLore');
+    }
+
     // Mission submissions + Master Mission requests: created and graded by
     // Cloud Functions (Admin SDK). A member may read their own; graders/admins
     // may read all. Direct client writes are denied.
