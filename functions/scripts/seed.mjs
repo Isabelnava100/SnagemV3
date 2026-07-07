@@ -261,6 +261,94 @@ const research_config = {
 };
 
 // --------------------------------------------------------------------------
+// Colosseum: battle rankings, hall of fame, tournaments
+// --------------------------------------------------------------------------
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+const rankingRows = [
+  ["Atlantis_Darts", 76], ["Blizzard120", 54], ["SubonicXP", 54], ["Darksol88", 30],
+  ["Ant", 22], ["RCCaughtem", 15], ["Dragon", 8], ["Kaya", 7],
+];
+const battle_rankings = Object.fromEntries(
+  rankingRows.map(([username, points]) => [slug(username), { username, points }])
+);
+
+const hall_of_fame = {
+  "summer-cup-2020": { tournament_name: "Snagem Summer Cup", year: 2020, winner: "Atlantis_Darts", order: 1 },
+  "monotype-cup-2020": { tournament_name: "Snagem Monotype Cup", year: 2020, winner: "Darksol88", order: 2 },
+  "winter-cup-2021": { tournament_name: "Snagem Winter Cup", year: 2021, winner: "Blizzard120", order: 3 },
+};
+
+const tournaments = {
+  "paldea-cup": {
+    name: "Team Snagem Paldea Cup",
+    game_generation: "Gen 9 (Paldea)",
+    format: "Double elimination, singles, 6v6",
+    status: "upcoming",
+    order: 1,
+    rules:
+      "<ul><li>Paldea Dex only, no legendaries or Paradox Pokemon (Charizard and Cinderace excluded).</li><li>No duplicate species.</li><li>No hacked or altered Pokemon (permanent disqualification).</li><li>Auto-loss if you KO your own last Pokemon via Self-Destruct, Explosion, Destiny Bond or Perish Song.</li><li>Terastallization allowed. The move Last Respects is banned.</li><li>Register one Battle Team at sign-up, no mid-tournament changes.</li></ul>",
+    prizes: {
+      "1st": ["$20 gift code", "2 Snag Emblems", "Discord role", "Paradox Pokemon set"],
+      "2nd": ["$10 gift code", "2 Snag Emblems", "Shiny starter set"],
+      "3rd": ["2 Snag Emblems", "40 Snag Coins"],
+      participation: ["1 Snag Emblem", "raffle entry"],
+    },
+  },
+};
+
+// --------------------------------------------------------------------------
+// Challenges: gym regions + island trials
+// --------------------------------------------------------------------------
+const gym = (order, leaderName, type) => ({ order, leaderName, type, battleFormat: "single", challengerPokemonLimit: Math.min(6, 1 + order) });
+const gymRegions = {
+  kanto: {
+    name: "Kanto", order: 1,
+    gyms: [
+      gym(1, "Brock", "Rock"), gym(2, "Misty", "Water"), gym(3, "Lt. Surge", "Electric"),
+      gym(4, "Erika", "Grass"), gym(5, "Koga", "Poison"), gym(6, "Sabrina", "Psychic"),
+      gym(7, "Blaine", "Fire"), gym(8, "Giovanni", "Ground"),
+    ],
+    eliteFour: { members: [{ name: "Lorelei", type: "Ice" }, { name: "Bruno", type: "Fighting" }, { name: "Agatha", type: "Ghost" }, { name: "Lance", type: "Dragon" }], champion: { name: "Blue" } },
+    championPrize: "Beat Champion Blue for a rare Kanto starter egg and the Kanto Champion title.",
+  },
+  johto: {
+    name: "Johto", order: 2,
+    gyms: [
+      gym(1, "Falkner", "Flying"), gym(2, "Bugsy", "Bug"), gym(3, "Whitney", "Normal"),
+      gym(4, "Morty", "Ghost"), gym(5, "Chuck", "Fighting"), gym(6, "Jasmine", "Steel"),
+      gym(7, "Pryce", "Ice"), gym(8, "Clair", "Dragon"),
+    ],
+    eliteFour: { members: [{ name: "Will", type: "Psychic" }, { name: "Koga", type: "Poison" }, { name: "Bruno", type: "Fighting" }, { name: "Karen", type: "Dark" }], champion: { name: "Lance" } },
+    championPrize: "Beat Champion Lance for a rare Johto starter egg and the Johto Champion title.",
+  },
+  hoenn: {
+    name: "Hoenn", order: 3,
+    gyms: [
+      gym(1, "Roxanne", "Rock"), gym(2, "Brawly", "Fighting"), gym(3, "Wattson", "Electric"),
+      gym(4, "Flannery", "Fire"), gym(5, "Norman", "Normal"), gym(6, "Winona", "Flying"),
+      gym(7, "Tate & Liza", "Psychic"), gym(8, "Wallace", "Water"),
+    ],
+    eliteFour: { members: [{ name: "Sidney", type: "Dark" }, { name: "Phoebe", type: "Ghost" }, { name: "Glacia", type: "Ice" }, { name: "Drake", type: "Dragon" }], champion: { name: "Steven" } },
+    championPrize: "Beat Champion Steven for a rare Hoenn starter egg and the Hoenn Champion title.",
+  },
+};
+
+const trial = (order, id, island, name, type, extra) => [id, { order, island, name, type, ...extra }];
+const islandTrials = Object.fromEntries([
+  trial(1, "verdant-cave", "Melemele", "Verdant Cave", "Normal", { captain: "Ilima", totemPokemon: "Gumshoos", snagCoins: 5 }),
+  trial(2, "grand-hala", "Melemele", "Grand Trial: Hala", "Fighting", { grand: true, kahuna: "Hala", zCrystalReward: "Fightinium Z" }),
+  trial(3, "brooklet-hill", "Akala", "Brooklet Hill", "Water", { captain: "Lana", totemPokemon: "Wishiwashi", snagCoins: 6 }),
+  trial(4, "wela-volcano", "Akala", "Wela Volcano", "Fire", { captain: "Kiawe", totemPokemon: "Salazzle", snagCoins: 6 }),
+  trial(5, "lush-jungle", "Akala", "Lush Jungle", "Grass", { captain: "Mallow", totemPokemon: "Lurantis", snagCoins: 6 }),
+  trial(6, "grand-olivia", "Akala", "Grand Trial: Olivia", "Rock", { grand: true, kahuna: "Olivia", zCrystalReward: "Rockium Z" }),
+  trial(7, "hokulani-obs", "Ula'ula", "Hokulani Obs.", "Electric", { captain: "Sophocles", totemPokemon: "Vikavolt", snagCoins: 8 }),
+  trial(8, "abandoned-megamart", "Ula'ula", "Abandoned Megamart", "Ghost", { captain: "Acerola", totemPokemon: "Mimikyu", snagCoins: 8 }),
+  trial(9, "grand-nanu", "Ula'ula", "Grand Trial: Nanu", "Dark", { grand: true, kahuna: "Nanu", zCrystalReward: "Darkinium Z" }),
+  trial(10, "vast-poni-canyon", "Poni", "Vast Poni Canyon", "Dragon", { totemPokemon: "Kommo-o", snagCoins: 10 }),
+  trial(11, "grand-hapu", "Poni", "Grand Trial: Hapu", "Ground", { grand: true, kahuna: "Hapu", zCrystalReward: "Groundium Z" }),
+]);
+
+// --------------------------------------------------------------------------
 // Write everything
 // --------------------------------------------------------------------------
 async function run() {
@@ -268,12 +356,20 @@ async function run() {
   for (const [id, data] of Object.entries(shops)) batch.set(db.doc(`shops/${id}`), data, { merge: true });
   for (const [id, data] of Object.entries(recipes)) batch.set(db.doc(`recipes/${id}`), data, { merge: true });
   for (const [id, data] of Object.entries(missions)) batch.set(db.doc(`missions/${id}`), data, { merge: true });
+  for (const [id, data] of Object.entries(battle_rankings)) batch.set(db.doc(`battle_rankings/${id}`), data, { merge: true });
+  for (const [id, data] of Object.entries(hall_of_fame)) batch.set(db.doc(`hall_of_fame/${id}`), data, { merge: true });
+  for (const [id, data] of Object.entries(tournaments)) batch.set(db.doc(`tournaments/${id}`), data, { merge: true });
+  for (const [id, data] of Object.entries(gymRegions)) batch.set(db.doc(`gymRegions/${id}`), data, { merge: true });
+  for (const [id, data] of Object.entries(islandTrials)) batch.set(db.doc(`islandTrials/${id}`), data, { merge: true });
   batch.set(db.doc("admin/kl_loot_tables"), kl, { merge: true });
   batch.set(db.doc("admin/research_config"), research_config, { merge: true });
   await batch.commit();
   console.log(
     `Seeded: ${Object.keys(shops).length} shops, ${Object.keys(recipes).length} recipes, ` +
-      `${Object.keys(missions).length} missions, ${Object.keys(kl).length} loot tables, research_config.`
+      `${Object.keys(missions).length} missions, ${Object.keys(battle_rankings).length} rankings, ` +
+      `${Object.keys(hall_of_fame).length} hall-of-fame, ${Object.keys(tournaments).length} tournaments, ` +
+      `${Object.keys(gymRegions).length} gym regions, ${Object.keys(islandTrials).length} island trials, ` +
+      `${Object.keys(kl).length} loot tables, research_config.`
   );
   process.exit(0);
 }

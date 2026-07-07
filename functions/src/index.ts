@@ -2418,3 +2418,120 @@ export const evoService = onCall(async (request) => {
   });
   return { ok: true };
 });
+
+// ===========================================================================
+// Colosseum and Challenges
+// ===========================================================================
+
+const dayStr = (d: Date) => d.toISOString().slice(0, 10);
+
+// --- Colosseum: Super Training Room log ------------------------------------
+export const logTrainingPost = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
+  const partner = request.data?.partner === true;
+
+  const sessRef = db.doc(`users/${uid}/bag/training_session`);
+  const pokeRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  const now = new Date();
+  const today = dayStr(now);
+
+  const result = await db.runTransaction(async (tx) => {
+    const [sessSnap, pokeSnap] = await Promise.all([tx.get(sessRef), tx.get(pokeRef)]);
+    const poke = (pokeSnap.data() ?? {}) as Record<string, { shadow?: number }>;
+    if (!poke[pokemonId]) throw new HttpsError("failed-precondition", "You do not own that Pokemon.");
+
+    const raw = (sessSnap.data() ?? {}) as {
+      date?: string; postsLogged?: number; evoPts?: number; happinessPts?: number;
+      partner?: boolean; startedAt?: FirebaseFirestore.Timestamp;
+    };
+    const fresh = raw.date !== today;
+    const partnerMode = fresh ? partner : !!raw.partner;
+    const windowMs = (partnerMode ? 4 : 2) * 60 * 60 * 1000;
+
+    if (!fresh && raw.startedAt) {
+      if (now.getTime() - raw.startedAt.toMillis() > windowMs) {
+        throw new HttpsError("failed-precondition", "Your training window for today has closed.");
+      }
+    }
+
+    const n = fresh ? 0 : raw.postsLogged ?? 0;
+    const evoCap = partnerMode ? 10 : 5;
+    const awardedEvo = n < evoCap ? 1.0 : 0.75;
+    const awardedHappiness = n < 5 ? 0.2 : 0.1;
+
+    // Shadow Pokemon earn Purification instead of Evolution (experience) points.
+    const evoField = (poke[pokemonId]?.shadow ?? 0) > 0 ? "purification" : "experience";
+    tx.set(
+      pokeRef,
+      { [pokemonId]: { [evoField]: FieldValue.increment(awardedEvo), friendship: FieldValue.increment(awardedHappiness) } },
+      { merge: true }
+    );
+
+    const session = {
+      date: today,
+      partner: partnerMode,
+      targetPokemonId: pokemonId,
+      startedAt: fresh ? now : raw.startedAt ?? now,
+      postsLogged: n + 1,
+      evoPts: (fresh ? 0 : raw.evoPts ?? 0) + awardedEvo,
+      happinessPts: (fresh ? 0 : raw.happinessPts ?? 0) + awardedHappiness,
+    };
+    tx.set(sessRef, session, { merge: false });
+    return { awardedEvo, awardedHappiness, session };
+  });
+
+  return { ok: true, ...result };
+});
+
+export const resetTrainingSession = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  await db.doc(`users/${uid}/bag/training_session`).set(
+    { date: "", postsLogged: 0, evoPts: 0, happinessPts: 0 },
+    { merge: false }
+  );
+  return { ok: true };
+});
+
+// --- Colosseum: adjust battle rankings (grader-gated) ----------------------
+export const awardRankingPoints = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isGrader(member)) throw new HttpsError("permission-denied", "You cannot adjust rankings.");
+  const targetUid = requireString(request.data?.uid, "uid", 80);
+  const points = requireInt(request.data?.points ?? 0, "points", -1000, 1000);
+  const targetSnap = await db.doc(`users/${targetUid}`).get();
+  const username = (targetSnap.data()?.username as string) ?? targetUid;
+  await db.doc(`battle_rankings/${targetUid}`).set(
+    { username, points: FieldValue.increment(points) },
+    { merge: true }
+  );
+  return { ok: true };
+});
+
+// --- Challenges: grant a cleared step (grader-gated) -----------------------
+export const grantChallengeStep = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isGrader(member)) throw new HttpsError("permission-denied", "You cannot grant challenge steps.");
+  const targetUid = requireString(request.data?.uid, "uid", 80);
+  const kind = requireString(request.data?.kind, "kind", 20);
+  const region = requireString(request.data?.regionOrIsland, "region", 40);
+  const stepId = requireString(request.data?.stepId, "step", 60);
+  const zCrystal = typeof request.data?.zCrystal === "string" ? request.data.zCrystal : undefined;
+
+  const update: Record<string, unknown> = {};
+  if (kind === "badge") update.badges = { [region]: FieldValue.arrayUnion(stepId) };
+  else if (kind === "eliteFour") update.eliteFour = { [region]: true };
+  else if (kind === "champion") update.champion = { [region]: true };
+  else if (kind === "trial") update.trialsCompleted = FieldValue.arrayUnion(stepId);
+  else if (kind === "grandTrial") update.grandTrials = FieldValue.arrayUnion(stepId);
+  else throw new HttpsError("invalid-argument", "Unknown challenge kind.");
+  if (zCrystal) update.zCrystals = FieldValue.arrayUnion(zCrystal);
+
+  await db.doc(`users/${targetUid}/bag/challenges`).set(update, { merge: true });
+  await notifyUsers([targetUid], { type: "reward", text: "You cleared a challenge stage!", link: "/Challenges" });
+  return { ok: true };
+});

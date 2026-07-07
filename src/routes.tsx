@@ -52,6 +52,8 @@ const { default: Users } = lazyImport(() => import("./Pages/User/Users"), "defau
 const { default: Missions } = lazyImport(() => import("./Pages/Missions"), "default");
 const { default: Mall } = lazyImport(() => import("./Pages/Mall"), "default");
 const { default: Research } = lazyImport(() => import("./Pages/Research"), "default");
+const { default: Colosseum } = lazyImport(() => import("./Pages/Colosseum"), "default");
+const { default: Challenges } = lazyImport(() => import("./Pages/Challenges"), "default");
 const { ErrorPage } = lazyImport(() => import("./components/navigation/error-page"), "ErrorPage");
 const { default: ComingSoon } = lazyImport(() => import("./Pages/ComingSoon"), "default");
 const { Protect } = lazyImport(() => import("./components/navigation/Protect"), "Protect");
@@ -198,6 +200,8 @@ export default function AppRoutes() {
                     <Route path="/Activities" element={<ComingSoon module="Activities" />} />
                     <Route path="/Missions" element={<Missions />} />
                     <Route path="/Research" element={<Research />} />
+                    <Route path="/Colosseum" element={<Colosseum />} />
+                    <Route path="/Challenges" element={<Challenges />} />
                     <Route
                       path="/Onboarding"
                       element={

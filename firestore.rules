@@ -200,6 +200,31 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- Colosseum + Challenges -------------------------------------------
+    // Read-only reference/leaderboard data for members. Rankings and per-member
+    // challenge progress are written by Cloud Functions (Admin SDK); catalogs
+    // (hall of fame, tournaments, gym regions, island trials) are admin-edited.
+    match /battle_rankings/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /hall_of_fame/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /tournaments/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /gymRegions/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /islandTrials/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
     // ---- Forums ------------------------------------------------------------
     // All publishing (threads, posts, rolls, votes, boss battles, inventory
     // effects) goes through Cloud Functions (functions/src/index.ts), which
