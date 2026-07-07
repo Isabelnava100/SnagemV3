@@ -31,6 +31,7 @@ import {
 import pokemonJSON from "./pokemon.json";
 import battleStages from "./battleStages.json";
 import evolutionsJSON from "./evolutions.json";
+import levelingCurveJSON from "./levelingCurve.json";
 
 // Each 2nd-gen function is a Cloud Run service reserving CPU = maxInstances x cpu.
 // This project's regional CPU quota is capped at 20,000 milli vCPU (20 vCPU) and
@@ -2615,28 +2616,23 @@ interface EvoOption {
 }
 const EVOLUTIONS = evolutionsJSON as Record<string, EvoOption[]>;
 
-// Leveling curve (ported from src/lib/leveling.ts). Level is derived from a
-// Pokemon's total experience; admins may override the table at admin/leveling.
+// Leveling curve. Level is derived from a Pokemon's total experience. The
+// default table is generated from src/lib/leveling.ts into levelingCurve.json
+// (regenerate that alongside evolutions.json if the curve is retuned); admins
+// may override it at admin/leveling.
 const MAX_LEVEL = 100;
-const REFERENCE_XP_PER_POST = 10;
-function defaultPostsForLevel(level: number): number {
-  if (level <= 1) return 0;
-  if (level <= 16) return 0.5 + ((level - 2) / 14) * 1.0;
-  if (level <= 40) return 2 + ((level - 17) / 23) * 8;
-  return 10 * Math.pow(1.05, level - 40);
-}
-const DEFAULT_XP_CURVE: number[] = (() => {
-  const curve = [0, 0];
-  let posts = 0;
-  for (let level = 2; level <= MAX_LEVEL; level++) {
-    posts += defaultPostsForLevel(level);
-    curve[level] = Math.round(posts * REFERENCE_XP_PER_POST);
-  }
-  return curve;
-})();
+const DEFAULT_XP_CURVE = levelingCurveJSON as number[];
+
+// admin/leveling rarely changes and function instances stay warm, so cache the
+// loaded curve briefly instead of reading the config doc on every evolve.
+let cachedCurve: { curve: number[]; at: number } | null = null;
 async function loadLevelingCurve(): Promise<number[]> {
+  const now = Date.now();
+  if (cachedCurve && now - cachedCurve.at < 60_000) return cachedCurve.curve;
   const stored = (await db.doc("admin/leveling").get()).data()?.curve as number[] | undefined;
-  return Array.isArray(stored) && stored.length > 1 ? stored : DEFAULT_XP_CURVE;
+  const curve = Array.isArray(stored) && stored.length > 1 ? stored : DEFAULT_XP_CURVE;
+  cachedCurve = { curve, at: now };
+  return curve;
 }
 function levelForXp(xp: number, curve: number[]): number {
   const total = Math.max(0, xp || 0);

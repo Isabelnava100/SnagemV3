@@ -6,12 +6,7 @@
  * (Firestore rules), so these no longer write the bag directly.
  */
 
-async function call<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase");
-  const res = await httpsCallable(getFunctions(), name)(data);
-  return res.data as T;
-}
+import { call } from "./_callable";
 
 /** Evolve an owned Pokemon into the chosen target form (server validates all). */
 export const evolvePokemon = (pokemonId: string, toIdx: number) =>

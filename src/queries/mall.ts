@@ -1,4 +1,5 @@
 import { db } from "../context/firebase";
+import { call } from "./_callable";
 
 /** A storefront in the Snag Mall (see docs/SHOP_DATA.md). */
 export interface Shop {
@@ -55,12 +56,6 @@ export const getRecipes = async (): Promise<Recipe[]> => {
     .filter((r) => r.active !== false);
 };
 
-async function call<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase");
-  const res = await httpsCallable(getFunctions(), name)(data);
-  return res.data as T;
-}
 
 export const buyShopItem = (shopId: string, itemId: string, qty: number) =>
   call<{ ok: boolean; spent: number; currency: string }>("buyShopItem", { shopId, itemId, qty });

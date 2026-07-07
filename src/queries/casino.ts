@@ -1,4 +1,5 @@
 import { db } from "../context/firebase";
+import { call } from "./_callable";
 
 /** Casino config (exchange rate + game table). See docs/CASINO_DATA.md. */
 export interface CasinoConfig {
@@ -33,12 +34,6 @@ export const getMyCasino = async (uid: string): Promise<MyCasino> => {
   return ((await getDoc(doc(db, "users", uid, "bag", "casino"))).data() as MyCasino) || {};
 };
 
-async function call<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase");
-  const res = await httpsCallable(getFunctions(), name)(data);
-  return res.data as T;
-}
 
 /** Exchange between Snag Coins and Gengar Tokens. */
 export const exchangeTokens = (direction: "buy" | "sell", amount: number) =>
