@@ -15,13 +15,13 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconCoin, IconSearch, IconStar } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getCurrencies } from "../../queries/dashboard";
-import { getMissions, Mission } from "../../queries/missions";
+import { getMissions, Mission, submitMission } from "../../queries/missions";
 
 /**
  * Public Missions page (Mission Vault). Members browse always-available mission
@@ -243,6 +243,20 @@ function MissionCard(props: { mission: Mission; onOpen: () => void }) {
 
 function MissionModal(props: { mission: Mission | null; opened: boolean; onClose: () => void }) {
   const { mission } = props;
+  const [threadLink, setThreadLink] = React.useState("");
+  const [msg, setMsg] = React.useState("");
+  const submit = useMutation({
+    mutationFn: () => submitMission(mission?.id ?? "", threadLink.trim()),
+    onSuccess: () => setMsg("Sent to a grader. Watch your notifications for the reward."),
+    onError: (e) => setMsg((e as Error).message || "Could not submit. Try again."),
+  });
+
+  // Reset the form whenever a different mission is opened.
+  React.useEffect(() => {
+    setThreadLink("");
+    setMsg("");
+  }, [mission?.id]);
+
   if (!mission) return null;
 
   const objectives = toLines(mission.objective);
@@ -349,15 +363,45 @@ function MissionModal(props: { mission: Mission | null; opened: boolean; onClose
 
         <Divider />
 
-        <Text c="dimmed" fz={12}>
-          To take this mission, submitting for grading happens in the Quests
-          forum thread you open. Base pay is Snag Coins, write it well and the
-          grader tips extra.
-        </Text>
-
-        <Button variant="default" disabled fullWidth>
-          Pick up in Quests forum
-        </Button>
+        <Box>
+          <Text c="white" fw={600} fz={14} mb={4}>
+            Submit for grading
+          </Text>
+          <Text c="dimmed" fz={12} mb={8}>
+            Play this mission out in a Quests forum thread, then paste the thread
+            link here to send it to a grader. Base pay is Snag Coins, write it
+            well and the grader tips extra.
+          </Text>
+          <TextInput
+            value={threadLink}
+            onChange={(e) => setThreadLink(e.currentTarget.value)}
+            placeholder="Link to your Quests thread"
+            aria-label="Quests thread link"
+            mb={8}
+          />
+          <Button
+            fullWidth
+            loading={submit.isPending}
+            disabled={!threadLink.trim()}
+            onClick={() => {
+              setMsg("");
+              submit.mutate();
+            }}
+          >
+            Submit for grading
+          </Button>
+          {msg && (
+            <Text
+              role="status"
+              aria-live="polite"
+              fz={12}
+              mt={6}
+              c={/could not|error|not enough|cannot|invalid/i.test(msg) ? "#E35C65" : "teal"}
+            >
+              {msg}
+            </Text>
+          )}
+        </Box>
       </Stack>
     </Modal>
   );

@@ -14,10 +14,13 @@ interface NavItem {
 }
 
 const ALL_LINKS: NavItem[] = [
-  { link: "/Activities", label: "Activities", icon: Activities },
+  { link: "/Colosseum", label: "Colosseum", icon: Activities },
+  { link: "/Challenges", label: "Challenges", icon: Quests },
   { link: "/Missions", label: "Missions", icon: Quests },
   { link: "/Shop", label: "Shop", icon: Marketplace },
+  { link: "/Research", label: "Research", icon: Marketplace },
   { link: "/Users", label: "Users", icon: Users },
+  { link: "/Activities", label: "Activities", icon: Activities },
   { link: "/Forum/Main-Forum", label: "Forum", icon: Forum },
   { link: "/Dashboard", label: "Snag", icon: TeamSangem },
 ];

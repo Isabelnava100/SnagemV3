@@ -115,6 +115,10 @@ const { default: AdminApplicants } = lazyImport(
   () => import("./Pages/User/Dashboard/Admin/Applicants"),
   "default"
 );
+const { default: AdminGrading } = lazyImport(
+  () => import("./Pages/User/Dashboard/Admin/Grading"),
+  "default"
+);
 const { default: AdminImports } = lazyImport(
   () => import("./Pages/User/Dashboard/Admin/Imports"),
   "default"
@@ -179,6 +183,7 @@ export default function AppRoutes() {
                         <Route path="Donate" element={<Donate />} />
                         <Route path="Announcements" element={<AdminAnnouncements />} />
                         <Route path="Applicants" element={<AdminApplicants />} />
+                        <Route path="Grading" element={<AdminGrading />} />
                         <Route path="Permissions" element={<AdminPermissions />} />
                         <Route path="Mystery-Boxes" element={<AdminMysteryBoxes />} />
                         <Route path="Badges" element={<AdminBadges />} />
