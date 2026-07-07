@@ -1,12 +1,15 @@
 import {
   Badge,
   Box,
+  Button,
   Card,
   Container,
   Group,
   Image,
+  Select,
   SimpleGrid,
   Stack,
+  Switch,
   Tabs,
   Text,
   TextInput,
@@ -31,25 +34,47 @@ import MovesTab from "./moves";
  * tools. Big lists are searched and capped to keep the page light.
  */
 
-const PAGE_CAP = 60;
+const PAGE_SIZE = 60;
 
 function ResultCount(props: { shown: number; total: number; noun: string }) {
-  if (props.total <= props.shown) {
-    return (
-      <Text fz={12} c="dimmed">
-        {props.total} {props.noun}
-      </Text>
-    );
-  }
   return (
     <Text fz={12} c="dimmed">
-      Showing {props.shown} of {props.total} {props.noun}. Refine your search to see more.
+      {props.total <= props.shown
+        ? `${props.total} ${props.noun}`
+        : `Showing ${props.shown} of ${props.total} ${props.noun}`}
     </Text>
+  );
+}
+
+/** Reveal a long list in pages, resetting to the first page whenever `deps`
+ * change (a new search or filter). Load More grows the window until all show. */
+function usePagedList<T>(items: T[], deps: React.DependencyList) {
+  const [limit, setLimit] = React.useState(PAGE_SIZE);
+  React.useEffect(() => {
+    setLimit(PAGE_SIZE);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return {
+    shown: items.slice(0, limit),
+    hasMore: items.length > limit,
+    loadMore: () => setLimit((n) => n + PAGE_SIZE),
+  };
+}
+
+function LoadMore(props: { hasMore: boolean; onClick: () => void }) {
+  if (!props.hasMore) return null;
+  return (
+    <Group justify="center" mt={4}>
+      <Button variant="light" color="grape" radius="xl" onClick={props.onClick}>
+        Load more
+      </Button>
+    </Group>
   );
 }
 
 function PokedexTab() {
   const [search, setSearch] = React.useState("");
+  const [shiny, setShiny] = React.useState(false);
   const q = search.trim().toLowerCase();
   const matches = React.useMemo(() => {
     if (!q) return pokemonData;
@@ -57,31 +82,41 @@ function PokedexTab() {
       (p) => p.name.toLowerCase().includes(q) || p.idx.includes(q)
     );
   }, [q]);
-  const shown = matches.slice(0, PAGE_CAP);
+  const { shown, hasMore, loadMore } = usePagedList(matches, [q]);
 
   return (
     <Stack gap={12}>
-      <TextInput
-        placeholder="Search by name or Pokedex number"
-        value={search}
-        onChange={(e) => setSearch(e.currentTarget.value)}
-        maw={320}
-        w="100%"
-        radius="xl"
-        styles={{ input: { background: "#2E2D2E" } }}
-      />
+      <Group gap={16} align="center" wrap="wrap">
+        <TextInput
+          placeholder="Search by name or Pokedex number"
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          maw={320}
+          w="100%"
+          radius="xl"
+          styles={{ input: { background: "#2E2D2E" }, root: { flex: "1 1 220px" } }}
+        />
+        <Switch
+          checked={shiny}
+          onChange={(e) => setShiny(e.currentTarget.checked)}
+          label="View shiny"
+          color="grape"
+          aria-label="View shiny sprites"
+        />
+      </Group>
       <ResultCount shown={shown.length} total={matches.length} noun="Pokemon" />
       <SimpleGrid cols={{ base: 3, xs: 4, sm: 6 }} spacing="xs">
         {shown.map((p) => (
           <Card key={p.idx} bg="#2b2a2b" radius="md" p={8} withBorder>
             <Stack gap={2} align="center">
               <Image
-                src={getPokemonImageURL(p.slug)}
+                src={getPokemonImageURL(p.slug, shiny)}
                 fallbackSrc={POKEMON_SPRITE_FALLBACK}
-                alt={p.name}
+                alt={shiny ? `Shiny ${p.name}` : p.name}
                 w={56}
                 h={56}
                 fit="contain"
+                loading="lazy"
               />
               <Text fz={10} c="dimmed">
                 #{p.idx}
@@ -98,32 +133,60 @@ function PokedexTab() {
           No Pokemon match that search.
         </Text>
       )}
+      <LoadMore hasMore={hasMore} onClick={loadMore} />
     </Stack>
   );
 }
 
+/** Distinct item categories, formatted for a Select (title-cased labels). */
+const ITEM_CATEGORIES = Array.from(new Set(itemData.map((i) => i.category)))
+  .filter(Boolean)
+  .sort((a, b) => a.localeCompare(b))
+  .map((c) => ({
+    value: c,
+    label: c.replace(/(^|\s)\S/g, (ch) => ch.toUpperCase()),
+  }));
+
 function ItemsTab() {
   const [search, setSearch] = React.useState("");
+  const [category, setCategory] = React.useState<string | null>(null);
   const q = search.trim().toLowerCase();
   const matches = React.useMemo(() => {
-    if (!q) return itemData;
-    return itemData.filter(
-      (i) => i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q)
-    );
-  }, [q]);
-  const shown = matches.slice(0, PAGE_CAP);
+    return itemData.filter((i) => {
+      if (category && i.category !== category) return false;
+      if (!q) return true;
+      return i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q);
+    });
+  }, [q, category]);
+  const { shown, hasMore, loadMore } = usePagedList(matches, [q, category]);
 
   return (
     <Stack gap={12}>
-      <TextInput
-        placeholder="Search by item name or category"
-        value={search}
-        onChange={(e) => setSearch(e.currentTarget.value)}
-        maw={320}
-        w="100%"
-        radius="xl"
-        styles={{ input: { background: "#2E2D2E" } }}
-      />
+      <Group gap={12} align="flex-end" wrap="wrap">
+        <TextInput
+          label="Search"
+          placeholder="Search by item name"
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          maw={320}
+          w="100%"
+          radius="xl"
+          styles={{ input: { background: "#2E2D2E" }, root: { flex: "1 1 220px" } }}
+        />
+        <Select
+          label="Category"
+          placeholder="All categories"
+          data={ITEM_CATEGORIES}
+          value={category}
+          onChange={setCategory}
+          clearable
+          searchable
+          radius="xl"
+          maw={260}
+          w="100%"
+          styles={{ input: { background: "#2E2D2E" }, root: { flex: "1 1 200px" } }}
+        />
+      </Group>
       <ResultCount shown={shown.length} total={matches.length} noun="items" />
       <SimpleGrid cols={{ base: 2, xs: 3, sm: 4 }} spacing="xs">
         {shown.map((item) => (
@@ -135,6 +198,7 @@ function ItemsTab() {
                 w={34}
                 h={34}
                 fit="contain"
+                loading="lazy"
               />
               <Box style={{ minWidth: 0 }}>
                 <Text fz={12} c="white" lineClamp={1}>
@@ -153,6 +217,7 @@ function ItemsTab() {
           No items match that search.
         </Text>
       )}
+      <LoadMore hasMore={hasMore} onClick={loadMore} />
     </Stack>
   );
 }
@@ -224,18 +289,18 @@ function ListsTab() {
 }
 
 const TABS = [
+  { value: "faq", label: "FAQ", content: <FaqTab /> },
   { value: "pokedex", label: "Pokedex", content: <PokedexTab /> },
   { value: "items", label: "Items", content: <ItemsTab /> },
-  { value: "moves", label: "Moves", content: <MovesTab /> },
+  { value: "moves", label: "Shadow Moves", content: <MovesTab /> },
   { value: "lists", label: "Encounter Lists", content: <ListsTab /> },
   { value: "lore", label: "Lore", content: <LoreTab /> },
-  { value: "faq", label: "FAQ", content: <FaqTab /> },
 ];
 
 export default function Library() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requested = searchParams.get("tab");
-  const active = TABS.some((t) => t.value === requested) ? requested : "pokedex";
+  const active = TABS.some((t) => t.value === requested) ? requested : "faq";
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>

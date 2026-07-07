@@ -1,6 +1,6 @@
 import { ActionIcon, Box, Drawer, Group, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconBooks, IconFileText, IconHome, IconX } from "@tabler/icons-react";
+import { IconBooks, IconFileText, IconHome, IconInfoCircle, IconX } from "@tabler/icons-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { Activities, Forum, Marketplace, Menu, Quests, TeamSangem, Users } from "../../icons";
@@ -56,6 +56,7 @@ type DrawerTileDef = { link: string; label: string; tabler?: typeof IconHome; im
 const DRAWER_TILES: DrawerTileDef[] = [
   { link: "/", label: "Home", tabler: IconHome },
   ...overflowLinks.map((l) => ({ link: l.link, label: l.label, img: l.icon })),
+  { link: "/About", label: "About", tabler: IconInfoCircle },
   { link: "/Library", label: "Library", tabler: IconBooks },
   { link: "/Policies", label: "Policies", tabler: IconFileText },
 ];
