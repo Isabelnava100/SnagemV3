@@ -9,7 +9,7 @@ export const HomePage = () => {
               <h1>The Snagem Guild</h1>
               <h2>Ready to start your journey?</h2>
               <div className="button-container">
-              <Link to="/" className="red button">Discover What We Do</Link>
+              <Link to="/About" className="red button">Discover What We Do</Link>
               <Link to="/Forum/Main-Forum" className="purple button">Go to the Forums</Link>
               </div>
            </div>
@@ -22,7 +22,7 @@ export const HomePage = () => {
       <span className="paragraph2">
       It is simple and easy to get started in the role-playing, based on Pokemon.
       </span>
-      <Link to="/" className="button yellow">Read About Snagem</Link>
+      <Link to="/About" className="button yellow">Read About Snagem</Link>
       </div>
 
 

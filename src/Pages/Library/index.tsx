@@ -4,17 +4,18 @@ import {
   Button,
   Card,
   Container,
+  Flex,
   Group,
   Image,
   Select,
   SimpleGrid,
   Stack,
   Switch,
-  Tabs,
   Text,
   TextInput,
-  Title,
+  UnstyledButton,
 } from "@mantine/core";
+import { IconArrowRight } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
@@ -288,55 +289,254 @@ function ListsTab() {
   );
 }
 
-const TABS = [
-  { value: "faq", label: "FAQ", content: <FaqTab /> },
-  { value: "pokedex", label: "Pokedex", content: <PokedexTab /> },
-  { value: "items", label: "Items", content: <ItemsTab /> },
-  { value: "moves", label: "Shadow Moves", content: <MovesTab /> },
-  { value: "lists", label: "Encounter Lists", content: <ListsTab /> },
-  { value: "lore", label: "Lore", content: <LoreTab /> },
+/**
+ * The Library is organized as a set of "wings". A directory on the left opens
+ * each wing; the Reading Room is the landing that introduces them all. The wing
+ * `value`s double as the `?tab=` deep-link keys (kept stable from the old tabs).
+ */
+const SERIF = 'Georgia, "Times New Roman", serif';
+const BG = "#0d0a14";
+const PANEL = "#171022";
+const PANEL_BORDER = "#271e38";
+
+type Wing = {
+  value: string;
+  name: string;
+  callNo: string;
+  meta: string;
+  blurb: string;
+  accent: string;
+  content: React.ReactNode;
+};
+
+const WINGS: Wing[] = [
+  {
+    value: "pokedex",
+    name: "The Bestiary",
+    callNo: "QL · 700",
+    meta: `${pokemonData.length.toLocaleString()} species`,
+    blurb: "Every catalogued species, searchable by name or number.",
+    accent: "#f472b6",
+    content: <PokedexTab />,
+  },
+  {
+    value: "items",
+    name: "The Artifact Vault",
+    callNo: "TS · 200",
+    meta: `${itemData.length.toLocaleString()} items`,
+    blurb: "The full item catalog: balls, berries, and rare relics.",
+    accent: "#f5c518",
+    content: <ItemsTab />,
+  },
+  {
+    value: "moves",
+    name: "The Shadow Codex",
+    callNo: "GN · 050",
+    meta: "Shadow Moves",
+    blurb: "Shadow Moves by class, and the rules that govern them.",
+    accent: "#b197fc",
+    content: <MovesTab />,
+  },
+  {
+    value: "lists",
+    name: "Field Registers",
+    callNo: "GB · 400",
+    meta: "Encounter lists",
+    blurb: "Shared encounter lists hosts can attach to a roleplay.",
+    accent: "#5eead4",
+    content: <ListsTab />,
+  },
+  {
+    value: "lore",
+    name: "The Archives",
+    callNo: "PZ · 900",
+    meta: "Guild canon",
+    blurb: "Bound volumes of the guild's canon and mythologies.",
+    accent: "#e879f9",
+    content: <LoreTab />,
+  },
+  {
+    value: "faq",
+    name: "The Help Desk",
+    callNo: "REF · 001",
+    meta: "Common Q&A",
+    blurb: "Answers to the questions new members ask most.",
+    accent: "#74c0fc",
+    content: <FaqTab />,
+  },
 ];
+
+const READING_ROOM = "reading-room";
+
+/** One row in the left directory. Real button, so it is keyboard-operable. */
+function DirectoryItem(props: {
+  title: string;
+  subtitle: string;
+  callNo?: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <UnstyledButton
+      onClick={props.onClick}
+      aria-current={props.active ? "true" : undefined}
+      style={{
+        display: "block",
+        width: "100%",
+        padding: "12px 14px",
+        borderRadius: 12,
+        background: props.active ? "#1c1430" : "transparent",
+        borderLeft: `3px solid ${props.active ? "#f5c518" : "transparent"}`,
+      }}
+    >
+      <Group justify="space-between" wrap="nowrap" gap={8}>
+        <Text fz={16} fw={700} c="white" style={{ fontFamily: SERIF }} lineClamp={1}>
+          {props.title}
+        </Text>
+        {props.callNo && (
+          <Text fz={11} c="dimmed" ff="monospace" style={{ letterSpacing: 1, flexShrink: 0 }}>
+            {props.callNo}
+          </Text>
+        )}
+      </Group>
+      <Text fz={12} c={props.active ? "#f5c518" : "dimmed"} mt={2}>
+        {props.subtitle}
+      </Text>
+    </UnstyledButton>
+  );
+}
+
+/** The landing: a welcome plus one card per wing. */
+function ReadingRoom(props: { onOpen: (value: string) => void }) {
+  return (
+    <Stack gap="lg">
+      <Box>
+        <Text component="h2" fz={{ base: 30, sm: 40 }} fw={700} c="#f4efe3" style={{ fontFamily: SERIF, lineHeight: 1.1 }}>
+          Welcome, reader.
+        </Text>
+        <Text fz={15} c="gray.4" mt={8} maw={720}>
+          Six wings hold everything the guild has recorded. Pick one from the directory on the left,
+          or open a wing below.
+        </Text>
+      </Box>
+
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+        {WINGS.map((w) => (
+          <UnstyledButton
+            key={w.value}
+            onClick={() => props.onOpen(w.value)}
+            aria-label={`Open ${w.name}`}
+            style={{
+              display: "block",
+              textAlign: "left",
+              borderRadius: 16,
+              background: PANEL,
+              border: `1px solid ${PANEL_BORDER}`,
+              borderTop: `2px solid ${w.accent}`,
+              padding: 20,
+              height: "100%",
+            }}
+          >
+            <Text fz={11} c="dimmed" ff="monospace" mb={10} style={{ letterSpacing: 2 }}>
+              {w.callNo}
+            </Text>
+            <Text fz={22} fw={700} c="white" mb={8} style={{ fontFamily: SERIF }}>
+              {w.name}
+            </Text>
+            <Text fz={14} c="gray.5" mb={16}>
+              {w.blurb}
+            </Text>
+            <Group justify="space-between" align="center">
+              <Text fz={13} fw={700} c={w.accent} ff="monospace">
+                {w.meta}
+              </Text>
+              <Group gap={4} wrap="nowrap">
+                <Text fz={14} fw={700} c={w.accent}>
+                  Open
+                </Text>
+                <IconArrowRight size={16} color={w.accent} />
+              </Group>
+            </Group>
+          </UnstyledButton>
+        ))}
+      </SimpleGrid>
+    </Stack>
+  );
+}
 
 export default function Library() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requested = searchParams.get("tab");
-  const active = TABS.some((t) => t.value === requested) ? requested : "faq";
+  const active = WINGS.some((w) => w.value === requested) ? (requested as string) : READING_ROOM;
+
+  const open = (value: string) => setSearchParams({ tab: value }, { replace: true });
+  const openWing = WINGS.find((w) => w.value === active);
 
   return (
-    <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
-      <Stack gap={6} mb={20}>
-        <Title order={1} c="white" size={30} fw={600}>
-          Library
-        </Title>
-        <Text fz={13} c="dimmed">
-          Browse the system's reference data: every Pokemon, the item catalog,
-          and the public encounter lists used in roleplays.
-        </Text>
-      </Stack>
+    <Box style={{ background: BG, minHeight: "100%" }}>
+      <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+        {/* Masthead */}
+        <Box mb={28}>
+          <Text fz={12} fw={700} c="#c9a94a" tt="uppercase" mb={10} style={{ letterSpacing: 3 }}>
+            The Great Snagem Library &middot; Est. 2022
+          </Text>
+          <Text component="h1" fz={{ base: 44, sm: 60 }} fw={700} c="#f4efe3" style={{ fontFamily: SERIF, lineHeight: 1, margin: 0 }}>
+            The Library
+          </Text>
+          <Text fz={{ base: 14, sm: 16 }} c="gray.4" mt={12} maw={720}>
+            The guild's public reference. Choose a wing from the directory, then browse or search its holdings.
+          </Text>
+        </Box>
 
-      <Tabs
-        value={active}
-        onChange={(value) => {
-          if (value) setSearchParams({ tab: value }, { replace: true });
-        }}
-        variant="pills"
-        color="grape"
-        keepMounted={false}
-      >
-        <Tabs.List mb={16} style={{ flexWrap: "wrap" }}>
-          {TABS.map((t) => (
-            <Tabs.Tab key={t.value} value={t.value}>
-              {t.label}
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
+        <Flex gap={{ base: 20, md: 36 }} direction={{ base: "column", md: "row" }} align="flex-start">
+          {/* Directory */}
+          <Box style={{ flex: "0 0 260px", width: "100%", maxWidth: 320 }}>
+            <Text fz={11} fw={700} c="dimmed" tt="uppercase" mb={10} px={14} style={{ letterSpacing: 2 }}>
+              Directory
+            </Text>
+            <Stack gap={2}>
+              <DirectoryItem
+                title="Reading Room"
+                subtitle={active === READING_ROOM ? "Start here" : "Back to the landing"}
+                active={active === READING_ROOM}
+                onClick={() => open(READING_ROOM)}
+              />
+              {WINGS.map((w) => (
+                <DirectoryItem
+                  key={w.value}
+                  title={w.name.replace(/^The /, "")}
+                  subtitle={w.meta}
+                  callNo={w.callNo.replace(" · ", " ")}
+                  active={active === w.value}
+                  onClick={() => open(w.value)}
+                />
+              ))}
+            </Stack>
+          </Box>
 
-        {TABS.map((t) => (
-          <Tabs.Panel key={t.value} value={t.value}>
-            {t.content}
-          </Tabs.Panel>
-        ))}
-      </Tabs>
-    </Container>
+          {/* Wing content */}
+          <Box style={{ flex: 1, minWidth: 0, width: "100%" }}>
+            {openWing ? (
+              <Stack gap="lg">
+                <Box>
+                  <Text fz={11} c="dimmed" ff="monospace" mb={4} style={{ letterSpacing: 2 }}>
+                    {openWing.callNo}
+                  </Text>
+                  <Text component="h2" fz={{ base: 26, sm: 32 }} fw={700} c="#f4efe3" style={{ fontFamily: SERIF, lineHeight: 1.1 }}>
+                    {openWing.name}
+                  </Text>
+                  <Text fz={14} c="gray.5" mt={4}>
+                    {openWing.blurb}
+                  </Text>
+                </Box>
+                {openWing.content}
+              </Stack>
+            ) : (
+              <ReadingRoom onOpen={open} />
+            )}
+          </Box>
+        </Flex>
+      </Container>
+    </Box>
   );
 }
