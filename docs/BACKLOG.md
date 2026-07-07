@@ -64,9 +64,12 @@ July 2026 build-out are marked (2026-07).
 
 - **Currency stored as strings** (2026-07). `bag/currency` values are strings; spend
   math uses parseInt server-side. Migrate to numbers before heavier economy math.
-- **Recycle rules simplified** (2026-07). `recycleItems` pays floor(n * 1.2); does not
-  enforce consumable-half, medicine exclusion, or the 1-coin-item exclusion. Candy ->
-  Scent conversion is not implemented as a function.
+- **Recycle 1-coin exclusion** (2026-07). `recycleItems` now enforces medicine exclusion
+  and consumable-half (see `functions/src/index.ts` RECYCLE_* sets, mirrored in
+  `src/Pages/Mall/index.tsx`), but the 1-coin-item exclusion is still deferred: bag
+  entries only store name/filePath/category/quantity, no price. Fix: store price on bag
+  items at buy/grant time, or load a price catalog server-side, then skip 1-coin items.
+- **Candy -> Scent conversion** (2026-07). Not implemented as a function yet.
 - **Members post-count index** (2026-07). The directory + profile post/thread counts use
   a `collectionGroup` aggregation needing a composite index; until created they show
   "-". Firebase logs a one-click create link on first run.
