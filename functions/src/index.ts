@@ -1867,6 +1867,58 @@ export const onMemberUpdated = onDocumentUpdated("users/{uid}", async (event) =>
   });
 });
 
+// --- Public profile projection --------------------------------------------
+// Profiles are world-readable, but the users doc holds PII (email, discordUID)
+// that must NOT be, and Firestore reads are per-document. So we mirror only the
+// world-safe display fields into publicProfiles/{uid}. Explicitly excludes
+// email, capabilities, isGaia, and every discord field (Discord stays visible
+// to signed-in members only, read from the members-only users doc).
+function publicProfileFrom(data: FirebaseFirestore.DocumentData): Record<string, unknown> {
+  return {
+    username: data.username ?? "",
+    avatar: data.avatar ?? "",
+    badges: Array.isArray(data.badges) ? data.badges : [],
+    permissions: data.permissions ?? "",
+    signature: data.signature ?? "",
+    emojis: Array.isArray(data.emojis) ? data.emojis : [],
+    joinedAt: data.joinedAt ?? null,
+  };
+}
+
+/** Keep publicProfiles/{uid} in sync with the world-safe subset of the user doc. */
+export const syncPublicProfile = onDocumentWritten("users/{uid}", async (event) => {
+  const ref = db.doc(`publicProfiles/${event.params.uid}`);
+  const after = event.data?.after.data();
+  if (!after) {
+    await ref.delete().catch(() => undefined);
+    return;
+  }
+  await ref.set(publicProfileFrom(after), { merge: false });
+});
+
+/** One-off: backfill publicProfiles for every existing user (admin only). */
+export const backfillPublicProfiles = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isAdmin(member)) throw new HttpsError("permission-denied", "Admins only.");
+  const users = await db.collection("users").get();
+  let batch = db.batch();
+  let pending = 0;
+  let written = 0;
+  for (const d of users.docs) {
+    batch.set(db.doc(`publicProfiles/${d.id}`), publicProfileFrom(d.data()), { merge: false });
+    pending++;
+    written++;
+    if (pending >= 400) {
+      await batch.commit();
+      batch = db.batch();
+      pending = 0;
+    }
+  }
+  if (pending) await batch.commit();
+  return { ok: true, written };
+});
+
 /** Ping the ApproveImports group when a member submits an import for review. */
 export const onImportSubmitted = onDocumentWritten("importRequests/{uid}", async (event) => {
   const before = event.data?.before.data();

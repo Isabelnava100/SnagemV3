@@ -59,27 +59,29 @@ service cloud.firestore {
         allow read: if request.auth.uid == uid || isAdmin();
         allow write: if isAdmin() || hasCap('ManageBadges');
       }
-      // Public-profile subset: any signed-in member may READ these to render the
-      // members directory and public profiles (see docs/PROFILE_DATA.md, which
-      // classifies these as public). Writes stay owner/admin. Currency, items,
-      // bookmarks, drafts and notifications remain private via the rules above/below.
+      // Public-profile subset: WORLD-readable so logged-out visitors can view
+      // profiles (see docs/PROFILE_DATA.md). These hold no PII. The user doc
+      // itself stays members-only (it has email + discordUID); its world-safe
+      // display fields are mirrored into the public publicProfiles/{uid} doc.
+      // Writes stay owner/admin. Currency, items, bookmarks, drafts and
+      // notifications remain private via the rules above/below.
       match /bag/profile {
-        allow read: if isSignedIn();
+        allow read: if true;
         allow write: if isAdmin() || request.auth.uid == uid;
       }
       match /bag/characters {
-        allow read: if isSignedIn();
+        allow read: if true;
         allow write: if isAdmin() || request.auth.uid == uid;
       }
       // Owned Pokemon: caught, evolved, trained and character-assigned only via
       // Cloud Functions (Admin SDK), so members cannot self-edit experience,
-      // species or shiny state. Member-readable for the directory/profiles.
+      // species or shiny state. World-readable for public profiles (no PII).
       match /bag/owned_pokemons {
-        allow read: if isSignedIn();
+        allow read: if true;
         allow write: if isAdmin();
       }
       match /bag/teams {
-        allow read: if isSignedIn();
+        allow read: if true;
         allow write: if isAdmin() || request.auth.uid == uid;
       }
       // Currency is money: written ONLY by the server (shop/casino/recycle/craft
@@ -187,6 +189,14 @@ service cloud.firestore {
     // Read-only reference data for members. Seeded + edited by admins; all
     // spend/write actions (buy, craft, recycle, tour, revive, grade) go through
     // Cloud Functions with the Admin SDK, so clients never write these.
+    // World-safe mirror of each member's display fields (username, avatar,
+    // badges, role, signature, emojis). Written only by the syncPublicProfile
+    // Cloud Function; never carries email or Discord. Public so logged-out
+    // visitors can view profiles.
+    match /publicProfiles/{uid} {
+      allow read: if true;
+      allow write: if false;
+    }
     match /shops/{id} {
       allow read: if isSignedIn();
       allow write: if isAdmin();

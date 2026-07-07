@@ -20,6 +20,7 @@ import { SectionLoader } from "../../components/navigation/loading";
 import { Character, OwnedPokemon } from "../../components/types/typesUsed";
 import { getColor1, getColor2 } from "../../components/user-forum/getColorBadges";
 import { db } from "../../context/firebase";
+import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
 import {
   getCharacters,
@@ -36,16 +37,16 @@ interface PublicUser {
   permissions?: string;
   badges?: string[];
   joinedAt?: { seconds: number };
-  discordName?: string;
-  discordPublic?: boolean;
   signature?: string;
   emojis?: string[];
 }
 
+// Reads the WORLD-safe projection (publicProfiles), never the users doc, so a
+// logged-out visitor can view the profile without exposing email or Discord.
 const getPublicUser = async (username: string): Promise<PublicUser | null> => {
   const { collection, getDocs, limit, query, where } = await import("firebase/firestore");
   const snap = await getDocs(
-    query(collection(db, "users"), where("username", "==", username), limit(1))
+    query(collection(db, "publicProfiles"), where("username", "==", username), limit(1))
   );
   if (snap.empty) return null;
   const docSnap = snap.docs[0];
@@ -57,11 +58,19 @@ const getPublicUser = async (username: string): Promise<PublicUser | null> => {
     permissions: data.permissions,
     badges: (data.badges as string[]) ?? [],
     joinedAt: data.joinedAt,
-    discordName: data.discordName,
-    discordPublic: !!data.discordPublic,
     signature: data.signature,
     emojis: (data.emojis as string[]) ?? [],
   };
+};
+
+// Discord handle lives only on the members-only users doc, so it is fetched
+// separately and only when the viewer is signed in (never shown to the world).
+const getMemberDiscord = async (
+  uid: string
+): Promise<{ discordName?: string; discordPublic?: boolean }> => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  const data = (await getDoc(doc(db, "users", uid))).data();
+  return { discordName: data?.discordName, discordPublic: !!data?.discordPublic };
 };
 
 /**
@@ -155,6 +164,7 @@ function PokemonSprite({ pokemon, size = 56 }: { pokemon: OwnedPokemon; size?: n
  */
 export default function PublicProfile() {
   const { username } = useParams();
+  const { user: viewer } = useAuth();
   const { data: user, isPending } = useQuery({
     queryKey: ["public-profile", username],
     queryFn: () => getPublicUser(username!),
@@ -162,6 +172,12 @@ export default function PublicProfile() {
   });
 
   const uid = user?.uid;
+  // Discord is members-only: only fetched when the viewer is signed in.
+  const { data: discord } = useQuery({
+    queryKey: ["public-discord", uid],
+    queryFn: () => getMemberDiscord(uid!),
+    enabled: !!uid && !!viewer,
+  });
   const { data: profile } = useQuery({
     queryKey: ["get-profile", uid],
     queryFn: () => getProfile(uid!),
@@ -275,14 +291,14 @@ export default function PublicProfile() {
                   Joined {formatJoined(user.joinedAt)}
                 </Text>
               )}
-              {user.discordPublic && user.discordName && (
+              {discord?.discordPublic && discord?.discordName && (
                 <Badge
                   variant="light"
                   color="indigo"
                   leftSection={<IconBrandDiscord size={13} />}
                   radius="sm"
                 >
-                  {user.discordName}
+                  {discord.discordName}
                 </Badge>
               )}
               {!!tags.length && (

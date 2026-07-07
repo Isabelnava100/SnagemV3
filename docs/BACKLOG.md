@@ -83,8 +83,15 @@ July 2026 build-out are marked (2026-07).
 - **Members post-count index** (2026-07). The directory + profile post/thread counts use
   a `collectionGroup` aggregation needing a composite index; until created they show
   "-". Firebase logs a one-click create link on first run.
-- **Public profiles are members-only.** Reads require sign-in (firestore rules). Not
-  viewable logged-out; decide if world-public sharing is wanted.
+- **Public profiles are world-public** (2026-07). Logged-out visitors can view profiles.
+  The users doc stays members-only (it holds email + discordUID); its world-safe display
+  fields (username, avatar, badges, role, signature, emojis) are mirrored into
+  `publicProfiles/{uid}` by the `syncPublicProfile` trigger, and the bag profile subset
+  (profile/characters/teams/owned_pokemons) is world-readable. Discord is fetched
+  separately from the members-only users doc and shown only to signed-in viewers (per the
+  member's `discordPublic` opt-in), so it never reaches the world. TODO after deploy: run
+  the `backfillPublicProfiles` callable once to populate existing members (new writes sync
+  automatically). Forum activity counts still need sign-in, so they show "-" logged-out.
 - **Function CPU cap** (2026-07). All functions run at cpu 0.25 / maxInstances 1 to fit
   the project's non-raiseable 20,000 milli vCPU regional quota. If traffic grows or the
   quota is raised (Sales), bump these in `functions/src/index.ts` setGlobalOptions.
