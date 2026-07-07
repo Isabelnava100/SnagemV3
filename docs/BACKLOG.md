@@ -102,9 +102,12 @@ July 2026 build-out are marked (2026-07).
   `startAfter()` cursors (`src/Pages/forum/queries.ts`).
 - **Thread list filters** `closed`/pinned client-side after `limit(200)`; move to
   `where`/`orderBy` (needs a composite index).
-- **Deferred XP for non-admin threads**: accumulate per-pokemon XP into the reward
-  session and commit at thread close, with an admin edit step and a `ReviewRewards`-style
-  gate. Admin threads keep immediate XP.
+- **Deferred XP for non-admin threads** DONE (verified 2026-07). Already wired end to end:
+  `publishForumPost` accrues per-pokemon XP into `thread.pendingXp` for non-admin/onClose
+  threads (admin/staff threads apply immediately, gated by `createdByAdmin`); the close
+  review page `ThreadRewards.tsx` seeds an editable per-pokemon table from `pendingXp`;
+  `finalizeThreadRewards` commits the edited `pokemonXp` to `owned_pokemons`, gated by
+  `GiveItems`/`ReviewRewards`.
 - **Discord notify endpoint** (2026-07). DONE. `src/Discord/NewPost.tsx` was dead code and
   the only reference to the public `VITE_BACKEND_DISCORD_BOT`; both are removed (and the
   now-unused `axios` dep). Thread-creation Discord notifications already run server-side
