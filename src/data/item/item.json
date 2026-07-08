@@ -5908,5 +5908,53 @@
     "Name": "speed",
     "Group": "mint",
     "Filename": "mint/speed.png"
+  },
+  "986": {
+    "Item ID": "item_15856",
+    "Name": "link-cable",
+    "Group": "evo-item",
+    "Filename": "evo-item/link-cable.png"
+  },
+  "987": {
+    "Item ID": "item_15857",
+    "Name": "metal-alloy",
+    "Group": "evo-item",
+    "Filename": "evo-item/metal-alloy.png"
+  },
+  "988": {
+    "Item ID": "item_15858",
+    "Name": "syrupy-apple",
+    "Group": "evo-item",
+    "Filename": "evo-item/syrupy-apple.png"
+  },
+  "989": {
+    "Item ID": "item_15859",
+    "Name": "unremarkable-teacup",
+    "Group": "evo-item",
+    "Filename": "evo-item/unremarkable-teacup.png"
+  },
+  "990": {
+    "Item ID": "item_15860",
+    "Name": "auspicious-armor",
+    "Group": "evo-item",
+    "Filename": "evo-item/auspicious-armor.png"
+  },
+  "991": {
+    "Item ID": "item_15861",
+    "Name": "malicious-armor",
+    "Group": "evo-item",
+    "Filename": "evo-item/malicious-armor.png"
+  },
+  "992": {
+    "Item ID": "item_15862",
+    "Name": "elemental-gem",
+    "Group": "gem",
+    "Filename": "gem/elemental-gem.png"
+  },
+  "993": {
+    "Item ID": "item_15863",
+    "Name": "mystery-pebble",
+    "Group": "other-item",
+    "Filename": "other-item/mystery-pebble.png"
   }
 }

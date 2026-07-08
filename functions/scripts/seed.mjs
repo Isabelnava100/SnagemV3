@@ -289,6 +289,7 @@ const shops = {
           named("Syrupy Apple", 25, "A peculiar, syrupy apple that evolves Dipplin."),
           named("Metal Alloy", 25, "A peculiar metal of many layers that evolves certain Pokemon."),
           named("Unremarkable Teacup", 25, "A cracked teacup that evolves Poltchageist into Sinistcha."),
+          named("Link Cable", 25, "A cable that links two Pokemon's feelings. Evolves the former trade evolutions Kadabra, Machoke, Graveler, and Haunter."),
         ],
       },
       {
@@ -607,6 +608,35 @@ const research_config = {
     fossil("jaw", "tyrunt"),
     fossil("sail", "amaura"),
   ]),
+  // Canon reference maps. PURE DATA, no consumer yet: nothing in the app reads
+  // these today (Mega/Z access is gated by capstone unlock flags, not a species
+  // lock). Seeded so a future "which species can use this stone/crystal"
+  // reference UI has the data ready. Keyed by the stone/crystal display name.
+  megaStoneSpecies: {
+    Abomasite: "abomasnow", Absolite: "absol", Aerodactylite: "aerodactyl", Aggronite: "aggron",
+    Alakazite: "alakazam", Altarianite: "altaria", Ampharosite: "ampharos", Audinite: "audino",
+    Banettite: "banette", Beedrillite: "beedrill", Blastoisinite: "blastoise", Blazikenite: "blaziken",
+    Cameruptite: "camerupt", "Charizardite X": "charizard", "Charizardite Y": "charizard",
+    Diancite: "diancie", Galladite: "gallade", Garchompite: "garchomp", Gardevoirite: "gardevoir",
+    Gengarite: "gengar", Glalitite: "glalie", Gyaradosite: "gyarados", Heracronite: "heracross",
+    Houndoominite: "houndoom", Kangaskhanite: "kangaskhan", Latiasite: "latias", Latiosite: "latios",
+    Lopunnite: "lopunny", Lucarionite: "lucario", Manectite: "manectric", Mawilite: "mawile",
+    Medichamite: "medicham", Metagrossite: "metagross", Pidgeotite: "pidgeot", Pinsirite: "pinsir",
+    Sablenite: "sableye", Salamencite: "salamence", Sceptilite: "sceptile", Scizorite: "scizor",
+    Sharpedonite: "sharpedo", Slowbronite: "slowbro", Steelixite: "steelix", Swampertite: "swampert",
+    Tyranitarite: "tyranitar", Venusaurite: "venusaur",
+  },
+  // Only the species-LOCKED Z-Crystals (the 18 type crystals in Z_NAME are not
+  // species-specific). "Tapunium Z" is shared by all four Tapus; tapu-koko listed
+  // as the representative.
+  zCrystalSpecies: {
+    "Aloraichium Z": "raichu-alola", "Decidium Z": "decidueye", "Eevium Z": "eevee",
+    "Incinium Z": "incineroar", "Kommonium Z": "kommo-o", "Lycanium Z": "lycanroc",
+    "Marshadium Z": "marshadow", "Mewnium Z": "mew", "Mimikium Z": "mimikyu",
+    "Pikanium Z": "pikachu", "Pikashunium Z": "pikachu", "Primarium Z": "primarina",
+    "Snorlium Z": "snorlax", "Solganium Z": "solgaleo", "Lunalium Z": "lunala",
+    "Ultranecrozium Z": "necrozma", "Tapunium Z": "tapu-koko",
+  },
 };
 
 // --------------------------------------------------------------------------

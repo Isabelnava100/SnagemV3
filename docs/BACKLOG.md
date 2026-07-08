@@ -16,7 +16,10 @@ July 2026 build-out are marked (2026-07).
   still render). Known: Scents (Joy/Excite/Vivid), Shadow Vaccine, Mega Stones,
   Z-Crystals, Sparkling/Key Stone, Mystery Pebble, Mystery Sack, Snag Emblem/Pieces,
   Destiny Stone, Pokeblocks, some Snag Machine upgrades, fossils, apricorns. Fix: add
-  sprites + catalog rows, or map these ids to existing art.
+  sprites + catalog rows, or map these ids to existing art. UPDATE (2026-07): the 6 evolution
+  items (Link Cable, Metal Alloy, Syrupy Apple, Unremarkable Teacup, Auspicious/Malicious
+  Armor), Elemental Gem, and Mystery Pebble now HAVE catalog rows (item_15856-15863) with
+  `evo-item/`, `gem/`, `other-item/` sprite paths; the PNG files still need adding.
 - **Gym badge art** (2026-07). Challenges "Badges Earned" uses letter chips, not real
   badge images. Options logged: SteGriff vector badges (jsDelivr) or vendor pixel PNGs
   into `public/badges/`. Plumbing not added yet.
@@ -51,10 +54,12 @@ July 2026 build-out are marked (2026-07).
     CAVEAT: reseeding merges, so the stale synthetic `valuable-*` keys will linger in the
     deployed `admin/research_config` doc alongside the correct ones (harmless, never match a
     real fossil); delete them in the console if you want the doc clean.
-  - **Mega Stone <-> species / Z-Crystal <-> species maps** NOT ADDED (2026-07). These are
-    public canon and safe to author, but nothing in the app reads a species-lock table (the
-    Research page only gates Mega/Z as capstone unlock flags). Seeding them now would be dead
-    data. Add together with a consumer (e.g. a "which species can use this stone" reference UI).
+  - **Mega Stone <-> species / Z-Crystal <-> species maps** ADDED as pure data (2026-07).
+    `research_config.megaStoneSpecies` (45 stones incl. Charizardite X/Y -> charizard) and
+    `research_config.zCrystalSpecies` (17 species-locked crystals; the 18 type crystals in
+    `Z_NAME` are not species-specific) are now seeded in `seed.mjs`. NOTE: still NO CONSUMER,
+    nothing reads them yet (Mega/Z access is gated by capstone unlock flags). They are reference
+    data ready for a future "which species can use this stone/crystal" UI.
   - **Channeler per-type skill trees + cooldowns** still GENUINELY MISSING: not canon, custom
     guild content that needs the Gaia sub-posts (logged in) or fresh authoring. See
     `docs/RESEARCH_DATA.md`.
@@ -62,12 +67,14 @@ July 2026 build-out are marked (2026-07).
   entries with a full 6-slug champion `team` roster (`seed.mjs` hall_of_fame), and the
   Colosseum `ChampionCard` renders it. The earlier "winners only" note was stale.
 - **E.V.O.** has no fixed move catalog (priced case-by-case by admins).
-- **Recipe ingredients: two unobtainable** (2026-07). The 7 Apricorn name mismatches are
-  fixed (the `apricorn` group now titles as "X Apricorn"), and `SEED_CHECK=1 node
-  scripts/seed.mjs` validates ingredient ids offline. Two ingredients still resolve to no
-  catalog item and are craftable/obtainable nowhere: **Elemental Gem** (needed by every
-  Mega Stone and Z-Crystal recipe) and **Mystery Pebble** (for the Mystery Sack). Both
-  need a real item source or a mapping to existing items before those crafts can succeed.
+- **Recipe ingredients: two unobtainable** RESOLVED / 1 source flagged (2026-07). Both now
+  have catalog rows and `SEED_CHECK=1 node scripts/seed.mjs` reports "All recipe ingredients
+  are obtainable." **Elemental Gem** DONE: catalog row added (`gem`, item_15862) and it was
+  already sold in the "Held Items" shop (2 SC), so the Mega Stone / Z-Crystal recipes can now
+  resolve + be crafted. **Mystery Pebble**: catalog row added (`other-item`, item_15863) so the
+  Mystery Sack recipe resolves, BUT it has NO source (guild-custom item, not canon; sold/dropped
+  nowhere). SOURCE IS AN OWNER DECISION: pick a home (shop price, mission reward, or a drop) so
+  players can obtain it and craft the Mystery Sack. Sprites still needed for both (blank icon).
 
 ## Unbuilt features
 
@@ -102,18 +109,18 @@ July 2026 build-out are marked (2026-07).
 
 ## Backend / integrity
 
-- **Currency stored as strings** CODE DONE, live apply GATED (2026-07). All server writes now
-  emit NUMBERS: `addCurrencyString` was renamed to `addCurrency` and returns a number (still
-  tolerates a legacy string on read), and the ~7 direct `String(have - x)` writes + the
-  `Record<string,string>` accumulators in `functions/src/index.ts` were made numeric. Client
-  made tolerant: `Currencies` typed as numbers, `CurrencyChip` uses `String(amount).padStart`
-  (the one hard crash site), Casino `num()` accepts number|string. Migration script:
-  `functions/scripts/migrate-currency-to-numbers.mjs` (dry-run default; --backup; --apply auto-
-  backs-up then verifies per-field sums are unchanged; --restore rolls back). Dry-run on prod:
-  only 2 currency docs, no unparseable values (pokecoin sum 12, gengarcoin 1, snagemblem 1).
-  NOT YET APPLIED: applying flips stored values to numbers, which crashes the DEPLOYED client's
-  `padStart` until Netlify redeploys the tolerant build. Deploy order: ship client + functions,
-  THEN `node scripts/migrate-currency-to-numbers.mjs --apply`.
+- **Currency stored as strings** DONE, APPLIED + DEPLOYED (2026-07). All server writes emit
+  NUMBERS: `addCurrencyString` renamed to `addCurrency` (returns a number, still tolerates a
+  legacy string on read); the ~7 direct `String(have - x)` writes + `Record<string,string>`
+  accumulators in `functions/src/index.ts` made numeric. Client tolerant: `Currencies` typed
+  numeric, `CurrencyChip` uses `String(amount).padStart`, Casino `num()` accepts number|string.
+  Migration `functions/scripts/migrate-currency-to-numbers.mjs` (dry-run/--backup/--apply/
+  --restore, sum-invariant verify) was RUN with `--apply` against `snagemguild`: 2 docs, 3 string
+  fields converted to numbers, VERIFY OK (per-field sums unchanged: pokecoin 12, gengarcoin 1,
+  snagemblem 1); backup saved under `functions/scripts/backups/` (gitignored). Functions DEPLOYED
+  (`firebase deploy --only functions`, 48/48 successful) and the client code was committed +
+  pushed to `main` (Netlify build) so the padStart-tolerant build ships. Chain now consistent:
+  data numeric, functions write numbers, client reads tolerantly.
 - **Recycle rules** (2026-07). DONE. `recycleItems` enforces medicine exclusion,
   consumable-half (RECYCLE_* sets), and the 1-coin-item exclusion (a cached itemId ->
   lowest-shop-price index built from the shops collection; price === 1 items are refused).
@@ -149,8 +156,13 @@ July 2026 build-out are marked (2026-07).
 
 ## Pre-existing deferred (from CLAUDE.md)
 
-- **Forum middle-page reads** from top of collection; switch `getPostsPage` to
-  `startAfter()` cursors (`src/Pages/forum/queries.ts`).
+- **Forum middle-page reads** DONE (2026-07). `getPostsPage` no longer reads
+  `safePage * perPage` docs from the top for a cold middle-page jump. It now starts from the
+  nearest cached page boundary at or before `safePage-1` and walks forward one page at a time
+  (`startAfter` + `limit(perPage)`), caching every intermediate boundary so later jumps are
+  cheap and it never holds more than one page of docs in memory. The reverse-tail last-page
+  path is unchanged. Verified against a real 33-post thread (7 pages): cold middle-jump,
+  sequential 1..7 (concat == full 33, no gaps/dupes), and cold last-page all correct.
 - **Thread list filters** DONE (2026-07). `getThreadList(forum, archive)` now filters the
   archive state SERVER-SIDE via `where("closed","==",archive)` + `orderBy("timePosted","desc")`,
   backed by the deployed composite index (threads: closed ASC, timePosted DESC). It falls back
@@ -178,9 +190,11 @@ July 2026 build-out are marked (2026-07).
   and `assignPokemonCharacter` (owned-pokemon character assignment). Members can no longer
   self-edit coins, item quantities, experience, species, or shiny state. `bag/items`
   still allows GiveItems/Admin writes for the Donate grant tool.
-- **Six evolution items have no catalog row** (2026-07). Link Cable (gates most trade
-  evolutions: Alakazam, Machamp, Golem, Gengar), Metal Alloy, Syrupy Apple, Unremarkable
-  Teacup, Auspicious Armor, Malicious Armor. Those evolutions are already blocked in the
-  UI (the item is unobtainable), and the server matches. Add catalog rows + a source to
-  enable them. Same class as the missing recipe items.
+- **Six evolution items have no catalog row** DONE (2026-07). Added `evo-item` catalog rows
+  (`src/data/item/item.json`, ids item_15856-15861) for Link Cable, Metal Alloy, Syrupy Apple,
+  Unremarkable Teacup, Auspicious Armor, Malicious Armor, so they resolve to real ids (were
+  synthetic) and `evolvePokemon` matches them by name. SOURCE: 5 were already sold in the
+  "Evolutionary Items" shop section at 25 SC; Link Cable was the only one missing and is now
+  added there at the same 25. No design decision needed (matches the existing evo-item economy).
+  Remaining: sprite PNGs for the 6 (blank icon until added, see Custom item sprites).
 - **`bun audit`** clean as of 2026-07 (no vulnerabilities). Re-audit after major bumps.

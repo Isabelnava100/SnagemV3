@@ -97,27 +97,34 @@ export const getPostsPage = async (
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as ForumPost).reverse();
   }
 
-  // If we hold the previous page's boundary cursor, start right after it and
-  // read a single page. Otherwise (a cold jump straight to a middle page) fall
-  // back to reading from the top, but still record the cursor for next time.
-  const prevCursor =
-    safePage > 1 ? pageCursors.get(cursorKey(forum, threadId, safePage - 1)) : undefined;
-
-  let docs;
-  if (safePage === 1 || prevCursor) {
-    const q = prevCursor
-      ? query(colRef, orderBy("timePosted", "asc"), startAfter(prevCursor), limit(perPage))
-      : query(colRef, orderBy("timePosted", "asc"), limit(perPage));
-    docs = (await getDocs(q)).docs;
-  } else {
-    const snapshot = await getDocs(
-      query(colRef, orderBy("timePosted", "asc"), limit(safePage * perPage))
-    );
-    docs = snapshot.docs.slice((safePage - 1) * perPage);
+  // Forward path via cursors: start from the nearest cached page boundary at or
+  // before safePage-1, then walk forward one page at a time with
+  // startAfter + limit(perPage), caching each boundary as we go. Only when no
+  // earlier cursor is cached (a cold jump to a middle page) do we walk from the
+  // top, and even then we read a single page at a time (not safePage*perPage at
+  // once) and populate every intermediate cursor so later jumps are cheap.
+  let startPage = 1;
+  let cursor: QueryDocumentSnapshot | undefined;
+  for (let p = safePage - 1; p >= 1; p--) {
+    const cached = pageCursors.get(cursorKey(forum, threadId, p));
+    if (cached) {
+      cursor = cached;
+      startPage = p + 1;
+      break;
+    }
   }
 
-  // Record this page's last doc so the following page can start after it.
-  if (docs.length) pageCursors.set(cursorKey(forum, threadId, safePage), docs[docs.length - 1]);
+  let docs: QueryDocumentSnapshot[] = [];
+  for (let p = startPage; p <= safePage; p++) {
+    const q = cursor
+      ? query(colRef, orderBy("timePosted", "asc"), startAfter(cursor), limit(perPage))
+      : query(colRef, orderBy("timePosted", "asc"), limit(perPage));
+    docs = (await getDocs(q)).docs;
+    if (!docs.length) break; // ran past the end
+    cursor = docs[docs.length - 1];
+    pageCursors.set(cursorKey(forum, threadId, p), cursor);
+  }
+
   return docs.map((d) => ({ id: d.id, ...d.data() }) as ForumPost);
 };
 
