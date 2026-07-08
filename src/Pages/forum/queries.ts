@@ -9,19 +9,38 @@ function threadsPath(forum: string) {
 }
 
 /**
- * One page-sized fetch of the newest threads for a category (both open and
- * archived; the archive toggle filters client-side so it flips instantly).
- * Server-side thread pagination stays deferred until a composite index exists
- * (see CLAUDE.md known deferred work).
+ * One page-sized fetch of the newest threads for a category, filtered to the
+ * requested archive state SERVER-SIDE via `where("closed", "==", archive)` +
+ * `orderBy("timePosted")`. This needs the composite index (closed ASC,
+ * timePosted DESC) in firestore.indexes.json. If that index is not built yet
+ * (or the query is otherwise rejected) it falls back to fetching the page and
+ * filtering `closed` client-side, so the list never breaks during rollout.
+ *
+ * Note: `pinned` is a sparse field (many threads lack it), so it is NOT part of
+ * the server orderBy; pinned threads are floated to the top client-side within
+ * the fetched page.
  */
-export const getThreadList = async (forum: string): Promise<ForumThread[]> => {
-  const { collection, getDocs, limit, orderBy, query } = await import("firebase/firestore");
+export const getThreadList = async (
+  forum: string,
+  archive = false
+): Promise<ForumThread[]> => {
+  const { collection, getDocs, limit, orderBy, query, where } = await import("firebase/firestore");
   const colRef = collection(db, ...threadsPath(forum));
-  const snapshot = await getDocs(query(colRef, orderBy("timePosted", "desc"), limit(200)));
+  let snapshot;
+  try {
+    snapshot = await getDocs(
+      query(colRef, where("closed", "==", archive), orderBy("timePosted", "desc"), limit(200))
+    );
+  } catch {
+    snapshot = await getDocs(query(colRef, orderBy("timePosted", "desc"), limit(200)));
+  }
   const threads: ForumThread[] = [];
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
     if (Object.keys(data).length === 0) return;
+    // Enforce the archive state in both paths (redundant for the indexed query,
+    // required for the fallback query which fetches every state).
+    if (!!(data as ForumThread).closed !== archive) return;
     threads.push({ id: docSnap.id, ...data } as ForumThread);
   });
   // Pinned threads always sit above the normal latest-activity ordering.

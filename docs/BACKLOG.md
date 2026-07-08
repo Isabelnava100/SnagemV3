@@ -35,11 +35,32 @@ July 2026 build-out are marked (2026-07).
   objective detail or SOS specifics.
 - **K&L loot tables are a subset** (2026-07). Each biome has ~5 range entries covering
   1-120, not the full ~30-row forum tables. Consumable-half payout and exclusions are
-  not modeled. Full tables were captured in research and can be ported.
-- **Research canon tables incomplete** (2026-07). Channeler per-type skill trees +
-  cooldowns, full Mega Stone <-> species map, full Z-Crystal <-> type/species map, and
-  the complete fossil <-> Pokemon map are partial. See `docs/RESEARCH_DATA.md`.
-- **Hall of Fame** seeds winners only, no champion team rosters.
+  not modeled. NOTE (corrected 2026-07): the full ~30-row tables are NOT in the repo. The
+  earlier "captured in research and can be ported" claim points to an external research
+  session, not a file here. Porting requires re-fetching the biome tables from the forum
+  (logged in) or recovering those notes; there is nothing in-repo to port from.
+- **Research canon tables incomplete** (2026-07). Partial breakdown:
+  - **Fossil <-> Pokemon map** DONE + BUG FIX (2026-07). `fossilMap` now covers the full
+    canon revivable set (11: Old Amber/Helix/Dome/Root/Claw/Skull/Armor/Cover/Plume/Jaw/Sail
+    -> Aerodactyl/Omanyte/Kabuto/Lileep/Anorith/Cranidos/Shieldon/Tirtouga/Archen/Tyrunt/Amaura).
+    It ALSO fixes a latent bug: the old entries resolved via `item("valuable", "helix-fossil")`,
+    which matched no catalog row and produced synthetic keys (`valuable-helix-fossil`) that
+    never matched a real bag fossil's Item ID (`item_01xx`), so `reviveFossil` and the Research
+    chamber silently failed for every fossil. Keys are now the real `fossil/<sprite>` catalog
+    Item IDs. bird/dino/drake/fish sprites have no canon revived species and are left unmapped.
+    CAVEAT: reseeding merges, so the stale synthetic `valuable-*` keys will linger in the
+    deployed `admin/research_config` doc alongside the correct ones (harmless, never match a
+    real fossil); delete them in the console if you want the doc clean.
+  - **Mega Stone <-> species / Z-Crystal <-> species maps** NOT ADDED (2026-07). These are
+    public canon and safe to author, but nothing in the app reads a species-lock table (the
+    Research page only gates Mega/Z as capstone unlock flags). Seeding them now would be dead
+    data. Add together with a consumer (e.g. a "which species can use this stone" reference UI).
+  - **Channeler per-type skill trees + cooldowns** still GENUINELY MISSING: not canon, custom
+    guild content that needs the Gaia sub-posts (logged in) or fresh authoring. See
+    `docs/RESEARCH_DATA.md`.
+- **Hall of Fame** DONE (verified 2026-07). `hall_of_fame` already seeds each of the 4
+  entries with a full 6-slug champion `team` roster (`seed.mjs` hall_of_fame), and the
+  Colosseum `ChampionCard` renders it. The earlier "winners only" note was stale.
 - **E.V.O.** has no fixed move catalog (priced case-by-case by admins).
 - **Recipe ingredients: two unobtainable** (2026-07). The 7 Apricorn name mismatches are
   fixed (the `apricorn` group now titles as "X Apricorn"), and `SEED_CHECK=1 node
@@ -61,17 +82,38 @@ July 2026 build-out are marked (2026-07).
   `drawLotto` splits the jackpot among matching tickets and there is a grader/admin "Draw
   winner" button on the Casino Shadow Lotto card. A weekly cron is intentionally NOT used
   (owner's call). Add an `onSchedule` job later if an automatic weekly draw is wanted.
-- **Tournament bracket management** (2026-07). `tournaments` display sign-ups/prizes;
-  bracket + standings are manual/admin, no UI.
+- **Tournament bracket management** (2026-07). Bracket DISPLAY is now built: the
+  `Tournament` type carries an optional `bracket: BracketRound[]` (`src/queries/colosseum.ts`),
+  and `BracketCard` renders it read-only (rounds as columns, winner highlighted, mobile
+  horizontal-scroll) inside the featured tournament (`src/Pages/Colosseum/index.tsx`).
+  Verified rendering with an injected sample. STILL DEFERRED: an in-app bracket EDITOR.
+  Authoring the `bracket`/standings fields is admin-only and needs a Firestore write rule
+  on `tournaments/{id}` (console) before a client editor can be shipped; today the field is
+  populated via seed/console.
 - **Dedicated mission detail design** (2026-07). `/Missions/:id` is a functional page;
   a bespoke design from the owner is still pending.
-- **Colosseum battle-report entry** (2026-07). Rankings adjust via a simple UID+points
-  form in Admin > Grading; no per-battle scoring UI.
+- **Colosseum battle-report entry** DONE (2026-07). Admin > Grading now has a `BattleReportForm`
+  (`src/Pages/User/Dashboard/Admin/Grading.tsx`) that itemizes a reported battle (Pokemon
+  defeated/survived, win, champion, upset rank gap, tournament win), computes the point total
+  from the documented scoring scheme, and awards it through the existing secured
+  `awardRankingPoints` callable (no new collection/write path). The plain UID+points form is
+  kept above it for manual adjustments. Wins/losses/streak still adjust manually. Visual QA
+  pending a logged-in staff pass.
 
 ## Backend / integrity
 
-- **Currency stored as strings** (2026-07). `bag/currency` values are strings; spend
-  math uses parseInt server-side. Migrate to numbers before heavier economy math.
+- **Currency stored as strings** CODE DONE, live apply GATED (2026-07). All server writes now
+  emit NUMBERS: `addCurrencyString` was renamed to `addCurrency` and returns a number (still
+  tolerates a legacy string on read), and the ~7 direct `String(have - x)` writes + the
+  `Record<string,string>` accumulators in `functions/src/index.ts` were made numeric. Client
+  made tolerant: `Currencies` typed as numbers, `CurrencyChip` uses `String(amount).padStart`
+  (the one hard crash site), Casino `num()` accepts number|string. Migration script:
+  `functions/scripts/migrate-currency-to-numbers.mjs` (dry-run default; --backup; --apply auto-
+  backs-up then verifies per-field sums are unchanged; --restore rolls back). Dry-run on prod:
+  only 2 currency docs, no unparseable values (pokecoin sum 12, gengarcoin 1, snagemblem 1).
+  NOT YET APPLIED: applying flips stored values to numbers, which crashes the DEPLOYED client's
+  `padStart` until Netlify redeploys the tolerant build. Deploy order: ship client + functions,
+  THEN `node scripts/migrate-currency-to-numbers.mjs --apply`.
 - **Recycle rules** (2026-07). DONE. `recycleItems` enforces medicine exclusion,
   consumable-half (RECYCLE_* sets), and the 1-coin-item exclusion (a cached itemId ->
   lowest-shop-price index built from the shops collection; price === 1 items are refused).
@@ -80,28 +122,42 @@ July 2026 build-out are marked (2026-07).
 - **Candy -> Scent conversion** (2026-07). DONE. `convertCandyToScent` spends a Pokemon's
   Evo Points (experience) for Joy/Excite/Vivid Scents (4/6/8 each) with a UI in the Trash
   Shack. Scents have no catalog sprite yet, so they show a blank icon (see custom sprites).
-- **Members post-count index** (2026-07). The directory + profile post/thread counts use
-  a `collectionGroup` aggregation needing a composite index; until created they show
-  "-". Firebase logs a one-click create link on first run.
+- **Members post-count index** DONE (2026-07). The `collectionGroup` field indexes the
+  directory + profile counts need are now tracked in `firestore.indexes.json` (COLLECTION_GROUP
+  scope on `posts.ownerUid`, `threads.hostUid`, `threads.ownerUid`) and DEPLOYED to
+  `snagemguild` via `firebase deploy --only firestore:indexes`. Counts populate once the indexes
+  finish building (they may briefly still show "-" until then).
 - **Public profiles are world-public** (2026-07). Logged-out visitors can view profiles.
   The users doc stays members-only (it holds email + discordUID); its world-safe display
   fields (username, avatar, badges, role, signature, emojis) are mirrored into
   `publicProfiles/{uid}` by the `syncPublicProfile` trigger, and the bag profile subset
   (profile/characters/teams/owned_pokemons) is world-readable. Discord is fetched
   separately from the members-only users doc and shown only to signed-in viewers (per the
-  member's `discordPublic` opt-in), so it never reaches the world. TODO after deploy: run
-  the `backfillPublicProfiles` callable once to populate existing members (new writes sync
-  automatically). Forum activity counts still need sign-in, so they show "-" logged-out.
-- **Function CPU cap** (2026-07). All functions run at cpu 0.25 / maxInstances 1 to fit
-  the project's non-raiseable 20,000 milli vCPU regional quota. If traffic grows or the
-  quota is raised (Sales), bump these in `functions/src/index.ts` setGlobalOptions.
+  member's `discordPublic` opt-in), so it never reaches the world. BACKFILL DONE (2026-07):
+  `node functions/scripts/backfill-public-profiles.mjs` was run against `snagemguild` and
+  populated 6 public profiles (the full roster); new writes sync automatically via the trigger.
+  Forum activity counts still need sign-in, so they show "-" logged-out.
+- **Function CPU cap** REVIEWED, no safe global bump (2026-07). All functions run at cpu 0.25 /
+  maxInstances 1 via `setGlobalOptions`. There are now 48 exported functions: 48 x 0.25 x 1 =
+  12,000 milli vCPU of the non-raiseable 20,000m regional quota (8,000m headroom). Any GLOBAL
+  bump exceeds the cap: cpu 0.5 -> 24,000m, or maxInstances 2 -> 24,000m, both over. So the
+  global setting was left unchanged. The only in-limit option is TARGETED per-function
+  `maxInstances: 2` (+250m each) on genuinely hot callables (e.g. `buyShopItem`,
+  `publishForumPost`, `playCasinoGame`), up to ~32 extra instance-slots before the cap. Not
+  applied: no traffic data to pick hot paths, and deploy can't be validated here. Revisit with
+  Cloud Run metrics, or if the quota is raised (Sales).
 
 ## Pre-existing deferred (from CLAUDE.md)
 
 - **Forum middle-page reads** from top of collection; switch `getPostsPage` to
   `startAfter()` cursors (`src/Pages/forum/queries.ts`).
-- **Thread list filters** `closed`/pinned client-side after `limit(200)`; move to
-  `where`/`orderBy` (needs a composite index).
+- **Thread list filters** DONE (2026-07). `getThreadList(forum, archive)` now filters the
+  archive state SERVER-SIDE via `where("closed","==",archive)` + `orderBy("timePosted","desc")`,
+  backed by the deployed composite index (threads: closed ASC, timePosted DESC). It falls back
+  to the old fetch-all + client-filter if the index is not built yet, so it never breaks during
+  rollout. `pinned` stays a client-side float (verified on prod: all 15 threads have `closed`,
+  none have `pinned`, so pinned cannot be part of the server orderBy without dropping rows).
+  `ForumIndex` keys the query by archive so open/archived cache separately.
 - **Deferred XP for non-admin threads** DONE (verified 2026-07). Already wired end to end:
   `publishForumPost` accrues per-pokemon XP into `thread.pendingXp` for non-admin/onClose
   threads (admin/staff threads apply immediately, gated by `createdByAdmin`); the close
@@ -128,8 +184,3 @@ July 2026 build-out are marked (2026-07).
   UI (the item is unobtainable), and the server matches. Add catalog rows + a source to
   enable them. Same class as the missing recipe items.
 - **`bun audit`** clean as of 2026-07 (no vulnerabilities). Re-audit after major bumps.
-
-## QA
-
-- **Logged-in visual QA pass** across all the new auth-gated pages (dashboard/editor/
-  admin + the 2026-07 systems). Preview verification so far was logged-out empty states.

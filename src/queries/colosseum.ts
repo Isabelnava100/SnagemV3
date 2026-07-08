@@ -32,6 +32,24 @@ export interface HallOfFameEntry {
   order?: number;
 }
 
+/** One head-to-head slot in a bracket round. Empty slots read as "TBD". */
+export interface BracketMatch {
+  /** Entrant in the top slot (member/team name). */
+  a?: string;
+  /** Entrant in the bottom slot. */
+  b?: string;
+  scoreA?: number;
+  scoreB?: number;
+  /** Which slot advanced, once the match is decided. */
+  winner?: "a" | "b";
+}
+
+/** A named round of the bracket, e.g. "Quarterfinals". */
+export interface BracketRound {
+  name: string;
+  matches: BracketMatch[];
+}
+
 export interface Tournament {
   id: string;
   name: string;
@@ -44,6 +62,13 @@ export interface Tournament {
   /** Max entrants; the featured card shows registered / capacity. */
   capacity?: number;
   order?: number;
+  /**
+   * Ordered bracket rounds for a running/complete tournament. Authored by
+   * admins (currently via seed/console; a matching Firestore write rule is
+   * required before an in-app editor can populate it). The featured card
+   * renders it read-only when present.
+   */
+  bracket?: BracketRound[];
 }
 
 /** One member's sign-up under tournaments/{id}/signups/{uid}. */

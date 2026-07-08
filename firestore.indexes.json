@@ -1,0 +1,35 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "threads",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "closed", "order": "ASCENDING" },
+        { "fieldPath": "timePosted", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "posts",
+      "fieldPath": "ownerUid",
+      "indexes": [
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "threads",
+      "fieldPath": "hostUid",
+      "indexes": [
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "threads",
+      "fieldPath": "ownerUid",
+      "indexes": [
+        { "queryScope": "COLLECTION_GROUP", "order": "ASCENDING" }
+      ]
+    }
+  ]
+}

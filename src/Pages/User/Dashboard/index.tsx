@@ -262,8 +262,9 @@ function NotificationBell() {
  * The label is clamped to one line (it gets cut off on narrow phones), so the
  * whole chip is tappable and opens a popover with the full name + amount.
  */
-function CurrencyChip(props: { amount: string; name: string; color: string; icon: string }) {
-  const amount = props.amount.padStart(3, "0");
+function CurrencyChip(props: { amount: number | string; name: string; color: string; icon: string }) {
+  // Tolerate both number (migrated) and string (legacy) currency values.
+  const amount = String(props.amount ?? 0).padStart(3, "0");
   return (
     <Popover position="bottom" withArrow shadow="md" width={180}>
       <Popover.Target>

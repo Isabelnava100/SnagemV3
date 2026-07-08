@@ -580,18 +580,32 @@ const kl = {
 // --------------------------------------------------------------------------
 // Research config
 // --------------------------------------------------------------------------
-const fossil = (name, slug) => [item("valuable", name).itemId, slug];
+// fossilItemId -> revived pokemon slug. The KEY must be the real catalog Item ID
+// (group "fossil"), because that is the id a member's bag fossil actually carries
+// and what reviveFossil (functions/src/index.ts) and the Research chamber filter
+// look up. NOTE: this previously resolved via item("valuable", ...) with names like
+// "helix-fossil", which matched no catalog row and produced synthetic keys
+// ("valuable-helix-fossil") that never matched a real fossil, so revival silently
+// failed for everyone. Now keyed by the correct "fossil/<sprite>" catalog ids.
+const fossil = (spriteName, slug) => [item("fossil", spriteName).itemId, slug];
 const research_config = {
   fossilCost: 5,
   masterMissionsPerType: 10,
   channelerTypes: ["Fairy", "Ghost", "Psychic", "Water", "Ground", "Flying", "Poison", "Dark"],
+  // Full canon revivable-fossil set. bird/dino/drake/fish catalog sprites have no
+  // canonical revived species, so they are intentionally left unmapped.
   fossilMap: Object.fromEntries([
     fossil("old-amber", "aerodactyl"),
-    fossil("helix-fossil", "omanyte"),
-    fossil("dome-fossil", "kabuto"),
-    fossil("sail-fossil", "amaura"),
-    fossil("skull-fossil", "cranidos"),
-    fossil("root-fossil", "lileep"),
+    fossil("helix", "omanyte"),
+    fossil("dome", "kabuto"),
+    fossil("root", "lileep"),
+    fossil("claw", "anorith"),
+    fossil("skull", "cranidos"),
+    fossil("armor", "shieldon"),
+    fossil("cover", "tirtouga"),
+    fossil("plume", "archen"),
+    fossil("jaw", "tyrunt"),
+    fossil("sail", "amaura"),
   ]),
 };
 

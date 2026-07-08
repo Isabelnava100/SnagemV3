@@ -276,10 +276,15 @@ async function mentionedUids(html: string, excludeUid: string): Promise<string[]
   return uids;
 }
 
-/** Currency values are stored as STRINGS (legacy): parse, add, restringify. */
-function addCurrencyString(current: unknown, amount: number): string {
+/**
+ * Add to a currency value and return a NUMBER. Tolerates a legacy string value
+ * (pre-migration docs stored currency as strings) or a numeric one, so it is
+ * safe during and after the string->number migration. Always writes a number,
+ * so it never re-introduces a string. See migrate-currency-to-numbers.mjs.
+ */
+function addCurrency(current: unknown, amount: number): number {
   const parsed = parseInt(String(current ?? "0"), 10);
-  return String((Number.isFinite(parsed) ? parsed : 0) + amount);
+  return (Number.isFinite(parsed) ? parsed : 0) + amount;
 }
 
 const CURRENCY_KEYS = ["pokecoin", "gengarcoin", "snagemblem"] as const;
@@ -1022,11 +1027,11 @@ export const finalizeThreadRewards = onCall(async (request) => {
       const read = currencyReads.find((r) => r?.targetUid === targetUid);
       if (read) {
         const current = read.snap.data() ?? {};
-        const update: Record<string, string> = {};
+        const update: Record<string, number> = {};
         CURRENCY_KEYS.forEach((key) => {
           const amount = Math.trunc(entry.currencies?.[key] ?? 0);
           if (amount > 0) {
-            update[key] = addCurrencyString(current[key], amount);
+            update[key] = addCurrency(current[key], amount);
             received = true;
           }
         });
@@ -1097,7 +1102,7 @@ export const grantCurrency = onCall(async (request) => {
     snaps.forEach((snap: DocumentSnapshot, i: number) => {
       tx.set(
         refs[i],
-        { [currency]: addCurrencyString(snap.data()?.[currency], amount) },
+        { [currency]: addCurrency(snap.data()?.[currency], amount) },
         { merge: true }
       );
     });
@@ -1391,7 +1396,7 @@ export const openMysteryBox = onCall(async (request) => {
       if (!CURRENCY_KEYS.includes(key)) throw new HttpsError("internal", "Bad box config.");
       tx.set(
         currencyRef,
-        { [key]: addCurrencyString(currencySnap.data()?.[key], picked.qty) },
+        { [key]: addCurrency(currencySnap.data()?.[key], picked.qty) },
         { merge: true }
       );
     } else {
@@ -1580,10 +1585,10 @@ export const approveImport = onCall(async (request) => {
     const prev = currencySnap.data() ?? {};
 
     // Currency
-    const currencyUpdate: Record<string, string> = {};
+    const currencyUpdate: Record<string, number> = {};
     CURRENCY_KEYS.forEach((key) => {
       const amount = clampInt((currency as Record<string, unknown>)[key], 0, 100_000_000);
-      if (amount > 0) currencyUpdate[key] = addCurrencyString(prev[key], amount);
+      if (amount > 0) currencyUpdate[key] = addCurrency(prev[key], amount);
     });
     if (Object.keys(currencyUpdate).length) tx.set(currencyRef, currencyUpdate, { merge: true });
 
@@ -2157,7 +2162,7 @@ export const buyShopItem = onCall(async (request) => {
     const curSnap = await tx.get(currencyRef);
     const have = parseInt(String(curSnap.data()?.[currency] ?? "0"), 10) || 0;
     if (have < cost) throw new HttpsError("failed-precondition", "You do not have enough currency.");
-    tx.set(currencyRef, { [currency]: String(have - cost) }, { merge: true });
+    tx.set(currencyRef, { [currency]: have - cost }, { merge: true });
     bagIncrement(tx, bagRef, itemId, item, qty);
   });
 
@@ -2265,7 +2270,7 @@ export const recycleItems = onCall(async (request) => {
     // Bulk-tier payout: floor(units * 1.2) keeps the 1->1, 5->6, 10->12 table
     // for ordinary items; consumables contribute half a unit each.
     const payout = Math.floor(units * 1.2);
-    tx.set(currencyRef, { pokecoin: addCurrencyString(curSnap.data()?.pokecoin, payout) }, { merge: true });
+    tx.set(currencyRef, { pokecoin: addCurrency(curSnap.data()?.pokecoin, payout) }, { merge: true });
     return { payout, removed, excluded };
   });
 
@@ -2294,7 +2299,7 @@ export const rollTour = onCall(async (request) => {
     const free = (rolls + 1) % 4 === 0; // every 4th roll is free
     const have = parseInt(String(curSnap.data()?.pokecoin ?? "0"), 10) || 0;
     if (!free && have < COST) throw new HttpsError("failed-precondition", "You need 2 Snag Coins to roll.");
-    if (!free) tx.set(currencyRef, { pokecoin: String(have - COST) }, { merge: true });
+    if (!free) tx.set(currencyRef, { pokecoin: have - COST }, { merge: true });
 
     const roll = randomInt(1, 121); // 1..120
     const entry = table.find((e) => roll >= e.min && roll <= e.max) ?? table[table.length - 1];
@@ -2352,7 +2357,7 @@ export const craftItem = onCall(async (request) => {
     );
     CURRENCY_KEYS.forEach((key) => {
       const spend = Number((cost as Record<string, number>)[key] ?? 0) * batch;
-      if (spend > 0) tx.set(currencyRef, { [key]: addCurrencyString(cur[key], -spend) }, { merge: true });
+      if (spend > 0) tx.set(currencyRef, { [key]: addCurrency(cur[key], -spend) }, { merge: true });
     });
 
     let successes = 0;
@@ -2402,7 +2407,7 @@ export const reviveFossil = onCall(async (request) => {
     if (have < fossilCost) throw new HttpsError("failed-precondition", "Not enough Snag Coins.");
 
     tx.set(bagRef, { [fossilItemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
-    tx.set(currencyRef, { pokecoin: String(have - fossilCost) }, { merge: true });
+    tx.set(currencyRef, { pokecoin: have - fossilCost }, { merge: true });
     tx.set(pokeRef, { [randomUUID()]: buildOwnedPokemon(slug, now, {}) }, { merge: true });
   });
 
@@ -2456,12 +2461,12 @@ export const gradeMission = onCall(async (request) => {
   await db.runTransaction(async (tx) => {
     const curSnap = await tx.get(currencyRef);
     const cur = curSnap.data() ?? {};
-    const update: Record<string, string> = {};
-    if (coins > 0) update.pokecoin = addCurrencyString(cur.pokecoin, coins);
+    const update: Record<string, number> = {};
+    if (coins > 0) update.pokecoin = addCurrency(cur.pokecoin, coins);
     if (awards.emblemPiece) {
       const pieces = (parseInt(String(cur.snagEmblemPieces ?? "0"), 10) || 0) + 1;
-      update.snagEmblemPieces = String(pieces);
-      if (pieces % 3 === 0) update.snagemblem = addCurrencyString(cur.snagemblem, 1);
+      update.snagEmblemPieces = pieces;
+      if (pieces % 3 === 0) update.snagemblem = addCurrency(cur.snagemblem, 1);
     }
     if (Object.keys(update).length) tx.set(currencyRef, update, { merge: true });
     tx.set(subRef, { status: "graded", gradedBy: member.username, gradedAt: new Date(), awarded: { coins, emblemPiece: !!awards.emblemPiece } }, { merge: true });
@@ -2543,7 +2548,7 @@ export const evoService = onCall(async (request) => {
     const curSnap = await tx.get(currencyRef);
     const have = parseInt(String(curSnap.data()?.[price.currency] ?? "0"), 10) || 0;
     if (have < price.amount) throw new HttpsError("failed-precondition", "You cannot afford that service.");
-    tx.set(currencyRef, { [price.currency]: String(have - price.amount) }, { merge: true });
+    tx.set(currencyRef, { [price.currency]: have - price.amount }, { merge: true });
     const field = action === "unlock_restraints" ? "slots" : action === "unlock_potential" ? "moves" : "adaptations";
     tx.set(evoRef, { [characterId]: { [field]: FieldValue.increment(1) } }, { merge: true });
   });
@@ -2895,7 +2900,7 @@ export const exchangeTokens = onCall(async (request) => {
     } else {
       throw new HttpsError("invalid-argument", "Bad direction.");
     }
-    tx.set(currencyRef, { pokecoin: String(poke), gengarcoin: String(geng) }, { merge: true });
+    tx.set(currencyRef, { pokecoin: poke, gengarcoin: geng }, { merge: true });
     return { pokecoin: poke, gengarcoin: geng };
   });
   return { ok: true, ...totals };
@@ -2940,7 +2945,7 @@ export const playCasinoGame = onCall(async (request) => {
     }
 
     geng += payout; // stake already deducted; add winnings
-    tx.set(currencyRef, { gengarcoin: String(geng) }, { merge: true });
+    tx.set(currencyRef, { gengarcoin: geng }, { merge: true });
     return { win, roll, payout, gengarcoin: geng };
   });
   return { ok: true, ...result };
@@ -2963,7 +2968,7 @@ export const buyLottoTicket = onCall(async (request) => {
     const lotto = lottoSnap.data() ?? {};
     const weekId = String(lotto.weekId ?? "current");
 
-    tx.set(currencyRef, { gengarcoin: String(geng - 1) }, { merge: true });
+    tx.set(currencyRef, { gengarcoin: geng - 1 }, { merge: true });
     tx.set(lottoRef, {
       jackpot: FieldValue.increment(1),
       ticketCount: FieldValue.increment(1),
@@ -3000,7 +3005,7 @@ export const drawLotto = onCall(async (request) => {
   for (let i = 0; i < winners.length; i++) {
     const cRef = db.doc(`users/${winners[i]}/bag/currency`);
     const cur = (await cRef.get()).data() ?? {};
-    batch.set(cRef, { gengarcoin: addCurrencyString(cur.gengarcoin, payoutFor(i)) }, { merge: true });
+    batch.set(cRef, { gengarcoin: addCurrency(cur.gengarcoin, payoutFor(i)) }, { merge: true });
   }
   // Reset the pot to the base for the next week.
   const nextWeek = String(Date.now());

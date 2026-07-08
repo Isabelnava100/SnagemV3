@@ -247,11 +247,14 @@ export interface myBookmarksInfo {
 }
 
 export interface Currencies {
-  gengarcoin: string;
-  pokecoin: string;
-  snagemblem?: string;
+  // Stored as numbers (migrated from legacy strings, see
+  // functions/scripts/migrate-currency-to-numbers.mjs). Readers should still
+  // tolerate a string in case they run against a not-yet-migrated doc.
+  gengarcoin: number;
+  pokecoin: number;
+  snagemblem?: number;
   /** Mission-bonus pieces; every 3 grant one Snag Emblem. Cumulative count. */
-  snagEmblemPieces?: string;
+  snagEmblemPieces?: number;
 }
 
 export type Item = {

@@ -33,6 +33,7 @@ import { useAuth } from "../../context/AuthContext";
 import { SectionLoader } from "../../components/navigation/loading";
 import { getPokemonImageURL } from "../../helpers";
 import {
+  BracketRound,
   getHallOfFame,
   getRankings,
   getTournaments,
@@ -881,6 +882,91 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
   );
 }
 
+/** One entrant slot inside a bracket match. Winner slot is highlighted. */
+function BracketSlot({
+  name,
+  score,
+  won,
+  decided,
+}: {
+  name?: string;
+  score?: number;
+  won: boolean;
+  decided: boolean;
+}) {
+  return (
+    <Group
+      justify="space-between"
+      wrap="nowrap"
+      px={10}
+      py={7}
+      gap={8}
+      style={{
+        background: won ? "rgba(90, 63, 176, 0.28)" : "#15131d",
+        borderLeft: `3px solid ${won ? "var(--mantine-color-grape-4)" : "transparent"}`,
+      }}
+    >
+      <Text
+        fz={12}
+        fw={won ? 700 : 500}
+        c={name ? (won || !decided ? "white" : "dimmed") : "dimmed"}
+        lineClamp={1}
+      >
+        {name || "TBD"}
+      </Text>
+      {score != null && (
+        <Text fz={12} fw={700} c={won ? "grape.3" : "dimmed"} style={{ fontVariantNumeric: "tabular-nums" }}>
+          {score}
+        </Text>
+      )}
+    </Group>
+  );
+}
+
+/**
+ * Read-only bracket view for a running or complete tournament. Rounds lay out
+ * as columns that scroll horizontally on narrow screens. Renders nothing when
+ * there is no bracket data.
+ */
+function BracketCard({ bracket }: { bracket: BracketRound[] }) {
+  if (!bracket.length) return null;
+  return (
+    <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
+      <SectionLabel>Bracket</SectionLabel>
+      <Box style={{ overflowX: "auto" }}>
+        <Flex gap="md" align="flex-start" style={{ minWidth: "min-content" }}>
+          {bracket.map((round) => (
+            <Stack key={round.name} gap="sm" style={{ minWidth: 190, flexShrink: 0 }}>
+              <Text fz={11} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 1 }}>
+                {round.name}
+              </Text>
+              <Stack gap="sm" justify="center" style={{ flex: 1 }}>
+                {round.matches.map((m, i) => {
+                  const decided = m.winner != null;
+                  return (
+                    <Box
+                      key={i}
+                      style={{
+                        borderRadius: 8,
+                        overflow: "hidden",
+                        border: "1px solid #2a2637",
+                      }}
+                    >
+                      <BracketSlot name={m.a} score={m.scoreA} won={m.winner === "a"} decided={decided} />
+                      <Box style={{ height: 1, background: "#2a2637" }} />
+                      <BracketSlot name={m.b} score={m.scoreB} won={m.winner === "b"} decided={decided} />
+                    </Box>
+                  );
+                })}
+              </Stack>
+            </Stack>
+          ))}
+        </Flex>
+      </Box>
+    </Card>
+  );
+}
+
 function FeaturedTournament({ t }: { t: Tournament }) {
   const { data: signups } = useQuery({
     queryKey: ["tournament-signups", t.id],
@@ -931,6 +1017,7 @@ function FeaturedTournament({ t }: { t: Tournament }) {
           </Box>
 
           {t.rules && <RulesCard html={t.rules} />}
+          {t.bracket && t.bracket.length > 0 && <BracketCard bracket={t.bracket} />}
         </Stack>
       </Box>
 

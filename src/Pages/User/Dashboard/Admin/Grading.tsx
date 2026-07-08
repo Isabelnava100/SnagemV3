@@ -324,6 +324,200 @@ export function BattleRankingsForm() {
   );
 }
 
+// Per-battle scoring scheme. Mirrors the "How Points Work" panel in the
+// Colosseum (src/Pages/Colosseum/index.tsx SCORING) and docs/COLOSSEUM_DATA.md.
+// Keep these in sync if the scoring ever changes.
+const BATTLE_POINTS = {
+  defeat: 1, // per opposing Pokemon knocked out
+  survive: 1, // per own Pokemon still standing at the end
+  win: 3, // winning the battle
+  champion: 5, // beating the reigning champion
+  upsetPerRank: 0.4, // per rank gap when beating a higher-ranked player
+  tournament: 10, // winning a tournament
+};
+
+/**
+ * Turn a reported battle into a ranking-point delta and award it through the
+ * same secured `awardRankingPoints` callable the manual form uses. This only
+ * itemizes the math the grader used to do by hand: no new write path, no new
+ * collection. Wins/losses/streak still adjust via the manual controls.
+ */
+export function BattleReportForm() {
+  const [uid, setUid] = React.useState("");
+  const [defeated, setDefeated] = React.useState<number>(0);
+  const [survived, setSurvived] = React.useState<number>(0);
+  const [wonBattle, setWonBattle] = React.useState(false);
+  const [beatChampion, setBeatChampion] = React.useState(false);
+  const [upsetRankGap, setUpsetRankGap] = React.useState<number>(0);
+  const [tournamentWin, setTournamentWin] = React.useState(false);
+  const [message, setMessage] = React.useState("");
+  const [error, setError] = React.useState(false);
+
+  const breakdown = [
+    { label: `${defeated} Pokemon defeated`, pts: defeated * BATTLE_POINTS.defeat, on: defeated > 0 },
+    { label: `${survived} Pokemon survived`, pts: survived * BATTLE_POINTS.survive, on: survived > 0 },
+    { label: "Won the battle", pts: BATTLE_POINTS.win, on: wonBattle },
+    { label: "Beat the champion", pts: BATTLE_POINTS.champion, on: beatChampion },
+    {
+      label: `Upset (${upsetRankGap} rank gap)`,
+      pts: upsetRankGap * BATTLE_POINTS.upsetPerRank,
+      on: upsetRankGap > 0,
+    },
+    { label: "Tournament win", pts: BATTLE_POINTS.tournament, on: tournamentWin },
+  ].filter((r) => r.on);
+
+  const rawTotal = breakdown.reduce((sum, r) => sum + r.pts, 0);
+  const total = Math.round(rawTotal); // ladder points are whole numbers
+
+  const award = useMutation({
+    mutationFn: () => awardRankingPoints(uid.trim(), total),
+    onSuccess: () => {
+      setError(false);
+      setMessage(`Awarded ${total} points from this battle.`);
+    },
+    onError: (e) => {
+      setError(true);
+      setMessage((e as Error).message || "Could not award battle points.");
+    },
+  });
+
+  const numStyles = { input: { background: "#2E2D2E" }, label: { color: "white" } };
+  const disabled = award.isPending || !uid.trim() || total === 0;
+
+  return (
+    <SectionCard>
+      <Group gap={8} mb={4}>
+        <IconTrophy size={18} color="#F0C674" />
+        <Text c="white" fw={600}>
+          Battle Report
+        </Text>
+      </Group>
+      <Text fz={13} c="dimmed" mb={10}>
+        Enter what happened in a reported battle and the point total is computed for you,
+        then awarded to the member. For a plain manual adjustment use Battle Rankings above.
+      </Text>
+
+      <Stack gap={12}>
+        <TextInput
+          label="Member UID"
+          aria-label="Member UID"
+          value={uid}
+          onChange={(e) => setUid(e.currentTarget.value)}
+          size="xs"
+          w={220}
+          styles={numStyles}
+        />
+
+        <Group gap={12} align="end" wrap="wrap">
+          <NumberInput
+            label="Pokemon defeated"
+            aria-label="Opposing Pokemon defeated"
+            value={defeated}
+            onChange={(v) => setDefeated(typeof v === "number" ? v : 0)}
+            min={0}
+            size="xs"
+            w={150}
+            styles={numStyles}
+          />
+          <NumberInput
+            label="Own Pokemon survived"
+            aria-label="Own Pokemon that survived"
+            value={survived}
+            onChange={(v) => setSurvived(typeof v === "number" ? v : 0)}
+            min={0}
+            size="xs"
+            w={170}
+            styles={numStyles}
+          />
+          <NumberInput
+            label="Upset rank gap"
+            aria-label="Rank gap for an upset win"
+            description="Ranks above the opponent you beat"
+            value={upsetRankGap}
+            onChange={(v) => setUpsetRankGap(typeof v === "number" ? v : 0)}
+            min={0}
+            size="xs"
+            w={170}
+            styles={numStyles}
+          />
+        </Group>
+
+        <Group gap={16} wrap="wrap">
+          <Checkbox
+            label="Won the battle"
+            checked={wonBattle}
+            onChange={(e) => setWonBattle(e.currentTarget.checked)}
+            styles={{ label: { color: "white" } }}
+          />
+          <Checkbox
+            label="Beat the champion"
+            checked={beatChampion}
+            onChange={(e) => setBeatChampion(e.currentTarget.checked)}
+            styles={{ label: { color: "white" } }}
+          />
+          <Checkbox
+            label="Tournament win"
+            checked={tournamentWin}
+            onChange={(e) => setTournamentWin(e.currentTarget.checked)}
+            styles={{ label: { color: "white" } }}
+          />
+        </Group>
+
+        <Box p={12} bg={INNER_BG} style={{ borderRadius: 10 }}>
+          {breakdown.length ? (
+            <Stack gap={4}>
+              {breakdown.map((r) => (
+                <Group key={r.label} justify="space-between" wrap="nowrap">
+                  <Text fz={12} c="rgba(255,255,255,0.8)">
+                    {r.label}
+                  </Text>
+                  <Text fz={12} c="#7CD992" fw={600}>
+                    +{r.pts}
+                  </Text>
+                </Group>
+              ))}
+              <Group
+                justify="space-between"
+                wrap="nowrap"
+                pt={6}
+                mt={2}
+                style={{ borderTop: "1px solid #3a3550" }}
+              >
+                <Text fz={13} c="white" fw={700}>
+                  Total to award
+                </Text>
+                <Text fz={16} c="#F0C674" fw={800}>
+                  {total}
+                </Text>
+              </Group>
+            </Stack>
+          ) : (
+            <Text fz={12} c="dimmed">
+              Fill in the battle result to see the point total.
+            </Text>
+          )}
+        </Box>
+
+        <Button
+          radius="lg"
+          size="xs"
+          color="teal"
+          w={180}
+          loading={award.isPending}
+          disabled={disabled}
+          onClick={() => {
+            setMessage("");
+            award.mutateAsync().catch(() => undefined);
+          }}
+        >
+          Award {total} points
+        </Button>
+      </Stack>
+      <StatusLine message={message} error={error} />
+    </SectionCard>
+  );
+}
+
 const KIND_OPTIONS = ["badge", "trial", "grandTrial", "eliteFour", "champion"];
 
 export function ChallengeStepForm() {
@@ -499,6 +693,7 @@ export default function Grading() {
       </SectionCard>
 
       <BattleRankingsForm />
+      <BattleReportForm />
       <ChallengeStepForm />
     </Stack>
   );

@@ -55,8 +55,8 @@ const BG = "#0d0716";
 const PANEL = "#171029";
 const PANEL_BORDER = "#2b2142";
 
-/** Pull a numeric balance out of the string-valued Currencies doc. */
-function num(value?: string): number {
+/** Pull a numeric balance out of a currency value (number or legacy string). */
+function num(value?: number | string): number {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
 }

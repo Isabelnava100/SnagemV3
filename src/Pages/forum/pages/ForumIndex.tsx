@@ -178,16 +178,16 @@ export default function ForumIndex() {
     return base;
   }, [user]);
 
+  // Archive state is filtered server-side (keyed so open/archived cache
+  // separately and flip instantly once both are fetched).
   const { data: threads, isPending } = useQuery({
-    queryKey: ["forum-threads", activeLink],
-    queryFn: () => getThreadList(activeLink),
+    queryKey: ["forum-threads", activeLink, archive],
+    queryFn: () => getThreadList(activeLink, archive),
   });
 
   const visible = React.useMemo(() => {
-    return (threads ?? [])
-      .filter((thread) => !!thread.closed === archive)
-      .filter((thread) => threadMatches(thread, search));
-  }, [threads, archive, search]);
+    return (threads ?? []).filter((thread) => threadMatches(thread, search));
+  }, [threads, search]);
 
   const totalPages = Math.max(1, Math.ceil(visible.length / THREADS_PER_PAGE));
   const safePage = Math.min(page, totalPages);
