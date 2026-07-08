@@ -57,6 +57,9 @@ async function run() {
         description: book.description ?? "",
         type: book.type ?? "other",
         order: b + 1,
+        // Author attribution (omit undefined; Firestore rejects it).
+        ...(book.authorName ? { authorName: book.authorName } : {}),
+        ...(book.authorUid ? { authorUid: book.authorUid } : {}),
       },
       { merge: true }
     );
@@ -85,6 +88,9 @@ async function run() {
           images: Array.isArray(entry.images) ? entry.images : [],
           order: e + 1,
           status: entry.status === "stub" ? "stub" : "complete",
+          // Author attribution (omit undefined; Firestore rejects it).
+          ...(entry.authorName ? { authorName: entry.authorName } : {}),
+          ...(entry.authorUid ? { authorUid: entry.authorUid } : {}),
         },
         { merge: true }
       );

@@ -22,6 +22,10 @@ export interface LoreBook {
   description?: string;
   type: LoreBookType;
   order: number;
+  /** Display name of the author (e.g. the Gaia poster). */
+  authorName?: string;
+  /** App user uid when the author has an account; enables a profile link. */
+  authorUid?: string;
 }
 
 export type LoreEntryStatus = "complete" | "stub";
@@ -39,6 +43,10 @@ export interface LoreEntry {
   attributes?: Record<string, string>;
   order: number;
   status: LoreEntryStatus;
+  /** Display name of the author (the Gaia poster of this section). */
+  authorName?: string;
+  /** App user uid when the author has an account; enables a profile link. */
+  authorUid?: string;
 }
 
 const byOrder = <T extends { order?: number; title?: string }>(a: T, b: T) =>

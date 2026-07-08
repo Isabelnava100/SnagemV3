@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Anchor,
   Badge,
   Box,
   Button,
@@ -16,6 +17,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { Link } from "react-router-dom";
 import {
   IconArrowLeft,
   IconBook,
@@ -59,6 +61,38 @@ const BOOK_TYPES: { value: LoreBookType; label: string }[] = [
 ];
 
 const typeLabel = (t: LoreBookType) => BOOK_TYPES.find((b) => b.value === t)?.label ?? t;
+
+/**
+ * An entry is "empty" when it has no prose body, no non-blank attribute values,
+ * and no images (e.g. the "[To be finished.]" placeholder rosters). These are
+ * hidden from readers, but kept for editors so the stubs stay fillable. The
+ * seeded data is untouched; this is a render-time filter only.
+ */
+function isEmptyEntry(entry: LoreEntry): boolean {
+  const hasBody = !!entry.body?.trim();
+  const hasAttr = Object.values(entry.attributes ?? {}).some((v) => v?.trim());
+  const hasImages = !!entry.images?.length;
+  return !hasBody && !hasAttr && !hasImages;
+}
+
+/** "by <author>" byline; links to the author's profile when they have an account. */
+function AuthorLine(props: { name?: string; uid?: string }) {
+  if (!props.name) return null;
+  return (
+    <Text fz={12} c="dimmed">
+      by{" "}
+      {props.uid ? (
+        <Anchor component={Link} to={`/Users/${props.name}`} fz={12}>
+          {props.name}
+        </Anchor>
+      ) : (
+        <Text component="span" c="rgba(255,255,255,0.7)">
+          {props.name}
+        </Text>
+      )}
+    </Text>
+  );
+}
 
 /** Sanitized rich-text block, matching the forum post render precedent. */
 function LoreProse(props: { html: string }) {
@@ -105,6 +139,7 @@ function EntryCard(props: { entry: LoreEntry; canEdit: boolean; onEdit: () => vo
             <Text fz={16} c="white" fw={600}>
               {entry.title}
             </Text>
+            <AuthorLine name={entry.authorName} uid={entry.authorUid} />
           </Box>
           <Group gap={4} wrap="nowrap">
             {entry.status === "stub" && (
@@ -187,6 +222,12 @@ function BookEditor(props: {
           minRows={2}
           value={draft.description ?? ""}
           onChange={(e) => setDraft({ ...draft, description: e.currentTarget.value })}
+        />
+        <TextInput
+          label="Author (name)"
+          placeholder="Gaia poster / attribution"
+          value={draft.authorName ?? ""}
+          onChange={(e) => setDraft({ ...draft, authorName: e.currentTarget.value })}
         />
         <Select
           label="Type"
@@ -334,6 +375,13 @@ function EntryEditor(props: {
           allowDeselect={false}
           maw={240}
         />
+        <TextInput
+          label="Author (name)"
+          placeholder="Gaia poster / attribution"
+          value={draft.authorName ?? ""}
+          onChange={(e) => setDraft({ ...draft, authorName: e.currentTarget.value })}
+          maw={320}
+        />
         <AttributeEditor
           value={draft.attributes ?? {}}
           onChange={(attributes) => setDraft({ ...draft, attributes })}
@@ -396,12 +444,15 @@ function BookView(props: { book: LoreBook; canEdit: boolean; onBack: () => void 
 
   const q = search.trim().toLowerCase();
   const shown = React.useMemo(() => {
-    const list = entries ?? [];
+    let list = entries ?? [];
+    // Readers never see fully-empty placeholder entries; editors keep them so
+    // the stubs remain visible and fillable.
+    if (!props.canEdit) list = list.filter((e) => !isEmptyEntry(e));
     if (!q) return list;
     return list.filter(
       (e) => e.title.toLowerCase().includes(q) || e.body.toLowerCase().includes(q)
     );
-  }, [entries, q]);
+  }, [entries, q, props.canEdit]);
 
   const openNew = () => {
     setEditing(emptyEntry(book.id, (entries?.length ?? 0) + 1));
@@ -429,9 +480,12 @@ function BookView(props: { book: LoreBook; canEdit: boolean; onBack: () => void 
         <Title order={2} c="white" size={24} fw={600}>
           {book.title}
         </Title>
-        <Text fz={12} c="dimmed">
-          {typeLabel(book.type)}
-        </Text>
+        <Group gap={8} wrap="wrap">
+          <Text fz={12} c="dimmed">
+            {typeLabel(book.type)}
+          </Text>
+          <AuthorLine name={book.authorName} uid={book.authorUid} />
+        </Group>
         {book.description && (
           <Text fz={14} c="rgba(255,255,255,0.8)" mt={6}>
             {book.description}

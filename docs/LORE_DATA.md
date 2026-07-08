@@ -53,23 +53,34 @@ lore_entries:
 Prose books (Story So Far, Book of X) have entries whose `attributes` map is empty.
 Structured books (Compendium, Unique Objects) populate `attributes` per entry.
 
-## Known books to migrate (page 1 of index; more gated)
+## Books on Gaia (full crawl, 2026-07 — all posts + replies)
 
 ```yaml
-retrievable_page_1:
-  - Alternate Universe Snagems
-  - The Story So Far                       # history
-  - Compendium of Entities of Interest     # bestiary (structured)
+all_books:
+  - Alternate Universe Snagems             # 8 character sheets (2 Alysandras are AU counterparts, both real)
+  - The Story So Far                       # history; 2 posts holding 14 titled arcs
+  - Compendium of Entities of Interest     # bestiary (structured, per-team/region rosters)
   - Unique Objects and Items               # item lore (structured)
-  - Short Stories                          # to be filed into books later
+  - Short Stories                          # Frozen Bond (2 parts), Amaya's Riddle (Part 1 only, stub)
   - Book of Dark, Book of Normal, Book of Fairy, Book of Water, Book of Psychic,
-    Book of Ghost, Book of Dragon, Book of Bug, Book of Poison   # 9 of 18 type books
-gap:
+    Book of Ghost, Book of Dragon, Book of Bug, Book of Poison   # the ONLY 9 type books that exist
+
+no_such_books:
   note: >
-    Gaia gated index pages 2-3 (start=15 / start=30 returned empty to the fetcher).
-    Only 9 of 18 type books are retrievable now. Missing likely: Fire, Grass, Electric,
-    Ground, Rock, Flying, Fighting, Ice, Steel. Pull those titles + bodies while logged
-    in before final migration.
+    CORRECTION (2026-07 full crawl): there are NOT 18 type books. The other 9 types
+    (Fire, Grass, Electric, Ground, Rock, Flying, Fighting, Ice, Steel) were NEVER
+    WRITTEN on Gaia -- they do not exist. Creating them is fresh authoring (an owner
+    decision), not a migration. The earlier "gated behind index pages 2-3" claim was
+    FALSE: real pagination is start=40 / start=80, and pages 2-3 are genuinely empty.
+    The old fetcher used start=15 / start=30 (wrong offsets), which is why it saw nothing.
+
+scraper_caveat:
+  note: >
+    A `get_page_text`-style extraction returns only the FIRST post of a thread. Reply
+    posts (which held ~10 lore sections -- e.g. Book of Water's -The Gyaan-/-The
+    Disappearance-, Book of Normal's -Bareeno Village-, and every Compendium roster)
+    must be pulled from the per-post `.postcontent` DOM nodes. Miss that and whole
+    sections look "missing" when they are just in replies.
 ```
 
 ## Page display (what to show)

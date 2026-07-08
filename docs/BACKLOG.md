@@ -78,13 +78,21 @@ July 2026 build-out are marked (2026-07).
 
 ## Unbuilt features
 
-- **Lore Library content** (2026-07). The Lore tab is BUILT (`src/Pages/Library/lore.tsx`,
-  reader + ManageLore admin editor; loreBooks/loreEntries collections + rules; page-1 book
-  shells seeded). Still needs real content: the entry bodies are migrated in-app by a
-  ManageLore director, and the 9 remaining type books (Fire, Grass, Electric, Ground,
-  Rock, Flying, Fighting, Ice, Steel) still need pulling from Gaia logged in. Optional:
-  cross-book entry search (today search is per-book) and reusing the rich Tiptap editor
-  for the body field (today it is an HTML textarea with a sanitized preview).
+- **Lore Library content** — NO LONGER Gaia-blocked; real gaps FILLED (2026-07). The Lore tab
+  is BUILT, and a full Gaia crawl (all posts + replies) recovered the sections a first-post-only
+  scraper had missed. `functions/scripts/lore-data.json` now includes them (LOCAL edit only, NOT
+  yet seeded to the DB): Book of Normal -Bareeno Village-; Book of Water -The Gyaan- and
+  -The Disappearance-; and 7 new Compendium rosters ([Unova], [Kalos], [Alola], [Galar],
+  [Other], [Ultra Space], [Paldea] Natives; Barbara Perez and Indi kept as faithful stubs).
+  Short Stories (Frozen Bond both parts, Amaya's Riddle Part 1 stub) and the 5 gem stubs
+  (aliases present, descriptions blank on Gaia) were already faithful. To publish: run
+  `node functions/scripts/seed-lore.mjs` (owner-confirmed DB write, not done here).
+  NOT a gap: the 9 "missing" type books (Fire, Grass, Electric, Ground, Rock, Flying, Fighting,
+  Ice, Steel) were NEVER WRITTEN on Gaia and do not exist -- creating them is fresh authoring, an
+  OWNER DECISION, not a migration. OWNER DECISION also: Team Shout vs Team Yell (the Gaia
+  [Team Shout] post is a completely empty stub; nothing there says whether it renames Team Yell,
+  so the repo's "Team Yell" was left untouched). Optional: cross-book search; Tiptap editor for
+  bodies (today an HTML textarea with sanitized preview).
 - **Scheduled Shadow Lotto draw** (2026-07). DONE for now as a manual admin action:
   `drawLotto` splits the jackpot among matching tickets and there is a grader/admin "Draw
   winner" button on the Casino Shadow Lotto card. A weekly cron is intentionally NOT used
