@@ -27,7 +27,6 @@ import { useAuth } from "../../../context/AuthContext";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
   AdminAccessIcon,
-  Bell,
   Bookmarks,
   Characters,
   Drafts,
@@ -39,6 +38,7 @@ import {
   SnagCoins,
   Tether,
 } from "../../../icons";
+import { SnagIcon } from "../../../icons/SnagIcon";
 import {
   getAnnouncement,
   getReadAnnouncements,
@@ -195,10 +195,10 @@ function NotificationBell() {
     <Popover width={300} position="bottom-end" withArrow shadow="md" onOpen={openRead}>
       <Popover.Target>
         <UnstyledButton style={{ position: "relative", lineHeight: 0 }}>
-          {/* Fixed box + fit=contain: Mantine 9 Image ignores numeric width,
-              which rendered the bell full-size. */}
+          {/* Crisp vector alert icon (burst) from the Snag icon set; replaced
+              the old bell.svg which scaled blurry. */}
           <Box style={{ width: 30, height: 30 }}>
-            <Image src={Bell} alt="Notifications" w="100%" h="100%" fit="contain" />
+            <SnagIcon name="burst" size={30} title="Notifications" />
           </Box>
           {unread > 0 && (
             <Box

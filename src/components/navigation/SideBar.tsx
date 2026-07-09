@@ -1,29 +1,31 @@
-import { ActionIcon, Box, Drawer, Group, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
+import { ActionIcon, Box, Drawer, Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
 import { IconBooks, IconFileText, IconHome, IconInfoCircle, IconX } from "@tabler/icons-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import useMediaQuery from "../../hooks/useMediaQuery";
-import { Activities, Forum, Marketplace, Menu, Quests, TeamSangem, Users } from "../../icons";
+import { SnagIcon, SnagIconName } from "../../icons/SnagIcon";
 import { RESET_READING_SCALE } from "../../lib/readingSize";
 import "/src/assets/styles/navigation.css";
 
 interface NavItem {
   link: string;
   label: string;
-  icon: string;
+  icon: SnagIconName;
 }
 
+// Icons come from the owner's Snag icon set (src/icons/SnagIcon.tsx), which
+// replaced the old raster-scaled svg sprites so the nav stays crisp everywhere.
 const ALL_LINKS: NavItem[] = [
-  { link: "/Colosseum", label: "Colosseum", icon: Activities },
-  { link: "/Challenges", label: "Challenges", icon: Quests },
-  { link: "/Missions", label: "Missions", icon: Quests },
-  { link: "/Shop", label: "Shop", icon: Marketplace },
-  { link: "/Research", label: "Research", icon: Marketplace },
-  { link: "/Casino", label: "Casino", icon: Activities },
-  { link: "/Users", label: "Users", icon: Users },
-  { link: "/Activities", label: "Activities", icon: Activities },
-  { link: "/Forum/Main-Forum", label: "Forum", icon: Forum },
-  { link: "/Dashboard", label: "Snag", icon: TeamSangem },
+  { link: "/Colosseum", label: "Colosseum", icon: "swords" },
+  { link: "/Challenges", label: "Challenges", icon: "medal" },
+  { link: "/Missions", label: "Missions", icon: "target" },
+  { link: "/Shop", label: "Shop", icon: "bag" },
+  { link: "/Research", label: "Research", icon: "flask" },
+  { link: "/Casino", label: "Casino", icon: "dice" },
+  { link: "/Users", label: "Users", icon: "users" },
+  { link: "/Activities", label: "Activities", icon: "ferris" },
+  { link: "/Forum/Main-Forum", label: "Forum", icon: "chat" },
+  { link: "/Dashboard", label: "Snag", icon: "snaghand" },
 ];
 
 // Only these two stay pinned to the main nav (the desktop rail and the mobile
@@ -47,15 +49,15 @@ function DrawerTile(props: { children: React.ReactNode }) {
 }
 
 // One tile in the drawer grid. `tabler` for the fixed Home/Library/Policies
-// icons, `img` for the overflow-link sprites.
-type DrawerTileDef = { link: string; label: string; tabler?: typeof IconHome; img?: string };
+// icons, `snag` for the overflow links.
+type DrawerTileDef = { link: string; label: string; tabler?: typeof IconHome; snag?: SnagIconName };
 
 // Importance order, top item first. The grid lays these out bottom-right first
 // (Home) and reads right-to-left then upward, so the most-used links sit
 // closest to the thumb.
 const DRAWER_TILES: DrawerTileDef[] = [
   { link: "/", label: "Home", tabler: IconHome },
-  ...overflowLinks.map((l) => ({ link: l.link, label: l.label, img: l.icon })),
+  ...overflowLinks.map((l) => ({ link: l.link, label: l.label, snag: l.icon })),
   { link: "/About", label: "About", tabler: IconInfoCircle },
   { link: "/Library", label: "Library", tabler: IconBooks },
   { link: "/Policies", label: "Policies", tabler: IconFileText },
@@ -70,11 +72,10 @@ function DrawerTileIcon({ tile }: { tile: DrawerTileDef }) {
       </Box>
     );
   }
-  // Fixed box + fit=contain: Mantine 9 Image ignores numeric width/height, so
-  // constrain the box to size the icon.
   return (
     <Box style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <Image src={tile.img} w="100%" h="100%" fit="contain" alt={tile.label} />
+      {/* cut matches the tile background (#3C3A3C) so cutlines read cleanly. */}
+      <SnagIcon name={tile.snag ?? "pokeball"} size={26} cut="#3C3A3C" />
     </Box>
   );
 }
@@ -111,7 +112,7 @@ function DrawerGrid({ onNavigate, bottomUp }: { onNavigate: () => void; bottomUp
 /* Desktop vertical sidebar                                                    */
 /* -------------------------------------------------------------------------- */
 
-function SingleLink(props: { label: string; link: string; icon: string }) {
+function SingleLink(props: { label: string; link: string; icon: SnagIconName }) {
   const { label, link, icon } = props;
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
   const { isOverSm, isOverMd } = useMediaQuery();
@@ -138,7 +139,7 @@ function SingleLink(props: { label: string; link: string; icon: string }) {
         borderBottomRightRadius: isOverMd ? 30 : 15,
       })}
     >
-      <Image src={icon} width={isUnder900 ? 44 : 100} height={isUnder900 ? 40 : 100} alt={label} />
+      <SnagIcon name={icon} size={isUnder900 ? 40 : 64} title={label} />
       {!isUnder900 && (
         <Text c="white" tt="uppercase" fz={16}>
           {label}
@@ -168,7 +169,7 @@ function MoreSideButton(props: { onClick: () => void }) {
         alignItems: "center",
       }}
     >
-      <Image src={Menu} width={isUnder900 ? 44 : 100} height={isUnder900 ? 40 : 100} alt="More" />
+      <SnagIcon name="sliders" size={isUnder900 ? 40 : 64} title="More" />
       {!isUnder900 && (
         <Text c="white" tt="uppercase" fz={16}>
           More
@@ -207,8 +208,7 @@ function TabButton(props: { item: NavItem }) {
               : "transparent",
           }}
         >
-          {/* w/h (not width/height, which Mantine 9 ignores) size the icon. */}
-          <Image src={item.icon} w={22} h={22} fit="contain" alt={item.label} style={{ opacity: isActive ? 1 : 0.65 }} />
+          <SnagIcon name={item.icon} size={22} title={item.label} style={{ opacity: isActive ? 1 : 0.65 }} />
         </Box>
         <Text fz={9} fw={isActive ? 700 : 500} c={isActive ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           {item.label}
@@ -235,7 +235,7 @@ function MoreButton(props: { active: boolean; onClick: () => void }) {
               : "transparent",
           }}
         >
-          <Image src={Menu} w={22} h={22} fit="contain" alt="More" style={{ opacity: props.active ? 1 : 0.65 }} />
+          <SnagIcon name="sliders" size={22} title="More" style={{ opacity: props.active ? 1 : 0.65 }} />
         </Box>
         <Text fz={9} fw={props.active ? 700 : 500} c={props.active ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           More
