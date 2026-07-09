@@ -191,7 +191,8 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
         paddingRight: isOverSm ? 30 : 20,
         gap: "8px",
         justifyContent: "center",
-        alignItems: "center",
+        // Desktop rail: left-align the icon + label instead of centering.
+        alignItems: "flex-start",
         textDecoration: "none",
         background: isActive
           ? "linear-gradient(180deg, #912691 41.15%, #4D14C4 90.1%)"
@@ -228,13 +229,14 @@ function MoreSideButton(props: { onClick: () => void }) {
         paddingRight: isOverSm ? 30 : 20,
         gap: 8,
         justifyContent: "center",
-        alignItems: "center",
+        // Desktop rail: left-align to match the nav links.
+        alignItems: "flex-start",
       }}
     >
-      <SnagIcon name="sliders" size={isUnder900 ? 40 : 64} title="More" />
+      <SnagIcon name="menu" size={isUnder900 ? 40 : 64} title="Menu" />
       {!isUnder900 && (
         <Text c="white" tt="uppercase" fz={16}>
-          More
+          Menu
         </Text>
       )}
     </UnstyledButton>
@@ -297,10 +299,10 @@ function MoreButton(props: { active: boolean; onClick: () => void }) {
               : "transparent",
           }}
         >
-          <SnagIcon name="sliders" size={22} title="More" style={{ opacity: props.active ? 1 : 0.65 }} />
+          <SnagIcon name="menu" size={22} title="Menu" style={{ opacity: props.active ? 1 : 0.65 }} />
         </Box>
         <Text fz={9} fw={props.active ? 700 : 500} c={props.active ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
-          More
+          Menu
         </Text>
       </Stack>
     </UnstyledButton>

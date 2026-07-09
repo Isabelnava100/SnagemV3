@@ -72,6 +72,7 @@ function iconSet(fg: string, cut: string, label: string): Record<string, string>
     play: `<polygon points="14,8 40,24 14,40" fill="${fg}"/>`,
     arrow: `<path d="M14 34 L34 14 M18 12 h16 v16" fill="none" stroke="${fg}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`,
     circleo: `<circle cx="24" cy="24" r="15" fill="none" stroke="${fg}" stroke-width="4"/>`,
+    menu: `<rect x="8" y="11" width="32" height="5" rx="2.5" fill="${fg}"/><rect x="8" y="21.5" width="32" height="5" rx="2.5" fill="${fg}"/><rect x="8" y="32" width="32" height="5" rx="2.5" fill="${fg}"/>`,
     // Gym badges: stylized icon versions, fixed palettes
     boulder: `<polygon points="16,5 32,5 43,16 43,32 32,43 16,43 5,32 5,16" fill="#a8adb8"/><polygon points="19,11 29,11 37,19 37,29 29,37 19,37 11,29 11,19" fill="none" stroke="#6f7580" stroke-width="2"/>`,
     cascade: `<path d="M24 4 C31 15 36 21 36 29 A12 12 0 0 1 12 29 C12 21 17 15 24 4 z" fill="#4aa8e0"/><path d="M18 27 a6 7 0 0 0 6 8" fill="none" stroke="#bfe4f8" stroke-width="2.2" stroke-linecap="round"/>`,
@@ -108,7 +109,7 @@ export type SnagIconName =
   | "duo" | "target" | "pin" | "medal" | "chart" | "clock" | "moon" | "barbell"
   | "moneybag" | "skull" | "gem" | "triangle" | "party" | "bolt" | "bone" | "droplet"
   | "tree" | "cactus" | "flower" | "mountain" | "waves" | "palm" | "ghost" | "sliders"
-  | "exchange" | "play" | "arrow" | "circleo" | "boulder" | "cascade" | "thunderbadge"
+  | "exchange" | "play" | "arrow" | "circleo" | "menu" | "boulder" | "cascade" | "thunderbadge"
   | "rainbow" | "soul" | "marsh" | "volcano" | "earth" | "zephyr" | "hive" | "plainbadge"
   | "fogbadge" | "storm" | "mineral" | "glacier" | "rising" | "stonebadge" | "knuckle"
   | "dynamo" | "heat" | "balance" | "feather" | "mind" | "rainbadge" | "zcrystal";

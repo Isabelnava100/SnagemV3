@@ -36,8 +36,8 @@ export const App = memo(() => {
           width: "100%",
           height: "100%",
           background: "linear-gradient(90deg, #104459 0%, #A978B5 51.56%, #F79292 100%)",
-          paddingTop: isUnder900 ? 0 : 40,
-          paddingBottom: isUnder900 ? 0 : 40,
+          paddingTop: isUnder900 ? 0 : 16,
+          paddingBottom: isUnder900 ? 0 : 16,
         }}
       >
         <nav
@@ -67,8 +67,8 @@ export const App = memo(() => {
             height: "100%",
             width: "100%",
             padding: isUnder900 ? 10 : undefined,
-            paddingLeft: isUnder900 ? 10 : 75,
-            paddingRight: isUnder900 ? 10 : 75,
+            paddingLeft: isUnder900 ? 10 : 24,
+            paddingRight: isUnder900 ? 10 : 24,
             // Clear the fixed bottom bar (bar height + home-indicator inset).
             paddingBottom: isUnder900 ? "calc(74px + env(safe-area-inset-bottom))" : undefined,
             overflowX: "hidden",
