@@ -1,32 +1,48 @@
-import { ActionIcon, Box, Drawer, Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
+import { ActionIcon, Box, Drawer, Group, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconBooks, IconFileText, IconHome, IconInfoCircle, IconX } from "@tabler/icons-react";
+import { IconBooks, IconFileText, IconHome, IconX } from "@tabler/icons-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import useMediaQuery from "../../hooks/useMediaQuery";
+import { AdminAccessIcon, Forum, Marketplace, Quests, TeamSangem } from "../../icons";
 import { SnagIcon, SnagIconName } from "../../icons/SnagIcon";
 import { RESET_READING_SCALE } from "../../lib/readingSize";
 import "/src/assets/styles/navigation.css";
 
+// A nav item renders either an original guild sprite (`img`) or an icon from
+// the Snag set (`snag`). Owner's call per item: the original Forum, Snag,
+// Shop, and Missions art stays; the rest use the Snag set.
 interface NavItem {
   link: string;
   label: string;
-  icon: SnagIconName;
+  img?: string;
+  snag?: SnagIconName;
 }
 
-// Icons come from the owner's Snag icon set (src/icons/SnagIcon.tsx), which
-// replaced the old raster-scaled svg sprites so the nav stays crisp everywhere.
 const ALL_LINKS: NavItem[] = [
-  { link: "/Colosseum", label: "Colosseum", icon: "swords" },
-  { link: "/Challenges", label: "Challenges", icon: "medal" },
-  { link: "/Missions", label: "Missions", icon: "target" },
-  { link: "/Shop", label: "Shop", icon: "bag" },
-  { link: "/Research", label: "Research", icon: "flask" },
-  { link: "/Casino", label: "Casino", icon: "dice" },
-  { link: "/Users", label: "Users", icon: "users" },
-  { link: "/Activities", label: "Activities", icon: "ferris" },
-  { link: "/Forum/Main-Forum", label: "Forum", icon: "chat" },
-  { link: "/Dashboard", label: "Snag", icon: "snaghand" },
+  { link: "/Colosseum", label: "Colosseum", snag: "swords" },
+  { link: "/Challenges", label: "Challenges", snag: "medal" },
+  { link: "/Missions", label: "Missions", img: Quests },
+  { link: "/Shop", label: "Shop", img: Marketplace },
+  { link: "/Research", label: "Research", snag: "flask" },
+  { link: "/Casino", label: "Casino", snag: "dice" },
+  { link: "/Users", label: "Users", snag: "users" },
+  { link: "/Activities", label: "Activities", snag: "ferris" },
+  { link: "/Forum/Main-Forum", label: "Forum", img: Forum },
+  { link: "/Dashboard", label: "Snag", img: TeamSangem },
 ];
+
+/** Render a nav item's icon at a square size, whichever kind it is. */
+function NavItemIcon(props: { item: Pick<NavItem, "img" | "snag" | "label">; size: number; style?: React.CSSProperties }) {
+  const { item, size, style } = props;
+  if (item.img) {
+    return (
+      <Box style={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", ...style }}>
+        <Image src={item.img} w="100%" h="100%" fit="contain" alt={item.label} />
+      </Box>
+    );
+  }
+  return <SnagIcon name={item.snag ?? "pokeball"} size={size} title={item.label} style={style} />;
+}
 
 // Only these two stay pinned to the main nav (the desktop rail and the mobile
 // bottom bar). Everything else lives behind "More" so the rail stays clean and
@@ -49,16 +65,17 @@ function DrawerTile(props: { children: React.ReactNode }) {
 }
 
 // One tile in the drawer grid. `tabler` for the fixed Home/Library/Policies
-// icons, `snag` for the overflow links.
-type DrawerTileDef = { link: string; label: string; tabler?: typeof IconHome; snag?: SnagIconName };
+// icons, `img` for original guild sprites, `snag` for the Snag set.
+type DrawerTileDef = { link: string; label: string; tabler?: typeof IconHome; img?: string; snag?: SnagIconName };
 
 // Importance order, top item first. The grid lays these out bottom-right first
 // (Home) and reads right-to-left then upward, so the most-used links sit
 // closest to the thumb.
 const DRAWER_TILES: DrawerTileDef[] = [
   { link: "/", label: "Home", tabler: IconHome },
-  ...overflowLinks.map((l) => ({ link: l.link, label: l.label, snag: l.icon })),
-  { link: "/About", label: "About", tabler: IconInfoCircle },
+  ...overflowLinks.map((l) => ({ link: l.link, label: l.label, img: l.img, snag: l.snag })),
+  // Owner's call: About shares the admin-access art.
+  { link: "/About", label: "About", img: AdminAccessIcon },
   { link: "/Library", label: "Library", tabler: IconBooks },
   { link: "/Policies", label: "Policies", tabler: IconFileText },
 ];
@@ -69,6 +86,13 @@ function DrawerTileIcon({ tile }: { tile: DrawerTileDef }) {
     return (
       <Box style={{ height: 30, display: "flex", alignItems: "center" }}>
         <Icon size={26} color="white" />
+      </Box>
+    );
+  }
+  if (tile.img) {
+    return (
+      <Box style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Image src={tile.img} w="100%" h="100%" fit="contain" alt={tile.label} />
       </Box>
     );
   }
@@ -112,8 +136,8 @@ function DrawerGrid({ onNavigate, bottomUp }: { onNavigate: () => void; bottomUp
 /* Desktop vertical sidebar                                                    */
 /* -------------------------------------------------------------------------- */
 
-function SingleLink(props: { label: string; link: string; icon: SnagIconName }) {
-  const { label, link, icon } = props;
+function SingleLink(props: NavItem) {
+  const { label, link } = props;
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
   const { isOverSm, isOverMd } = useMediaQuery();
   return (
@@ -139,7 +163,7 @@ function SingleLink(props: { label: string; link: string; icon: SnagIconName }) 
         borderBottomRightRadius: isOverMd ? 30 : 15,
       })}
     >
-      <SnagIcon name={icon} size={isUnder900 ? 40 : 64} title={label} />
+      <NavItemIcon item={props} size={isUnder900 ? 40 : 64} />
       {!isUnder900 && (
         <Text c="white" tt="uppercase" fz={16}>
           {label}
@@ -208,7 +232,7 @@ function TabButton(props: { item: NavItem }) {
               : "transparent",
           }}
         >
-          <SnagIcon name={item.icon} size={22} title={item.label} style={{ opacity: isActive ? 1 : 0.65 }} />
+          <NavItemIcon item={item} size={22} style={{ opacity: isActive ? 1 : 0.65 }} />
         </Box>
         <Text fz={9} fw={isActive ? 700 : 500} c={isActive ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           {item.label}
