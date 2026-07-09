@@ -51,8 +51,16 @@ const primaryLinks = PRIMARY_LABELS.map((label) => ALL_LINKS.find((l) => l.label
 const overflowLinks = ALL_LINKS.filter((l) => !PRIMARY_LABELS.includes(l.label));
 
 /** Render a nav icon, whether it is an original image file or a SnagIcon. */
-function NavGlyph(props: { icon: IconRef; size: number; cut?: string; opacity?: number; title?: string }) {
-  const { icon, size, cut, opacity, title } = props;
+function NavGlyph(props: {
+  icon: IconRef;
+  size: number;
+  cut?: string;
+  opacity?: number;
+  title?: string;
+  /** Horizontal placement of the art in its box. Rail uses flex-start. */
+  align?: "center" | "flex-start";
+}) {
+  const { icon, size, cut, opacity, title, align = "center" } = props;
   const dim = opacity != null ? { opacity } : undefined;
   if ("snag" in icon) {
     return <SnagIcon name={icon.snag} size={size} cut={cut} title={title} style={dim} />;
@@ -64,11 +72,20 @@ function NavGlyph(props: { icon: IconRef; size: number; cut?: string; opacity?: 
         height: size,
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: align,
         ...dim,
       }}
     >
-      <Image src={icon.img} w="100%" h="100%" fit="contain" alt={title ?? ""} />
+      {/* The image fills the box, so object-position (not justify) is what
+          left-aligns the contained art with the label. */}
+      <Image
+        src={icon.img}
+        w="100%"
+        h="100%"
+        fit="contain"
+        alt={title ?? ""}
+        style={{ objectPosition: align === "flex-start" ? "left center" : "center" }}
+      />
     </Box>
   );
 }
@@ -202,7 +219,7 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
         borderBottomRightRadius: isOverMd ? 30 : 15,
       })}
     >
-      <NavGlyph icon={icon} size={isUnder900 ? 40 : 64} title={label} />
+      <NavGlyph icon={icon} size={isUnder900 ? 40 : 64} title={label} align="flex-start" />
       {!isUnder900 && (
         <Text c="white" tt="uppercase" fz={16}>
           {label}
