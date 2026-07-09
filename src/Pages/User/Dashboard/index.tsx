@@ -26,7 +26,6 @@ import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { useAuth } from "../../../context/AuthContext";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
-  AdminAccessIcon,
   Bookmarks,
   Characters,
   Drafts,
@@ -36,9 +35,8 @@ import {
   Profile,
   SettingsIcon,
   SnagCoins,
-  Tether,
 } from "../../../icons";
-import { SnagIcon } from "../../../icons/SnagIcon";
+import { SnagIcon, SnagIconName } from "../../../icons/SnagIcon";
 import {
   getAnnouncement,
   getReadAnnouncements,
@@ -48,8 +46,6 @@ import { getCharacters, getCurrencies } from "../../../queries/dashboard";
 import { getNotifications, markNotificationsRead } from "../../../queries/game";
 import { getImportRequest } from "../../../queries/imports";
 import { RESET_READING_SCALE } from "../../../lib/readingSize";
-import { canAccessStaffArea, hasCapability, isAdmin } from "../../../lib/permissions";
-import { Capability } from "../../../components/types/typesUsed";
 import { handleLogout } from "../../auth/components/LogoutHandle";
 import "/src/assets/styles/dashboard.css";
 
@@ -345,7 +341,10 @@ function CurrencyBar() {
 
 type DashboardTabLink = {
   path: string;
-  icon: string;
+  /** Original icon file (image src). Use `snag` instead for the Snag icon set. */
+  icon?: string;
+  /** Snag icon set glyph; takes precedence over `icon` when set. */
+  snag?: SnagIconName;
   label: string;
   enabled: boolean;
   /** Link to `path` as-is (top-level), instead of under /Dashboard. */
@@ -356,32 +355,16 @@ function TabsPanel() {
   const location = useLocation();
   const currentPath = location.pathname;
   const { isOverMd } = useMediaQuery();
-  const { user } = useAuth();
   const dashboardTabLinks: DashboardTabLink[] = [
     { path: "/Bookmarks", icon: Bookmarks, label: "Bookmarks", enabled: true },
     { path: "/Drafts", icon: Drafts, label: "Drafts", enabled: true },
-    { path: "/Items", icon: Tether, label: "Items", enabled: true },
+    { path: "/Items", snag: "bag", label: "Items", enabled: true },
     { path: "/Characters", icon: Characters, label: "Characters", enabled: true },
     { path: "/Pokemon", icon: Pokemons, label: "Pokemon", enabled: true },
     { path: "/Profile", icon: Profile, label: "Profile", enabled: true },
     { path: "/Settings", icon: SettingsIcon, label: "Settings", enabled: true },
-    {
-      // Site-wide settings (SEO, etc.). Admins and ManageSEO directors only.
-      path: "/Site-Settings",
-      icon: SettingsIcon,
-      label: "Site Settings",
-      enabled: isAdmin(user) || hasCapability(user, Capability.ManageSEO),
-    },
-    {
-      // Admins get the full "Admin Access"; directors with a staff capability
-      // get a "Staff Tools" entry to the same area (with only their tools).
-      // Lives at the top-level /Admin page now.
-      path: "/Admin",
-      absolute: true,
-      icon: AdminAccessIcon,
-      label: isAdmin(user) ? "Admin Access" : "Staff Tools",
-      enabled: canAccessStaffArea(user),
-    },
+    // Site Settings and Admin Access now live in the nav (More drawer), gated to
+    // admins/directors, so they no longer appear on the Snag dashboard.
   ];
 
   return (
@@ -431,13 +414,21 @@ function TabsPanel() {
                             justifyContent: "center",
                           }}
                         >
-                          <Image
-                            src={link.icon}
-                            alt={link.label}
-                            w="100%"
-                            h="100%"
-                            fit="contain"
-                          />
+                          {link.snag ? (
+                            <SnagIcon
+                              name={link.snag}
+                              size={isOverMd ? 30 : 24}
+                              title={link.label}
+                            />
+                          ) : (
+                            <Image
+                              src={link.icon}
+                              alt={link.label}
+                              w="100%"
+                              h="100%"
+                              fit="contain"
+                            />
+                          )}
                         </Box>
                         <Text
                           fz={isOverMd ? 12 : 9}

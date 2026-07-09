@@ -2,55 +2,76 @@ import { ActionIcon, Box, Drawer, Group, Image, Paper, Stack, Text, UnstyledButt
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
 import { IconBooks, IconFileText, IconHome, IconX } from "@tabler/icons-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { Capability } from "../../components/types/typesUsed";
+import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
-import { AdminAccessIcon, Forum, Marketplace, Quests, TeamSangem } from "../../icons";
+import {
+  AdminAccessIcon,
+  Forum,
+  GengarCoins,
+  Marketplace,
+  Quests,
+  SettingsIcon,
+  TeamSangem,
+} from "../../icons";
 import { SnagIcon, SnagIconName } from "../../icons/SnagIcon";
+import { canAccessStaffArea, hasCapability, isAdmin } from "../../lib/permissions";
 import { RESET_READING_SCALE } from "../../lib/readingSize";
 import "/src/assets/styles/navigation.css";
 
-// A nav item renders either an original guild sprite (`img`) or an icon from
-// the Snag set (`snag`). Owner's call per item: the original Forum, Snag,
-// Shop, and Missions art stays; the rest use the Snag set.
+// Nav icons are a mix: some are the guild's original icon files (kept where the
+// owner wants the originals), others are the newer Snag icon set (SnagIcon).
+type IconRef = { snag: SnagIconName } | { img: string };
+
 interface NavItem {
   link: string;
   label: string;
-  img?: string;
-  snag?: SnagIconName;
+  icon: IconRef;
 }
 
 const ALL_LINKS: NavItem[] = [
-  { link: "/Colosseum", label: "Colosseum", snag: "swords" },
-  { link: "/Challenges", label: "Challenges", snag: "medal" },
-  { link: "/Missions", label: "Missions", img: Quests },
-  { link: "/Shop", label: "Shop", img: Marketplace },
-  { link: "/Research", label: "Research", snag: "flask" },
-  { link: "/Casino", label: "Casino", snag: "dice" },
-  { link: "/Users", label: "Users", snag: "users" },
-  { link: "/Activities", label: "Activities", snag: "ferris" },
-  { link: "/Forum/Main-Forum", label: "Forum", img: Forum },
-  { link: "/Dashboard", label: "Snag", img: TeamSangem },
+  { link: "/Colosseum", label: "Colosseum", icon: { snag: "swords" } },
+  { link: "/Challenges", label: "Challenges", icon: { snag: "medal" } },
+  { link: "/Missions", label: "Missions", icon: { img: Quests } },
+  { link: "/Shop", label: "Shop", icon: { img: Marketplace } },
+  { link: "/Research", label: "Research", icon: { snag: "flask" } },
+  { link: "/Casino", label: "Casino", icon: { img: GengarCoins } },
+  { link: "/Users", label: "Users", icon: { snag: "users" } },
+  { link: "/Activities", label: "Activities", icon: { snag: "ferris" } },
+  { link: "/Forum/Main-Forum", label: "Forum", icon: { img: Forum } },
+  { link: "/Dashboard", label: "Snag", icon: { img: TeamSangem } },
 ];
 
-/** Render a nav item's icon at a square size, whichever kind it is. */
-function NavItemIcon(props: { item: Pick<NavItem, "img" | "snag" | "label">; size: number; style?: React.CSSProperties }) {
-  const { item, size, style } = props;
-  if (item.img) {
-    return (
-      <Box style={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", ...style }}>
-        <Image src={item.img} w="100%" h="100%" fit="contain" alt={item.label} />
-      </Box>
-    );
-  }
-  return <SnagIcon name={item.snag ?? "pokeball"} size={size} title={item.label} style={style} />;
-}
-
-// Only these two stay pinned to the main nav (the desktop rail and the mobile
+// Only these three stay pinned to the main nav (the desktop rail and the mobile
 // bottom bar). Everything else lives behind "More" so the rail stays clean and
 // the bar stays thumb-friendly.
 const PRIMARY_LABELS = ["Forum", "Snag", "Shop"];
 
 const primaryLinks = PRIMARY_LABELS.map((label) => ALL_LINKS.find((l) => l.label === label)!);
 const overflowLinks = ALL_LINKS.filter((l) => !PRIMARY_LABELS.includes(l.label));
+
+/** Render a nav icon, whether it is an original image file or a SnagIcon. */
+function NavGlyph(props: { icon: IconRef; size: number; cut?: string; opacity?: number; title?: string }) {
+  const { icon, size, cut, opacity, title } = props;
+  const dim = opacity != null ? { opacity } : undefined;
+  if ("snag" in icon) {
+    return <SnagIcon name={icon.snag} size={size} cut={cut} title={title} style={dim} />;
+  }
+  return (
+    <Box
+      style={{
+        width: size,
+        height: size,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        ...dim,
+      }}
+    >
+      <Image src={icon.img} w="100%" h="100%" fit="contain" alt={title ?? ""} />
+    </Box>
+  );
+}
 
 /* -------------------------------------------------------------------------- */
 /* Shared drawer grid (used by both the desktop and mobile "More" drawers)     */
@@ -65,20 +86,47 @@ function DrawerTile(props: { children: React.ReactNode }) {
 }
 
 // One tile in the drawer grid. `tabler` for the fixed Home/Library/Policies
-// icons, `img` for original guild sprites, `snag` for the Snag set.
-type DrawerTileDef = { link: string; label: string; tabler?: typeof IconHome; img?: string; snag?: SnagIconName };
+// icons, `icon` for the nav links and admin tools.
+type DrawerTileDef = { link: string; label: string; tabler?: typeof IconHome; icon?: IconRef };
 
-// Importance order, top item first. The grid lays these out bottom-right first
-// (Home) and reads right-to-left then upward, so the most-used links sit
-// closest to the thumb.
-const DRAWER_TILES: DrawerTileDef[] = [
+// Base tiles, in importance order (top item first). The grid lays these out
+// bottom-right first (Home) and reads right-to-left then upward on mobile, so
+// the most-used links sit closest to the thumb. Admin/staff tools are appended
+// per-user at render time (see useDrawerTiles).
+const BASE_DRAWER_TILES: DrawerTileDef[] = [
   { link: "/", label: "Home", tabler: IconHome },
-  ...overflowLinks.map((l) => ({ link: l.link, label: l.label, img: l.img, snag: l.snag })),
-  // Owner's call: About shares the admin-access art.
-  { link: "/About", label: "About", img: AdminAccessIcon },
+  ...overflowLinks.map((l) => ({ link: l.link, label: l.label, icon: l.icon })),
+  // About reuses the Admin Access icon per the owner's request.
+  { link: "/About", label: "About", icon: { img: AdminAccessIcon } },
   { link: "/Library", label: "Library", tabler: IconBooks },
   { link: "/Policies", label: "Policies", tabler: IconFileText },
 ];
+
+/**
+ * Drawer tiles for the current user. Site Settings and Admin Access live in the
+ * nav (not the Snag dashboard) and are only shown to admins / directors with the
+ * matching capability. The UI gate mirrors the Firestore rules; it is not the
+ * real authorization boundary.
+ */
+function useDrawerTiles(): DrawerTileDef[] {
+  const { user } = useAuth();
+  const adminTiles: DrawerTileDef[] = [];
+  if (isAdmin(user) || hasCapability(user, Capability.ManageSEO)) {
+    adminTiles.push({
+      link: "/Dashboard/Site-Settings",
+      label: "Site Settings",
+      icon: { img: SettingsIcon },
+    });
+  }
+  if (canAccessStaffArea(user)) {
+    adminTiles.push({
+      link: "/Admin",
+      label: isAdmin(user) ? "Admin Access" : "Staff Tools",
+      icon: { img: AdminAccessIcon },
+    });
+  }
+  return [...BASE_DRAWER_TILES, ...adminTiles];
+}
 
 function DrawerTileIcon({ tile }: { tile: DrawerTileDef }) {
   if (tile.tabler) {
@@ -89,29 +137,19 @@ function DrawerTileIcon({ tile }: { tile: DrawerTileDef }) {
       </Box>
     );
   }
-  if (tile.img) {
-    return (
-      <Box style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Image src={tile.img} w="100%" h="100%" fit="contain" alt={tile.label} />
-      </Box>
-    );
-  }
-  return (
-    <Box style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {/* cut matches the tile background (#3C3A3C) so cutlines read cleanly. */}
-      <SnagIcon name={tile.snag ?? "pokeball"} size={26} cut="#3C3A3C" />
-    </Box>
-  );
+  // cut matches the tile background (#3C3A3C) so SnagIcon cutlines read cleanly.
+  return <NavGlyph icon={tile.icon ?? { snag: "pokeball" }} size={28} cut="#3C3A3C" title={tile.label} />;
 }
 
 const DRAWER_COLS = 3;
 
 function DrawerGrid({ onNavigate, bottomUp }: { onNavigate: () => void; bottomUp?: boolean }) {
+  const tiles = useDrawerTiles();
   // Mobile (bottomUp): fill bottom-right first, running right-to-left then up,
   // so the most-used tiles sit closest to the thumb. Reverse the DOM order and
   // pad the top row with blanks so Home always lands bottom-right. Desktop: keep
   // normal top-left-to-bottom-right reading order (blanks trail at the end).
-  const cells = bottomUp ? [...DRAWER_TILES].reverse() : DRAWER_TILES;
+  const cells = bottomUp ? [...tiles].reverse() : tiles;
   const leadEmpties = bottomUp ? (DRAWER_COLS - (cells.length % DRAWER_COLS)) % DRAWER_COLS : 0;
   return (
     <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
@@ -136,8 +174,8 @@ function DrawerGrid({ onNavigate, bottomUp }: { onNavigate: () => void; bottomUp
 /* Desktop vertical sidebar                                                    */
 /* -------------------------------------------------------------------------- */
 
-function SingleLink(props: NavItem) {
-  const { label, link } = props;
+function SingleLink(props: { label: string; link: string; icon: IconRef }) {
+  const { label, link, icon } = props;
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
   const { isOverSm, isOverMd } = useMediaQuery();
   return (
@@ -163,7 +201,7 @@ function SingleLink(props: NavItem) {
         borderBottomRightRadius: isOverMd ? 30 : 15,
       })}
     >
-      <NavItemIcon item={props} size={isUnder900 ? 40 : 64} />
+      <NavGlyph icon={icon} size={isUnder900 ? 40 : 64} title={label} />
       {!isUnder900 && (
         <Text c="white" tt="uppercase" fz={16}>
           {label}
@@ -232,7 +270,7 @@ function TabButton(props: { item: NavItem }) {
               : "transparent",
           }}
         >
-          <NavItemIcon item={item} size={22} style={{ opacity: isActive ? 1 : 0.65 }} />
+          <NavGlyph icon={item.icon} size={22} title={item.label} opacity={isActive ? 1 : 0.65} />
         </Box>
         <Text fz={9} fw={isActive ? 700 : 500} c={isActive ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           {item.label}
