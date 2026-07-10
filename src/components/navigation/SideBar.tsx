@@ -208,8 +208,7 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
         paddingRight: isOverSm ? 30 : 20,
         gap: "8px",
         justifyContent: "center",
-        // Desktop rail: left-align the icon + label instead of centering.
-        alignItems: "flex-start",
+        alignItems: "center",
         textDecoration: "none",
         background: isActive
           ? "linear-gradient(180deg, #912691 41.15%, #4D14C4 90.1%)"
@@ -219,7 +218,7 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
         borderBottomRightRadius: isOverMd ? 30 : 15,
       })}
     >
-      <NavGlyph icon={icon} size={isUnder900 ? 40 : 64} title={label} align="flex-start" />
+      <NavGlyph icon={icon} size={isUnder900 ? 40 : 64} title={label} />
       {!isUnder900 && (
         <Text c="white" tt="uppercase" fz={16}>
           {label}
@@ -246,8 +245,7 @@ function MoreSideButton(props: { onClick: () => void }) {
         paddingRight: isOverSm ? 30 : 20,
         gap: 8,
         justifyContent: "center",
-        // Desktop rail: left-align to match the nav links.
-        alignItems: "flex-start",
+        alignItems: "center",
       }}
     >
       <SnagIcon name="menu" size={isUnder900 ? 40 : 64} title="Menu" />
