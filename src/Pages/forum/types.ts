@@ -186,6 +186,13 @@ export interface ForumThread {
   notifyviaDiscord?: string[];
   private?: boolean;
   privateTo?: Array<string | null | undefined>;
+  /**
+   * The shared Super Training Room thread. Replies must start from the
+   * Colosseum Training Room page; the composer bounces direct replies there.
+   */
+  trainingLog?: boolean;
+  /** Set on threads auto-created by pickUpMission; links back to /Missions/{id}. */
+  missionId?: string;
 }
 
 /**

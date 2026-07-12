@@ -34,6 +34,7 @@ import { canManageLore } from "../../lib/permissions";
 import {
   deleteLoreBook,
   deleteLoreEntry,
+  getAllLoreEntries,
   getLoreBooks,
   getLoreEntries,
   LoreBook,
@@ -546,6 +547,21 @@ export default function LoreTab() {
 
   const { data: books, isPending } = useQuery({ queryKey: ["lore-books"], queryFn: getLoreBooks });
 
+  // Readers only see books that hold at least one substantive entry; editors
+  // keep seeing empty shelves so they can fill them.
+  const { data: allEntries } = useQuery({
+    queryKey: ["lore-entries-all"],
+    queryFn: getAllLoreEntries,
+    enabled: !canEdit,
+  });
+  const booksWithContent = React.useMemo(() => {
+    if (canEdit || !allEntries) return null;
+    const filled = new Set(
+      allEntries.filter((e) => !isEmptyEntry(e)).map((e) => e.bookId)
+    );
+    return filled;
+  }, [allEntries, canEdit]);
+
   const del = useMutation({
     mutationFn: (bookId: string) => deleteLoreBook(bookId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["lore-books"] }),
@@ -556,12 +572,13 @@ export default function LoreTab() {
 
   const q = search.trim().toLowerCase();
   const shelf = React.useMemo(() => {
-    const list = books ?? [];
+    let list = books ?? [];
+    if (booksWithContent) list = list.filter((b) => booksWithContent.has(b.id));
     if (!q) return list;
     return list.filter(
       (b) => b.title.toLowerCase().includes(q) || (b.description ?? "").toLowerCase().includes(q)
     );
-  }, [books, q]);
+  }, [books, q, booksWithContent]);
 
   if (openBook) {
     return <BookView book={openBook} canEdit={canEdit} onBack={() => setOpenBookId(null)} />;

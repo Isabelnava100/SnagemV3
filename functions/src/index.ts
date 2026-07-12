@@ -78,8 +78,8 @@ function encounterRequiredFromConfig(cfg: FirebaseFirestore.DocumentData | undef
   const value = Number.isFinite(configured) && configured > 0 ? configured : fallback;
   return Math.max(1, Math.min(100, value));
 }
-const GEN_CAPS = [151, 251, 386, 493, 649, 721, 809, 898];
-const GEN_NAMES = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
+const GEN_CAPS = [151, 251, 386, 493, 649, 721, 809, 905, 1025];
+const GEN_NAMES = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
 
 // Modern main-series full-odds shiny rate. Every Pokemon obtained through a
 // random means (a caught encounter, and future eggs/mystery boxes) rolls this.
@@ -2078,9 +2078,34 @@ export const onThreadClosed = onDocumentUpdated(
     if (before.closed || !after.closed) return; // only the false -> true edge
     const staff = await staffUidsWithCaps(["GiveItems", "ReviewRewards"]);
     const { forum, threadId } = event.params;
+
+    // Mission threads file their grading submission automatically at close, so
+    // members never need a separate "submit for grading" step.
+    if (after.missionId) {
+      const threadLink = `/Forum/${forum}/thread/${threadId}`;
+      const dup = await db
+        .collection("missionSubmissions")
+        .where("threadLink", "==", threadLink)
+        .where("status", "==", "pending")
+        .limit(1)
+        .get();
+      if (dup.empty) {
+        await db.collection("missionSubmissions").add({
+          missionId: String(after.missionId),
+          submitterUid: String(after.hostUid ?? ""),
+          submitterName: String(after.createdBy ?? ""),
+          threadLink,
+          status: "pending",
+          submittedAt: new Date(),
+        });
+      }
+    }
+
     await notifyUsers(staff, {
       type: "approval",
-      text: `A thread closed and may need reward review: ${after.title ?? threadId}`,
+      text: after.missionId
+        ? `A mission thread closed and is ready for grading: ${after.title ?? threadId}`
+        : `A thread closed and may need reward review: ${after.title ?? threadId}`,
       link: `/Forum/${forum}/thread/${threadId}/rewards`,
     });
   }
@@ -2416,6 +2441,115 @@ export const reviveFossil = onCall(async (request) => {
 });
 
 // --- Missions: submit for grading ------------------------------------------
+// --- Missions: pick up (auto-creates the Quests thread) ---------------------
+// The Quests forum is create:"none" for clients; this callable is the only way
+// a mission thread starts. It copies the briefing into the first post, attaches
+// the mission's default encounter list, and stamps missionId on the thread so
+// closing it auto-files a grading submission (see onThreadClosed).
+export const pickUpMission = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const missionId = requireString(request.data?.missionId, "mission", 80);
+
+  const missionSnap = await db.doc(`missions/${missionId}`).get();
+  const mission = missionSnap.data();
+  if (!mission || mission.active === false) {
+    throw new HttpsError("not-found", "Mission not found.");
+  }
+
+  const esc = (v: unknown) =>
+    String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const parts: string[] = [];
+  parts.push(
+    `<p><strong>Mission: ${esc(mission.title)}</strong>${
+      mission.location ? ` &middot; ${esc(mission.location)}` : ""
+    }</p>`
+  );
+  if (mission.story) parts.push(String(mission.story).slice(0, 50_000));
+  if (mission.objective) parts.push(`<p><strong>Objective:</strong> ${esc(mission.objective)}</p>`);
+  if (mission.opposition) parts.push(`<p><strong>Opposition:</strong> ${esc(mission.opposition)}</p>`);
+  if (mission.pokemon_note) {
+    parts.push(`<p><strong>Pokemon rules:</strong> ${esc(mission.pokemon_note)}</p>`);
+  }
+  parts.push(
+    "<p><em>Roleplay the mission in this thread. Close the thread when the run is complete " +
+      "and it goes to the admins for grading automatically.</em></p>"
+  );
+  const html = parts.join("");
+
+  // Attach the mission's default encounter list when one is seeded. Members
+  // choose when to face each opponent; the briefing's set foes stay the
+  // minimum requirement for the grade.
+  let encounterConfig: Record<string, unknown> | null = null;
+  if (typeof mission.encounterListId === "string" && mission.encounterListId) {
+    const listsSnap = await db.doc("admin/pokemon_lists").get();
+    const list = (listsSnap.data() ?? {})[mission.encounterListId];
+    if (list) {
+      encounterConfig = {
+        enabled: true,
+        disabled: false,
+        listId: mission.encounterListId,
+        listName: String(list.name ?? `Mission: ${mission.title}`).slice(0, 100),
+        mode: mission.encounterMode === "roll" ? "roll" : "choose",
+        perUserLimit: Math.min(50, Math.max(1, Math.trunc(Number(mission.encounterLimit)) || 5)),
+        nonCatchable: null,
+      };
+    }
+  }
+
+  const defaultsSnap = await db.doc("admin/xp_defaults").get();
+  const xpConfig = normalizeXpConfig(defaultsSnap.data());
+
+  const threadsCol = db.collection("forum/Quests/threads");
+  const countSnap = await threadsCol.count().get();
+  const threadId = String(countSnap.data().count + 1);
+  const now = new Date();
+
+  const batch = db.batch();
+  const tRef = threadsCol.doc(threadId);
+  batch.create(tRef, {
+    title: String(mission.title ?? missionId).slice(0, 200),
+    createdBy: member.username,
+    hostUid: uid,
+    createdByAdmin: false,
+    staffCreated: false,
+    xpAward: "onClose",
+    missionId,
+    closed: false,
+    private: false,
+    pinned: false,
+    tags: ["mission", ...(mission.tier ? [String(mission.tier)] : [])],
+    instructions:
+      "Mission thread. Cover the objective in your posts, then close the thread to send the run for grading.",
+    restricted: false,
+    allowedPosters: [],
+    createdAt: now,
+    timePosted: now,
+    replyCount: 0,
+    lastPost: { by: member.username, avatar: member.avatar, at: now },
+    participants: { [uid]: { name: member.username, avatar: member.avatar } },
+    poll: null,
+    encounterConfig,
+    encounterClaims: {},
+    bossBattle: null,
+    xpConfig,
+  });
+  batch.create(tRef.collection("posts").doc(), {
+    ...authorFields(member),
+    character: "",
+    characters: [],
+    text: html,
+    signature: "",
+    timePosted: now,
+    type: "user",
+    blocks: {},
+  });
+  batch.set(db.doc(`missions/${missionId}`), { times_taken: FieldValue.increment(1) }, { merge: true });
+  await batch.commit();
+
+  return { threadId };
+});
+
 export const submitMission = onCall(async (request) => {
   const uid = requireAuth(request);
   const member = await loadMember(uid);
@@ -2561,6 +2695,101 @@ export const evoService = onCall(async (request) => {
 
 const dayStr = (d: Date) => d.toISOString().slice(0, 10);
 
+// --- Colosseum: shared Super Training Room thread ---------------------------
+// Training posts all land on one pinned Colosseum thread. Any member can ask
+// for it; the first call creates it (authored by an admin account) and its id
+// is remembered in admin/colosseum so every later call returns the same thread.
+const MAX_TRAINING_POSTS = 10;
+
+export const ensureTrainingThread = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const caller = await loadMember(uid);
+
+  const configRef = db.doc("admin/colosseum");
+  const cfg = (await configRef.get()).data() ?? {};
+  const existingId = typeof cfg.trainingThreadId === "string" ? cfg.trainingThreadId : "";
+  if (existingId) {
+    const snap = await threadRef("The-Colosseum", existingId).get();
+    if (snap.exists && !snap.data()?.closed) return { threadId: existingId };
+  }
+
+  // Author the pinned thread as an admin account so it reads as staff-owned.
+  const adminSnap = await db.collection("users").where("permissions", "==", "Admin").limit(1).get();
+  const adminDoc = adminSnap.docs[0];
+  const author: Member = adminDoc
+    ? {
+        uid: adminDoc.id,
+        username: (adminDoc.data().username as string) ?? "Snagem Staff",
+        avatar: (adminDoc.data().avatar as string) ?? "",
+        badges: (adminDoc.data().badges as string[]) ?? null,
+        permissions: "Admin",
+        capabilities: [],
+        signature: "",
+      }
+    : caller;
+
+  const threadsCol = db.collection("forum/The-Colosseum/threads");
+  const countSnap = await threadsCol.count().get();
+  const threadId = String(countSnap.data().count + 1);
+  const now = new Date();
+
+  const batch = db.batch();
+  const tRef = threadsCol.doc(threadId);
+  batch.create(tRef, {
+    title: "Super Training Room Log",
+    createdBy: author.username,
+    hostUid: author.uid,
+    createdByAdmin: true,
+    staffCreated: true,
+    xpAward: "instant",
+    closed: false,
+    private: false,
+    pinned: true,
+    // Marks the thread so the composer only accepts posts started from the
+    // Colosseum Training Room page (direct replies bounce back there).
+    trainingLog: true,
+    tags: ["training"],
+    instructions:
+      "Log your Super Training Room sessions here. Start every session from the Colosseum Training Room page; posts made from there attach to your daily training window.",
+    restricted: false,
+    allowedPosters: [],
+    createdAt: now,
+    timePosted: now,
+    replyCount: 0,
+    lastPost: { by: author.username, avatar: author.avatar, at: now },
+    participants: { [author.uid]: { name: author.username, avatar: author.avatar } },
+    poll: null,
+    encounterConfig: null,
+    encounterClaims: {},
+    bossBattle: null,
+    // Training points are awarded by logTrainingPost, so the forum's own
+    // per-post XP is zeroed out here to avoid double awards.
+    xpConfig: {
+      experiencePerPost: 0,
+      friendshipPerPost: 0,
+      purificationPerPost: 0,
+      shadowPerPost: 0,
+      minPostLength: 0,
+    },
+  });
+  batch.create(tRef.collection("posts").doc(), {
+    ...authorFields(author),
+    character: "",
+    characters: [],
+    text:
+      "<p><strong>Welcome to the Super Training Room.</strong></p>" +
+      "<p>Every training session is logged on this thread. Head to the Colosseum page, choose your training target, and press Log a Training Post to start. Cover the whole session inside your posts: once per day, up to 10 posts within your 2-hour window (4 hours with a partner).</p>",
+    signature: "",
+    timePosted: now,
+    type: "user",
+    blocks: {},
+  });
+  batch.set(configRef, { trainingThreadId: threadId }, { merge: true });
+  await batch.commit();
+
+  return { threadId };
+});
+
 // --- Colosseum: Super Training Room log ------------------------------------
 export const logTrainingPost = onCall(async (request) => {
   const uid = requireAuth(request);
@@ -2593,6 +2822,12 @@ export const logTrainingPost = onCall(async (request) => {
     }
 
     const n = fresh ? 0 : raw.postsLogged ?? 0;
+    if (n >= MAX_TRAINING_POSTS) {
+      throw new HttpsError(
+        "failed-precondition",
+        `You reached the ${MAX_TRAINING_POSTS}-post limit for this training window.`
+      );
+    }
     const evoCap = partnerMode ? 10 : 5;
     const awardedEvo = n < evoCap ? 1.0 : 0.75;
     const awardedHappiness = n < 5 ? 0.2 : 0.1;
@@ -2867,6 +3102,94 @@ export const grantChallengeStep = onCall(async (request) => {
   return { ok: true };
 });
 
+// --- Challenges: member requests a run; staff accept + create the thread ----
+// Gym runs and island trials are admin-hosted, so starting one files a request
+// and pings the staff who can create Main Adventures threads. The member waits
+// until someone accepts and sets their thread up.
+export const requestChallenge = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const kind = requireString(request.data?.kind, "kind", 20);
+  if (kind !== "gym" && kind !== "trial") {
+    throw new HttpsError("invalid-argument", "Unknown challenge kind.");
+  }
+  const regionOrIsland = requireString(request.data?.regionOrIsland, "region", 60);
+  const stageId = requireString(request.data?.stageId, "stage", 120);
+  const stageTitle = String(request.data?.stageTitle ?? "").slice(0, 120);
+
+  // One open request per member and stage; a repeat tap returns the first one.
+  const dupSnap = await db
+    .collection("challengeRequests")
+    .where("uid", "==", uid)
+    .where("stageId", "==", stageId)
+    .where("status", "==", "requested")
+    .limit(1)
+    .get();
+  if (!dupSnap.empty) return { ok: true, id: dupSnap.docs[0].id, duplicate: true };
+
+  const ref = await db.collection("challengeRequests").add({
+    uid,
+    username: member.username,
+    kind,
+    regionOrIsland,
+    stageId,
+    stageTitle,
+    status: "requested",
+    createdAt: new Date(),
+  });
+  const staff = await staffUidsWithCaps(["HostMainForum", "ReviewRewards"]);
+  await notifyUsers(staff, {
+    type: "approval",
+    text: `${member.username} requested a challenge: ${stageTitle || stageId}. Accept it and create their thread.`,
+    link: "/Dashboard/Admin-Access",
+  });
+  return { ok: true, id: ref.id };
+});
+
+export const resolveChallengeRequest = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const mayHost =
+    isAdmin(member) || hasCap(member, "HostMainForum") || hasCap(member, "ReviewRewards");
+  if (!mayHost) throw new HttpsError("permission-denied", "You cannot manage challenge requests.");
+  const requestId = requireString(request.data?.requestId, "request", 80);
+  const accept = request.data?.accept !== false;
+  const threadLink = String(request.data?.threadLink ?? "").slice(0, 300);
+
+  const ref = db.doc(`challengeRequests/${requestId}`);
+  const snap = await ref.get();
+  const data = snap.data();
+  if (!data) throw new HttpsError("not-found", "Request not found.");
+  if (data.status !== "requested") throw new HttpsError("failed-precondition", "Already handled.");
+
+  await ref.set(
+    {
+      status: accept ? "accepted" : "declined",
+      handledBy: member.username,
+      handledAt: new Date(),
+      ...(threadLink ? { threadLink } : {}),
+    },
+    { merge: true }
+  );
+  await notifyUsers(
+    [String(data.uid)],
+    accept
+      ? {
+          type: "approval",
+          text: `Your ${data.kind === "gym" ? "gym" : "island trial"} challenge was accepted${
+            threadLink ? " and your thread is ready." : ". An admin will set up your thread."
+          }`,
+          link: threadLink || "/Challenges",
+        }
+      : {
+          type: "approval",
+          text: "Your challenge request was declined. Reach out to staff for details.",
+          link: "/Challenges",
+        }
+  );
+  return { ok: true };
+});
+
 // ===========================================================================
 // Casino (Darts' Ghastly Gambling). Gengar Tokens (gengarcoin) bought from
 // Snag Coins (pokecoin). ALL randomness is server-side. See docs/CASINO_DATA.md.
@@ -2952,6 +3275,10 @@ export const playCasinoGame = onCall(async (request) => {
 });
 
 // --- Shadow Lotto: buy a ticket --------------------------------------------
+// Once entries reach the draw minimum (admin/casino_config.lottoMinTickets,
+// default 5), the graders who can run drawLotto get pinged to roll the winner.
+const DEFAULT_LOTTO_MIN_TICKETS = 5;
+
 export const buyLottoTicket = onCall(async (request) => {
   const uid = requireAuth(request);
   const member = await loadMember(uid);
@@ -2976,8 +3303,29 @@ export const buyLottoTicket = onCall(async (request) => {
       tickets: FieldValue.arrayUnion({ uid, name: member.username, number, weekId }),
     }, { merge: true });
     tx.set(myRef, { lottoNumber: number, lottoWeekId: weekId }, { merge: true });
-    return { number, jackpot: (Number(lotto.jackpot ?? 100)) + 1 };
+    return {
+      number,
+      jackpot: (Number(lotto.jackpot ?? 100)) + 1,
+      ticketCount: (Number(lotto.ticketCount ?? 0)) + 1,
+    };
   });
+
+  // Ping the draw-capable staff exactly once, on the ticket that reaches the
+  // minimum (later tickets don't re-notify).
+  const cfgSnap = await db.doc("admin/casino_config").get();
+  const minTickets = Math.max(
+    1,
+    Math.trunc(Number(cfgSnap.data()?.lottoMinTickets ?? DEFAULT_LOTTO_MIN_TICKETS))
+  );
+  if (out.ticketCount === minTickets) {
+    const staff = await staffUidsWithCaps(["ReviewRewards"]);
+    await notifyUsers(staff, {
+      type: "approval",
+      text: `Shadow Lotto has ${out.ticketCount} entries and is ready for a draw.`,
+      link: "/Casino",
+    });
+  }
+
   return { ok: true, ...out };
 });
 

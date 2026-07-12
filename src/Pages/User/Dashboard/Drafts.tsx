@@ -1,7 +1,6 @@
 import {
   ActionIcon,
   Badge,
-  Box,
   Button,
   Flex,
   Group,
@@ -177,28 +176,36 @@ function SingleDraft(props: Draft) {
   const { isOverSm } = useMediaQuery();
   return (
     <Paper bg="#3E3D3D" radius={15} py={0} pos="relative" sx={{ overflow: "hidden" }}>
-      {/* Delete pinned to the card's top-right corner. */}
-      <Box style={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}>
-        <DeleteDraft draftId={props.id} />
-      </Box>
       <Flex
         justify="space-between"
         sx={{ flexDirection: isOverSm ? "row" : "column" }}
         align="stretch"
       >
-        {/* pr clears the absolute delete so the title never runs under it. */}
-        <Stack py={10} pl={18} pr={52} gap={6}>
-          <Title order={3} size={20} c="white">
-            {props.title_thread}
-          </Title>
-          <Badge
-            w="fit-content"
-            variant="light"
-            color={props.thread_id && props.thread_id !== "new-thread" ? "cyan.0" : "pink.0"}
-          >
-            {props.thread_id && props.thread_id !== "new-thread" ? "Post draft" : "Thread draft"}
-          </Badge>
-        </Stack>
+        {/* Delete lives in the dark text area, outside the colored panel, so it
+            never stacks on top of the edit pencil. */}
+        <Flex
+          justify="space-between"
+          align="flex-start"
+          py={10}
+          pl={18}
+          pr={12}
+          gap={10}
+          style={{ flex: 1, minWidth: 0 }}
+        >
+          <Stack gap={6} style={{ minWidth: 0 }}>
+            <Title order={3} size={20} c="white">
+              {props.title_thread}
+            </Title>
+            <Badge
+              w="fit-content"
+              variant="light"
+              color={props.thread_id && props.thread_id !== "new-thread" ? "cyan.0" : "pink.0"}
+            >
+              {props.thread_id && props.thread_id !== "new-thread" ? "Post draft" : "Thread draft"}
+            </Badge>
+          </Stack>
+          <DeleteDraft draftId={props.id} />
+        </Flex>
         <Stack
           bg={props.color}
           sx={{

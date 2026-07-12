@@ -1,4 +1,14 @@
-import { Box, Button, Flex, Group, Stack, Switch, Text, type SwitchProps } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Flex,
+  Group,
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+  type SwitchProps,
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +19,7 @@ import { SectionLoader } from "../../../../components/navigation/loading";
 import { Settings } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
 import { getNotifications, markNotificationsRead } from "../../../../queries/game";
-import { getSettings } from "../../../../queries/settings";
+import { getMyFriendCode, getSettings, saveFriendCode } from "../../../../queries/settings";
 import {
   DISCORD_CLIENT_ID,
   discordAuthorizeUrl,
@@ -250,6 +260,70 @@ function ConnectDiscord() {
   );
 }
 
+/**
+ * Switch friend code, stored on the member's own user doc. Prefills the
+ * Colosseum tournament register form (registering there also updates it).
+ */
+function FriendCodeSection() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [code, setCode] = React.useState("");
+  const [status, setStatus] = React.useState("");
+  const [loaded, setLoaded] = React.useState(false);
+
+  const { data: savedCode, isPending } = useQuery({
+    queryKey: ["friend-code", user?.uid],
+    queryFn: () => getMyFriendCode(user!.uid),
+    enabled: !!user,
+  });
+
+  React.useEffect(() => {
+    if (!loaded && savedCode !== undefined) {
+      setCode(savedCode);
+      setLoaded(true);
+    }
+  }, [savedCode, loaded]);
+
+  const saveMutation = useMutation({
+    mutationFn: () => saveFriendCode(user!.uid, code),
+    onSuccess: () => {
+      setStatus("Friend code saved.");
+      queryClient.invalidateQueries({ queryKey: ["friend-code", user?.uid] });
+    },
+    onError: () => setStatus("Could not save your friend code. Try again."),
+  });
+
+  if (isPending) return null;
+
+  return (
+    <Stack gap={6}>
+      <TextInput
+        label="Switch friend code"
+        placeholder="SW-0000-0000-0000"
+        description="Used to prefill tournament registrations in the Colosseum."
+        value={code}
+        onChange={(e) => setCode(e.currentTarget.value)}
+        maw={320}
+      />
+      <Button
+        size="xs"
+        variant="light"
+        w="fit-content"
+        loading={saveMutation.isPending}
+        disabled={code.trim() === (savedCode ?? "")}
+        onClick={() => saveMutation.mutate()}
+      >
+        Save friend code
+      </Button>
+      {status && (
+        <Text fz={12} c="dimmed" role="status" aria-live="polite">
+          {status}
+        </Text>
+      )}
+    </Stack>
+  );
+}
+
 export default function Notifications() {
   const { user } = useAuth();
   const [isFirstTime, setFirstTime] = React.useState(true);
@@ -327,6 +401,7 @@ export default function Notifications() {
           <ConnectDiscord />
           <DiscordPublicToggle />
         </Stack>
+        <FriendCodeSection />
         <CustomSwitch
           {...getInputProps("postsAndBookmarkedThreadsNotification", { type: "checkbox" })}
           label="Receive notifications for new posts on your bookmarked threads"

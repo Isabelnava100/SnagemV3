@@ -21,6 +21,14 @@ export interface Mission {
   active?: boolean;
   times_taken?: number;
   order?: number;
+  /** Default encounter pool for this mission (pokemon slugs, seeded). */
+  encounters?: string[];
+  /** Set foes from the briefing; beating them is the minimum for the grade. */
+  requiredEncounters?: string[];
+  /** admin/pokemon_lists entry attached to auto-created threads. */
+  encounterListId?: string;
+  encounterMode?: "choose" | "roll";
+  encounterLimit?: number;
 }
 
 export const getMissions = async (): Promise<Mission[]> => {
@@ -44,6 +52,14 @@ async function call<T>(name: string, data: unknown): Promise<T> {
   const res = await httpsCallable(getFunctions(), name)(data);
   return res.data as T;
 }
+
+/**
+ * Picks up a mission: the server creates the Quests thread with the briefing
+ * as its first post and the mission's encounter list attached, then returns
+ * the new thread id.
+ */
+export const pickUpMission = (missionId: string) =>
+  call<{ threadId: string }>("pickUpMission", { missionId });
 
 /** Submit a completed mission for grading (creates a pending submission). */
 export const submitMission = (missionId: string, threadLink: string) =>

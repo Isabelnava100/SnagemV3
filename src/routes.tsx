@@ -144,7 +144,6 @@ export default function AppRoutes() {
                       <Route path="Pokemon/:teamId" element={<PokemonTeam />} />
                       <Route path="Pokemon" element={<Pokemons />} />
                       <Route path="Profile" element={<Profile />} />
-                      <Route path="Site-Settings" element={<SiteSettings />} />
                       {/* Admin moved to the top-level /Admin page; old links redirect. */}
                       <Route path="Admin-Access/*" element={<Navigate to="/Admin" replace />} />
                       <Route path="Settings" element={<Settings />}>
@@ -156,6 +155,17 @@ export default function AppRoutes() {
                       </Route>
                       <Route path="*" element={<Navigate to="" />} />
                     </Route>
+                    {/* Standalone (outside the Dashboard shell) so it reads as its
+                        own admin page, not another dashboard tab. Same URL, so the
+                        SideBar link keeps working. */}
+                    <Route
+                      path="/Dashboard/Site-Settings"
+                      element={
+                        <Protect>
+                          <SiteSettings />
+                        </Protect>
+                      }
+                    />
                     {/* Designed-but-unbuilt sidebar modules get a friendly placeholder. */}
                     <Route path="/Shop" element={<Mall />} />
                     <Route

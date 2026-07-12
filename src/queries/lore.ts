@@ -61,6 +61,16 @@ export const getLoreBooks = async (): Promise<LoreBook[]> => {
 };
 
 /**
+ * Every entry in one read, used to hide empty books from readers on the shelf
+ * (a book with no substantive entries stays visible only to editors).
+ */
+export const getAllLoreEntries = async (): Promise<LoreEntry[]> => {
+  const { collection, getDocs } = await import("firebase/firestore");
+  const snap = await getDocs(collection(db, "loreEntries"));
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<LoreEntry, "id">) }));
+};
+
+/**
  * Entries for one book. Filtered server-side by bookId, then sorted by `order`
  * on the client so no composite index is required (entry counts stay small).
  */

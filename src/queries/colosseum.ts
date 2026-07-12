@@ -76,8 +76,11 @@ export interface TournamentSignup {
   id: string;
   username?: string;
   friendCode?: string;
+  /** Legacy sign-ups saved a dashboard team reference. */
   teamId?: string;
   teamName?: string;
+  /** Free-pick battle team (pokemon slugs, any species, for the Switch). */
+  teamPokemon?: string[];
   createdAt?: { seconds: number };
 }
 
@@ -124,15 +127,13 @@ export const registerForTournament = async (args: {
   uid: string;
   username?: string;
   friendCode: string;
-  teamId: string;
-  teamName?: string;
+  teamPokemon: string[];
 }): Promise<void> => {
   const { doc, setDoc, serverTimestamp } = await import("firebase/firestore");
   await setDoc(doc(db, "tournaments", args.tournamentId, "signups", args.uid), {
     username: args.username ?? "",
     friendCode: args.friendCode,
-    teamId: args.teamId,
-    teamName: args.teamName ?? "",
+    teamPokemon: args.teamPokemon.slice(0, 6),
     createdAt: serverTimestamp(),
   });
 };
@@ -159,3 +160,13 @@ export const logTrainingPost = (pokemonId: string, partner: boolean) =>
 
 /** Clear today's training session. */
 export const resetTrainingSession = () => call<{ ok: boolean }>("resetTrainingSession", {});
+
+/** Hard cap of posts inside one training window (mirrors the Cloud Function). */
+export const MAX_TRAINING_POSTS = 10;
+
+/**
+ * Returns the shared pinned Super Training Room thread on The-Colosseum forum,
+ * creating it (authored by an admin account) when it does not exist yet.
+ */
+export const ensureTrainingThread = () =>
+  call<{ threadId: string }>("ensureTrainingThread", {});

@@ -1,7 +1,7 @@
 import { Avatar, Checkbox, Container, Flex, Grid, Group, Stack, Text, Title } from "@mantine/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
@@ -9,7 +9,12 @@ import Editor, { useRichTextEditor } from "../../../components/editor/Editor";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { getPokemonImageURL } from "../../../helpers";
-import { getItems } from "../../../queries/dashboard";
+import { getItems, getOwnedPokemons } from "../../../queries/dashboard";
+import {
+  getTrainingSession,
+  logTrainingPost,
+  MAX_TRAINING_POSTS,
+} from "../../../queries/colosseum";
 import { queryClient } from "../../../lib/react-query";
 import { callableMessage } from "../functionsClient";
 import {
@@ -90,6 +95,32 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     enabled: mode === "new" && !!user && !!draftId,
   });
 
+  // Training-post mode: arriving from the Colosseum Training Room carries the
+  // target pokemon id. Publishing also logs the post against the member's
+  // daily training window (max 10 posts).
+  const trainingTargetId = searchParams.get("training");
+  const trainingPartner = searchParams.get("partner") === "1";
+  const trainingActive = mode === "new" && !!thread?.trainingLog && !!trainingTargetId;
+
+  const { data: trainingSession } = useQuery({
+    queryKey: ["training-session", user?.uid],
+    queryFn: () => getTrainingSession(user!.uid),
+    enabled: trainingActive && !!user,
+  });
+  const { data: ownedForTraining } = useQuery({
+    queryKey: ["owned-pokemons", user?.uid],
+    queryFn: () => getOwnedPokemons(user!.uid),
+    enabled: trainingActive && !!user,
+  });
+  const trainingTarget = (ownedForTraining?.sortedData ?? []).find(
+    (p) => p.id === trainingTargetId
+  );
+  const trainingToday = new Date().toISOString().slice(0, 10);
+  const trainingPostsLogged =
+    trainingSession?.date === trainingToday ? trainingSession?.postsLogged ?? 0 : 0;
+  const trainingAtCap = trainingActive && trainingPostsLogged >= MAX_TRAINING_POSTS;
+  const trainingOnLastPost = trainingActive && trainingPostsLogged === MAX_TRAINING_POSTS - 1;
+
   const { data: inventory } = useQuery({
     queryKey: ["get-items", user?.uid],
     queryFn: () => getItems(user!.uid),
@@ -141,7 +172,31 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
       load(draft.long_text || "");
       setLoadedEdit(true);
     }
-  }, [editor, editingPost, quotedPost, draft, mode, loadedEdit]);
+    if (mode === "new" && !quoteId && !draftId && trainingActive && trainingTarget) {
+      const label =
+        trainingTarget.name && trainingTarget.name !== trainingTarget.species
+          ? `${trainingTarget.name} (${trainingTarget.species})`
+          : trainingTarget.species || trainingTarget.name;
+      load(
+        `<p><em>Super Training Room session: training ${label}, ${
+          trainingPartner ? "partner" : "solo"
+        } window.</em></p><p></p>`
+      );
+      setLoadedEdit(true);
+    }
+  }, [
+    editor,
+    editingPost,
+    quotedPost,
+    draft,
+    mode,
+    loadedEdit,
+    quoteId,
+    draftId,
+    trainingActive,
+    trainingTarget,
+    trainingPartner,
+  ]);
 
   const bossActive =
     !!thread?.bossBattle?.active &&
@@ -165,6 +220,11 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
 
   const publishMutation = useMutation({
     mutationFn: async () => {
+      // Log the training post first so the daily window and 10-post cap are
+      // enforced before anything is published to the thread.
+      if (trainingActive && trainingTargetId) {
+        await logTrainingPost(trainingTargetId, trainingPartner);
+      }
       await publishPost({
         forum,
         threadId: threadId!,
@@ -184,6 +244,10 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     },
     onSuccess: async () => {
       if (draftId && user) await deleteDraft(user.uid, draftId);
+      if (trainingActive) {
+        queryClient.invalidateQueries({ queryKey: ["training-session", user?.uid] });
+        queryClient.invalidateQueries({ queryKey: ["owned-pokemons", user?.uid] });
+      }
       queryClient.invalidateQueries({ queryKey: ["forum-thread", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["forum-posts-count", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["forum-posts", forum, threadId] });
@@ -224,6 +288,12 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     );
   }
 
+  // Training posts must start from the Colosseum Training Room page so the
+  // target and daily window travel with them; direct replies bounce there.
+  if (mode === "new" && thread.trainingLog && !trainingTargetId) {
+    return <Navigate to="/Colosseum" replace />;
+  }
+
   if (mode === "new" && !userMayPost(thread, user)) {
     return (
       <Container size="lg" mt={20}>
@@ -245,7 +315,9 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   }
 
   const handlePublish = () => {
-    const problem = validate();
+    const problem = trainingAtCap
+      ? `You reached the ${MAX_TRAINING_POSTS}-post limit for this training window.`
+      : validate();
     setError(problem);
     if (!problem) publishMutation.mutateAsync();
   };
@@ -288,6 +360,56 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
 
         <Grid.Col span={{ base: 12, sm: 7 }}>
           <Stack gap={16}>
+            {trainingActive && (
+              <ForumPanel title="Training Post">
+                <Stack gap={10}>
+                  <Text fz={14} c="orange.3" fw={600} role="status" aria-live="polite">
+                    You are logging a training post. The whole training session needs to be
+                    written out and posted within this post.
+                  </Text>
+                  {trainingTarget && (
+                    <Flex align="center" gap={10}>
+                      <Avatar
+                        src={getPokemonImageURL(trainingTarget.image_slug)}
+                        alt={`${trainingTarget.name || trainingTarget.species} sprite`}
+                        size={48}
+                        radius="xl"
+                      />
+                      <Stack gap={2}>
+                        <Text fz={14} c="white" fw={600}>
+                          Training target: {trainingTarget.name || trainingTarget.species}
+                          {trainingTarget.name && trainingTarget.name !== trainingTarget.species
+                            ? ` (${trainingTarget.species})`
+                            : ""}
+                        </Text>
+                        <PanelHint>
+                          This post counts only toward this target. {trainingPartner ? "Partner" : "Solo"}{" "}
+                          window: {trainingPartner ? "4 hours" : "2 hours"}, once per day.
+                        </PanelHint>
+                      </Stack>
+                    </Flex>
+                  )}
+                  <PanelHint>
+                    You may keep posting inside your window, up to {MAX_TRAINING_POSTS} posts.
+                    This will be post {Math.min(trainingPostsLogged + 1, MAX_TRAINING_POSTS)} of{" "}
+                    {MAX_TRAINING_POSTS}.
+                  </PanelHint>
+                  {trainingOnLastPost && (
+                    <Text fz={13} c="orange.4" fw={600} role="status" aria-live="polite">
+                      Heads up: this is going to be your last post of the{" "}
+                      {trainingPartner ? "4-hour" : "2-hour"} limit.
+                    </Text>
+                  )}
+                  {trainingAtCap && (
+                    <Text fz={13} c="red.4" fw={600} role="status" aria-live="polite">
+                      You reached the {MAX_TRAINING_POSTS}-post limit for this training window.
+                      Come back tomorrow for a new session.
+                    </Text>
+                  )}
+                </Stack>
+              </ForumPanel>
+            )}
+
             {bossActive && thread.bossBattle && (
               <ForumPanel title="Boss Battle">
                 <Flex align="center" gap={10}>

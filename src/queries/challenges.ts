@@ -80,3 +80,57 @@ export const grantChallengeStep = (
   stepId: string,
   zCrystal?: string
 ) => call<{ ok: boolean }>("grantChallengeStep", { uid, kind, regionOrIsland, stepId, zCrystal });
+
+/**
+ * A member's ask to start a gym run or island trial. Admins/directors host
+ * these threads, so the request waits in the staff inbox until someone
+ * accepts it and creates the thread.
+ */
+export interface ChallengeRequest {
+  id: string;
+  uid: string;
+  username?: string;
+  kind: "gym" | "trial";
+  regionOrIsland: string;
+  stageId: string;
+  stageTitle?: string;
+  status: "requested" | "accepted" | "declined";
+  threadLink?: string;
+  handledBy?: string;
+  createdAt?: { seconds: number };
+}
+
+/** The signed-in member's own challenge requests (drives the page's buttons). */
+export const getMyChallengeRequests = async (uid: string): Promise<ChallengeRequest[]> => {
+  const { collection, getDocs, query, where } = await import("firebase/firestore");
+  const snap = await getDocs(
+    query(collection(db, "challengeRequests"), where("uid", "==", uid))
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ChallengeRequest, "id">) }));
+};
+
+/** Staff view: every request still waiting for someone to accept it. */
+export const getPendingChallengeRequests = async (): Promise<ChallengeRequest[]> => {
+  const { collection, getDocs, query, where } = await import("firebase/firestore");
+  const snap = await getDocs(
+    query(collection(db, "challengeRequests"), where("status", "==", "requested"))
+  );
+  return snap.docs
+    .map((d) => ({ id: d.id, ...(d.data() as Omit<ChallengeRequest, "id">) }))
+    .sort((a, b) => (a.createdAt?.seconds ?? 0) - (b.createdAt?.seconds ?? 0));
+};
+
+/** Files a challenge request and notifies hosting staff. */
+export const requestChallenge = (args: {
+  kind: "gym" | "trial";
+  regionOrIsland: string;
+  stageId: string;
+  stageTitle?: string;
+}) => call<{ ok: boolean; id: string; duplicate?: boolean }>("requestChallenge", args);
+
+/** Staff action: accept (optionally with the created thread's link) or decline. */
+export const resolveChallengeRequest = (args: {
+  requestId: string;
+  accept: boolean;
+  threadLink?: string;
+}) => call<{ ok: boolean }>("resolveChallengeRequest", args);

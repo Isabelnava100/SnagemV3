@@ -421,6 +421,12 @@ export interface AdminPokemonList {
   pokemons: string[];
   public: boolean;
   rule: "except" | "only";
+  /**
+   * Seeded default pool for a mission (attached by pickUpMission). Hidden from
+   * the Library's Field Registers and the host encounter picker, which only
+   * show manually curated lists.
+   */
+  missionDefault?: boolean;
 }
 
 export interface Settings {

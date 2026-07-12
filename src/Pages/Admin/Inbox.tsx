@@ -1,5 +1,5 @@
-import { Badge, Box, Button, Group, Stack, Text } from "@mantine/core";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Badge, Box, Button, Group, Stack, Text, TextInput } from "@mantine/core";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconChevronDown } from "@tabler/icons-react";
 import React from "react";
 import { EmptyMessage } from "../../components/common/Message";
@@ -10,6 +10,11 @@ import { hasCapability, isAdmin } from "../../lib/permissions";
 import { getUsers } from "../../queries/admin";
 import { getNewUsers } from "../../queries/applicants";
 import {
+  ChallengeRequest,
+  getPendingChallengeRequests,
+  resolveChallengeRequest,
+} from "../../queries/challenges";
+import {
   getPendingMasterMissionRequests,
   getPendingMissionSubmissions,
 } from "../../queries/grading";
@@ -18,14 +23,83 @@ import { ApplicantCard } from "../User/Dashboard/Admin/Applicants";
 import { MMRequestCard, SubmissionCard } from "../User/Dashboard/Admin/Grading";
 import { ReviewCard } from "../User/Dashboard/Admin/Imports";
 
-type InboxType = "application" | "import" | "mission" | "master";
+type InboxType = "application" | "import" | "mission" | "master" | "challenge";
 
 const TYPE_META: Record<InboxType, { label: string; color: string; action: string }> = {
   application: { label: "Application", color: "#a855f7", action: "Review" },
   import: { label: "Import", color: "#3b82f6", action: "Review" },
   mission: { label: "Mission", color: "#ef4444", action: "Grade" },
   master: { label: "Master Req", color: "#14b8a6", action: "Grant" },
+  challenge: { label: "Challenge", color: "#f59e0b", action: "Review" },
 };
+
+/**
+ * Accept/decline card for a gym or trial run request. Accepting is the staff
+ * promise to create + host the member's thread; pasting the thread link is
+ * optional and gets sent along in the member's notification.
+ */
+function ChallengeRequestCard(props: { request: ChallengeRequest; onDone: () => void }) {
+  const { request, onDone } = props;
+  const [threadLink, setThreadLink] = React.useState("");
+  const [error, setError] = React.useState("");
+
+  const resolveMutation = useMutation({
+    mutationFn: (accept: boolean) =>
+      resolveChallengeRequest({
+        requestId: request.id,
+        accept,
+        threadLink: threadLink.trim() || undefined,
+      }),
+    onSuccess: onDone,
+    onError: () => setError("Could not update that request. Try again."),
+  });
+
+  return (
+    <Stack gap="sm">
+      <Text fz={13} c="dimmed">
+        {request.username || "A member"} wants to start{" "}
+        <Text component="span" fz={13} c="white" fw={600}>
+          {request.stageTitle || request.stageId}
+        </Text>{" "}
+        ({request.kind === "gym" ? "gym run" : "island trial"}, {request.regionOrIsland}).
+        Create their thread in the forums, then accept. You can paste the thread link so
+        their notification takes them straight there.
+      </Text>
+      <TextInput
+        label="Thread link (optional)"
+        placeholder="/Forum/Main-Forum/thread/123"
+        value={threadLink}
+        onChange={(e) => setThreadLink(e.currentTarget.value)}
+      />
+      <Group gap="sm">
+        <Button
+          color="teal"
+          radius="xl"
+          size="sm"
+          loading={resolveMutation.isPending}
+          onClick={() => resolveMutation.mutate(true)}
+        >
+          Accept challenge
+        </Button>
+        <Button
+          variant="light"
+          color="red"
+          radius="xl"
+          size="sm"
+          loading={resolveMutation.isPending}
+          onClick={() => resolveMutation.mutate(false)}
+        >
+          Decline
+        </Button>
+      </Group>
+      {error && (
+        <Text fz={12} c="red.4" role="status" aria-live="polite">
+          {error}
+        </Text>
+      )}
+    </Stack>
+  );
+}
 
 /** Collapsed summary row that expands to the full review card for that item. */
 function InboxRow(props: {
@@ -114,6 +188,10 @@ export default function Inbox() {
   const canApps = admin;
   const canImports = admin || hasCapability(user, Capability.ApproveImports);
   const canGrade = admin || hasCapability(user, Capability.ReviewRewards);
+  const canChallenges =
+    admin ||
+    hasCapability(user, Capability.HostMainForum) ||
+    hasCapability(user, Capability.ReviewRewards);
 
   const apps = useQuery({
     queryKey: ["new-users"],
@@ -143,6 +221,13 @@ export default function Inbox() {
     refetchOnMount: "always",
     staleTime: 0,
   });
+  const challenges = useQuery({
+    queryKey: ["pending-challenge-requests"],
+    queryFn: getPendingChallengeRequests,
+    enabled: canChallenges,
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
   const { data: users } = useQuery({
     queryKey: ["get-all-users"],
     queryFn: getUsers,
@@ -156,13 +241,16 @@ export default function Inbox() {
   const importList = canImports ? imports.data ?? [] : [];
   const missionList = canGrade ? missions.data ?? [] : [];
   const masterList = canGrade ? master.data ?? [] : [];
+  const challengeList = canChallenges ? challenges.data ?? [] : [];
 
   const loading =
     (canApps && apps.isPending) ||
     (canImports && imports.isPending) ||
-    (canGrade && (missions.isPending || master.isPending));
+    (canGrade && (missions.isPending || master.isPending)) ||
+    (canChallenges && challenges.isPending);
 
-  const total = appList.length + importList.length + missionList.length + masterList.length;
+  const total =
+    appList.length + importList.length + missionList.length + masterList.length + challengeList.length;
 
   return (
     <Stack gap="lg">
@@ -180,6 +268,7 @@ export default function Inbox() {
           {canImports && <CountPill label="Imports" count={importList.length} />}
           {canGrade && <CountPill label="Missions" count={missionList.length} />}
           {canGrade && <CountPill label="Master Req" count={masterList.length} />}
+          {canChallenges && <CountPill label="Challenges" count={challengeList.length} />}
         </Group>
       </Group>
 
@@ -241,6 +330,16 @@ export default function Inbox() {
               subtitle={`${r.type || "Master"} Master Mission #${r.number ?? "?"}`}
             >
               <MMRequestCard request={r} onDone={refresh("pending-mm-requests")} />
+            </InboxRow>
+          ))}
+          {challengeList.map((r) => (
+            <InboxRow
+              key={`ch-${r.id}`}
+              type="challenge"
+              title={r.username || "Unknown member"}
+              subtitle={r.stageTitle || r.stageId}
+            >
+              <ChallengeRequestCard request={r} onDone={refresh("pending-challenge-requests")} />
             </InboxRow>
           ))}
         </Stack>

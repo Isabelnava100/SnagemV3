@@ -7,6 +7,7 @@ import {
   Flex,
   Group,
   Image,
+  MultiSelect,
   RingProgress,
   SegmentedControl,
   Select,
@@ -29,18 +30,21 @@ import {
   IconTrophy,
 } from "@tabler/icons-react";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { SectionLoader } from "../../components/navigation/loading";
 import { getPokemonImageURL } from "../../helpers";
+import { pokemonData } from "../../data/pokemon";
 import {
   BracketRound,
+  ensureTrainingThread,
   getHallOfFame,
   getRankings,
   getTournaments,
   getTournamentSignups,
   getTrainingSession,
   HallOfFameEntry,
-  logTrainingPost,
+  MAX_TRAINING_POSTS,
   RankingRow,
   registerForTournament,
   resetTrainingSession,
@@ -49,7 +53,9 @@ import {
   TrainingSession,
   withdrawFromTournament,
 } from "../../queries/colosseum";
-import { getOwnedPokemons, getTeamsRaw } from "../../queries/dashboard";
+import { getMyFriendCode, saveFriendCode } from "../../queries/settings";
+import { getOwnedPokemons } from "../../queries/dashboard";
+import { OwnedPokemon } from "../../components/types/typesUsed";
 
 /**
  * The Colosseum: the battle and training hub. Four sub-systems in one page:
@@ -103,10 +109,83 @@ function StatTile(props: { label: string; value: React.ReactNode }) {
   );
 }
 
+/**
+ * Confirmation card next to the training-target dropdown: sprite plus the
+ * details we hold on that specific pokemon so the member can double-check
+ * before opening a training post.
+ */
+function TrainingTargetCard({ pokemon }: { pokemon: OwnedPokemon }) {
+  const genderLabel = pokemon.gender === "F" ? "Female" : pokemon.gender === "M" ? "Male" : "Unknown";
+  const types = [pokemon.type1, pokemon.type2].filter((t) => t && t !== "Unknown").join(" / ");
+  const details: Array<[string, string]> = [
+    ["Species", pokemon.species || "-"],
+    ["Gender", genderLabel],
+    ...(types ? ([["Type", types]] as Array<[string, string]>) : []),
+    ...(pokemon.pokedex ? ([["Dex No.", `#${pokemon.pokedex}`]] as Array<[string, string]>) : []),
+    ["Evo Points", String(pokemon.experience ?? 0)],
+    ["Happiness", String(pokemon.friendship ?? 0)],
+    ...((pokemon.shadow ?? 0) > 0
+      ? ([["Purification", String(pokemon.purification ?? 0)]] as Array<[string, string]>)
+      : []),
+  ];
+  return (
+    <Card bg="#201e2b" radius="md" p={12} withBorder style={{ borderColor: "#3a3550", flex: "1 1 220px", minWidth: 0 }}>
+      <Group gap={12} wrap="nowrap" align="flex-start">
+        <Box
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: 10,
+            background: "#15131d",
+            border: "1px solid #2a2637",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Image
+            src={getPokemonImageURL(pokemon.image_slug)}
+            alt={`${pokemon.name || pokemon.species} sprite`}
+            w={56}
+            h={56}
+            fit="contain"
+          />
+        </Box>
+        <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
+          <Group gap={6} wrap="nowrap">
+            <Text fz={14} fw={700} c="white" lineClamp={1}>
+              {pokemon.name || pokemon.species}
+            </Text>
+            {pokemon.shiny && (
+              <Badge color="yellow" variant="light" size="xs">
+                Shiny
+              </Badge>
+            )}
+            {(pokemon.shadow ?? 0) > 0 && (
+              <Badge color="violet" variant="light" size="xs">
+                Shadow
+              </Badge>
+            )}
+          </Group>
+          <SimpleGrid cols={2} spacing={2} verticalSpacing={2}>
+            {details.map(([label, value]) => (
+              <Text key={label} fz={11} c="dimmed" lineClamp={1}>
+                {label}: <Text component="span" fz={11} c="gray.3">{value}</Text>
+              </Text>
+            ))}
+          </SimpleGrid>
+        </Stack>
+      </Group>
+    </Card>
+  );
+}
+
 function TrainingRoomTab() {
   const { user } = useAuth();
   const uid = user?.uid;
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: owned, isPending: ownedPending } = useQuery({
     queryKey: ["owned-pokemons", uid],
@@ -135,19 +214,25 @@ function TrainingRoomTab() {
 
   const experience = selected?.experience ?? 0;
   const pct = Math.min(100, Math.round((experience / 25) * 100));
-  const postsLogged = session?.postsLogged ?? 0;
+  // Session counters only apply to today's window (the server resets by date).
+  const today = new Date().toISOString().slice(0, 10);
+  const sessionIsToday = session?.date === today;
+  const postsLogged = sessionIsToday ? session?.postsLogged ?? 0 : 0;
   const nextEvoPts = postsLogged < 5 ? "1.0" : "0.75";
+  const atPostCap = postsLogged >= MAX_TRAINING_POSTS;
+  const onLastPost = postsLogged === MAX_TRAINING_POSTS - 1;
 
+  // Opens the shared pinned training thread and sends the member to the post
+  // composer with this target preloaded. Points are awarded when the post is
+  // published there (the composer calls logTrainingPost).
   const logMutation = useMutation({
-    mutationFn: () => logTrainingPost(selectedId as string, partner),
-    onSuccess: (res) => {
-      setStatus(
-        `Post logged. Earned ${res.awardedEvo} evolution and ${res.awardedHappiness} happiness points.`
+    mutationFn: () => ensureTrainingThread(),
+    onSuccess: ({ threadId }) => {
+      navigate(
+        `/Forum/The-Colosseum/thread/${threadId}/post?training=${selectedId}&partner=${partner ? 1 : 0}`
       );
-      queryClient.invalidateQueries({ queryKey: ["training-session", uid] });
-      queryClient.invalidateQueries({ queryKey: ["owned-pokemons", uid] });
     },
-    onError: () => setStatus("Could not log that post. Please try again."),
+    onError: () => setStatus("Could not open the training thread. Please try again."),
   });
 
   const resetMutation = useMutation({
@@ -171,18 +256,25 @@ function TrainingRoomTab() {
 
   return (
     <Stack gap="md">
-      <Select
-        aria-label="Training target Pokemon"
-        label="Training target"
-        placeholder={pokemons.length ? "Choose a Pokemon" : "You have no Pokemon yet"}
-        data={pokemons.map((p) => ({ value: p.id, label: p.name || p.species }))}
-        value={selectedId}
-        onChange={setSelectedId}
-        disabled={!pokemons.length}
-        maw={320}
-        w="100%"
-        searchable
-      />
+      <Flex direction={{ base: "column", sm: "row" }} gap="md" align={{ base: "stretch", sm: "flex-start" }}>
+        <Select
+          aria-label="Training target Pokemon"
+          label="Training target"
+          placeholder={pokemons.length ? "Choose a Pokemon" : "You have no Pokemon yet"}
+          data={pokemons.map((p) => ({
+            value: p.id,
+            label:
+              p.name && p.name !== p.species ? `${p.name} (${p.species})` : p.species || p.name,
+          }))}
+          value={selectedId}
+          onChange={setSelectedId}
+          disabled={!pokemons.length}
+          maw={320}
+          w="100%"
+          searchable
+        />
+        {selected && <TrainingTargetCard pokemon={selected} />}
+      </Flex>
 
       <Flex direction={{ base: "column", sm: "row" }} gap="md" align="stretch">
         <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
@@ -216,9 +308,9 @@ function TrainingRoomTab() {
             </Group>
 
             <SimpleGrid cols={{ base: 3 }} spacing="xs" mb="md">
-              <StatTile label="Evolution Pts" value={session?.evoPts ?? 0} />
-              <StatTile label="Happiness Pts" value={session?.happinessPts ?? 0} />
-              <StatTile label="Posts Logged" value={postsLogged} />
+              <StatTile label="Evolution Pts" value={sessionIsToday ? session?.evoPts ?? 0 : 0} />
+              <StatTile label="Happiness Pts" value={sessionIsToday ? session?.happinessPts ?? 0 : 0} />
+              <StatTile label="Posts Logged" value={`${postsLogged} / ${MAX_TRAINING_POSTS}`} />
             </SimpleGrid>
 
             <Stack gap="sm">
@@ -237,15 +329,26 @@ function TrainingRoomTab() {
                 gradient={{ from: "grape", to: "indigo", deg: 90 }}
                 onClick={() => logMutation.mutate()}
                 loading={logMutation.isPending}
-                disabled={!selectedId}
+                disabled={!selectedId || atPostCap}
                 fullWidth
               >
                 Log a Training Post
               </Button>
 
+              {atPostCap && (
+                <Text fz={12} c="orange.4" role="status" aria-live="polite">
+                  You reached the {MAX_TRAINING_POSTS}-post limit for this training window.
+                </Text>
+              )}
+              {onLastPost && (
+                <Text fz={12} c="orange.4" role="status" aria-live="polite">
+                  Heads up: your next post is the last one of this training window.
+                </Text>
+              )}
+
               <Group justify="space-between" wrap="nowrap">
                 <Text fz={11} c="dimmed">
-                  Next post earns {nextEvoPts} evolution pts.
+                  Opens the pinned training thread. Next post earns {nextEvoPts} evolution pts.
                 </Text>
                 <Button
                   variant="subtle"
@@ -279,6 +382,9 @@ function TrainingRoomTab() {
                 </Text>
                 <Text fz={12} c="dimmed">
                   Train in a pair for a 4-hour window.
+                </Text>
+                <Text fz={12} c="dimmed">
+                  Maximum {MAX_TRAINING_POSTS} posts per training window.
                 </Text>
                 <Text fz={12} c="dimmed">
                   Shadow Pokemon earn Purification instead.
@@ -757,17 +863,22 @@ function PrizesCard({ prizes }: { prizes: Record<string, string[]> }) {
   );
 }
 
+/** Full-dex options for the free-pick battle team (Switch play, not the dashboard). */
+const BATTLE_TEAM_OPTIONS = pokemonData.map((p) => ({ value: p.slug, label: p.name }));
+
 function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup[] }) {
   const { user } = useAuth();
   const uid = user?.uid;
   const queryClient = useQueryClient();
   const [friendCode, setFriendCode] = React.useState("");
-  const [teamId, setTeamId] = React.useState<string | null>(null);
+  const [teamPokemon, setTeamPokemon] = React.useState<string[]>([]);
   const [status, setStatus] = React.useState("");
 
-  const { data: teams } = useQuery({
-    queryKey: ["teams-raw", uid],
-    queryFn: () => getTeamsRaw(uid as string),
+  // A friend code saved in Settings prefills the form; registering keeps it in
+  // sync so the member only ever types it once.
+  const { data: savedFriendCode } = useQuery({
+    queryKey: ["friend-code", uid],
+    queryFn: () => getMyFriendCode(uid as string),
     enabled: !!uid,
   });
 
@@ -776,23 +887,31 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
   React.useEffect(() => {
     if (mine) {
       setFriendCode(mine.friendCode ?? "");
-      setTeamId(mine.teamId ?? null);
+      setTeamPokemon(mine.teamPokemon ?? []);
     }
   }, [mine?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  React.useEffect(() => {
+    if (!mine && savedFriendCode) setFriendCode((prev) => prev || savedFriendCode);
+  }, [savedFriendCode, mine]);
+
   const registerMutation = useMutation({
-    mutationFn: () =>
-      registerForTournament({
+    mutationFn: async () => {
+      await registerForTournament({
         tournamentId: t.id,
         uid: uid as string,
         username: user?.username,
         friendCode: friendCode.trim(),
-        teamId: teamId as string,
-        teamName: teams?.find((tm) => tm.id === teamId)?.team_name,
-      }),
+        teamPokemon,
+      });
+      if (friendCode.trim() && friendCode.trim() !== savedFriendCode) {
+        await saveFriendCode(uid as string, friendCode).catch(() => undefined);
+      }
+    },
     onSuccess: () => {
       setStatus(mine ? "Registration updated." : "You are registered. Good luck!");
       queryClient.invalidateQueries({ queryKey: ["tournament-signups", t.id] });
+      queryClient.invalidateQueries({ queryKey: ["friend-code", uid] });
     },
     onError: () => setStatus("Could not register. Please try again."),
   });
@@ -801,15 +920,15 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
     mutationFn: () => withdrawFromTournament(t.id, uid as string),
     onSuccess: () => {
       setStatus("You have withdrawn.");
-      setFriendCode("");
-      setTeamId(null);
+      setFriendCode(savedFriendCode ?? "");
+      setTeamPokemon([]);
       queryClient.invalidateQueries({ queryKey: ["tournament-signups", t.id] });
     },
     onError: () => setStatus("Could not withdraw. Please try again."),
   });
 
   const closed = t.status === "complete" || t.status === "running";
-  const canRegister = !!friendCode.trim() && !!teamId;
+  const canRegister = !!friendCode.trim() && teamPokemon.length > 0;
 
   return (
     <Card
@@ -835,20 +954,23 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
             </Badge>
           )}
           <TextInput
-            aria-label="Friend code"
+            label="Friend code"
             placeholder="Friend code (SW-0000-0000-0000)"
+            description="Saved to your Settings so it prefills next time."
             value={friendCode}
             onChange={(e) => setFriendCode(e.currentTarget.value)}
           />
-          <Select
-            aria-label="Battle Team"
-            placeholder={teams?.length ? "Select a Battle Team" : "You have no Battle Teams"}
-            data={(teams ?? []).map((tm) => ({ value: tm.id, label: tm.team_name || "Unnamed team" }))}
-            value={teamId}
-            onChange={setTeamId}
-            disabled={!teams?.length}
-            nothingFoundMessage="No teams yet"
+          <MultiSelect
+            label="Battle team"
+            placeholder={teamPokemon.length >= 6 ? "" : "Pick up to 6 Pokemon"}
+            description="This team is for the Switch battle, so pick any Pokemon (owned or not)."
+            data={BATTLE_TEAM_OPTIONS}
+            value={teamPokemon}
+            onChange={setTeamPokemon}
+            maxValues={6}
+            limit={50}
             searchable
+            nothingFoundMessage="No Pokemon matches that search"
           />
           <Button
             variant="gradient"

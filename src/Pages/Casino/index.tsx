@@ -33,6 +33,7 @@ import { hasCapability } from "../../lib/permissions";
 import {
   buyLottoTicket,
   CasinoGame,
+  DEFAULT_LOTTO_MIN_TICKETS,
   drawLotto,
   exchangeTokens,
   getCasinoConfig,
@@ -634,6 +635,8 @@ function ShadowLotto(props: { uid: string; tokens: number }) {
 
   const lotto = useQuery({ queryKey: ["lotto-state"], queryFn: getLottoState });
   const mine = useQuery({ queryKey: ["my-casino", props.uid], queryFn: () => getMyCasino(props.uid) });
+  const config = useQuery({ queryKey: ["casino-config"], queryFn: getCasinoConfig });
+  const minTickets = Math.max(1, config.data?.lottoMinTickets ?? DEFAULT_LOTTO_MIN_TICKETS);
 
   const mutation = useMutation({
     mutationFn: () => buyLottoTicket(pick),
@@ -695,6 +698,11 @@ function ShadowLotto(props: { uid: string; tokens: number }) {
         <Text fz={13} c="dimmed">
           Gengar Tokens
         </Text>
+        <Text fz={12} c="dimmed" role="status" aria-live="polite">
+          {(lotto.data?.ticketCount ?? 0) >= minTickets
+            ? `${lotto.data?.ticketCount ?? 0} entries in, ready for the draw. Staff have been notified.`
+            : `${lotto.data?.ticketCount ?? 0} of ${minTickets} entries needed before the draw runs.`}
+        </Text>
       </Stack>
       <Group gap="md" align="flex-end" mt="sm" wrap="nowrap">
         <Box style={{ flex: 1, minWidth: 0 }}>
@@ -743,6 +751,7 @@ function ShadowLotto(props: { uid: string; tokens: number }) {
           </Button>
           <Text fz={11} c="dimmed">
             Draws the number, splits the jackpot among matching tickets, and resets the pot.
+            You get a notification when entries reach {minTickets}.
           </Text>
         </Stack>
       )}

@@ -13,7 +13,7 @@ import {
 import { getPokemonImageURL } from "../../../helpers";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
@@ -172,6 +172,46 @@ export default function ThreadView() {
         {thread.closed ? " (Archived)" : ""}
       </Title>
 
+      {thread.missionId && (
+        <Box
+          mt={12}
+          p={12}
+          style={{ background: "#1f2a3a", border: "1px solid #2b4a7a", borderRadius: 10 }}
+        >
+          <Text fz={13} c="white" fw={600}>
+            This is a mission thread.{" "}
+            <Text
+              component={Link}
+              to={`/Missions/${thread.missionId}`}
+              fz={13}
+              fw={700}
+              c="blue.3"
+              td="underline"
+            >
+              View the mission briefing
+            </Text>{" "}
+            for the objective, opposition and rewards. Closing the thread sends it to the
+            admins for grading.
+          </Text>
+        </Box>
+      )}
+
+      {thread.trainingLog && (
+        <Box
+          mt={12}
+          p={12}
+          style={{ background: "#2a1f3a", border: "1px solid #5a3fb0", borderRadius: 10 }}
+        >
+          <Text fz={13} c="white" fw={600}>
+            Super Training Room log. Posts here start from the{" "}
+            <Text component={Link} to="/Colosseum" fz={13} fw={700} c="grape.3" td="underline">
+              Colosseum Training Room
+            </Text>
+            , once per day, up to 10 posts inside your training window.
+          </Text>
+        </Box>
+      )}
+
       {thread.bossBattle?.active && <BossBanner boss={thread.bossBattle} />}
 
       <Flex justify="space-between" align="center" mt={14} gap={10} wrap="wrap">
@@ -207,9 +247,15 @@ export default function ThreadView() {
             <GradientButtonPrimary
               radius="xl"
               size="xs"
-              onClick={() => navigate(`/Forum/${forum}/thread/${threadId}/post`)}
+              onClick={() =>
+                // Training posts must start from the Colosseum Training Room so
+                // the target pokemon and daily window travel with the post.
+                thread.trainingLog
+                  ? navigate("/Colosseum")
+                  : navigate(`/Forum/${forum}/thread/${threadId}/post`)
+              }
             >
-              Make a New Post
+              {thread.trainingLog ? "Log a Training Post" : "Make a New Post"}
             </GradientButtonPrimary>
           )}
         </Group>

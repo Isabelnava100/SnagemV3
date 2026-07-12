@@ -228,7 +228,9 @@ function ListsTab() {
     queryKey: ["public-pokemon-lists"],
     queryFn: getPokemonLists,
   });
-  const publicLists = (data?.formattedData ?? []).filter((l) => l.public);
+  // Only manually curated host lists show here; seeded mission-default pools
+  // are attached by pickUpMission and stay out of the registers.
+  const publicLists = (data?.formattedData ?? []).filter((l) => l.public && !l.missionDefault);
 
   if (isPending) {
     return (
@@ -312,7 +314,7 @@ type Wing = {
 const WINGS: Wing[] = [
   {
     value: "pokedex",
-    name: "The Bestiary",
+    name: "The Pokédex",
     callNo: "QL · 700",
     meta: `${pokemonData.length.toLocaleString()} species`,
     blurb: "Every catalogued species, searchable by name or number.",

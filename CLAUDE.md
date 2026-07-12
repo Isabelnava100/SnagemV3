@@ -63,6 +63,9 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 
 ## Known deferred work
 
+- Forum-first flows (July 2026) need a functions + rules deploy before they work live: new callables `ensureTrainingThread`, `pickUpMission`, `requestChallenge`, `resolveChallengeRequest`, updated `buyLottoTicket`/`logTrainingPost`/`onThreadClosed`, plus the `challengeRequests` rules block. After deploying, run `node scripts/seed-mission-encounters.mjs` from `functions/` (gcloud ADC; `--check` validates slugs offline) to seed per-mission encounter lists. Mission-default lists carry `missionDefault: true` and stay hidden from Field Registers and the host encounter picker.
+- Training posts now flow through the forum: the Colosseum "Log a Training Post" button opens the pinned "Super Training Room Log" thread (`trainingLog: true`, created on first use) and the composer calls `logTrainingPost` (10-post window cap) before publishing. Direct replies to that thread bounce to /Colosseum.
+- Mission grading: closing a thread with `missionId` auto-files the pending `missionSubmissions` doc (onThreadClosed); the manual submit form was removed from the mission brief.
 - Remaining `bun audit` findings are transitive; re-audit after major bumps.
 - Auth-gated pages (dashboard/editor/admin) migrated to Mantine 9 mechanically. Visual QA pending a logged-in pass.
 - Forum post pages still read from the top of the collection for middle pages (`src/Pages/forum/queries.ts` getPostsPage). Switch to `startAfter()` cursors before threads get long.

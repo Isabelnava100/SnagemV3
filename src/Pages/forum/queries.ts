@@ -142,12 +142,15 @@ export const getPost = async (
 /**
  * Encounter lists come from the existing admin pokemon-list library
  * (admin/pokemon_lists, managed under Dashboard → Admin → Adjust Lists).
- * Hosts may pick any public list or one they created themselves.
+ * Hosts may pick any public list or one they created themselves. Seeded
+ * mission-default pools stay out of the picker; pickUpMission attaches them.
  */
 export const getEncounterLists = async (username?: string): Promise<AdminPokemonList[]> => {
   const { getPokemonLists } = await import("../../queries/admin");
   const { formattedData } = await getPokemonLists();
-  return formattedData.filter((list) => list.public || (!!username && list.creator === username));
+  return formattedData
+    .filter((list) => !list.missionDefault)
+    .filter((list) => list.public || (!!username && list.creator === username));
 };
 
 /**

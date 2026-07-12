@@ -1,27 +1,30 @@
-import { Box, Button, Card, Container, Flex, Group, Image, Stack, Text } from "@mantine/core";
+import { Box, Button, Card, Container, Flex, Group, Stack, Text } from "@mantine/core";
 import { IconArrowRight, IconCheck, IconExternalLink, IconStar } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
-import { getPokemonImageURL } from "../../helpers";
 import {
   ChallengeProgress,
+  ChallengeRequest,
   Gym,
   GymRegion,
   IslandTrial,
   getChallengeProgress,
   getGymRegions,
   getIslandTrials,
+  getMyChallengeRequests,
+  requestChallenge,
 } from "../../queries/challenges";
 
 /**
- * Public, display-only view of the two progress-tracked challenge systems:
- * Gym Leader Runs and Island Trials. Progression is granted by admins/graders
- * elsewhere, so this page never writes. Each system draws a progress hero
- * (badge case / Z-crystals + final prize) and an ordered vertical timeline; the
- * next uncleared stop glows. Renders safely with no user, empty content and no
+ * The two progress-tracked challenge systems: Gym Leader Runs and Island
+ * Trials. Admins/directors host every challenge thread, so "starting" a stage
+ * files a challengeRequest (Cloud Function) that pings the hosting staff; the
+ * page otherwise only reads. Each system draws a progress hero (badge case /
+ * Z-crystals + final prize) and an ordered vertical timeline; the next
+ * uncleared stop glows. Renders safely with no user, empty content and no
  * progress.
  */
 
@@ -35,8 +38,11 @@ interface Stage {
   title: string;
   type?: string;
   desc: string;
-  teamSlugs: string[];
   state: NodeState;
+  /** requestChallenge payload for this stage. */
+  requestKind: "gym" | "trial";
+  requestRegion: string;
+  requestStageId: string;
 }
 
 const HEADER_GRADIENT = "linear-gradient(120deg, #3a1d63 0%, #2c2352 55%, #1c2a4a 100%)";
@@ -60,8 +66,6 @@ const TYPE_COLORS: Record<string, string> = {
   Steel: "#8888A8", Fairy: "#EE99AC",
 };
 const typeColor = (t?: string) => (t && TYPE_COLORS[t]) || "#8a8399";
-const slugify = (s: string) =>
-  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 const TYPE_TEXT_DARK = new Set(["#E0B000", "#F8D030", "#98D8D8", "#EE99AC", "#E0C068"]);
 
@@ -272,8 +276,16 @@ function TimelineNode(props: { order: number; state: NodeState; color: string })
   );
 }
 
-function TimelineItem(props: { stage: Stage }) {
-  const { stage } = props;
+interface StageRequestProps {
+  /** The member's request for this stage, when one exists. */
+  request?: ChallengeRequest;
+  onRequest: (stage: Stage) => void;
+  requesting: boolean;
+  signedIn: boolean;
+}
+
+function TimelineItem(props: { stage: Stage } & StageRequestProps) {
+  const { stage, request, onRequest, requesting, signedIn } = props;
   const color = typeColor(stage.type);
   const cleared = stage.state === "cleared";
   const available = stage.state === "available";
@@ -340,66 +352,74 @@ function TimelineItem(props: { stage: Stage }) {
           )}
         </Group>
 
-        <Text fz={13} c="dimmed" mb={stage.teamSlugs.length || !locked ? 12 : 0}>
+        <Text fz={13} c="dimmed" mb={!locked ? 12 : 0}>
           {stage.desc}
         </Text>
 
-        {stage.teamSlugs.length > 0 && (
-          <Box mb={12}>
-            <Text fz={10} fw={700} c="dimmed" tt="uppercase" mb={6} style={{ letterSpacing: 1 }}>
-              Team
-            </Text>
-            <Group gap={8}>
-              {stage.teamSlugs.map((slug, i) => (
-                <Box
-                  key={`${slug}-${i}`}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    background: "#0e0c14",
-                    border: "1px solid #232028",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
+        {available &&
+          (request?.status === "requested" ? (
+            <Stack gap={6}>
+              <Button variant="default" radius="xl" disabled w="fit-content">
+                Challenge requested
+              </Button>
+              <Text fz={12} c="orange.3" role="status" aria-live="polite">
+                Your challenge has been requested. Please wait until an admin accepts it and
+                sets up your thread.
+              </Text>
+            </Stack>
+          ) : request?.status === "accepted" ? (
+            <Stack gap={6}>
+              {request.threadLink ? (
+                <Button
+                  component={Link}
+                  to={request.threadLink}
+                  variant="gradient"
+                  gradient={{ from: "grape", to: "cyan", deg: 90 }}
+                  radius="xl"
+                  w="fit-content"
+                  rightSection={<IconExternalLink size={14} />}
                 >
-                  <Image src={getPokemonImageURL(slug)} alt={slug} w={30} h={30} fit="contain" />
-                </Box>
-              ))}
-            </Group>
-          </Box>
-        )}
-
-        {available ? (
-          <Button
-            component={Link}
-            to="/Forum/Main-Forum"
-            variant="gradient"
-            gradient={{ from: "grape", to: "cyan", deg: 90 }}
-            radius="xl"
-            rightSection={<IconArrowRight size={16} />}
-          >
-            Start this Challenge
-          </Button>
-        ) : cleared ? (
-          <Button
-            component={Link}
-            to="/Forum/Main-Forum"
-            variant="default"
-            radius="xl"
-            size="sm"
-            rightSection={<IconExternalLink size={14} />}
-          >
-            View thread
-          </Button>
-        ) : null}
+                  Go to your challenge thread
+                </Button>
+              ) : (
+                <Text fz={12} c="teal.3" role="status" aria-live="polite">
+                  Accepted! An admin is setting up your thread; watch your notifications.
+                </Text>
+              )}
+            </Stack>
+          ) : (
+            <Stack gap={6}>
+              <Button
+                variant="gradient"
+                gradient={{ from: "grape", to: "cyan", deg: 90 }}
+                radius="xl"
+                w="fit-content"
+                rightSection={<IconArrowRight size={16} />}
+                loading={requesting}
+                disabled={!signedIn}
+                onClick={() => onRequest(stage)}
+              >
+                Start this Challenge
+              </Button>
+              {!signedIn && (
+                <Text fz={12} c="dimmed">
+                  Sign in to request this challenge.
+                </Text>
+              )}
+            </Stack>
+          ))}
       </Card>
     </Group>
   );
 }
 
-function Timeline(props: { stages: Stage[] }) {
+function Timeline(props: {
+  stages: Stage[];
+  requestsByStage: Map<string, ChallengeRequest>;
+  onRequest: (stage: Stage) => void;
+  requestingStageId: string | null;
+  signedIn: boolean;
+}) {
   return (
     <Box style={{ position: "relative" }}>
       {/* dotted rail behind the nodes (node centers sit at x=34) */}
@@ -414,7 +434,14 @@ function Timeline(props: { stages: Stage[] }) {
       />
       <Stack gap="lg">
         {props.stages.map((s) => (
-          <TimelineItem key={s.key} stage={s} />
+          <TimelineItem
+            key={s.key}
+            stage={s}
+            request={props.requestsByStage.get(s.requestStageId)}
+            onRequest={props.onRequest}
+            requesting={props.requestingStageId === s.requestStageId}
+            signedIn={props.signedIn}
+          />
         ))}
       </Stack>
     </Box>
@@ -445,8 +472,10 @@ function buildGymStages(region: GymRegion, progress: ChallengeProgress): Stage[]
     ]
       .filter(Boolean)
       .join(" · "),
-    teamSlugs: [],
     state: isGymCleared(g) ? "cleared" : i === firstOpen ? "available" : "locked",
+    requestKind: "gym",
+    requestRegion: region.id,
+    requestStageId: `${region.id}:gym-${g.order}-${g.leaderName}`,
   }));
 
   const eliteState: NodeState = eliteDone ? "cleared" : allBadges ? "available" : "locked";
@@ -461,8 +490,10 @@ function buildGymStages(region: GymRegion, progress: ChallengeProgress): Stage[]
     desc: eliteNames
       ? `${eliteNames}. Four straight battles, no healing between them.`
       : "Four straight battles, no healing between them.",
-    teamSlugs: [],
     state: eliteState,
+    requestKind: "gym",
+    requestRegion: region.id,
+    requestStageId: `${region.id}:elite-four`,
   });
   stages.push({
     key: "champion",
@@ -470,8 +501,10 @@ function buildGymStages(region: GymRegion, progress: ChallengeProgress): Stage[]
     kind: "CHAMPION",
     title: region.eliteFour?.champion?.name || "Champion",
     desc: region.championPrize || "Beat the Champion to complete this region.",
-    teamSlugs: [],
     state: championState,
+    requestKind: "gym",
+    requestRegion: region.id,
+    requestStageId: `${region.id}:champion`,
   });
 
   return stages;
@@ -482,7 +515,7 @@ function buildTrialStages(trials: IslandTrial[], progress: ChallengeProgress): S
   const completed = new Set([...(progress.trialsCompleted ?? []), ...(progress.grandTrials ?? [])]);
   const firstOpen = sorted.findIndex((t) => !completed.has(t.id));
 
-  return sorted.map((t, i) => {
+  return sorted.map((t, i): Stage => {
     const grand = !!t.grand;
     const reward = [
       t.snagCoins != null ? `${t.snagCoins} coins` : null,
@@ -513,8 +546,10 @@ function buildTrialStages(trials: IslandTrial[], progress: ChallengeProgress): S
       title: t.name,
       type: t.type,
       desc,
-      teamSlugs: t.totemPokemon ? [slugify(t.totemPokemon)] : [],
       state: completed.has(t.id) ? "cleared" : i === firstOpen ? "available" : "locked",
+      requestKind: "trial",
+      requestRegion: t.island || "alola",
+      requestStageId: t.id,
     };
   });
 }
@@ -523,7 +558,7 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /* ---------------------------------- Tabs ----------------------------------- */
 
-function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress }) {
+function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress } & TabRequestProps) {
   const { regions, progress } = props;
   const [regionId, setRegionId] = React.useState<string | null>(regions[0]?.id ?? null);
 
@@ -585,12 +620,18 @@ function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress }
         ))}
       />
 
-      <Timeline stages={stages} />
+      <Timeline
+        stages={stages}
+        requestsByStage={props.requestsByStage}
+        onRequest={props.onRequest}
+        requestingStageId={props.requestingStageId}
+        signedIn={props.signedIn}
+      />
     </Stack>
   );
 }
 
-function IslandTrialsTab(props: { trials: IslandTrial[]; progress: ChallengeProgress }) {
+function IslandTrialsTab(props: { trials: IslandTrial[]; progress: ChallengeProgress } & TabRequestProps) {
   const { trials, progress } = props;
 
   if (!trials.length) {
@@ -634,8 +675,51 @@ function IslandTrialsTab(props: { trials: IslandTrial[]; progress: ChallengeProg
         })}
       />
 
-      <Timeline stages={stages} />
+      <Timeline
+        stages={stages}
+        requestsByStage={props.requestsByStage}
+        onRequest={props.onRequest}
+        requestingStageId={props.requestingStageId}
+        signedIn={props.signedIn}
+      />
     </Stack>
+  );
+}
+
+/** Request plumbing shared by both tabs (owned by the page component). */
+interface TabRequestProps {
+  requestsByStage: Map<string, ChallengeRequest>;
+  onRequest: (stage: Stage) => void;
+  requestingStageId: string | null;
+  signedIn: boolean;
+}
+
+/** Explains the admin-hosted flow so members know what happens after they ask. */
+function HowChallengesWork() {
+  return (
+    <Card bg="#141019" radius="lg" p="lg" withBorder style={{ borderColor: "#2a2637" }} mb="xl">
+      <Text fz={13} fw={800} c="white" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
+        How challenges work
+      </Text>
+      <Stack gap={6}>
+        <Text fz={13} c="dimmed">
+          1. Press Start this Challenge on your next glowing stage. That sends a request to the
+          admins and directors.
+        </Text>
+        <Text fz={13} c="dimmed">
+          2. An admin accepts your challenge and creates your thread in the forums. They lead the
+          thread and guide you through what happens next.
+        </Text>
+        <Text fz={13} c="dimmed">
+          3. Roleplay the battle in that thread. When it wraps up, a grader marks the stage
+          cleared here and your progress updates.
+        </Text>
+        <Text fz={13} c="dimmed">
+          The opposing team changes from person to person, so it stays hidden until your host
+          reveals it in the thread.
+        </Text>
+      </Stack>
+    </Card>
   );
 }
 
@@ -644,7 +728,9 @@ function IslandTrialsTab(props: { trials: IslandTrial[]; progress: ChallengeProg
 export default function Challenges() {
   const { user } = useAuth();
   const uid = user?.uid;
+  const queryClient = useQueryClient();
   const [tab, setTab] = React.useState<"gyms" | "trials">("gyms");
+  const [requestingStageId, setRequestingStageId] = React.useState<string | null>(null);
 
   const regionsQuery = useQuery({ queryKey: ["gym-regions"], queryFn: getGymRegions });
   const trialsQuery = useQuery({ queryKey: ["island-trials"], queryFn: getIslandTrials });
@@ -653,10 +739,62 @@ export default function Challenges() {
     queryFn: () => getChallengeProgress(uid as string),
     enabled: Boolean(uid),
   });
+  const myRequestsQuery = useQuery({
+    queryKey: ["my-challenge-requests", uid],
+    queryFn: () => getMyChallengeRequests(uid as string),
+    enabled: Boolean(uid),
+  });
+
+  // One request per stage: an open request always wins, otherwise the newest
+  // resolved one, so a re-request after a decline shows as pending again.
+  const requestsByStage = React.useMemo(() => {
+    const map = new Map<string, ChallengeRequest>();
+    for (const req of myRequestsQuery.data ?? []) {
+      const existing = map.get(req.stageId);
+      if (!existing) {
+        map.set(req.stageId, req);
+        continue;
+      }
+      if (existing.status === "requested") continue;
+      if (
+        req.status === "requested" ||
+        (req.createdAt?.seconds ?? 0) > (existing.createdAt?.seconds ?? 0)
+      ) {
+        map.set(req.stageId, req);
+      }
+    }
+    return map;
+  }, [myRequestsQuery.data]);
+
+  const requestMutation = useMutation({
+    mutationFn: (stage: Stage) =>
+      requestChallenge({
+        kind: stage.requestKind,
+        regionOrIsland: stage.requestRegion,
+        stageId: stage.requestStageId,
+        stageTitle: `${stage.kind} · ${stage.title}`,
+      }),
+    onSettled: () => {
+      setRequestingStageId(null);
+      queryClient.invalidateQueries({ queryKey: ["my-challenge-requests", uid] });
+    },
+  });
+
+  const onRequest = (stage: Stage) => {
+    if (requestMutation.isPending) return;
+    setRequestingStageId(stage.requestStageId);
+    requestMutation.mutate(stage);
+  };
 
   const loading =
     regionsQuery.isPending || trialsQuery.isPending || (Boolean(uid) && progressQuery.isPending);
   const progress: ChallengeProgress = progressQuery.data ?? {};
+  const tabRequestProps: TabRequestProps = {
+    requestsByStage,
+    onRequest,
+    requestingStageId,
+    signedIn: Boolean(uid),
+  };
 
   const TABS: { value: "gyms" | "trials"; label: string; icon: string }[] = [
     { value: "gyms", label: "Gym Leader Runs", icon: "⚔️" },
@@ -697,10 +835,15 @@ export default function Challenges() {
 
       {loading ? (
         <SectionLoader />
-      ) : tab === "gyms" ? (
-        <GymRunsTab regions={regionsQuery.data ?? []} progress={progress} />
       ) : (
-        <IslandTrialsTab trials={trialsQuery.data ?? []} progress={progress} />
+        <>
+          <HowChallengesWork />
+          {tab === "gyms" ? (
+            <GymRunsTab regions={regionsQuery.data ?? []} progress={progress} {...tabRequestProps} />
+          ) : (
+            <IslandTrialsTab trials={trialsQuery.data ?? []} progress={progress} {...tabRequestProps} />
+          )}
+        </>
       )}
     </Container>
   );

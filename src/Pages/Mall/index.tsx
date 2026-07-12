@@ -12,6 +12,7 @@ import {
   Select,
   SimpleGrid,
   Stack,
+  Tabs,
   Text,
   TextInput,
   Title,
@@ -293,8 +294,36 @@ function StoreBody(props: { shop: Shop; balance: number }) {
     }
   };
 
-  const sections = shop.sections ?? [];
-  const rare = shop.rare_section?.pool ?? [];
+  const allSections = shop.sections ?? [];
+  const allRare = shop.rare_section?.pool ?? [];
+
+  // Section tabs + name search so long catalogs stay browsable.
+  const RARE_TAB = "__rare__";
+  const [activeSection, setActiveSection] = React.useState<string>("all");
+  const [search, setSearch] = React.useState("");
+  const q = search.trim().toLowerCase();
+  const matchesSearch = (item: { itemId: string; description?: string }) => {
+    if (!q) return true;
+    const resolved = resolveItem(item.itemId);
+    return (
+      resolved.name.toLowerCase().includes(q) ||
+      (item.description ?? "").toLowerCase().includes(q)
+    );
+  };
+  const sections = allSections
+    .filter((s) => activeSection === "all" || activeSection === s.title)
+    .map((s) => ({ ...s, items: (s.items ?? []).filter(matchesSearch) }))
+    .filter((s) => s.items.length > 0);
+  const rare =
+    activeSection === "all" || activeSection === RARE_TAB ? allRare.filter(matchesSearch) : [];
+  const sectionTabs =
+    allSections.length > 1
+      ? [
+          { value: "all", label: "All" },
+          ...allSections.map((s) => ({ value: s.title, label: s.title })),
+          ...(allRare.length ? [{ value: RARE_TAB, label: "Rare Wares" }] : []),
+        ]
+      : [];
 
   const ItemCard = (item: { itemId: string; price: number; description?: string }, rareCard = false) => {
     const resolved = resolveItem(item.itemId);
@@ -358,8 +387,43 @@ function StoreBody(props: { shop: Shop; balance: number }) {
       {message && <StatusMessage>{message}</StatusMessage>}
       {error && <StatusMessage color="red">{error}</StatusMessage>}
 
-      {!sections.length && !rare.length && (
+      {(allSections.length > 0 || allRare.length > 0) && (
+        <Flex gap="md" wrap="wrap" align="center">
+          <TextInput
+            aria-label={`Search ${shop.name} wares`}
+            placeholder="Search the shelves"
+            value={search}
+            onChange={(e) => setSearch(e.currentTarget.value)}
+            radius="xl"
+            maw={280}
+            w="100%"
+            styles={{ root: { flex: "1 1 200px" } }}
+          />
+          {sectionTabs.length > 0 && (
+            <Group gap={6} wrap="wrap" role="tablist" aria-label="Shop sections">
+              {sectionTabs.map((tab) => (
+                <Button
+                  key={tab.value}
+                  size="xs"
+                  radius="xl"
+                  variant={activeSection === tab.value ? "gradient" : "default"}
+                  gradient={{ from: "grape", to: "indigo", deg: 90 }}
+                  onClick={() => setActiveSection(tab.value)}
+                  aria-pressed={activeSection === tab.value}
+                >
+                  {tab.label}
+                </Button>
+              ))}
+            </Group>
+          )}
+        </Flex>
+      )}
+
+      {!allSections.length && !allRare.length && (
         <Text c="dimmed">This vendor has nothing on the shelves right now.</Text>
+      )}
+      {(allSections.length > 0 || allRare.length > 0) && !sections.length && !rare.length && (
+        <Text c="dimmed">Nothing on the shelves matches that search.</Text>
       )}
 
       {sections.map((section) => (
@@ -458,13 +522,59 @@ function RecycleBody() {
 
   const bag = items ?? [];
 
+  // Two clearly tabbed services so the candy trade is not buried under a long
+  // item list: recycle items on one tab, candy-to-scent on the other.
+  return (
+    <Tabs defaultValue="items" variant="pills" color="grape" keepMounted={false}>
+      <Tabs.List mb="lg">
+        <Tabs.Tab value="items">Recycle Items</Tabs.Tab>
+        <Tabs.Tab value="candy">Trade Candy for Scents</Tabs.Tab>
+      </Tabs.List>
+
+      <Tabs.Panel value="items">
+        <RecycleItemsTab
+          bag={bag}
+          selected={selected}
+          toggle={toggle}
+          payout={payout}
+          pending={pending}
+          message={message}
+          error={error}
+          onRecycle={recycle}
+        />
+      </Tabs.Panel>
+
+      <Tabs.Panel value="candy">
+        <Stack gap="xl">
+          <RatePanel
+            title="Candy → Scents"
+            rows={SCENT_RATES}
+            note="Spends Evolution Points from your Pokemon to brew Scents."
+            valueColor="#3bc9db"
+          />
+          <CandyToScentPanel />
+        </Stack>
+      </Tabs.Panel>
+    </Tabs>
+  );
+}
+
+/** The recycle-items side of the Trash Shack (rate card + bag list + action). */
+function RecycleItemsTab(props: {
+  bag: Array<{ id: string; name: string; category?: string; quantity: number; filePath?: string }>;
+  selected: string[];
+  toggle: (id: string) => void;
+  payout: number;
+  pending: boolean;
+  message: string;
+  error: string;
+  onRecycle: () => void;
+}) {
+  const { bag, selected, toggle, payout, pending, message, error, onRecycle } = props;
   return (
     <Stack gap="xl">
-      {/* Rate reference tables (informational; the server is authoritative) */}
-      <Flex gap="lg" direction={{ base: "column", md: "row" }} align="stretch">
-        <RatePanel title="Items → Snag Coins" rows={RECYCLE_RATES} note="Consumables pay half (rounded down). Medicines excluded. Items bought for 1 coin can't be recycled." valueColor="#f5c518" />
-        <RatePanel title="Candy → Scents" rows={SCENT_RATES} note="Spends Evolution Points from your Pokemon to brew Scents." valueColor="#3bc9db" />
-      </Flex>
+      {/* Rate reference table (informational; the server is authoritative) */}
+      <RatePanel title="Items → Snag Coins" rows={RECYCLE_RATES} note="Consumables pay half (rounded down). Medicines excluded. Items bought for 1 coin can't be recycled." valueColor="#f5c518" />
 
       <Divider color="#232028" label="Bring your junk" labelPosition="center" />
 
@@ -543,16 +653,13 @@ function RecycleBody() {
             radius="md"
             loading={pending}
             disabled={pending || !selected.length}
-            onClick={recycle}
+            onClick={onRecycle}
             aria-label="Recycle selected items"
           >
             Recycle selected
           </Button>
         </>
       )}
-
-      <Divider my={4} label="Garbodor's other service" labelPosition="center" />
-      <CandyToScentPanel />
     </Stack>
   );
 }

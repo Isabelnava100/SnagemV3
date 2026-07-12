@@ -4,7 +4,12 @@ import { call } from "./_callable";
 /** Casino config (exchange rate + game table). See docs/CASINO_DATA.md. */
 export interface CasinoConfig {
   exchangeRate?: number; // Snag Coins per 1 Gengar Token (buy)
+  /** Entries needed before staff get pinged to run the draw (default 5). */
+  lottoMinTickets?: number;
 }
+
+/** Mirrors the Cloud Function default when the config doc leaves it unset. */
+export const DEFAULT_LOTTO_MIN_TICKETS = 5;
 
 export interface LottoState {
   jackpot?: number;

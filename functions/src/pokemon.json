@@ -1,2769 +1,4 @@
 {
-  "001": {
-    "idx": "001",
-    "name": {
-      "eng": "Bulbasaur"
-    },
-    "slug": {
-      "eng": "bulbasaur"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "002": {
-    "idx": "002",
-    "name": {
-      "eng": "Ivysaur"
-    },
-    "slug": {
-      "eng": "ivysaur"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "003": {
-    "idx": "003",
-    "name": {
-      "eng": "Venusaur"
-    },
-    "slug": {
-      "eng": "venusaur"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "mega": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "gmax": {
-          "is_prev_gen_icon": false
-        },
-        "mega": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "004": {
-    "idx": "004",
-    "name": {
-      "eng": "Charmander"
-    },
-    "slug": {
-      "eng": "charmander"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "005": {
-    "idx": "005",
-    "name": {
-      "eng": "Charmeleon"
-    },
-    "slug": {
-      "eng": "charmeleon"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "006": {
-    "idx": "006",
-    "name": {
-      "eng": "Charizard"
-    },
-    "slug": {
-      "eng": "charizard"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "mega-x": {
-          "has_female": false,
-          "has_right": false
-        },
-        "mega-y": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "gmax": {
-          "is_prev_gen_icon": false
-        },
-        "mega-x": {
-          "is_prev_gen_icon": true
-        },
-        "mega-y": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "007": {
-    "idx": "007",
-    "name": {
-      "eng": "Squirtle"
-    },
-    "slug": {
-      "eng": "squirtle"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "008": {
-    "idx": "008",
-    "name": {
-      "eng": "Wartortle"
-    },
-    "slug": {
-      "eng": "wartortle"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "009": {
-    "idx": "009",
-    "name": {
-      "eng": "Blastoise"
-    },
-    "slug": {
-      "eng": "blastoise"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "mega": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "gmax": {
-          "is_prev_gen_icon": false
-        },
-        "mega": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "010": {
-    "idx": "010",
-    "name": {
-      "eng": "Caterpie"
-    },
-    "slug": {
-      "eng": "caterpie"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "011": {
-    "idx": "011",
-    "name": {
-      "eng": "Metapod"
-    },
-    "slug": {
-      "eng": "metapod"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "012": {
-    "idx": "012",
-    "name": {
-      "eng": "Butterfree"
-    },
-    "slug": {
-      "eng": "butterfree"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "gmax": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "013": {
-    "idx": "013",
-    "name": {
-      "eng": "Weedle"
-    },
-    "slug": {
-      "eng": "weedle"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "014": {
-    "idx": "014",
-    "name": {
-      "eng": "Kakuna"
-    },
-    "slug": {
-      "eng": "kakuna"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "015": {
-    "idx": "015",
-    "name": {
-      "eng": "Beedrill"
-    },
-    "slug": {
-      "eng": "beedrill"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "mega": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "mega": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "016": {
-    "idx": "016",
-    "name": {
-      "eng": "Pidgey"
-    },
-    "slug": {
-      "eng": "pidgey"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "017": {
-    "idx": "017",
-    "name": {
-      "eng": "Pidgeotto"
-    },
-    "slug": {
-      "eng": "pidgeotto"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "018": {
-    "idx": "018",
-    "name": {
-      "eng": "Pidgeot"
-    },
-    "slug": {
-      "eng": "pidgeot"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "mega": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "mega": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "019": {
-    "idx": "019",
-    "name": {
-      "eng": "Rattata"
-    },
-    "slug": {
-      "eng": "rattata"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "020": {
-    "idx": "020",
-    "name": {
-      "eng": "Raticate"
-    },
-    "slug": {
-      "eng": "raticate"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        },
-        "totem": {
-          "has_female": false,
-          "has_right": false,
-          "is_alias_of": "alola"
-        },
-        "totem-alola": {
-          "has_female": false,
-          "has_right": false,
-          "is_alias_of": "alola"
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        },
-        "totem": {
-          "is_alias_of": "alola",
-          "is_prev_gen_icon": true
-        },
-        "totem-alola": {
-          "is_alias_of": "alola",
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "021": {
-    "idx": "021",
-    "name": {
-      "eng": "Spearow"
-    },
-    "slug": {
-      "eng": "spearow"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "022": {
-    "idx": "022",
-    "name": {
-      "eng": "Fearow"
-    },
-    "slug": {
-      "eng": "fearow"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "023": {
-    "idx": "023",
-    "name": {
-      "eng": "Ekans"
-    },
-    "slug": {
-      "eng": "ekans"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "024": {
-    "idx": "024",
-    "name": {
-      "eng": "Arbok"
-    },
-    "slug": {
-      "eng": "arbok"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "025": {
-    "idx": "025",
-    "name": {
-      "eng": "Pikachu"
-    },
-    "slug": {
-      "eng": "pikachu"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": true,
-          "has_right": false,
-          "has_unofficial_female_icon": true
-        },
-        "alola-cap": {
-          "has_female": true,
-          "has_right": false,
-          "has_unofficial_female_icon": true
-        },
-        "belle": {
-          "has_female": false,
-          "has_right": true
-        },
-        "cosplay": {
-          "has_female": false,
-          "has_right": false
-        },
-        "hoenn-cap": {
-          "has_female": true,
-          "has_right": false,
-          "has_unofficial_female_icon": true
-        },
-        "kalos-cap": {
-          "has_female": true,
-          "has_right": false,
-          "has_unofficial_female_icon": true
-        },
-        "libre": {
-          "has_female": false,
-          "has_right": false
-        },
-        "original-cap": {
-          "has_female": true,
-          "has_right": true,
-          "has_unofficial_female_icon": true
-        },
-        "partner-cap": {
-          "has_female": true,
-          "has_right": true,
-          "has_unofficial_female_icon": true
-        },
-        "phd": {
-          "has_female": false,
-          "has_right": false
-        },
-        "pop-star": {
-          "has_female": false,
-          "has_right": true
-        },
-        "rock-star": {
-          "has_female": false,
-          "has_right": false
-        },
-        "sinnoh-cap": {
-          "has_female": true,
-          "has_right": false,
-          "has_unofficial_female_icon": true
-        },
-        "starter": {
-          "has_female": true,
-          "has_right": false,
-          "has_unofficial_female_icon": true
-        },
-        "unova-cap": {
-          "has_female": true,
-          "has_right": false,
-          "has_unofficial_female_icon": true
-        },
-        "world-cap": {
-          "has_female": true,
-          "has_right": false,
-          "has_unofficial_female_icon": true
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "has_female": true,
-          "has_unofficial_female_icon": true,
-          "is_prev_gen_icon": true
-        },
-        "alola-cap": {
-          "has_female": true,
-          "has_unofficial_female_icon": true,
-          "is_prev_gen_icon": true
-        },
-        "belle": {
-          "is_prev_gen_icon": true
-        },
-        "cosplay": {
-          "is_prev_gen_icon": true
-        },
-        "gmax": {
-          "is_prev_gen_icon": false
-        },
-        "hoenn-cap": {
-          "has_female": true,
-          "has_unofficial_female_icon": true,
-          "is_prev_gen_icon": true
-        },
-        "kalos-cap": {
-          "has_female": true,
-          "has_unofficial_female_icon": true,
-          "is_prev_gen_icon": true
-        },
-        "libre": {
-          "is_prev_gen_icon": true
-        },
-        "original-cap": {
-          "has_female": true,
-          "has_unofficial_female_icon": true,
-          "is_prev_gen_icon": true
-        },
-        "partner-cap": {
-          "has_female": true,
-          "has_unofficial_female_icon": true,
-          "is_prev_gen_icon": true
-        },
-        "phd": {
-          "is_prev_gen_icon": true
-        },
-        "pop-star": {
-          "is_prev_gen_icon": true
-        },
-        "rock-star": {
-          "is_prev_gen_icon": true
-        },
-        "sinnoh-cap": {
-          "has_female": true,
-          "has_unofficial_female_icon": true,
-          "is_prev_gen_icon": true
-        },
-        "starter": {
-          "has_female": true,
-          "has_unofficial_female_icon": true,
-          "is_prev_gen_icon": true
-        },
-        "unova-cap": {
-          "has_female": true,
-          "has_unofficial_female_icon": true,
-          "is_prev_gen_icon": true
-        },
-        "world-cap": {
-          "has_female": true,
-          "has_unofficial_female_icon": true,
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "026": {
-    "idx": "026",
-    "name": {
-      "eng": "Raichu"
-    },
-    "slug": {
-      "eng": "raichu"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "027": {
-    "idx": "027",
-    "name": {
-      "eng": "Sandshrew"
-    },
-    "slug": {
-      "eng": "sandshrew"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "028": {
-    "idx": "028",
-    "name": {
-      "eng": "Sandslash"
-    },
-    "slug": {
-      "eng": "sandslash"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "029": {
-    "idx": "029",
-    "name": {
-      "eng": "Nidoran♀"
-    },
-    "slug": {
-      "eng": "nidoran-f"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "030": {
-    "idx": "030",
-    "name": {
-      "eng": "Nidorina"
-    },
-    "slug": {
-      "eng": "nidorina"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "031": {
-    "idx": "031",
-    "name": {
-      "eng": "Nidoqueen"
-    },
-    "slug": {
-      "eng": "nidoqueen"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "032": {
-    "idx": "032",
-    "name": {
-      "eng": "Nidoran♂"
-    },
-    "slug": {
-      "eng": "nidoran-m"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "033": {
-    "idx": "033",
-    "name": {
-      "eng": "Nidorino"
-    },
-    "slug": {
-      "eng": "nidorino"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "034": {
-    "idx": "034",
-    "name": {
-      "eng": "Nidoking"
-    },
-    "slug": {
-      "eng": "nidoking"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "035": {
-    "idx": "035",
-    "name": {
-      "eng": "Clefairy"
-    },
-    "slug": {
-      "eng": "clefairy"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": true
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "036": {
-    "idx": "036",
-    "name": {
-      "eng": "Clefable"
-    },
-    "slug": {
-      "eng": "clefable"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": true
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "037": {
-    "idx": "037",
-    "name": {
-      "eng": "Vulpix"
-    },
-    "slug": {
-      "eng": "vulpix"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "038": {
-    "idx": "038",
-    "name": {
-      "eng": "Ninetales"
-    },
-    "slug": {
-      "eng": "ninetales"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "039": {
-    "idx": "039",
-    "name": {
-      "eng": "Jigglypuff"
-    },
-    "slug": {
-      "eng": "jigglypuff"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": true
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "040": {
-    "idx": "040",
-    "name": {
-      "eng": "Wigglytuff"
-    },
-    "slug": {
-      "eng": "wigglytuff"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": true
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "041": {
-    "idx": "041",
-    "name": {
-      "eng": "Zubat"
-    },
-    "slug": {
-      "eng": "zubat"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "042": {
-    "idx": "042",
-    "name": {
-      "eng": "Golbat"
-    },
-    "slug": {
-      "eng": "golbat"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "043": {
-    "idx": "043",
-    "name": {
-      "eng": "Oddish"
-    },
-    "slug": {
-      "eng": "oddish"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "044": {
-    "idx": "044",
-    "name": {
-      "eng": "Gloom"
-    },
-    "slug": {
-      "eng": "gloom"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "045": {
-    "idx": "045",
-    "name": {
-      "eng": "Vileplume"
-    },
-    "slug": {
-      "eng": "vileplume"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "046": {
-    "idx": "046",
-    "name": {
-      "eng": "Paras"
-    },
-    "slug": {
-      "eng": "paras"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "047": {
-    "idx": "047",
-    "name": {
-      "eng": "Parasect"
-    },
-    "slug": {
-      "eng": "parasect"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "048": {
-    "idx": "048",
-    "name": {
-      "eng": "Venonat"
-    },
-    "slug": {
-      "eng": "venonat"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "049": {
-    "idx": "049",
-    "name": {
-      "eng": "Venomoth"
-    },
-    "slug": {
-      "eng": "venomoth"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "050": {
-    "idx": "050",
-    "name": {
-      "eng": "Diglett"
-    },
-    "slug": {
-      "eng": "diglett"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "051": {
-    "idx": "051",
-    "name": {
-      "eng": "Dugtrio"
-    },
-    "slug": {
-      "eng": "dugtrio"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "052": {
-    "idx": "052",
-    "name": {
-      "eng": "Meowth"
-    },
-    "slug": {
-      "eng": "meowth"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        },
-        "galar": {
-          "is_prev_gen_icon": false
-        },
-        "gmax": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "053": {
-    "idx": "053",
-    "name": {
-      "eng": "Persian"
-    },
-    "slug": {
-      "eng": "persian"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "054": {
-    "idx": "054",
-    "name": {
-      "eng": "Psyduck"
-    },
-    "slug": {
-      "eng": "psyduck"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "055": {
-    "idx": "055",
-    "name": {
-      "eng": "Golduck"
-    },
-    "slug": {
-      "eng": "golduck"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "056": {
-    "idx": "056",
-    "name": {
-      "eng": "Mankey"
-    },
-    "slug": {
-      "eng": "mankey"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "057": {
-    "idx": "057",
-    "name": {
-      "eng": "Primeape"
-    },
-    "slug": {
-      "eng": "primeape"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "058": {
-    "idx": "058",
-    "name": {
-      "eng": "Growlithe"
-    },
-    "slug": {
-      "eng": "growlithe"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "hisui": {
-          "is_prev_gen_icon": false,
-          "is_unofficial_icon": true
-        }
-      }
-    }
-  },
-  "059": {
-    "idx": "059",
-    "name": {
-      "eng": "Arcanine"
-    },
-    "slug": {
-      "eng": "arcanine"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "hisui": {
-          "is_prev_gen_icon": false,
-          "is_unofficial_icon": true
-        },
-        "hisui-noble": {
-          "is_prev_gen_icon": false,
-          "is_unofficial_icon": true
-        }
-      }
-    }
-  },
-  "060": {
-    "idx": "060",
-    "name": {
-      "eng": "Poliwag"
-    },
-    "slug": {
-      "eng": "poliwag"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "061": {
-    "idx": "061",
-    "name": {
-      "eng": "Poliwhirl"
-    },
-    "slug": {
-      "eng": "poliwhirl"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": true
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "062": {
-    "idx": "062",
-    "name": {
-      "eng": "Poliwrath"
-    },
-    "slug": {
-      "eng": "poliwrath"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": true
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "063": {
-    "idx": "063",
-    "name": {
-      "eng": "Abra"
-    },
-    "slug": {
-      "eng": "abra"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "064": {
-    "idx": "064",
-    "name": {
-      "eng": "Kadabra"
-    },
-    "slug": {
-      "eng": "kadabra"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "065": {
-    "idx": "065",
-    "name": {
-      "eng": "Alakazam"
-    },
-    "slug": {
-      "eng": "alakazam"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "mega": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "mega": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "066": {
-    "idx": "066",
-    "name": {
-      "eng": "Machop"
-    },
-    "slug": {
-      "eng": "machop"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "067": {
-    "idx": "067",
-    "name": {
-      "eng": "Machoke"
-    },
-    "slug": {
-      "eng": "machoke"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "068": {
-    "idx": "068",
-    "name": {
-      "eng": "Machamp"
-    },
-    "slug": {
-      "eng": "machamp"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "gmax": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "069": {
-    "idx": "069",
-    "name": {
-      "eng": "Bellsprout"
-    },
-    "slug": {
-      "eng": "bellsprout"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "070": {
-    "idx": "070",
-    "name": {
-      "eng": "Weepinbell"
-    },
-    "slug": {
-      "eng": "weepinbell"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "071": {
-    "idx": "071",
-    "name": {
-      "eng": "Victreebel"
-    },
-    "slug": {
-      "eng": "victreebel"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "072": {
-    "idx": "072",
-    "name": {
-      "eng": "Tentacool"
-    },
-    "slug": {
-      "eng": "tentacool"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "073": {
-    "idx": "073",
-    "name": {
-      "eng": "Tentacruel"
-    },
-    "slug": {
-      "eng": "tentacruel"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "074": {
-    "idx": "074",
-    "name": {
-      "eng": "Geodude"
-    },
-    "slug": {
-      "eng": "geodude"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "075": {
-    "idx": "075",
-    "name": {
-      "eng": "Graveler"
-    },
-    "slug": {
-      "eng": "graveler"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "076": {
-    "idx": "076",
-    "name": {
-      "eng": "Golem"
-    },
-    "slug": {
-      "eng": "golem"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "alola": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "077": {
-    "idx": "077",
-    "name": {
-      "eng": "Ponyta"
-    },
-    "slug": {
-      "eng": "ponyta"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "galar": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "078": {
-    "idx": "078",
-    "name": {
-      "eng": "Rapidash"
-    },
-    "slug": {
-      "eng": "rapidash"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "galar": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "079": {
-    "idx": "079",
-    "name": {
-      "eng": "Slowpoke"
-    },
-    "slug": {
-      "eng": "slowpoke"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "galar": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "galar": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "080": {
-    "idx": "080",
-    "name": {
-      "eng": "Slowbro"
-    },
-    "slug": {
-      "eng": "slowbro"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "mega": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "galar": {
-          "is_prev_gen_icon": false
-        },
-        "mega": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "081": {
-    "idx": "081",
-    "name": {
-      "eng": "Magnemite"
-    },
-    "slug": {
-      "eng": "magnemite"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "082": {
-    "idx": "082",
-    "name": {
-      "eng": "Magneton"
-    },
-    "slug": {
-      "eng": "magneton"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "083": {
-    "idx": "083",
-    "name": {
-      "eng": "Farfetch'd"
-    },
-    "slug": {
-      "eng": "farfetchd"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "galar": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "084": {
-    "idx": "084",
-    "name": {
-      "eng": "Doduo"
-    },
-    "slug": {
-      "eng": "doduo"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "085": {
-    "idx": "085",
-    "name": {
-      "eng": "Dodrio"
-    },
-    "slug": {
-      "eng": "dodrio"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "086": {
-    "idx": "086",
-    "name": {
-      "eng": "Seel"
-    },
-    "slug": {
-      "eng": "seel"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "087": {
-    "idx": "087",
-    "name": {
-      "eng": "Dewgong"
-    },
-    "slug": {
-      "eng": "dewgong"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "088": {
-    "idx": "088",
-    "name": {
-      "eng": "Grimer"
-    },
-    "slug": {
-      "eng": "grimer"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "089": {
-    "idx": "089",
-    "name": {
-      "eng": "Muk"
-    },
-    "slug": {
-      "eng": "muk"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "alola": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        },
-        "alola": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "090": {
-    "idx": "090",
-    "name": {
-      "eng": "Shellder"
-    },
-    "slug": {
-      "eng": "shellder"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "091": {
-    "idx": "091",
-    "name": {
-      "eng": "Cloyster"
-    },
-    "slug": {
-      "eng": "cloyster"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "092": {
-    "idx": "092",
-    "name": {
-      "eng": "Gastly"
-    },
-    "slug": {
-      "eng": "gastly"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "093": {
-    "idx": "093",
-    "name": {
-      "eng": "Haunter"
-    },
-    "slug": {
-      "eng": "haunter"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "094": {
-    "idx": "094",
-    "name": {
-      "eng": "Gengar"
-    },
-    "slug": {
-      "eng": "gengar"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        },
-        "mega": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "gmax": {
-          "is_prev_gen_icon": false
-        },
-        "mega": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "095": {
-    "idx": "095",
-    "name": {
-      "eng": "Onix"
-    },
-    "slug": {
-      "eng": "onix"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "096": {
-    "idx": "096",
-    "name": {
-      "eng": "Drowzee"
-    },
-    "slug": {
-      "eng": "drowzee"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "097": {
-    "idx": "097",
-    "name": {
-      "eng": "Hypno"
-    },
-    "slug": {
-      "eng": "hypno"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
-  "098": {
-    "idx": "098",
-    "name": {
-      "eng": "Krabby"
-    },
-    "slug": {
-      "eng": "krabby"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": false
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": true
-        }
-      }
-    }
-  },
-  "099": {
-    "idx": "099",
-    "name": {
-      "eng": "Kingler"
-    },
-    "slug": {
-      "eng": "kingler"
-    },
-    "gen-7": {
-      "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": true
-        }
-      }
-    },
-    "gen-8": {
-      "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
-        "gmax": {
-          "is_prev_gen_icon": false
-        }
-      }
-    }
-  },
   "100": {
     "idx": "100",
     "name": {
@@ -19713,10 +16948,6 @@
     },
     "gen-7": {
       "forms": {
-        "$": {
-          "has_female": false,
-          "has_right": true
-        },
         "10": {
           "has_female": false,
           "has_right": true
@@ -19726,6 +16957,10 @@
           "has_right": true,
           "is_alias_of": "$"
         },
+        "$": {
+          "has_female": false,
+          "has_right": true
+        },
         "complete": {
           "has_female": false,
           "has_right": true
@@ -19734,14 +16969,14 @@
     },
     "gen-8": {
       "forms": {
-        "$": {
-          "is_prev_gen_icon": false
-        },
         "10": {
           "is_prev_gen_icon": false
         },
         "50": {
           "is_alias_of": "$",
+          "is_prev_gen_icon": false
+        },
+        "$": {
           "is_prev_gen_icon": false
         },
         "complete": {
@@ -22533,8 +19768,7 @@
     "slug": {
       "eng": "grookey"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22551,8 +19785,7 @@
     "slug": {
       "eng": "thwackey"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22569,8 +19802,7 @@
     "slug": {
       "eng": "rillaboom"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22590,8 +19822,7 @@
     "slug": {
       "eng": "scorbunny"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22608,8 +19839,7 @@
     "slug": {
       "eng": "raboot"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22626,8 +19856,7 @@
     "slug": {
       "eng": "cinderace"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22647,8 +19876,7 @@
     "slug": {
       "eng": "sobble"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22665,8 +19893,7 @@
     "slug": {
       "eng": "drizzile"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22683,8 +19910,7 @@
     "slug": {
       "eng": "inteleon"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22704,8 +19930,7 @@
     "slug": {
       "eng": "skwovet"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22722,8 +19947,7 @@
     "slug": {
       "eng": "greedent"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22740,8 +19964,7 @@
     "slug": {
       "eng": "rookidee"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22758,8 +19981,7 @@
     "slug": {
       "eng": "corvisquire"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22776,8 +19998,7 @@
     "slug": {
       "eng": "corviknight"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22797,8 +20018,7 @@
     "slug": {
       "eng": "blipbug"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22815,8 +20035,7 @@
     "slug": {
       "eng": "dottler"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22833,8 +20052,7 @@
     "slug": {
       "eng": "orbeetle"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22854,8 +20072,7 @@
     "slug": {
       "eng": "nickit"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22872,8 +20089,7 @@
     "slug": {
       "eng": "thievul"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22890,8 +20106,7 @@
     "slug": {
       "eng": "gossifleur"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22908,8 +20123,7 @@
     "slug": {
       "eng": "eldegoss"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22926,8 +20140,7 @@
     "slug": {
       "eng": "wooloo"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22944,8 +20157,7 @@
     "slug": {
       "eng": "dubwool"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22962,8 +20174,7 @@
     "slug": {
       "eng": "chewtle"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -22980,8 +20191,7 @@
     "slug": {
       "eng": "drednaw"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23001,8 +20211,7 @@
     "slug": {
       "eng": "yamper"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23019,8 +20228,7 @@
     "slug": {
       "eng": "boltund"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23037,8 +20245,7 @@
     "slug": {
       "eng": "rolycoly"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23055,8 +20262,7 @@
     "slug": {
       "eng": "carkol"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23073,8 +20279,7 @@
     "slug": {
       "eng": "coalossal"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23094,8 +20299,7 @@
     "slug": {
       "eng": "applin"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23112,8 +20316,7 @@
     "slug": {
       "eng": "flapple"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23133,8 +20336,7 @@
     "slug": {
       "eng": "appletun"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23151,8 +20353,7 @@
     "slug": {
       "eng": "silicobra"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23169,8 +20370,7 @@
     "slug": {
       "eng": "sandaconda"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23190,8 +20390,7 @@
     "slug": {
       "eng": "cramorant"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23214,8 +20413,7 @@
     "slug": {
       "eng": "arrokuda"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23232,8 +20430,7 @@
     "slug": {
       "eng": "barraskewda"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23250,8 +20447,7 @@
     "slug": {
       "eng": "toxel"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23268,8 +20464,7 @@
     "slug": {
       "eng": "toxtricity"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23300,8 +20495,7 @@
     "slug": {
       "eng": "sizzlipede"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23318,8 +20512,7 @@
     "slug": {
       "eng": "centiskorch"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23339,8 +20532,7 @@
     "slug": {
       "eng": "clobbopus"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23357,8 +20549,7 @@
     "slug": {
       "eng": "grapploct"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23375,8 +20566,7 @@
     "slug": {
       "eng": "sinistea"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23393,8 +20583,7 @@
     "slug": {
       "eng": "polteageist"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23411,8 +20600,7 @@
     "slug": {
       "eng": "hatenna"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23429,8 +20617,7 @@
     "slug": {
       "eng": "hattrem"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23447,8 +20634,7 @@
     "slug": {
       "eng": "hatterene"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23468,8 +20654,7 @@
     "slug": {
       "eng": "impidimp"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23486,8 +20671,7 @@
     "slug": {
       "eng": "morgrem"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23504,8 +20688,7 @@
     "slug": {
       "eng": "grimmsnarl"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23525,8 +20708,7 @@
     "slug": {
       "eng": "obstagoon"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23543,8 +20725,7 @@
     "slug": {
       "eng": "perrserker"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23561,8 +20742,7 @@
     "slug": {
       "eng": "cursola"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23579,8 +20759,7 @@
     "slug": {
       "eng": "sirfetchd"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23597,8 +20776,7 @@
     "slug": {
       "eng": "mr-rime"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23615,8 +20793,7 @@
     "slug": {
       "eng": "runerigus"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23633,8 +20810,7 @@
     "slug": {
       "eng": "milcery"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23651,8 +20827,7 @@
     "slug": {
       "eng": "alcremie"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23952,8 +21127,7 @@
     "slug": {
       "eng": "falinks"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23970,8 +21144,7 @@
     "slug": {
       "eng": "pincurchin"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -23988,8 +21161,7 @@
     "slug": {
       "eng": "snom"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24006,8 +21178,7 @@
     "slug": {
       "eng": "frosmoth"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24024,8 +21195,7 @@
     "slug": {
       "eng": "stonjourner"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24042,8 +21212,7 @@
     "slug": {
       "eng": "eiscue"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24067,8 +21236,7 @@
     "slug": {
       "eng": "indeedee"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24086,8 +21254,7 @@
     "slug": {
       "eng": "morpeko"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24111,8 +21278,7 @@
     "slug": {
       "eng": "cufant"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24129,8 +21295,7 @@
     "slug": {
       "eng": "copperajah"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24150,8 +21315,7 @@
     "slug": {
       "eng": "dracozolt"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24168,8 +21332,7 @@
     "slug": {
       "eng": "arctozolt"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24186,8 +21349,7 @@
     "slug": {
       "eng": "dracovish"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24204,8 +21366,7 @@
     "slug": {
       "eng": "arctovish"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24222,8 +21383,7 @@
     "slug": {
       "eng": "duraludon"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24243,8 +21403,7 @@
     "slug": {
       "eng": "dreepy"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24261,8 +21420,7 @@
     "slug": {
       "eng": "drakloak"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24279,8 +21437,7 @@
     "slug": {
       "eng": "dragapult"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24297,8 +21454,7 @@
     "slug": {
       "eng": "zacian"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24322,8 +21478,7 @@
     "slug": {
       "eng": "zamazenta"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24347,8 +21502,7 @@
     "slug": {
       "eng": "eternatus"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24368,8 +21522,7 @@
     "slug": {
       "eng": "kubfu"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24386,8 +21539,7 @@
     "slug": {
       "eng": "urshifu"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24414,8 +21566,7 @@
     "slug": {
       "eng": "zarude"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24435,8 +21586,7 @@
     "slug": {
       "eng": "regieleki"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24453,8 +21603,7 @@
     "slug": {
       "eng": "regidrago"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24471,8 +21620,7 @@
     "slug": {
       "eng": "glastrier"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24489,8 +21637,7 @@
     "slug": {
       "eng": "spectrier"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24507,8 +21654,7 @@
     "slug": {
       "eng": "calyrex"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24531,8 +21677,7 @@
     "slug": {
       "eng": "wyrdeer"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24550,8 +21695,7 @@
     "slug": {
       "eng": "kleavor"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24573,8 +21717,7 @@
     "slug": {
       "eng": "ursaluna"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24592,8 +21735,7 @@
     "slug": {
       "eng": "basculegion"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24613,8 +21755,7 @@
     "slug": {
       "eng": "sneasler"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24632,8 +21773,7 @@
     "slug": {
       "eng": "overqwil"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24651,8 +21791,7 @@
     "slug": {
       "eng": "enamorus"
     },
-    "gen-7": {
-    },
+    "gen-7": {},
     "gen-8": {
       "forms": {
         "$": {
@@ -24667,6 +21806,3851 @@
         "therian": {
           "is_prev_gen_icon": false,
           "is_unofficial_icon": true
+        }
+      }
+    }
+  },
+  "906": {
+    "idx": "906",
+    "name": {
+      "eng": "Sprigatito"
+    },
+    "slug": {
+      "eng": "sprigatito"
+    }
+  },
+  "907": {
+    "idx": "907",
+    "name": {
+      "eng": "Floragato"
+    },
+    "slug": {
+      "eng": "floragato"
+    }
+  },
+  "908": {
+    "idx": "908",
+    "name": {
+      "eng": "Meowscarada"
+    },
+    "slug": {
+      "eng": "meowscarada"
+    }
+  },
+  "909": {
+    "idx": "909",
+    "name": {
+      "eng": "Fuecoco"
+    },
+    "slug": {
+      "eng": "fuecoco"
+    }
+  },
+  "910": {
+    "idx": "910",
+    "name": {
+      "eng": "Crocalor"
+    },
+    "slug": {
+      "eng": "crocalor"
+    }
+  },
+  "911": {
+    "idx": "911",
+    "name": {
+      "eng": "Skeledirge"
+    },
+    "slug": {
+      "eng": "skeledirge"
+    }
+  },
+  "912": {
+    "idx": "912",
+    "name": {
+      "eng": "Quaxly"
+    },
+    "slug": {
+      "eng": "quaxly"
+    }
+  },
+  "913": {
+    "idx": "913",
+    "name": {
+      "eng": "Quaxwell"
+    },
+    "slug": {
+      "eng": "quaxwell"
+    }
+  },
+  "914": {
+    "idx": "914",
+    "name": {
+      "eng": "Quaquaval"
+    },
+    "slug": {
+      "eng": "quaquaval"
+    }
+  },
+  "915": {
+    "idx": "915",
+    "name": {
+      "eng": "Lechonk"
+    },
+    "slug": {
+      "eng": "lechonk"
+    }
+  },
+  "916": {
+    "idx": "916",
+    "name": {
+      "eng": "Oinkologne"
+    },
+    "slug": {
+      "eng": "oinkologne"
+    }
+  },
+  "917": {
+    "idx": "917",
+    "name": {
+      "eng": "Tarountula"
+    },
+    "slug": {
+      "eng": "tarountula"
+    }
+  },
+  "918": {
+    "idx": "918",
+    "name": {
+      "eng": "Spidops"
+    },
+    "slug": {
+      "eng": "spidops"
+    }
+  },
+  "919": {
+    "idx": "919",
+    "name": {
+      "eng": "Nymble"
+    },
+    "slug": {
+      "eng": "nymble"
+    }
+  },
+  "920": {
+    "idx": "920",
+    "name": {
+      "eng": "Lokix"
+    },
+    "slug": {
+      "eng": "lokix"
+    }
+  },
+  "921": {
+    "idx": "921",
+    "name": {
+      "eng": "Pawmi"
+    },
+    "slug": {
+      "eng": "pawmi"
+    }
+  },
+  "922": {
+    "idx": "922",
+    "name": {
+      "eng": "Pawmo"
+    },
+    "slug": {
+      "eng": "pawmo"
+    }
+  },
+  "923": {
+    "idx": "923",
+    "name": {
+      "eng": "Pawmot"
+    },
+    "slug": {
+      "eng": "pawmot"
+    }
+  },
+  "924": {
+    "idx": "924",
+    "name": {
+      "eng": "Tandemaus"
+    },
+    "slug": {
+      "eng": "tandemaus"
+    }
+  },
+  "925": {
+    "idx": "925",
+    "name": {
+      "eng": "Maushold"
+    },
+    "slug": {
+      "eng": "maushold"
+    }
+  },
+  "926": {
+    "idx": "926",
+    "name": {
+      "eng": "Fidough"
+    },
+    "slug": {
+      "eng": "fidough"
+    }
+  },
+  "927": {
+    "idx": "927",
+    "name": {
+      "eng": "Dachsbun"
+    },
+    "slug": {
+      "eng": "dachsbun"
+    }
+  },
+  "928": {
+    "idx": "928",
+    "name": {
+      "eng": "Smoliv"
+    },
+    "slug": {
+      "eng": "smoliv"
+    }
+  },
+  "929": {
+    "idx": "929",
+    "name": {
+      "eng": "Dolliv"
+    },
+    "slug": {
+      "eng": "dolliv"
+    }
+  },
+  "930": {
+    "idx": "930",
+    "name": {
+      "eng": "Arboliva"
+    },
+    "slug": {
+      "eng": "arboliva"
+    }
+  },
+  "931": {
+    "idx": "931",
+    "name": {
+      "eng": "Squawkabilly"
+    },
+    "slug": {
+      "eng": "squawkabilly"
+    }
+  },
+  "932": {
+    "idx": "932",
+    "name": {
+      "eng": "Nacli"
+    },
+    "slug": {
+      "eng": "nacli"
+    }
+  },
+  "933": {
+    "idx": "933",
+    "name": {
+      "eng": "Naclstack"
+    },
+    "slug": {
+      "eng": "naclstack"
+    }
+  },
+  "934": {
+    "idx": "934",
+    "name": {
+      "eng": "Garganacl"
+    },
+    "slug": {
+      "eng": "garganacl"
+    }
+  },
+  "935": {
+    "idx": "935",
+    "name": {
+      "eng": "Charcadet"
+    },
+    "slug": {
+      "eng": "charcadet"
+    }
+  },
+  "936": {
+    "idx": "936",
+    "name": {
+      "eng": "Armarouge"
+    },
+    "slug": {
+      "eng": "armarouge"
+    }
+  },
+  "937": {
+    "idx": "937",
+    "name": {
+      "eng": "Ceruledge"
+    },
+    "slug": {
+      "eng": "ceruledge"
+    }
+  },
+  "938": {
+    "idx": "938",
+    "name": {
+      "eng": "Tadbulb"
+    },
+    "slug": {
+      "eng": "tadbulb"
+    }
+  },
+  "939": {
+    "idx": "939",
+    "name": {
+      "eng": "Bellibolt"
+    },
+    "slug": {
+      "eng": "bellibolt"
+    }
+  },
+  "940": {
+    "idx": "940",
+    "name": {
+      "eng": "Wattrel"
+    },
+    "slug": {
+      "eng": "wattrel"
+    }
+  },
+  "941": {
+    "idx": "941",
+    "name": {
+      "eng": "Kilowattrel"
+    },
+    "slug": {
+      "eng": "kilowattrel"
+    }
+  },
+  "942": {
+    "idx": "942",
+    "name": {
+      "eng": "Maschiff"
+    },
+    "slug": {
+      "eng": "maschiff"
+    }
+  },
+  "943": {
+    "idx": "943",
+    "name": {
+      "eng": "Mabosstiff"
+    },
+    "slug": {
+      "eng": "mabosstiff"
+    }
+  },
+  "944": {
+    "idx": "944",
+    "name": {
+      "eng": "Shroodle"
+    },
+    "slug": {
+      "eng": "shroodle"
+    }
+  },
+  "945": {
+    "idx": "945",
+    "name": {
+      "eng": "Grafaiai"
+    },
+    "slug": {
+      "eng": "grafaiai"
+    }
+  },
+  "946": {
+    "idx": "946",
+    "name": {
+      "eng": "Bramblin"
+    },
+    "slug": {
+      "eng": "bramblin"
+    }
+  },
+  "947": {
+    "idx": "947",
+    "name": {
+      "eng": "Brambleghast"
+    },
+    "slug": {
+      "eng": "brambleghast"
+    }
+  },
+  "948": {
+    "idx": "948",
+    "name": {
+      "eng": "Toedscool"
+    },
+    "slug": {
+      "eng": "toedscool"
+    }
+  },
+  "949": {
+    "idx": "949",
+    "name": {
+      "eng": "Toedscruel"
+    },
+    "slug": {
+      "eng": "toedscruel"
+    }
+  },
+  "950": {
+    "idx": "950",
+    "name": {
+      "eng": "Klawf"
+    },
+    "slug": {
+      "eng": "klawf"
+    }
+  },
+  "951": {
+    "idx": "951",
+    "name": {
+      "eng": "Capsakid"
+    },
+    "slug": {
+      "eng": "capsakid"
+    }
+  },
+  "952": {
+    "idx": "952",
+    "name": {
+      "eng": "Scovillain"
+    },
+    "slug": {
+      "eng": "scovillain"
+    }
+  },
+  "953": {
+    "idx": "953",
+    "name": {
+      "eng": "Rellor"
+    },
+    "slug": {
+      "eng": "rellor"
+    }
+  },
+  "954": {
+    "idx": "954",
+    "name": {
+      "eng": "Rabsca"
+    },
+    "slug": {
+      "eng": "rabsca"
+    }
+  },
+  "955": {
+    "idx": "955",
+    "name": {
+      "eng": "Flittle"
+    },
+    "slug": {
+      "eng": "flittle"
+    }
+  },
+  "956": {
+    "idx": "956",
+    "name": {
+      "eng": "Espathra"
+    },
+    "slug": {
+      "eng": "espathra"
+    }
+  },
+  "957": {
+    "idx": "957",
+    "name": {
+      "eng": "Tinkatink"
+    },
+    "slug": {
+      "eng": "tinkatink"
+    }
+  },
+  "958": {
+    "idx": "958",
+    "name": {
+      "eng": "Tinkatuff"
+    },
+    "slug": {
+      "eng": "tinkatuff"
+    }
+  },
+  "959": {
+    "idx": "959",
+    "name": {
+      "eng": "Tinkaton"
+    },
+    "slug": {
+      "eng": "tinkaton"
+    }
+  },
+  "960": {
+    "idx": "960",
+    "name": {
+      "eng": "Wiglett"
+    },
+    "slug": {
+      "eng": "wiglett"
+    }
+  },
+  "961": {
+    "idx": "961",
+    "name": {
+      "eng": "Wugtrio"
+    },
+    "slug": {
+      "eng": "wugtrio"
+    }
+  },
+  "962": {
+    "idx": "962",
+    "name": {
+      "eng": "Bombirdier"
+    },
+    "slug": {
+      "eng": "bombirdier"
+    }
+  },
+  "963": {
+    "idx": "963",
+    "name": {
+      "eng": "Finizen"
+    },
+    "slug": {
+      "eng": "finizen"
+    }
+  },
+  "964": {
+    "idx": "964",
+    "name": {
+      "eng": "Palafin"
+    },
+    "slug": {
+      "eng": "palafin"
+    }
+  },
+  "965": {
+    "idx": "965",
+    "name": {
+      "eng": "Varoom"
+    },
+    "slug": {
+      "eng": "varoom"
+    }
+  },
+  "966": {
+    "idx": "966",
+    "name": {
+      "eng": "Revavroom"
+    },
+    "slug": {
+      "eng": "revavroom"
+    }
+  },
+  "967": {
+    "idx": "967",
+    "name": {
+      "eng": "Cyclizar"
+    },
+    "slug": {
+      "eng": "cyclizar"
+    }
+  },
+  "968": {
+    "idx": "968",
+    "name": {
+      "eng": "Orthworm"
+    },
+    "slug": {
+      "eng": "orthworm"
+    }
+  },
+  "969": {
+    "idx": "969",
+    "name": {
+      "eng": "Glimmet"
+    },
+    "slug": {
+      "eng": "glimmet"
+    }
+  },
+  "970": {
+    "idx": "970",
+    "name": {
+      "eng": "Glimmora"
+    },
+    "slug": {
+      "eng": "glimmora"
+    }
+  },
+  "971": {
+    "idx": "971",
+    "name": {
+      "eng": "Greavard"
+    },
+    "slug": {
+      "eng": "greavard"
+    }
+  },
+  "972": {
+    "idx": "972",
+    "name": {
+      "eng": "Houndstone"
+    },
+    "slug": {
+      "eng": "houndstone"
+    }
+  },
+  "973": {
+    "idx": "973",
+    "name": {
+      "eng": "Flamigo"
+    },
+    "slug": {
+      "eng": "flamigo"
+    }
+  },
+  "974": {
+    "idx": "974",
+    "name": {
+      "eng": "Cetoddle"
+    },
+    "slug": {
+      "eng": "cetoddle"
+    }
+  },
+  "975": {
+    "idx": "975",
+    "name": {
+      "eng": "Cetitan"
+    },
+    "slug": {
+      "eng": "cetitan"
+    }
+  },
+  "976": {
+    "idx": "976",
+    "name": {
+      "eng": "Veluza"
+    },
+    "slug": {
+      "eng": "veluza"
+    }
+  },
+  "977": {
+    "idx": "977",
+    "name": {
+      "eng": "Dondozo"
+    },
+    "slug": {
+      "eng": "dondozo"
+    }
+  },
+  "978": {
+    "idx": "978",
+    "name": {
+      "eng": "Tatsugiri"
+    },
+    "slug": {
+      "eng": "tatsugiri"
+    }
+  },
+  "979": {
+    "idx": "979",
+    "name": {
+      "eng": "Annihilape"
+    },
+    "slug": {
+      "eng": "annihilape"
+    }
+  },
+  "980": {
+    "idx": "980",
+    "name": {
+      "eng": "Clodsire"
+    },
+    "slug": {
+      "eng": "clodsire"
+    }
+  },
+  "981": {
+    "idx": "981",
+    "name": {
+      "eng": "Farigiraf"
+    },
+    "slug": {
+      "eng": "farigiraf"
+    }
+  },
+  "982": {
+    "idx": "982",
+    "name": {
+      "eng": "Dudunsparce"
+    },
+    "slug": {
+      "eng": "dudunsparce"
+    }
+  },
+  "983": {
+    "idx": "983",
+    "name": {
+      "eng": "Kingambit"
+    },
+    "slug": {
+      "eng": "kingambit"
+    }
+  },
+  "984": {
+    "idx": "984",
+    "name": {
+      "eng": "Great Tusk"
+    },
+    "slug": {
+      "eng": "great-tusk"
+    }
+  },
+  "985": {
+    "idx": "985",
+    "name": {
+      "eng": "Scream Tail"
+    },
+    "slug": {
+      "eng": "scream-tail"
+    }
+  },
+  "986": {
+    "idx": "986",
+    "name": {
+      "eng": "Brute Bonnet"
+    },
+    "slug": {
+      "eng": "brute-bonnet"
+    }
+  },
+  "987": {
+    "idx": "987",
+    "name": {
+      "eng": "Flutter Mane"
+    },
+    "slug": {
+      "eng": "flutter-mane"
+    }
+  },
+  "988": {
+    "idx": "988",
+    "name": {
+      "eng": "Slither Wing"
+    },
+    "slug": {
+      "eng": "slither-wing"
+    }
+  },
+  "989": {
+    "idx": "989",
+    "name": {
+      "eng": "Sandy Shocks"
+    },
+    "slug": {
+      "eng": "sandy-shocks"
+    }
+  },
+  "990": {
+    "idx": "990",
+    "name": {
+      "eng": "Iron Treads"
+    },
+    "slug": {
+      "eng": "iron-treads"
+    }
+  },
+  "991": {
+    "idx": "991",
+    "name": {
+      "eng": "Iron Bundle"
+    },
+    "slug": {
+      "eng": "iron-bundle"
+    }
+  },
+  "992": {
+    "idx": "992",
+    "name": {
+      "eng": "Iron Hands"
+    },
+    "slug": {
+      "eng": "iron-hands"
+    }
+  },
+  "993": {
+    "idx": "993",
+    "name": {
+      "eng": "Iron Jugulis"
+    },
+    "slug": {
+      "eng": "iron-jugulis"
+    }
+  },
+  "994": {
+    "idx": "994",
+    "name": {
+      "eng": "Iron Moth"
+    },
+    "slug": {
+      "eng": "iron-moth"
+    }
+  },
+  "995": {
+    "idx": "995",
+    "name": {
+      "eng": "Iron Thorns"
+    },
+    "slug": {
+      "eng": "iron-thorns"
+    }
+  },
+  "996": {
+    "idx": "996",
+    "name": {
+      "eng": "Frigibax"
+    },
+    "slug": {
+      "eng": "frigibax"
+    }
+  },
+  "997": {
+    "idx": "997",
+    "name": {
+      "eng": "Arctibax"
+    },
+    "slug": {
+      "eng": "arctibax"
+    }
+  },
+  "998": {
+    "idx": "998",
+    "name": {
+      "eng": "Baxcalibur"
+    },
+    "slug": {
+      "eng": "baxcalibur"
+    }
+  },
+  "999": {
+    "idx": "999",
+    "name": {
+      "eng": "Gimmighoul"
+    },
+    "slug": {
+      "eng": "gimmighoul"
+    }
+  },
+  "1000": {
+    "idx": "1000",
+    "name": {
+      "eng": "Gholdengo"
+    },
+    "slug": {
+      "eng": "gholdengo"
+    }
+  },
+  "1001": {
+    "idx": "1001",
+    "name": {
+      "eng": "Wo-Chien"
+    },
+    "slug": {
+      "eng": "wo-chien"
+    }
+  },
+  "1002": {
+    "idx": "1002",
+    "name": {
+      "eng": "Chien-Pao"
+    },
+    "slug": {
+      "eng": "chien-pao"
+    }
+  },
+  "1003": {
+    "idx": "1003",
+    "name": {
+      "eng": "Ting-Lu"
+    },
+    "slug": {
+      "eng": "ting-lu"
+    }
+  },
+  "1004": {
+    "idx": "1004",
+    "name": {
+      "eng": "Chi-Yu"
+    },
+    "slug": {
+      "eng": "chi-yu"
+    }
+  },
+  "1005": {
+    "idx": "1005",
+    "name": {
+      "eng": "Roaring Moon"
+    },
+    "slug": {
+      "eng": "roaring-moon"
+    }
+  },
+  "1006": {
+    "idx": "1006",
+    "name": {
+      "eng": "Iron Valiant"
+    },
+    "slug": {
+      "eng": "iron-valiant"
+    }
+  },
+  "1007": {
+    "idx": "1007",
+    "name": {
+      "eng": "Koraidon"
+    },
+    "slug": {
+      "eng": "koraidon"
+    }
+  },
+  "1008": {
+    "idx": "1008",
+    "name": {
+      "eng": "Miraidon"
+    },
+    "slug": {
+      "eng": "miraidon"
+    }
+  },
+  "1009": {
+    "idx": "1009",
+    "name": {
+      "eng": "Walking Wake"
+    },
+    "slug": {
+      "eng": "walking-wake"
+    }
+  },
+  "1010": {
+    "idx": "1010",
+    "name": {
+      "eng": "Iron Leaves"
+    },
+    "slug": {
+      "eng": "iron-leaves"
+    }
+  },
+  "1011": {
+    "idx": "1011",
+    "name": {
+      "eng": "Dipplin"
+    },
+    "slug": {
+      "eng": "dipplin"
+    }
+  },
+  "1012": {
+    "idx": "1012",
+    "name": {
+      "eng": "Poltchageist"
+    },
+    "slug": {
+      "eng": "poltchageist"
+    }
+  },
+  "1013": {
+    "idx": "1013",
+    "name": {
+      "eng": "Sinistcha"
+    },
+    "slug": {
+      "eng": "sinistcha"
+    }
+  },
+  "1014": {
+    "idx": "1014",
+    "name": {
+      "eng": "Okidogi"
+    },
+    "slug": {
+      "eng": "okidogi"
+    }
+  },
+  "1015": {
+    "idx": "1015",
+    "name": {
+      "eng": "Munkidori"
+    },
+    "slug": {
+      "eng": "munkidori"
+    }
+  },
+  "1016": {
+    "idx": "1016",
+    "name": {
+      "eng": "Fezandipiti"
+    },
+    "slug": {
+      "eng": "fezandipiti"
+    }
+  },
+  "1017": {
+    "idx": "1017",
+    "name": {
+      "eng": "Ogerpon"
+    },
+    "slug": {
+      "eng": "ogerpon"
+    }
+  },
+  "1018": {
+    "idx": "1018",
+    "name": {
+      "eng": "Archaludon"
+    },
+    "slug": {
+      "eng": "archaludon"
+    }
+  },
+  "1019": {
+    "idx": "1019",
+    "name": {
+      "eng": "Hydrapple"
+    },
+    "slug": {
+      "eng": "hydrapple"
+    }
+  },
+  "1020": {
+    "idx": "1020",
+    "name": {
+      "eng": "Gouging Fire"
+    },
+    "slug": {
+      "eng": "gouging-fire"
+    }
+  },
+  "1021": {
+    "idx": "1021",
+    "name": {
+      "eng": "Raging Bolt"
+    },
+    "slug": {
+      "eng": "raging-bolt"
+    }
+  },
+  "1022": {
+    "idx": "1022",
+    "name": {
+      "eng": "Iron Boulder"
+    },
+    "slug": {
+      "eng": "iron-boulder"
+    }
+  },
+  "1023": {
+    "idx": "1023",
+    "name": {
+      "eng": "Iron Crown"
+    },
+    "slug": {
+      "eng": "iron-crown"
+    }
+  },
+  "1024": {
+    "idx": "1024",
+    "name": {
+      "eng": "Terapagos"
+    },
+    "slug": {
+      "eng": "terapagos"
+    }
+  },
+  "1025": {
+    "idx": "1025",
+    "name": {
+      "eng": "Pecharunt"
+    },
+    "slug": {
+      "eng": "pecharunt"
+    }
+  },
+  "001": {
+    "idx": "001",
+    "name": {
+      "eng": "Bulbasaur"
+    },
+    "slug": {
+      "eng": "bulbasaur"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "002": {
+    "idx": "002",
+    "name": {
+      "eng": "Ivysaur"
+    },
+    "slug": {
+      "eng": "ivysaur"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "003": {
+    "idx": "003",
+    "name": {
+      "eng": "Venusaur"
+    },
+    "slug": {
+      "eng": "venusaur"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "mega": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "gmax": {
+          "is_prev_gen_icon": false
+        },
+        "mega": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "004": {
+    "idx": "004",
+    "name": {
+      "eng": "Charmander"
+    },
+    "slug": {
+      "eng": "charmander"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "005": {
+    "idx": "005",
+    "name": {
+      "eng": "Charmeleon"
+    },
+    "slug": {
+      "eng": "charmeleon"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "006": {
+    "idx": "006",
+    "name": {
+      "eng": "Charizard"
+    },
+    "slug": {
+      "eng": "charizard"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "mega-x": {
+          "has_female": false,
+          "has_right": false
+        },
+        "mega-y": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "gmax": {
+          "is_prev_gen_icon": false
+        },
+        "mega-x": {
+          "is_prev_gen_icon": true
+        },
+        "mega-y": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "007": {
+    "idx": "007",
+    "name": {
+      "eng": "Squirtle"
+    },
+    "slug": {
+      "eng": "squirtle"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "008": {
+    "idx": "008",
+    "name": {
+      "eng": "Wartortle"
+    },
+    "slug": {
+      "eng": "wartortle"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "009": {
+    "idx": "009",
+    "name": {
+      "eng": "Blastoise"
+    },
+    "slug": {
+      "eng": "blastoise"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "mega": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "gmax": {
+          "is_prev_gen_icon": false
+        },
+        "mega": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "010": {
+    "idx": "010",
+    "name": {
+      "eng": "Caterpie"
+    },
+    "slug": {
+      "eng": "caterpie"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "011": {
+    "idx": "011",
+    "name": {
+      "eng": "Metapod"
+    },
+    "slug": {
+      "eng": "metapod"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "012": {
+    "idx": "012",
+    "name": {
+      "eng": "Butterfree"
+    },
+    "slug": {
+      "eng": "butterfree"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "gmax": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "013": {
+    "idx": "013",
+    "name": {
+      "eng": "Weedle"
+    },
+    "slug": {
+      "eng": "weedle"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "014": {
+    "idx": "014",
+    "name": {
+      "eng": "Kakuna"
+    },
+    "slug": {
+      "eng": "kakuna"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "015": {
+    "idx": "015",
+    "name": {
+      "eng": "Beedrill"
+    },
+    "slug": {
+      "eng": "beedrill"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "mega": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "mega": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "016": {
+    "idx": "016",
+    "name": {
+      "eng": "Pidgey"
+    },
+    "slug": {
+      "eng": "pidgey"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "017": {
+    "idx": "017",
+    "name": {
+      "eng": "Pidgeotto"
+    },
+    "slug": {
+      "eng": "pidgeotto"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "018": {
+    "idx": "018",
+    "name": {
+      "eng": "Pidgeot"
+    },
+    "slug": {
+      "eng": "pidgeot"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "mega": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "mega": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "019": {
+    "idx": "019",
+    "name": {
+      "eng": "Rattata"
+    },
+    "slug": {
+      "eng": "rattata"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "020": {
+    "idx": "020",
+    "name": {
+      "eng": "Raticate"
+    },
+    "slug": {
+      "eng": "raticate"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        },
+        "totem": {
+          "has_female": false,
+          "has_right": false,
+          "is_alias_of": "alola"
+        },
+        "totem-alola": {
+          "has_female": false,
+          "has_right": false,
+          "is_alias_of": "alola"
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        },
+        "totem": {
+          "is_alias_of": "alola",
+          "is_prev_gen_icon": true
+        },
+        "totem-alola": {
+          "is_alias_of": "alola",
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "021": {
+    "idx": "021",
+    "name": {
+      "eng": "Spearow"
+    },
+    "slug": {
+      "eng": "spearow"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "022": {
+    "idx": "022",
+    "name": {
+      "eng": "Fearow"
+    },
+    "slug": {
+      "eng": "fearow"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "023": {
+    "idx": "023",
+    "name": {
+      "eng": "Ekans"
+    },
+    "slug": {
+      "eng": "ekans"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "024": {
+    "idx": "024",
+    "name": {
+      "eng": "Arbok"
+    },
+    "slug": {
+      "eng": "arbok"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "025": {
+    "idx": "025",
+    "name": {
+      "eng": "Pikachu"
+    },
+    "slug": {
+      "eng": "pikachu"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": true,
+          "has_right": false,
+          "has_unofficial_female_icon": true
+        },
+        "alola-cap": {
+          "has_female": true,
+          "has_right": false,
+          "has_unofficial_female_icon": true
+        },
+        "belle": {
+          "has_female": false,
+          "has_right": true
+        },
+        "cosplay": {
+          "has_female": false,
+          "has_right": false
+        },
+        "hoenn-cap": {
+          "has_female": true,
+          "has_right": false,
+          "has_unofficial_female_icon": true
+        },
+        "kalos-cap": {
+          "has_female": true,
+          "has_right": false,
+          "has_unofficial_female_icon": true
+        },
+        "libre": {
+          "has_female": false,
+          "has_right": false
+        },
+        "original-cap": {
+          "has_female": true,
+          "has_right": true,
+          "has_unofficial_female_icon": true
+        },
+        "partner-cap": {
+          "has_female": true,
+          "has_right": true,
+          "has_unofficial_female_icon": true
+        },
+        "phd": {
+          "has_female": false,
+          "has_right": false
+        },
+        "pop-star": {
+          "has_female": false,
+          "has_right": true
+        },
+        "rock-star": {
+          "has_female": false,
+          "has_right": false
+        },
+        "sinnoh-cap": {
+          "has_female": true,
+          "has_right": false,
+          "has_unofficial_female_icon": true
+        },
+        "starter": {
+          "has_female": true,
+          "has_right": false,
+          "has_unofficial_female_icon": true
+        },
+        "unova-cap": {
+          "has_female": true,
+          "has_right": false,
+          "has_unofficial_female_icon": true
+        },
+        "world-cap": {
+          "has_female": true,
+          "has_right": false,
+          "has_unofficial_female_icon": true
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "has_female": true,
+          "has_unofficial_female_icon": true,
+          "is_prev_gen_icon": true
+        },
+        "alola-cap": {
+          "has_female": true,
+          "has_unofficial_female_icon": true,
+          "is_prev_gen_icon": true
+        },
+        "belle": {
+          "is_prev_gen_icon": true
+        },
+        "cosplay": {
+          "is_prev_gen_icon": true
+        },
+        "gmax": {
+          "is_prev_gen_icon": false
+        },
+        "hoenn-cap": {
+          "has_female": true,
+          "has_unofficial_female_icon": true,
+          "is_prev_gen_icon": true
+        },
+        "kalos-cap": {
+          "has_female": true,
+          "has_unofficial_female_icon": true,
+          "is_prev_gen_icon": true
+        },
+        "libre": {
+          "is_prev_gen_icon": true
+        },
+        "original-cap": {
+          "has_female": true,
+          "has_unofficial_female_icon": true,
+          "is_prev_gen_icon": true
+        },
+        "partner-cap": {
+          "has_female": true,
+          "has_unofficial_female_icon": true,
+          "is_prev_gen_icon": true
+        },
+        "phd": {
+          "is_prev_gen_icon": true
+        },
+        "pop-star": {
+          "is_prev_gen_icon": true
+        },
+        "rock-star": {
+          "is_prev_gen_icon": true
+        },
+        "sinnoh-cap": {
+          "has_female": true,
+          "has_unofficial_female_icon": true,
+          "is_prev_gen_icon": true
+        },
+        "starter": {
+          "has_female": true,
+          "has_unofficial_female_icon": true,
+          "is_prev_gen_icon": true
+        },
+        "unova-cap": {
+          "has_female": true,
+          "has_unofficial_female_icon": true,
+          "is_prev_gen_icon": true
+        },
+        "world-cap": {
+          "has_female": true,
+          "has_unofficial_female_icon": true,
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "026": {
+    "idx": "026",
+    "name": {
+      "eng": "Raichu"
+    },
+    "slug": {
+      "eng": "raichu"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "027": {
+    "idx": "027",
+    "name": {
+      "eng": "Sandshrew"
+    },
+    "slug": {
+      "eng": "sandshrew"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "028": {
+    "idx": "028",
+    "name": {
+      "eng": "Sandslash"
+    },
+    "slug": {
+      "eng": "sandslash"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "029": {
+    "idx": "029",
+    "name": {
+      "eng": "Nidoran♀"
+    },
+    "slug": {
+      "eng": "nidoran-f"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "030": {
+    "idx": "030",
+    "name": {
+      "eng": "Nidorina"
+    },
+    "slug": {
+      "eng": "nidorina"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "031": {
+    "idx": "031",
+    "name": {
+      "eng": "Nidoqueen"
+    },
+    "slug": {
+      "eng": "nidoqueen"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "032": {
+    "idx": "032",
+    "name": {
+      "eng": "Nidoran♂"
+    },
+    "slug": {
+      "eng": "nidoran-m"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "033": {
+    "idx": "033",
+    "name": {
+      "eng": "Nidorino"
+    },
+    "slug": {
+      "eng": "nidorino"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "034": {
+    "idx": "034",
+    "name": {
+      "eng": "Nidoking"
+    },
+    "slug": {
+      "eng": "nidoking"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "035": {
+    "idx": "035",
+    "name": {
+      "eng": "Clefairy"
+    },
+    "slug": {
+      "eng": "clefairy"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": true
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "036": {
+    "idx": "036",
+    "name": {
+      "eng": "Clefable"
+    },
+    "slug": {
+      "eng": "clefable"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": true
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "037": {
+    "idx": "037",
+    "name": {
+      "eng": "Vulpix"
+    },
+    "slug": {
+      "eng": "vulpix"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "038": {
+    "idx": "038",
+    "name": {
+      "eng": "Ninetales"
+    },
+    "slug": {
+      "eng": "ninetales"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "039": {
+    "idx": "039",
+    "name": {
+      "eng": "Jigglypuff"
+    },
+    "slug": {
+      "eng": "jigglypuff"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": true
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "040": {
+    "idx": "040",
+    "name": {
+      "eng": "Wigglytuff"
+    },
+    "slug": {
+      "eng": "wigglytuff"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": true
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "041": {
+    "idx": "041",
+    "name": {
+      "eng": "Zubat"
+    },
+    "slug": {
+      "eng": "zubat"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "042": {
+    "idx": "042",
+    "name": {
+      "eng": "Golbat"
+    },
+    "slug": {
+      "eng": "golbat"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "043": {
+    "idx": "043",
+    "name": {
+      "eng": "Oddish"
+    },
+    "slug": {
+      "eng": "oddish"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "044": {
+    "idx": "044",
+    "name": {
+      "eng": "Gloom"
+    },
+    "slug": {
+      "eng": "gloom"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "045": {
+    "idx": "045",
+    "name": {
+      "eng": "Vileplume"
+    },
+    "slug": {
+      "eng": "vileplume"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "046": {
+    "idx": "046",
+    "name": {
+      "eng": "Paras"
+    },
+    "slug": {
+      "eng": "paras"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "047": {
+    "idx": "047",
+    "name": {
+      "eng": "Parasect"
+    },
+    "slug": {
+      "eng": "parasect"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "048": {
+    "idx": "048",
+    "name": {
+      "eng": "Venonat"
+    },
+    "slug": {
+      "eng": "venonat"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "049": {
+    "idx": "049",
+    "name": {
+      "eng": "Venomoth"
+    },
+    "slug": {
+      "eng": "venomoth"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "050": {
+    "idx": "050",
+    "name": {
+      "eng": "Diglett"
+    },
+    "slug": {
+      "eng": "diglett"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "051": {
+    "idx": "051",
+    "name": {
+      "eng": "Dugtrio"
+    },
+    "slug": {
+      "eng": "dugtrio"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "052": {
+    "idx": "052",
+    "name": {
+      "eng": "Meowth"
+    },
+    "slug": {
+      "eng": "meowth"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        },
+        "galar": {
+          "is_prev_gen_icon": false
+        },
+        "gmax": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "053": {
+    "idx": "053",
+    "name": {
+      "eng": "Persian"
+    },
+    "slug": {
+      "eng": "persian"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "054": {
+    "idx": "054",
+    "name": {
+      "eng": "Psyduck"
+    },
+    "slug": {
+      "eng": "psyduck"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "055": {
+    "idx": "055",
+    "name": {
+      "eng": "Golduck"
+    },
+    "slug": {
+      "eng": "golduck"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "056": {
+    "idx": "056",
+    "name": {
+      "eng": "Mankey"
+    },
+    "slug": {
+      "eng": "mankey"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "057": {
+    "idx": "057",
+    "name": {
+      "eng": "Primeape"
+    },
+    "slug": {
+      "eng": "primeape"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "058": {
+    "idx": "058",
+    "name": {
+      "eng": "Growlithe"
+    },
+    "slug": {
+      "eng": "growlithe"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "hisui": {
+          "is_prev_gen_icon": false,
+          "is_unofficial_icon": true
+        }
+      }
+    }
+  },
+  "059": {
+    "idx": "059",
+    "name": {
+      "eng": "Arcanine"
+    },
+    "slug": {
+      "eng": "arcanine"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "hisui": {
+          "is_prev_gen_icon": false,
+          "is_unofficial_icon": true
+        },
+        "hisui-noble": {
+          "is_prev_gen_icon": false,
+          "is_unofficial_icon": true
+        }
+      }
+    }
+  },
+  "060": {
+    "idx": "060",
+    "name": {
+      "eng": "Poliwag"
+    },
+    "slug": {
+      "eng": "poliwag"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "061": {
+    "idx": "061",
+    "name": {
+      "eng": "Poliwhirl"
+    },
+    "slug": {
+      "eng": "poliwhirl"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": true
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "062": {
+    "idx": "062",
+    "name": {
+      "eng": "Poliwrath"
+    },
+    "slug": {
+      "eng": "poliwrath"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": true
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "063": {
+    "idx": "063",
+    "name": {
+      "eng": "Abra"
+    },
+    "slug": {
+      "eng": "abra"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "064": {
+    "idx": "064",
+    "name": {
+      "eng": "Kadabra"
+    },
+    "slug": {
+      "eng": "kadabra"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "065": {
+    "idx": "065",
+    "name": {
+      "eng": "Alakazam"
+    },
+    "slug": {
+      "eng": "alakazam"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "mega": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "mega": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "066": {
+    "idx": "066",
+    "name": {
+      "eng": "Machop"
+    },
+    "slug": {
+      "eng": "machop"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "067": {
+    "idx": "067",
+    "name": {
+      "eng": "Machoke"
+    },
+    "slug": {
+      "eng": "machoke"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "068": {
+    "idx": "068",
+    "name": {
+      "eng": "Machamp"
+    },
+    "slug": {
+      "eng": "machamp"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "gmax": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "069": {
+    "idx": "069",
+    "name": {
+      "eng": "Bellsprout"
+    },
+    "slug": {
+      "eng": "bellsprout"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "070": {
+    "idx": "070",
+    "name": {
+      "eng": "Weepinbell"
+    },
+    "slug": {
+      "eng": "weepinbell"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "071": {
+    "idx": "071",
+    "name": {
+      "eng": "Victreebel"
+    },
+    "slug": {
+      "eng": "victreebel"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "072": {
+    "idx": "072",
+    "name": {
+      "eng": "Tentacool"
+    },
+    "slug": {
+      "eng": "tentacool"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "073": {
+    "idx": "073",
+    "name": {
+      "eng": "Tentacruel"
+    },
+    "slug": {
+      "eng": "tentacruel"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "074": {
+    "idx": "074",
+    "name": {
+      "eng": "Geodude"
+    },
+    "slug": {
+      "eng": "geodude"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "075": {
+    "idx": "075",
+    "name": {
+      "eng": "Graveler"
+    },
+    "slug": {
+      "eng": "graveler"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "076": {
+    "idx": "076",
+    "name": {
+      "eng": "Golem"
+    },
+    "slug": {
+      "eng": "golem"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "alola": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "077": {
+    "idx": "077",
+    "name": {
+      "eng": "Ponyta"
+    },
+    "slug": {
+      "eng": "ponyta"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "galar": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "078": {
+    "idx": "078",
+    "name": {
+      "eng": "Rapidash"
+    },
+    "slug": {
+      "eng": "rapidash"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "galar": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "079": {
+    "idx": "079",
+    "name": {
+      "eng": "Slowpoke"
+    },
+    "slug": {
+      "eng": "slowpoke"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "galar": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "galar": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "080": {
+    "idx": "080",
+    "name": {
+      "eng": "Slowbro"
+    },
+    "slug": {
+      "eng": "slowbro"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "mega": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "galar": {
+          "is_prev_gen_icon": false
+        },
+        "mega": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "081": {
+    "idx": "081",
+    "name": {
+      "eng": "Magnemite"
+    },
+    "slug": {
+      "eng": "magnemite"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "082": {
+    "idx": "082",
+    "name": {
+      "eng": "Magneton"
+    },
+    "slug": {
+      "eng": "magneton"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "083": {
+    "idx": "083",
+    "name": {
+      "eng": "Farfetch'd"
+    },
+    "slug": {
+      "eng": "farfetchd"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "galar": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "084": {
+    "idx": "084",
+    "name": {
+      "eng": "Doduo"
+    },
+    "slug": {
+      "eng": "doduo"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "085": {
+    "idx": "085",
+    "name": {
+      "eng": "Dodrio"
+    },
+    "slug": {
+      "eng": "dodrio"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "086": {
+    "idx": "086",
+    "name": {
+      "eng": "Seel"
+    },
+    "slug": {
+      "eng": "seel"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "087": {
+    "idx": "087",
+    "name": {
+      "eng": "Dewgong"
+    },
+    "slug": {
+      "eng": "dewgong"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "088": {
+    "idx": "088",
+    "name": {
+      "eng": "Grimer"
+    },
+    "slug": {
+      "eng": "grimer"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "089": {
+    "idx": "089",
+    "name": {
+      "eng": "Muk"
+    },
+    "slug": {
+      "eng": "muk"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "alola": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        },
+        "alola": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "090": {
+    "idx": "090",
+    "name": {
+      "eng": "Shellder"
+    },
+    "slug": {
+      "eng": "shellder"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "091": {
+    "idx": "091",
+    "name": {
+      "eng": "Cloyster"
+    },
+    "slug": {
+      "eng": "cloyster"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "092": {
+    "idx": "092",
+    "name": {
+      "eng": "Gastly"
+    },
+    "slug": {
+      "eng": "gastly"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "093": {
+    "idx": "093",
+    "name": {
+      "eng": "Haunter"
+    },
+    "slug": {
+      "eng": "haunter"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "094": {
+    "idx": "094",
+    "name": {
+      "eng": "Gengar"
+    },
+    "slug": {
+      "eng": "gengar"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        },
+        "mega": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "gmax": {
+          "is_prev_gen_icon": false
+        },
+        "mega": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "095": {
+    "idx": "095",
+    "name": {
+      "eng": "Onix"
+    },
+    "slug": {
+      "eng": "onix"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "096": {
+    "idx": "096",
+    "name": {
+      "eng": "Drowzee"
+    },
+    "slug": {
+      "eng": "drowzee"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "097": {
+    "idx": "097",
+    "name": {
+      "eng": "Hypno"
+    },
+    "slug": {
+      "eng": "hypno"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        }
+      }
+    }
+  },
+  "098": {
+    "idx": "098",
+    "name": {
+      "eng": "Krabby"
+    },
+    "slug": {
+      "eng": "krabby"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": false
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": true
+        }
+      }
+    }
+  },
+  "099": {
+    "idx": "099",
+    "name": {
+      "eng": "Kingler"
+    },
+    "slug": {
+      "eng": "kingler"
+    },
+    "gen-7": {
+      "forms": {
+        "$": {
+          "has_female": false,
+          "has_right": true
+        }
+      }
+    },
+    "gen-8": {
+      "forms": {
+        "$": {
+          "is_prev_gen_icon": false
+        },
+        "gmax": {
+          "is_prev_gen_icon": false
         }
       }
     }

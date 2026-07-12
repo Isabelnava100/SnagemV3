@@ -265,6 +265,15 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
+    // Challenge run requests: created and resolved by Cloud Functions
+    // (requestChallenge / resolveChallengeRequest). A member reads their own;
+    // hosting/grading staff read the queue. Direct client writes are denied.
+    match /challengeRequests/{id} {
+      allow read: if isSignedIn()
+                  && (resource.data.uid == request.auth.uid
+                      || isAdmin() || hasCap('HostMainForum') || hasCap('ReviewRewards'));
+      allow write: if false;
+    }
     match /islandTrials/{id} {
       allow read: if isSignedIn();
       allow write: if isAdmin();

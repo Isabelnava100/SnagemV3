@@ -37,3 +37,21 @@ export const getEmojis = async (uid: string) => {
   const data = (await getDoc(doc(db, "users", uid))).data();
   return (data ? data.emojis || [] : []) satisfies string[];
 };
+
+/**
+ * Switch friend code, stored on the member's own users/{uid} doc (rules allow
+ * self-edits outside the staff-only fields). Prefills the Colosseum tournament
+ * register form and is editable from Dashboard -> Settings -> Notifications.
+ */
+export const getMyFriendCode = async (uid: string): Promise<string> => {
+  const { getDoc, doc } = await import("firebase/firestore");
+  const { db } = await import("../context/firebase");
+  const snap = await getDoc(doc(db, "users", uid));
+  return String(snap.data()?.friendCode ?? "");
+};
+
+export const saveFriendCode = async (uid: string, friendCode: string): Promise<void> => {
+  const { doc, updateDoc } = await import("firebase/firestore");
+  const { db } = await import("../context/firebase");
+  await updateDoc(doc(db, "users", uid), { friendCode: friendCode.trim().slice(0, 40) });
+};

@@ -33,13 +33,25 @@ export interface Recipe {
   active?: boolean;
 }
 
+/** True when a "store" shop has nothing on the shelves (no sections, no rares). */
+const isEmptyStore = (s: Shop): boolean => {
+  const kind = s.kind ?? "store";
+  if (kind !== "store") return false;
+  const itemCount = s.sections?.reduce((sum, sec) => sum + (sec.items?.length ?? 0), 0) ?? 0;
+  const rareCount = s.rare_section?.pool?.length ?? 0;
+  return itemCount === 0 && rareCount === 0;
+};
+
 export const getShops = async (): Promise<Shop[]> => {
   const { collection, getDocs } = await import("firebase/firestore");
   const snap = await getDocs(collection(db, "shops"));
   return snap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<Shop, "id">) }))
     .filter((s) => s.active !== false)
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    // Unstocked store docs would render as a bare "0 items" card (and a doc
+    // with no order used to sort first); hide them until an admin stocks them.
+    .filter((s) => !isEmptyStore(s))
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 };
 
 export const getShop = async (id: string): Promise<Shop | null> => {

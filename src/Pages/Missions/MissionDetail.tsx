@@ -1,19 +1,22 @@
-import { Box, Button, Container, Flex, Group, Stack, Text, TextInput } from "@mantine/core";
+import { Badge, Box, Button, Container, Flex, Group, Image, Stack, Text } from "@mantine/core";
 import { IconArrowLeft, IconArrowRight, IconMapPin, IconSparkles } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
-import { getMission, submitMission } from "../../queries/missions";
+import { getPokemonImageURL } from "../../helpers";
+import { pokemonData } from "../../data/pokemon";
+import { Mission, getMission, pickUpMission } from "../../queries/missions";
 
 /**
- * Full-page mission brief (behind a Mission Vault card). A striped hero, a
- * two-column body (Briefing + Objective/Opposition + Pokemon Rules on the left,
- * Rewards + Bonus + pick-up on the right), and the grading submit form below.
- * "Pick Up Mission" points members at the Quests forum to start their thread;
- * rewards still flow through the submitMission callable once the run is graded.
+ * Full-page mission brief (behind a Mission Vault card). A striped hero and a
+ * two-column body (Briefing + Objective/Opposition + Pokemon Rules + possible
+ * encounters on the left, Rewards + Bonus + pick-up on the right). "Pick Up
+ * Mission" calls the pickUpMission Cloud Function, which creates the Quests
+ * thread with the briefing preloaded; closing that thread later files the run
+ * for grading automatically, so there is no separate submit form here.
  */
 
 const TIER_COLOR: Record<string, string> = {
@@ -139,64 +142,66 @@ function DotIcon({ color }: { color: string }) {
   );
 }
 
-/* --------------------------------- Submit ---------------------------------- */
+/* ------------------------------- Encounters -------------------------------- */
 
-function SubmitCard(props: { missionId: string }) {
-  const { user } = useAuth();
-  const [threadLink, setThreadLink] = React.useState("");
-  const [msg, setMsg] = React.useState("");
-  const submit = useMutation({
-    mutationFn: () => submitMission(props.missionId, threadLink.trim()),
-    onSuccess: () => setMsg("Sent to a grader. Watch your notifications for the reward."),
-    onError: (e) => setMsg((e as Error).message || "Could not submit. Try again."),
-  });
+const pokemonNameBySlug = new Map(pokemonData.map((p) => [p.slug, p.name]));
+
+/**
+ * The mission's default encounter pool so members know what they can run into
+ * before picking the job up. Required foes (from the briefing) are flagged;
+ * they are the minimum to beat for the grade, everything else is optional.
+ */
+function EncountersPanel({ mission }: { mission: Mission }) {
+  const pool = mission.encounters ?? [];
+  if (!pool.length) return null;
+  const required = new Set(mission.requiredEncounters ?? []);
+  const sorted = [...pool].sort((a, b) => Number(required.has(b)) - Number(required.has(a)));
 
   return (
     <Panel>
       <Box p="md">
-        <Text c="white" fw={700} fz={16} mb={4}>
-          Already played it? Submit for grading
+        <Text fz={11} fw={800} tt="uppercase" c="cyan.4" mb={8} style={{ letterSpacing: 1 }}>
+          Possible Encounters
         </Text>
-        <Text c="dimmed" fz={13} mb={12}>
-          Paste your Quests thread link to send the finished run to a grader. Base pay is Snag Coins;
-          write it well and the grader tips extra.
+        <Text fz={13} c="dimmed" mb={12}>
+          You choose when to take on each opponent inside your thread.
+          {required.size > 0 &&
+            " The ones marked Required come from the briefing; beating them is the minimum to clear the mission."}
         </Text>
-        {!user ? (
-          <Text c="dimmed" fz={14} role="status" aria-live="polite" py={8}>
-            Sign in to submit this mission.
-          </Text>
-        ) : (
-          <>
-            <TextInput
-              value={threadLink}
-              onChange={(e) => setThreadLink(e.currentTarget.value)}
-              placeholder="Link to your Quests thread"
-              aria-label="Link to your Quests thread"
-              mb={10}
-            />
-            <Button
-              loading={submit.isPending}
-              disabled={!threadLink.trim() || submit.isPending}
-              onClick={() => {
-                setMsg("");
-                submit.mutate();
-              }}
-            >
-              Submit for grading
-            </Button>
-            {msg && (
-              <Text
-                role="status"
-                aria-live="polite"
-                fz={13}
-                mt={8}
-                c={/could not|error|not enough|cannot|invalid|fail/i.test(msg) ? "#E35C65" : "teal"}
+        <Group gap={8}>
+          {sorted.map((slug) => (
+            <Stack key={slug} gap={2} align="center" w={72}>
+              <Box
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 10,
+                  background: "#0e0c14",
+                  border: `1px solid ${required.has(slug) ? "#f76b1c" : "#232028"}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
-                {msg}
+                <Image
+                  src={getPokemonImageURL(slug)}
+                  alt={pokemonNameBySlug.get(slug) ?? slug}
+                  w={44}
+                  h={44}
+                  fit="contain"
+                />
+              </Box>
+              <Text fz={10} c="gray.4" ta="center" lineClamp={1} w="100%">
+                {pokemonNameBySlug.get(slug) ?? slug}
               </Text>
-            )}
-          </>
-        )}
+              {required.has(slug) && (
+                <Badge size="xs" color="orange" variant="light">
+                  Required
+                </Badge>
+              )}
+            </Stack>
+          ))}
+        </Group>
       </Box>
     </Panel>
   );
@@ -206,10 +211,20 @@ function SubmitCard(props: { missionId: string }) {
 
 export default function MissionDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [pickUpError, setPickUpError] = React.useState("");
   const { data: mission, isPending } = useQuery({
     queryKey: ["mission", id],
     queryFn: () => getMission(id!),
     enabled: !!id,
+  });
+
+  const pickUpMutation = useMutation({
+    mutationFn: () => pickUpMission(id!),
+    onSuccess: ({ threadId }) => navigate(`/Forum/Quests/thread/${threadId}`),
+    onError: (e) =>
+      setPickUpError((e as Error).message || "Could not open the mission thread. Try again."),
   });
 
   if (isPending) {
@@ -354,6 +369,8 @@ export default function MissionDetail() {
                   </Box>
                 </Panel>
               )}
+
+              <EncountersPanel mission={mission} />
             </Stack>
           </Box>
 
@@ -402,27 +419,33 @@ export default function MissionDetail() {
               </Box>
 
               <Button
-                component={Link}
-                to="/Forum/Main-Forum"
                 variant="gradient"
                 gradient={{ from: "grape", to: "cyan", deg: 90 }}
                 radius="xl"
                 size="lg"
                 fullWidth
+                loading={pickUpMutation.isPending}
+                disabled={!user}
+                onClick={() => {
+                  setPickUpError("");
+                  pickUpMutation.mutate();
+                }}
               >
                 Pick Up Mission
               </Button>
+              {pickUpError && (
+                <Text fz={13} c="#E35C65" ta="center" role="status" aria-live="polite">
+                  {pickUpError}
+                </Text>
+              )}
               <Text fz={12} c="dimmed" ta="center">
-                Opens a new roleplay thread in the Quests forum. Play it out, then submit the thread
-                below for grading.
+                {user
+                  ? "Creates your roleplay thread in the Quests forum with this briefing preloaded. Play it out, then close the thread and it goes straight to the admins for grading."
+                  : "Sign in to pick up this mission."}
               </Text>
             </Stack>
           </Box>
         </Flex>
-
-        <Box mt="lg">
-          <SubmitCard missionId={mission.id} />
-        </Box>
       </Container>
     </Box>
   );
