@@ -1,10 +1,24 @@
-import { ActionIcon, Box, Drawer, Group, Image, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
+import {
+  ActionIcon,
+  Box,
+  Drawer,
+  Group,
+  Image,
+  Paper,
+  Popover,
+  Stack,
+  Text,
+  UnstyledButton,
+} from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
 import { IconBooks, IconFileText, IconHome, IconX } from "@tabler/icons-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
+import { getUnseenAnnouncement } from "../../queries/announcements";
+import { AppNotification, getNotifications, markNotificationsRead } from "../../queries/game";
 import {
   AdminAccessIcon,
   Forum,
@@ -250,42 +264,152 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
 }
 
 /**
- * Alerts shortcut on the desktop rail. The red dot lights for unread
- * notifications, an unseen announcement or (for staff) pending inbox work;
- * clicking goes to whichever of those needs attention first.
+ * Popover body for the nav Alerts button: recent notifications inline, plus
+ * jump rows for staff-inbox work and an unseen announcement. Notifications are
+ * marked read when the popover opens (see the trigger components).
  */
-function AlertsSideLink() {
+function AlertsDropdown(props: { onClose: () => void }) {
+  const { user } = useAuth();
+  const { staffPending } = useAlertsBadge();
+
+  const { data: notifications } = useQuery({
+    queryKey: ["notifications", user?.uid],
+    queryFn: () => getNotifications(user!.uid),
+    enabled: !!user,
+  });
+  const { data: unseenAnnouncement } = useQuery({
+    queryKey: ["announcement-unseen", user?.uid],
+    queryFn: () => getUnseenAnnouncement(user!.uid),
+    enabled: !!user,
+  });
+
+  const items = (notifications ?? []).slice(0, 12);
+  const linkStyle = { textDecoration: "none" as const };
+  const rowStyle = {
+    borderRadius: 10,
+    background: "#2a2830",
+    padding: "8px 10px",
+  };
+
+  return (
+    <Stack gap={8} w={290}>
+      <Text fw={700} c="white" fz={14}>
+        Alerts
+      </Text>
+
+      {staffPending > 0 && (
+        <Link to="/Admin" onClick={props.onClose} style={linkStyle}>
+          <Box style={{ ...rowStyle, border: "1px solid #7a5a1e" }}>
+            <Text fz={13} fw={600} c="#f5c518">
+              {staffPending} item{staffPending === 1 ? "" : "s"} waiting in the staff inbox
+            </Text>
+          </Box>
+        </Link>
+      )}
+
+      {unseenAnnouncement && (
+        <Link to="/Dashboard" onClick={props.onClose} style={linkStyle}>
+          <Box style={{ ...rowStyle, border: "1px solid #5a3fb0" }}>
+            <Text fz={13} fw={600} c="grape.3">
+              New announcement on your dashboard
+            </Text>
+          </Box>
+        </Link>
+      )}
+
+      {items.length === 0 && !staffPending && !unseenAnnouncement ? (
+        <Text fz={13} c="dimmed" py={6}>
+          You&apos;re all caught up.
+        </Text>
+      ) : (
+        items.map((n) => (
+          <Link key={n.id} to={n.link || "/Dashboard"} onClick={props.onClose} style={linkStyle}>
+            <Box style={rowStyle}>
+              <Text fz={13} c="white" lineClamp={2}>
+                {n.text}
+              </Text>
+            </Box>
+          </Link>
+        ))
+      )}
+    </Stack>
+  );
+}
+
+/**
+ * Shared popover wiring for both Alerts triggers. Opening marks the unread
+ * notifications read (mirrors the dashboard bell); the dot keeps showing for
+ * staff work and unseen announcements, which have their own jump rows.
+ */
+function useAlertsPopover() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [opened, { close, toggle }] = useDisclosure(false);
+  const { show } = useAlertsBadge();
+
+  const markRead = useMutation({
+    mutationFn: async () => {
+      if (!user) return;
+      const list =
+        queryClient.getQueryData<AppNotification[]>(["notifications", user.uid]) ??
+        (await getNotifications(user.uid));
+      const unread = list.filter((n) => !n.read).map((n) => n.id);
+      if (unread.length) await markNotificationsRead(user.uid, unread);
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.uid] }),
+  });
+
+  const onToggle = () => {
+    if (!opened) markRead.mutate();
+    toggle();
+  };
+
+  return { user, opened, close, onToggle, show };
+}
+
+/** Alerts popover trigger on the desktop rail. */
+function AlertsSideButton() {
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
   const { isOverSm } = useMediaQuery();
-  const { show, target } = useAlertsBadge();
+  const { user, opened, close, onToggle, show } = useAlertsPopover();
+  if (!user) return null;
+
   return (
-    <NavLink
-      to={target}
-      aria-label={show ? "Alerts, new activity waiting" : "Alerts"}
-      style={{
-        display: "flex",
-        width: "100%",
-        flexDirection: "column",
-        paddingTop: 14,
-        paddingBottom: 14,
-        paddingLeft: isOverSm ? 30 : 20,
-        paddingRight: isOverSm ? 30 : 20,
-        gap: 8,
-        justifyContent: "center",
-        alignItems: "center",
-        textDecoration: "none",
-      }}
-    >
-      <Box style={{ position: "relative" }}>
-        <SnagIcon name="burst" size={isUnder900 ? 40 : 64} title="Alerts" />
-        <AlertDot show={show} />
-      </Box>
-      {!isUnder900 && (
-        <Text c="white" tt="uppercase" fz={16}>
-          Alerts
-        </Text>
-      )}
-    </NavLink>
+    <Popover opened={opened} onChange={close} position="right-start" withArrow shadow="md">
+      <Popover.Target>
+        <UnstyledButton
+          onClick={onToggle}
+          aria-label={show ? "Alerts, new activity waiting" : "Alerts"}
+          aria-expanded={opened}
+          style={{
+            display: "flex",
+            width: "100%",
+            flexDirection: "column",
+            paddingTop: 14,
+            paddingBottom: 14,
+            paddingLeft: isOverSm ? 30 : 20,
+            paddingRight: isOverSm ? 30 : 20,
+            gap: 8,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Box style={{ position: "relative" }}>
+            <SnagIcon name="burst" size={isUnder900 ? 40 : 64} title="Alerts" />
+            <AlertDot show={show} />
+          </Box>
+          {!isUnder900 && (
+            <Text c="white" tt="uppercase" fz={16}>
+              Alerts
+            </Text>
+          )}
+        </UnstyledButton>
+      </Popover.Target>
+      <Popover.Dropdown bg="#1E1D20" style={{ border: "1px solid #3C3A3C" }}>
+        <AlertsDropdown onClose={close} />
+      </Popover.Dropdown>
+    </Popover>
   );
 }
 
@@ -358,34 +482,53 @@ function TabButton(props: { item: NavItem }) {
   );
 }
 
-/** Alerts tab on the mobile bar; same red-dot rules as the desktop rail. */
+/** Alerts popover trigger on the mobile bar; opens upward above the bar. */
 function AlertsTabButton() {
-  const { show, target } = useAlertsBadge();
+  const { user, opened, close, onToggle, show } = useAlertsPopover();
+  if (!user) return null;
+
   return (
-    <NavLink
-      to={target}
-      style={{ textDecoration: "none", flex: 1 }}
-      aria-label={show ? "Alerts, new activity waiting" : "Alerts"}
-    >
-      <Stack gap={4} align="center" justify="center" pt={10} pb={6}>
-        <Box
-          style={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 42,
-            height: 30,
-          }}
+    <Popover opened={opened} onChange={close} position="top" withArrow shadow="md">
+      <Popover.Target>
+        <UnstyledButton
+          onClick={onToggle}
+          style={{ flex: 1 }}
+          aria-label={show ? "Alerts, new activity waiting" : "Alerts"}
+          aria-expanded={opened}
         >
-          <SnagIcon name="burst" size={22} title="Alerts" style={{ opacity: 0.65 }} />
-          <AlertDot show={show} />
-        </Box>
-        <Text fz={9} fw={500} c="rgba(255,255,255,0.6)" tt="uppercase">
-          Alerts
-        </Text>
-      </Stack>
-    </NavLink>
+          <Stack gap={4} align="center" justify="center" pt={10} pb={6}>
+            <Box
+              style={{
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 42,
+                height: 30,
+                borderRadius: 999,
+                background: opened
+                  ? "linear-gradient(180deg, #912691 41.15%, #4D14C4 90.1%)"
+                  : "transparent",
+              }}
+            >
+              <SnagIcon name="burst" size={22} title="Alerts" style={{ opacity: opened ? 1 : 0.65 }} />
+              <AlertDot show={show} />
+            </Box>
+            <Text
+              fz={9}
+              fw={opened ? 700 : 500}
+              c={opened ? "white" : "rgba(255,255,255,0.6)"}
+              tt="uppercase"
+            >
+              Alerts
+            </Text>
+          </Stack>
+        </UnstyledButton>
+      </Popover.Target>
+      <Popover.Dropdown bg="#1E1D20" style={{ border: "1px solid #3C3A3C" }}>
+        <AlertsDropdown onClose={close} />
+      </Popover.Dropdown>
+    </Popover>
   );
 }
 
@@ -508,7 +651,7 @@ export const SideBar = () => {
         {primaryLinks.map((link) => (
           <SingleLink {...link} key={link.label} />
         ))}
-        <AlertsSideLink />
+        <AlertsSideButton />
         <MoreSideButton onClick={open} />
       </Paper>
 
