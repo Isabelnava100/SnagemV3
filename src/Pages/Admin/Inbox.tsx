@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Group, Stack, Text, TextInput } from "@mantine/core";
+import { Badge, Box, Button, Group, Select, Stack, Text, TextInput } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconChevronDown } from "@tabler/icons-react";
 import React from "react";
@@ -19,11 +19,16 @@ import {
   getPendingMissionSubmissions,
 } from "../../queries/grading";
 import { getPendingImports } from "../../queries/imports";
+import {
+  MasterClearanceRequest,
+  getPendingClearanceRequests,
+  resolveMasterClearance,
+} from "../../queries/research";
 import { ApplicantCard } from "../User/Dashboard/Admin/Applicants";
 import { MMRequestCard, SubmissionCard } from "../User/Dashboard/Admin/Grading";
 import { ReviewCard } from "../User/Dashboard/Admin/Imports";
 
-type InboxType = "application" | "import" | "mission" | "master" | "challenge";
+type InboxType = "application" | "import" | "mission" | "master" | "challenge" | "clearance";
 
 const TYPE_META: Record<InboxType, { label: string; color: string; action: string }> = {
   application: { label: "Application", color: "#a855f7", action: "Review" },
@@ -31,7 +36,72 @@ const TYPE_META: Record<InboxType, { label: string; color: string; action: strin
   mission: { label: "Mission", color: "#ef4444", action: "Grade" },
   master: { label: "Master Req", color: "#14b8a6", action: "Grant" },
   challenge: { label: "Challenge", color: "#f59e0b", action: "Review" },
+  clearance: { label: "Clearance", color: "#8b5cf6", action: "Review" },
 };
+
+/**
+ * Approve/decline card for a master-track clearance request. Approving sets
+ * the character's track (Hybrid/Channeler), which unlocks the Research
+ * Facility console for that character.
+ */
+function ClearanceRequestCard(props: { request: MasterClearanceRequest; onDone: () => void }) {
+  const { request, onDone } = props;
+  const [track, setTrack] = React.useState<"Hybrid" | "Channeler">(request.track ?? "Hybrid");
+  const [error, setError] = React.useState("");
+
+  const resolveMutation = useMutation({
+    mutationFn: (approve: boolean) =>
+      resolveMasterClearance({ requestId: request.id, approve, track }),
+    onSuccess: onDone,
+    onError: () => setError("Could not update that request. Try again."),
+  });
+
+  return (
+    <Stack gap="sm">
+      <Text fz={13} c="dimmed">
+        {request.username || "A member"} wants master clearance for{" "}
+        <Text component="span" fz={13} c="white" fw={600}>
+          {request.characterName || request.characterId}
+        </Text>
+        {request.track ? ` and asked for the ${request.track} track.` : "."} Approving sets the
+        character's track and opens the Research Facility console for them.
+      </Text>
+      <Select
+        label="Track"
+        data={["Hybrid", "Channeler"]}
+        value={track}
+        onChange={(v) => setTrack(v === "Channeler" ? "Channeler" : "Hybrid")}
+        maw={220}
+      />
+      <Group gap="sm">
+        <Button
+          color="teal"
+          radius="xl"
+          size="sm"
+          loading={resolveMutation.isPending}
+          onClick={() => resolveMutation.mutate(true)}
+        >
+          Approve clearance
+        </Button>
+        <Button
+          variant="light"
+          color="red"
+          radius="xl"
+          size="sm"
+          loading={resolveMutation.isPending}
+          onClick={() => resolveMutation.mutate(false)}
+        >
+          Decline
+        </Button>
+      </Group>
+      {error && (
+        <Text fz={12} c="red.4" role="status" aria-live="polite">
+          {error}
+        </Text>
+      )}
+    </Stack>
+  );
+}
 
 /**
  * Accept/decline card for a gym or trial run request. Accepting is the staff
@@ -228,6 +298,13 @@ export default function Inbox() {
     refetchOnMount: "always",
     staleTime: 0,
   });
+  const clearances = useQuery({
+    queryKey: ["pending-clearance-requests"],
+    queryFn: getPendingClearanceRequests,
+    enabled: canGrade,
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
   const { data: users } = useQuery({
     queryKey: ["get-all-users"],
     queryFn: getUsers,
@@ -242,15 +319,21 @@ export default function Inbox() {
   const missionList = canGrade ? missions.data ?? [] : [];
   const masterList = canGrade ? master.data ?? [] : [];
   const challengeList = canChallenges ? challenges.data ?? [] : [];
+  const clearanceList = canGrade ? clearances.data ?? [] : [];
 
   const loading =
     (canApps && apps.isPending) ||
     (canImports && imports.isPending) ||
-    (canGrade && (missions.isPending || master.isPending)) ||
+    (canGrade && (missions.isPending || master.isPending || clearances.isPending)) ||
     (canChallenges && challenges.isPending);
 
   const total =
-    appList.length + importList.length + missionList.length + masterList.length + challengeList.length;
+    appList.length +
+    importList.length +
+    missionList.length +
+    masterList.length +
+    challengeList.length +
+    clearanceList.length;
 
   return (
     <Stack gap="lg">
@@ -269,6 +352,7 @@ export default function Inbox() {
           {canGrade && <CountPill label="Missions" count={missionList.length} />}
           {canGrade && <CountPill label="Master Req" count={masterList.length} />}
           {canChallenges && <CountPill label="Challenges" count={challengeList.length} />}
+          {canGrade && <CountPill label="Clearance" count={clearanceList.length} />}
         </Group>
       </Group>
 
@@ -340,6 +424,16 @@ export default function Inbox() {
               subtitle={r.stageTitle || r.stageId}
             >
               <ChallengeRequestCard request={r} onDone={refresh("pending-challenge-requests")} />
+            </InboxRow>
+          ))}
+          {clearanceList.map((r) => (
+            <InboxRow
+              key={`cl-${r.id}`}
+              type="clearance"
+              title={r.username || "Unknown member"}
+              subtitle={`Master clearance · ${r.characterName || r.characterId}`}
+            >
+              <ClearanceRequestCard request={r} onDone={refresh("pending-clearance-requests")} />
             </InboxRow>
           ))}
         </Stack>

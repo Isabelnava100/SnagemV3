@@ -15,6 +15,7 @@ import {
   TeamSangem,
 } from "../../icons";
 import { SnagIcon, SnagIconName } from "../../icons/SnagIcon";
+import { useAlertsBadge } from "../../hooks/useAlertsBadge";
 import { canAccessStaffArea, hasCapability, isAdmin } from "../../lib/permissions";
 import { RESET_READING_SCALE } from "../../lib/readingSize";
 import "/src/assets/styles/navigation.css";
@@ -49,6 +50,26 @@ const PRIMARY_LABELS = ["Forum", "Snag", "Shop"];
 
 const primaryLinks = PRIMARY_LABELS.map((label) => ALL_LINKS.find((l) => l.label === label)!);
 const overflowLinks = ALL_LINKS.filter((l) => !PRIMARY_LABELS.includes(l.label));
+
+/** Red dot pinned to a nav icon when something needs the member's attention. */
+function AlertDot({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <Box
+      aria-hidden
+      style={{
+        position: "absolute",
+        top: 0,
+        right: 0,
+        width: 10,
+        height: 10,
+        borderRadius: "50%",
+        background: "#E35C65",
+        border: "2px solid #1E1D20",
+      }}
+    />
+  );
+}
 
 /** Render a nav icon, whether it is an original image file or a SnagIcon. */
 function NavGlyph(props: {
@@ -228,6 +249,46 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
   );
 }
 
+/**
+ * Alerts shortcut on the desktop rail. The red dot lights for unread
+ * notifications, an unseen announcement or (for staff) pending inbox work;
+ * clicking goes to whichever of those needs attention first.
+ */
+function AlertsSideLink() {
+  const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
+  const { isOverSm } = useMediaQuery();
+  const { show, target } = useAlertsBadge();
+  return (
+    <NavLink
+      to={target}
+      aria-label={show ? "Alerts, new activity waiting" : "Alerts"}
+      style={{
+        display: "flex",
+        width: "100%",
+        flexDirection: "column",
+        paddingTop: 14,
+        paddingBottom: 14,
+        paddingLeft: isOverSm ? 30 : 20,
+        paddingRight: isOverSm ? 30 : 20,
+        gap: 8,
+        justifyContent: "center",
+        alignItems: "center",
+        textDecoration: "none",
+      }}
+    >
+      <Box style={{ position: "relative" }}>
+        <SnagIcon name="burst" size={isUnder900 ? 40 : 64} title="Alerts" />
+        <AlertDot show={show} />
+      </Box>
+      {!isUnder900 && (
+        <Text c="white" tt="uppercase" fz={16}>
+          Alerts
+        </Text>
+      )}
+    </NavLink>
+  );
+}
+
 // Desktop "More" trigger, styled to match SingleLink but opening the drawer.
 function MoreSideButton(props: { onClick: () => void }) {
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
@@ -297,6 +358,37 @@ function TabButton(props: { item: NavItem }) {
   );
 }
 
+/** Alerts tab on the mobile bar; same red-dot rules as the desktop rail. */
+function AlertsTabButton() {
+  const { show, target } = useAlertsBadge();
+  return (
+    <NavLink
+      to={target}
+      style={{ textDecoration: "none", flex: 1 }}
+      aria-label={show ? "Alerts, new activity waiting" : "Alerts"}
+    >
+      <Stack gap={4} align="center" justify="center" pt={10} pb={6}>
+        <Box
+          style={{
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 42,
+            height: 30,
+          }}
+        >
+          <SnagIcon name="burst" size={22} title="Alerts" style={{ opacity: 0.65 }} />
+          <AlertDot show={show} />
+        </Box>
+        <Text fz={9} fw={500} c="rgba(255,255,255,0.6)" tt="uppercase">
+          Alerts
+        </Text>
+      </Stack>
+    </NavLink>
+  );
+}
+
 function MoreButton(props: { active: boolean; onClick: () => void }) {
   return (
     <UnstyledButton onClick={props.onClick} style={{ flex: 1 }}>
@@ -341,11 +433,14 @@ function MobileTabBar() {
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
+        {/* Mobile runs in the opposite order to the desktop rail: Menu on the
+            left, Forum on the right (owner's preference). */}
         <Box style={{ display: "flex", alignItems: "stretch" }}>
-          {primaryLinks.map((item) => (
+          <MoreButton active={opened} onClick={open} />
+          <AlertsTabButton />
+          {[...primaryLinks].reverse().map((item) => (
             <TabButton key={item.label} item={item} />
           ))}
-          <MoreButton active={opened} onClick={open} />
         </Box>
       </Paper>
 
@@ -413,6 +508,7 @@ export const SideBar = () => {
         {primaryLinks.map((link) => (
           <SingleLink {...link} key={link.label} />
         ))}
+        <AlertsSideLink />
         <MoreSideButton onClick={open} />
       </Paper>
 

@@ -23,6 +23,7 @@ import BackgroundImage from "../../../assets/images/dashboard-background.jpg";
 import PokemonImage from "../../../assets/images/sylveon.svg";
 import SectionWrapper, { ActionButton } from "../../../components/Dashboard/SectionWrapper";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
+import { HERO_BORDER, HERO_GRADIENT, HERO_STRIPES } from "../../../components/common/PageHero";
 import { useAuth } from "../../../context/AuthContext";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
@@ -79,14 +80,24 @@ export function Dashboard() {
   );
 }
 
-/** Desktop: full title + logout + welcome. Mobile: compact welcome + bell. */
+/**
+ * Desktop: full title + logout + welcome. Mobile: compact welcome + bell.
+ * Wrapped in the shared hero banner so the dashboard opens like every other
+ * section, while keeping its own unique content (welcome, bell, logout).
+ */
 function DashboardHeader() {
   const { user } = useAuth();
   const { isOverMd } = useMediaQuery();
 
+  const banner = {
+    borderRadius: 16,
+    background: `${HERO_STRIPES}, ${HERO_GRADIENT}`,
+    border: `1px solid ${HERO_BORDER}`,
+  };
+
   if (!isOverMd) {
     return (
-      <Flex justify="space-between" align="center" px={4} gap={8}>
+      <Flex justify="space-between" align="center" px={14} py={12} gap={8} style={banner}>
         <Group gap={6} style={{ minWidth: 0 }} wrap="nowrap">
           <Text c="white" fw={700} fz={18} lineClamp={1}>
             Welcome, {user?.displayName}!
@@ -108,18 +119,23 @@ function DashboardHeader() {
   }
 
   return (
-    <Stack gap={13}>
+    <Stack gap={13} p={{ base: 20, sm: 28 }} style={banner}>
       <Flex justify="space-between" align="center">
-        <Title order={2} c="white" size={40} tt="uppercase">
-          Snag Dashboard
-        </Title>
+        <Box>
+          <Text fz={12} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }} mb={8}>
+            Guild Member Hub
+          </Text>
+          <Text component="h1" c="white" fw={800} fz={{ base: 28, sm: 40 }} style={{ lineHeight: 1.1, margin: 0 }}>
+            Snag Dashboard
+          </Text>
+        </Box>
         <Button className="self-start" variant="subtle" onClick={handleLogout}>
           Logout
         </Button>
       </Flex>
       <Group>
         <NotificationBell />
-        <Text color="white" fz={20}>
+        <Text c="white" fz={18}>
           Welcome, {user?.displayName}!
         </Text>
       </Group>
@@ -482,8 +498,11 @@ function Announcements() {
       if (!user || !announcement) return;
       await markAnnouncementRead(user.uid, announcement.id);
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["announcement-read", user?.uid] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcement-read", user?.uid] });
+      // The nav Alerts dot watches this key.
+      queryClient.invalidateQueries({ queryKey: ["announcement-unseen", user?.uid] });
+    },
   });
 
   const handleClick = () => {

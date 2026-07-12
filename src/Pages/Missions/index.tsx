@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
 import { Link } from "react-router-dom";
+import { HeroStat, PageHero } from "../../components/common/PageHero";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getCurrencies } from "../../queries/dashboard";
@@ -90,24 +91,6 @@ function matchesFilter(mission: Mission, filter: FilterKey): boolean {
     default:
       return true;
   }
-}
-
-function StatChip(props: { value: string; label: string; gold?: boolean }) {
-  return (
-    <Box
-      bg="rgba(0,0,0,0.35)"
-      px={16}
-      py={8}
-      style={{ borderRadius: 12, textAlign: "center", minWidth: 92 }}
-    >
-      <Text fz={24} fw={700} c={props.gold ? "#F5C842" : "white"} lh={1.1}>
-        {props.value}
-      </Text>
-      <Text fz={10} fw={600} c="dimmed" style={{ letterSpacing: 0.5 }}>
-        {props.label}
-      </Text>
-    </Box>
-  );
 }
 
 function RewardChip(props: { label: string; dot?: string; icon?: React.ReactNode }) {
@@ -281,30 +264,20 @@ export default function Missions() {
 
   return (
     <Box>
-      <Box
-        px={{ base: 16, sm: 40 }}
-        py={{ base: 24, sm: 32 }}
-        style={{
-          background: "linear-gradient(90deg,#3A2A4D 0%,#2C3E50 100%)",
-        }}
-      >
-        <Group justify="space-between" align="center" wrap="wrap" gap={20}>
-          <Box style={{ flex: "1 1 320px", minWidth: 0 }}>
-            <Title c="white" fw={700} fz={{ base: 26, sm: 34 }} mb={8}>
-              Take on a Mission!!
-            </Title>
-            <Text c="gray.3" fz={{ base: 13, sm: 15 }} maw={620}>
-              Pick up a job from the Vault to open a roleplay thread in the
-              Quests forum. Base pay is Snag Coins, write it well and the grader
-              tips extra.
-            </Text>
-          </Box>
-          <Group gap={12} wrap="nowrap">
-            <StatChip value={String(all.length)} label="MISSIONS" />
-            <StatChip value={`${pieces % 3}/3`} label="EMBLEM PIECES" gold />
-          </Group>
-        </Group>
-      </Box>
+      <Container size="xl" pt={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+        <PageHero
+          eyebrow="The Mission Vault"
+          title="Take on a Mission!!"
+          subtitle="Pick up a job from the Vault to open a roleplay thread in the Quests forum. Base pay is Snag Coins, write it well and the grader tips extra."
+          aside={
+            <Group gap="sm" wrap="wrap">
+              <HeroStat value={String(all.length)} label="Missions" />
+              <HeroStat value={`${pieces % 3}/3`} label="Emblem Pieces" gold />
+            </Group>
+          }
+          mb={0}
+        />
+      </Container>
 
       <Container size="xl" py={{ base: 20, sm: 28 }} px={{ base: 16, sm: 24 }}>
         <Group justify="space-between" align="center" wrap="wrap" gap={12} mb={20}>

@@ -1,6 +1,7 @@
 import { Box, Container, Stack, Tabs, Text, Title } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { useSearchParams } from "react-router-dom";
+import { PageHero } from "../../components/common/PageHero";
 
 /**
  * Public policies hub. Anyone (signed in or not) can read these. Tabbed so we
@@ -395,15 +396,12 @@ export default function Policies() {
 
   return (
     <Container size="md" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
-      <Stack gap={6} mb={20}>
-        <Title order={1} c="white" size={30} fw={600}>
-          Policies
-        </Title>
-        <Text fz={13} c="dimmed">
-          Last updated {LAST_UPDATED}. If anything here is unclear, reach out to
-          the staff team.
-        </Text>
-      </Stack>
+      <PageHero
+        eyebrow="House Rules"
+        title="Policies"
+        subtitle={`Last updated ${LAST_UPDATED}. If anything here is unclear, reach out to the staff team.`}
+        mb={20}
+      />
 
       <Tabs
         value={active}

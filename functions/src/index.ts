@@ -2609,6 +2609,102 @@ export const gradeMission = onCall(async (request) => {
   return { ok: true };
 });
 
+// --- Research: master-track clearance request + approval --------------------
+// A character unlocks the Facility console once an admin clears it into a
+// Division (character.type flips from "None" to Hybrid/Channeler). The member
+// asks from the Research guide; graders approve from the admin inbox.
+export const requestMasterClearance = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const characterId = requireString(request.data?.characterId, "character", 80);
+  const track = request.data?.track === "Channeler" ? "Channeler" : "Hybrid";
+
+  const charsSnap = await db.doc(`users/${uid}/bag/characters`).get();
+  const character = (charsSnap.data() ?? {})[characterId];
+  if (!character) throw new HttpsError("not-found", "Character not found.");
+  if (character.type && character.type !== "None") {
+    throw new HttpsError("failed-precondition", "That character already has master clearance.");
+  }
+  const characterName = String(character.name ?? characterId).slice(0, 100);
+
+  // One open request per character; a repeat tap returns the first one.
+  const dup = await db
+    .collection("masterClearanceRequests")
+    .where("uid", "==", uid)
+    .where("characterId", "==", characterId)
+    .where("status", "==", "requested")
+    .limit(1)
+    .get();
+  if (!dup.empty) return { ok: true, id: dup.docs[0].id, duplicate: true };
+
+  const ref = await db.collection("masterClearanceRequests").add({
+    uid,
+    username: member.username,
+    characterId,
+    characterName,
+    track,
+    status: "requested",
+    createdAt: new Date(),
+  });
+  const staff = await staffUidsWithCaps(["ReviewRewards"]);
+  await notifyUsers(staff, {
+    type: "approval",
+    text: `${member.username} requested master clearance for ${characterName} (${track} track).`,
+    link: "/Dashboard/Admin-Access",
+  });
+  return { ok: true, id: ref.id };
+});
+
+export const resolveMasterClearance = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isGrader(member)) {
+    throw new HttpsError("permission-denied", "You cannot review clearance requests.");
+  }
+  const requestId = requireString(request.data?.requestId, "request", 80);
+  const approve = request.data?.approve !== false;
+  const track = request.data?.track === "Channeler" ? "Channeler" : "Hybrid";
+
+  const ref = db.doc(`masterClearanceRequests/${requestId}`);
+  const snap = await ref.get();
+  const data = snap.data();
+  if (!data) throw new HttpsError("not-found", "Request not found.");
+  if (data.status !== "requested") throw new HttpsError("failed-precondition", "Already handled.");
+
+  if (approve) {
+    // Flipping the character's type IS the clearance: the Research console
+    // unlocks for any character whose type is not "None".
+    await db
+      .doc(`users/${data.uid}/bag/characters`)
+      .set({ [String(data.characterId)]: { type: track } }, { merge: true });
+  }
+  await ref.set(
+    {
+      status: approve ? "approved" : "declined",
+      track,
+      handledBy: member.username,
+      handledAt: new Date(),
+    },
+    { merge: true }
+  );
+  const who = String(data.characterName ?? data.characterId);
+  await notifyUsers(
+    [String(data.uid)],
+    approve
+      ? {
+          type: "approval",
+          text: `Master clearance granted: ${who} joined the ${track} track. The Facility console is open.`,
+          link: "/Research",
+        }
+      : {
+          type: "approval",
+          text: `Your master clearance request for ${who} was declined. Reach out to staff for details.`,
+          link: "/Research",
+        }
+  );
+  return { ok: true };
+});
+
 // --- Research: Master Mission request + grant ------------------------------
 export const requestMasterMission = onCall(async (request) => {
   const uid = requireAuth(request);

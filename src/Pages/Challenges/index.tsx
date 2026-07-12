@@ -3,6 +3,7 @@ import { IconArrowRight, IconCheck, IconExternalLink, IconStar } from "@tabler/i
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
+import { PageHero } from "../../components/common/PageHero";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -45,9 +46,6 @@ interface Stage {
   requestStageId: string;
 }
 
-const HEADER_GRADIENT = "linear-gradient(120deg, #3a1d63 0%, #2c2352 55%, #1c2a4a 100%)";
-const HEADER_STRIPES =
-  "repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 12px, transparent 12px, transparent 24px)";
 const BAR_GRADIENT = "linear-gradient(90deg, #c026d3, #6366f1, #22d3ee)";
 
 const TAB_SUBTITLES: Record<string, string> = {
@@ -803,16 +801,11 @@ export default function Challenges() {
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
-      <Box
-        mb={24}
-        p={{ base: 20, sm: 28 }}
-        style={{ background: `${HEADER_STRIPES}, ${HEADER_GRADIENT}`, borderRadius: 16 }}
+      <PageHero
+        eyebrow="Gyms and Island Trials"
+        title="Take on a Challenge!"
+        subtitle={TAB_SUBTITLES[tab]}
       >
-        <Title>Take on a Challenge!</Title>
-        <Text fz={14} c="white" mt={8} mb={20} style={{ maxWidth: 680, opacity: 0.9 }}>
-          {TAB_SUBTITLES[tab]}
-        </Text>
-
         <Group gap={10}>
           {TABS.map((t) => {
             const active = tab === t.value;
@@ -831,7 +824,7 @@ export default function Challenges() {
             );
           })}
         </Group>
-      </Box>
+      </PageHero>
 
       {loading ? (
         <SectionLoader />
@@ -849,11 +842,3 @@ export default function Challenges() {
   );
 }
 
-/** Big page heading. */
-function Title({ children }: { children: React.ReactNode }) {
-  return (
-    <Text component="h1" fz={{ base: 28, sm: 34 }} fw={800} c="white" style={{ lineHeight: 1.1, margin: 0 }}>
-      {children}
-    </Text>
-  );
-}

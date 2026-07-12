@@ -13,9 +13,10 @@ import {
   IconTargetArrow,
   IconX,
 } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
+import { PageHero } from "../../components/common/PageHero";
 import { SectionLoader } from "../../components/navigation/loading";
 import { Character } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
@@ -23,8 +24,10 @@ import { isAdmin } from "../../lib/permissions";
 import { getCharacters, getItems } from "../../queries/dashboard";
 import {
   ResearchProgress,
+  getMyClearanceRequests,
   getResearchConfig,
   getResearchProgress,
+  requestMasterClearance,
   requestMasterMission,
   reviveFossil,
 } from "../../queries/research";
@@ -196,7 +199,19 @@ const CHECKLIST = [
   { ok: false, title: "Patience", body: "Ten missions per type. Most trainers spend months reaching the Grand Master." },
 ];
 
-function GuideView(props: { onPreview: () => void }) {
+/** Clearance-request state passed down from the page for the selected character. */
+interface ClearanceProps {
+  characterSelected: boolean;
+  alreadyCleared: boolean;
+  requestPending: boolean;
+  requesting: boolean;
+  requestStatus: string;
+  track: "Hybrid" | "Channeler";
+  onTrackChange: (track: "Hybrid" | "Channeler") => void;
+  onRequest: () => void;
+}
+
+function GuideView(props: { onPreview: () => void } & ClearanceProps) {
   return (
     <Stack gap={44}>
       <Box>
@@ -329,19 +344,51 @@ function GuideView(props: { onPreview: () => void }) {
           </Box>
 
           <Stack gap={12} align="flex-end" justify="flex-start" style={{ flexShrink: 0 }}>
-            <Button
-              component="a"
-              href="/Forum/Main-Forum"
-              variant="gradient"
-              gradient={{ from: "grape", to: "cyan", deg: 90 }}
-              radius="xl"
-              size="lg"
-              rightSection={<IconArrowRight size={18} />}
-            >
-              Request Clearance Review
-            </Button>
+            {props.alreadyCleared ? (
+              <Text fz={14} c="teal.3" ta="right" role="status" aria-live="polite">
+                This character already holds master clearance.
+              </Text>
+            ) : props.requestPending ? (
+              <Text fz={14} c="orange.3" ta="right" role="status" aria-live="polite" maw={320}>
+                Clearance review requested. An admin will review your character and open the
+                console once approved.
+              </Text>
+            ) : (
+              <>
+                <Select
+                  label="Which track are you aiming for?"
+                  data={["Hybrid", "Channeler"]}
+                  value={props.track}
+                  onChange={(v) => props.onTrackChange(v === "Channeler" ? "Channeler" : "Hybrid")}
+                  w={220}
+                  styles={{ input: { background: "#141019" } }}
+                />
+                <Button
+                  variant="gradient"
+                  gradient={{ from: "grape", to: "cyan", deg: 90 }}
+                  radius="xl"
+                  size="lg"
+                  rightSection={<IconArrowRight size={18} />}
+                  loading={props.requesting}
+                  disabled={!props.characterSelected}
+                  onClick={props.onRequest}
+                >
+                  Request Clearance Review
+                </Button>
+                {!props.characterSelected && (
+                  <Text fz={12} c="dimmed" ta="right">
+                    Pick a character above to request a review.
+                  </Text>
+                )}
+              </>
+            )}
+            {props.requestStatus && (
+              <Text fz={13} c="grape.3" ta="right" role="status" aria-live="polite">
+                {props.requestStatus}
+              </Text>
+            )}
             <Text fz={13} c="dimmed" ta="right">
-              Most trainers wait months. Progress is earned.
+              An admin gets notified the moment you ask. Progress is earned.
             </Text>
             <Button variant="subtle" color="grape" size="sm" onClick={props.onPreview}>
               Preview the Facility console
@@ -1008,6 +1055,7 @@ function ConsoleView(props: {
 export default function Research() {
   const { user } = useAuth();
   const uid = user?.uid;
+  const queryClient = useQueryClient();
 
   const configQuery = useQuery({ queryKey: ["research-config"], queryFn: getResearchConfig });
   const charactersQuery = useQuery({
@@ -1060,13 +1108,36 @@ export default function Research() {
   const canAct = (!!selected && selected.type !== "None") || isAdmin(user);
 
   const [view, setView] = React.useState<"guide" | "console">("guide");
-  // Once we know the selected character, land masters on the console.
+  // Once we know the selected character, land masters on the console. Picking
+  // a character without clearance always sends them back to the guide.
   const [viewInit, setViewInit] = React.useState(false);
   React.useEffect(() => {
     if (viewInit || !selected) return;
     setView(canAct ? "console" : "guide");
     setViewInit(true);
   }, [selected, canAct, viewInit]);
+
+  // Clearance review flow: the guide's request button files a request that
+  // notifies the graders; approval flips the character's type server-side.
+  const [track, setTrack] = React.useState<"Hybrid" | "Channeler">("Hybrid");
+  const [requestStatus, setRequestStatus] = React.useState("");
+  const myClearanceQuery = useQuery({
+    queryKey: ["my-clearance-requests", uid],
+    queryFn: () => getMyClearanceRequests(uid as string),
+    enabled: !!uid,
+  });
+  const clearancePending = (myClearanceQuery.data ?? []).some(
+    (r) => r.characterId === selectedId && r.status === "requested"
+  );
+  const clearanceMutation = useMutation({
+    mutationFn: () => requestMasterClearance(selectedId as string, track),
+    onSuccess: () => {
+      setRequestStatus("");
+      queryClient.invalidateQueries({ queryKey: ["my-clearance-requests", uid] });
+    },
+    onError: (e) =>
+      setRequestStatus((e as Error).message || "Could not send the request. Try again."),
+  });
 
   const loading = configQuery.isPending || (!!uid && (charactersQuery.isPending || progressQuery.isPending));
   const granted = view === "console" && canAct;
@@ -1128,23 +1199,17 @@ export default function Research() {
         </Group>
 
         {/* Hero */}
-        <Flex gap="lg" align="flex-start" mb={44} wrap="nowrap">
-          <FacilityIcon granted={granted} />
-          <Box style={{ minWidth: 0 }}>
-            <Eyebrow color={accentColor} />
-            <Group gap="md" align="center" wrap="wrap" mb={12}>
-              <Text component="h1" c="white" fw={800} fz={{ base: 34, sm: 52 }} style={{ lineHeight: 1, margin: 0 }}>
-                Become a Master
-              </Text>
-              <AccessBadge granted={granted} />
-            </Group>
-            <Text fz={{ base: 14, sm: 16 }} c="gray.4" maw={760}>
-              {granted
-                ? "You made it past the missions and the forums. This is the late game. Few reach the Facility, fewer finish. Everything here is earned, one encrypted door at a time."
-                : "You're not a Master yet. Behind this door is the end-game: powers, transformations and stories most trainers never touch. Here's why it's worth it, and exactly how to earn your way in."}
-            </Text>
-          </Box>
-        </Flex>
+        <PageHero
+          eyebrow={<Eyebrow color={accentColor} />}
+          title="Become a Master"
+          titleSuffix={<AccessBadge granted={granted} />}
+          subtitle={
+            granted
+              ? "You made it past the missions and the forums. This is the late game. Few reach the Facility, fewer finish. Everything here is earned, one encrypted door at a time."
+              : "You're not a Master yet. Behind this door is the end-game: powers, transformations and stories most trainers never touch. Here's why it's worth it, and exactly how to earn your way in."
+          }
+          aside={<FacilityIcon granted={granted} />}
+        />
 
         {loading ? (
           <SectionLoader />
@@ -1157,7 +1222,17 @@ export default function Research() {
             fossilItems={fossilItems}
           />
         ) : (
-          <GuideView onPreview={() => setView("console")} />
+          <GuideView
+            onPreview={() => setView("console")}
+            characterSelected={!!selectedId}
+            alreadyCleared={!!selected && selected.type !== "None"}
+            requestPending={clearancePending}
+            requesting={clearanceMutation.isPending}
+            requestStatus={requestStatus}
+            track={track}
+            onTrackChange={setTrack}
+            onRequest={() => clearanceMutation.mutate()}
+          />
         )}
       </Container>
     </Box>

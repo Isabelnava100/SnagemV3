@@ -32,6 +32,7 @@ import {
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { HeroStat as HeroStatChip, PageHero } from "../../components/common/PageHero";
 import { SectionLoader } from "../../components/navigation/loading";
 import { getPokemonImageURL } from "../../helpers";
 import { pokemonData } from "../../data/pokemon";
@@ -1257,56 +1258,26 @@ export default function Colosseum() {
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
-      <Box
-        p={{ base: 20, sm: 28 }}
-        mb={24}
-        style={{
-          borderRadius: 16,
-          background: "linear-gradient(135deg, #2a1b4a 0%, #1a1636 60%, #12102a 100%)",
-          border: "1px solid #3a3550",
-        }}
-      >
-        <Flex direction={{ base: "column", sm: "row" }} gap="md" align={{ base: "stretch", sm: "center" }}>
-          <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
-            <Group gap={8} mb={8}>
-              <Badge color="red" variant="filled" radius="sm">
-                LIVE
-              </Badge>
-              <Text fz={11} c="grape.3" fw={700} tt="uppercase" style={{ letterSpacing: 1 }}>
-                Season 4 . Week 9
-              </Text>
-            </Group>
-            <Title order={1} c="white" fw={800} tt="uppercase" size={34}>
-              The Colosseum
-            </Title>
-            <Text fz={14} c="dimmed" mt={8} maw={520}>
-              Train. Battle. Climb the ladder. Every post, every match, every point counts
-              toward the top of the standings.
+      <PageHero
+        eyebrow={
+          <Group gap={8}>
+            <Badge color="red" variant="filled" radius="sm">
+              LIVE
+            </Badge>
+            <Text fz={12} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
+              Season 4 . Week 9
             </Text>
-          </Box>
-
-          <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
-            <SimpleGrid cols={{ base: 2 }} spacing="sm">
-              <Card bg="rgba(0,0,0,0.35)" radius="md" p={12} withBorder style={{ borderColor: "#3a3550" }}>
-                <Text fz={24} fw={800} c="white">
-                  {rankedCount}
-                </Text>
-                <Text fz={10} c="dimmed" tt="uppercase">
-                  Ranked Players
-                </Text>
-              </Card>
-              <Card bg="rgba(0,0,0,0.35)" radius="md" p={12} withBorder style={{ borderColor: "#3a3550" }}>
-                <Text fz={24} fw={800} c="white">
-                  {daysToCup}
-                </Text>
-                <Text fz={10} c="dimmed" tt="uppercase">
-                  To Paldea Cup
-                </Text>
-              </Card>
-            </SimpleGrid>
-          </Box>
-        </Flex>
-      </Box>
+          </Group>
+        }
+        title="The Colosseum"
+        subtitle="Train. Battle. Climb the ladder. Every post, every match, every point counts toward the top of the standings."
+        aside={
+          <Group gap="sm" wrap="wrap">
+            <HeroStatChip value={String(rankedCount)} label="Ranked Players" />
+            <HeroStatChip value={daysToCup} label="To Paldea Cup" />
+          </Group>
+        }
+      />
 
       <Tabs defaultValue="training" variant="pills" color="grape" keepMounted={false}>
         <Tabs.List mb={16} style={{ flexWrap: "wrap" }}>

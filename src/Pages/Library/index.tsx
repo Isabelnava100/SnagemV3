@@ -19,6 +19,7 @@ import { IconArrowRight } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
+import { PageHero } from "../../components/common/PageHero";
 import { itemData } from "../../data/item";
 import { pokemonData } from "../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "../../helpers";
@@ -477,18 +478,13 @@ export default function Library() {
   return (
     <Box style={{ background: BG, minHeight: "100%" }}>
       <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
-        {/* Masthead */}
-        <Box mb={28}>
-          <Text fz={12} fw={700} c="#c9a94a" tt="uppercase" mb={10} style={{ letterSpacing: 3 }}>
-            The Great Snagem Library &middot; Est. 2022
-          </Text>
-          <Text component="h1" fz={{ base: 44, sm: 60 }} fw={700} c="#f4efe3" style={{ fontFamily: SERIF, lineHeight: 1, margin: 0 }}>
-            The Library
-          </Text>
-          <Text fz={{ base: 14, sm: 16 }} c="gray.4" mt={12} maw={720}>
-            The guild's public reference. Choose a wing from the directory, then browse or search its holdings.
-          </Text>
-        </Box>
+        <PageHero
+          eyebrow="The Great Snagem Library &middot; Est. 2022"
+          eyebrowColor="#c9a94a"
+          title="The Library"
+          subtitle="The guild's public reference. Choose a wing from the directory, then browse or search its holdings."
+          mb={28}
+        />
 
         <Flex gap={{ base: 20, md: 36 }} direction={{ base: "column", md: "row" }} align="flex-start">
           {/* Directory */}

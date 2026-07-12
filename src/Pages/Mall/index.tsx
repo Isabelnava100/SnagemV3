@@ -21,6 +21,7 @@ import { IconArrowLeft, IconLock, IconRefresh, IconShoppingBag, IconSparkles } f
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
+import { PageHero } from "../../components/common/PageHero";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { isMaster } from "../../lib/permissions";
@@ -1317,38 +1318,26 @@ export default function Mall() {
 
   return (
     <Box>
-      {/* Header band */}
-      <Box
-        px={{ base: 16, sm: 24 }}
-        py={{ base: 20, sm: 28 }}
-        style={{
-          backgroundImage:
-            "linear-gradient(135deg, #4a2585, #7b3fb0 60%, #a259c9)",
-        }}
-      >
-        <Container size="lg" px={0}>
-          <Group justify="space-between" align="flex-start" wrap="wrap" gap={16}>
-            <Stack gap={4}>
-              <Group gap={8}>
-                <IconShoppingBag size={26} color="white" />
-                <Title order={1} c="white" fz={{ base: 24, sm: 30 }} fw={800}>
-                  The Snag Mall
-                </Title>
-              </Group>
-              <Text fz={13} c="rgba(255,255,255,0.85)">
-                Stroll the arcade, step through any storefront to shop.
+      <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+        <PageHero
+          eyebrow={
+            <Group gap={8}>
+              <IconShoppingBag size={16} color="var(--mantine-color-grape-3)" />
+              <Text fz={12} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
+                The Arcade &middot; Open Daily
               </Text>
-            </Stack>
+            </Group>
+          }
+          title="The Snag Mall"
+          subtitle="Stroll the arcade, step through any storefront to shop."
+          aside={
             <Group gap={10} wrap="wrap">
               <CurrencyChip badge="C" label="Snag Coins" value={String(snagCoins)} />
               <CurrencyChip badge="S" label="Snag Emblems" value={String(snagEmblems)} />
             </Group>
-          </Group>
-        </Container>
-      </Box>
+          }
+        />
 
-      {/* Body */}
-      <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
         {shopsPending ? (
           <SectionLoader />
         ) : (

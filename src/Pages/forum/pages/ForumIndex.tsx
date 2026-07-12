@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { GradientButtonSecondary } from "../../../components/common/GradientButton";
+import { PageHero } from "../../../components/common/PageHero";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { canAccessForum } from "../../../lib/permissions";
@@ -207,26 +208,27 @@ export default function ForumIndex() {
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
-      {/* Hero */}
-      <Flex justify="space-between" align="flex-start" gap={12} wrap="wrap">
-        <Stack gap={4}>
-          <Title order={1} fz={isOverSm ? 32 : 22} c="white" fw={400}>
-            Snagem Forums
-          </Title>
-        </Stack>
-        <TextInput
-          placeholder="Search the Forums..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.currentTarget.value);
-            setPage(1);
-          }}
-          size="xs"
-          w={isOverSm ? 220 : "100%"}
-          radius="xl"
-          styles={{ input: { background: "#2E2D2E" } }}
-        />
-      </Flex>
+      <PageHero
+        eyebrow="The Roleplay Boards"
+        title="Snagem Forums"
+        subtitle="Where the guild's stories happen. Pick a board, join a thread, or start your own."
+        aside={
+          <TextInput
+            placeholder="Search the Forums..."
+            aria-label="Search the Forums"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.currentTarget.value);
+              setPage(1);
+            }}
+            size="xs"
+            w={{ base: "100%", sm: 220 }}
+            radius="xl"
+            styles={{ input: { background: "rgba(0,0,0,0.25)" } }}
+          />
+        }
+        mb={16}
+      />
 
       <Group gap={10} mt={14} mb={16}>
         <GradientButtonSecondary radius="xl" size="xs" onClick={() => navigate("/Dashboard/Bookmarks")}>

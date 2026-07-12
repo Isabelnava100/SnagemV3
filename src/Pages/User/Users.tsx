@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { IconSearch } from "@tabler/icons-react";
+import { PageHero } from "../../components/common/PageHero";
 import { SectionLoader } from "../../components/navigation/loading";
 import { clickable } from "../../lib/a11y";
 import { getMembers, MemberCard } from "../../queries/members";
@@ -162,33 +163,26 @@ export default function Users() {
 
   return (
     <Box>
-      {/* Header band */}
-      <Box
-        px={{ base: 16, sm: 32 }}
-        py={{ base: 20, sm: 26 }}
-        style={{ background: "linear-gradient(90deg, #3A2A4D 0%, #2C3E50 100%)" }}
-      >
-        <Group justify="space-between" align="center" wrap="wrap" gap={16}>
-          <Box>
-            <Title order={1} c="white" fw={700} fz={{ base: 26, sm: 34 }}>
-              Snagem Members
-            </Title>
-            <Text c="rgba(255,255,255,0.65)" fz={13}>
-              {members.length} of {total} trainers
-            </Text>
-          </Box>
-          <TextInput
-            value={search}
-            onChange={(e) => setSearch(e.currentTarget.value)}
-            placeholder="Search by username..."
-            aria-label="Search members by username"
-            leftSection={<IconSearch size={16} />}
-            radius="xl"
-            w={{ base: "100%", sm: 320 }}
-            styles={{ input: { background: "rgba(0,0,0,0.25)", border: "none", color: "white" } }}
-          />
-        </Group>
-      </Box>
+      <Container size="xl" pt={{ base: 24, sm: 40 }} px={{ base: 12, sm: 20 }}>
+        <PageHero
+          eyebrow="The Guild Roster"
+          title="Snagem Members"
+          subtitle={`${members.length} of ${total} trainers`}
+          aside={
+            <TextInput
+              value={search}
+              onChange={(e) => setSearch(e.currentTarget.value)}
+              placeholder="Search by username..."
+              aria-label="Search members by username"
+              leftSection={<IconSearch size={16} />}
+              radius="xl"
+              w={{ base: "100%", sm: 320 }}
+              styles={{ input: { background: "rgba(0,0,0,0.25)", border: "none", color: "white" } }}
+            />
+          }
+          mb={0}
+        />
+      </Container>
 
       <Container size="xl" py={20} px={{ base: 12, sm: 20 }}>
         <Group justify="space-between" align="center" mb={18} wrap="wrap" gap={12}>

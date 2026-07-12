@@ -90,3 +90,14 @@ export const markAnnouncementRead = async (uid: string, announcementId: string):
   const { arrayUnion, doc, updateDoc } = await import("firebase/firestore");
   await updateDoc(doc(db, "users", uid), { readAnnouncements: arrayUnion(announcementId) });
 };
+
+/**
+ * The active announcement's id when this member has not read it yet, else
+ * null. Feeds the nav Alerts red dot.
+ */
+export const getUnseenAnnouncement = async (uid: string): Promise<string | null> => {
+  const announcement = await getAnnouncement();
+  if (!announcement?.active || !announcement.id) return null;
+  const read = await getReadAnnouncements(uid);
+  return read.includes(announcement.id) ? null : announcement.id;
+};

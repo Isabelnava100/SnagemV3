@@ -26,6 +26,7 @@ import {
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+import { PageHero } from "../../components/common/PageHero";
 import { SectionLoader } from "../../components/navigation/loading";
 import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
@@ -811,41 +812,38 @@ export default function Casino() {
   return (
     <Box style={{ background: BG, minHeight: "100%" }}>
       <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
-        {/* Header */}
-        <Group justify="space-between" align="flex-start" wrap="wrap" gap={16} mb={28}>
-          <Box style={{ minWidth: 0 }}>
-            <Group gap={8} mb={6}>
+        <PageHero
+          eyebrow={
+            <Group gap={8}>
               <IconSkull size={16} color="#c084fc" />
               <Text fz={12} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
                 The Casino &middot; Open All Night
               </Text>
             </Group>
-            <Text component="h1" fw={800} fz={{ base: 40, sm: 56 }} c="white" style={{ lineHeight: 1, margin: 0 }}>
-              Ghastly Gambling
-            </Text>
-            <Text fz={{ base: 14, sm: 16 }} c="gray.4" mt={10} maw={620}>
-              Trade Snag Coins for Gengar Tokens and try your luck. The house RNG is server-side and final.
-            </Text>
-          </Box>
-          {uid && (
-            <Group gap={12} wrap="wrap">
-              <CurrencyCard
-                icon={<IconCoin size={22} color="#f5c518" />}
-                iconBg="#2a2410"
-                label="Snag Coins"
-                value={snagCoins}
-                border="#5a4a1e"
-              />
-              <CurrencyCard
-                icon={<IconGhost2 size={22} color="#c084fc" />}
-                iconBg="#1f1633"
-                label="Gengar Tokens"
-                value={gengarTokens}
-                border={PANEL_BORDER}
-              />
-            </Group>
-          )}
-        </Group>
+          }
+          title="Ghastly Gambling"
+          subtitle="Trade Snag Coins for Gengar Tokens and try your luck. The house RNG is server-side and final."
+          aside={
+            uid ? (
+              <Group gap={12} wrap="wrap">
+                <CurrencyCard
+                  icon={<IconCoin size={22} color="#f5c518" />}
+                  iconBg="#2a2410"
+                  label="Snag Coins"
+                  value={snagCoins}
+                  border="#5a4a1e"
+                />
+                <CurrencyCard
+                  icon={<IconGhost2 size={22} color="#c084fc" />}
+                  iconBg="#1f1633"
+                  label="Gengar Tokens"
+                  value={gengarTokens}
+                  border={PANEL_BORDER}
+                />
+              </Group>
+            ) : undefined
+          }
+        />
 
         {!uid ? (
           <Box p={24} style={{ background: PANEL, border: `1px solid ${PANEL_BORDER}`, borderRadius: 20 }}>

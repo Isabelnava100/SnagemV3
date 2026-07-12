@@ -236,6 +236,14 @@ service cloud.firestore {
                       || isAdmin() || hasCap('ReviewRewards'));
       allow write: if false;
     }
+    // Master-track clearance requests: created by requestMasterClearance and
+    // resolved by resolveMasterClearance (Cloud Functions). Read own or grader.
+    match /masterClearanceRequests/{id} {
+      allow read: if isSignedIn()
+                  && (resource.data.uid == request.auth.uid
+                      || isAdmin() || hasCap('ReviewRewards'));
+      allow write: if false;
+    }
 
     // ---- Colosseum + Challenges -------------------------------------------
     // Read-only reference/leaderboard data for members. Rankings and per-member
