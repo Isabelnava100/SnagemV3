@@ -531,6 +531,9 @@ export const publishForumPost = onCall(async (request) => {
   const teamsRef = db.doc(`users/${uid}/bag/teams`);
 
   let threadForNotify: FirebaseFirestore.DocumentData | undefined;
+  // Whether this post caught a pokemon (set inside the transaction, read after
+  // commit for the weekly Snag List checklist).
+  let snagCaught = false;
   const postId = await db.runTransaction(async (tx) => {
     // -- reads (all before any write) --------------------------------------
     const [threadSnap, pendingSnap] = await Promise.all([tx.get(tRef), tx.get(pRef)]);
@@ -790,6 +793,7 @@ export const publishForumPost = onCall(async (request) => {
     } else if (pendingSnap.exists) {
       tx.delete(pRef);
     }
+    snagCaught = encounterCaught;
     return resultPostId;
   });
 
@@ -808,6 +812,13 @@ export const publishForumPost = onCall(async (request) => {
       mentioned.filter((m) => !watchers.includes(m)),
       { type: "mention", text: `${member.username} mentioned you in "${title}"`, link }
     );
+  }
+
+  // Weekly Snag List checklist (never blocks the publish).
+  if (!editPostId) {
+    await markSnagTask(uid, "post");
+    if (snagCaught) await markSnagTask(uid, "catch");
+    if (forum === "Events" || forum === "Quests") await markSnagTask(uid, "activity");
   }
 
   return { postId };
@@ -938,6 +949,9 @@ export const publishForumThread = onCall(async (request) => {
     blocks: {},
   });
   await batch.commit();
+
+  await markSnagTask(uid, "post");
+  if (forum === "Events") await markSnagTask(uid, "activity");
 
   return { threadId };
 });
@@ -2191,6 +2205,7 @@ export const buyShopItem = onCall(async (request) => {
     bagIncrement(tx, bagRef, itemId, item, qty);
   });
 
+  await markSnagTask(uid, "mall");
   return { ok: true, spent: cost, currency };
 });
 
@@ -2299,6 +2314,7 @@ export const recycleItems = onCall(async (request) => {
     return { payout, removed, excluded };
   });
 
+  await markSnagTask(uid, "mall");
   return { ok: true, coins: result.payout, recycled: result.removed, excluded: result.excluded };
 });
 
@@ -2336,6 +2352,8 @@ export const rollTour = onCall(async (request) => {
     tx.set(stateRef, { rolls: FieldValue.increment(1) }, { merge: true });
     return { item: { name: entry.name ?? entry.itemId, filePath: entry.filePath ?? "" }, bonusRareCandy: bonus, free };
   });
+
+  await markSnagTask(uid, "mall");
 
   return { ok: true, ...result };
 });
@@ -2404,6 +2422,7 @@ export const craftItem = onCall(async (request) => {
     return { successes, failures };
   });
 
+  await markSnagTask(uid, "mall");
   return { ok: true, ...outcome };
 });
 
@@ -2546,6 +2565,8 @@ export const pickUpMission = onCall(async (request) => {
   });
   batch.set(db.doc(`missions/${missionId}`), { times_taken: FieldValue.increment(1) }, { merge: true });
   await batch.commit();
+
+  await markSnagTask(uid, "activity");
 
   return { threadId };
 });
@@ -2949,6 +2970,8 @@ export const logTrainingPost = onCall(async (request) => {
     return { awardedEvo, awardedHappiness, session };
   });
 
+  await markSnagTask(uid, "battle");
+
   return { ok: true, ...result };
 });
 
@@ -3011,6 +3034,7 @@ export const convertCandyToScent = onCall(async (request) => {
     createdAt: new Date(),
   });
 
+  await markSnagTask(uid, "mall");
   return { ok: true, scent: scentKey, qty, spent: totalCost, remaining };
 });
 
@@ -3170,6 +3194,7 @@ export const awardRankingPoints = onCall(async (request) => {
     { username, points: FieldValue.increment(points) },
     { merge: true }
   );
+  await markSnagTask(targetUid, "battle");
   return { ok: true };
 });
 
@@ -3239,6 +3264,7 @@ export const requestChallenge = onCall(async (request) => {
     text: `${member.username} requested a challenge: ${stageTitle || stageId}. Accept it and create their thread.`,
     link: "/Dashboard/Admin-Access",
   });
+  await markSnagTask(uid, "activity");
   return { ok: true, id: ref.id };
 });
 
@@ -3367,6 +3393,7 @@ export const playCasinoGame = onCall(async (request) => {
     tx.set(currencyRef, { gengarcoin: geng }, { merge: true });
     return { win, roll, payout, gengarcoin: geng };
   });
+  await markSnagTask(uid, "casino");
   return { ok: true, ...result };
 });
 
@@ -3422,6 +3449,8 @@ export const buyLottoTicket = onCall(async (request) => {
     });
   }
 
+  await markSnagTask(uid, "casino");
+
   return { ok: true, ...out };
 });
 
@@ -3466,4 +3495,155 @@ export const drawLotto = onCall(async (request) => {
     await notifyUsers(baseWinners, { type: "reward", text: `You won the Shadow Lotto! +${share} Gengar Tokens.`, link: "/Casino" });
   }
   return { ok: true, drawn, winners: winners.length, jackpot, share };
+});
+
+// ===========================================================================
+// The Snag List: weekly activities checklist (/Activities). Six tasks tracked
+// server-side by the gameplay callables; finishing all six unlocks one weekly
+// Mystery Box. Resets every Monday 00:00 UTC. State: users/{uid}/bag/snaglist
+// (server-written only; see firestore.rules).
+// ===========================================================================
+
+type SnagTask = "battle" | "casino" | "post" | "catch" | "activity" | "mall";
+const SNAG_TASKS: SnagTask[] = ["battle", "casino", "post", "catch", "activity", "mall"];
+
+/** Monday-anchored UTC week id: the date of this week's Monday, "YYYY-MM-DD". */
+function snagWeekId(now: Date): string {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const sinceMonday = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - sinceMonday);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Mark one Snag List task done for the current week. Called by the gameplay
+ * callables after their main action commits; never throws, so checklist
+ * bookkeeping can never break gameplay. Week rollover resets the checklist;
+ * completing all six stamps the week and advances the streak (consecutive
+ * completed weeks).
+ */
+async function markSnagTask(uid: string, task: SnagTask): Promise<void> {
+  try {
+    const ref = db.doc(`users/${uid}/bag/snaglist`);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.data() ?? {};
+      const now = new Date();
+      const weekId = snagWeekId(now);
+      const sameWeek = data.weekId === weekId;
+      const tasks: Record<string, boolean> = sameWeek ? { ...(data.tasks ?? {}) } : {};
+      if (tasks[task]) return;
+      tasks[task] = true;
+
+      const updates: Record<string, unknown> = {
+        weekId,
+        tasks,
+        ...(sameWeek ? {} : { boxClaimed: false, boxChoice: null }),
+      };
+      const allDone = SNAG_TASKS.every((t) => tasks[t]);
+      if (allDone && data.completedWeekId !== weekId) {
+        const prevWeek = snagWeekId(new Date(now.getTime() - 7 * 86_400_000));
+        updates.completedWeekId = weekId;
+        updates.streak = data.completedWeekId === prevWeek ? Number(data.streak ?? 0) + 1 : 1;
+      }
+      tx.set(ref, updates, { merge: true });
+    });
+  } catch {
+    // Checklist bookkeeping must never block the action that triggered it.
+  }
+}
+
+// Mystery Egg pool: baby pokemon only, hatched straight into the bag.
+const SNAG_EGG_POOL = [
+  "pichu", "cleffa", "igglybuff", "togepi", "azurill", "happiny", "munchlax",
+  "riolu", "elekid", "magby", "smoochum", "tyrogue", "bonsly", "mime-jr",
+  "wynaut", "budew", "chingling", "mantyke",
+];
+
+/** Open the weekly Mystery Box: all six tasks required, one box per week. */
+export const claimSnagBox = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const choice = String(request.data?.choice ?? "");
+  if (!["random", "currency", "egg"].includes(choice)) {
+    throw new HttpsError("invalid-argument", "Pick a box first.");
+  }
+
+  // Pre-pick the random-item reward outside the transaction (reads the shop
+  // catalog); the transaction only validates state and applies the grant.
+  let randomItem: { itemId: string; name: string; filePath: string; category: string } | null =
+    null;
+  if (choice === "random") {
+    const shopSnap = await db.doc("shops/golden-sarcophagus").get();
+    const sections = (shopSnap.data()?.sections ?? []) as Array<{
+      items?: Array<{ itemId: string; name?: string; filePath?: string; category?: string }>;
+    }>;
+    const pool = sections.flatMap((s) => s.items ?? []);
+    if (!pool.length) throw new HttpsError("failed-precondition", "The item pool is empty.");
+    const picked = pool[randomInt(pool.length)];
+    randomItem = {
+      itemId: picked.itemId,
+      name: picked.name ?? picked.itemId,
+      filePath: picked.filePath ?? "",
+      category: picked.category ?? "other-item",
+    };
+  }
+  const eggSlug = SNAG_EGG_POOL[randomInt(SNAG_EGG_POOL.length)];
+
+  const ref = db.doc(`users/${uid}/bag/snaglist`);
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const pokeRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  const weekId = snagWeekId(new Date());
+
+  const reward = await db.runTransaction(async (tx) => {
+    const [snap, curSnap] = await Promise.all([tx.get(ref), tx.get(currencyRef)]);
+    const data = snap.data() ?? {};
+    if (data.weekId !== weekId) {
+      throw new HttpsError("failed-precondition", "The list reset for a new week. Finish the new one first.");
+    }
+    const tasks = (data.tasks ?? {}) as Record<string, boolean>;
+    if (!SNAG_TASKS.every((t) => tasks[t])) {
+      throw new HttpsError("failed-precondition", "Finish all six tasks first.");
+    }
+    if (data.boxClaimed) {
+      throw new HttpsError("failed-precondition", "You already opened this week's box.");
+    }
+
+    let text: string;
+    if (choice === "currency") {
+      const cur = curSnap.data() ?? {};
+      tx.set(
+        currencyRef,
+        {
+          pokecoin: addCurrency(cur.pokecoin, 8),
+          gengarcoin: addCurrency(cur.gengarcoin, 4),
+        },
+        { merge: true }
+      );
+      text = "8 Snag Coins and 4 Gengar Tokens";
+    } else if (choice === "egg") {
+      const now = new Date();
+      tx.set(
+        pokeRef,
+        { [randomUUID()]: buildOwnedPokemon(eggSlug, now, {}) },
+        { merge: true }
+      );
+      const hatched = catalogBySlug.get(eggSlug)?.name ?? eggSlug;
+      text = `a Mystery Egg that hatched into ${hatched}`;
+    } else {
+      bagIncrement(tx, bagRef, randomItem!.itemId, randomItem!, 1);
+      text = `1x ${randomItem!.name}`;
+    }
+
+    tx.set(ref, { boxClaimed: true, boxChoice: choice }, { merge: true });
+    return text;
+  });
+
+  await notifyUsers([uid], {
+    type: "reward",
+    text: `Weekly Mystery Box opened: ${reward}.`,
+    link: "/Activities",
+  });
+  return { ok: true, reward };
 });

@@ -95,9 +95,12 @@ service cloud.firestore {
       // All other per-user data: owner (or admin) only. Note bag/items stays
       // owner-writable because the client-side evolution flow decrements a spend
       // item there; closing that fully means moving evolvePokemon to a callable.
+      // 'snaglist' (the weekly activities checklist) is excluded: only the
+      // Cloud Functions write it, so members cannot check their own boxes.
       match /bag/{doc} {
         allow read: if request.auth.uid == uid || isAdmin();
-        allow write: if isAdmin() || (request.auth.uid == uid && doc != 'badges');
+        allow write: if isAdmin()
+                     || (request.auth.uid == uid && doc != 'badges' && doc != 'snaglist');
       }
       match /bookmarks/{doc} {
         allow read, write: if request.auth.uid == uid || isAdmin();

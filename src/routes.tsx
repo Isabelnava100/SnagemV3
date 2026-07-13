@@ -57,7 +57,7 @@ const { default: Challenges } = lazyImport(() => import("./Pages/Challenges"), "
 const { default: Casino } = lazyImport(() => import("./Pages/Casino"), "default");
 const { default: MissionDetail } = lazyImport(() => import("./Pages/Missions/MissionDetail"), "default");
 const { ErrorPage } = lazyImport(() => import("./components/navigation/error-page"), "ErrorPage");
-const { default: ComingSoon } = lazyImport(() => import("./Pages/ComingSoon"), "default");
+const { default: Activities } = lazyImport(() => import("./Pages/Activities"), "default");
 const { Protect } = lazyImport(() => import("./components/navigation/Protect"), "Protect");
 const { AuthContextProvider } = lazyImport(
   () => import("./context/AuthContext"),
@@ -180,7 +180,7 @@ export default function AppRoutes() {
                     />
                     <Route path="/Users" element={<Users />} />
                     <Route path="/Users/:username" element={<PublicProfile />} />
-                    <Route path="/Activities" element={<ComingSoon module="Activities" />} />
+                    <Route path="/Activities" element={<Activities />} />
                     <Route path="/Missions" element={<Missions />} />
                     <Route path="/Missions/:id" element={<MissionDetail />} />
                     <Route path="/Research" element={<Research />} />
