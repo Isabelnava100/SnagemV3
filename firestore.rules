@@ -294,6 +294,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Collection-group reads for the dashboard History tab: a member may query
+    // their OWN posts and threads across every forum at once. Other members'
+    // documents stay behind the explicit /forum path rules below (overlapping
+    // rules are OR'd, so this only widens reads for the author).
+    match /{path=**}/posts/{postId} {
+      allow read: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+    match /{path=**}/threads/{threadId} {
+      allow read: if isSignedIn() && resource.data.hostUid == request.auth.uid;
+    }
+
     // ---- Forums ------------------------------------------------------------
     // All publishing (threads, posts, rolls, votes, boss battles, inventory
     // effects) goes through Cloud Functions (functions/src/index.ts), which

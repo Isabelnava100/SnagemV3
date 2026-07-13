@@ -374,6 +374,7 @@ function TabsPanel() {
   const dashboardTabLinks: DashboardTabLink[] = [
     { path: "/Bookmarks", icon: Bookmarks, label: "Bookmarks", enabled: true },
     { path: "/Drafts", icon: Drafts, label: "Drafts", enabled: true },
+    { path: "/History", snag: "book", label: "History", enabled: true },
     { path: "/Items", snag: "bag", label: "Items", enabled: true },
     { path: "/Characters", icon: Characters, label: "Characters", enabled: true },
     { path: "/Pokemon", icon: Pokemons, label: "Pokemon", enabled: true },

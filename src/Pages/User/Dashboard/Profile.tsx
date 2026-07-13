@@ -14,14 +14,17 @@ import {
   type StackProps,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
-import { IconX } from "@tabler/icons-react";
+import { IconExternalLink, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
 import { IconInfoCircle } from "@tabler/icons-react";
 import DOMPurify from "dompurify";
+import { useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 import { Conditional } from "../../../components/common/Conditional";
-import GradientButtonPrimary from "../../../components/common/GradientButton";
+import GradientButtonPrimary, {
+  GradientButtonSecondary,
+} from "../../../components/common/GradientButton";
 import FeaturedPicks from "./FeaturedPicks";
 import { UploadAndCropImage } from "../../../components/crop-image/UploadAndCropImage";
 import Editor, { useRichTextEditor } from "../../../components/editor/Editor";
@@ -44,19 +47,35 @@ function useProfileQuery() {
 
 export default function Profile() {
   const { isOverLg } = useMediaQuery();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { isLoading, isError } = useProfileQuery();
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   return (
-    <Flex
-      gap={10}
-      sx={{ flexDirection: isOverLg ? "row" : "column" }}
-      justify="space-between"
-      align="stretch"
-    >
-      <LeftSideContent />
-      <RightSideContent />
-    </Flex>
+    <Stack gap={10} w="100%">
+      {/* Everything below edits the public profile; this jumps to the real thing. */}
+      {user?.username && (
+        <GradientButtonSecondary
+          radius="xl"
+          size="xs"
+          w="fit-content"
+          rightSection={<IconExternalLink size={14} />}
+          onClick={() => navigate(`/Users/${user.username}`)}
+        >
+          View your public profile
+        </GradientButtonSecondary>
+      )}
+      <Flex
+        gap={10}
+        sx={{ flexDirection: isOverLg ? "row" : "column" }}
+        justify="space-between"
+        align="stretch"
+      >
+        <LeftSideContent />
+        <RightSideContent />
+      </Flex>
+    </Stack>
   );
 }
 
