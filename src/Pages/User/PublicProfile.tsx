@@ -6,7 +6,6 @@ import {
   Container,
   Grid,
   Group,
-  Image,
   SimpleGrid,
   Stack,
   Text,
@@ -21,7 +20,7 @@ import { Character, OwnedPokemon } from "../../components/types/typesUsed";
 import { getColor1, getColor2 } from "../../components/user-forum/getColorBadges";
 import { db } from "../../context/firebase";
 import { useAuth } from "../../context/AuthContext";
-import { getPokemonImageURL } from "../../helpers";
+import OwnedPokemonAvatar from "../../components/pokemon/OwnedPokemonAvatar";
 import {
   getCharacters,
   getOwnedPokemons,
@@ -146,15 +145,7 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
 }
 
 function PokemonSprite({ pokemon, size = 56 }: { pokemon: OwnedPokemon; size?: number }) {
-  return (
-    <Image
-      src={getPokemonImageURL(pokemon.image_slug, pokemon.shiny)}
-      alt={`${pokemon.name ?? pokemon.species ?? "Pokemon"} sprite`}
-      w={size}
-      h={size}
-      fit="contain"
-    />
-  );
+  return <OwnedPokemonAvatar pokemon={pokemon} size={size} />;
 }
 
 /**

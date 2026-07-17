@@ -373,7 +373,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
         </Flex>
         {isEditing ? (
           <Select
-            label="Character"
+            label="Owned by"
             placeholder="Any character (shared)"
             data={characterOptions}
             clearable
@@ -632,7 +632,7 @@ function OwnedPokemons(props: EditingProps) {
                   styles={darkInput}
                 />
                 <Select
-                  label="Character"
+                  label="Owned by"
                   clearable
                   value={filterState.characterId || null}
                   data={[
@@ -826,7 +826,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         <Text fz={12}>Shadow pts: {pokemon.shadow ?? 0} / {STAT_MAX}</Text>
       </Stack>
       <Select
-        label="Character"
+        label="Owned by"
         placeholder="Unassigned"
         size="xs"
         clearable
@@ -865,21 +865,26 @@ function SinglePokemon(props: {
     }
   };
 
+  const shadowed = isShadowed(pokemon);
   return (
     <Flex
       p={10}
-      bg="#3C3A3C"
+      bg={shadowed ? "#000" : "#3C3A3C"}
       justify="center"
       align="center"
       pos="relative"
       w={60}
       h={60}
       sx={{
-        borderRadius: "100%",
+        // Shadowed pokemon read as a black square with a soft corner; normal
+        // ones stay round. (All sprites have transparent backgrounds.)
+        borderRadius: shadowed ? 4 : "100%",
         // Selected (already in team) = white so it reads clearly; hover = purple.
         border: isEditing
           ? `${isAlreadyInTeam ? 2 : 1}px solid ${isAlreadyInTeam ? "#FFFFFF" : "#DB5866"}`
-          : undefined,
+          : shadowed
+            ? "1px solid #5a3fb0"
+            : undefined,
         "&:hover": isEditing ? { borderColor: "#762B77" } : undefined,
         flexShrink: 0,
       }}
