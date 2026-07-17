@@ -130,8 +130,8 @@ color:white;line-height: 1.1em;margin:0;}
 width:320px;margin:20px 0 26px 0;line-height: 1.4em;}
 
 span.red-text {color: #E54156!important; }
-.innerHold2 span.paragraph2 a.button {
-margin-top:28px;
+.innerHold2 span.paragraph2 + a.button {
+margin-top:0;
 
 }
 .right-text {

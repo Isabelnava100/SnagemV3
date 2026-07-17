@@ -30,8 +30,8 @@ export const HomePage = () => {
       <h2 className="right-text">Forums custom built <span className="red-text">for roleplay.</span></h2>
       <span className="paragraph2">
       We created this platform that adjusts to our needs and regularly update it with new features.
-      <Link to="/" className="button red">See Anticipated Updates</Link>
       </span>
+      <Link to="/" className="button red">See Anticipated Updates</Link>
       
       </div>
     </div>
