@@ -126,6 +126,12 @@ export default function AdjustLists() {
         </Title>
         <CreateList />
       </Flex>
+      <Text fz={13} c="dimmed">
+        Reusable encounter pools a host can attach to a roleplay. Set the rule to <b>Only</b> to
+        limit a thread to just the pokemon you pick, or <b>All Except</b> to allow everything but
+        them. <b>Public</b> lists show up in the Library&apos;s Field Registers for every host to
+        use; private lists are yours only.
+      </Text>
       {/* Header row is desktop-only; mobile cards are self-labeled. */}
       <div className="hidden lg:grid grid-cols-4 py-2 w-full">
         <span className="text-start text-white uppercase font-[700] text-sm">Name</span>

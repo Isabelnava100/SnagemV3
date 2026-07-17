@@ -1,4 +1,5 @@
 import { Avatar, Badge, Button, Group, NumberInput, Stack, Table, Text } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { useAuth } from "../../../context/AuthContext";
@@ -7,7 +8,7 @@ import { hasCapability, isAdmin } from "../../../lib/permissions";
 import { Capability } from "../../../components/types/typesUsed";
 import { queryClient } from "../../../lib/react-query";
 import { callFinalizeSafariContest, callJudgeSafariContest, callableMessage } from "../functionsClient";
-import { ForumPanel, GameResultText, PanelHint } from "./ui";
+import { ConfirmModal, ForumPanel, GameResultText, PanelHint } from "./ui";
 import { ForumThread, SafariResult } from "../types";
 
 /**
@@ -27,6 +28,7 @@ export default function SafariJudgePanel(props: {
   const [message, setMessage] = React.useState("");
   const finalized = !!safari?.finalized;
   const canAward = isAdmin(user) || hasCapability(user, Capability.GiveItems);
+  const [awardOpened, awardModal] = useDisclosure(false);
 
   const judgeMutation = useMutation({
     mutationFn: () => callJudgeSafariContest(forum, threadId),
@@ -159,7 +161,7 @@ export default function SafariJudgePanel(props: {
               radius="xl"
               color="green"
               loading={finalizeMutation.isPending}
-              onClick={() => finalizeMutation.mutateAsync().catch(() => undefined)}
+              onClick={awardModal.open}
             >
               Award Prizes
             </Button>
@@ -171,6 +173,19 @@ export default function SafariJudgePanel(props: {
           </Text>
         )}
       </Stack>
+
+      <ConfirmModal
+        opened={awardOpened}
+        title="Award these prizes?"
+        message="Snag Coins will be paid to the players below and the contest will be marked finished. This cannot be undone."
+        confirmLabel="Award Prizes"
+        loading={finalizeMutation.isPending}
+        onConfirm={async () => {
+          await finalizeMutation.mutateAsync().catch(() => undefined);
+          awardModal.close();
+        }}
+        onClose={awardModal.close}
+      />
     </ForumPanel>
   );
 }

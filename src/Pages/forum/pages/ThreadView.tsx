@@ -199,7 +199,7 @@ export default function ThreadView() {
     }
   }, [page, totalPosts, forum, threadId, navigate]);
 
-  const { data: posts } = useQuery({
+  const { data: posts, isError: postsError } = useQuery({
     queryKey: ["forum-posts", forum, threadId, currentPage, totalPosts],
     queryFn: () => getPostsPage(forum, threadId!, currentPage, POSTS_PER_PAGE, totalPosts!),
     enabled: !!threadId && typeof totalPosts === "number" && page !== "last",
@@ -367,7 +367,11 @@ export default function ThreadView() {
           <PollBlock poll={thread.poll} forum={forum} threadId={thread.id} />
         )}
 
-        {posts === undefined ? (
+        {postsError ? (
+          <Text c="red.4" mt={16} role="status" aria-live="polite">
+            Something went wrong loading these posts. Refresh the page to try again.
+          </Text>
+        ) : posts === undefined ? (
           <SectionLoader />
         ) : (
           posts.map((post) => (

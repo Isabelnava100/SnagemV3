@@ -818,6 +818,9 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         <Text fz={12}>Friendship pts: {pokemon.friendship ?? 0} / {STAT_MAX}</Text>
         <Text fz={12}>Purification pts: {pokemon.purification ?? 0} / {STAT_MAX}</Text>
         <Text fz={12}>Shadow pts: {pokemon.shadow ?? 0} / {STAT_MAX}</Text>
+        <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={11} c="grape.3">
+          What do these stats mean?
+        </Anchor>
       </Stack>
       <Box>
         <Text fz={11} c="dimmed" tt="uppercase" fw={700}>

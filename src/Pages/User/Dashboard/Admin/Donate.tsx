@@ -149,6 +149,11 @@ export default function Donate() {
 
   return (
     <Stack gap={24}>
+      <Text fz={13} c="dimmed">
+        Send items, currency or pokemon straight to a member. Grants apply immediately, are recorded
+        in the activity log, and notify the recipient. There is no undo, so double-check the
+        recipient and amounts before sending.
+      </Text>
       <Flex direction={isOverXl ? "row" : "column"} gap={10}>
         <Stack w="100%">
           <Stack sx={{ flex: 1 }} gap={7}>
@@ -427,6 +432,14 @@ function GivePokemonSection() {
           disabled={!userIds.length || !slug}
           loading={isPending}
           onClick={() => {
+            if (
+              !window.confirm(
+                `Send ${shiny ? "a shiny " : "a "}${slug} to ${userIds.length} ${
+                  userIds.length === 1 ? "user" : "users"
+                }? This grant is immediate and cannot be undone.`
+              )
+            )
+              return;
             setMessage("");
             mutateAsync();
           }}
@@ -435,7 +448,12 @@ function GivePokemonSection() {
         </GradientButtonSecondary>
       </Flex>
       {message && (
-        <Text fz={13} c={message === "Pokemon sent!" ? "green.0" : "#E35C65"}>
+        <Text
+          fz={13}
+          c={message === "Pokemon sent!" ? "green.0" : "#E35C65"}
+          role="status"
+          aria-live="polite"
+        >
           {message}
         </Text>
       )}

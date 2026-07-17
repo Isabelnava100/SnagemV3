@@ -294,7 +294,8 @@ export default function MysteryBoxes() {
               variant="outline"
               color="gray"
               style={{ cursor: "pointer" }}
-              onClick={() => setBoxItemId(id)}
+              aria-label={`Edit ${boxes?.[id]?.name || id}`}
+              {...clickable(() => setBoxItemId(id))}
             >
               {boxes?.[id]?.name || id}
             </Badge>

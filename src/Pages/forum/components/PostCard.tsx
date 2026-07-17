@@ -1,4 +1,5 @@
 import {
+  Anchor,
   Avatar,
   Badge,
   Box,
@@ -18,6 +19,7 @@ import { getColor1, getColor2 } from "../../../components/user-forum/getColorBad
 import { useAuth } from "../../../context/AuthContext";
 import { itemData } from "../../../data/item";
 import { getItemImageURL, getPokemonImageURL } from "../../../helpers";
+import { SHADOW_GUIDE_LINK } from "../../../lib/shadow";
 import { ForumPost, PostCharacter, formatFireTime } from "../types";
 import { ForumTextLink, GameResultText } from "./ui";
 
@@ -267,6 +269,9 @@ function ShadowedAnnouncement(props: { post: ForumPost }) {
         Your pokemon have become shadowed! {names.join(", ")} {names.length === 1 ? "is" : "are"} now
         shadowed.
       </GameResultText>
+      <Anchor component={Link} to={SHADOW_GUIDE_LINK} c="grape.3" fz={13} mt={4} display="inline-block">
+        What does that mean, and how do I cure it? →
+      </Anchor>
     </Box>
   );
 }
@@ -427,12 +432,12 @@ function PostFooterNote(props: { post: ForumPost }) {
       {stats.map((s, i) => (
         <React.Fragment key={s.abbr}>
           {i > 0 && (
-            <Text fz={10} c="gray.7">
+            <Text fz={10} c="dimmed">
               |
             </Text>
           )}
           <Tooltip label={s.full} withArrow openDelay={100}>
-            <Text fz={10} c="gray.6" style={{ cursor: "help" }}>
+            <Text fz={10} c="dimmed" style={{ cursor: "help" }}>
               {s.value} {s.abbr}
             </Text>
           </Tooltip>
@@ -442,6 +447,11 @@ function PostFooterNote(props: { post: ForumPost }) {
         <Text fz={10} c="grape.4" ml={stats.length ? 4 : 0}>
           {flags.join("  ·  ")}
         </Text>
+      )}
+      {stats.length > 0 && (
+        <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={10} c="dimmed" ml={2}>
+          (guide)
+        </Anchor>
       )}
     </Group>
   );

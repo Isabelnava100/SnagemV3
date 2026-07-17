@@ -1,8 +1,10 @@
-import { Avatar, Checkbox, Group, Select, Stack, Text } from "@mantine/core";
+import { Anchor, Avatar, Checkbox, Group, Select, Stack, Text } from "@mantine/core";
 import React from "react";
+import { Link } from "react-router-dom";
 import { getPokemonImageURL } from "../../../../helpers";
 import { Item, OwnedPokemon } from "../../../../components/types/typesUsed";
 import { evaluateEvolutions } from "../../../../lib/evolution";
+import { SHADOW_GUIDE_LINK } from "../../../../lib/shadow";
 import { ForumPanel } from "../ui";
 
 interface EvolveChoice {
@@ -75,6 +77,9 @@ export default function EvolutionPanel(props: {
   return (
     <ForumPanel title="Evolution">
       <Stack gap={8}>
+        <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={11} c="grape.3">
+          How evolution, levels and friendship work →
+        </Anchor>
         <Checkbox
           label="Hey! You can evolve a pokemon on this team. Evolve now by making a post about it?"
           checked={enabled}
