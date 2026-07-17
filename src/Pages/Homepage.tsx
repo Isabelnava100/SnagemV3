@@ -31,7 +31,7 @@ export const HomePage = () => {
       <span className="paragraph2">
       We created this platform that adjusts to our needs and regularly update it with new features.
       </span>
-      <Link to="/" className="button red">See Anticipated Updates</Link>
+      <Link to="/Announcements" className="button red">See Anticipated Updates</Link>
       
       </div>
     </div>

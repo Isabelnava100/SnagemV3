@@ -97,6 +97,7 @@ const { default: Onboarding } = lazyImport(() => import("./Pages/User/Onboarding
 const { default: Policies } = lazyImport(() => import("./Pages/Policies"), "default");
 const { default: Library } = lazyImport(() => import("./Pages/Library"), "default");
 const { default: About } = lazyImport(() => import("./Pages/About"), "default");
+const { default: Announcements } = lazyImport(() => import("./Pages/Announcements"), "default");
 
 const { default: Settings } = lazyImport(
   () => import("./Pages/User/Dashboard/Settings"),
@@ -199,6 +200,7 @@ export default function AppRoutes() {
                       }
                     />
                     <Route path="/About" element={<About />} />
+                    <Route path="/Announcements" element={<Announcements />} />
                     <Route path="/Policies" element={<Policies />} />
                     <Route path="/Library" element={<Library />} />
                     <Route path="/Login" element={<Login />} />
