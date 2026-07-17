@@ -45,12 +45,16 @@ rules must be deployed together (Blaze plan) before this works in production.
 
 ## Data model
 
-- **`admin/safari_config`** (singleton): the editable template. Shape mirrors
+- **`admin/safari_config`**: the zone library, a `zones` map of
+  `zoneId -> SafariConfig`. Each zone (a named encounter list) mirrors
   `SafariConfig` in `src/lib/safari.ts` (`name`, `blurb`, `tiers[{star, rate,
   postsToDefeat, pokemons[]}]`, `runAwayChance`, `berryBonus`, `berryBonusCap`,
   `encountersPerPlayer`, `prizeCoins[3]`, `consolationCoins`). Writable by
-  Admin / HostEvents / ManageLists (see firestore.rules). The web app and the
-  seed script both ship the Johto Meadow Zone as the default.
+  Admin / HostEvents / ManageLists (see firestore.rules). The admin tab loads a
+  zone, edits it, saves it back or as a new named zone, and launches it (the
+  chosen zone id rides in the launch URL as `?zone=`). A legacy flat config (no
+  `zones` map) still loads as a single zone. The web app and seed script ship
+  the Johto Meadow Zone as the default.
 - **`forum/Events/threads/{id}.safariContest`**: the config snapshot baked on at
   launch, plus live state: `catches{uid: [{slug,name,star,postId}]}`,
   `results[SafariResult]` (draft judging), `finalized`.

@@ -83,9 +83,11 @@ if (process.argv.includes("--check")) {
 }
 
 // --- Write ----------------------------------------------------------------
+// Stored in the named-zone library (admin/safari_config.zones), keyed so
+// re-running updates the Meadow Zone in place without touching other zones.
 const { default: admin } = await import("firebase-admin");
 admin.initializeApp();
 const db = admin.firestore();
-await db.doc("admin/safari_config").set(config, { merge: false });
-console.log("Wrote admin/safari_config.");
+await db.doc("admin/safari_config").set({ zones: { "meadow-zone": config } }, { merge: true });
+console.log("Wrote admin/safari_config.zones.meadow-zone.");
 process.exit(0);

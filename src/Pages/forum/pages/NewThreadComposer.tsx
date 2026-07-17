@@ -30,7 +30,7 @@ import { getUsers } from "../../../queries/admin";
 import { XPDefaults, XP_STAT_FIELDS, getXPDefaults } from "../../../queries/game";
 import { creatableCategories } from "../config";
 import { callStartSafariContest, callableMessage } from "../functionsClient";
-import { getSafariConfig } from "../../../queries/safari";
+import { getSafariZoneById } from "../../../queries/safari";
 import {
   DRAFT_WARNING_AT,
   MAX_DRAFTS,
@@ -57,9 +57,10 @@ export default function NewThreadComposer() {
   // The thread is created through startSafariContest (Event forum, star pools
   // baked on) instead of the normal publish path.
   const safariMode = searchParams.get("safari") === "1";
+  const safariZoneId = searchParams.get("zone");
   const { data: safariConfig } = useQuery({
-    queryKey: ["safari-config"],
-    queryFn: getSafariConfig,
+    queryKey: ["safari-zone", safariZoneId],
+    queryFn: () => getSafariZoneById(safariZoneId),
     enabled: safariMode,
   });
 
