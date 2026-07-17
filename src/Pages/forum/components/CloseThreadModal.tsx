@@ -1,4 +1,4 @@
-import { Box, Group, Modal, Stack, Text, Textarea } from "@mantine/core";
+import { Avatar, Box, Group, Modal, ScrollArea, Stack, Text, Textarea } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -6,11 +6,29 @@ import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
 import { useAuth } from "../../../context/AuthContext";
+import { getPokemonImageURL } from "../../../helpers";
 import { actorFrom, logAuditEvent } from "../../../lib/auditLog";
 import { canGiveRewards } from "../../../lib/permissions";
 import { getXPDefaults } from "../../../queries/game";
 import { closeThread } from "../mutations";
 import { ForumThread } from "../types";
+
+const XP_FIELDS = ["experience", "friendship", "purification", "shadow"] as const;
+
+/** Flatten the thread's per-post XP log into one row per pokemon. */
+function xpSummaryRows(thread: ForumThread) {
+  return Object.values(thread.pendingXp ?? {})
+    .flatMap((pokes) => Object.values(pokes))
+    .map((xp) => ({
+      name: xp.name ?? "Pokemon",
+      slug: xp.slug ?? "",
+      experience: xp.experience ?? 0,
+      friendship: xp.friendship ?? 0,
+      purification: xp.purification ?? 0,
+      shadow: xp.shadow ?? 0,
+    }))
+    .filter((r) => r.experience + r.friendship + r.purification + r.shadow > 0);
+}
 
 /**
  * Close-thread confirmation, shared by the host menu. Closing archives the
@@ -38,6 +56,7 @@ export default function CloseThreadModal(props: {
     enabled: props.opened,
   });
   const perPost = xpDefaults?.experiencePerPost ?? 0;
+  const xpRows = xpSummaryRows(props.thread);
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async () => {
@@ -76,20 +95,52 @@ export default function CloseThreadModal(props: {
       <Stack gap={12}>
         <Text fz={13} c="dimmed">
           Closing this thread archives it: no new posts can be made and existing
-          posts can no longer be edited. If you roleplay finding a specific item,
-          money or pokemon, let us know for review.
+          posts can no longer be edited. Experience and stats were already awarded
+          automatically as people posted. Items and coins are assigned by an admin
+          in the review after closing.
         </Text>
-        {perPost > 0 && (
+        {xpRows.length > 0 ? (
           <Box p={10} style={{ background: "#2E2D2E", borderRadius: 8 }}>
-            <Text fz={13} c="white" fw={600}>
-              Estimated reward
+            <Text fz={13} c="white" fw={600} mb={6}>
+              Experience awarded this thread
             </Text>
-            <Text fz={13} c="dimmed">
-              About {perPost} experience per qualifying post. An admin does the
-              final review before anything is assigned, so the final amount may
-              change.
-            </Text>
+            <ScrollArea.Autosize mah={220}>
+              <Stack gap={6}>
+                {xpRows.map((row, i) => (
+                  <Group key={i} gap={8} wrap="nowrap" align="center">
+                    <Avatar
+                      src={row.slug ? getPokemonImageURL(row.slug) : undefined}
+                      alt={`${row.name} sprite`}
+                      size={24}
+                      radius="xl"
+                    />
+                    <Text fz={13} c="white" style={{ minWidth: 0 }} truncate>
+                      {row.name}
+                    </Text>
+                    <Group gap={8} wrap="wrap" style={{ flex: 1, justifyContent: "flex-end" }}>
+                      {XP_FIELDS.filter((f) => row[f] > 0).map((f) => (
+                        <Text key={f} fz={12} c="dimmed" tt="capitalize">
+                          {f.slice(0, 4)}{" "}
+                          <Text span c="teal.4" fw={700}>
+                            +{row[f]}
+                          </Text>
+                        </Text>
+                      ))}
+                    </Group>
+                  </Group>
+                ))}
+              </Stack>
+            </ScrollArea.Autosize>
           </Box>
+        ) : (
+          perPost > 0 && (
+            <Box p={10} style={{ background: "#2E2D2E", borderRadius: 8 }}>
+              <Text fz={13} c="dimmed">
+                Team pokemon earn about {perPost} experience per qualifying post,
+                awarded automatically as people post.
+              </Text>
+            </Box>
+          )
         )}
         <Textarea
           label="Rewards to review (optional)"

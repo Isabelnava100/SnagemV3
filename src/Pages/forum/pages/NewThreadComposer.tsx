@@ -87,7 +87,6 @@ export default function NewThreadComposer() {
   // Staff-created roleplays choose when XP is served (instant vs at close) and
   // whether to use the site default XP settings.
   const canHostRoleplay = canCurateThreads(user);
-  const [xpAward, setXpAward] = React.useState<"instant" | "onClose">("instant");
   const [useDefaultXp, setUseDefaultXp] = React.useState(true);
 
   // Site-wide XP defaults, shown as the panel's starting values.
@@ -187,7 +186,6 @@ export default function NewThreadComposer() {
         characters,
         html,
         xpConfig: canAdjustXP && !useDefaultXp && xpOverride ? { ...xpOverride } : null,
-        ...(canHostRoleplay ? { xpAward } : {}),
         attachSignature,
       });
       return threadId;
@@ -365,16 +363,10 @@ export default function NewThreadComposer() {
               <ForumPanel title="Rewards & XP">
                 {canHostRoleplay && (
                   <>
-                    <PanelHint>Choose when the experience rewards are given out.</PanelHint>
-                    <Radio.Group
-                      value={xpAward}
-                      onChange={(v) => setXpAward(v === "instant" ? "instant" : "onClose")}
-                    >
-                      <Stack gap={4}>
-                        <Radio value="instant" label="Award instantly as people post" color="pink.0" size="xs" />
-                        <Radio value="onClose" label="Award only after closing the thread" color="pink.0" size="xs" />
-                      </Stack>
-                    </Radio.Group>
+                    <PanelHint>
+                      Experience and stats are awarded automatically to each team pokemon as people
+                      post. Items and coins are reviewed by an admin when the thread closes.
+                    </PanelHint>
                     <Checkbox
                       mt={8}
                       mb={4}

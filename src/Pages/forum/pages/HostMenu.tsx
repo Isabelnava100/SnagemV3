@@ -331,21 +331,10 @@ export default function HostMenu() {
 
           {thread.staffCreated && (
             <ForumPanel title="Rewards & XP">
-              <PanelHint>Choose when the experience rewards are given out.</PanelHint>
-              <Radio.Group
-                value={xpAward}
-                onChange={(v) => setXpAward(v === "instant" ? "instant" : "onClose")}
-              >
-                <Stack gap={4}>
-                  <Radio value="instant" label="Award instantly as people post" color="pink.0" size="xs" />
-                  <Radio
-                    value="onClose"
-                    label="Award only after closing the thread"
-                    color="pink.0"
-                    size="xs"
-                  />
-                </Stack>
-              </Radio.Group>
+              <PanelHint>
+                Experience and stats are awarded automatically to each team pokemon as people post.
+                Items and coins are reviewed by an admin when the thread closes.
+              </PanelHint>
               <Checkbox
                 mt={10}
                 label="Use default settings for exp stuff"

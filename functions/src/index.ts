@@ -692,13 +692,10 @@ export const publishForumPost = onCall(async (request) => {
     const strippedLength = html.replace(/<[^>]*>/g, "").trim().length;
     const teamIds = characters.map((c: any) => c.teamId).filter(Boolean) as string[];
     const anyStat = XP_STATS.some((s) => (xpConfig[s.cfg] ?? 0) > 0);
-    // XP is applied instantly only when a staff-created thread chose "instant";
-    // otherwise it accrues into pendingXp for the close review. Legacy threads
-    // (no xpAward) keep the original behavior keyed off createdByAdmin.
-    let deferXp: boolean;
-    if (thread.xpAward === "instant") deferXp = !(thread.staffCreated === true);
-    else if (thread.xpAward === "onClose") deferXp = true;
-    else deferXp = thread.createdByAdmin === false;
+    // Experience and stats are always awarded immediately to each team pokemon
+    // as people post. The same amounts are also tallied on the thread (pendingXp)
+    // purely as a running log, so the close review can show a summary. Items and
+    // coins stay manual: an admin assigns those at close (finalizeThreadRewards).
     let xpPokemonIds: string[] = [];
     let ownedForXp: Record<string, any> = {};
     if (
@@ -712,8 +709,8 @@ export const publishForumPost = onCall(async (request) => {
       xpPokemonIds = [
         ...new Set(teamIds.flatMap((teamId) => teams[teamId]?.pokemon_ids ?? [])),
       ];
-      // Deferred accrual needs pokemon display names for the close-time review.
-      if (deferXp && xpPokemonIds.length) {
+      // Pokemon display names for the close-time XP summary.
+      if (xpPokemonIds.length) {
         ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
       }
     }
@@ -910,38 +907,33 @@ export const publishForumPost = onCall(async (request) => {
     }
 
     if (xpPokemonIds.length) {
-      if (deferXp) {
-        // Accrue per-pokemon XP into the thread's pending ledger (keyed by the
-        // posting user) for review + commit at close via finalizeThreadRewards.
-        const pending: Record<string, Record<string, unknown>> = {};
-        xpPokemonIds.forEach((pokeId) => {
-          const poke = ownedForXp[pokeId] ?? {};
-          const entry: Record<string, unknown> = {
-            name: poke.species ?? poke.name ?? pokeId,
-            slug: poke.image_slug ?? "",
-          };
-          XP_STATS.forEach((stat) => {
-            const amount = xpConfig[stat.cfg] ?? 0;
-            if (amount > 0) entry[stat.field] = FieldValue.increment(amount);
-          });
-          pending[pokeId] = entry;
+      // Apply the experience/stats to each team pokemon right away...
+      const xpUpdates: Record<string, Record<string, ReturnType<typeof FieldValue.increment>>> = {};
+      // ...and tally the same amounts on the thread as a running log (with the
+      // pokemon's name/sprite) so the close review can show a summary. This log
+      // is display-only; it is never re-applied at close.
+      const xpLog: Record<string, Record<string, unknown>> = {};
+      xpPokemonIds.forEach((pokeId) => {
+        const poke = ownedForXp[pokeId] ?? {};
+        const inc: Record<string, ReturnType<typeof FieldValue.increment>> = {};
+        const logEntry: Record<string, unknown> = {
+          name: poke.species ?? poke.name ?? pokeId,
+          slug: poke.image_slug ?? "",
+        };
+        XP_STATS.forEach((stat) => {
+          const amount = xpConfig[stat.cfg] ?? 0;
+          if (amount > 0) {
+            inc[stat.field] = FieldValue.increment(amount);
+            logEntry[stat.field] = FieldValue.increment(amount);
+          }
         });
-        if (Object.keys(pending).length) {
-          tx.set(tRef, { pendingXp: { [uid]: pending } }, { merge: true });
+        if (Object.keys(inc).length) {
+          xpUpdates[pokeId] = inc;
+          xpLog[pokeId] = logEntry;
         }
-      } else {
-        // Admin-created (or legacy) threads: apply immediately to the pokemon.
-        const xpUpdates: Record<string, Record<string, ReturnType<typeof FieldValue.increment>>> = {};
-        xpPokemonIds.forEach((pokeId) => {
-          const inc: Record<string, ReturnType<typeof FieldValue.increment>> = {};
-          XP_STATS.forEach((stat) => {
-            const amount = xpConfig[stat.cfg] ?? 0;
-            if (amount > 0) inc[stat.field] = FieldValue.increment(amount);
-          });
-          if (Object.keys(inc).length) xpUpdates[pokeId] = inc;
-        });
-        if (Object.keys(xpUpdates).length) tx.set(ownedRef, xpUpdates, { merge: true });
-      }
+      });
+      if (Object.keys(xpUpdates).length) tx.set(ownedRef, xpUpdates, { merge: true });
+      if (Object.keys(xpLog).length) tx.set(tRef, { pendingXp: { [uid]: xpLog } }, { merge: true });
     }
 
     let resultPostId: string;
@@ -1466,22 +1458,9 @@ export const finalizeThreadRewards = onCall(async (request) => {
         });
         if (Object.keys(update).length) tx.set(read.ref, update, { merge: true });
       }
-      // Reviewed team XP: commit the (possibly edited) per-pokemon stats.
-      if (entry.pokemonXp) {
-        const pokeUpdate: Record<string, Record<string, ReturnType<typeof FieldValue.increment>>> = {};
-        Object.entries(entry.pokemonXp).forEach(([pokeId, xp]) => {
-          const stats: Record<string, ReturnType<typeof FieldValue.increment>> = {};
-          (["experience", "friendship", "purification", "shadow"] as const).forEach((k) => {
-            const amount = Math.trunc((xp as any)?.[k] ?? 0);
-            if (amount > 0) stats[k] = FieldValue.increment(amount);
-          });
-          if (Object.keys(stats).length) pokeUpdate[pokeId] = stats;
-        });
-        if (Object.keys(pokeUpdate).length) {
-          tx.set(db.doc(`users/${targetUid}/bag/owned_pokemons`), pokeUpdate, { merge: true });
-          received = true;
-        }
-      }
+      // Team XP is NOT applied here: experience/stats are awarded automatically
+      // as people post (see publishForumPost). entry.pokemonXp is only the
+      // summary of what was already earned, shown on the review page.
       if (received) recipients.push(targetUid);
     });
 
