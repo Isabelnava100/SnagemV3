@@ -34,6 +34,7 @@ export interface PublishThreadInput {
   html: string;
   xpConfig?: Record<string, number> | null;
   xpAward?: "instant" | "onClose";
+  noXp?: boolean;
   attachSignature?: boolean;
 }
 

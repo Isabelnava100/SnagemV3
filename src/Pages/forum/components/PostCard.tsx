@@ -9,6 +9,7 @@ import {
   ScrollArea,
   Stack,
   Text,
+  Tooltip,
 } from "@mantine/core";
 import DOMPurify from "dompurify";
 import React from "react";
@@ -401,20 +402,47 @@ export default function PostCard(props: {
   );
 }
 
-/** ~10px note under a post: the stats it earned and any active game action. */
+/**
+ * ~10px note under a post: the abbreviated stats the team earned this post
+ * (hover each for its full name) plus any active encounter/boss. Stats that are
+ * maxed out for the whole team are omitted server-side.
+ */
 function PostFooterNote(props: { post: ForumPost }) {
   const { post } = props;
   const xp = post.xpEarned;
-  const parts: string[] = [];
-  if ((xp?.experience ?? 0) > 0) parts.push(`+${xp!.experience} exp`);
-  if ((xp?.friendship ?? 0) > 0) parts.push(`+${xp!.friendship} friendship`);
-  if ((xp?.purification ?? 0) > 0) parts.push(`+${xp!.purification} purification`);
-  if ((post.blocks?.encounters?.length ?? 0) > 0) parts.push("encounter active");
-  if (post.blocks?.boss) parts.push("boss battle active");
-  if (!parts.length) return null;
+  const stats: Array<{ abbr: string; full: string; value: number }> = [];
+  if ((xp?.experience ?? 0) > 0) stats.push({ abbr: "exp", full: "Experience", value: xp!.experience! });
+  if ((xp?.friendship ?? 0) > 0) stats.push({ abbr: "frn", full: "Friendship points", value: xp!.friendship! });
+  if ((xp?.shadow ?? 0) > 0) stats.push({ abbr: "shd", full: "Shadow points", value: xp!.shadow! });
+  if ((xp?.purification ?? 0) > 0)
+    stats.push({ abbr: "prf", full: "Purification points", value: xp!.purification! });
+
+  const flags: string[] = [];
+  if ((post.blocks?.encounters?.length ?? 0) > 0) flags.push("encounter active");
+  if (post.blocks?.boss) flags.push("boss battle active");
+  if (!stats.length && !flags.length) return null;
+
   return (
-    <Text fz={10} c="gray.6" mt={8} style={{ lineHeight: 1.4 }}>
-      {parts.join("  ·  ")}
-    </Text>
+    <Group gap={5} mt={8} wrap="wrap" align="center">
+      {stats.map((s, i) => (
+        <React.Fragment key={s.abbr}>
+          {i > 0 && (
+            <Text fz={10} c="gray.7">
+              |
+            </Text>
+          )}
+          <Tooltip label={s.full} withArrow openDelay={100}>
+            <Text fz={10} c="gray.6" style={{ cursor: "help" }}>
+              {s.value} {s.abbr}
+            </Text>
+          </Tooltip>
+        </React.Fragment>
+      ))}
+      {flags.length > 0 && (
+        <Text fz={10} c="grape.4" ml={stats.length ? 4 : 0}>
+          {flags.join("  ·  ")}
+        </Text>
+      )}
+    </Group>
   );
 }

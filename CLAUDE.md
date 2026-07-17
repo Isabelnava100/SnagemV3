@@ -64,19 +64,25 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 
 ## Known deferred work
 
-- Forum post mechanics (evolution-on-post, shadow corruption, thread-event
-  notifications, per-post XP caption) need a functions deploy (`firebase deploy
-  --only functions`) to run live. `publishForumPost` now: applies XP instantly,
-  rolls each team pokemon a 25% chance of +0.01 shadow (cap 1.0 = fully
-  shadowed), auto-purifies when purification reaches the shadow amount, evolves a
-  chosen team pokemon on publish (reusing `applyEvolutionInTx`, shared with the
-  `evolvePokemon` callable), stamps `post.xpEarned`, and drops `evolution` /
-  `shadowed` system posts + self-notifications. Cleanup also has the
-  `useShadowVaccine` callable + a "Shadow Vaccine" catalog item (item 994 in
-  `src/data/item/item.json`; re-add if the catalog is regenerated).
-  `notifyUsers` now honors `users/{uid}.settings.siteNotifications` (the toggle
-  was previously a no-op). `shadowPerPost` in the XP config is ignored (shadow
-  comes from the roll); shadow/purification are a 0..1 scale.
+- Forum post mechanics need a functions deploy (`firebase deploy --only
+  functions`) to run live. Progression stats friendship/shadow/purification are
+  a fixed 0..100 scale (100 = maxed); experience stays level-based (admin
+  `xpConfig`). Per qualifying post on a normal exp thread, each team pokemon:
+  gains experience (capped at level 100) + friendship +2 (cap 100), rolls 25%
+  for +1 shadow (cap 100 = "Shadow'ed"), and if already shadowed rolls 80% for
+  +5 purification (reaching 100 auto-clears shadow). `publishForumPost` also:
+  evolves a chosen team pokemon on publish (`applyEvolutionInTx`, shared with the
+  `evolvePokemon` callable; friendship evolutions now need friendship 100),
+  stamps `post.xpEarned` (only stats a member actually earned; maxed ones are
+  omitted), drops `evolution`/`shadowed` system posts + self-notifications, and
+  enforces the per-user team lock (`thread.lockedTeams`) on normal threads.
+  Thread flag `noXp` (new-thread composer checkbox) disables all progression.
+  Cleanup: `useShadowVaccine` callable + "Shadow Vaccine" catalog item (item 994
+  in `src/data/item/item.json`; re-add if regenerated). `notifyUsers` honors
+  `users/{uid}.settings.siteNotifications`. Admins can still assign BONUS team XP
+  at close (`ThreadRewards` editable fields → `finalizeThreadRewards`, applied on
+  top of earned XP). Stats scale + shadow/purification guide: `/Library?tab=shadow`
+  (`src/Pages/Library/shadow.tsx`); shared helpers in `src/lib/shadow.ts`.
 
 - Safari Contest (July 2026, /Forum Events + Admin > Manage > Safari Contest)
   needs a functions + rules deploy before it works live: new callables

@@ -6,6 +6,12 @@ July 2026 build-out are marked (2026-07).
 
 ## Assets & sprites
 
+- **Shadow Vaccine sprite** (2026-07). The Shadow Vaccine item was added to the
+  catalog (`src/data/item/item.json`, item 994) with `Filename:
+  medicine/shadow-vaccine.png`, which may not exist yet, so it can render a blank
+  icon. Verify/add the sprite (or map to existing art). Re-add the catalog row if
+  item.json is ever regenerated.
+
 - **Gen 9 shiny sprites** (2026-07). Pokemon sprites come from `msikma/pokesprite`
   via jsDelivr, but Gen 9 (#906-1025) box sprites are bundled locally as the REGULAR
   set only (`src/assets/sprites/gen9/`). A shiny Gen 9 species falls back to its

@@ -301,14 +301,18 @@ function addCurrency(current: unknown, amount: number): number {
 const CURRENCY_KEYS = ["pokecoin", "gengarcoin", "snagemblem"] as const;
 type CurrencyKey = (typeof CURRENCY_KEYS)[number];
 
-// The four pokemon stats awarded per qualifying post: config key (on the
-// thread's xpConfig / admin defaults) -> pokemon doc field.
-const XP_STATS = [
-  { cfg: "experiencePerPost", field: "experience" },
-  { cfg: "friendshipPerPost", field: "friendship" },
-  { cfg: "purificationPerPost", field: "purification" },
-  { cfg: "shadowPerPost", field: "shadow" },
-] as const;
+// Per-post progression on a normal (exp-earning) thread. Friendship, shadow and
+// purification run on a 0..100 scale (100 = maxed); experience stays level-based
+// (admin-configured per thread). These are fixed game rules, not admin config.
+const STAT_MAX = 100;
+const FRIENDSHIP_PER_POST = 2; // reaching 100 unlocks friendship evolutions
+const SHADOW_TICK = 1; // +1 on a hit
+const SHADOW_ROLL = 4; // 1-in-4 = 25% chance per post, per team pokemon
+const PURIFICATION_PER_POST = 5; // only while shadowed; reaching 100 clears it
+const PURIFICATION_ROLL_PCT = 80; // % chance per post while shadowed
+const FRIENDSHIP_EVO_MIN = STAT_MAX; // friendship-method evolutions need max friendship
+// A pokemon is "shadowed" once its shadow stat reaches the cap.
+const isShadowedShadow = (shadow: number) => shadow >= STAT_MAX;
 
 interface XpConfig {
   experiencePerPost: number;
@@ -706,20 +710,16 @@ export const publishForumPost = onCall(async (request) => {
       bag = (bagSnap.data() as Record<string, any>) ?? {};
     }
 
-    // XP: pokemon on the teams brought into this post earn the thread's per-post
-    // stats (experience/friendship/purification), if the post meets the minimum
-    // length. Shadow corruption + evolution use the same team read.
+    // Team pokemon earn progression as people post (see the loop below).
+    // Experience is applied immediately and also tallied on the thread
+    // (pendingXp) as a running log for the close summary; items and coins stay
+    // manual (an admin assigns those at close). The team read is also used by
+    // shadow corruption + evolution, so it runs whenever a team is brought.
     const xpConfig = normalizeXpConfig(thread.xpConfig);
     const strippedLength = html.replace(/<[^>]*>/g, "").trim().length;
     const teamIds = characters.map((c: any) => c.teamId).filter(Boolean) as string[];
-    const anyStat = XP_STATS.some((s) => (xpConfig[s.cfg] ?? 0) > 0);
-    // Experience and stats are always awarded immediately to each team pokemon
-    // as people post. The same amounts are also tallied on the thread (pendingXp)
-    // purely as a running log, so the close review can show a summary. Items and
-    // coins stay manual: an admin assigns those at close (finalizeThreadRewards).
-    // The team read is also used by shadow corruption + evolution, so it runs
-    // whenever a team is brought (not only when XP is configured).
-    const xpQualifies = anyStat && strippedLength >= (xpConfig.minPostLength ?? 0);
+    // Anti-spam gate: a post must meet the thread's minimum length to progress.
+    const xpQualifies = strippedLength >= (xpConfig.minPostLength ?? 0);
     let teamPokemonIds: string[] = [];
     let ownedForXp: Record<string, any> = {};
     if (!editPostId && teamIds.length) {
@@ -733,6 +733,26 @@ export const publishForumPost = onCall(async (request) => {
       }
     } else if (evolveReq && !editPostId) {
       ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
+    }
+
+    // Team lock: on a normal exp-earning thread a poster is pinned to the
+    // team(s) they first posted with, so they cannot rotate teams to farm XP
+    // across their whole box. Event/safari/training/no-exp threads are exempt.
+    const teamLockable = !thread.noXp && !thread.safariContest && !thread.trainingLog;
+    const postTeamIds = [...new Set(teamIds)];
+    const lockedTeams = (thread.lockedTeams as Record<string, string[]> | undefined)?.[uid] ?? null;
+    let setTeamLock = false;
+    if (!editPostId && teamLockable && postTeamIds.length) {
+      if (lockedTeams && lockedTeams.length) {
+        if (!postTeamIds.every((t) => lockedTeams.includes(t))) {
+          throw new HttpsError(
+            "failed-precondition",
+            "You are locked to the team you first posted with on this thread."
+          );
+        }
+      } else {
+        setTeamLock = true; // first post here: remember this team
+      }
     }
 
     // -- compute ------------------------------------------------------------
@@ -926,19 +946,19 @@ export const publishForumPost = onCall(async (request) => {
       }
     }
 
-    // The per-post XP amounts, stamped on the post for its footer caption.
-    const postXpEarned = xpQualifies
-      ? {
-          experience: xpConfig.experiencePerPost ?? 0,
-          friendship: xpConfig.friendshipPerPost ?? 0,
-          purification: xpConfig.purificationPerPost ?? 0,
-        }
-      : null;
+    // Progression runs only on normal exp-earning threads (not safari, training
+    // or no-exp threads). Experience is admin-configured; friendship, shadow and
+    // purification are fixed 0..100 mechanics.
+    const earnsStats = !thread.noXp && !thread.safariContest && !thread.trainingLog;
+    const qualifies = earnsStats && xpQualifies && !editPostId;
+    const maxXp = curve[STAT_MAX] ?? Infinity;
+    const expPerPost = xpConfig.experiencePerPost ?? 0;
+    // Amounts at least one team pokemon actually earned (for the footer caption;
+    // a stat that is maxed out for every team member shows nothing).
+    const earned = { experience: 0, friendship: 0, shadow: 0, purification: 0 };
 
     if (teamPokemonIds.length) {
-      // Per-pokemon owned-doc updates (XP increments + computed shadow/purif)...
       const pokeUpdates: Record<string, Record<string, unknown>> = {};
-      // ...and the awarded XP tallied on the thread as a display-only running log.
       const xpLog: Record<string, Record<string, unknown>> = {};
       teamPokemonIds.forEach((pokeId) => {
         const poke = ownedForXp[pokeId] ?? {};
@@ -949,45 +969,55 @@ export const publishForumPost = onCall(async (request) => {
         };
         let logged = false;
 
+        const curExp = Number(poke.experience ?? 0);
+        const curFriend = Number(poke.friendship ?? 0);
+        const curShadow = Number(poke.shadow ?? 0);
         const curPurif = Number(poke.purification ?? 0);
-        let newPurif = curPurif;
-        if (xpQualifies) {
-          // experience + friendship accumulate safely via increment; purification
-          // is computed (it also feeds the auto-purify below).
-          XP_STATS.forEach((stat) => {
-            const amount = xpConfig[stat.cfg] ?? 0;
-            if (amount <= 0) return;
-            if (stat.field === "experience" || stat.field === "friendship") {
-              update[stat.field] = FieldValue.increment(amount);
-              logEntry[stat.field] = FieldValue.increment(amount);
-              logged = true;
-            } else if (stat.field === "purification") {
-              newPurif = Math.round((newPurif + amount) * 100) / 100;
-              logEntry[stat.field] = FieldValue.increment(amount);
-              logged = true;
-            }
-            // shadowPerPost is intentionally ignored: shadow comes from the roll.
-          });
+        const wasShadowed = isShadowedShadow(curShadow);
+
+        // Experience: capped at the level-100 total.
+        if (qualifies && expPerPost > 0 && curExp < maxXp) {
+          const gain = Math.min(expPerPost, maxXp - curExp);
+          update.experience = FieldValue.increment(gain);
+          logEntry.experience = FieldValue.increment(gain);
+          logged = true;
+          earned.experience = expPerPost;
+        }
+        // Friendship: +2 per post, capped at 100 (a full bar unlocks friendship
+        // evolutions).
+        if (qualifies && curFriend < STAT_MAX) {
+          const next = Math.min(STAT_MAX, curFriend + FRIENDSHIP_PER_POST);
+          update.friendship = next;
+          logEntry.friendship = FieldValue.increment(next - curFriend);
+          logged = true;
+          earned.friendship = FRIENDSHIP_PER_POST;
         }
 
-        // Shadow corruption: each team pokemon independently rolls 25% for a
-        // +0.01 shadow tick, capped at 1.0 (fully shadowed).
-        const curShadow = Number(poke.shadow ?? 0);
         let newShadow = curShadow;
-        if (randomInt(4) === 0) {
-          newShadow = Math.min(1, Math.round((curShadow + 0.01) * 100) / 100);
+        let newPurif = curPurif;
+        // Purification: only a shadowed pokemon earns it (80% for +5, cap 100).
+        if (qualifies && wasShadowed && curPurif < STAT_MAX && randomInt(100) < PURIFICATION_ROLL_PCT) {
+          newPurif = Math.min(STAT_MAX, curPurif + PURIFICATION_PER_POST);
+          logEntry.purification = FieldValue.increment(newPurif - curPurif);
+          logged = true;
+          earned.purification = PURIFICATION_PER_POST;
         }
-        // Auto-purify: once purification reaches the shadow amount, cleanse it
-        // and bank the leftover purification.
-        if (newShadow > 0 && newPurif >= newShadow) {
-          newPurif = Math.round((newPurif - newShadow) * 100) / 100;
+        // Reaching a full purification bar clears the shadow status.
+        if (wasShadowed && newPurif >= STAT_MAX) {
           newShadow = 0;
+          newPurif = 0;
+        }
+        // Shadow corruption: a not-yet-shadowed pokemon rolls 25% for +1 (cap
+        // 100). Reaching 100 marks it shadowed.
+        if (qualifies && !wasShadowed && newShadow < STAT_MAX && randomInt(SHADOW_ROLL) === 0) {
+          newShadow = Math.min(STAT_MAX, newShadow + SHADOW_TICK);
+          earned.shadow = SHADOW_TICK;
+          if (isShadowedShadow(newShadow)) {
+            shadowedNames.push(String(poke.species ?? poke.name ?? "A pokemon"));
+          }
         }
         if (newShadow !== curShadow) update.shadow = newShadow;
         if (newPurif !== curPurif) update.purification = newPurif;
-        if (curShadow < 1 && newShadow >= 1) {
-          shadowedNames.push(String(poke.species ?? poke.name ?? "A pokemon"));
-        }
 
         if (Object.keys(update).length) pokeUpdates[pokeId] = update;
         if (logged) xpLog[pokeId] = logEntry;
@@ -995,6 +1025,17 @@ export const publishForumPost = onCall(async (request) => {
       if (Object.keys(pokeUpdates).length) tx.set(ownedRef, pokeUpdates, { merge: true });
       if (Object.keys(xpLog).length) tx.set(tRef, { pendingXp: { [uid]: xpLog } }, { merge: true });
     }
+
+    // Footer caption amounts: only the stats a team member actually earned.
+    const postXpEarned =
+      earned.experience || earned.friendship || earned.shadow || earned.purification
+        ? {
+            ...(earned.experience ? { experience: earned.experience } : {}),
+            ...(earned.friendship ? { friendship: earned.friendship } : {}),
+            ...(earned.shadow ? { shadow: earned.shadow } : {}),
+            ...(earned.purification ? { purification: earned.purification } : {}),
+          }
+        : null;
 
     // Evolve a chosen team pokemon on publish (the composer confirmed it). Uses
     // the same server-side rules + item consumption as the evolvePokemon button.
@@ -1036,6 +1077,11 @@ export const publishForumPost = onCall(async (request) => {
         blocks,
         ...(postXpEarned ? { xpEarned: postXpEarned } : {}),
       });
+
+      // Pin the poster to this team for the rest of the thread (anti-farm).
+      if (setTeamLock) {
+        tx.set(tRef, { lockedTeams: { [uid]: postTeamIds } }, { merge: true });
+      }
 
       // Attacking the boss: opt-in per post, only when a boss is active for
       // this player. Attack posts total across everyone until the boss is down.
@@ -1269,6 +1315,9 @@ export const publishForumThread = onCall(async (request) => {
     encounterClaims: {},
     bossBattle: null,
     xpConfig,
+    // When set, posting here earns no progression (experience/friendship/shadow/
+    // purification). An admin can still assign bonuses at close.
+    noXp: !!request.data?.noXp,
   });
   batch.create(tRef.collection("posts").doc(), {
     ...authorFields(member),
@@ -1581,9 +1630,23 @@ export const finalizeThreadRewards = onCall(async (request) => {
         });
         if (Object.keys(update).length) tx.set(read.ref, update, { merge: true });
       }
-      // Team XP is NOT applied here: experience/stats are awarded automatically
-      // as people post (see publishForumPost). entry.pokemonXp is only the
-      // summary of what was already earned, shown on the review page.
+      // Bonus team XP the admin chose to assign at close (on top of the XP that
+      // was already earned per post). Applied to each reviewed pokemon.
+      if (entry.pokemonXp) {
+        const pokeUpdate: Record<string, Record<string, ReturnType<typeof FieldValue.increment>>> = {};
+        Object.entries(entry.pokemonXp).forEach(([pokeId, xp]) => {
+          const stats: Record<string, ReturnType<typeof FieldValue.increment>> = {};
+          (["experience", "friendship", "purification", "shadow"] as const).forEach((k) => {
+            const amount = Number((xp as any)?.[k] ?? 0);
+            if (amount > 0) stats[k] = FieldValue.increment(amount);
+          });
+          if (Object.keys(stats).length) pokeUpdate[pokeId] = stats;
+        });
+        if (Object.keys(pokeUpdate).length) {
+          tx.set(db.doc(`users/${targetUid}/bag/owned_pokemons`), pokeUpdate, { merge: true });
+          received = true;
+        }
+      }
       if (received) recipients.push(targetUid);
     });
 
@@ -3633,9 +3696,9 @@ function applyEvolutionInTx(
   }
   const level = levelForXp(Number(entry.experience ?? 0), curve);
   if (option.method === "friendship") {
-    const need = option.friendship ?? 220;
-    if (Number(entry.friendship ?? 0) < need) {
-      throw new HttpsError("failed-precondition", `Raise friendship to ${need} first.`);
+    // Friendship is a 0..100 stat now; a full bar (100) unlocks the evolution.
+    if (Number(entry.friendship ?? 0) < FRIENDSHIP_EVO_MIN) {
+      throw new HttpsError("failed-precondition", `Max out friendship (${FRIENDSHIP_EVO_MIN}) first.`);
     }
   } else if (option.method === "item" || option.method === "trade") {
     if (option.level && level < option.level) {

@@ -91,10 +91,11 @@ export function evaluateEvolutions(
 
   return options.map((option) => {
     if (option.method === "friendship") {
-      const need = option.friendship ?? 220;
+      // Friendship is a 0..100 stat now; a full bar (100) unlocks the evolution.
+      const need = 100;
       return friendship >= need
         ? { option, eligible: true }
-        : { option, eligible: false, reason: `Raise friendship to ${need} (now ${friendship})` };
+        : { option, eligible: false, reason: `Max out friendship (${friendship}/${need})` };
     }
 
     if (option.method === "item" || option.method === "trade") {

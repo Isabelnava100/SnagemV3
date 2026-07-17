@@ -68,6 +68,8 @@ export const callPublishThread = (input: {
   xpConfig?: Record<string, number> | null;
   /** Staff-only: award XP instantly vs at close (server gates non-staff). */
   xpAward?: "instant" | "onClose";
+  /** When true, posting in this thread earns no experience/stats. */
+  noXp?: boolean;
   attachSignature?: boolean;
 }) => call<{ threadId: string }>("publishForumThread", input);
 

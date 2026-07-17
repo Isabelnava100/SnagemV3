@@ -89,7 +89,9 @@ export default function ThreadRewards() {
   const [message, setMessage] = React.useState("");
 
   // Load saved progress, or seed a fresh session from the thread participants
-  // and the accrued team XP (non-admin threads accumulate XP into pendingXp).
+  // and the team pokemon that posted (thread.pendingXp is the earned-XP log).
+  // Bonus amounts start at 0: the per-post XP was already applied automatically,
+  // so anything entered here is an extra grant on top.
   React.useEffect(() => {
     if (session || sessionPending || !thread) return;
     const seededRewards: Record<string, RewardEntry> = {};
@@ -99,10 +101,10 @@ export default function ThreadRewards() {
         pokemonXp[pokeId] = {
           name: xp.name,
           slug: xp.slug,
-          experience: xp.experience ?? 0,
-          friendship: xp.friendship ?? 0,
-          purification: xp.purification ?? 0,
-          shadow: xp.shadow ?? 0,
+          experience: 0,
+          friendship: 0,
+          purification: 0,
+          shadow: 0,
         };
       });
       if (Object.keys(pokemonXp).length) seededRewards[participantUid] = { ...emptyEntry(), pokemonXp };
@@ -133,6 +135,26 @@ export default function ThreadRewards() {
     if (!session) return;
     const current = session.rewards[uid] ?? emptyEntry();
     setSession({ ...session, rewards: { ...session.rewards, [uid]: updater(current) } });
+  };
+
+  const setPokeXp = (
+    uid: string,
+    pokeId: string,
+    field: "experience" | "friendship" | "purification" | "shadow",
+    value: number
+  ) => {
+    updateEntry(uid, (entry) => {
+      const current = entry.pokemonXp?.[pokeId] ?? {
+        experience: 0,
+        friendship: 0,
+        purification: 0,
+        shadow: 0,
+      };
+      return {
+        ...entry,
+        pokemonXp: { ...(entry.pokemonXp ?? {}), [pokeId]: { ...current, [field]: value } },
+      };
+    });
   };
 
   const addItemTo = (uid: string, itemId: string, qty: number) => {
@@ -412,13 +434,16 @@ export default function ThreadRewards() {
                           </Text>
                         )}
                     </Group>
-                    {/* Team XP earned while posting. It was already awarded to
-                        each pokemon automatically, so this is a read-only summary
-                        (only the items and coins above need assigning). */}
+                    {/* Bonus team XP. Per-post XP was already awarded
+                        automatically; these add an optional extra grant to the
+                        team pokemon that posted. */}
                     {entry.pokemonXp && Object.keys(entry.pokemonXp).length > 0 && (
                       <Stack gap={6} mt={10}>
                         <Text fz={11} fw={700} c="white" tt="uppercase">
-                          Team XP earned (already awarded)
+                          Bonus team XP to assign
+                        </Text>
+                        <Text fz={11} c="dimmed">
+                          Optional, added on top of the exp/stats already earned per post.
                         </Text>
                         {Object.entries(entry.pokemonXp).map(([pokeId, xp]) => (
                           <Box key={pokeId} p={8} bg="#2b2a2b" style={{ borderRadius: 8 }}>
@@ -433,14 +458,26 @@ export default function ThreadRewards() {
                                 {xp.name ?? pokeId}
                               </Text>
                             </Group>
-                            <Group gap={10} wrap="wrap">
-                              {(["experience", "friendship", "purification", "shadow"] as const)
-                                .filter((field) => (xp[field] ?? 0) > 0)
-                                .map((field) => (
-                                  <Text key={field} fz={12} c="dimmed" tt="capitalize">
-                                    {field}: <Text span c="teal.4" fw={700}>+{xp[field] ?? 0}</Text>
-                                  </Text>
-                                ))}
+                            <Group gap={6} wrap="wrap">
+                              {(["experience", "friendship", "purification", "shadow"] as const).map(
+                                (field) => (
+                                  <Stack gap={0} key={field}>
+                                    <Text fz={10} c="dimmed" tt="capitalize">
+                                      {field}
+                                    </Text>
+                                    <NumberInput
+                                      value={xp[field] ?? 0}
+                                      onChange={(v) =>
+                                        setPokeXp(uid, pokeId, field, Math.max(0, Number(v) || 0))
+                                      }
+                                      min={0}
+                                      w={78}
+                                      size="xs"
+                                      styles={{ input: { background: "#2E2D2E" } }}
+                                    />
+                                  </Stack>
+                                )
+                              )}
                             </Group>
                           </Box>
                         ))}

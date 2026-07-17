@@ -112,7 +112,7 @@ export interface ForumPost {
   type?: PostType;
   blocks?: PostBlocks;
   /** Per-pokemon stats each team member earned on this post (footer caption). */
-  xpEarned?: { experience?: number; friendship?: number; purification?: number };
+  xpEarned?: { experience?: number; friendship?: number; shadow?: number; purification?: number };
 }
 
 export interface ThreadPoll {
@@ -267,6 +267,10 @@ export interface ForumThread {
   trainingLog?: boolean;
   /** Set on threads auto-created by pickUpMission; links back to /Missions/{id}. */
   missionId?: string;
+  /** When true, posting here earns no progression (an admin can bonus at close). */
+  noXp?: boolean;
+  /** uid -> the team(s) that user is locked to on this thread (anti-farm). */
+  lockedTeams?: Record<string, string[]>;
 }
 
 /**

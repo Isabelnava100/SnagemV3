@@ -2,6 +2,7 @@ import {
   ActionIcon,
   Anchor,
   Avatar,
+  Badge,
   Box,
   Button,
   Flex,
@@ -48,6 +49,7 @@ import { getCharacters, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../.
 import { assignPokemonCharacter } from "../../../queries/evolution";
 import { EvolveButton, LevelBar } from "../../../components/pokemon/EvolveButton";
 import ShadowVaccineButton from "../../../components/pokemon/ShadowVaccineButton";
+import { SHADOW_GUIDE_LINK, STAT_MAX, isShadowed } from "../../../lib/shadow";
 import formatter from "../../../utils/date";
 
 type TeamForm = UseFormReturnType<Team | null>;
@@ -766,6 +768,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
       assignPokemonCharacter(pokemon.id, characterId ?? ""),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["get-owned-pokemons", user?.uid] }),
   });
+  const shadowed = isShadowed(pokemon);
   return (
     <Stack>
       <Group>
@@ -774,14 +777,28 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
           alt={`${pokemon.name ?? pokemon.species ?? "Pokemon"} sprite`}
           w={60}
           h={60}
-          radius="xl"
-          sx={{ border: "4px solid white" }}
-          bg="#909090"
+          radius={shadowed ? 4 : "xl"}
+          sx={{ border: shadowed ? "1px solid #5a3fb0" : "4px solid white" }}
+          bg={shadowed ? "#000" : "#909090"}
         />
         <Stack gap={3}>
-          <Title order={3} size={16}>
-            {pokemon.species} ({pokemon.gender})
-          </Title>
+          <Group gap={6}>
+            <Title order={3} size={16}>
+              {pokemon.species} ({pokemon.gender})
+            </Title>
+            {shadowed && (
+              <Badge
+                component={Link}
+                to={SHADOW_GUIDE_LINK}
+                size="sm"
+                style={{ background: "#000", border: "1px solid #5a3fb0", cursor: "pointer" }}
+                c="grape.2"
+                title="This pokemon is shadowed. Open the growth & shadow guide."
+              >
+                Shadow&apos;ed
+              </Badge>
+            )}
+          </Group>
           {pokemon.date_caught?.seconds && (
             <Text>Caught {formatter.format(new Date(pokemon.date_caught.seconds * 1000))}</Text>
           )}
@@ -801,12 +818,12 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
       )}
       {/* Level is derived from experience; the bar shows progress to the next. */}
       <LevelBar experience={pokemon.experience} />
-      {/* Game stats: experience accrues from forum posting (thread xpConfig). */}
+      {/* Game stats: friendship/shadow/purification run 0..100 (see Library). */}
       <Stack gap={2}>
         <Text fz={12}>Experience pts: {pokemon.experience ?? 0}</Text>
-        <Text fz={12}>Friendship pts: {pokemon.friendship ?? 0}</Text>
-        <Text fz={12}>Purification pts: {pokemon.purification ?? 0}</Text>
-        <Text fz={12}>Shadow pts: {pokemon.shadow ?? 0}</Text>
+        <Text fz={12}>Friendship pts: {pokemon.friendship ?? 0} / {STAT_MAX}</Text>
+        <Text fz={12}>Purification pts: {pokemon.purification ?? 0} / {STAT_MAX}</Text>
+        <Text fz={12}>Shadow pts: {pokemon.shadow ?? 0} / {STAT_MAX}</Text>
       </Stack>
       <Select
         label="Character"

@@ -26,6 +26,7 @@ import { getItemImageURL, getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "..
 import { resolveListSlugs } from "../forum/queries";
 import { getPokemonLists } from "../../queries/admin";
 import FaqTab from "./faq";
+import ShadowGuideTab from "./shadow";
 import LoreTab from "./lore";
 import MovesTab from "./moves";
 
@@ -339,6 +340,15 @@ const WINGS: Wing[] = [
     blurb: "Shadow Moves by class, and the rules that govern them.",
     accent: "#b197fc",
     content: <MovesTab />,
+  },
+  {
+    value: "shadow",
+    name: "Growth & Shadow",
+    callNo: "GN · 040",
+    meta: "Stats guide",
+    blurb: "Experience, friendship, shadow and purification, and how to cure a shadowed pokemon.",
+    accent: "#9775fa",
+    content: <ShadowGuideTab />,
   },
   {
     value: "lists",

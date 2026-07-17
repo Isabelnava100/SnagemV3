@@ -230,6 +230,14 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     if (mode === "new") {
       if (!characters.length) return "Select at least one character.";
       if (characters.some((c) => !c.teamId)) return "Select a team for each character.";
+      // Team lock: on a normal exp thread you stay on your first team.
+      const locked = thread?.lockedTeams?.[user?.uid ?? ""];
+      if (locked?.length) {
+        const postTeams = [...new Set(characters.map((c) => c.teamId).filter(Boolean))] as string[];
+        if (postTeams.some((t) => !locked.includes(t))) {
+          return "You're locked to the team you first posted with on this thread.";
+        }
+      }
     }
     if (html.replace(/<[^>]*>/g, "").trim().length < 2) return "Write your post first.";
     for (const selection of itemSelections) {
@@ -362,6 +370,12 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
               locked={mode === "edit"}
               hint="Choose the characters you want to include in this post to make it clearer for everyone. Doing so will issue your character and team experience."
             />
+            {mode === "new" && !!thread?.lockedTeams?.[user?.uid ?? ""]?.length && (
+              <Text fz={12} c="orange.4" role="status" aria-live="polite">
+                You are locked to the team you first posted with on this thread, so everyone earns XP
+                on the same team throughout it.
+              </Text>
+            )}
             {mode === "edit" && (
               <UsedItemsPanel items={editingPost?.blocks?.itemsUsed ?? []} />
             )}

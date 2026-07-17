@@ -14,6 +14,7 @@ import {
   Text,
   TextInput,
   Title,
+  Tooltip,
 } from "@mantine/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
@@ -74,6 +75,7 @@ export default function NewThreadComposer() {
   const [allowedPosters, setAllowedPosters] = React.useState<string[]>([]);
   const [tags, setTags] = React.useState<string[]>([]);
   const [instructions, setInstructions] = React.useState("");
+  const [noXp, setNoXp] = React.useState(false);
   const [characters, setCharacters] = React.useState<PostCharacter[]>([]);
   const [encounterConfig, setEncounterConfig] = React.useState<EncounterConfig | null>(null);
   const [poll, setPoll] = React.useState<ThreadPoll | null>(null);
@@ -181,6 +183,7 @@ export default function NewThreadComposer() {
         pinned: canPin && pinned,
         restricted,
         allowedPosters: restricted ? allowedPosters : [],
+        noXp,
         poll,
         encounterConfig,
         characters,
@@ -352,6 +355,23 @@ export default function NewThreadComposer() {
                   onChange={(e) => setInstructions(e.currentTarget.value)}
                   styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
                 />
+
+                <Divider color="#4a464a" />
+
+                <Tooltip
+                  multiline
+                  w={280}
+                  withArrow
+                  label="Posts here will not give any experience, friendship, shadow or purification. Team lock is also off. Good for casual or non-canon roleplay. An admin can still hand out bonuses when the thread closes."
+                >
+                  <Checkbox
+                    label="Posting in this thread does not give experience or stats"
+                    checked={noXp}
+                    onChange={(e) => setNoXp(e.currentTarget.checked)}
+                    color="green.0"
+                    styles={{ label: { color: "white", fontSize: 13 } }}
+                  />
+                </Tooltip>
               </Stack>
             </ForumPanel>
 
