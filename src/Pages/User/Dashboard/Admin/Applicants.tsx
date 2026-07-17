@@ -96,6 +96,7 @@ export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () =
           loading={reject.isPending}
           disabled={busy}
           onClick={() => {
+            if (!window.confirm("Reject and remove this application? This cannot be undone.")) return;
             setMessage("");
             reject.mutateAsync().catch(() => undefined);
           }}

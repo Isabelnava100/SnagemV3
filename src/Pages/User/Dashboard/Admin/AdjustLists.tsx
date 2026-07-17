@@ -36,6 +36,7 @@ import { getPokemonImageURL } from "../../../../helpers";
 import useMediaQuery from "../../../../hooks/useMediaQuery";
 import { DocumentCopyIcon, Edit2 } from "../../../../icons";
 import { getPokemonLists } from "../../../../queries/admin";
+import { toastError, toastSuccess } from "../../../../lib/toast";
 
 function useUpdateOrAddDocument(documentId?: string) {
   const { user } = useAuth();
@@ -81,8 +82,9 @@ function CreateList() {
     try {
       await mutateAsync({});
       await queryClient.invalidateQueries({ queryKey: ["get-admin-pokemon-lists"] });
+      toastSuccess("New list created.");
     } catch (err) {
-      //
+      toastError(err, "Could not create the list.");
     }
   };
   return (
@@ -105,7 +107,12 @@ export default function AdjustLists() {
   const { isOverXs } = useMediaQuery();
 
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <Text c="red.4" role="status" aria-live="polite">
+        Could not load the encounter lists. Refresh the page to try again.
+      </Text>
+    );
 
   const { formattedData } = data;
 
@@ -204,8 +211,9 @@ function EditSingleListItem(props: {
       await mutateAsync({ values: form.values });
       await queryClient.invalidateQueries({ queryKey: ["get-admin-pokemon-lists"] });
       setEditing(false);
+      toastSuccess("List saved.");
     } catch (err) {
-      //
+      toastError(err, "Could not save the list.");
     }
   };
 
@@ -319,8 +327,9 @@ function DeleteSingleListItem(props: { itemId: string }) {
       await mutateAsync({ itemIdInput: itemId });
       close();
       await queryClient.invalidateQueries({ queryKey: ["get-admin-pokemon-lists"] });
+      toastSuccess("List deleted.");
     } catch (err) {
-      //
+      toastError(err, "Could not delete the list.");
     }
   };
 
@@ -358,8 +367,9 @@ function DuplicateListItem(props: { listItem: AdminPokemonList }) {
     try {
       await mutateAsync({ values: { ...values, name: `${values.name} [DUPLICATE]` } });
       await queryClient.invalidateQueries({ queryKey: ["get-admin-pokemon-lists"] });
+      toastSuccess("List duplicated.");
     } catch (err) {
-      //
+      toastError(err, "Could not duplicate the list.");
     }
   };
   return (

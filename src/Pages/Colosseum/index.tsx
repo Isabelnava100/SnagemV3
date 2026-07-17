@@ -1,4 +1,5 @@
 import {
+  Anchor,
   Badge,
   Box,
   Button,
@@ -30,8 +31,9 @@ import {
   IconTrophy,
 } from "@tabler/icons-react";
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { SHADOW_GUIDE_LINK } from "../../lib/shadow";
 import { HeroStat as HeroStatChip, PageHero } from "../../components/common/PageHero";
 import { SectionLoader } from "../../components/navigation/loading";
 import { getPokemonImageURL } from "../../helpers";
@@ -123,8 +125,8 @@ function TrainingTargetCard({ pokemon }: { pokemon: OwnedPokemon }) {
     ["Gender", genderLabel],
     ...(types ? ([["Type", types]] as Array<[string, string]>) : []),
     ...(pokemon.pokedex ? ([["Dex No.", `#${pokemon.pokedex}`]] as Array<[string, string]>) : []),
-    ["Evo Points", String(pokemon.experience ?? 0)],
-    ["Happiness", String(pokemon.friendship ?? 0)],
+    ["Exp", String(pokemon.experience ?? 0)],
+    ["Friendship", String(pokemon.friendship ?? 0)],
     ...((pokemon.shadow ?? 0) > 0
       ? ([["Purification", String(pokemon.purification ?? 0)]] as Array<[string, string]>)
       : []),
@@ -309,8 +311,8 @@ function TrainingRoomTab() {
             </Group>
 
             <SimpleGrid cols={{ base: 3 }} spacing="xs" mb="md">
-              <StatTile label="Evolution Pts" value={sessionIsToday ? session?.evoPts ?? 0 : 0} />
-              <StatTile label="Happiness Pts" value={sessionIsToday ? session?.happinessPts ?? 0 : 0} />
+              <StatTile label="Exp Pts" value={sessionIsToday ? session?.evoPts ?? 0 : 0} />
+              <StatTile label="Friendship Pts" value={sessionIsToday ? session?.happinessPts ?? 0 : 0} />
               <StatTile label="Posts Logged" value={`${postsLogged} / ${MAX_TRAINING_POSTS}`} />
             </SimpleGrid>
 
@@ -429,6 +431,9 @@ function TrainingRoomTab() {
           <Text fz={12} c="dimmed">
             Shadow Pokemon: earn Purification at the same rates.
           </Text>
+          <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={12} c="grape.3">
+            How exp, friendship, shadow and purification work →
+          </Anchor>
         </SimpleGrid>
       </Card>
     </Stack>

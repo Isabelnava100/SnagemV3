@@ -28,6 +28,7 @@ import useMediaQuery from "../../../../hooks/useMediaQuery";
 import { ItemIcon } from "../../../../icons";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import { hasCapability } from "../../../../lib/permissions";
+import { toastError, toastSuccess } from "../../../../lib/toast";
 import { getUsers } from "../../../../queries/admin";
 
 // The catalog is ordered balls-first; sort alphabetically so the dropdown
@@ -140,8 +141,9 @@ export default function Donate() {
       setShowConfirmation(false);
 
       await queryClient.invalidateQueries({ queryKey: ["get-items"] });
+      toastSuccess("Items sent.");
     } catch (err) {
-      //
+      toastError(err, "Could not send the items.");
     } finally {
       setSending(false);
     }
@@ -212,6 +214,7 @@ export default function Donate() {
                         <div className="flex justify-end">
                           <input
                             type="number"
+                            aria-label={`Quantity of ${item.name} to send`}
                             onChange={(e) =>
                               setItemsToSendQtys((pre) => ({
                                 ...pre,

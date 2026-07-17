@@ -1,6 +1,8 @@
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import { MantineEmotionProvider, emotionTransform } from "@mantine/emotion";
+import { Notifications as MantineNotifications } from "@mantine/notifications";
+import "@mantine/notifications/styles.css";
 import "@mantine/tiptap/styles.css";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./assets/styles/index.css";
@@ -121,6 +123,7 @@ export default function AppRoutes() {
   return (
     <MantineProvider theme={theme} defaultColorScheme="dark" stylesTransform={emotionTransform}>
       <MantineEmotionProvider>
+        <MantineNotifications position="top-right" />
     <AuthContextProvider>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>

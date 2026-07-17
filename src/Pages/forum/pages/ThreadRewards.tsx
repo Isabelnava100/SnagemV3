@@ -27,6 +27,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { itemData } from "../../../data/item";
 import { pokemonData } from "../../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL } from "../../../helpers";
+import { clickable } from "../../../lib/a11y";
 import { hasCapability } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
@@ -361,12 +362,13 @@ export default function ThreadRewards() {
                           rightSection={
                             <span
                               style={{ cursor: "pointer" }}
-                              onClick={() =>
+                              aria-label={`Remove ${c.value}`}
+                              {...clickable(() =>
                                 updateEntry(uid, (e) => ({
                                   ...e,
                                   currencies: { ...e.currencies, [c.value]: 0 },
                                 }))
-                              }
+                              )}
                             >
                               ✕
                             </span>
@@ -386,12 +388,13 @@ export default function ThreadRewards() {
                           rightSection={
                             <span
                               style={{ cursor: "pointer" }}
-                              onClick={() =>
+                              aria-label={`Remove ${item.name}`}
+                              {...clickable(() =>
                                 updateEntry(uid, (e) => ({
                                   ...e,
                                   items: e.items.filter((i) => i.itemId !== item.itemId),
                                 }))
-                              }
+                              )}
                             >
                               ✕
                             </span>
@@ -411,12 +414,13 @@ export default function ThreadRewards() {
                           rightSection={
                             <span
                               style={{ cursor: "pointer" }}
-                              onClick={() =>
+                              aria-label={`Remove ${p.name}`}
+                              {...clickable(() =>
                                 updateEntry(uid, (e) => ({
                                   ...e,
                                   pokemon: (e.pokemon ?? []).filter((_, j) => j !== i),
                                 }))
-                              }
+                              )}
                             >
                               ✕
                             </span>

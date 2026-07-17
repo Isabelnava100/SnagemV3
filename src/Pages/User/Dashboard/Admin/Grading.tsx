@@ -165,6 +165,7 @@ export function SubmissionCard(props: { submission: PendingSubmission; onDone: (
           loading={approve.isPending}
           disabled={busy}
           onClick={() => {
+            if (!window.confirm("Approve this and grant its rewards? This cannot be undone.")) return;
             setMessage("");
             approve.mutateAsync().catch(() => undefined);
           }}
@@ -180,6 +181,7 @@ export function SubmissionCard(props: { submission: PendingSubmission; onDone: (
           loading={reject.isPending}
           disabled={busy}
           onClick={() => {
+            if (!window.confirm("Reject this submission? This cannot be undone.")) return;
             setMessage("");
             reject.mutateAsync().catch(() => undefined);
           }}
@@ -245,6 +247,7 @@ export function MMRequestCard(props: { request: PendingMMRequest; onDone: () => 
           loading={grant.isPending}
           disabled={grant.isPending || !ability.trim()}
           onClick={() => {
+            if (!window.confirm("Grant this? Rewards apply immediately and cannot be undone.")) return;
             setMessage("");
             grant.mutateAsync().catch(() => undefined);
           }}
@@ -312,6 +315,7 @@ export function BattleRankingsForm() {
           loading={award.isPending}
           disabled={award.isPending || !uid.trim()}
           onClick={() => {
+            if (!window.confirm("Award this? It applies immediately and cannot be undone.")) return;
             setMessage("");
             award.mutateAsync().catch(() => undefined);
           }}
@@ -506,6 +510,7 @@ export function BattleReportForm() {
           loading={award.isPending}
           disabled={disabled}
           onClick={() => {
+            if (!window.confirm("Award this? It applies immediately and cannot be undone.")) return;
             setMessage("");
             award.mutateAsync().catch(() => undefined);
           }}
@@ -607,6 +612,7 @@ export function ChallengeStepForm() {
           loading={grant.isPending}
           disabled={disabled}
           onClick={() => {
+            if (!window.confirm("Grant this? Rewards apply immediately and cannot be undone.")) return;
             setMessage("");
             grant.mutateAsync().catch(() => undefined);
           }}

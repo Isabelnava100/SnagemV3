@@ -49,6 +49,7 @@ import { getCharacters, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../.
 import { EvolveButton, LevelBar } from "../../../components/pokemon/EvolveButton";
 import ShadowVaccineButton from "../../../components/pokemon/ShadowVaccineButton";
 import { SHADOW_GUIDE_LINK, STAT_MAX, isShadowed } from "../../../lib/shadow";
+import { toastError, toastSuccess } from "../../../lib/toast";
 import formatter from "../../../utils/date";
 
 type TeamForm = UseFormReturnType<Team | null>;
@@ -173,7 +174,12 @@ function Teams(props: EditingProps) {
   const { isOverLg } = useMediaQuery();
 
   if (isLoading || !owned) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <Text c="red.4" role="status" aria-live="polite">
+        Could not load your teams. Refresh the page to try again.
+      </Text>
+    );
 
   const sortedData = hydrateTeams(rawTeams ?? [], owned.sortedData);
 
@@ -218,8 +224,9 @@ function DeleteTeam(props: { teamId: string }) {
       await mutateAsync({ teamId });
       close();
       await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
+      toastSuccess("Team deleted.");
     } catch (err) {
-      //
+      toastError(err, "Could not delete the team.");
     }
   };
 
@@ -302,11 +309,12 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
       await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
       await queryClient.invalidateQueries({ queryKey: ["get-team", team.id] });
       resetEditing();
+      toastSuccess("Team saved.");
       if (isSingleTeam) {
         navigate("/Dashboard/Pokemon");
       }
     } catch (err) {
-      //
+      toastError(err, "Could not save the team.");
     }
   };
 
@@ -454,8 +462,9 @@ function CreateNewTeam() {
     try {
       await mutateAsync({});
       await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
+      toastSuccess("Team created.");
     } catch (err) {
-      //
+      toastError(err, "Could not create the team.");
     }
   };
 
@@ -519,7 +528,12 @@ function OwnedPokemons(props: EditingProps) {
   );
 
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <Text c="red.4" role="status" aria-live="polite">
+        Could not load your pokemon. Refresh the page to try again.
+      </Text>
+    );
 
   const { sortedData } = data;
 
