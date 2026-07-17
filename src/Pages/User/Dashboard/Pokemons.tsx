@@ -46,7 +46,6 @@ import { containsBlockedWord, excludeProperties, getPokemonImageURL } from "../.
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
 import { getCharacters, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
-import { assignPokemonCharacter } from "../../../queries/evolution";
 import { EvolveButton, LevelBar } from "../../../components/pokemon/EvolveButton";
 import ShadowVaccineButton from "../../../components/pokemon/ShadowVaccineButton";
 import { SHADOW_GUIDE_LINK, STAT_MAX, isShadowed } from "../../../lib/shadow";
@@ -757,17 +756,12 @@ function RemovePokemonFromTeam(props: {
 function PokemonDetails(props: { pokemon: OwnedPokemon }) {
   const { pokemon } = props;
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const { data: characters } = useQuery({
     queryKey: ["get-characters", user?.uid],
     queryFn: () => getCharacters(user!.uid),
     enabled: !!user,
   });
-  const assign = useMutation({
-    mutationFn: (characterId: string | null) =>
-      assignPokemonCharacter(pokemon.id, characterId ?? ""),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["get-owned-pokemons", user?.uid] }),
-  });
+  const ownerName = (characters?.sortedData ?? []).find((c) => c.id === pokemon.characterId)?.name;
   const shadowed = isShadowed(pokemon);
   return (
     <Stack>
@@ -825,17 +819,14 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         <Text fz={12}>Purification pts: {pokemon.purification ?? 0} / {STAT_MAX}</Text>
         <Text fz={12}>Shadow pts: {pokemon.shadow ?? 0} / {STAT_MAX}</Text>
       </Stack>
-      <Select
-        label="Owned by"
-        placeholder="Unassigned"
-        size="xs"
-        clearable
-        data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
-        value={pokemon.characterId || null}
-        disabled={assign.isPending}
-        onChange={(value) => assign.mutateAsync(value)}
-        styles={{ input: { background: "#2E2D2E" } }}
-      />
+      <Box>
+        <Text fz={11} c="dimmed" tt="uppercase" fw={700}>
+          Owned by
+        </Text>
+        <Text fz={13} c="white">
+          {ownerName ?? "Unassigned"}
+        </Text>
+      </Box>
       <EvolveButton pokemon={pokemon} />
       <ShadowVaccineButton pokemon={pokemon} />
     </Stack>
