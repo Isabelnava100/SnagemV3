@@ -44,6 +44,7 @@ import {
 import { getThread, resolveListSlugs } from "../queries";
 import { EncounterConfig } from "../types";
 import { EncounterSetupPanel } from "../components/composer/EncounterPanels";
+import SafariJudgePanel from "../components/SafariJudgePanel";
 import { ConfirmModal, ForumPanel, GameResultText, PanelHint } from "../components/ui";
 import CloseThreadModal from "../components/CloseThreadModal";
 import { userIsHost } from "./ThreadView";
@@ -369,14 +370,19 @@ export default function HostMenu() {
           </Group>
         </Stack>
 
-        {/* Right column: encounters + boss battle */}
+        {/* Right column: encounters + boss battle (or Safari judging) */}
         <Stack gap={16} style={{ flex: 7, width: "100%" }}>
-          <EncounterSetupPanel
-            value={encounterConfig}
-            onChange={setEncounterConfig}
-            showDisableSwitch
-          />
+          {thread.safariContest ? (
+            <SafariJudgePanel forum={forum} threadId={threadId!} thread={thread} />
+          ) : (
+            <EncounterSetupPanel
+              value={encounterConfig}
+              onChange={setEncounterConfig}
+              showDisableSwitch
+            />
+          )}
 
+          {!thread.safariContest && (
           <ForumPanel title="Boss Battle">
             {activeBoss ? (
               <Stack gap={10}>
@@ -452,6 +458,7 @@ export default function HostMenu() {
               </Stack>
             )}
           </ForumPanel>
+          )}
 
           {saved && (
             <Text fz={13} c="green.0" role="status" aria-live="polite">

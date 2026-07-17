@@ -20,6 +20,7 @@ import { DEFAULT_ENCOUNTERS_PER_USER } from "../../config";
 import { callRollEncounter, callableMessage } from "../../functionsClient";
 import { getEncounterLists, resolveListSlugs } from "../../queries";
 import { EncounterBlock, EncounterConfig, ForumThread } from "../../types";
+import { safariFightBonus } from "../../../../lib/safari";
 import { ForumPanel, ForumTextLink, GameResultText, PanelHint } from "../ui";
 
 function YesNo(props: {
@@ -198,15 +199,74 @@ export function EncounterSetupPanel(props: {
  * remaining allowance is displayed and enforced. Once rolled/chosen the
  * encounter locks (board 20/21).
  */
+/**
+ * The per-turn Safari controls: shows the wild Pokemon's remaining health and
+ * lets the player pick this turn's action (fight it down, feed it a berry, or
+ * throw a ball). The chosen action rides along to publishForumPost, which rolls
+ * the capture, applies the berry bonus, or wears its health down.
+ */
+function SafariEncounterControls(props: {
+  thread: ForumThread;
+  value: EncounterBlock;
+  action: "fight" | "berry" | "ball";
+  onAction: (action: "fight" | "berry" | "ball") => void;
+}) {
+  const { thread, value, action, onAction } = props;
+  const safari = thread.safariContest!;
+  const postsToDefeat = Math.max(3, value.postsToDefeat ?? 3);
+  const fightPosts = value.fightPosts ?? 0;
+  const healthLeft = Math.max(0, postsToDefeat - fightPosts);
+  const healthPct = Math.round((healthLeft / postsToDefeat) * 100);
+  const fightBonus = safariFightBonus(fightPosts, postsToDefeat);
+  const berryBonus = value.catchBonus ?? 0;
+
+  return (
+    <Stack gap={8}>
+      <GameResultText>
+        A {"★".repeat(value.star ?? 1)} {value.star ?? 1}-star {value.name} appeared!
+      </GameResultText>
+      <Stack gap={2}>
+        <Progress value={healthPct} color="red.6" size="lg" radius="xl" striped animated />
+        <Text fz={12} c="dimmed">
+          Health: {healthLeft}/{postsToDefeat}. Knock it out and it is gone, so catch it first.
+        </Text>
+      </Stack>
+      <Text fz={12} c="dimmed">
+        Catch bonus so far: +{fightBonus + berryBonus}% (weakened +{fightBonus}%, berries +{berryBonus}
+        %). Your ball sets the base rate.
+      </Text>
+      <Radio.Group
+        label="What do you do this post?"
+        value={action}
+        onChange={(v) => onAction((v as "fight" | "berry" | "ball") ?? "fight")}
+        styles={{ label: { color: "white", fontSize: 13, marginBottom: 4 } }}
+      >
+        <Stack gap={4}>
+          <Radio value="fight" color="pink.0" size="xs" label="Fight it (wear its health down)" />
+          <Radio value="berry" color="pink.0" size="xs" label="Feed a berry / food (add it in Items to raise the catch rate)" />
+          <Radio value="ball" color="pink.0" size="xs" label="Throw a ball (add a ball in Items to attempt the catch)" />
+        </Stack>
+      </Radio.Group>
+      <PanelHint>
+        There is a {safari.runAwayChance}% chance it runs off on a fight or feed turn. A ball throw
+        always resolves.
+      </PanelHint>
+    </Stack>
+  );
+}
+
 export function EncounterPostPanel(props: {
   forum: string;
   thread: ForumThread;
   value: EncounterBlock | null;
   onChange: (encounter: EncounterBlock | null) => void;
   lockedEncounters?: EncounterBlock[];
+  safariAction?: "fight" | "berry" | "ball";
+  onSafariAction?: (action: "fight" | "berry" | "ball") => void;
 }) {
   const { user } = useAuth();
   const { forum, thread, value, onChange } = props;
+  const isSafari = !!thread.safariContest;
   const [wantsEncounter, setWantsEncounter] = React.useState(false);
   const [encounterError, setEncounterError] = React.useState("");
   const [forCharacterIds, setForCharacterIds] = React.useState<string[]>([]);
@@ -243,7 +303,10 @@ export function EncounterPostPanel(props: {
     ? allLists?.formattedData.find((l) => l.id === config.nonCatchable?.listId)
     : undefined;
   const nonCatchSlugs = new Set(resolveListSlugs(nonCatchList));
-  const pool = [...new Set([...resolveListSlugs(mainList), ...nonCatchSlugs])];
+  // Safari pools live on the thread's safariContest tiers, not the list library.
+  const pool = isSafari
+    ? [...new Set((thread.safariContest?.tiers ?? []).flatMap((t) => t.pokemons))]
+    : [...new Set([...resolveListSlugs(mainList), ...nonCatchSlugs])];
 
   const claimed = (thread.encounterClaims ?? {})[user?.uid ?? ""] ?? 0;
   // The value being set means one claim was just consumed server-side.
@@ -263,6 +326,13 @@ export function EncounterPostPanel(props: {
         <Text fz={13} c="dimmed">
           The host has turned off new encounters in this thread.
         </Text>
+      ) : value && isSafari && value.star ? (
+        <SafariEncounterControls
+          thread={thread}
+          value={value}
+          action={props.safariAction ?? "fight"}
+          onAction={props.onSafariAction ?? (() => undefined)}
+        />
       ) : value ? (
         <Stack gap={6}>
           <GameResultText>

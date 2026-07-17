@@ -413,6 +413,95 @@ export const rollRandom = onCall(async (request) => {
   return random;
 });
 
+// ---------------------------------------------------------------------------
+// Safari Contest (star-tiered wild hunt). Mirrors src/lib/safari.ts, which the
+// client + admin editor use; keep the two in sync.
+// ---------------------------------------------------------------------------
+const SAFARI_BALL_BASE_RATE: Record<string, number> = {
+  poke: 50, safari: 50, premier: 50, luxury: 50, net: 50, dusk: 50, nest: 50,
+  dive: 50, timer: 50, repeat: 50, fast: 50, heavy: 50, love: 50, friend: 50,
+  moon: 50, lure: 50, sport: 50, park: 50, dream: 50, beast: 50, heal: 50,
+  quick: 50, level: 50, great: 60, ultra: 70, cherish: 90, master: 100,
+};
+const SAFARI_MAX_FIGHT_BONUS = 40;
+const SAFARI_CATCH_CAP = 95;
+
+function safariBallKey(filePath: string, name: string): string {
+  const m = filePath.match(/ball\/([a-z0-9-]+)/i);
+  if (m) return m[1].toLowerCase();
+  return name.toLowerCase().replace(/\s*ball$/, "").trim();
+}
+function isSafariFood(category: string): boolean {
+  const c = String(category ?? "").toLowerCase();
+  return c.includes("berry") || c === "curry-ingredient";
+}
+function isFirstStageDex(idx: number): boolean {
+  return stageForDex(idx) === "stage1";
+}
+function safariBallBaseRate(
+  ballKey: string,
+  ctx: { firstStage?: boolean; failCount?: number; firstEncounter?: boolean }
+): number {
+  let rate = SAFARI_BALL_BASE_RATE[ballKey] ?? 50;
+  if (ballKey === "level" && ctx.firstStage) rate = 70;
+  if (ballKey === "quick" && ctx.firstEncounter) rate = 80;
+  if (ballKey === "heal" && (ctx.failCount ?? 0) > 0) rate = 80;
+  return rate;
+}
+function safariFightBonus(fightPosts: number, postsToDefeat: number): number {
+  const span = Math.max(1, postsToDefeat - 1);
+  return Math.round((Math.min(fightPosts, span) / span) * SAFARI_MAX_FIGHT_BONUS);
+}
+function safariCatchChance(p: {
+  ballKey: string;
+  fightPosts: number;
+  postsToDefeat: number;
+  berryBonus: number;
+  firstStage?: boolean;
+  failCount?: number;
+  firstEncounter?: boolean;
+}): number {
+  const base = safariBallBaseRate(p.ballKey, p);
+  if (base >= 100) return 100;
+  const total =
+    base + safariFightBonus(p.fightPosts, p.postsToDefeat) + (p.berryBonus || 0);
+  return Math.max(0, Math.min(SAFARI_CATCH_CAP, total));
+}
+
+/** Validate + clamp an incoming Safari config (drops unknown/empty pools). */
+function sanitizeSafariConfig(raw: any): Record<string, unknown> {
+  const tiersIn = Array.isArray(raw?.tiers) ? raw.tiers : [];
+  const tiers = tiersIn
+    .slice(0, 5)
+    .map((t: any) => ({
+      star: Math.max(1, Math.min(5, Math.trunc(Number(t?.star)) || 1)),
+      rate: Math.max(0, Math.min(100, Math.trunc(Number(t?.rate)) || 0)),
+      postsToDefeat: Math.max(3, Math.min(51, Math.trunc(Number(t?.postsToDefeat)) || 3)),
+      pokemons: (Array.isArray(t?.pokemons) ? t.pokemons : [])
+        .map((s: any) => String(s))
+        .filter((s: string) => catalogBySlug.has(s))
+        .slice(0, 300),
+    }))
+    .filter((t: any) => t.pokemons.length);
+  if (!tiers.length || !tiers.reduce((s: number, t: any) => s + t.rate, 0)) {
+    throw new HttpsError("invalid-argument", "Set an encounter rate and pool for at least one star tier.");
+  }
+  const prizeIn = Array.isArray(raw?.prizeCoins) ? raw.prizeCoins : [10, 10, 7];
+  return {
+    name: String(raw?.name ?? "Safari Contest").slice(0, 120),
+    blurb: String(raw?.blurb ?? "").slice(0, 2000),
+    tiers,
+    runAwayChance: Math.max(0, Math.min(100, Math.trunc(Number(raw?.runAwayChance)) || 0)),
+    berryBonus: Math.max(0, Math.min(100, Math.trunc(Number(raw?.berryBonus)) || 0)),
+    berryBonusCap: Math.max(0, Math.min(100, Math.trunc(Number(raw?.berryBonusCap)) || 0)),
+    prizeCoins: [0, 1, 2].map((i) => Math.max(0, Math.trunc(Number(prizeIn[i])) || 0)),
+    consolationCoins: Math.max(0, Math.trunc(Number(raw?.consolationCoins)) || 0),
+    catches: {},
+    results: null,
+    finalized: false,
+  };
+}
+
 export const rollEncounter = onCall(async (request) => {
   const uid = requireAuth(request);
   const forum = requireString(request.data?.forum, "forum", 60);
@@ -449,38 +538,71 @@ export const rollEncounter = onCall(async (request) => {
       throw new HttpsError("failed-precondition", "You have no encounters left on this thread.");
     }
 
-    const nonCatchSlugs = new Set(resolveListSlugs(lists, config.nonCatchable?.listId));
-    const pool = [...new Set([...resolveListSlugs(lists, config.listId), ...nonCatchSlugs])];
-    if (!pool.length) throw new HttpsError("failed-precondition", "The encounter list is empty.");
-
-    let slug: string;
-    let mode: "roll" | "choose";
-    if (config.mode === "choose") {
-      if (!chosenSlug || !pool.includes(chosenSlug)) {
-        throw new HttpsError("invalid-argument", "That pokemon is not in the host's list.");
+    // Safari Contest: weighted star roll, then a uniform pick within that
+    // star's pool. Health goes down over fight posts instead of capture posts.
+    const safari = thread.safariContest;
+    let result: Record<string, unknown>;
+    if (safari && Array.isArray(safari.tiers)) {
+      const tiers = (safari.tiers as any[]).filter(
+        (t) => Number(t?.rate) > 0 && Array.isArray(t?.pokemons) && t.pokemons.length
+      );
+      if (!tiers.length) throw new HttpsError("failed-precondition", "This contest has no encounters set up.");
+      const totalRate = tiers.reduce((s, t) => s + Number(t.rate), 0);
+      let r = randomInt(totalRate);
+      let tier = tiers[tiers.length - 1];
+      for (const t of tiers) {
+        if (r < Number(t.rate)) { tier = t; break; }
+        r -= Number(t.rate);
       }
-      slug = chosenSlug;
-      mode = "choose";
+      const pool = (tier.pokemons as string[]).filter((s) => catalogBySlug.has(s));
+      if (!pool.length) throw new HttpsError("failed-precondition", "This contest tier is empty.");
+      const slug = pool[randomInt(pool.length)];
+      result = {
+        slug,
+        name: catalogBySlug.get(slug)?.name ?? slug,
+        mode: "roll",
+        catchable: true,
+        star: Math.max(1, Math.min(5, Number(tier.star) || 1)),
+        postsToDefeat: Math.max(3, Number(tier.postsToDefeat) || 3),
+        fightPosts: 0,
+        catchBonus: 0,
+        failCount: 0,
+        forCharacterIds,
+      };
     } else {
-      slug = pool[randomInt(pool.length)];
-      mode = "roll";
-    }
+      const nonCatchSlugs = new Set(resolveListSlugs(lists, config.nonCatchable?.listId));
+      const pool = [...new Set([...resolveListSlugs(lists, config.listId), ...nonCatchSlugs])];
+      if (!pool.length) throw new HttpsError("failed-precondition", "The encounter list is empty.");
 
-    const stage = stageForDex(Number(catalogBySlug.get(slug)?.idx ?? 0));
-    const required = encounterRequiredFromConfig(battleCfg, stage);
-    const result = {
-      slug,
-      name: catalogBySlug.get(slug)?.name ?? slug,
-      mode,
-      catchable: !nonCatchSlugs.has(slug) && !thread.bossBattle?.active,
-      // Capture progress: it takes `required` qualifying posts before a ball
-      // can catch it. `forCharacterIds` restricts which posts count (empty =
-      // any of the roller's posts).
-      stage,
-      required,
-      progress: 0,
-      forCharacterIds,
-    };
+      let slug: string;
+      let mode: "roll" | "choose";
+      if (config.mode === "choose") {
+        if (!chosenSlug || !pool.includes(chosenSlug)) {
+          throw new HttpsError("invalid-argument", "That pokemon is not in the host's list.");
+        }
+        slug = chosenSlug;
+        mode = "choose";
+      } else {
+        slug = pool[randomInt(pool.length)];
+        mode = "roll";
+      }
+
+      const stage = stageForDex(Number(catalogBySlug.get(slug)?.idx ?? 0));
+      const required = encounterRequiredFromConfig(battleCfg, stage);
+      result = {
+        slug,
+        name: catalogBySlug.get(slug)?.name ?? slug,
+        mode,
+        catchable: !nonCatchSlugs.has(slug) && !thread.bossBattle?.active,
+        // Capture progress: it takes `required` qualifying posts before a ball
+        // can catch it. `forCharacterIds` restricts which posts count (empty =
+        // any of the roller's posts).
+        stage,
+        required,
+        progress: 0,
+        forCharacterIds,
+      };
+    }
     tx.set(pendingRef(forum, threadId, uid), { encounter: result }, { merge: true });
     tx.update(threadRef(forum, threadId), {
       [`encounterClaims.${uid}`]: FieldValue.increment(1),
@@ -610,6 +732,7 @@ export const publishForumPost = onCall(async (request) => {
         );
       }
       const isBall = String(owned.category ?? "").toLowerCase().includes("ball");
+      const isFood = isSafariFood(owned.category as string);
       if (isBall && bossActiveForUser) {
         throw new HttpsError("failed-precondition", "Balls cannot be used in a team battle.");
       }
@@ -619,6 +742,7 @@ export const publishForumPost = onCall(async (request) => {
         filePath: (owned.filePath as string) ?? "",
         qty: req.qty,
         isBall,
+        isFood,
         ...(req.note ? { note: req.note } : {}),
       };
     });
@@ -627,7 +751,79 @@ export const publishForumPost = onCall(async (request) => {
     const encounter = pending.encounter ? { ...pending.encounter } : undefined;
     let encounterCaught = false;
     let encounterForCharacter = "";
-    if (encounter) {
+    // Safari encounters clear (fled / knocked out) without being caught.
+    let safariCleared = false;
+    const safariCfg = thread.safariContest;
+    if (encounter && safariCfg && encounter.star && !editPostId) {
+      // --- Safari Contest turn: fight, feed, or throw a ball ----------------
+      const forIds: string[] = Array.isArray(encounter.forCharacterIds)
+        ? encounter.forCharacterIds
+        : [];
+      encounterForCharacter = forIds[0] ?? "";
+      const postsToDefeat = Math.max(3, Number(encounter.postsToDefeat) || 3);
+      let fightPosts = Number(encounter.fightPosts) || 0;
+      let catchBonus = Number(encounter.catchBonus) || 0;
+      let failCount = Number(encounter.failCount) || 0;
+      const berryBonus = Math.max(0, Number(safariCfg.berryBonus) || 0);
+      const berryCap = Math.max(0, Number(safariCfg.berryBonusCap) || 0);
+      const runAway = Math.max(0, Math.min(100, Number(safariCfg.runAwayChance) || 0));
+
+      const ball = itemsUsed.find((i) => i.isBall);
+      const foodCount = itemsUsed.filter((i) => i.isFood).reduce((n, i) => n + i.qty, 0);
+      // Berries/food fed this post nudge the catch rate (they help this throw).
+      if (foodCount > 0 && berryBonus > 0) {
+        catchBonus = Math.min(berryCap, catchBonus + foodCount * berryBonus);
+      }
+      const claimCount = ((thread.encounterClaims as Record<string, number>) ?? {})[uid] ?? 0;
+
+      let outcome: string;
+      if (ball) {
+        const idx = Number(catalogBySlug.get(encounter.slug)?.idx ?? 0);
+        const chance = safariCatchChance({
+          ballKey: safariBallKey(ball.filePath || "", ball.name || ""),
+          fightPosts,
+          postsToDefeat,
+          berryBonus: catchBonus,
+          firstStage: isFirstStageDex(idx),
+          failCount,
+          firstEncounter: claimCount <= 1,
+        });
+        encounter.catchChance = chance;
+        if (randomInt(100) < chance) {
+          encounter.caught = true;
+          encounterCaught = true;
+          outcome = "caught";
+          (ball as any).caughtPokemon = encounter.name;
+        } else {
+          failCount += 1;
+          outcome = "missed";
+        }
+      } else if (foodCount > 0 && request.data?.safariAction !== "fight") {
+        // Feed turn: bonus already applied; the wild Pokemon may still bolt.
+        outcome = "fed";
+        if (runAway > 0 && randomInt(100) < runAway) {
+          outcome = "fled";
+          safariCleared = true;
+        }
+      } else {
+        // Fight turn: wear its health down; a knockout ends the encounter.
+        fightPosts += 1;
+        if (fightPosts >= postsToDefeat) {
+          outcome = "ko";
+          safariCleared = true;
+        } else {
+          outcome = "weakened";
+        }
+        if (!safariCleared && runAway > 0 && randomInt(100) < runAway) {
+          outcome = "fled";
+          safariCleared = true;
+        }
+      }
+      encounter.fightPosts = fightPosts;
+      encounter.catchBonus = catchBonus;
+      encounter.failCount = failCount;
+      encounter.outcome = outcome;
+    } else if (encounter) {
       // Capture progress: a qualifying post weakens the encounter; a ball only
       // catches once progress has reached the required number of posts.
       const required = Number(encounter.required) || 1;
@@ -649,7 +845,7 @@ export const publishForumPost = onCall(async (request) => {
     const blocks: Record<string, unknown> = {};
     if (encounter) blocks.encounters = [encounter];
     if (itemsUsed.length) {
-      blocks.itemsUsed = itemsUsed.map(({ isBall, ...item }) => item);
+      blocks.itemsUsed = itemsUsed.map(({ isBall, isFood, ...item }) => item);
     }
     if (pending.dice) blocks.dice = [pending.dice];
     if (pending.random) blocks.randoms = [pending.random];
@@ -673,6 +869,7 @@ export const publishForumPost = onCall(async (request) => {
     const newPostRef = editPostId ? undefined : tRef.collection("posts").doc();
 
     if (encounter?.caught) {
+      const caughtPostId = editPostId ?? newPostRef!.id;
       // Any caught Pokemon rolls for shiny at the standard full-odds rate.
       tx.set(
         ownedRef,
@@ -683,13 +880,33 @@ export const publishForumPost = onCall(async (request) => {
             caughtIn: {
               forum,
               threadId,
-              postId: editPostId ?? newPostRef!.id,
+              postId: caughtPostId,
               threadTitle: (thread.title as string) ?? "",
+              ...(encounter.star ? { safari: true, star: Number(encounter.star) } : {}),
             },
           }),
         },
         { merge: true }
       );
+      // Track Safari catches on the thread so the host can judge them at close.
+      if (safariCfg && encounter.star) {
+        tx.set(
+          tRef,
+          {
+            safariContest: {
+              catches: {
+                [uid]: FieldValue.arrayUnion({
+                  slug: encounter.slug,
+                  name: encounter.name,
+                  star: Number(encounter.star) || 1,
+                  postId: caughtPostId,
+                }),
+              },
+            },
+          },
+          { merge: true }
+        );
+      }
     }
 
     if (xpPokemonIds.length) {
@@ -788,7 +1005,7 @@ export const publishForumPost = onCall(async (request) => {
     // Consume the per-post rolls. A catchable, uncaught encounter survives (with
     // its new progress) so it can be weakened over several posts and caught
     // later; non-catchable encounters are consumed as before.
-    if (!editPostId && encounter && encounter.catchable && !encounterCaught) {
+    if (!editPostId && encounter && encounter.catchable && !encounterCaught && !safariCleared) {
       tx.set(pRef, { encounter });
     } else if (pendingSnap.exists) {
       tx.delete(pRef);
@@ -954,6 +1171,204 @@ export const publishForumThread = onCall(async (request) => {
   if (forum === "Events") await markSnagTask(uid, "activity");
 
   return { threadId };
+});
+
+// ---------------------------------------------------------------------------
+// Safari Contest lifecycle: launch, judge, award
+// ---------------------------------------------------------------------------
+
+/**
+ * Launch a Safari Contest as an Event thread. Builds the thread + first post
+ * server-side (like publishForumThread) and bakes the star-tiered config onto
+ * it, plus a matching encounterConfig so the roll button appears. HostEvents.
+ */
+export const startSafariContest = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const title = requireString(request.data?.title, "title", 200);
+  const html = requireString(request.data?.html, "post body", 100_000);
+  const characters = sanitizeCharacters(request.data?.characters);
+  const attachSignature = request.data?.attachSignature !== false;
+  const member = await loadMember(uid);
+  if (!hasCap(member, "HostEvents")) {
+    throw new HttpsError("permission-denied", "You do not have permission to host events.");
+  }
+  const safari = sanitizeSafariConfig(request.data?.config);
+  const perUserLimit = Math.min(
+    50,
+    Math.max(1, Math.trunc(Number(request.data?.config?.encountersPerPlayer)) || 20)
+  );
+
+  const forum = "Events";
+  const defaultsSnap = await db.doc("admin/xp_defaults").get();
+  const xpConfig = normalizeXpConfig(defaultsSnap.data());
+  const threadsCol = db.collection(`forum/${forum}/threads`);
+  const countSnap = await threadsCol.count().get();
+  const threadId = String(countSnap.data().count + 1);
+  const now = new Date();
+  const encounterConfig = {
+    enabled: true,
+    disabled: false,
+    listId: "__safari__",
+    listName: String(safari.name),
+    mode: "roll",
+    perUserLimit,
+    nonCatchable: null,
+  };
+
+  const batch = db.batch();
+  const tRef = threadsCol.doc(threadId);
+  batch.create(tRef, {
+    title,
+    createdBy: member.username,
+    hostUid: uid,
+    createdByAdmin: isAdmin(member),
+    staffCreated: true,
+    xpAward: "onClose",
+    closed: false,
+    private: false,
+    pinned: false,
+    tags: ["safari", "event"],
+    instructions: String(safari.blurb ?? ""),
+    restricted: false,
+    allowedPosters: [],
+    createdAt: now,
+    timePosted: now,
+    replyCount: 0,
+    lastPost: { by: member.username, avatar: member.avatar, at: now },
+    participants: { [uid]: { name: member.username, avatar: member.avatar } },
+    poll: null,
+    encounterConfig,
+    encounterClaims: {},
+    bossBattle: null,
+    safariContest: safari,
+    xpConfig,
+  });
+  batch.create(tRef.collection("posts").doc(), {
+    ...authorFields(member),
+    character: characters.map((c) => c.name).join(", "),
+    characters,
+    text: html,
+    signature: attachSignature ? member.signature : "",
+    timePosted: now,
+    type: "user",
+    blocks: {},
+  });
+  await batch.commit();
+
+  await markSnagTask(uid, "post");
+  await markSnagTask(uid, "activity");
+
+  return { threadId };
+});
+
+/**
+ * Judge a Safari Contest: for each participant's kept (last) catch, roll a
+ * quality 1-5 and score it by star x quality. Stores a ranked draft the host
+ * reviews before finalizing. Host or admin only.
+ */
+export const judgeSafariContest = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const forum = requireString(request.data?.forum, "forum", 60);
+  const threadId = requireString(request.data?.threadId, "threadId", 20);
+  const member = await loadMember(uid);
+
+  const results = await db.runTransaction(async (tx) => {
+    const tRef = threadRef(forum, threadId);
+    const snap = await tx.get(tRef);
+    if (!snap.exists) throw new HttpsError("not-found", "Thread not found.");
+    const thread = snap.data()!;
+    if (!(isAdmin(member) || isHost(thread, member))) {
+      throw new HttpsError("permission-denied", "Only the host can judge this contest.");
+    }
+    const safari = thread.safariContest;
+    if (!safari) throw new HttpsError("failed-precondition", "This thread is not a Safari Contest.");
+    const catches = (safari.catches as Record<string, any[]>) ?? {};
+    const participants = (thread.participants as Record<string, { name: string }>) ?? {};
+    const prize: number[] = Array.isArray(safari.prizeCoins) ? safari.prizeCoins : [10, 10, 7];
+    const consolation = Number(safari.consolationCoins) || 0;
+
+    const entries = Object.entries(catches)
+      .map(([pid, list]) => {
+        const arr = Array.isArray(list) ? list : [];
+        const kept = arr[arr.length - 1];
+        if (!kept) return null;
+        const star = Number(kept.star) || 1;
+        const quality = randomInt(1, 6); // 1..5
+        return {
+          uid: pid,
+          name: participants[pid]?.name ?? pid,
+          slug: String(kept.slug),
+          pokemonName: String(kept.name),
+          star,
+          quality,
+          score: star * quality,
+        };
+      })
+      .filter(Boolean) as any[];
+    entries.sort((a, b) => b.score - a.score || b.star - a.star);
+    const ranked = entries.map((e, i) => ({
+      ...e,
+      coins: i < 3 ? Number(prize[i]) || 0 : consolation,
+    }));
+    tx.set(tRef, { safariContest: { results: ranked } }, { merge: true });
+    return ranked;
+  });
+
+  return { results };
+});
+
+/**
+ * Pay out the reviewed Safari Contest prizes. Coin amounts can be overridden by
+ * the reviewer (admin has final say). Marks the contest finalized so prizes are
+ * never paid twice. GiveItems / admin only.
+ */
+export const finalizeSafariContest = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const forum = requireString(request.data?.forum, "forum", 60);
+  const threadId = requireString(request.data?.threadId, "threadId", 20);
+  const member = await loadMember(uid);
+  if (!hasCap(member, "GiveItems")) {
+    throw new HttpsError("permission-denied", "You do not have permission to award prizes.");
+  }
+  const overrides = Array.isArray(request.data?.results) ? request.data.results : [];
+  const coinByUid = new Map<string, number>();
+  overrides.forEach((r: any) => {
+    if (r?.uid) coinByUid.set(String(r.uid), Math.max(0, Math.trunc(Number(r.coins)) || 0));
+  });
+
+  const paid = await db.runTransaction(async (tx) => {
+    const tRef = threadRef(forum, threadId);
+    const snap = await tx.get(tRef);
+    if (!snap.exists) throw new HttpsError("not-found", "Thread not found.");
+    const thread = snap.data()!;
+    const safari = thread.safariContest;
+    if (!safari) throw new HttpsError("failed-precondition", "This thread is not a Safari Contest.");
+    if (safari.finalized) throw new HttpsError("failed-precondition", "Prizes were already awarded.");
+    const results: any[] = Array.isArray(safari.results) ? safari.results : [];
+    if (!results.length) throw new HttpsError("failed-precondition", "Judge the contest before awarding.");
+
+    const targets = results
+      .map((r) => ({
+        uid: String(r.uid),
+        coins: coinByUid.has(String(r.uid)) ? coinByUid.get(String(r.uid))! : Number(r.coins) || 0,
+      }))
+      .filter((t) => t.uid && t.coins > 0);
+    const curSnaps = await Promise.all(
+      targets.map((t) => tx.get(db.doc(`users/${t.uid}/bag/currency`)))
+    );
+    targets.forEach((t, i) => {
+      const cur = curSnaps[i].data() ?? {};
+      tx.set(
+        db.doc(`users/${t.uid}/bag/currency`),
+        { pokecoin: addCurrency(cur.pokecoin, t.coins) },
+        { merge: true }
+      );
+    });
+    tx.set(tRef, { safariContest: { finalized: true } }, { merge: true });
+    return targets.length;
+  });
+
+  return { ok: true, paid };
 });
 
 // ---------------------------------------------------------------------------

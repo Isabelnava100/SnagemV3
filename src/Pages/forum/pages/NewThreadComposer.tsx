@@ -29,7 +29,8 @@ import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getUsers } from "../../../queries/admin";
 import { XPDefaults, XP_STAT_FIELDS, getXPDefaults } from "../../../queries/game";
 import { creatableCategories } from "../config";
-import { callableMessage } from "../functionsClient";
+import { callStartSafariContest, callableMessage } from "../functionsClient";
+import { getSafariConfig } from "../../../queries/safari";
 import {
   DRAFT_WARNING_AT,
   MAX_DRAFTS,
@@ -51,9 +52,20 @@ export default function NewThreadComposer() {
   const { user } = useAuth();
   const { isOverSm } = useMediaQuery();
 
+  const [searchParams] = useSearchParams();
+  // Safari Contest launch: arrives from Admin -> Safari Contest with ?safari=1.
+  // The thread is created through startSafariContest (Event forum, star pools
+  // baked on) instead of the normal publish path.
+  const safariMode = searchParams.get("safari") === "1";
+  const { data: safariConfig } = useQuery({
+    queryKey: ["safari-config"],
+    queryFn: getSafariConfig,
+    enabled: safariMode,
+  });
+
   const categories = creatableCategories(user);
   const [categoryLink, setCategoryLink] = React.useState<string | null>(
-    categories.some((c) => c.link === forum) ? (forum as string) : null
+    safariMode ? "Events" : categories.some((c) => c.link === forum) ? (forum as string) : null
   );
   const [title, setTitle] = React.useState("");
   const [pinned, setPinned] = React.useState(false);
@@ -89,7 +101,6 @@ export default function NewThreadComposer() {
   });
 
   // Continue a saved draft from Dashboard → Drafts (?draft=<id>).
-  const [searchParams] = useSearchParams();
   const draftId = searchParams.get("draft");
   const [draftLoaded, setDraftLoaded] = React.useState(false);
   const { data: draft } = useQuery({
@@ -151,6 +162,17 @@ export default function NewThreadComposer() {
 
   const publishMutation = useMutation({
     mutationFn: async () => {
+      if (safariMode) {
+        if (!safariConfig) throw new Error("The Safari Contest settings are still loading.");
+        const { threadId } = await callStartSafariContest({
+          title: title.trim(),
+          html,
+          characters,
+          config: safariConfig,
+          attachSignature,
+        });
+        return threadId;
+      }
       const threadId = await publishThread({
         forum: categoryLink!,
         title: title.trim(),
@@ -221,7 +243,7 @@ export default function NewThreadComposer() {
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
       <Title order={1} fz={isOverSm ? 30 : 20} c="white" fw={400} mb={16}>
-        Make a New Thread
+        {safariMode ? "Launch a Safari Contest" : "Make a New Thread"}
       </Title>
 
       <Grid>
@@ -264,6 +286,8 @@ export default function NewThreadComposer() {
                     data={categories.map((c) => ({ value: c.link, label: c.label }))}
                     value={categoryLink}
                     onChange={setCategoryLink}
+                    disabled={safariMode}
+                    description={safariMode ? "Safari Contests are always Events." : undefined}
                     styles={{ input: { background: "#2E2D2E" } }}
                   />
                 </Box>
@@ -416,7 +440,37 @@ export default function NewThreadComposer() {
 
         <Grid.Col span={{ base: 12, sm: 7 }}>
           <Stack gap={16}>
-            <EncounterSetupPanel value={encounterConfig} onChange={setEncounterConfig} />
+            {safariMode ? (
+              <ForumPanel title="Safari Contest">
+                {safariConfig ? (
+                  <Stack gap={8}>
+                    <Text fz={15} fw={700} c="white">
+                      {safariConfig.name}
+                    </Text>
+                    <PanelHint>
+                      Launching creates this Event thread with the confirmed star pools attached.
+                      Players roll a wild Pokemon, then fight, feed a berry or throw a ball. Post the
+                      opening scene below as your own character and team, like any thread.
+                    </PanelHint>
+                    <Stack gap={2}>
+                      {safariConfig.tiers.map((t) => (
+                        <Text key={t.star} fz={12} c="dimmed">
+                          {"★".repeat(t.star)} {t.star} Star: rate {t.rate}, {t.pokemons.length} pokemon,{" "}
+                          {t.postsToDefeat} posts to defeat
+                        </Text>
+                      ))}
+                    </Stack>
+                    <PanelHint>
+                      Change any of this in Admin, Manage, Safari Contest before you launch.
+                    </PanelHint>
+                  </Stack>
+                ) : (
+                  <PanelHint>Loading the Safari Contest settings...</PanelHint>
+                )}
+              </ForumPanel>
+            ) : (
+              <EncounterSetupPanel value={encounterConfig} onChange={setEncounterConfig} />
+            )}
 
             <ForumPanel title="Write Your Post">
               <Editor editor={editor} />

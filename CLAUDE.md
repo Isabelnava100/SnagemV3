@@ -64,6 +64,17 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 
 ## Known deferred work
 
+- Safari Contest (July 2026, /Forum Events + Admin > Manage > Safari Contest)
+  needs a functions + rules deploy before it works live: new callables
+  `startSafariContest`, `judgeSafariContest`, `finalizeSafariContest`, plus the
+  star-weighted branch in `rollEncounter` and the Safari turn resolution in
+  `publishForumPost` (fight/feed/ball, run-away, percentage capture), and the
+  `admin/safari_config` rules block. Config template + Johto Meadow Zone default
+  live in `src/lib/safari.ts`; seed with `node scripts/seed-safari-contest.mjs`
+  from `functions/` (`--check` validates slugs offline). Full flow + data model:
+  `docs/SAFARI.md`. Catch math is duplicated in `functions/src/index.ts` and
+  `src/lib/safari.ts`; keep them in sync.
+
 - Snag List (July 2026, /Activities) needs a functions + rules deploy: new callable `claimSnagBox`, `markSnagTask` hooks in the gameplay callables, and the `bag/snaglist` owner-write exclusion in rules. State: `users/{uid}/bag/snaglist` (server-written only). Weekly reset is Monday 00:00 UTC; streak counts consecutive completed weeks.
 
 - Forum-first flows (July 2026) need a functions + rules deploy before they work live: new callables `ensureTrainingThread`, `pickUpMission`, `requestChallenge`, `resolveChallengeRequest`, `requestMasterClearance`, `resolveMasterClearance`, updated `buyLottoTicket`/`logTrainingPost`/`onThreadClosed`, plus the `challengeRequests` and `masterClearanceRequests` rules blocks. After deploying, run `node scripts/seed-mission-encounters.mjs` from `functions/` (gcloud ADC; `--check` validates slugs offline) to seed per-mission encounter lists. Mission-default lists carry `missionDefault: true` and stay hidden from Field Registers and the host encounter picker.

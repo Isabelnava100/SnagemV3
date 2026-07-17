@@ -38,6 +38,22 @@ export interface EncounterBlock {
   progress?: number;
   /** Characters the encounter is being caught for (empty = any of the roller's). */
   forCharacterIds?: string[];
+
+  // --- Safari Contest encounters (star-tiered wild hunt) -------------------
+  /** Star rarity 1-5 when rolled inside a Safari Contest. */
+  star?: number;
+  /** Fight posts needed to knock this wild Pokemon out (catch it before then). */
+  postsToDefeat?: number;
+  /** Fight posts landed so far (its health going down). */
+  fightPosts?: number;
+  /** Accumulated catch-rate bonus (percent) from berries/food fed. */
+  catchBonus?: number;
+  /** Failed ball throws so far (some balls key off this). */
+  failCount?: number;
+  /** What happened on the post this block is attached to. */
+  outcome?: "weakened" | "fed" | "fled" | "ko" | "caught" | "missed";
+  /** The catch chance shown when a ball was thrown (for the post log). */
+  catchChance?: number;
 }
 
 export interface ItemUsedBlock {
@@ -134,6 +150,56 @@ export interface ThreadParticipant {
   avatar?: string;
 }
 
+/** One tier of a Safari Contest: a star rarity, its odds, and its pool. */
+export interface SafariTier {
+  star: number;
+  rate: number;
+  postsToDefeat: number;
+  pokemons: string[];
+}
+
+/** A caught Safari Pokemon, tracked on the thread for judging. */
+export interface SafariCatch {
+  slug: string;
+  name: string;
+  star: number;
+  postId: string;
+}
+
+/** One judged entry in the contest results table. */
+export interface SafariResult {
+  uid: string;
+  name: string;
+  /** The kept Pokemon judged for this player. */
+  slug: string;
+  pokemonName: string;
+  star: number;
+  /** Rolled quality 1-5. */
+  quality: number;
+  /** star x quality. */
+  score: number;
+  /** Snag Coins to award (admin-editable before finalizing). */
+  coins: number;
+}
+
+/** Safari Contest config + live state, baked onto the Event thread at launch. */
+export interface SafariContest {
+  name: string;
+  blurb?: string;
+  tiers: SafariTier[];
+  runAwayChance: number;
+  berryBonus: number;
+  berryBonusCap: number;
+  prizeCoins: number[];
+  consolationCoins: number;
+  /** uid -> the Pokemon that player has caught in this contest. */
+  catches?: Record<string, SafariCatch[]>;
+  /** Draft judging results, ranked; the admin reviews before finalizing. */
+  results?: SafariResult[] | null;
+  /** True once prizes have been paid out (guards double payment). */
+  finalized?: boolean;
+}
+
 export interface ForumThread {
   id: string;
   title: string;
@@ -182,6 +248,8 @@ export interface ForumThread {
   /** uid -> encounters already claimed in this thread. */
   encounterClaims?: Record<string, number>;
   bossBattle?: BossBattle | null;
+  /** Set on Event threads launched as a Safari Contest (star-tiered hunt). */
+  safariContest?: SafariContest | null;
   /** Discord UIDs subscribed via bookmarks (legacy). */
   notifyviaDiscord?: string[];
   private?: boolean;

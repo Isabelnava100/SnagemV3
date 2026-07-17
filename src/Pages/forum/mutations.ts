@@ -54,6 +54,8 @@ export interface PublishPostInput {
   attachSignature?: boolean;
   /** Opt-in: this post attacks the active boss. */
   attackBoss?: boolean;
+  /** Safari Contest turn: fight the wild Pokemon, feed it, or throw a ball. */
+  safariAction?: "fight" | "berry" | "ball";
 }
 
 /**

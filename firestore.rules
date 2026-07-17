@@ -136,6 +136,14 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Safari Contest template (admin/safari_config): star pools + rates that an
+    // event host confirms and launches. Event hosts and list managers may edit
+    // it (the specific match widens the generic admin rule below via OR).
+    match /admin/safari_config {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasCap('HostEvents') || hasCap('ManageLists');
+    }
+
     // ---- Admin-managed shared data ----------------------------------------
     // Includes the badge catalog (admin/badges); ManageBadges may edit it.
     match /admin/{doc} {

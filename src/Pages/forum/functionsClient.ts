@@ -46,6 +46,8 @@ export const callPublishPost = (input: {
   attachSignature?: boolean;
   /** Opt-in: this post attacks the active boss. */
   attackBoss?: boolean;
+  /** Safari Contest turn: fight the wild Pokemon, feed it, or throw a ball. */
+  safariAction?: "fight" | "berry" | "ball";
 }) => call<{ postId: string }>("publishForumPost", input);
 
 export const callPublishThread = (input: {
@@ -119,3 +121,27 @@ export const callSetBossBattle = (input: {
   /** Battle stage of the boss; server reads the post count from config. */
   stage?: string;
 }) => call<{ ok: boolean }>("setBossBattle", input);
+
+/**
+ * Launch a Safari Contest: builds the Event thread + first post server-side and
+ * bakes the star-tiered config onto it (mirrors publishForumThread + the extra
+ * safari settings). Requires the HostEvents capability.
+ */
+export const callStartSafariContest = (input: {
+  title: string;
+  html: string;
+  characters: PostCharacter[];
+  config: unknown;
+  attachSignature?: boolean;
+}) => call<{ threadId: string }>("startSafariContest", input);
+
+/** Roll quality x rarity for every participant's kept catch (host/admin). */
+export const callJudgeSafariContest = (forum: string, threadId: string) =>
+  call<{ results: unknown[] }>("judgeSafariContest", { forum, threadId });
+
+/** Pay out the reviewed Safari Contest prizes (admin / GiveItems). */
+export const callFinalizeSafariContest = (input: {
+  forum: string;
+  threadId: string;
+  results: Array<{ uid: string; coins: number }>;
+}) => call<{ ok: boolean; paid: number }>("finalizeSafariContest", input);

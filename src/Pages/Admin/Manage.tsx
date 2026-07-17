@@ -6,6 +6,7 @@ import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import { hasCapability, isAdmin } from "../../lib/permissions";
 import AdjustLists from "../User/Dashboard/Admin/AdjustLists";
+import SafariContest from "../User/Dashboard/Admin/SafariContest";
 import Announcements from "../User/Dashboard/Admin/Announcements";
 import Badges from "../User/Dashboard/Admin/Badges";
 import Donate from "../User/Dashboard/Admin/Donate";
@@ -23,6 +24,7 @@ type ToolKey =
   | "grant"
   | "battle"
   | "lists"
+  | "safari"
   | "announcements"
   | "boxes"
   | "badges"
@@ -91,6 +93,13 @@ const GROUPS: ToolGroup[] = [
         desc: "Groups with only-these / all-except rules.",
         cap: Capability.ManageLists,
         render: () => <AdjustLists />,
+      },
+      {
+        key: "safari",
+        label: "Safari Contest",
+        desc: "Star-tiered wild hunt: set pools and rates, then launch.",
+        cap: Capability.HostEvents,
+        render: () => <SafariContest />,
       },
       {
         key: "announcements",

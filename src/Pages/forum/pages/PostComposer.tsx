@@ -63,6 +63,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const [draftMessage, setDraftMessage] = React.useState("");
   const [attachSignature, setAttachSignature] = React.useState(true);
   const [attackBoss, setAttackBoss] = React.useState(false);
+  const [safariAction, setSafariAction] = React.useState<"fight" | "berry" | "ball">("fight");
   const [loadedEdit, setLoadedEdit] = React.useState(false);
 
   const editor = useRichTextEditor({
@@ -239,6 +240,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
           })),
         attachSignature,
         ...(mode === "new" && attackBoss ? { attackBoss: true } : {}),
+        ...(mode === "new" && thread?.safariContest && encounter ? { safariAction } : {}),
         ...(mode === "edit" ? { editPostId: postId } : {}),
       });
     },
@@ -458,6 +460,8 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
               value={encounter}
               onChange={setEncounter}
               lockedEncounters={mode === "edit" ? editingPost?.blocks?.encounters ?? [] : []}
+              safariAction={safariAction}
+              onSafariAction={setSafariAction}
             />
 
             <ForumPanel title="Write Your Post">
