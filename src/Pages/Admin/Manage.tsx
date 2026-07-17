@@ -168,10 +168,6 @@ const GROUPS: ToolGroup[] = [
 
 const ALL_TOOLS: Tool[] = GROUPS.flatMap((g) => g.tools);
 
-function capPill(cap: Capability | null): string {
-  return cap === null ? "admin" : `cap ${cap}`;
-}
-
 function ToolCard(props: { tool: Tool; onOpen: () => void }) {
   return (
     <Group
@@ -182,22 +178,10 @@ function ToolCard(props: { tool: Tool; onOpen: () => void }) {
       style={{ borderRadius: 12, background: "#141318", border: "1px solid #232028" }}
     >
       <Box style={{ minWidth: 0 }}>
-        <Group gap={8} wrap="nowrap" mb={2}>
-          <Text fw={700} c="white" lineClamp={1}>
-            {props.tool.label}
-          </Text>
-          <Text
-            fz={11}
-            fw={600}
-            c="grape.3"
-            px={8}
-            py={2}
-            style={{ borderRadius: 6, background: "rgba(160,120,220,0.14)", whiteSpace: "nowrap" }}
-          >
-            {capPill(props.tool.cap)}
-          </Text>
-        </Group>
-        <Text fz={13} c="dimmed" lineClamp={1}>
+        <Text fw={700} c="white" mb={2}>
+          {props.tool.label}
+        </Text>
+        <Text fz={13} c="dimmed">
           {props.tool.desc}
         </Text>
       </Box>
@@ -271,22 +255,6 @@ export default function Manage() {
         </Text>
       </Box>
 
-      <Group gap={10} wrap="wrap">
-        {visibleGroups.map((g) => (
-          <Text
-            key={g.title}
-            fz={13}
-            fw={600}
-            c="dimmed"
-            px={14}
-            py={6}
-            style={{ borderRadius: 999, background: "#1c1a26", border: "1px solid #2a2637" }}
-          >
-            {g.title}
-          </Text>
-        ))}
-      </Group>
-
       {visibleGroups.map((g) => (
         <Box
           key={g.title}
@@ -312,7 +280,7 @@ export default function Manage() {
 
       <Text fz={13} c="dimmed">
         Every tool from the old admin tabs lives under one of these groups. Directors only see the
-        groups they have a capability for: the cap pill shows which.
+        groups they have a capability for.
       </Text>
     </Stack>
   );
