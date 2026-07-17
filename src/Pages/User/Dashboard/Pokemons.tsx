@@ -47,6 +47,7 @@ import { Edit2, FileSearch } from "../../../icons";
 import { getCharacters, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
 import { assignPokemonCharacter } from "../../../queries/evolution";
 import { EvolveButton, LevelBar } from "../../../components/pokemon/EvolveButton";
+import ShadowVaccineButton from "../../../components/pokemon/ShadowVaccineButton";
 import formatter from "../../../utils/date";
 
 type TeamForm = UseFormReturnType<Team | null>;
@@ -819,6 +820,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         styles={{ input: { background: "#2E2D2E" } }}
       />
       <EvolveButton pokemon={pokemon} />
+      <ShadowVaccineButton pokemon={pokemon} />
     </Stack>
   );
 }

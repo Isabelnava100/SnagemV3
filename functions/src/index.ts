@@ -243,16 +243,27 @@ function sanitizeCharacters(input: unknown): any[] {
   }));
 }
 
-/** Fire-and-forget in-app notifications (users/{uid}/notifications). */
+/**
+ * Fire-and-forget in-app notifications (users/{uid}/notifications). Recipients
+ * who turned off site notifications (users/{uid}.settings.siteNotifications ===
+ * false) are skipped; the default (unset) is on.
+ */
 async function notifyUsers(
   uids: string[],
   notification: { type: string; text: string; link: string }
 ): Promise<void> {
-  const unique = [...new Set(uids)].filter(Boolean);
+  const unique = [...new Set(uids)].filter(Boolean).slice(0, 400);
   if (!unique.length) return;
+  const settingSnaps = await Promise.all(
+    unique.map((uid) => db.doc(`users/${uid}`).get().catch(() => null))
+  );
+  const allowed = unique.filter(
+    (_, i) => (settingSnaps[i]?.data()?.settings?.siteNotifications ?? true) !== false
+  );
+  if (!allowed.length) return;
   const batch = db.batch();
   const now = new Date();
-  unique.slice(0, 400).forEach((uid) => {
+  allowed.forEach((uid) => {
     batch.create(db.collection(`users/${uid}/notifications`).doc(), {
       ...notification,
       read: false,
@@ -644,7 +655,17 @@ export const publishForumPost = onCall(async (request) => {
   const itemRequests = readItemRequests(request.data?.items);
   // Gaia-style signature: attached by default, snapshotted at publish time.
   const attachSignature = request.data?.attachSignature !== false;
+  // Optional: evolve one of this post's team pokemon on publish (the composer
+  // asks the poster to confirm first). Validated + applied server-side.
+  const evolveReq =
+    request.data?.evolve && typeof request.data.evolve === "object"
+      ? {
+          pokemonId: String((request.data.evolve as any).pokemonId ?? "").slice(0, 80),
+          toIdx: Math.trunc(Number((request.data.evolve as any).toIdx)) || 0,
+        }
+      : null;
   const member = await loadMember(uid);
+  const curve = evolveReq && evolveReq.pokemonId && evolveReq.toIdx ? await loadLevelingCurve() : [];
 
   const tRef = threadRef(forum, threadId);
   const pRef = pendingRef(forum, threadId, uid);
@@ -653,10 +674,10 @@ export const publishForumPost = onCall(async (request) => {
   const teamsRef = db.doc(`users/${uid}/bag/teams`);
 
   let threadForNotify: FirebaseFirestore.DocumentData | undefined;
-  // Whether this post caught a pokemon (set inside the transaction, read after
-  // commit for the weekly Snag List checklist).
-  let snagCaught = false;
-  const postId = await db.runTransaction(async (tx) => {
+  const txResult = await db.runTransaction(async (tx) => {
+    // Thread events caused by this post, returned for post-commit notifications.
+    let evolvedInfo: EvolveApplied | null = null;
+    const shadowedNames: string[] = [];
     // -- reads (all before any write) --------------------------------------
     const [threadSnap, pendingSnap] = await Promise.all([tx.get(tRef), tx.get(pRef)]);
     const thread = assertOpenThread(threadSnap);
@@ -680,14 +701,14 @@ export const publishForumPost = onCall(async (request) => {
     threadForNotify = thread;
 
     let bag: Record<string, any> = {};
-    if (itemRequests.length) {
+    if (itemRequests.length || evolveReq) {
       const bagSnap = await tx.get(bagRef);
       bag = (bagSnap.data() as Record<string, any>) ?? {};
     }
 
-    // XP: pokemon on the teams brought into this post earn the thread's
-    // per-post stats (experience/friendship/purification/shadow), if the post
-    // meets the minimum length (Q5).
+    // XP: pokemon on the teams brought into this post earn the thread's per-post
+    // stats (experience/friendship/purification), if the post meets the minimum
+    // length. Shadow corruption + evolution use the same team read.
     const xpConfig = normalizeXpConfig(thread.xpConfig);
     const strippedLength = html.replace(/<[^>]*>/g, "").trim().length;
     const teamIds = characters.map((c: any) => c.teamId).filter(Boolean) as string[];
@@ -696,23 +717,22 @@ export const publishForumPost = onCall(async (request) => {
     // as people post. The same amounts are also tallied on the thread (pendingXp)
     // purely as a running log, so the close review can show a summary. Items and
     // coins stay manual: an admin assigns those at close (finalizeThreadRewards).
-    let xpPokemonIds: string[] = [];
+    // The team read is also used by shadow corruption + evolution, so it runs
+    // whenever a team is brought (not only when XP is configured).
+    const xpQualifies = anyStat && strippedLength >= (xpConfig.minPostLength ?? 0);
+    let teamPokemonIds: string[] = [];
     let ownedForXp: Record<string, any> = {};
-    if (
-      !editPostId &&
-      teamIds.length &&
-      anyStat &&
-      strippedLength >= (xpConfig.minPostLength ?? 0)
-    ) {
+    if (!editPostId && teamIds.length) {
       const teamsSnap = await tx.get(teamsRef);
       const teams = (teamsSnap.data() as Record<string, { pokemon_ids?: string[] }>) ?? {};
-      xpPokemonIds = [
+      teamPokemonIds = [
         ...new Set(teamIds.flatMap((teamId) => teams[teamId]?.pokemon_ids ?? [])),
       ];
-      // Pokemon display names for the close-time XP summary.
-      if (xpPokemonIds.length) {
+      if (teamPokemonIds.length || evolveReq) {
         ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
       }
+    } else if (evolveReq && !editPostId) {
+      ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
     }
 
     // -- compute ------------------------------------------------------------
@@ -906,34 +926,89 @@ export const publishForumPost = onCall(async (request) => {
       }
     }
 
-    if (xpPokemonIds.length) {
-      // Apply the experience/stats to each team pokemon right away...
-      const xpUpdates: Record<string, Record<string, ReturnType<typeof FieldValue.increment>>> = {};
-      // ...and tally the same amounts on the thread as a running log (with the
-      // pokemon's name/sprite) so the close review can show a summary. This log
-      // is display-only; it is never re-applied at close.
+    // The per-post XP amounts, stamped on the post for its footer caption.
+    const postXpEarned = xpQualifies
+      ? {
+          experience: xpConfig.experiencePerPost ?? 0,
+          friendship: xpConfig.friendshipPerPost ?? 0,
+          purification: xpConfig.purificationPerPost ?? 0,
+        }
+      : null;
+
+    if (teamPokemonIds.length) {
+      // Per-pokemon owned-doc updates (XP increments + computed shadow/purif)...
+      const pokeUpdates: Record<string, Record<string, unknown>> = {};
+      // ...and the awarded XP tallied on the thread as a display-only running log.
       const xpLog: Record<string, Record<string, unknown>> = {};
-      xpPokemonIds.forEach((pokeId) => {
+      teamPokemonIds.forEach((pokeId) => {
         const poke = ownedForXp[pokeId] ?? {};
-        const inc: Record<string, ReturnType<typeof FieldValue.increment>> = {};
+        const update: Record<string, unknown> = {};
         const logEntry: Record<string, unknown> = {
           name: poke.species ?? poke.name ?? pokeId,
           slug: poke.image_slug ?? "",
         };
-        XP_STATS.forEach((stat) => {
-          const amount = xpConfig[stat.cfg] ?? 0;
-          if (amount > 0) {
-            inc[stat.field] = FieldValue.increment(amount);
-            logEntry[stat.field] = FieldValue.increment(amount);
-          }
-        });
-        if (Object.keys(inc).length) {
-          xpUpdates[pokeId] = inc;
-          xpLog[pokeId] = logEntry;
+        let logged = false;
+
+        const curPurif = Number(poke.purification ?? 0);
+        let newPurif = curPurif;
+        if (xpQualifies) {
+          // experience + friendship accumulate safely via increment; purification
+          // is computed (it also feeds the auto-purify below).
+          XP_STATS.forEach((stat) => {
+            const amount = xpConfig[stat.cfg] ?? 0;
+            if (amount <= 0) return;
+            if (stat.field === "experience" || stat.field === "friendship") {
+              update[stat.field] = FieldValue.increment(amount);
+              logEntry[stat.field] = FieldValue.increment(amount);
+              logged = true;
+            } else if (stat.field === "purification") {
+              newPurif = Math.round((newPurif + amount) * 100) / 100;
+              logEntry[stat.field] = FieldValue.increment(amount);
+              logged = true;
+            }
+            // shadowPerPost is intentionally ignored: shadow comes from the roll.
+          });
         }
+
+        // Shadow corruption: each team pokemon independently rolls 25% for a
+        // +0.01 shadow tick, capped at 1.0 (fully shadowed).
+        const curShadow = Number(poke.shadow ?? 0);
+        let newShadow = curShadow;
+        if (randomInt(4) === 0) {
+          newShadow = Math.min(1, Math.round((curShadow + 0.01) * 100) / 100);
+        }
+        // Auto-purify: once purification reaches the shadow amount, cleanse it
+        // and bank the leftover purification.
+        if (newShadow > 0 && newPurif >= newShadow) {
+          newPurif = Math.round((newPurif - newShadow) * 100) / 100;
+          newShadow = 0;
+        }
+        if (newShadow !== curShadow) update.shadow = newShadow;
+        if (newPurif !== curPurif) update.purification = newPurif;
+        if (curShadow < 1 && newShadow >= 1) {
+          shadowedNames.push(String(poke.species ?? poke.name ?? "A pokemon"));
+        }
+
+        if (Object.keys(update).length) pokeUpdates[pokeId] = update;
+        if (logged) xpLog[pokeId] = logEntry;
       });
-      if (Object.keys(xpUpdates).length) tx.set(ownedRef, xpUpdates, { merge: true });
+      if (Object.keys(pokeUpdates).length) tx.set(ownedRef, pokeUpdates, { merge: true });
       if (Object.keys(xpLog).length) tx.set(tRef, { pendingXp: { [uid]: xpLog } }, { merge: true });
+    }
+
+    // Evolve a chosen team pokemon on publish (the composer confirmed it). Uses
+    // the same server-side rules + item consumption as the evolvePokemon button.
+    if (evolveReq && evolveReq.pokemonId && evolveReq.toIdx && !editPostId) {
+      evolvedInfo = applyEvolutionInTx(
+        tx,
+        ownedRef,
+        bagRef,
+        ownedForXp,
+        bag,
+        evolveReq.pokemonId,
+        evolveReq.toIdx,
+        curve
+      );
     }
 
     let resultPostId: string;
@@ -959,6 +1034,7 @@ export const publishForumPost = onCall(async (request) => {
         timePosted: now,
         type: "user",
         blocks,
+        ...(postXpEarned ? { xpEarned: postXpEarned } : {}),
       });
 
       // Attacking the boss: opt-in per post, only when a boss is active for
@@ -991,6 +1067,30 @@ export const publishForumPost = onCall(async (request) => {
           blocks: { boss: { slug: thread.bossBattle.slug, name: thread.bossBattle.name } },
         });
       }
+      // Announce an evolution right after the post that triggered it.
+      if (evolvedInfo) {
+        tx.create(tRef.collection("posts").doc(), {
+          ...authorFields(member),
+          character: "",
+          characters: [],
+          text: "",
+          timePosted: now,
+          type: "evolution",
+          blocks: { evolution: { ...evolvedInfo } },
+        });
+      }
+      // Announce any pokemon that just became fully shadowed on this post.
+      if (shadowedNames.length) {
+        tx.create(tRef.collection("posts").doc(), {
+          ...authorFields(member),
+          character: "",
+          characters: [],
+          text: "",
+          timePosted: now,
+          type: "shadowed",
+          blocks: { shadowed: { names: shadowedNames } },
+        });
+      }
       resultPostId = newPostRef!.id;
     }
 
@@ -1002,9 +1102,14 @@ export const publishForumPost = onCall(async (request) => {
     } else if (pendingSnap.exists) {
       tx.delete(pRef);
     }
-    snagCaught = encounterCaught;
-    return resultPostId;
+    return {
+      postId: resultPostId,
+      snagCaught: encounterCaught,
+      evolved: evolvedInfo,
+      shadowed: shadowedNames,
+    };
   });
+  const { postId, snagCaught, evolved: evolvedInfo, shadowed: shadowedNames } = txResult;
 
   // Post-commit notifications: bookmark watchers + @mentions (Q7).
   if (!editPostId && threadForNotify) {
@@ -1021,6 +1126,24 @@ export const publishForumPost = onCall(async (request) => {
       mentioned.filter((m) => !watchers.includes(m)),
       { type: "mention", text: `${member.username} mentioned you in "${title}"`, link }
     );
+    // Self notifications so the poster does not miss a thread event they caused.
+    if (evolvedInfo) {
+      await notifyUsers([uid], {
+        type: "evolution",
+        text: `Wow! ${evolvedInfo.fromName} evolved into ${evolvedInfo.toName}!`,
+        link,
+      });
+    }
+    if (shadowedNames.length) {
+      await notifyUsers([uid], {
+        type: "shadowed",
+        text:
+          shadowedNames.length === 1
+            ? `${shadowedNames[0]} has become shadowed!`
+            : `${shadowedNames.length} of your pokemon have become shadowed!`,
+        link,
+      });
+    }
   }
 
   // Weekly Snag List checklist (never blocks the publish).
@@ -3479,6 +3602,74 @@ function levelForXp(xp: number, curve: number[]): number {
 // Match an evolution item name against a bag entry name, ignoring case/spacing.
 const normItemName = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
+interface EvolveApplied {
+  fromName: string;
+  fromSlug: string;
+  toName: string;
+  toSlug: string;
+}
+
+/**
+ * Validate an evolution against the server's rules and apply it inside an
+ * existing transaction, consuming the required item when needed. `pokeData` and
+ * `bagData` are the already-read owned_pokemons / bag maps. Throws on a failed
+ * gate. Shared by the evolvePokemon callable and the evolve-during-a-post path.
+ */
+function applyEvolutionInTx(
+  tx: Transaction,
+  pokeRef: DocumentReference,
+  bagRef: DocumentReference,
+  pokeData: Record<string, any>,
+  bagData: Record<string, any>,
+  pokemonId: string,
+  toIdx: number,
+  curve: number[]
+): EvolveApplied {
+  const entry = pokeData[pokemonId];
+  if (!entry) throw new HttpsError("failed-precondition", "You do not own that Pokemon.");
+  const option = (EVOLUTIONS[String(Number(entry.pokedex ?? 0))] ?? []).find((o) => o.toIdx === toIdx);
+  if (!option) {
+    throw new HttpsError("invalid-argument", "That Pokemon cannot evolve into that form.");
+  }
+  const level = levelForXp(Number(entry.experience ?? 0), curve);
+  if (option.method === "friendship") {
+    const need = option.friendship ?? 220;
+    if (Number(entry.friendship ?? 0) < need) {
+      throw new HttpsError("failed-precondition", `Raise friendship to ${need} first.`);
+    }
+  } else if (option.method === "item" || option.method === "trade") {
+    if (option.level && level < option.level) {
+      throw new HttpsError("failed-precondition", `Reach level ${option.level} first.`);
+    }
+    const want = normItemName(option.itemName ?? "");
+    const bagItemId = Object.keys(bagData).find(
+      (id) => normItemName(String(bagData[id]?.name ?? id)) === want && (bagData[id]?.quantity ?? 0) > 0
+    );
+    if (!bagItemId) {
+      throw new HttpsError("failed-precondition", `You need a ${option.itemName} to evolve this Pokemon.`);
+    }
+    tx.set(bagRef, { [bagItemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
+  } else {
+    const need = option.level ?? 1;
+    if (level < need) throw new HttpsError("failed-precondition", `Reach level ${need} first.`);
+  }
+  const fromName = String(entry.name ?? entry.species ?? "");
+  const fromSlug = String(entry.image_slug ?? "");
+  tx.set(
+    pokeRef,
+    {
+      [pokemonId]: {
+        species: option.toName,
+        name: option.toName,
+        image_slug: option.toSlug,
+        pokedex: String(option.toIdx),
+      },
+    },
+    { merge: true }
+  );
+  return { fromName, fromSlug, toName: option.toName, toSlug: option.toSlug };
+}
+
 export const evolvePokemon = onCall(async (request) => {
   const uid = requireAuth(request);
   await loadMember(uid);
@@ -3492,62 +3683,52 @@ export const evolvePokemon = onCall(async (request) => {
   const result = await db.runTransaction(async (tx) => {
     // All reads first (Firestore requires reads before writes).
     const [pokeSnap, bagSnap] = await Promise.all([tx.get(pokeRef), tx.get(bagRef)]);
-    const poke = (pokeSnap.data() ?? {}) as Record<
-      string,
-      { pokedex?: string; experience?: number; friendship?: number }
-    >;
-    const entry = poke[pokemonId];
-    if (!entry) throw new HttpsError("failed-precondition", "You do not own that Pokemon.");
-
-    const option = (EVOLUTIONS[String(Number(entry.pokedex ?? 0))] ?? []).find(
-      (o) => o.toIdx === toIdx
-    );
-    if (!option) {
-      throw new HttpsError("invalid-argument", "That Pokemon cannot evolve into that form.");
-    }
-
-    const level = levelForXp(Number(entry.experience ?? 0), curve);
-
-    if (option.method === "friendship") {
-      const need = option.friendship ?? 220;
-      if (Number(entry.friendship ?? 0) < need) {
-        throw new HttpsError("failed-precondition", `Raise friendship to ${need} first.`);
-      }
-    } else if (option.method === "item" || option.method === "trade") {
-      if (option.level && level < option.level) {
-        throw new HttpsError("failed-precondition", `Reach level ${option.level} first.`);
-      }
-      const bag = (bagSnap.data() ?? {}) as Record<string, { name?: string; quantity?: number }>;
-      const want = normItemName(option.itemName ?? "");
-      const bagItemId = Object.keys(bag).find(
-        (id) => normItemName(String(bag[id]?.name ?? id)) === want && (bag[id]?.quantity ?? 0) > 0
-      );
-      if (!bagItemId) {
-        throw new HttpsError("failed-precondition", `You need a ${option.itemName} to evolve this Pokemon.`);
-      }
-      tx.set(bagRef, { [bagItemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
-    } else {
-      const need = option.level ?? 1;
-      if (level < need) throw new HttpsError("failed-precondition", `Reach level ${need} first.`);
-    }
-
-    // Apply the evolution using the server's own target data.
-    tx.set(
+    return applyEvolutionInTx(
+      tx,
       pokeRef,
-      {
-        [pokemonId]: {
-          species: option.toName,
-          name: option.toName,
-          image_slug: option.toSlug,
-          pokedex: String(option.toIdx),
-        },
-      },
-      { merge: true }
+      bagRef,
+      (pokeSnap.data() ?? {}) as Record<string, any>,
+      (bagSnap.data() ?? {}) as Record<string, any>,
+      pokemonId,
+      toIdx,
+      curve
     );
-    return { toName: option.toName, toIdx: option.toIdx };
   });
 
-  return { ok: true, ...result };
+  return { ok: true, toName: result.toName, toIdx };
+});
+
+/** Cure a fully (or partly) shadowed Pokemon with a Shadow Vaccine from the bag. */
+export const useShadowVaccine = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
+  const pokeRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+
+  const cleared = await db.runTransaction(async (tx) => {
+    const [pokeSnap, bagSnap] = await Promise.all([tx.get(pokeRef), tx.get(bagRef)]);
+    const poke = (pokeSnap.data() ?? {}) as Record<string, { shadow?: number; purification?: number }>;
+    const entry = poke[pokemonId];
+    if (!entry) throw new HttpsError("failed-precondition", "You do not own that Pokemon.");
+    const shadow = Number(entry.shadow ?? 0);
+    if (shadow <= 0) throw new HttpsError("failed-precondition", "That Pokemon is not shadowed.");
+    const bag = (bagSnap.data() ?? {}) as Record<string, { name?: string; quantity?: number }>;
+    const bagItemId = Object.keys(bag).find(
+      (id) => normItemName(String(bag[id]?.name ?? id)) === "shadowvaccine" && (bag[id]?.quantity ?? 0) > 0
+    );
+    if (!bagItemId) throw new HttpsError("failed-precondition", "You need a Shadow Vaccine to purify this Pokemon.");
+    tx.set(bagRef, { [bagItemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
+    // Purify: shadow back to 0, banking the cleared corruption as purification.
+    tx.set(
+      pokeRef,
+      { [pokemonId]: { shadow: 0, purification: FieldValue.increment(Math.round(shadow * 100) / 100) } },
+      { merge: true }
+    );
+    return shadow;
+  });
+
+  return { ok: true, cleared };
 });
 
 // --- Assign an owned Pokemon to one of the trainer's characters -------------

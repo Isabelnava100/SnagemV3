@@ -87,9 +87,13 @@ export interface PostBlocks {
   randoms?: RandomBlock[];
   /** Boss present in this post (mirrors thread.bossBattle at publish time). */
   boss?: { slug: string; name: string };
+  /** An evolution triggered by this post (on the evolution system card). */
+  evolution?: { fromName: string; fromSlug: string; toName: string; toSlug: string };
+  /** Pokemon that became fully shadowed on this post (shadowed system card). */
+  shadowed?: { names: string[] };
 }
 
-export type PostType = "user" | "boss_start" | "boss_end";
+export type PostType = "user" | "boss_start" | "boss_end" | "evolution" | "shadowed";
 
 export interface ForumPost {
   id: string;
@@ -107,6 +111,8 @@ export interface ForumPost {
   editedAt?: FireTimestamp;
   type?: PostType;
   blocks?: PostBlocks;
+  /** Per-pokemon stats each team member earned on this post (footer caption). */
+  xpEarned?: { experience?: number; friendship?: number; purification?: number };
 }
 
 export interface ThreadPoll {

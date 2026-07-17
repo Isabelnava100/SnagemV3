@@ -9,7 +9,8 @@ import Editor, { useRichTextEditor } from "../../../components/editor/Editor";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { getPokemonImageURL } from "../../../helpers";
-import { getItems, getOwnedPokemons } from "../../../queries/dashboard";
+import { getItems, getOwnedPokemons, getTeamsRaw } from "../../../queries/dashboard";
+import { OwnedPokemon } from "../../../components/types/typesUsed";
 import {
   getTrainingSession,
   logTrainingPost,
@@ -27,6 +28,7 @@ import {
 import { getDraft, getPendingActions, getPost, getThread } from "../queries";
 import { DiceBlock, EncounterBlock, PostCharacter, RandomBlock } from "../types";
 import CharactersPanel from "../components/composer/CharactersPanel";
+import EvolutionPanel from "../components/composer/EvolutionPanel";
 import { EncounterPostPanel } from "../components/composer/EncounterPanels";
 import UseItemsPanel, {
   ItemSelection,
@@ -64,6 +66,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const [attachSignature, setAttachSignature] = React.useState(true);
   const [attackBoss, setAttackBoss] = React.useState(false);
   const [safariAction, setSafariAction] = React.useState<"fight" | "berry" | "ball">("fight");
+  const [evolve, setEvolve] = React.useState<{ pokemonId: string; toIdx: number } | null>(null);
   const [loadedEdit, setLoadedEdit] = React.useState(false);
 
   const editor = useRichTextEditor({
@@ -111,11 +114,29 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const { data: ownedForTraining } = useQuery({
     queryKey: ["owned-pokemons", user?.uid],
     queryFn: () => getOwnedPokemons(user!.uid),
-    enabled: trainingActive && !!user,
+    enabled: !!user,
+  });
+  const { data: teamsRaw } = useQuery({
+    queryKey: ["teams-raw", user?.uid],
+    queryFn: () => getTeamsRaw(user!.uid),
+    enabled: !!user,
   });
   const trainingTarget = (ownedForTraining?.sortedData ?? []).find(
     (p) => p.id === trainingTargetId
   );
+
+  // The owned pokemon on the teams brought into this post (for evolve-on-post).
+  const evoTeamPokemon = React.useMemo<OwnedPokemon[]>(() => {
+    if (!ownedForTraining || !teamsRaw) return [];
+    const byId = new Map(ownedForTraining.sortedData.map((p) => [p.id, p]));
+    const teamById = new Map(teamsRaw.map((t) => [t.id, t]));
+    const ids = new Set<string>();
+    characters.forEach((c) => {
+      if (!c.teamId) return;
+      (teamById.get(c.teamId)?.pokemon_ids ?? []).forEach((id) => ids.add(id));
+    });
+    return [...ids].map((id) => byId.get(id)).filter(Boolean) as OwnedPokemon[];
+  }, [ownedForTraining, teamsRaw, characters]);
   const trainingToday = new Date().toISOString().slice(0, 10);
   const trainingPostsLogged =
     trainingSession?.date === trainingToday ? trainingSession?.postsLogged ?? 0 : 0;
@@ -241,6 +262,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
         attachSignature,
         ...(mode === "new" && attackBoss ? { attackBoss: true } : {}),
         ...(mode === "new" && thread?.safariContest && encounter ? { safariAction } : {}),
+        ...(mode === "new" && evolve ? { evolve } : {}),
         ...(mode === "edit" ? { editPostId: postId } : {}),
       });
     },
@@ -248,8 +270,9 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
       if (draftId && user) await deleteDraft(user.uid, draftId);
       if (trainingActive) {
         queryClient.invalidateQueries({ queryKey: ["training-session", user?.uid] });
-        queryClient.invalidateQueries({ queryKey: ["owned-pokemons", user?.uid] });
       }
+      // Evolution / XP / shadow changes owned pokemon; refresh the cache.
+      queryClient.invalidateQueries({ queryKey: ["owned-pokemons", user?.uid] });
       queryClient.invalidateQueries({ queryKey: ["forum-thread", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["forum-posts-count", forum, threadId] });
       queryClient.invalidateQueries({ queryKey: ["forum-posts", forum, threadId] });
@@ -357,6 +380,14 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
               lockedDice={mode === "edit" ? editingPost?.blocks?.dice ?? [] : []}
               lockedRandoms={mode === "edit" ? editingPost?.blocks?.randoms ?? [] : []}
             />
+            {mode === "new" && (
+              <EvolutionPanel
+                teamPokemon={evoTeamPokemon}
+                items={inventory ?? []}
+                value={evolve}
+                onChange={setEvolve}
+              />
+            )}
           </Stack>
         </Grid.Col>
 

@@ -56,6 +56,8 @@ export interface PublishPostInput {
   attackBoss?: boolean;
   /** Safari Contest turn: fight the wild Pokemon, feed it, or throw a ball. */
   safariAction?: "fight" | "berry" | "ball";
+  /** Evolve a team pokemon on publish (validated + applied server-side). */
+  evolve?: { pokemonId: string; toIdx: number } | null;
 }
 
 /**

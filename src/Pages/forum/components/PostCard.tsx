@@ -236,6 +236,40 @@ function BossAnnouncement(props: { post: ForumPost }) {
   );
 }
 
+/** In-stream card announcing an evolution that a post triggered. */
+function EvolutionAnnouncement(props: { post: ForumPost }) {
+  const evo = props.post.blocks?.evolution;
+  if (!evo) return null;
+  return (
+    <Box p={16} mt={10} bg="#22331f" style={{ borderRadius: 10, border: "1px solid #3f7a2b" }}>
+      <Flex align="center" gap={12} wrap="wrap">
+        <Avatar src={getPokemonImageURL(evo.fromSlug)} alt={`${evo.fromName} sprite`} size={56} radius="xl" />
+        <Text c="dimmed" fz={20}>
+          →
+        </Text>
+        <Avatar src={getPokemonImageURL(evo.toSlug)} alt={`${evo.toName} sprite`} size={56} radius="xl" />
+        <GameResultText>
+          Wow! {evo.fromName} evolved into {evo.toName}!
+        </GameResultText>
+      </Flex>
+    </Box>
+  );
+}
+
+/** In-stream card announcing pokemon that became fully shadowed on a post. */
+function ShadowedAnnouncement(props: { post: ForumPost }) {
+  const names = props.post.blocks?.shadowed?.names ?? [];
+  if (!names.length) return null;
+  return (
+    <Box p={16} mt={10} bg="#241a33" style={{ borderRadius: 10, border: "1px solid #5a3fb0" }}>
+      <GameResultText>
+        Your pokemon have become shadowed! {names.join(", ")} {names.length === 1 ? "is" : "are"} now
+        shadowed.
+      </GameResultText>
+    </Box>
+  );
+}
+
 export default function PostCard(props: {
   post: ForumPost;
   forum: string;
@@ -246,7 +280,11 @@ export default function PostCard(props: {
 }) {
   const { post, forum, threadId } = props;
   const { user } = useAuth();
-  const isSystem = post.type === "boss_start" || post.type === "boss_end";
+  const isSystem =
+    post.type === "boss_start" ||
+    post.type === "boss_end" ||
+    post.type === "evolution" ||
+    post.type === "shadowed";
   const canEdit =
     !isSystem &&
     !props.threadClosed &&
@@ -305,7 +343,13 @@ export default function PostCard(props: {
 
       <Box px={14} pb={16}>
         {isSystem ? (
-          <BossAnnouncement post={post} />
+          post.type === "evolution" ? (
+            <EvolutionAnnouncement post={post} />
+          ) : post.type === "shadowed" ? (
+            <ShadowedAnnouncement post={post} />
+          ) : (
+            <BossAnnouncement post={post} />
+          )
         ) : (
           <>
             {/* character strips: capped height, horizontal scroll on overflow */}
@@ -347,9 +391,30 @@ export default function PostCard(props: {
                 />
               </Box>
             )}
+
+            {/* Tiny footer: XP earned on this post + active boss/encounter. */}
+            <PostFooterNote post={post} />
           </>
         )}
       </Box>
     </Card>
+  );
+}
+
+/** ~10px note under a post: the stats it earned and any active game action. */
+function PostFooterNote(props: { post: ForumPost }) {
+  const { post } = props;
+  const xp = post.xpEarned;
+  const parts: string[] = [];
+  if ((xp?.experience ?? 0) > 0) parts.push(`+${xp!.experience} exp`);
+  if ((xp?.friendship ?? 0) > 0) parts.push(`+${xp!.friendship} friendship`);
+  if ((xp?.purification ?? 0) > 0) parts.push(`+${xp!.purification} purification`);
+  if ((post.blocks?.encounters?.length ?? 0) > 0) parts.push("encounter active");
+  if (post.blocks?.boss) parts.push("boss battle active");
+  if (!parts.length) return null;
+  return (
+    <Text fz={10} c="gray.6" mt={8} style={{ lineHeight: 1.4 }}>
+      {parts.join("  ·  ")}
+    </Text>
   );
 }

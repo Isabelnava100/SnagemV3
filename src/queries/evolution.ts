@@ -15,3 +15,7 @@ export const evolvePokemon = (pokemonId: string, toIdx: number) =>
 /** Assign an owned Pokemon to one of the trainer's characters ("" = unassigned). */
 export const assignPokemonCharacter = (pokemonId: string, characterId: string) =>
   call<{ ok: boolean }>("assignPokemonCharacter", { pokemonId, characterId });
+
+/** Cure a shadowed Pokemon with a Shadow Vaccine from the bag (server validates). */
+export const purifyShadowPokemon = (pokemonId: string) =>
+  call<{ ok: boolean; cleared: number }>("useShadowVaccine", { pokemonId });

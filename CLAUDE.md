@@ -64,6 +64,20 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 
 ## Known deferred work
 
+- Forum post mechanics (evolution-on-post, shadow corruption, thread-event
+  notifications, per-post XP caption) need a functions deploy (`firebase deploy
+  --only functions`) to run live. `publishForumPost` now: applies XP instantly,
+  rolls each team pokemon a 25% chance of +0.01 shadow (cap 1.0 = fully
+  shadowed), auto-purifies when purification reaches the shadow amount, evolves a
+  chosen team pokemon on publish (reusing `applyEvolutionInTx`, shared with the
+  `evolvePokemon` callable), stamps `post.xpEarned`, and drops `evolution` /
+  `shadowed` system posts + self-notifications. Cleanup also has the
+  `useShadowVaccine` callable + a "Shadow Vaccine" catalog item (item 994 in
+  `src/data/item/item.json`; re-add if the catalog is regenerated).
+  `notifyUsers` now honors `users/{uid}.settings.siteNotifications` (the toggle
+  was previously a no-op). `shadowPerPost` in the XP config is ignored (shadow
+  comes from the roll); shadow/purification are a 0..1 scale.
+
 - Safari Contest (July 2026, /Forum Events + Admin > Manage > Safari Contest)
   needs a functions + rules deploy before it works live: new callables
   `startSafariContest`, `judgeSafariContest`, `finalizeSafariContest`, plus the

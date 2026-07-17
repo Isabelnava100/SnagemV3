@@ -5956,5 +5956,11 @@
     "Name": "mystery-pebble",
     "Group": "other-item",
     "Filename": "other-item/mystery-pebble.png"
+  },
+  "994": {
+    "Item ID": "item_shadow_vaccine",
+    "Name": "shadow-vaccine",
+    "Group": "medicine",
+    "Filename": "medicine/shadow-vaccine.png"
   }
 }
