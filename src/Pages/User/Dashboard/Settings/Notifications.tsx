@@ -69,7 +69,7 @@ function NotificationsInbox() {
   if (isPending) return null;
   if (!notifications?.length) {
     return (
-      <Text fz={13} c="dimmed" mb={10}>
+      <Text fz={14} c="dimmed" mb={10}>
         You have no notifications yet.
       </Text>
     );
@@ -79,7 +79,7 @@ function NotificationsInbox() {
   return (
     <Stack gap={8} mb={10}>
       <Flex justify="space-between" align="center">
-        <Text c="white" fw={600} fz={16}>
+        <Text c="white" fw={600} fz={20}>
           Inbox{unreadCount ? ` (${unreadCount} unread)` : ""}
         </Text>
         {unreadCount > 0 && (
@@ -118,7 +118,7 @@ function NotificationsInbox() {
                 borderLeft: notification.read ? undefined : "3px solid #17F1F0",
               }}
             >
-              <Text fz={13} c={notification.read ? "dimmed" : "white"}>
+              <Text fz={14} c={notification.read ? "dimmed" : "white"}>
                 {notification.text}
               </Text>
             </Flex>
@@ -222,7 +222,7 @@ function ConnectDiscord() {
     <Stack gap={6}>
       {connected ? (
         <Group gap={10} wrap="wrap">
-          <Text fz={13} c="white">
+          <Text fz={14} c="white">
             Discord connected{link?.discordUsername ? ` as ${link.discordUsername}` : ""}.
           </Text>
           <Button
@@ -247,12 +247,12 @@ function ConnectDiscord() {
           Connect Discord
         </GradientButtonSecondary>
       ) : (
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           Discord connecting is not set up yet.
         </Text>
       )}
       {status && (
-        <Text fz={12} c="dimmed" role="status" aria-live="polite">
+        <Text fz={14} c="dimmed" role="status" aria-live="polite">
           {status}
         </Text>
       )}
@@ -316,7 +316,7 @@ function FriendCodeSection() {
         Save friend code
       </Button>
       {status && (
-        <Text fz={12} c="dimmed" role="status" aria-live="polite">
+        <Text fz={14} c="dimmed" role="status" aria-live="polite">
           {status}
         </Text>
       )}
@@ -416,7 +416,7 @@ export default function Notifications() {
             {...getInputProps("emailUpdates", { type: "checkbox" })}
             label="Receive information via Email"
           />
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Announcements and site updates by email. Account emails such as password
             resets always come through, even with this off.
           </Text>

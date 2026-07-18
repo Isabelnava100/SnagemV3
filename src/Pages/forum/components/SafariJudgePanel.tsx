@@ -111,7 +111,7 @@ export default function SafariJudgePanel(props: {
                     <Table.Td>
                       <Group gap={6} wrap="nowrap">
                         <Avatar size="sm" src={getPokemonImageURL(r.slug)} alt={r.pokemonName} />
-                        <Text c="white" fz={13}>
+                        <Text c="white" fz={14}>
                           {r.pokemonName}
                         </Text>
                       </Group>
@@ -168,7 +168,7 @@ export default function SafariJudgePanel(props: {
           </Group>
         )}
         {rows.length > 0 && !canAward && (
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             An admin or a director with Give Items awards the prizes.
           </Text>
         )}

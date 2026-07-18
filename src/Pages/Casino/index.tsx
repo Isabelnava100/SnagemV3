@@ -67,7 +67,7 @@ function num(value?: number | string): number {
 function StatusLine(props: { color?: string; children: React.ReactNode }) {
   if (!props.children) return null;
   return (
-    <Text role="status" aria-live="polite" fz={13} c={props.color} mt={4}>
+    <Text role="status" aria-live="polite" fz={14} c={props.color} mt={4}>
       {props.children}
     </Text>
   );
@@ -76,7 +76,7 @@ function StatusLine(props: { color?: string; children: React.ReactNode }) {
 /** Little uppercase caption used above every stepper and section. */
 function Caption(props: { children: React.ReactNode; c?: string }) {
   return (
-    <Text fz={11} fw={700} tt="uppercase" c={props.c ?? "dimmed"} style={{ letterSpacing: 1.5 }}>
+    <Text fz={14} fw={700} tt="uppercase" c={props.c ?? "dimmed"} style={{ letterSpacing: 1.5 }}>
       {props.children}
     </Text>
   );
@@ -117,7 +117,7 @@ function Stepper(props: {
       >
         <IconMinus size={18} />
       </ActionIcon>
-      <Text fz={22} fw={800} c="white" aria-label={`${props.label}: ${props.value}`}>
+      <Text fz={26} fw={800} c="white" aria-label={`${props.label}: ${props.value}`}>
         {props.value}
       </Text>
       <ActionIcon
@@ -139,7 +139,7 @@ function Stepper(props: {
 function PayoutBadge(props: { children: React.ReactNode; color: string }) {
   return (
     <Text
-      fz={12}
+      fz={14}
       fw={800}
       tt="uppercase"
       px={12}
@@ -196,13 +196,13 @@ function GameCard(props: {
           >
             {props.icon}
           </Box>
-          <Text fz={22} fw={800} c="white">
+          <Text fz={26} fw={800} c="white">
             {props.title}
           </Text>
         </Group>
         {props.badge}
       </Group>
-      <Text fz={14} c="gray.5" mb="md">
+      <Text fz={16} c="gray.5" mb="md">
         {props.blurb}
       </Text>
       <Box style={{ flex: 1, display: "flex", flexDirection: "column" }}>{props.children}</Box>
@@ -276,7 +276,7 @@ function RouletteWheel(props: { number: number }) {
             justifyContent: "center",
           }}
         >
-          <Text fz={26} fw={800} c="white">
+          <Text fz={30} fw={800} c="white">
             {props.number}
           </Text>
         </Box>
@@ -386,12 +386,12 @@ function ExchangeCard(props: { uid: string }) {
           >
             <IconArrowsExchange size={24} color="#fff" />
           </Box>
-          <Text fz={24} fw={800} c="white">
+          <Text fz={28} fw={800} c="white">
             The Exchange Cage
           </Text>
         </Group>
         <Text
-          fz={13}
+          fz={14}
           fw={700}
           c="grape.3"
           px={14}
@@ -433,7 +433,7 @@ function ExchangeCard(props: { uid: string }) {
         >
           Exchange
         </Button>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           {line}
         </Text>
       </Group>
@@ -495,7 +495,7 @@ function HexRoulette(props: { uid: string; tokens: number }) {
         Spin the Wheel
       </Button>
       {props.tokens < bet && (
-        <Text fz={12} c="dimmed" mt={6}>
+        <Text fz={14} c="dimmed" mt={6}>
           You need {bet} Gengar Tokens to play this bet.
         </Text>
       )}
@@ -563,7 +563,7 @@ function DreamDice(props: { uid: string; tokens: number }) {
         Roll the Dice
       </Button>
       {props.tokens < bet && (
-        <Text fz={12} c="dimmed" mt={6}>
+        <Text fz={14} c="dimmed" mt={6}>
           You need {bet} Gengar Tokens to play this bet.
         </Text>
       )}
@@ -632,7 +632,7 @@ function PaybackPyramid(props: { uid: string; tokens: number }) {
         Play
       </Button>
       {props.tokens < bet && (
-        <Text fz={12} c="dimmed" mt={6}>
+        <Text fz={14} c="dimmed" mt={6}>
           You need {bet} Gengar Tokens to play this bet.
         </Text>
       )}
@@ -705,13 +705,13 @@ function ShadowLotto(props: { uid: string; tokens: number }) {
     >
       <Stack gap={2} align="center" my={4}>
         <Caption c="teal.4">Jackpot</Caption>
-        <Text fz={40} fw={800} c="#5eead4" lh={1.05}>
+        <Text fz={44} fw={800} c="#5eead4" lh={1.05}>
           {typeof jackpot === "number" ? jackpot : "-"}
         </Text>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           Gengar Tokens
         </Text>
-        <Text fz={12} c="dimmed" role="status" aria-live="polite">
+        <Text fz={14} c="dimmed" role="status" aria-live="polite">
           {(lotto.data?.ticketCount ?? 0) >= minTickets
             ? `${lotto.data?.ticketCount ?? 0} entries in, ready for the draw. Staff have been notified.`
             : `${lotto.data?.ticketCount ?? 0} of ${minTickets} entries needed before the draw runs.`}
@@ -741,7 +741,7 @@ function ShadowLotto(props: { uid: string; tokens: number }) {
         </Button>
       </Group>
       {props.tokens < 1 && (
-        <Text fz={12} c="dimmed" mt={6}>
+        <Text fz={14} c="dimmed" mt={6}>
           You need at least 1 Gengar Token to buy a ticket.
         </Text>
       )}
@@ -762,7 +762,7 @@ function ShadowLotto(props: { uid: string; tokens: number }) {
           >
             Draw winner (admin)
           </Button>
-          <Text fz={11} c="dimmed">
+          <Text fz={14} c="dimmed">
             Draws the number, splits the jackpot among matching tickets, and resets the pot.
             You get a notification when entries reach {minTickets}.
           </Text>
@@ -800,7 +800,7 @@ function CurrencyCard(props: { icon: React.ReactNode; label: string; value: numb
       </Box>
       <Box>
         <Caption>{props.label}</Caption>
-        <Text fz={22} fw={800} c="white" lh={1.1}>
+        <Text fz={26} fw={800} c="white" lh={1.1}>
           {props.value.toLocaleString()}
         </Text>
       </Box>
@@ -828,7 +828,7 @@ export default function Casino() {
           eyebrow={
             <Group gap={8}>
               <IconSkull size={16} color="#c084fc" />
-              <Text fz={12} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
+              <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
                 The Casino &middot; Open All Night
               </Text>
             </Group>
@@ -859,7 +859,7 @@ export default function Casino() {
 
         {!uid ? (
           <Box p={24} style={{ background: PANEL, border: `1px solid ${PANEL_BORDER}`, borderRadius: 20 }}>
-            <Text fz={15} c="dimmed" ta="center">
+            <Text fz={16} c="dimmed" ta="center">
               Sign in to play.
             </Text>
           </Box>

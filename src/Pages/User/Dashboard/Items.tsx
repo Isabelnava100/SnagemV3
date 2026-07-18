@@ -112,7 +112,7 @@ export default function Items() {
                         <Flex w="100%" justify="space-between" align="center">
                           <Group px={14} py={8} gap={8} wrap="nowrap">
                             <Avatar src={getItemImageURL(item.filePath)} alt={displayName} size={36} />
-                            <Text c="white" fz={15} lineClamp={1}>
+                            <Text c="white" fz={16} lineClamp={1}>
                               {displayName}
                             </Text>
                           </Group>
@@ -182,12 +182,12 @@ function MysteryBoxModal(props: {
       radius={12}
     >
       {result ? (
-        <Text fz={15} c="green.0">
+        <Text fz={16} c="green.0">
           {result}
         </Text>
       ) : (
         <Stack gap={10}>
-          <Text fz={14}>Something is rattling inside...</Text>
+          <Text fz={16}>Something is rattling inside...</Text>
           {props.openable ? (
             <GradientButtonPrimary
               radius="xl"
@@ -197,12 +197,12 @@ function MysteryBoxModal(props: {
               Open the Box
             </GradientButtonPrimary>
           ) : (
-            <Text fz={13} c="dimmed">
+            <Text fz={14} c="dimmed">
               This box cannot be opened yet. An admin still needs to fill it.
             </Text>
           )}
           {error && (
-            <Text fz={13} c="#E54156">
+            <Text fz={14} c="#E54156">
               {error}
             </Text>
           )}

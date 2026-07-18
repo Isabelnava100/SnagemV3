@@ -67,7 +67,7 @@ export function EvolveButton(props: { pokemon: OwnedPokemon; compact?: boolean }
       </Popover.Target>
       <Popover.Dropdown bg="#1E1D20" p="md" maw="calc(100vw - 24px)" w={300}>
         <Stack gap={10}>
-          <Text c="white" fw={600} fz={14}>
+          <Text c="white" fw={600} fz={16}>
             Evolve {pokemon.species} (Lv {level})
           </Text>
           {options.map((o, i) => (
@@ -82,11 +82,11 @@ export function EvolveButton(props: { pokemon: OwnedPokemon; compact?: boolean }
                   <img src={POKEMON_SPRITE_FALLBACK} alt="" width={24} height={24} />
                 </Avatar>
                 <Stack gap={0} style={{ minWidth: 0 }}>
-                  <Text c="white" fz={13} truncate>
+                  <Text c="white" fz={14} truncate>
                     {o.option.toName}
                   </Text>
                   {o.option.note && (
-                    <Text c="dimmed" fz={11} truncate>
+                    <Text c="dimmed" fz={14} truncate>
                       {o.option.note}
                     </Text>
                   )}
@@ -120,11 +120,11 @@ export function LevelBar(props: { experience?: number }) {
   return (
     <Box>
       <Group justify="space-between" gap={4}>
-        <Text fz={12} c="white">
+        <Text fz={14} c="white">
           Level {p.level}
         </Text>
         {!p.isMax && (
-          <Text fz={11} c="dimmed">
+          <Text fz={14} c="dimmed">
             {p.xpIntoLevel}/{p.xpForThisLevel} to next
           </Text>
         )}

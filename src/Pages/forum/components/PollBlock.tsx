@@ -37,7 +37,7 @@ export default function PollBlock(props: {
 
   return (
     <Box p={14} bg="#3C3A3C" style={{ borderRadius: 10 }} mb={12}>
-      <Text fw={600} c="white" fz={15} mb={10}>
+      <Text fw={600} c="white" fz={16} mb={10}>
         Poll: {poll.question}
       </Text>
       <Radio.Group value={selected} onChange={setSelected}>
@@ -50,7 +50,7 @@ export default function PollBlock(props: {
                 color="pink.0"
                 disabled={!user}
               />
-              <Text fz={12} c="dimmed">
+              <Text fz={14} c="dimmed">
                 {counts[option.id] ?? 0} vote{(counts[option.id] ?? 0) === 1 ? "" : "s"}
               </Text>
               {myVote === option.id && (

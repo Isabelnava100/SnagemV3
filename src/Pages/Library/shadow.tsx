@@ -10,7 +10,7 @@ function Section(props: { title: string; children: React.ReactNode }) {
       p="lg"
       style={{ background: PANEL, border: `1px solid ${PANEL_BORDER}`, borderRadius: 14 }}
     >
-      <Title order={3} c="white" fz={20} mb={8}>
+      <Title order={3} c="white" fz={24} mb={8}>
         {props.title}
       </Title>
       {props.children}
@@ -30,20 +30,20 @@ export default function ShadowGuideTab() {
         <Title order={2} c="white">
           Growth, Shadow &amp; Purification
         </Title>
-        <Text c="gray.4" fz={14} mt={4}>
+        <Text c="gray.4" fz={16} mt={4}>
           Every roleplay post you make with a team grows the pokemon on it. Here is what each stat
           does, how it is earned, and how to cure a shadowed pokemon.
         </Text>
       </Box>
 
       <Section title="The four stats">
-        <Text c="gray.3" fz={14} mb={10}>
+        <Text c="gray.3" fz={16} mb={10}>
           Under a post you will see the stats it earned, abbreviated (hover any of them for the full
           name), for example: <Text span c="teal.4" fw={700}>10 exp | 2 frn | 1 shd | 5 prf</Text>.
           Friendship, Shadow and Purification each run from 0 to 100.
         </Text>
         <Table.ScrollContainer minWidth={480}>
-          <Table verticalSpacing="sm" horizontalSpacing="md" c="gray.3" fz={14}>
+          <Table verticalSpacing="sm" horizontalSpacing="md" c="gray.3" fz={16}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Stat</Table.Th>
@@ -91,7 +91,7 @@ export default function ShadowGuideTab() {
             </Table.Tbody>
           </Table>
         </Table.ScrollContainer>
-        <Text c="gray.5" fz={12} mt={8}>
+        <Text c="gray.5" fz={14} mt={8}>
           Maxed stats stop showing under your posts, and short posts below the thread's minimum
           length do not earn anything. Some threads are marked as giving no experience at all.
         </Text>
@@ -102,11 +102,11 @@ export default function ShadowGuideTab() {
           <Badge color="dark" style={{ background: "#000", border: "1px solid #5a3fb0" }}>
             Shadow'ed
           </Badge>
-          <Text c="gray.4" fz={13}>
+          <Text c="gray.4" fz={14}>
             A shadowed pokemon shows a black sprite background and a Shadow'ed badge.
           </Text>
         </Group>
-        <List c="gray.3" fz={14} spacing={6}>
+        <List c="gray.3" fz={16} spacing={6}>
           <List.Item>
             A pokemon becomes <b>Shadow'ed</b> when its Shadow reaches 100. Its heart has been shut,
             and it will not grow the same way until it is cured.
@@ -128,17 +128,17 @@ export default function ShadowGuideTab() {
       </Section>
 
       <Section title="Shadow Moves">
-        <Text c="gray.3" fz={14}>
+        <Text c="gray.3" fz={16}>
           Shadow'ed pokemon can learn Shadow Moves, a special move class with its own rules. The full
           list and how they work live in the Shadow Codex.
         </Text>
-        <Anchor component={Link} to="/Library?tab=moves" c="grape.3" fz={14} mt={6} display="inline-block">
+        <Anchor component={Link} to="/Library?tab=moves" c="grape.3" fz={16} mt={6} display="inline-block">
           Open the Shadow Codex (all Shadow Moves) →
         </Anchor>
       </Section>
 
       <Divider color={PANEL_BORDER} />
-      <Text c="gray.5" fz={12}>
+      <Text c="gray.5" fz={14}>
         Looking for more? The <Anchor component={Link} to="/Library?tab=faq" c="blue.3">Help Desk</Anchor>{" "}
         answers common questions about experience, evolution and shadow status.
       </Text>

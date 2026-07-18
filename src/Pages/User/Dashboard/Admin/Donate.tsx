@@ -43,7 +43,7 @@ function renderItemOption({ option }: { option: { value: string; label: string }
   return (
     <Group gap={8} wrap="nowrap">
       {item && <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={26} />}
-      <Text fz={14} c="white">
+      <Text fz={16} c="white">
         {option.label}
       </Text>
     </Group>
@@ -57,7 +57,7 @@ function TopHeader(props: { children: React.ReactNode }) {
       sx={{ background: "linear-gradient(90deg, #742D78 0%, #239DAD 100%)", borderRadius: 8 }}
       py={10}
     >
-      <Title c="white" tt="uppercase" order={3} fz={14} fw={700}>
+      <Title c="white" tt="uppercase" order={3} fz={16} fw={700}>
         {props.children}
       </Title>
     </Box>
@@ -151,7 +151,7 @@ export default function Donate() {
 
   return (
     <Stack gap={24}>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Send items, currency or pokemon straight to a member. Grants apply immediately, are recorded
         in the activity log, and notify the recipient. There is no undo, so double-check the
         recipient and amounts before sending.
@@ -207,7 +207,7 @@ export default function Donate() {
                               alt={item.name}
                             />
                           </Box>
-                          <Text fz={16} fw={400} c="white">
+                          <Text fz={20} fw={400} c="white">
                             {item.name}
                           </Text>
                         </Group>
@@ -266,7 +266,7 @@ export default function Donate() {
       {/* Confirmation */}
       {showConfirmation && (
         <Stack gap={24}>
-          <Title order={2} c="white" size={24} fw={400}>
+          <Title order={2} c="white" size={28} fw={400}>
             Confirm that you&apos;ll be sending these items to these users...
           </Title>
           <Flex direction={isOverXl ? "row" : "column"} gap={10}>
@@ -283,7 +283,7 @@ export default function Donate() {
                       className="rounded-[22px]"
                       color="white"
                       fw={400}
-                      fz={14}
+                      fz={16}
                     >
                       Category: {categoryName}
                     </Text>
@@ -303,10 +303,10 @@ export default function Donate() {
                                 />
                               </Box>
                               <Group>
-                                <Text fz={16} c="white" fw={400}>
+                                <Text fz={20} c="white" fw={400}>
                                   {item.quantity}
                                 </Text>
-                                <Text fz={16} c="white" fw={400}>
+                                <Text fz={20} c="white" fw={400}>
                                   {item.name}
                                 </Text>
                               </Group>
@@ -331,7 +331,7 @@ export default function Donate() {
                   {toUsers?.map((user) => (
                     <Group key={user.id} gap={6}>
                       <Avatar alt={`${user.username ?? "User"} avatar`} sx={{ borderRadius: "100%" }} />
-                      <Text c="white" fz={16} fw={400} key={user.id}>
+                      <Text c="white" fz={20} fw={400} key={user.id}>
                         {user.username}
                       </Text>
                     </Group>
@@ -397,7 +397,7 @@ function GivePokemonSection() {
 
   return (
     <Stack gap={10} mt={20}>
-      <Title order={2} c="white" size={24} fw={400}>
+      <Title order={2} c="white" size={28} fw={400}>
         Give Pokemon to Users
       </Title>
       <Flex gap={10} wrap="wrap" align="center">
@@ -452,7 +452,7 @@ function GivePokemonSection() {
       </Flex>
       {message && (
         <Text
-          fz={13}
+          fz={14}
           c={message === "Pokemon sent!" ? "green.0" : "#E54156"}
           role="status"
           aria-live="polite"
@@ -499,7 +499,7 @@ function GiveCurrencySection() {
 
   return (
     <Stack gap={10} mt={20}>
-      <Title order={2} c="white" size={24} fw={400}>
+      <Title order={2} c="white" size={28} fw={400}>
         Give Currency to Users
       </Title>
       <Flex gap={10} wrap="wrap" align="center">
@@ -531,7 +531,7 @@ function GiveCurrencySection() {
         />
         {confirming ? (
           <Group gap={6}>
-            <Text fz={13} c="white">
+            <Text fz={14} c="white">
               Send {amount} {currencyLabel} to {userIds.length} user
               {userIds.length === 1 ? "" : "s"}?
             </Text>
@@ -561,7 +561,7 @@ function GiveCurrencySection() {
         )}
       </Flex>
       {message && (
-        <Text fz={13} c={message === "Currency sent!" ? "green.0" : "#E54156"}>
+        <Text fz={14} c={message === "Currency sent!" ? "green.0" : "#E54156"}>
           {message}
         </Text>
       )}

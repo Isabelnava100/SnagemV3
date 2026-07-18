@@ -91,7 +91,7 @@ function Collectible(props: { label: string; sublabel: string; color: string; ea
           alignItems: "center",
           justifyContent: "center",
           fontWeight: 800,
-          fontSize: 15,
+          fontSize: 16,
           color: props.earned ? (darkText ? "#1a1626" : "#fff") : "#6a6580",
           background: props.earned ? props.color : "transparent",
           border: props.earned ? `2px solid ${props.color}` : "2px dashed #3a3550",
@@ -99,7 +99,7 @@ function Collectible(props: { label: string; sublabel: string; color: string; ea
       >
         {props.earned ? props.label : "?"}
       </Box>
-      <Text fz={10} ta="center" lineClamp={1} c={props.earned ? "rgba(255,255,255,0.8)" : "dimmed"}>
+      <Text fz={14} ta="center" lineClamp={1} c={props.earned ? "rgba(255,255,255,0.8)" : "dimmed"}>
         {props.earned ? props.sublabel : "locked"}
       </Text>
     </Stack>
@@ -130,28 +130,28 @@ function ProgressHero(props: {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 28,
+              fontSize: 32,
               flexShrink: 0,
             }}
           >
             {props.icon}
           </Box>
           <Box style={{ minWidth: 0 }}>
-            <Text fz={11} fw={800} c="grape.3" tt="uppercase" style={{ letterSpacing: 1 }}>
+            <Text fz={14} fw={800} c="grape.3" tt="uppercase" style={{ letterSpacing: 1 }}>
               {props.eyebrow}
             </Text>
-            <Text fz={24} fw={800} c="white" lineClamp={1}>
+            <Text fz={28} fw={800} c="white" lineClamp={1}>
               {props.title}
             </Text>
           </Box>
         </Group>
         <Box ta="right">
-          <Text fz={11} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
+          <Text fz={14} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
             Progress
           </Text>
-          <Text fz={22} fw={800} c="white">
+          <Text fz={26} fw={800} c="white">
             {props.cleared}{" "}
-            <Text span c="dimmed" fz={15} fw={600}>
+            <Text span c="dimmed" fz={16} fw={600}>
               / {props.total} cleared
             </Text>
           </Text>
@@ -162,7 +162,7 @@ function ProgressHero(props: {
 
       <Flex mt="lg" gap="lg" direction={{ base: "column", md: "row" }} align="flex-start">
         <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
-          <Text fz={11} fw={700} c="dimmed" tt="uppercase" mb={12} style={{ letterSpacing: 1 }}>
+          <Text fz={14} fw={700} c="dimmed" tt="uppercase" mb={12} style={{ letterSpacing: 1 }}>
             {props.collectibleLabel}
           </Text>
           <Group gap={12} style={{ rowGap: 14 }}>
@@ -181,11 +181,11 @@ function ProgressHero(props: {
         >
           <Group gap={6} mb={6}>
             <IconStar size={16} color="#F5C842" />
-            <Text fz={12} fw={800} c="#F5C842" tt="uppercase" style={{ letterSpacing: 0.5 }}>
+            <Text fz={14} fw={800} c="#F5C842" tt="uppercase" style={{ letterSpacing: 0.5 }}>
               Final Prize
             </Text>
           </Group>
-          <Text fz={13} c="rgba(255,255,255,0.85)">
+          <Text fz={14} c="rgba(255,255,255,0.85)">
             {props.finalPrize}
           </Text>
         </Box>
@@ -229,7 +229,7 @@ function TimelineNode(props: { order: number; state: NodeState; color: string })
         ) : available ? (
           <IconStar size={26} color={color} fill={color} />
         ) : (
-          <Text fz={20} fw={800} c="#6a6580">
+          <Text fz={24} fw={800} c="#6a6580">
             {props.order}
           </Text>
         )}
@@ -251,7 +251,7 @@ function TimelineNode(props: { order: number; state: NodeState; color: string })
           justifyContent: "center",
         }}
       >
-        <Text fz={11} fw={700} c="white">
+        <Text fz={14} fw={700} c="white">
           {props.order}
         </Text>
       </Box>
@@ -265,7 +265,7 @@ function TimelineNode(props: { order: number; state: NodeState; color: string })
             background: "#F5C842",
           }}
         >
-          <Text fz={9} fw={800} c="#1a1626" tt="uppercase">
+          <Text fz={14} fw={800} c="#1a1626" tt="uppercase">
             Here
           </Text>
         </Box>
@@ -307,7 +307,7 @@ function TimelineItem(props: { stage: Stage } & StageRequestProps) {
       >
         <Group gap={8} mb={8}>
           <Text
-            fz={10}
+            fz={14}
             fw={800}
             tt="uppercase"
             px={8}
@@ -317,29 +317,29 @@ function TimelineItem(props: { stage: Stage } & StageRequestProps) {
             {stage.kind}
           </Text>
           {cleared && (
-            <Text fz={11} fw={700} c="#7CD992" tt="uppercase">
+            <Text fz={14} fw={700} c="#7CD992" tt="uppercase">
               &#10003; Cleared
             </Text>
           )}
           {available && (
-            <Text fz={11} fw={800} c="grape.3" tt="uppercase">
+            <Text fz={14} fw={800} c="grape.3" tt="uppercase">
               &#9654; Your next battle
             </Text>
           )}
           {locked && (
-            <Text fz={11} fw={700} c="dimmed" tt="uppercase">
+            <Text fz={14} fw={700} c="dimmed" tt="uppercase">
               Locked
             </Text>
           )}
         </Group>
 
         <Group gap={8} mb={6} wrap="nowrap">
-          <Text fz={20} fw={800} c="white" lineClamp={1}>
+          <Text fz={24} fw={800} c="white" lineClamp={1}>
             {stage.title}
           </Text>
           {stage.type && (
             <Text
-              fz={11}
+              fz={14}
               fw={700}
               px={8}
               py={2}
@@ -350,7 +350,7 @@ function TimelineItem(props: { stage: Stage } & StageRequestProps) {
           )}
         </Group>
 
-        <Text fz={13} c="dimmed" mb={!locked ? 12 : 0}>
+        <Text fz={14} c="dimmed" mb={!locked ? 12 : 0}>
           {stage.desc}
         </Text>
 
@@ -360,7 +360,7 @@ function TimelineItem(props: { stage: Stage } & StageRequestProps) {
               <Button variant="default" radius="xl" disabled w="fit-content">
                 Challenge requested
               </Button>
-              <Text fz={12} c="gold.1" role="status" aria-live="polite">
+              <Text fz={14} c="gold.1" role="status" aria-live="polite">
                 Your challenge has been requested. Please wait until an admin accepts it and
                 sets up your thread.
               </Text>
@@ -380,7 +380,7 @@ function TimelineItem(props: { stage: Stage } & StageRequestProps) {
                   Go to your challenge thread
                 </Button>
               ) : (
-                <Text fz={12} c="teal.3" role="status" aria-live="polite">
+                <Text fz={14} c="teal.3" role="status" aria-live="polite">
                   Accepted! An admin is setting up your thread; watch your notifications.
                 </Text>
               )}
@@ -400,7 +400,7 @@ function TimelineItem(props: { stage: Stage } & StageRequestProps) {
                 Start this Challenge
               </Button>
               {!signedIn && (
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Sign in to request this challenge.
                 </Text>
               )}
@@ -566,7 +566,7 @@ function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress }
 
   if (!regions.length) {
     return (
-      <Text fz={13} c="dimmed" ta="center" py={30}>
+      <Text fz={14} c="dimmed" ta="center" py={30}>
         Regions are being set up. Check back soon.
       </Text>
     );
@@ -581,7 +581,7 @@ function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress }
   return (
     <Stack gap={0}>
       <Group gap={8} wrap="wrap" mb="lg" role="tablist" aria-label="Select a region">
-        <Text fz={11} fw={700} c="dimmed" tt="uppercase" mr={4} style={{ letterSpacing: 1 }}>
+        <Text fz={14} fw={700} c="dimmed" tt="uppercase" mr={4} style={{ letterSpacing: 1 }}>
           Region
         </Text>
         {regions.map((r) => (
@@ -634,7 +634,7 @@ function IslandTrialsTab(props: { trials: IslandTrial[]; progress: ChallengeProg
 
   if (!trials.length) {
     return (
-      <Text fz={13} c="dimmed" ta="center" py={30}>
+      <Text fz={14} c="dimmed" ta="center" py={30}>
         Trials coming soon.
       </Text>
     );
@@ -696,23 +696,23 @@ interface TabRequestProps {
 function HowChallengesWork() {
   return (
     <Card bg="#141019" radius="lg" p="lg" withBorder style={{ borderColor: "#2a2637" }} mb="xl">
-      <Text fz={13} fw={800} c="white" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
+      <Text fz={14} fw={800} c="white" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
         How challenges work
       </Text>
       <Stack gap={6}>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           1. Press Start this Challenge on your next glowing stage. That sends a request to the
           admins and directors.
         </Text>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           2. An admin accepts your challenge and creates your thread in the forums. They lead the
           thread and guide you through what happens next.
         </Text>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           3. Roleplay the battle in that thread. When it wraps up, a grader marks the stage
           cleared here and your progress updates.
         </Text>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           The opposing team changes from person to person, so it stays hidden until your host
           reveals it in the thread.
         </Text>
@@ -816,7 +816,7 @@ export default function Challenges() {
                 radius="xl"
                 variant={active ? "gradient" : "default"}
                 gradient={{ from: "grape", to: "violet", deg: 90 }}
-                leftSection={<span style={{ fontSize: 15 }}>{t.icon}</span>}
+                leftSection={<span style={{ fontSize: 16 }}>{t.icon}</span>}
                 styles={active ? undefined : { root: { background: "rgba(0,0,0,0.25)", borderColor: "#4a4368", color: "#fff" } }}
               >
                 {t.label}

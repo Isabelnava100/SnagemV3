@@ -67,10 +67,10 @@ const SORTS: { key: SortKey; label: string }[] = [
 function Stat(props: { value: number | null; label: string }) {
   return (
     <Stack gap={0} align="center">
-      <Text c="white" fw={700} fz={16} lh={1.1}>
+      <Text c="white" fw={700} fz={20} lh={1.1}>
         {props.value ?? "-"}
       </Text>
-      <Text c="dimmed" fz={9} tt="uppercase" fw={600}>
+      <Text c="dimmed" fz={14} tt="uppercase" fw={600}>
         {props.label}
       </Text>
     </Stack>
@@ -99,11 +99,11 @@ function MemberGridCard({ member }: { member: MemberCard }) {
           {member.username.slice(0, 2).toUpperCase()}
         </Avatar>
         <Stack gap={0} align="center">
-          <Text c="white" fw={600} fz={16} lineClamp={1}>
+          <Text c="white" fw={600} fz={20} lineClamp={1}>
             {member.username || "Unnamed"}
           </Text>
           {role && (
-            <Text fz={10} fw={700} tt="uppercase" style={{ color: ROLE_COLOR[role], letterSpacing: 0.5 }}>
+            <Text fz={14} fw={700} tt="uppercase" style={{ color: ROLE_COLOR[role], letterSpacing: 0.5 }}>
               {role}
             </Text>
           )}
@@ -115,10 +115,10 @@ function MemberGridCard({ member }: { member: MemberCard }) {
               {member.featured.name.slice(0, 1)}
             </Avatar>
             <Box style={{ minWidth: 0 }}>
-              <Text c="dimmed" fz={8} tt="uppercase" fw={700}>
+              <Text c="dimmed" fz={14} tt="uppercase" fw={700}>
                 Featured
               </Text>
-              <Text c="white" fz={12} lineClamp={1}>
+              <Text c="white" fz={14} lineClamp={1}>
                 {member.featured.name}
               </Text>
             </Box>
@@ -132,7 +132,7 @@ function MemberGridCard({ member }: { member: MemberCard }) {
         </Group>
 
         {joined && (
-          <Text c="dimmed" fz={10} mt={2}>
+          <Text c="dimmed" fz={14} mt={2}>
             Joined {joined}
           </Text>
         )}
@@ -200,19 +200,19 @@ export default function Users() {
                   background: role === r ? "#8C2595" : "#2b2a2b",
                 }}
               >
-                <Text fz={12} fw={600} c={role === r ? "white" : "dimmed"}>
+                <Text fz={14} fw={600} c={role === r ? "white" : "dimmed"}>
                   {r}
                 </Text>
               </Box>
             ))}
           </Group>
           <Group gap={12}>
-            <Text fz={11} c="dimmed" tt="uppercase" fw={700}>
+            <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
               Sort
             </Text>
             {SORTS.map((s) => (
               <Box key={s.key} {...clickable(() => setSort(s.key))} aria-label={`Sort by ${s.label}`} style={{ cursor: "pointer" }}>
-                <Text fz={12} fw={600} c={sort === s.key ? "grape.2" : "dimmed"}>
+                <Text fz={14} fw={600} c={sort === s.key ? "grape.2" : "dimmed"}>
                   {s.label}
                 </Text>
               </Box>

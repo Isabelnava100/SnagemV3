@@ -130,7 +130,7 @@ export default function CharactersPanel(props: {
         {value.length ? (
           value.map((character) => (
             <Stack key={character.id} gap={6} mb={8}>
-              <Text c="white" fz={14}>
+              <Text c="white" fz={16}>
                 {character.name}
               </Text>
               <Group gap={6}>
@@ -141,7 +141,7 @@ export default function CharactersPanel(props: {
             </Stack>
           ))
         ) : (
-          <Text fz={13} c="dimmed">
+          <Text fz={14} c="dimmed">
             No characters were attached to this post.
           </Text>
         )}
@@ -155,7 +155,7 @@ export default function CharactersPanel(props: {
         {props.hint ??
           "Choose the characters you want to include in this post to make it clearer for everyone."}{" "}
         You can go{" "}
-        <ForumTextLink component={Link} to="/Dashboard/Characters" fz={11}>
+        <ForumTextLink component={Link} to="/Dashboard/Characters" fz={14}>
           here
         </ForumTextLink>{" "}
         to set up your characters.
@@ -171,17 +171,17 @@ export default function CharactersPanel(props: {
                   color="green.0"
                   checked={!!picked}
                   onChange={(e) => toggleCharacter(character.id, e.currentTarget.checked)}
-                  styles={{ label: { color: "white", fontSize: 14 } }}
+                  styles={{ label: { color: "white", fontSize: 16 } }}
                 />
                 {picked && (
                   <Stack gap={6} pl={30}>
                     {restrictTo ? (
-                      <Text fz={11} c="dimmed">
+                      <Text fz={14} c="dimmed">
                         You are locked to the team from your first post on this
                         thread. This is the team fighting with you here.
                       </Text>
                     ) : (
-                      <Text fz={11} c="dimmed">
+                      <Text fz={14} c="dimmed">
                         Select the team to use. Its Pokemon are the ones that earn
                         experience and rewards from this post.
                       </Text>
@@ -223,7 +223,7 @@ export default function CharactersPanel(props: {
                       .filter((m) => canEverEvolve(m))
                       .map((m) => (
                         <Group key={m.id} gap={8} wrap="nowrap" justify="space-between">
-                          <Text fz={12} c="white" truncate>
+                          <Text fz={14} c="white" truncate>
                             {m.species} · Lv {levelProgress(m.experience ?? 0).level}
                           </Text>
                           <EvolveButton pokemon={m} compact />
@@ -235,7 +235,7 @@ export default function CharactersPanel(props: {
             );
           })}
           {!characters?.sortedData.length && (
-            <Text fz={13} c="dimmed">
+            <Text fz={14} c="dimmed">
               You have no characters yet. Create them from your dashboard.
             </Text>
           )}

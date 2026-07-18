@@ -101,7 +101,7 @@ const BadgePill = React.forwardRef<
     style={{
       background,
       color: "white",
-      fontSize: 16,
+      fontSize: 20,
       fontWeight: 400,
       lineHeight: 1,
       padding: "7px 16px",
@@ -133,11 +133,11 @@ function BadgesSectionWrapper(props: {
   return (
     <Stack gap={12}>
       <Group align="center">
-        <Title size={24} c="white" fw={400} order={3}>
+        <Title size={28} c="white" fw={400} order={3}>
           {title}
         </Title>
         {secondaryText && (
-          <Text c="rgba(255, 255, 255, 0.50)" fz={16} fw={400}>
+          <Text c="rgba(255, 255, 255, 0.50)" fz={20} fw={400}>
             {secondaryText}
           </Text>
         )}
@@ -154,7 +154,7 @@ function BadgesSectionWrapper(props: {
           />
         ))}
         {!displayedBadges.length && (
-          <Text fz={13} c="dimmed">
+          <Text fz={14} c="dimmed">
             {showEnabledOnly ? "No badges inserted." : "Nothing here."}
           </Text>
         )}
@@ -209,10 +209,10 @@ function AutoBadges() {
   return (
     <Stack gap={8}>
       <Group gap={6} align="center">
-        <Title size={18} c="white" fw={400} order={4}>
+        <Title size={22} c="white" fw={400} order={4}>
           Earned Automatically
         </Title>
-        <Text c="rgba(255, 255, 255, 0.50)" fz={13}>
+        <Text c="rgba(255, 255, 255, 0.50)" fz={14}>
           from your account status
         </Text>
       </Group>
@@ -240,7 +240,7 @@ function AutoBadges() {
           );
         })}
       </Flex>
-      <Text c="rgba(255, 255, 255, 0.50)" fz={12}>
+      <Text c="rgba(255, 255, 255, 0.50)" fz={14}>
         Click a badge to hide it from your public profile (or show it again).
       </Text>
     </Stack>
@@ -318,7 +318,7 @@ function Badges() {
         )}
       </Flex>
       {toggleMutation.error && (
-        <Text fz={13} c="#E54156">
+        <Text fz={14} c="#E54156">
           {toggleMutation.error}
         </Text>
       )}
@@ -341,7 +341,7 @@ function Emojis() {
   return (
     <SimpleSectionWrapper>
       <Stack gap={18}>
-        <Title size={24} c="white" fw={400} order={3}>
+        <Title size={28} c="white" fw={400} order={3}>
           Your Emoji Collection
         </Title>
         {emojiIds.length ? (
@@ -403,18 +403,18 @@ function Emojis() {
                             alt={emoji.Name}
                           />
                         </Flex>
-                        <Title order={4} size={16} fw={600}>
+                        <Title order={4} size={20} fw={600}>
                           {emoji.Name}
                         </Title>
                       </Group>
                       <Stack gap={2}>
-                        <Text fz={12}>
+                        <Text fz={14}>
                           <b>Created:</b> {emoji.Description || "Snagem"}
                         </Text>
-                        <Text fz={12}>
+                        <Text fz={14}>
                           <b>Obtained from:</b> Manually assigned
                         </Text>
-                        <Text fz={12}>
+                        <Text fz={14}>
                           <b>Date obtained:</b> {obtainedDate}
                         </Text>
                       </Stack>
@@ -439,7 +439,7 @@ function EmojiCollection() {
   const userEmojiIds = data;
   return (
     <Stack gap={18}>
-      <Title size={24} c="white" fw={400} order={3}>
+      <Title size={28} c="white" fw={400} order={3}>
         Collection of All Emojis
       </Title>
       <Flex wrap="wrap" gap={8}>
@@ -500,10 +500,10 @@ function EmojiCollection() {
                       />
                     </Flex>
                     <Stack gap={0}>
-                      <Title order={4} size={16} fw={500}>
+                      <Title order={4} size={20} fw={500}>
                         {emoji.Name}
                       </Title>
-                      <Text fz={12}>{emoji.Description}</Text>
+                      <Text fz={14}>{emoji.Description}</Text>
                     </Stack>
                     <Box sx={{ flexShrink: 0 }}>
                       {existingEmoji ? (
@@ -514,10 +514,10 @@ function EmojiCollection() {
                     </Box>
                   </Flex>
                   <Stack gap={0}>
-                    <Title order={5} size={16} fw={600}>
+                    <Title order={5} size={20} fw={600}>
                       How to Obtain:
                     </Title>
-                    <List color="white" sx={{ fontSize: 16, color: "white", fontWeight: 400 }}>
+                    <List color="white" sx={{ fontSize: 20, color: "white", fontWeight: 400 }}>
                       <List.Item>Join before 2025</List.Item>
                       <List.Item>
                         Buy for {emoji.CoinCost} Snag Coins in the{" "}
@@ -554,7 +554,7 @@ function BadgesCollection() {
   return (
     <Stack gap={18}>
       <Stack gap={0}>
-        <Title size={24} c="white" fw={400} order={3}>
+        <Title size={28} c="white" fw={400} order={3}>
           Collection of All Badges
         </Title>
         <Text>Here&apos;s a list of all badges and how to obtain them.</Text>
@@ -580,20 +580,20 @@ function BadgesCollection() {
                 px={17}
               >
                 <Stack>
-                  <Text fz={14} fw={500}>
+                  <Text fz={16} fw={500}>
                     {badge.description}
                   </Text>
                   <Flex justify="space-between" align="center">
                     {existingUserBadge ? (
                       <>
-                        <Text fz={14} fw={500} c="#12B7B6">
+                        <Text fz={16} fw={500} c="#12B7B6">
                           You have this badge
                         </Text>
                         <Image src={CheckCircleIcon} alt="Check circle icon" w={22} h={22} fit="contain" />
                       </>
                     ) : (
                       <>
-                        <Text fz={14} fw={500} c="#E54156">
+                        <Text fz={16} fw={500} c="#E54156">
                           You don&apos;t have this badge
                         </Text>
                         <Image src={CrossCircleIcon} alt="Cross circle icon" w={22} h={22} fit="contain" />

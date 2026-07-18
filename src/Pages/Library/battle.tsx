@@ -16,10 +16,10 @@ import { useAuth } from "../../context/AuthContext";
 function Section(props: { title: string; children: React.ReactNode }) {
   return (
     <Stack gap={6}>
-      <Title order={3} c="white" size={18} fw={600}>
+      <Title order={3} c="white" size={22} fw={600}>
         {props.title}
       </Title>
-      <Box c="rgba(255,255,255,0.75)" fz={14} style={{ lineHeight: 1.7 }}>
+      <Box c="rgba(255,255,255,0.75)" fz={16} style={{ lineHeight: 1.7 }}>
         {props.children}
       </Box>
     </Stack>
@@ -61,7 +61,7 @@ export default function BattleGuideTab() {
           beat them to end the battle).
         </Text>
         <ScrollArea type="auto">
-          <Table withTableBorder withColumnBorders fz={13} miw={480}>
+          <Table withTableBorder withColumnBorders fz={14} miw={480}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Star</Table.Th>
@@ -82,7 +82,7 @@ export default function BattleGuideTab() {
             </Table.Tbody>
           </Table>
         </ScrollArea>
-        <Text mt={8} fz={13} c="dimmed">
+        <Text mt={8} fz={14} c="dimmed">
           A boss deals its species&apos; star damage unless the host set a custom
           value for that battle. A failed run-away wastes your turn: you land no
           damage and the enemy still hits you.
@@ -117,7 +117,7 @@ export default function BattleGuideTab() {
           its best matchup. The composer shows both multipliers before you post.
         </Text>
         <ScrollArea type="auto">
-          <Table withTableBorder withColumnBorders fz={10} miw={720}>
+          <Table withTableBorder withColumnBorders fz={14} miw={720}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Atk \ Def</Table.Th>

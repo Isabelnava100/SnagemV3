@@ -66,7 +66,7 @@ function GradientPanel(props: { title: string; gradient: string; children: React
   return (
     <Panel>
       <Box px="md" py={10} style={{ background: props.gradient }}>
-        <Text fw={800} c="white" fz={15}>
+        <Text fw={800} c="white" fz={16}>
           {props.title}
         </Text>
       </Box>
@@ -80,14 +80,14 @@ function LineList(props: { label: string; color: string; lines: string[] }) {
   return (
     <Panel>
       <Box p="md">
-        <Text fz={11} fw={800} tt="uppercase" c={props.color} mb={10} style={{ letterSpacing: 1 }}>
+        <Text fz={14} fw={800} tt="uppercase" c={props.color} mb={10} style={{ letterSpacing: 1 }}>
           {props.label}
         </Text>
         <Stack gap={8}>
           {props.lines.map((line, i) => (
             <Group key={i} gap={8} wrap="nowrap" align="flex-start">
               <IconArrowRight size={14} color={props.color} style={{ marginTop: 3, flexShrink: 0 }} />
-              <Text fz={14} c="gray.4">
+              <Text fz={16} c="gray.4">
                 {line}
               </Text>
             </Group>
@@ -103,10 +103,10 @@ function RewardRow(props: { icon: React.ReactNode; title: string; sub: string })
     <Group gap={12} wrap="nowrap" p={12} style={{ borderRadius: 10, background: "#0e0c14" }}>
       {props.icon}
       <Box style={{ minWidth: 0 }}>
-        <Text fz={14} fw={700} c="white" lineClamp={1}>
+        <Text fz={16} fw={700} c="white" lineClamp={1}>
           {props.title}
         </Text>
-        <Text fz={12} c="dimmed" lineClamp={1}>
+        <Text fz={14} c="dimmed" lineClamp={1}>
           {props.sub}
         </Text>
       </Box>
@@ -122,7 +122,7 @@ function CoinIcon() {
         background: "#F5C842", display: "flex", alignItems: "center", justifyContent: "center",
       }}
     >
-      <Text fz={15} fw={800} c="#3a2a05">
+      <Text fz={16} fw={800} c="#3a2a05">
         C
       </Text>
     </Box>
@@ -160,10 +160,10 @@ function EncountersPanel({ mission }: { mission: Mission }) {
   return (
     <Panel>
       <Box p="md">
-        <Text fz={11} fw={800} tt="uppercase" c="cyan.4" mb={8} style={{ letterSpacing: 1 }}>
+        <Text fz={14} fw={800} tt="uppercase" c="cyan.4" mb={8} style={{ letterSpacing: 1 }}>
           Possible Encounters
         </Text>
-        <Text fz={13} c="dimmed" mb={12}>
+        <Text fz={14} c="dimmed" mb={12}>
           You choose when to take on each opponent inside your thread.
           {required.size > 0 &&
             " The ones marked Required come from the briefing; beating them is the minimum to clear the mission."}
@@ -191,7 +191,7 @@ function EncountersPanel({ mission }: { mission: Mission }) {
                   fit="contain"
                 />
               </Box>
-              <Text fz={10} c="gray.4" ta="center" lineClamp={1} w="100%">
+              <Text fz={14} c="gray.4" ta="center" lineClamp={1} w="100%">
                 {pokemonNameBySlug.get(slug) ?? slug}
               </Text>
               {required.has(slug) && (
@@ -251,10 +251,10 @@ export default function MissionDetail() {
           </Button>
           <Panel>
             <Box p="lg">
-              <Text c="white" fw={800} fz={24} mb={8}>
+              <Text c="white" fw={800} fz={28} mb={8}>
                 Mission not found
               </Text>
-              <Text c="dimmed" fz={14}>
+              <Text c="dimmed" fz={16}>
                 This mission may have been retired or the link is out of date. Head back to the Vault
                 to pick another job.
               </Text>
@@ -295,7 +295,7 @@ export default function MissionDetail() {
           {mission.tier && (
             <Text
               display="inline-block"
-              fz={12}
+              fz={14}
               fw={700}
               c="#fff"
               px={12}
@@ -306,25 +306,25 @@ export default function MissionDetail() {
               {mission.tier}
             </Text>
           )}
-          <Text component="h1" c="white" fw={800} fz={{ base: 30, sm: 44 }} style={{ lineHeight: 1.05, margin: 0 }}>
+          <Text component="h1" c="white" fw={800} fz={{ base: 34, sm: 48 }} style={{ lineHeight: 1.05, margin: 0 }}>
             {mission.title}
           </Text>
           <Group gap={10} mt={12} wrap="wrap">
             {mission.location && (
               <Group gap={4} wrap="nowrap">
                 <IconMapPin size={15} color="#f76b1c" />
-                <Text fz={14} c="gray.3">
+                <Text fz={16} c="gray.3">
                   {mission.location}
                 </Text>
               </Group>
             )}
             {mission.location && mission.times_taken != null && (
-              <Text c="dimmed" fz={14}>
+              <Text c="dimmed" fz={16}>
                 &middot;
               </Text>
             )}
             {mission.times_taken != null && (
-              <Text fz={14} c="gray.3">
+              <Text fz={16} c="gray.3">
                 Taken {mission.times_taken}&times;
               </Text>
             )}
@@ -340,7 +340,7 @@ export default function MissionDetail() {
               {mission.story && (
                 <GradientPanel title="Briefing" gradient={BRIEF_GRADIENT}>
                   <Box
-                    fz={15}
+                    fz={16}
                     c="gray.3"
                     style={{ lineHeight: 1.7 }}
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(mission.story) }}
@@ -360,10 +360,10 @@ export default function MissionDetail() {
               {mission.pokemon_note && (
                 <Panel>
                   <Box p="md">
-                    <Text fz={11} fw={800} tt="uppercase" c="grape.3" mb={8} style={{ letterSpacing: 1 }}>
+                    <Text fz={14} fw={800} tt="uppercase" c="grape.3" mb={8} style={{ letterSpacing: 1 }}>
                       Pokemon Rules
                     </Text>
-                    <Text fz={14} c="gray.4">
+                    <Text fz={16} c="gray.4">
                       {mission.pokemon_note}
                     </Text>
                   </Box>
@@ -396,7 +396,7 @@ export default function MissionDetail() {
                     <RewardRow icon={<DotIcon color="#F5C842" />} title="Snag Emblem Piece" sub="if eligible" />
                   )}
                   {!mission.coins && !rewardLabel && !mission.special_item && !mission.emblem_eligible && (
-                    <Text fz={13} c="dimmed">
+                    <Text fz={14} c="dimmed">
                       Rewards set by the grader.
                     </Text>
                   )}
@@ -409,11 +409,11 @@ export default function MissionDetail() {
               >
                 <Group gap={6} mb={6}>
                   <IconSparkles size={15} color="#b197fc" />
-                  <Text fz={12} fw={800} c="grape.3" tt="uppercase" style={{ letterSpacing: 0.5 }}>
+                  <Text fz={14} fw={800} c="grape.3" tt="uppercase" style={{ letterSpacing: 0.5 }}>
                     Bonus
                   </Text>
                 </Group>
-                <Text fz={13} c="rgba(255,255,255,0.85)">
+                <Text fz={14} c="rgba(255,255,255,0.85)">
                   {mission.bonus || "Write it well, make it fun to read, and the grader tips extra."}
                 </Text>
               </Box>
@@ -434,11 +434,11 @@ export default function MissionDetail() {
                 Pick Up Mission
               </Button>
               {pickUpError && (
-                <Text fz={13} c="#E54156" ta="center" role="status" aria-live="polite">
+                <Text fz={14} c="#E54156" ta="center" role="status" aria-live="polite">
                   {pickUpError}
                 </Text>
               )}
-              <Text fz={12} c="dimmed" ta="center">
+              <Text fz={14} c="dimmed" ta="center">
                 {user
                   ? "Creates your roleplay thread in the Quests forum with this briefing preloaded. Play it out, then close the thread and it goes straight to the admins for grading."
                   : "Sign in to pick up this mission."}

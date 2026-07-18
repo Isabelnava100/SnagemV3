@@ -75,7 +75,7 @@ function BadgePreview(props: { name: string; background: string }) {
       style={{
         background: props.background,
         color: "white",
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: 400,
         lineHeight: 1,
         padding: "7px 16px",
@@ -167,7 +167,7 @@ export default function Badges() {
 
   return (
     <Stack gap={20} maw={620}>
-      <Title order={2} c="white" size={24} fw={400}>
+      <Title order={2} c="white" size={28} fw={400}>
         Badges
       </Title>
 
@@ -225,14 +225,14 @@ export default function Badges() {
               {colors.length === 1 ? "Add a second color (gradient)" : "Add a third color"}
             </Button>
           )}
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             One color is a solid badge. Two or three blend into a gradient, spaced
             evenly. Use the swatch to pick a color if you do not have the hex code.
           </Text>
         </Stack>
 
         <Group gap={10} align="center">
-          <Text fz={13} c="white">
+          <Text fz={14} c="white">
             Preview:
           </Text>
           <BadgePreview name={name} background={background} />
@@ -245,7 +245,7 @@ export default function Badges() {
           styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
         />
         {message && (
-          <Text fz={13} c={message.includes("Could not") || message.includes("Give") ? "#E54156" : "green.0"}>
+          <Text fz={14} c={message.includes("Could not") || message.includes("Give") ? "#E54156" : "green.0"}>
             {message}
           </Text>
         )}
@@ -283,7 +283,7 @@ export default function Badges() {
                   </Badge>
                 )}
                 {badge.description && (
-                  <Text fz={12} c="dimmed" lineClamp={1}>
+                  <Text fz={14} c="dimmed" lineClamp={1}>
                     {badge.description}
                   </Text>
                 )}
@@ -333,7 +333,7 @@ function DeleteBadge(props: { id: string }) {
       </Popover.Target>
       <Popover.Dropdown bg="#1E1D20">
         <Stack gap={10} maw={260}>
-          <Text c="white" fz={14}>
+          <Text c="white" fz={16}>
             Delete this badge from the catalog?
           </Text>
           <Checkbox
@@ -387,7 +387,7 @@ function AssignBadges(props: { catalog: BadgeDef[] }) {
       <Text c="white" fw={600}>
         Assign a badge to users
       </Text>
-      <Text fz={12} c="dimmed">
+      <Text fz={14} c="dimmed">
         Assigned badges arrive disabled. Each user enables them from Settings, Collections.
         Admin, Master, New User and Legacy are earned automatically and are not listed here.
       </Text>
@@ -427,7 +427,7 @@ function AssignBadges(props: { catalog: BadgeDef[] }) {
         </GradientButtonSecondary>
       </Group>
       {message && (
-        <Text fz={13} c={message.startsWith("Could not") ? "#E54156" : "green.0"}>
+        <Text fz={14} c={message.startsWith("Could not") ? "#E54156" : "green.0"}>
           {message}
         </Text>
       )}

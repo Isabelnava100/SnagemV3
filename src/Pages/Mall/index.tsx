@@ -115,22 +115,22 @@ const SCENT_RATES: Array<[string, string]> = [
 function RatePanel(props: { title: string; rows: Array<[string, string]>; note: string; valueColor: string }) {
   return (
     <Box p="lg" style={{ flex: "1 1 0%", minWidth: 0, borderRadius: 16, background: "#141019", border: "1px solid #232028" }}>
-      <Text fz={13} fw={800} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
+      <Text fz={14} fw={800} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
         {props.title}
       </Text>
       <Stack gap={0}>
         {props.rows.map(([label, value], i) => (
           <Group key={label} justify="space-between" wrap="nowrap" py={10} style={{ borderTop: i ? "1px solid #232028" : undefined }}>
-            <Text fz={14} c="gray.3">
+            <Text fz={16} c="gray.3">
               {label}
             </Text>
-            <Text fz={14} fw={800} c={props.valueColor}>
+            <Text fz={16} fw={800} c={props.valueColor}>
               {value}
             </Text>
           </Group>
         ))}
       </Stack>
-      <Text fz={12} c="dimmed" mt="md" pt="md" style={{ borderTop: "1px solid #232028" }}>
+      <Text fz={14} c="dimmed" mt="md" pt="md" style={{ borderTop: "1px solid #232028" }}>
         {props.note}
       </Text>
     </Box>
@@ -143,7 +143,7 @@ function StatusMessage(props: { children: React.ReactNode; color?: string }) {
     <Text
       role="status"
       aria-live="polite"
-      fz={13}
+      fz={14}
       c={props.color ?? "green"}
       mt={4}
     >
@@ -193,10 +193,10 @@ function ShopCard(props: { shop: Shop; index: number; onEnter: () => void }) {
       />
       {/* Signboard */}
       <Box px={12} py={10} style={{ background: "#181719" }}>
-        <Text fz={15} fw={700} c="white" lineClamp={1}>
+        <Text fz={16} fw={700} c="white" lineClamp={1}>
           {shop.name}
         </Text>
-        <Text fz={10} c="dimmed" tt="uppercase" fw={600}>
+        <Text fz={14} c="dimmed" tt="uppercase" fw={600}>
           {shop.type}
         </Text>
       </Box>
@@ -215,14 +215,14 @@ function ShopCard(props: { shop: Shop; index: number; onEnter: () => void }) {
         }}
       >
         {shop.npc_name && (
-          <Text fz={14} fw={700} c="white" ta="center" px={8}>
+          <Text fz={16} fw={700} c="white" ta="center" px={8}>
             {shop.npc_name}
           </Text>
         )}
       </Box>
       {/* Stats + enter */}
       <Stack gap={10} p={12}>
-        <Text fz={11} c="dimmed" ta="center">
+        <Text fz={14} c="dimmed" ta="center">
           {stats}
         </Text>
         <Button
@@ -353,14 +353,14 @@ function StoreBody(props: { shop: Shop; balance: number }) {
             />
           </Box>
           <Box style={{ minWidth: 0 }}>
-            <Text fz={15} fw={700} c="white" lineClamp={1}>
+            <Text fz={16} fw={700} c="white" lineClamp={1}>
               {resolved.name}
             </Text>
             <PriceBadge currency={shop.currency} value={item.price} />
           </Box>
         </Group>
         {item.description && (
-          <Text fz={13} c="dimmed" mb={12} lineClamp={2}>
+          <Text fz={14} c="dimmed" mb={12} lineClamp={2}>
             {item.description}
           </Text>
         )}
@@ -426,7 +426,7 @@ function StoreBody(props: { shop: Shop; balance: number }) {
 
       {sections.map((section) => (
         <Box key={section.title}>
-          <Text fz={13} fw={800} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
+          <Text fz={14} fw={800} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
             {section.title}
           </Text>
           <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 5 }} spacing="md">
@@ -440,11 +440,11 @@ function StoreBody(props: { shop: Shop; balance: number }) {
           <Group justify="space-between" align="center" mb="md" wrap="wrap">
             <Group gap={8}>
               <IconSparkles size={16} color="#F5C842" />
-              <Text fz={13} fw={800} c="#F5C842" tt="uppercase" style={{ letterSpacing: 2 }}>
+              <Text fz={14} fw={800} c="#F5C842" tt="uppercase" style={{ letterSpacing: 2 }}>
                 Today's Rare Wares
               </Text>
             </Group>
-            <Text fz={12} c="dimmed">
+            <Text fz={14} c="dimmed">
               Refreshes in {rareRefreshLabel()}
             </Text>
           </Group>
@@ -616,10 +616,10 @@ function RecycleItemsTab(props: {
                       h={44}
                       fit="contain"
                     />
-                    <Text fz={16} c="white" ta="center" lineClamp={1}>
+                    <Text fz={20} c="white" ta="center" lineClamp={1}>
                       {item.name}
                     </Text>
-                    <Text fz={14} c="dimmed" ta="center" tt="capitalize" lineClamp={1}>
+                    <Text fz={16} c="dimmed" ta="center" tt="capitalize" lineClamp={1}>
                       x{item.quantity}
                       {hint ? ` · ${hint}` : ""}
                     </Text>
@@ -638,10 +638,10 @@ function RecycleItemsTab(props: {
 
           <Card withBorder radius="md" p={12} bg="#181719">
             <Group justify="space-between">
-              <Text fz={13} c="dimmed">
+              <Text fz={14} c="dimmed">
                 {selected.length} selected (estimate)
               </Text>
-              <Text fz={15} fw={700} c="white">
+              <Text fz={16} fw={700} c="white">
                 ~ {payout} Snag Coins
               </Text>
             </Group>
@@ -711,10 +711,10 @@ function CandyToScentPanel() {
   return (
     <Stack gap={10}>
       <Box>
-        <Text fz={14} c="white" fw={600}>
+        <Text fz={16} c="white" fw={600}>
           Candy to Scent
         </Text>
-        <Text fz={12} c="dimmed">
+        <Text fz={14} c="dimmed">
           Spend a Pokemon's Evo Points for an aroma Scent (Joy 4, Excite 6, Vivid 8 each).
         </Text>
       </Box>
@@ -747,7 +747,7 @@ function CandyToScentPanel() {
           w={90}
         />
       </Group>
-      <Text fz={12} c="dimmed">
+      <Text fz={14} c="dimmed">
         Cost: {cost} Evo Points{selected ? ` · this Pokemon has ${have}` : ""}
       </Text>
       <Button
@@ -813,7 +813,7 @@ function TourBody() {
 
   return (
     <Box>
-      <Text fz={13} fw={800} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
+      <Text fz={14} fw={800} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
         Pick a biome &middot; 2 Snag Coins per roll
       </Text>
       <Flex gap="lg" direction={{ base: "column", md: "row" }} align="stretch">
@@ -836,17 +836,17 @@ function TourBody() {
                     border: `1px solid ${active ? "#3bc9db" : "#232028"}`,
                   }}
                 >
-                  <Text fz={30} mb={6}>
+                  <Text fz={34} mb={6}>
                     {a.emoji}
                   </Text>
-                  <Text fz={14} fw={700} c="white">
+                  <Text fz={16} fw={700} c="white">
                     {a.name}
                   </Text>
                 </Box>
               );
             })}
           </SimpleGrid>
-          <Text fz={12} c="dimmed" mt="md">
+          <Text fz={14} c="dimmed" mt="md">
             Every 4th roll is free &middot; roll a 7 for a bonus Rare Candy &middot; Apricorn picking: 6
             coins per mature tree.
           </Text>
@@ -857,10 +857,10 @@ function TourBody() {
           p="lg"
           style={{ flex: "1 1 0%", minWidth: 0, maxWidth: 360, borderRadius: 16, background: "#141019", border: "1px solid #232028", textAlign: "center" }}
         >
-          <Text fz={12} c="dimmed" tt="uppercase" mb={6} style={{ letterSpacing: 1 }}>
+          <Text fz={14} c="dimmed" tt="uppercase" mb={6} style={{ letterSpacing: 1 }}>
             Selected biome
           </Text>
-          <Text fz={22} fw={800} c="white" mb="md">
+          <Text fz={26} fw={800} c="white" mb="md">
             {area}
           </Text>
           <Box
@@ -881,23 +881,23 @@ function TourBody() {
                 fit="contain"
               />
             ) : (
-              <Text fz={40} c="dimmed">
+              <Text fz={44} c="dimmed">
                 ?
               </Text>
             )}
           </Box>
           {result && (
             <Box mb="md">
-              <Text fz={14} fw={700} c="white">
+              <Text fz={16} fw={700} c="white">
                 {result.item.name}
               </Text>
               {result.bonusRareCandy && (
-                <Text fz={12} c="gold.1">
+                <Text fz={14} c="gold.1">
                   Rare Candy bonus!
                 </Text>
               )}
               {result.free && (
-                <Text fz={12} c="green">
+                <Text fz={14} c="green">
                   free roll
                 </Text>
               )}
@@ -993,7 +993,7 @@ function EvoBody() {
         p="md"
         style={{ borderRadius: 12, background: "rgba(160,120,220,0.12)", border: "1px solid #3a3550" }}
       >
-        <Text fz={13} c="rgba(255,255,255,0.85)">
+        <Text fz={14} c="rgba(255,255,255,0.85)">
           <Text span fw={800} c="grape.3">
             Eligibility:{" "}
           </Text>
@@ -1004,7 +1004,7 @@ function EvoBody() {
 
       {!master ? (
         <Box p="md" style={{ borderRadius: 12, background: "#161319", border: "1px solid #232028" }}>
-          <Text fz={14} c="dimmed">
+          <Text fz={16} c="dimmed">
             You need the Master role to use E.V.O. Clear your first Master Mission and a director will
             promote you, then come back to loosen your restraints.
           </Text>
@@ -1044,16 +1044,16 @@ function EvoBody() {
                 {svc.icon}
               </Box>
               <Box style={{ minWidth: 0 }}>
-                <Text fz={16} fw={800} c="white">
+                <Text fz={20} fw={800} c="white">
                   {svc.title}
                 </Text>
-                <Text fz={13} c="dimmed" lineClamp={2}>
+                <Text fz={14} c="dimmed" lineClamp={2}>
                   {svc.desc}
                 </Text>
               </Box>
             </Group>
             <Group gap="md" wrap="nowrap" style={{ flexShrink: 0 }}>
-              <Text fz={14} fw={800} c="#F5C842" ta="right" style={{ whiteSpace: "nowrap" }}>
+              <Text fz={16} fw={800} c="#F5C842" ta="right" style={{ whiteSpace: "nowrap" }}>
                 {svc.price}
               </Text>
               <Button
@@ -1107,11 +1107,11 @@ function PriceBadge(props: { currency: Shop["currency"]; value: number | string 
           display: "flex", alignItems: "center", justifyContent: "center",
         }}
       >
-        <Text fz={11} fw={800} c="#fff">
+        <Text fz={14} fw={800} c="#fff">
           {b.letter}
         </Text>
       </Box>
-      <Text fz={14} fw={800} c="#F5C842">
+      <Text fz={16} fw={800} c="#F5C842">
         {props.value}
       </Text>
     </Group>
@@ -1149,17 +1149,17 @@ function ShopHeader(props: { shop: Shop; balance: number; onBack: () => void }) 
             />
             <Box style={{ minWidth: 0 }}>
               <Group gap={10} align="center" wrap="wrap">
-                <Text component="h1" c="white" fw={800} fz={{ base: 26, sm: 40 }} style={{ lineHeight: 1, margin: 0 }}>
+                <Text component="h1" c="white" fw={800} fz={{ base: 30, sm: 44 }} style={{ lineHeight: 1, margin: 0 }}>
                   {shop.name}
                 </Text>
                 {shop.type && (
-                  <Text fz={12} fw={700} c="rgba(255,255,255,0.8)" px={10} py={4} style={{ borderRadius: 999, background: "rgba(0,0,0,0.35)" }}>
+                  <Text fz={14} fw={700} c="rgba(255,255,255,0.8)" px={10} py={4} style={{ borderRadius: 999, background: "rgba(0,0,0,0.35)" }}>
                     {shop.type}
                   </Text>
                 )}
               </Group>
               {shop.npc_name && (
-                <Text fz={14} c="rgba(255,255,255,0.7)" mt={6}>
+                <Text fz={16} c="rgba(255,255,255,0.7)" mt={6}>
                   Kept by {shop.npc_name}
                 </Text>
               )}
@@ -1172,15 +1172,15 @@ function ShopHeader(props: { shop: Shop; balance: number; onBack: () => void }) 
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}
             >
-              <Text fz={16} fw={800} c="#fff">
+              <Text fz={20} fw={800} c="#fff">
                 {cb.letter}
               </Text>
             </Box>
             <Box>
-              <Text fz={22} fw={800} c="white" lh={1}>
+              <Text fz={26} fw={800} c="white" lh={1}>
                 {props.balance}
               </Text>
-              <Text fz={11} c="rgba(255,255,255,0.7)" tt="uppercase" mt={2}>
+              <Text fz={14} c="rgba(255,255,255,0.7)" tt="uppercase" mt={2}>
                 your {CURRENCY_LABEL[shop.currency]}
               </Text>
             </Box>
@@ -1197,7 +1197,7 @@ function FlavorCard(props: { html: string }) {
     <Box p="lg" style={{ borderRadius: 16, background: "#161319", border: "1px solid #232028" }}>
       <Box
         c="gray.4"
-        style={{ fontSize: 15, lineHeight: 1.6, fontStyle: "italic" }}
+        style={{ fontSize: 16, lineHeight: 1.6, fontStyle: "italic" }}
         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(props.html) }}
       />
     </Box>
@@ -1254,7 +1254,7 @@ function CurrencyChip(props: { badge: string; label: string; value: string }) {
           background: "rgba(255,255,255,0.9)",
           color: "#3a1d5c",
           fontWeight: 800,
-          fontSize: 12,
+          fontSize: 14,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -1264,10 +1264,10 @@ function CurrencyChip(props: { badge: string; label: string; value: string }) {
         {props.badge}
       </Box>
       <Box>
-        <Text fz={9} c="rgba(255,255,255,0.7)" tt="uppercase" fw={600} lh={1}>
+        <Text fz={14} c="rgba(255,255,255,0.7)" tt="uppercase" fw={600} lh={1}>
           {props.label}
         </Text>
-        <Text fz={14} fw={700} c="white" lh={1.1}>
+        <Text fz={16} fw={700} c="white" lh={1.1}>
           {props.value}
         </Text>
       </Box>
@@ -1322,7 +1322,7 @@ export default function Mall() {
           eyebrow={
             <Group gap={8}>
               <IconShoppingBag size={16} color="var(--mantine-color-grape-3)" />
-              <Text fz={12} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
+              <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
                 Snag Mall Storefronts &middot; Always Open
               </Text>
             </Group>

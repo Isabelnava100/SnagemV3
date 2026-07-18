@@ -95,7 +95,7 @@ export const App = memo(() => {
         {/* {!isOverMd &&
           (user ? (
             <Flex align="center" mih={65} px={17} justify="space-between" bg="#1E1E1E" w="100%">
-              <Title order={4} size={20} color="white">
+              <Title order={4} size={24} color="white">
                 Welcome, {user?.displayName}
               </Title>
               <ActionIcon variant="transparent" size={35} h="auto">

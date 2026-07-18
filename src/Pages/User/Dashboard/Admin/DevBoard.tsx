@@ -172,21 +172,21 @@ export default function DevBoard() {
   return (
     <Stack gap={20}>
       {error && (
-        <Text fz={13} c="red.4" role="status" aria-live="polite">
+        <Text fz={14} c="red.4" role="status" aria-live="polite">
           {error}
         </Text>
       )}
 
       <Stack gap={8}>
-        <Title order={3} c="white" size={18} fw={600}>
+        <Title order={3} c="white" size={22} fw={600}>
           Incoming from S.N.A.G. ({(incoming.data ?? []).length})
         </Title>
-        <Text fz={12} c="dimmed">
+        <Text fz={14} c="dimmed">
           Suggestions, bug reports and questions members sent through the help device.
           Promote the keepers into board tickets; discard the rest.
         </Text>
         {(incoming.data ?? []).length === 0 && (
-          <Text fz={13} c="dimmed">
+          <Text fz={14} c="dimmed">
             Nothing waiting. All clear.
           </Text>
         )}
@@ -201,11 +201,11 @@ export default function DevBoard() {
                 >
                   {TYPE_BADGE[item.type]?.label ?? item.type}
                 </Badge>
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   {item.actorName || "Unknown"} · {dateOf(item.createdAt?.seconds)}
                 </Text>
               </Group>
-              <Text fz={14} c="rgba(255,255,255,0.85)">
+              <Text fz={16} c="rgba(255,255,255,0.85)">
                 {item.text}
               </Text>
               <Group gap={8}>
@@ -236,11 +236,11 @@ export default function DevBoard() {
       </Stack>
 
       <Stack gap={8}>
-        <Title order={3} c="white" size={18} fw={600}>
+        <Title order={3} c="white" size={22} fw={600}>
           Tickets ({tickets.length})
         </Title>
         {tickets.length === 0 && (
-          <Text fz={13} c="dimmed">
+          <Text fz={14} c="dimmed">
             No open development tickets.
           </Text>
         )}
@@ -279,11 +279,11 @@ export default function DevBoard() {
                   </Button>
                 </Group>
               </Group>
-              <Text fz={14} fw={600} c="white">
+              <Text fz={16} fw={600} c="white">
                 {t.title}
               </Text>
               {t.body && t.body !== t.title && (
-                <Text fz={13} c="rgba(255,255,255,0.75)">
+                <Text fz={14} c="rgba(255,255,255,0.75)">
                   {t.body}
                 </Text>
               )}
@@ -294,10 +294,10 @@ export default function DevBoard() {
       </Stack>
 
       <Stack gap={8}>
-        <Title order={3} c="white" size={18} fw={600}>
+        <Title order={3} c="white" size={22} fw={600}>
           Admin Notes ({notes.length})
         </Title>
-        <Text fz={12} c="dimmed">
+        <Text fz={14} c="dimmed">
           Planning notes for the team: what is coming up, what you plan to do next.
           Visible to admins only.
         </Text>
@@ -329,11 +329,11 @@ export default function DevBoard() {
           card(
             <Stack gap={4}>
               <Group justify="space-between" wrap="wrap">
-                <Text fz={14} fw={600} c="white">
+                <Text fz={16} fw={600} c="white">
                   {n.title}
                 </Text>
                 <Group gap={8}>
-                  <Text fz={11} c="dimmed">
+                  <Text fz={14} c="dimmed">
                     {n.createdByName} · {dateOf(n.updatedAt?.seconds)}
                   </Text>
                   <Button
@@ -347,7 +347,7 @@ export default function DevBoard() {
                   </Button>
                 </Group>
               </Group>
-              <Text fz={13} c="rgba(255,255,255,0.75)" style={{ whiteSpace: "pre-wrap" }}>
+              <Text fz={14} c="rgba(255,255,255,0.75)" style={{ whiteSpace: "pre-wrap" }}>
                 {n.body}
               </Text>
             </Stack>,

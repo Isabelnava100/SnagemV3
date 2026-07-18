@@ -35,7 +35,7 @@ export function UsedItemsPanel(props: { items: ItemUsedBlock[] }) {
         {props.items.map((item, i) => (
           <Group key={`${item.itemId}${i}`} gap={8}>
             <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={24} />
-            <Text fz={13} c="white">
+            <Text fz={14} c="white">
               {item.name} x{item.qty}
             </Text>
           </Group>
@@ -112,10 +112,10 @@ export default function UseItemsPanel(props: {
         styles={{ input: { background: "#2E2D2E" } }}
       />
       <Flex justify="space-between" px={4} mb={4}>
-        <Text fz={11} fw={700} c="white" tt="uppercase">
+        <Text fz={14} fw={700} c="white" tt="uppercase">
           Items
         </Text>
-        <Text fz={11} fw={700} c="white" tt="uppercase">
+        <Text fz={14} fw={700} c="white" tt="uppercase">
           Qty to use
         </Text>
       </Flex>
@@ -133,7 +133,7 @@ export default function UseItemsPanel(props: {
                   <Flex justify="space-between" align="center" gap={8}>
                     <Group gap={6} wrap="nowrap">
                       <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={22} />
-                      <Text fz={13} c={blocked ? "dimmed" : "white"}>
+                      <Text fz={14} c={blocked ? "dimmed" : "white"}>
                         {item.name} x{item.quantity}
                       </Text>
                     </Group>
@@ -162,7 +162,7 @@ export default function UseItemsPanel(props: {
               );
             })}
           {!shownItems.length && (
-            <Text fz={13} c="dimmed" p={6}>
+            <Text fz={14} c="dimmed" p={6}>
               {!ownedItems.length
                 ? "Your bag is empty."
                 : "No items match your search."}
@@ -175,14 +175,14 @@ export default function UseItemsPanel(props: {
         <Stack gap={6} mt={10} p={10} bg="#211f21" style={{ borderRadius: 8 }}>
           <Group gap={6} wrap="nowrap">
             <IconAlertTriangle size={16} color="#f0a500" />
-            <Text fz={12} fw={700} c="white">
+            <Text fz={14} fw={700} c="white">
               These items will be used up in your post
             </Text>
           </Group>
           {usedSummary.map(({ selection, item }) => (
             <Group key={selection.itemId} gap={8} wrap="nowrap">
               <Avatar src={getItemImageURL(item!.filePath)} alt={item!.name} size={22} />
-              <Text fz={13} c="white">
+              <Text fz={14} c="white">
                 {item!.name} x{selection.qty}
               </Text>
             </Group>

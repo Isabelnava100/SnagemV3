@@ -273,14 +273,14 @@ export default function HostMenu() {
                   </Group>
                 </Radio.Group>
               )}
-              <Text fz={13} c="dimmed" fs="italic">
+              <Text fz={14} c="dimmed" fs="italic">
                 Location: {forum.replace(/-/g, " ")}
               </Text>
 
               <Divider color="#4a464a" />
 
               <Box>
-                <Text fz={12} fw={700} c="white" tt="uppercase">
+                <Text fz={14} fw={700} c="white" tt="uppercase">
                   Restrictions
                 </Text>
                 <PanelHint>
@@ -312,7 +312,7 @@ export default function HostMenu() {
               <Divider color="#4a464a" />
 
               <Box>
-                <Text fz={12} fw={700} c="white" tt="uppercase">
+                <Text fz={14} fw={700} c="white" tt="uppercase">
                   Tags
                 </Text>
                 <PanelHint>
@@ -347,7 +347,7 @@ export default function HostMenu() {
                 color="green.0"
                 checked={useDefaultXp}
                 onChange={(e) => setUseDefaultXp(e.currentTarget.checked)}
-                styles={{ label: { color: "white", fontSize: 13 } }}
+                styles={{ label: { color: "white", fontSize: 14 } }}
               />
             </ForumPanel>
           )}
@@ -381,7 +381,7 @@ export default function HostMenu() {
           <ForumPanel title="Boss Battle">
             {activeBoss ? (
               <Stack gap={10}>
-                <Text fz={18} c="white">
+                <Text fz={22} c="white">
                   It&apos;s a Boss Battle!
                 </Text>
                 <Avatar src={getPokemonImageURL(activeBoss.slug)} alt={`${activeBoss.name} sprite`} size={72} radius="xl" />
@@ -434,7 +434,7 @@ export default function HostMenu() {
                   styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
                 />
                 <Box>
-                  <Text fz={12} fw={700} c="white">
+                  <Text fz={14} fw={700} c="white">
                     Exclude
                   </Text>
                   <PanelHint>
@@ -466,12 +466,12 @@ export default function HostMenu() {
           )}
 
           {saved && (
-            <Text fz={13} c="green.0" role="status" aria-live="polite">
+            <Text fz={14} c="green.0" role="status" aria-live="polite">
               Changes saved.
             </Text>
           )}
           {saveError && (
-            <Text fz={13} c="red.4" role="status" aria-live="polite">
+            <Text fz={14} c="red.4" role="status" aria-live="polite">
               {saveError}
             </Text>
           )}

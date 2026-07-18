@@ -62,7 +62,7 @@ function Eyebrow({ color }: { color: string }) {
   return (
     <Group gap={8} mb={10}>
       <IconDiamond size={12} color={color} fill={color} />
-      <Text fz={12} fw={700} c={color} style={{ letterSpacing: 3 }}>
+      <Text fz={14} fw={700} c={color} style={{ letterSpacing: 3 }}>
         SNAGEM RESEARCH FACILITY &nbsp;&middot;&nbsp; CLEARANCE &#937;
       </Text>
     </Group>
@@ -114,7 +114,7 @@ function AccessBadge({ granted }: { granted: boolean }) {
   return (
     <Text
       display="inline-block"
-      fz={13}
+      fz={14}
       fw={800}
       tt="uppercase"
       px={14}
@@ -136,7 +136,7 @@ function AccessBadge({ granted }: { granted: boolean }) {
 function SectionLabel({ children, color = "#F5C842" }: { children: React.ReactNode; color?: string }) {
   return (
     <Group gap={12} align="center" mb="md">
-      <Text fz={13} fw={700} c={color} style={{ letterSpacing: 3 }}>
+      <Text fz={14} fw={700} c={color} style={{ letterSpacing: 3 }}>
         {children}
       </Text>
       <Box style={{ flex: 1, height: 1, background: "#232028" }} />
@@ -216,7 +216,7 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
     <Stack gap={44}>
       <Box>
         <SectionLabel>ASCENDING BENEFITS</SectionLabel>
-        <Text fz={15} c="gray.4" mb="lg">
+        <Text fz={16} c="gray.4" mb="lg">
           Mastery isn't just a badge, it's a whole tier of the game that stays sealed until you earn
           it. This is what waits inside.
         </Text>
@@ -249,10 +249,10 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
                   {b.icon}
                 </Box>
                 <Box style={{ minWidth: 0 }}>
-                  <Text fz={19} fw={800} c="white" mb={6}>
+                  <Text fz={23} fw={800} c="white" mb={6}>
                     {b.title}
                   </Text>
-                  <Text fz={14} c="gray.5">
+                  <Text fz={16} c="gray.5">
                     {b.body}
                   </Text>
                 </Box>
@@ -264,7 +264,7 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
 
       <Box>
         <SectionLabel color="#b197fc">HOW TO EARN ACCESS</SectionLabel>
-        <Text fz={15} c="gray.4" mb="lg">
+        <Text fz={16} c="gray.4" mb="lg">
           Four steps stand between you and the Ascension Track. None can be skipped, that's the point.
         </Text>
         <Box style={{ position: "relative" }}>
@@ -283,7 +283,7 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
                     flexShrink: 0,
                   }}
                 >
-                  <Text fz={22} fw={800} c="white">
+                  <Text fz={26} fw={800} c="white">
                     {i + 1}
                   </Text>
                 </Box>
@@ -291,10 +291,10 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
                   p="md"
                   style={{ flex: 1, borderRadius: 14, background: PANEL, border: `1px solid ${PANEL_BORDER}` }}
                 >
-                  <Text fz={18} fw={800} c="white" mb={4}>
+                  <Text fz={22} fw={800} c="white" mb={4}>
                     {s.title}
                   </Text>
-                  <Text fz={14} c="gray.5">
+                  <Text fz={16} c="gray.5">
                     {s.body}
                   </Text>
                 </Box>
@@ -307,10 +307,10 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
       <Box p="lg" style={{ borderRadius: 18, background: "#120f1c", border: "1px solid #2a2440" }}>
         <Flex gap="xl" direction={{ base: "column", md: "row" }} justify="space-between">
           <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
-            <Text fz={26} fw={800} c="white" mb={4}>
+            <Text fz={30} fw={800} c="white" mb={4}>
               Are you ready?
             </Text>
-            <Text fz={14} c="gray.5" mb="lg">
+            <Text fz={16} c="gray.5" mb="lg">
               Check yourself against the entry requirements, then request a clearance review.
             </Text>
             <Stack gap="md">
@@ -330,10 +330,10 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
                     )}
                   </Box>
                   <Box>
-                    <Text fz={15} fw={700} c="white">
+                    <Text fz={16} fw={700} c="white">
                       {c.title}
                     </Text>
-                    <Text fz={13} c="gray.5">
+                    <Text fz={14} c="gray.5">
                       {c.body}
                     </Text>
                   </Box>
@@ -344,11 +344,11 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
 
           <Stack gap={12} align="flex-end" justify="flex-start" style={{ flexShrink: 0 }}>
             {props.alreadyCleared ? (
-              <Text fz={14} c="teal.3" ta="right" role="status" aria-live="polite">
+              <Text fz={16} c="teal.3" ta="right" role="status" aria-live="polite">
                 This character already holds master clearance.
               </Text>
             ) : props.requestPending ? (
-              <Text fz={14} c="gold.1" ta="right" role="status" aria-live="polite" maw={320}>
+              <Text fz={16} c="gold.1" ta="right" role="status" aria-live="polite" maw={320}>
                 Clearance review requested. An admin will review your character and open the
                 console once approved.
               </Text>
@@ -375,18 +375,18 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
                   Request Clearance Review
                 </Button>
                 {!props.characterSelected && (
-                  <Text fz={12} c="dimmed" ta="right">
+                  <Text fz={14} c="dimmed" ta="right">
                     Pick a character above to request a review.
                   </Text>
                 )}
               </>
             )}
             {props.requestStatus && (
-              <Text fz={13} c="grape.3" ta="right" role="status" aria-live="polite">
+              <Text fz={14} c="grape.3" ta="right" role="status" aria-live="polite">
                 {props.requestStatus}
               </Text>
             )}
-            <Text fz={13} c="dimmed" ta="right">
+            <Text fz={14} c="dimmed" ta="right">
               An admin gets notified the moment you ask. Progress is earned.
             </Text>
             <Button variant="subtle" color="grape" size="sm" onClick={props.onPreview}>
@@ -437,14 +437,14 @@ function DossierStat(props: { label: string; value: React.ReactNode; sub?: strin
         border: `1px solid ${props.highlight ? "#2f7d4f" : PANEL_BORDER}`,
       }}
     >
-      <Text fz={11} fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: 1.5 }}>
+      <Text fz={14} fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: 1.5 }}>
         {props.label}
       </Text>
-      <Text fz={22} fw={800} c={props.highlight ? "#69db7c" : "white"} lh={1.1}>
+      <Text fz={26} fw={800} c={props.highlight ? "#69db7c" : "white"} lh={1.1}>
         {props.value}
       </Text>
       {props.sub && (
-        <Text fz={12} c="dimmed" mt={4}>
+        <Text fz={14} c="dimmed" mt={4}>
           {props.sub}
         </Text>
       )}
@@ -484,27 +484,27 @@ function PhaseCard(props: { n: number; title: string; body: string; state: Phase
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
         >
-          <Text fz={14} fw={800} c={props.state === "sealed" ? "#6a6580" : "white"}>
+          <Text fz={16} fw={800} c={props.state === "sealed" ? "#6a6580" : "white"}>
             {props.n}
           </Text>
         </Box>
-        <Text fz={16} fw={800} c="white">
+        <Text fz={20} fw={800} c="white">
           {props.title}
         </Text>
       </Group>
-      <Text fz={13} c="gray.5" mb={10}>
+      <Text fz={14} c="gray.5" mb={10}>
         {props.body}
       </Text>
       {done ? (
-        <Text fz={11} fw={800} c="#69db7c" tt="uppercase">
+        <Text fz={14} fw={800} c="#69db7c" tt="uppercase">
           &#10003; Done
         </Text>
       ) : current ? (
-        <Text fz={11} fw={800} c="grape.3" tt="uppercase">
+        <Text fz={14} fw={800} c="grape.3" tt="uppercase">
           &#9654; In progress
         </Text>
       ) : (
-        <Text fz={11} fw={700} c="dimmed" tt="uppercase">
+        <Text fz={14} fw={700} c="dimmed" tt="uppercase">
           Sealed
         </Text>
       )}
@@ -534,13 +534,13 @@ function OverviewTab(props: {
   return (
     <Stack gap="xl">
       <Box p="lg" style={{ borderRadius: 16, background: "#101820", border: "1px solid #1c2a2a" }}>
-        <Text fz={12} fw={700} c="teal.3" tt="uppercase" mb={8} style={{ letterSpacing: 2 }}>
+        <Text fz={14} fw={700} c="teal.3" tt="uppercase" mb={8} style={{ letterSpacing: 2 }}>
           Welcome, Operative
         </Text>
-        <Text fz={26} fw={800} c="white" mb={8}>
+        <Text fz={30} fw={800} c="white" mb={8}>
           Your dossier is active.
         </Text>
-        <Text fz={14} c="gray.4" maw={720}>
+        <Text fz={16} c="gray.4" maw={720}>
           The path to mastery is three phases: transform, master ten abilities, then face the Grand
           Master. Track your ascension below; explore the Divisions and classified Chambers when
           you're ready.
@@ -593,22 +593,22 @@ function DivisionPanel(props: {
       style={{ flex: "1 1 440px", minWidth: 0, borderRadius: 16, overflow: "hidden", border: `1px solid ${props.accent}55` }}
     >
       <Box px="lg" py="md" style={{ background: `linear-gradient(135deg, ${props.accent}44, ${props.accent}11)` }}>
-        <Text fz={11} fw={700} c="rgba(255,255,255,0.7)" tt="uppercase" style={{ letterSpacing: 2 }}>
+        <Text fz={14} fw={700} c="rgba(255,255,255,0.7)" tt="uppercase" style={{ letterSpacing: 2 }}>
           Division {props.numeral}
         </Text>
-        <Text fz={24} fw={800} c="white">
+        <Text fz={28} fw={800} c="white">
           {props.title}
         </Text>
       </Box>
       <Box p="lg" style={{ background: PANEL }}>
-        <Text fz={15} c="gray.3" mb="md">
+        <Text fz={16} c="gray.3" mb="md">
           {props.intro}
         </Text>
         <Stack gap="md">
           {props.rows.map((r) => (
             <Group key={r.tag} gap={12} wrap="nowrap" align="flex-start">
               <Text
-                fz={11}
+                fz={14}
                 fw={700}
                 tt="uppercase"
                 px={8}
@@ -617,7 +617,7 @@ function DivisionPanel(props: {
               >
                 {r.tag}
               </Text>
-              <Text fz={14} c="gray.4">
+              <Text fz={16} c="gray.4">
                 {r.text}
               </Text>
             </Group>
@@ -631,7 +631,7 @@ function DivisionPanel(props: {
 function DivisionsTab() {
   return (
     <Stack gap="lg">
-      <Text fz={15} c="gray.4">
+      <Text fz={16} c="gray.4">
         To enter the Facility you must first become something more. Two doors, one choice, and it
         cannot be undone. Both progress the same way: ten Master Missions, ten abilities, one Grand
         Master trial.
@@ -711,13 +711,13 @@ function ChambersTab(props: {
         >
           {p.icon}
         </Box>
-        <Text fz={18} fw={800} c="white">
+        <Text fz={22} fw={800} c="white">
           {p.title}
         </Text>
       </Group>
       {p.children}
       <Text
-        fz={11}
+        fz={14}
         fw={800}
         tt="uppercase"
         mt={14}
@@ -733,7 +733,7 @@ function ChambersTab(props: {
 
   return (
     <Stack gap="lg">
-      <Text fz={15} c="gray.4" maw={820}>
+      <Text fz={16} c="gray.4" maw={820}>
         Sealed rooms deeper in the Facility. Some open with a fee, some only after the Grand Master,
         and one is <Text span c="#ff8787">classified</Text>, entered in-character, by request only.
       </Text>
@@ -746,12 +746,12 @@ function ChambersTab(props: {
           badgeColor="#63e6be"
           borderColor="#2f4a3a"
         >
-          <Text fz={14} c="gray.5">
+          <Text fz={16} c="gray.5">
             Bring an Old Amber, Helix, Sail, Skull or Root Fossil and an empty Poke Ball. Pay the fee;
             walk out with a revived Pokemon.
           </Text>
           {!props.canAct ? (
-            <Text fz={13} c="dimmed" mt={12}>
+            <Text fz={14} c="dimmed" mt={12}>
               Master clearance required to operate this chamber.
             </Text>
           ) : props.fossilItems.length ? (
@@ -768,13 +768,13 @@ function ChambersTab(props: {
                 Revive
               </Button>
               {status && (
-                <Text fz={13} c="gray.3" role="status" aria-live="polite">
+                <Text fz={14} c="gray.3" role="status" aria-live="polite">
                   {status}
                 </Text>
               )}
             </Stack>
           ) : (
-            <Text fz={13} c="dimmed" mt={12}>
+            <Text fz={14} c="dimmed" mt={12}>
               You have no revivable fossils in your bag yet.
             </Text>
           )}
@@ -788,7 +788,7 @@ function ChambersTab(props: {
           badgeColor="#b197fc"
           borderColor="#3a2f55"
         >
-          <Text fz={14} c="gray.5">
+          <Text fz={16} c="gray.5">
             Earn a Key Stone at the Tower of Mastery and a Sparkling Stone from the Tapu trials. One or
             the other per mission, never both.
           </Text>
@@ -802,7 +802,7 @@ function ChambersTab(props: {
           badgeColor="#ff8787"
           borderColor="#4a2a2e"
         >
-          <Text fz={14} c="gray.5">
+          <Text fz={16} c="gray.5">
             The only path to Legendary capture and Legendary hybrids. No costs, no tiers, a bespoke,
             story-driven mission authored by an admin. Enter in-character.
           </Text>
@@ -855,7 +855,7 @@ function AscensionTab(props: {
     <Stack gap="lg">
       <Group justify="space-between" align="center" wrap="wrap" gap="md">
         <Group gap={12} align="center" wrap="wrap">
-          <Text fz={12} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 2 }}>
+          <Text fz={14} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 2 }}>
             Tracking Type
           </Text>
           <Group gap={6}>
@@ -865,7 +865,7 @@ function AscensionTab(props: {
                 <Text
                   key={t}
                   onClick={typeOptions.length > 1 ? () => setType(t) : undefined}
-                  fz={13}
+                  fz={14}
                   fw={800}
                   px={14}
                   py={4}
@@ -884,8 +884,8 @@ function AscensionTab(props: {
           </Group>
         </Group>
         <Group gap={14} align="center" style={{ flex: "1 1 240px", minWidth: 200, justifyContent: "flex-end" }}>
-          <Text fz={15} c="gray.4">
-            <Text span fz={26} fw={800} c="white">
+          <Text fz={16} c="gray.4">
+            <Text span fz={30} fw={800} c="white">
               {completed}
             </Text>{" "}
             / {MISSIONS_PER_TYPE} abilities
@@ -896,7 +896,7 @@ function AscensionTab(props: {
         </Group>
       </Group>
 
-      <Text fz={14} c="gray.5" maw={860}>
+      <Text fz={16} c="gray.5" maw={860}>
         Ten missions, ten abilities, each one <Text span c="#b197fc">encrypted</Text> until the mission
         before it is cleared. Request the next from the board; an admin authors your bespoke RP thread.
       </Text>
@@ -929,34 +929,34 @@ function AscensionTab(props: {
                       border: available ? "1px solid #7c5cff" : "none",
                     }}
                   >
-                    <Text fz={18} fw={800} c={cleared || available ? "#fff" : "#4a4560"}>
+                    <Text fz={22} fw={800} c={cleared || available ? "#fff" : "#4a4560"}>
                       {num}
                     </Text>
                   </Box>
                   <Box style={{ minWidth: 0 }}>
                     <Group gap={8} mb={2}>
-                      <Text fz={11} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
+                      <Text fz={14} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
                         Mission {num}
                       </Text>
                       {cleared ? (
-                        <Text fz={11} fw={800} c="#69db7c" tt="uppercase">
+                        <Text fz={14} fw={800} c="#69db7c" tt="uppercase">
                           &#10003; Cleared
                         </Text>
                       ) : available ? (
-                        <Text fz={11} fw={800} c="grape.3" tt="uppercase">
+                        <Text fz={14} fw={800} c="grape.3" tt="uppercase">
                           &#9654; Available
                         </Text>
                       ) : (
                         <Group gap={4} wrap="nowrap">
                           <IconLock size={12} color="#8a83a0" />
-                          <Text fz={11} fw={800} c="dimmed" tt="uppercase">
+                          <Text fz={14} fw={800} c="dimmed" tt="uppercase">
                             Encrypted
                           </Text>
                         </Group>
                       )}
                     </Group>
                     {cleared || available ? (
-                      <Text fz={17} fw={800} c="white" lineClamp={1}>
+                      <Text fz={21} fw={800} c="white" lineClamp={1}>
                         {abilityName}
                       </Text>
                     ) : (
@@ -967,7 +967,7 @@ function AscensionTab(props: {
                         ))}
                       </Group>
                     )}
-                    <Text fz={13} c="dimmed" lineClamp={1}>
+                    <Text fz={14} c="dimmed" lineClamp={1}>
                       {cleared
                         ? "Ability unlocked."
                         : available
@@ -981,7 +981,7 @@ function AscensionTab(props: {
                   <Text
                     component={Link}
                     to="/Forum/Main-Forum"
-                    fz={14}
+                    fz={16}
                     fw={700}
                     c="grape.3"
                     style={{ whiteSpace: "nowrap", textDecoration: "none", flexShrink: 0 }}
@@ -1007,7 +1007,7 @@ function AscensionTab(props: {
         })}
       </Stack>
       {status && (
-        <Text fz={13} c="gray.3" role="status" aria-live="polite">
+        <Text fz={14} c="gray.3" role="status" aria-live="polite">
           {status}
         </Text>
       )}
@@ -1148,7 +1148,7 @@ export default function Research() {
         {/* VIEW AS toggle + character picker */}
         <Group justify="space-between" align="flex-end" wrap="wrap" gap="md" mb="xl">
           <Group gap={10} align="center">
-            <Text fz={11} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 2 }}>
+            <Text fz={14} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 2 }}>
               View as
             </Text>
             <Group

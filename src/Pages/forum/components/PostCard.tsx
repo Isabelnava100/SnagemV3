@@ -41,7 +41,7 @@ function CharacterStrip(props: { character: PostCharacter }) {
         radius="xl"
       />
       <Stack gap={4}>
-        <Text fz={14} c="white" fw={500}>
+        <Text fz={16} c="white" fw={500}>
           {character.name}
         </Text>
         <Group gap={4} wrap="nowrap">
@@ -73,7 +73,7 @@ function AuthorPopover(props: {
     <Popover width={190} position="bottom-start" withArrow shadow="md">
       <Popover.Target>
         <Text
-          fz={15}
+          fz={16}
           fw={600}
           c="white"
           component="span"
@@ -91,7 +91,7 @@ function AuthorPopover(props: {
             radius="xl"
           />
           <Stack gap={2}>
-            <Text fz={13} fw={600} c="white">
+            <Text fz={14} fw={600} c="white">
               {post.owner}
             </Text>
             <ForumTextLink component={Link} to={`/Users/${post.owner}`}>
@@ -204,7 +204,7 @@ export function GameBlocks(props: { post: ForumPost }) {
             {item.caughtPokemon && ` it successfully caught the ${item.caughtPokemon}!`}
           </GameResultText>
           {item.note && (
-            <Text fz={12} c="gray.4">
+            <Text fz={14} c="gray.4">
               {item.note}
             </Text>
           )}
@@ -264,7 +264,7 @@ function BossAnnouncement(props: { post: ForumPost }) {
           </GameResultText>
           {starting && post.text && (
             <Text
-              fz={13}
+              fz={14}
               c="gray.3"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.text) }}
             />
@@ -283,7 +283,7 @@ function EvolutionAnnouncement(props: { post: ForumPost }) {
     <Box p={16} mt={10} bg="#22331f" style={{ borderRadius: 10, border: "1px solid #3f7a2b" }}>
       <Flex align="center" gap={12} wrap="wrap">
         <Avatar src={getPokemonImageURL(evo.fromSlug)} alt={`${evo.fromName} sprite`} size={56} radius="xl" />
-        <Text c="dimmed" fz={20}>
+        <Text c="dimmed" fz={24}>
           →
         </Text>
         <Avatar src={getPokemonImageURL(evo.toSlug)} alt={`${evo.toName} sprite`} size={56} radius="xl" />
@@ -305,7 +305,7 @@ function ShadowedAnnouncement(props: { post: ForumPost }) {
         Your pokemon have become shadowed! {names.join(", ")} {names.length === 1 ? "is" : "are"} now
         shadowed.
       </GameResultText>
-      <Anchor component={Link} to={SHADOW_GUIDE_LINK} c="grape.3" fz={13} mt={4} display="inline-block">
+      <Anchor component={Link} to={SHADOW_GUIDE_LINK} c="grape.3" fz={14} mt={4} display="inline-block">
         What does that mean, and how do I cure it? →
       </Anchor>
     </Box>
@@ -376,7 +376,7 @@ export default function PostCard(props: {
               Edit ✎
             </Badge>
           )}
-          <Text fz={13} fw={600} c="white">
+          <Text fz={14} fw={600} c="white">
             {formatFireTime(post.timePosted)}
             {post.editedAt ? " (edited)" : ""}
           </Text>
@@ -405,7 +405,7 @@ export default function PostCard(props: {
               </ScrollArea>
             )}
             {!post.characters?.length && post.character && (
-              <Text fz={13} c="dimmed" mt={10}>
+              <Text fz={14} c="dimmed" mt={10}>
                 [ {post.character} ]
               </Text>
             )}
@@ -413,7 +413,7 @@ export default function PostCard(props: {
             <GameBlocks post={post} />
 
             <Text
-              fz={13}
+              fz={14}
               c="gray.2"
               mt={12}
               style={{ width: "100%", overflowWrap: "break-word" }}
@@ -425,7 +425,7 @@ export default function PostCard(props: {
             {post.signature && post.signature.replace(/<[^>]*>/g, "").trim().length > 0 && (
               <Box mt={16} pt={10} style={{ borderTop: "1px solid #3C3A3C" }}>
                 <Text
-                  fz={12}
+                  fz={14}
                   c="gray.5"
                   style={{ width: "100%", overflowWrap: "break-word" }}
                   className="forum-post-body"
@@ -468,24 +468,24 @@ function PostFooterNote(props: { post: ForumPost }) {
       {stats.map((s, i) => (
         <React.Fragment key={s.abbr}>
           {i > 0 && (
-            <Text fz={10} c="dimmed">
+            <Text fz={14} c="dimmed">
               |
             </Text>
           )}
           <Tooltip label={s.full} withArrow openDelay={100}>
-            <Text fz={10} c="dimmed" style={{ cursor: "help" }}>
+            <Text fz={14} c="dimmed" style={{ cursor: "help" }}>
               {s.value} {s.abbr}
             </Text>
           </Tooltip>
         </React.Fragment>
       ))}
       {flags.length > 0 && (
-        <Text fz={10} c="grape.4" ml={stats.length ? 4 : 0}>
+        <Text fz={14} c="grape.4" ml={stats.length ? 4 : 0}>
           {flags.join("  ·  ")}
         </Text>
       )}
       {stats.length > 0 && (
-        <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={10} c="dimmed" ml={2}>
+        <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={14} c="dimmed" ml={2}>
           (guide)
         </Anchor>
       )}

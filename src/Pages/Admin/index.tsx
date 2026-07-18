@@ -25,7 +25,7 @@ export default function AdminPage() {
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
-      <Text fz={12} fw={700} tt="uppercase" c="grape.3" mb={16} style={{ letterSpacing: 1 }}>
+      <Text fz={14} fw={700} tt="uppercase" c="grape.3" mb={16} style={{ letterSpacing: 1 }}>
         {isAdmin(user) ? "Admin Access" : "Staff Tools"}
       </Text>
       {canInbox && (

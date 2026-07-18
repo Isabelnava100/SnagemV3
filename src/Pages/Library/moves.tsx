@@ -80,7 +80,7 @@ function MoveCard(props: { move: Move }) {
   return (
     <Card bg="#2b2a2b" radius="md" p={12} withBorder>
       <Group justify="space-between" wrap="nowrap" mb={4} gap={8}>
-        <Text fz={14} c="white" fw={600}>
+        <Text fz={16} c="white" fw={600}>
           {move.name}
         </Text>
         <Group gap={6} wrap="nowrap">
@@ -94,10 +94,10 @@ function MoveCard(props: { move: Move }) {
           )}
         </Group>
       </Group>
-      <Text fz={12} c="dimmed">
+      <Text fz={14} c="dimmed">
         Cost: {move.cost}
       </Text>
-      <Text fz={13} c="rgba(255,255,255,0.8)" mt={4} style={{ lineHeight: 1.6 }}>
+      <Text fz={14} c="rgba(255,255,255,0.8)" mt={4} style={{ lineHeight: 1.6 }}>
         {move.effect}
       </Text>
     </Card>
@@ -123,7 +123,7 @@ export default function MovesTab() {
 
   return (
     <Stack gap={16}>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Shadow Moves used by Shadow Pokemon. Which class a Pokemon can use depends
         on its evolution stage (see the Shadow Pokemon entry in the FAQ).
       </Text>
@@ -138,10 +138,10 @@ export default function MovesTab() {
       />
       {groups.map((group) => (
         <Stack key={group.title} gap={8}>
-          <Title order={3} c="white" size={18} fw={600}>
+          <Title order={3} c="white" size={22} fw={600}>
             {group.title}
           </Title>
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             {group.note}
           </Text>
           <Stack gap={8}>
@@ -152,7 +152,7 @@ export default function MovesTab() {
         </Stack>
       ))}
       {!groups.length && (
-        <Text fz={13} c="dimmed" ta="center" py={20}>
+        <Text fz={14} c="dimmed" ta="center" py={20}>
           No moves match that search.
         </Text>
       )}

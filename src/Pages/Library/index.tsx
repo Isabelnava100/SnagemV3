@@ -49,7 +49,7 @@ const PAGE_SIZE = 60;
 
 function ResultCount(props: { shown: number; total: number; noun: string }) {
   return (
-    <Text fz={12} c="dimmed">
+    <Text fz={14} c="dimmed">
       {props.total <= props.shown
         ? `${props.total} ${props.noun}`
         : `Showing ${props.shown} of ${props.total} ${props.noun}`}
@@ -152,7 +152,7 @@ function StarEditorModal(props: {
               h={56}
               fit="contain"
             />
-            <Text fz={13} c="dimmed">
+            <Text fz={14} c="dimmed">
               The star sets how many posts it takes to beat this species in an
               encounter. Default: {defaultStar} star ({postsToBeatStar(defaultStar)}{" "}
               posts), from its base stats.
@@ -172,7 +172,7 @@ function StarEditorModal(props: {
             styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
           />
           {error && (
-            <Text fz={13} c="red.4" role="status" aria-live="polite">
+            <Text fz={14} c="red.4" role="status" aria-live="polite">
               {error}
             </Text>
           )}
@@ -247,7 +247,7 @@ function PokedexTab() {
       </Group>
       <ResultCount shown={shown.length} total={matches.length} noun="Pokemon" />
       {admin && (
-        <Text fz={12} c="dimmed">
+        <Text fz={14} c="dimmed">
           Admin: select any Pokemon to change its star rating (posts to beat in
           encounters).
         </Text>
@@ -267,13 +267,13 @@ function PokedexTab() {
                 fit="contain"
                 loading="lazy"
               />
-              <Text fz={10} c="dimmed">
+              <Text fz={14} c="dimmed">
                 #{p.idx}
               </Text>
-              <Text fz={11} c="white" ta="center" lineClamp={1}>
+              <Text fz={14} c="white" ta="center" lineClamp={1}>
                 {p.name}
               </Text>
-              <Text fz={10} c="gold.1" fw={700}>
+              <Text fz={14} c="gold.1" fw={700}>
                 {star}★{overridden ? " (set)" : ""}
               </Text>
             </Stack>
@@ -297,7 +297,7 @@ function PokedexTab() {
         })}
       </SimpleGrid>
       {!shown.length && (
-        <Text fz={13} c="dimmed" ta="center" py={20}>
+        <Text fz={14} c="dimmed" ta="center" py={20}>
           No Pokemon match that search.
         </Text>
       )}
@@ -376,10 +376,10 @@ function ItemsTab() {
                 loading="lazy"
               />
               <Box style={{ minWidth: 0 }}>
-                <Text fz={12} c="white" lineClamp={1}>
+                <Text fz={14} c="white" lineClamp={1}>
                   {item.name}
                 </Text>
-                <Text fz={10} c="dimmed" tt="capitalize" lineClamp={1}>
+                <Text fz={14} c="dimmed" tt="capitalize" lineClamp={1}>
                   {item.category}
                 </Text>
               </Box>
@@ -388,7 +388,7 @@ function ItemsTab() {
         ))}
       </SimpleGrid>
       {!shown.length && (
-        <Text fz={13} c="dimmed" ta="center" py={20}>
+        <Text fz={14} c="dimmed" ta="center" py={20}>
           No items match that search.
         </Text>
       )}
@@ -424,16 +424,16 @@ function SafariZonesSection() {
   if (!zones?.length) return null;
   return (
     <Stack gap={12} mt={8}>
-      <Title order={3} c="white" size={18} fw={600}>
+      <Title order={3} c="white" size={22} fw={600}>
         Safari Contest zones
       </Title>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         The star-tiered pools staff can launch as a Safari Contest. Higher stars are
         rarer rolls.
       </Text>
       {zones.map((zone) => (
         <Card key={zone.id} bg="#2b2a2b" radius="md" p={14} withBorder>
-          <Text fz={15} c="white" fw={600} mb={8}>
+          <Text fz={16} c="white" fw={600} mb={8}>
             {zone.name}
           </Text>
           <Stack gap={8}>
@@ -455,7 +455,7 @@ function SafariZonesSection() {
                   />
                 ))}
                 {(tier.pokemons ?? []).length > 16 && (
-                  <Text fz={12} c="dimmed">
+                  <Text fz={14} c="dimmed">
                     +{(tier.pokemons ?? []).length - 16} more
                   </Text>
                 )}
@@ -479,7 +479,7 @@ function ListsTab() {
 
   if (isPending) {
     return (
-      <Text fz={13} c="dimmed" py={20}>
+      <Text fz={14} c="dimmed" py={20}>
         Loading lists...
       </Text>
     );
@@ -488,7 +488,7 @@ function ListsTab() {
   if (!publicLists.length) {
     return (
       <Stack gap={8} py={20}>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           There are no public encounter lists to show yet.
         </Text>
         <SafariZonesSection />
@@ -498,7 +498,7 @@ function ListsTab() {
 
   return (
     <Stack gap={16}>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         These are the shared encounter lists hosts can attach to a roleplay.
       </Text>
       {publicLists.map((list) => {
@@ -507,7 +507,7 @@ function ListsTab() {
         return (
           <Card key={list.id} bg="#2b2a2b" radius="md" p={14} withBorder>
             <Group justify="space-between" mb={8} wrap="nowrap">
-              <Text fz={15} c="white" fw={600} lineClamp={1}>
+              <Text fz={16} c="white" fw={600} lineClamp={1}>
                 {list.name || "Untitled list"}
               </Text>
               <Badge variant="light" color="grape">
@@ -527,7 +527,7 @@ function ListsTab() {
                 />
               ))}
               {slugs.length > preview.length && (
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   +{slugs.length - preview.length} more
                 </Text>
               )}
@@ -667,16 +667,16 @@ function DirectoryItem(props: {
       }}
     >
       <Group justify="space-between" wrap="nowrap" gap={8}>
-        <Text fz={16} fw={700} c="white" lineClamp={1}>
+        <Text fz={20} fw={700} c="white" lineClamp={1}>
           {props.title}
         </Text>
         {props.callNo && (
-          <Text fz={11} c="dimmed" ff="monospace" style={{ letterSpacing: 1, flexShrink: 0 }}>
+          <Text fz={14} c="dimmed" ff="monospace" style={{ letterSpacing: 1, flexShrink: 0 }}>
             {props.callNo}
           </Text>
         )}
       </Group>
-      <Text fz={12} c={props.active ? "#F5C842" : "dimmed"} mt={2}>
+      <Text fz={14} c={props.active ? "#F5C842" : "dimmed"} mt={2}>
         {props.subtitle}
       </Text>
     </UnstyledButton>
@@ -688,10 +688,10 @@ function ReadingRoom(props: { onOpen: (value: string) => void }) {
   return (
     <Stack gap="lg">
       <Box>
-        <Text component="h2" fz={{ base: 30, sm: 40 }} fw={700} c="#f4efe3" style={{ lineHeight: 1.1 }}>
+        <Text component="h2" fz={{ base: 34, sm: 44 }} fw={700} c="#f4efe3" style={{ lineHeight: 1.1 }}>
           Welcome, reader.
         </Text>
-        <Text fz={15} c="gray.4" mt={8} maw={720}>
+        <Text fz={16} c="gray.4" mt={8} maw={720}>
           Six wings hold everything the guild has recorded. Pick one from the directory on the left,
           or open a wing below.
         </Text>
@@ -714,21 +714,21 @@ function ReadingRoom(props: { onOpen: (value: string) => void }) {
               height: "100%",
             }}
           >
-            <Text fz={11} c="dimmed" ff="monospace" mb={10} style={{ letterSpacing: 2 }}>
+            <Text fz={14} c="dimmed" ff="monospace" mb={10} style={{ letterSpacing: 2 }}>
               {w.callNo}
             </Text>
-            <Text fz={22} fw={700} c="white" mb={8}>
+            <Text fz={26} fw={700} c="white" mb={8}>
               {w.name}
             </Text>
-            <Text fz={14} c="gray.5" mb={16}>
+            <Text fz={16} c="gray.5" mb={16}>
               {w.blurb}
             </Text>
             <Group justify="space-between" align="center">
-              <Text fz={13} fw={700} c={w.accent} ff="monospace">
+              <Text fz={14} fw={700} c={w.accent} ff="monospace">
                 {w.meta}
               </Text>
               <Group gap={4} wrap="nowrap">
-                <Text fz={14} fw={700} c={w.accent}>
+                <Text fz={16} fw={700} c={w.accent}>
                   Open
                 </Text>
                 <IconArrowRight size={16} color={w.accent} />
@@ -763,7 +763,7 @@ export default function Library() {
         <Flex gap={{ base: 20, md: 36 }} direction={{ base: "column", md: "row" }} align="flex-start">
           {/* Directory */}
           <Box style={{ flex: "0 0 260px", width: "100%", maxWidth: 320 }}>
-            <Text fz={11} fw={700} c="dimmed" tt="uppercase" mb={10} px={14} style={{ letterSpacing: 2 }}>
+            <Text fz={14} fw={700} c="dimmed" tt="uppercase" mb={10} px={14} style={{ letterSpacing: 2 }}>
               Directory
             </Text>
             <Stack gap={2}>
@@ -791,13 +791,13 @@ export default function Library() {
             {openWing ? (
               <Stack gap="lg">
                 <Box>
-                  <Text fz={11} c="dimmed" ff="monospace" mb={4} style={{ letterSpacing: 2 }}>
+                  <Text fz={14} c="dimmed" ff="monospace" mb={4} style={{ letterSpacing: 2 }}>
                     {openWing.callNo}
                   </Text>
-                  <Text component="h2" fz={{ base: 26, sm: 32 }} fw={700} c="#f4efe3" style={{ lineHeight: 1.1 }}>
+                  <Text component="h2" fz={{ base: 30, sm: 36 }} fw={700} c="#f4efe3" style={{ lineHeight: 1.1 }}>
                     {openWing.name}
                   </Text>
-                  <Text fz={14} c="gray.5" mt={4}>
+                  <Text fz={16} c="gray.5" mt={4}>
                     {openWing.blurb}
                   </Text>
                 </Box>

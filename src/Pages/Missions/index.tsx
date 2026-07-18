@@ -114,7 +114,7 @@ function RewardChip(props: { label: string; dot?: string; icon?: React.ReactNode
           }}
         />
       )}
-      <Text fz={11} c="white">
+      <Text fz={14} c="white">
         {props.label}
       </Text>
     </Group>
@@ -146,7 +146,7 @@ function MissionCard(props: { mission: Mission }) {
         {!mission.image && (
           <Text
             ff="monospace"
-            fz={12}
+            fz={14}
             c="dimmed"
             style={{
               position: "absolute",
@@ -183,18 +183,18 @@ function MissionCard(props: { mission: Mission }) {
 
       <Stack gap={8} p={12}>
         <Box>
-          <Text c="white" fw={600} fz={15} lineClamp={1}>
+          <Text c="white" fw={600} fz={16} lineClamp={1}>
             {mission.title}
           </Text>
           {mission.location && (
-            <Text c="dimmed" fz={12} lineClamp={1}>
+            <Text c="dimmed" fz={14} lineClamp={1}>
               {mission.location}
             </Text>
           )}
         </Box>
 
         {preview && (
-          <Text c="dimmed" fz={12} lineClamp={2}>
+          <Text c="dimmed" fz={14} lineClamp={2}>
             {preview}
           </Text>
         )}
@@ -210,7 +210,7 @@ function MissionCard(props: { mission: Mission }) {
         </Group>
 
         <Group justify="space-between" wrap="nowrap" mt={4}>
-          <Text c="dimmed" fz={12}>
+          <Text c="dimmed" fz={14}>
             Taken {mission.times_taken || 0}x
           </Text>
           <Button
@@ -320,7 +320,7 @@ export default function Missions() {
         {isPending ? (
           <SectionLoader />
         ) : !shown.length ? (
-          <Text c="dimmed" fz={14} ta="center" py={40} role="status" aria-live="polite">
+          <Text c="dimmed" fz={16} ta="center" py={40} role="status" aria-live="polite">
             No missions match your filters.
           </Text>
         ) : (

@@ -131,7 +131,7 @@ function ItemPicker({
               <Combobox.Option value={o.value} key={o.value}>
                 <Group gap={8} wrap="nowrap">
                   <Avatar src={getItemImageURL(o.filePath)} alt={o.label} size={26} />
-                  <Text fz={14} c="white">
+                  <Text fz={16} c="white">
                     {o.label}
                   </Text>
                 </Group>
@@ -257,16 +257,16 @@ export default function MysteryBoxes() {
 
   return (
     <Stack gap={12} maw={640}>
-      <Title order={2} c="white" size={24} fw={400}>
+      <Title order={2} c="white" size={28} fw={400}>
         Mystery Boxes
       </Title>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Choose which item acts as a mystery box (its sprite is the box image), then configure the
         reward pool and drop rates. Players open boxes from Your Items on the dashboard.
       </Text>
       {!!activeIds.length && (
         <Group gap={6}>
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Active boxes:
           </Text>
           {activeIds.map((id) => (
@@ -285,7 +285,7 @@ export default function MysteryBoxes() {
       )}
       {!!archivedIds.length && (
         <Group gap={6}>
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Archived (still openable, not given out):
           </Text>
           {archivedIds.map((id) => (
@@ -332,7 +332,7 @@ export default function MysteryBoxes() {
           />
 
           {/* Pool */}
-          <Text fz={13} fw={700} c="white" tt="uppercase">
+          <Text fz={14} fw={700} c="white" tt="uppercase">
             Reward pool {totalWeight > 0 && `(total weight ${totalWeight})`}
           </Text>
           <Stack gap={6}>
@@ -341,7 +341,7 @@ export default function MysteryBoxes() {
                 {entry.kind === "item" && entry.filePath && (
                   <Avatar src={getItemImageURL(entry.filePath)} alt={entry.name} size={22} />
                 )}
-                <Text fz={13} c="white">
+                <Text fz={14} c="white">
                   {entry.qty}x {entry.name}
                 </Text>
                 <Badge size="xs" variant="outline" color="gray">
@@ -360,7 +360,7 @@ export default function MysteryBoxes() {
               </Group>
             ))}
             {!pool.length && (
-              <Text fz={12} c="dimmed">
+              <Text fz={14} c="dimmed">
                 No rewards yet. Add at least one below.
               </Text>
             )}
@@ -402,7 +402,7 @@ export default function MysteryBoxes() {
               />
             )}
             <Group gap={4}>
-              <Text fz={12} c="white">
+              <Text fz={14} c="white">
                 Qty:
               </Text>
               <NumberInput
@@ -415,7 +415,7 @@ export default function MysteryBoxes() {
               />
             </Group>
             <Group gap={4}>
-              <Text fz={12} c="white">
+              <Text fz={14} c="white">
                 Weight:
               </Text>
               <NumberInput
@@ -432,7 +432,7 @@ export default function MysteryBoxes() {
             </GradientButtonSecondary>
           </Group>
 
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Weight sets how common a reward is relative to the others, not a
             percentage. A reward with weight 30 is picked three times as often as
             one with weight 10. The badge next to each reward shows the resulting
@@ -441,13 +441,13 @@ export default function MysteryBoxes() {
           </Text>
 
           {archived && (
-            <Text fz={12} c="gold.1">
+            <Text fz={14} c="gold.1">
               This box is archived. It cannot be given out, but members who already own one can
               still open it.
             </Text>
           )}
           {message && (
-            <Text fz={13} c="green.0" role="status" aria-live="polite">
+            <Text fz={14} c="green.0" role="status" aria-live="polite">
               {message}
             </Text>
           )}

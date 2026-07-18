@@ -83,7 +83,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
           {this.state.message && (
             <Text
               ff="monospace"
-              fz={12}
+              fz={14}
               c="#E54156"
               ta="center"
               maw={420}

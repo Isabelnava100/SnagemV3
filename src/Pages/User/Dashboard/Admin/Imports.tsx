@@ -55,10 +55,10 @@ export default function Imports() {
 
   return (
     <Stack gap={16} maw={720}>
-      <Title order={2} c="white" size={24} fw={400}>
+      <Title order={2} c="white" size={28} fw={400}>
         Import approvals
       </Title>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Returning members submit currency, items, and Pokemon to restore. Review each one, trim
         anything that looks off, then approve to add it to their account, or send it back with a
         note.
@@ -119,7 +119,7 @@ export function ReviewCard(props: { req: ImportRequest & { uid: string }; userna
         </Group>
 
         {req.note && (
-          <Text fz={13} c="dimmed">
+          <Text fz={14} c="dimmed">
             Member note: {req.note}
           </Text>
         )}
@@ -141,12 +141,12 @@ export function ReviewCard(props: { req: ImportRequest & { uid: string }; userna
 
         {!!items.length && (
           <Stack gap={4}>
-            <Text fz={12} c="dimmed" tt="uppercase" fw={700}>
+            <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
               Items
             </Text>
             {items.map((it, i) => (
               <Group key={i} gap={8} wrap="nowrap">
-                <Text fz={13} c="white">
+                <Text fz={14} c="white">
                   {it.qty}x {it.name}
                 </Text>
                 <ActionIcon
@@ -164,12 +164,12 @@ export function ReviewCard(props: { req: ImportRequest & { uid: string }; userna
 
         {!!pokemon.length && (
           <Stack gap={4}>
-            <Text fz={12} c="dimmed" tt="uppercase" fw={700}>
+            <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
               Pokemon
             </Text>
             {pokemon.map((p, i) => (
               <Group key={i} gap={8} wrap="nowrap">
-                <Text fz={13} c="white">
+                <Text fz={14} c="white">
                   {p.species} · Lv {p.level} · {p.gender}
                   {p.shiny ? " · Shiny" : ""} · Friend {p.friendship}
                   {p.shadow ? ` · Shadow ${p.shadow}` : ""}
@@ -190,7 +190,7 @@ export function ReviewCard(props: { req: ImportRequest & { uid: string }; userna
 
         {message && (
           <Text
-            fz={13}
+            fz={14}
             role="status"
             aria-live="polite"
             c={message.startsWith("Could not") ? "#E54156" : "green.0"}

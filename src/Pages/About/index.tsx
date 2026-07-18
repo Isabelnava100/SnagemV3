@@ -36,7 +36,7 @@ function Eyebrow({ children, color = "#F5C842" }: { children: React.ReactNode; c
   return (
     <Group gap={8} justify="inherit">
       <IconDiamond size={12} color={color} fill={color} />
-      <Text fz={12} fw={700} c={color} style={{ letterSpacing: 3 }} tt="uppercase">
+      <Text fz={14} fw={700} c={color} style={{ letterSpacing: 3 }} tt="uppercase">
         {children}
       </Text>
     </Group>
@@ -166,14 +166,14 @@ export default function About() {
             <Eyebrow>A Pokemon Roleplay Community</Eyebrow>
           </Box>
 
-          <Text component="h1" fw={800} fz={{ base: 44, sm: 72 }} c="white" style={{ lineHeight: 1.02, margin: 0 }}>
+          <Text component="h1" fw={800} fz={{ base: 48, sm: 76 }} c="white" style={{ lineHeight: 1.02, margin: 0 }}>
             About the{" "}
             <Text span inherit variant="gradient" gradient={{ from: "grape", to: "violet", deg: 90 }}>
               Snagem Guild
             </Text>
           </Text>
 
-          <Text fz={{ base: 16, sm: 20 }} c="gray.4" maw={640}>
+          <Text fz={{ base: 20, sm: 24 }} c="gray.4" maw={640}>
             Roleplay, raise Pokemon, pull the perfect heist. Every great story starts with a snatch of
             ambition, and <Text span c="white" fw={700}>ours started with a Snag Machine.</Text>
           </Text>
@@ -208,16 +208,16 @@ export default function About() {
           {/* Left: copy + THE WORLD badge (moved here, under the text) */}
           <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
             <Eyebrow color="#b197fc">Who we are</Eyebrow>
-            <Text component="h2" fw={800} fz={{ base: 30, sm: 40 }} c="white" mt={16} mb="lg" style={{ lineHeight: 1.1 }}>
+            <Text component="h2" fw={800} fz={{ base: 34, sm: 44 }} c="white" mt={16} mb="lg" style={{ lineHeight: 1.1 }}>
               Writers, artists, schemers &amp; softies, one shared world.
             </Text>
-            <Text fz={16} c="gray.4" mb="md">
+            <Text fz={20} c="gray.4" mb="md">
               The Snagem Guild is a long-running Pokemon roleplay community, built one post at a time.
               Team Snagem has a reputation for "acquiring" what it wants, but under the swagger, we're a
               home. A place to grow a character, chase a rival, hatch an egg, and belong to a crew that
               has your back.
             </Text>
-            <Text fz={16} c="gray.4" mb="xl">
+            <Text fz={20} c="gray.4" mb="xl">
               No pressure, no grind you didn't sign up for. Just a living world, a friendly staff, and
               room to make your mark.
             </Text>
@@ -232,7 +232,7 @@ export default function About() {
               }}
             >
               <Eyebrow color="#22d3ee">The World</Eyebrow>
-              <Text fz={15} c="gray.3" mt={10}>
+              <Text fz={16} c="gray.3" mt={10}>
                 Snag Machines. Shadow Pokemon. A guild balanced on the line between outlaw and family.
                 You start as one of us, pick your path, and write yourself into the lore.{" "}
                 <Text span c="white" fw={600}>
@@ -259,7 +259,7 @@ export default function About() {
             }}
           >
             <IconPhoto size={40} color="#4a4560" />
-            <Text fz={15} c="dimmed" fw={600}>
+            <Text fz={16} c="dimmed" fw={600}>
               Guild art / group shot
             </Text>
           </Box>
@@ -269,7 +269,7 @@ export default function About() {
         <Box id="what-you-can-do" mb={{ base: 64, sm: 120 }} style={{ scrollMarginTop: 80 }}>
           <Stack gap={4} align="center" ta="center" mb={{ base: 32, sm: 48 }}>
             <Eyebrow>What you can do here</Eyebrow>
-            <Text component="h2" fw={800} fz={{ base: 30, sm: 44 }} c="white" mt={8} style={{ lineHeight: 1.1 }}>
+            <Text component="h2" fw={800} fz={{ base: 34, sm: 48 }} c="white" mt={8} style={{ lineHeight: 1.1 }}>
               Nine ways to make your mark
             </Text>
           </Stack>
@@ -301,10 +301,10 @@ export default function About() {
                 >
                   {f.icon}
                 </Box>
-                <Text fz={20} fw={800} c="white" mb={6}>
+                <Text fz={24} fw={800} c="white" mb={6}>
                   {f.title}
                 </Text>
-                <Text fz={14} c="gray.5">
+                <Text fz={16} c="gray.5">
                   {f.body}
                 </Text>
               </Box>
@@ -316,10 +316,10 @@ export default function About() {
         <Flex gap={{ base: 32, md: 56 }} direction={{ base: "column", md: "row" }} align="center" mb={{ base: 64, sm: 120 }}>
           <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
             <Eyebrow>Earn your keep</Eyebrow>
-            <Text component="h2" fw={800} fz={{ base: 32, sm: 48 }} c="white" mt={12} mb="md" style={{ lineHeight: 1.05 }}>
+            <Text component="h2" fw={800} fz={{ base: 36, sm: 52 }} c="white" mt={12} mb="md" style={{ lineHeight: 1.05 }}>
               Post, scheme, get paid.
             </Text>
-            <Text fz={16} c="gray.4" mb="lg">
+            <Text fz={20} c="gray.4" mb="lg">
               Three currencies flow through the guild, and the badges you collect along the way mark
               exactly who you are: Legacy, Hybrid, Master and more.
             </Text>
@@ -327,7 +327,7 @@ export default function About() {
               {ROLE_PILLS.map((p) => (
                 <Text
                   key={p.label}
-                  fz={14}
+                  fz={16}
                   fw={700}
                   px={14}
                   py={6}
@@ -365,10 +365,10 @@ export default function About() {
                   {c.icon}
                 </Box>
                 <Box style={{ minWidth: 0 }}>
-                  <Text fz={18} fw={800} c="white">
+                  <Text fz={22} fw={800} c="white">
                     {c.title}
                   </Text>
-                  <Text fz={14} c="gray.5">
+                  <Text fz={16} c="gray.5">
                     {c.body}
                   </Text>
                 </Box>
@@ -387,10 +387,10 @@ export default function About() {
           }}
         >
           <Stack gap={6} align="center" ta="center" mb="xl">
-            <Text component="h2" fw={800} fz={{ base: 30, sm: 44 }} c="white" style={{ lineHeight: 1.05 }}>
+            <Text component="h2" fw={800} fz={{ base: 34, sm: 48 }} c="white" style={{ lineHeight: 1.05 }}>
               Ready to run with us?
             </Text>
-            <Text fz={{ base: 15, sm: 18 }} c="gray.4">
+            <Text fz={{ base: 16, sm: 22 }} c="gray.4">
               Three steps to start. Team Snagem is <Text span c="#F5C842" fw={700}>always recruiting.</Text>
             </Text>
           </Stack>
@@ -416,14 +416,14 @@ export default function About() {
                     justifyContent: "center",
                   }}
                 >
-                  <Text fz={22} fw={800} c="white">
+                  <Text fz={26} fw={800} c="white">
                     {s.n}
                   </Text>
                 </Box>
-                <Text fz={18} fw={800} c="white" mb={4}>
+                <Text fz={22} fw={800} c="white" mb={4}>
                   {s.title}
                 </Text>
-                <Text fz={14} c="gray.5">
+                <Text fz={16} c="gray.5">
                   {s.body}
                 </Text>
               </Box>
@@ -445,7 +445,7 @@ export default function About() {
           </Group>
         </Box>
 
-        <Text ta="center" fz={14} c="dimmed" mt={{ base: 40, sm: 56 }}>
+        <Text ta="center" fz={16} c="dimmed" mt={{ base: 40, sm: 56 }}>
           Snagem Guild, a rogue's guild with a good heart. Made by the crew, for the crew.
         </Text>
       </Container>

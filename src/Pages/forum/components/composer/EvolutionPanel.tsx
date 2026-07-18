@@ -77,7 +77,7 @@ export default function EvolutionPanel(props: {
   return (
     <ForumPanel title="Evolution">
       <Stack gap={8}>
-        <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={11} c="grape.3">
+        <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={14} c="grape.3">
           How evolution, levels and friendship work →
         </Anchor>
         <Checkbox
@@ -92,7 +92,7 @@ export default function EvolutionPanel(props: {
             }
           }}
           color="green.0"
-          styles={{ label: { color: "white", fontSize: 13 } }}
+          styles={{ label: { color: "white", fontSize: 14 } }}
         />
         {enabled && (
           <>
@@ -114,7 +114,7 @@ export default function EvolutionPanel(props: {
             {chosen && (
               <Group gap={10} align="center">
                 <Avatar src={getPokemonImageURL(chosen.pokemonSlug)} alt={chosen.pokemonName} size={40} radius="xl" />
-                <Text c="dimmed" fz={18}>
+                <Text c="dimmed" fz={22}>
                   →
                 </Text>
                 <Avatar src={getPokemonImageURL(chosen.toSlug)} alt={chosen.toName} size={40} radius="xl" />
@@ -126,7 +126,7 @@ export default function EvolutionPanel(props: {
                 checked={confirm1}
                 onChange={(e) => setConfirm1(e.currentTarget.checked)}
                 color="green.0"
-                styles={{ label: { color: "white", fontSize: 13 } }}
+                styles={{ label: { color: "white", fontSize: 14 } }}
               />
             )}
             {chosen && needsItem && (
@@ -135,11 +135,11 @@ export default function EvolutionPanel(props: {
                 checked={confirm2}
                 onChange={(e) => setConfirm2(e.currentTarget.checked)}
                 color="green.0"
-                styles={{ label: { color: "white", fontSize: 13 } }}
+                styles={{ label: { color: "white", fontSize: 14 } }}
               />
             )}
             {value && chosen && (
-              <Text fz={12} c="green.4" role="status" aria-live="polite">
+              <Text fz={14} c="green.4" role="status" aria-live="polite">
                 {chosen.pokemonName} will evolve into {chosen.toName} when you publish this post.
               </Text>
             )}

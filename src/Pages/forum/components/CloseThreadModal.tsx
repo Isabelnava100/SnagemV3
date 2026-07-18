@@ -110,7 +110,7 @@ export default function CloseThreadModal(props: {
       radius={12}
     >
       <Stack gap={12}>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           Closing this thread archives it: no new posts can be made and existing
           posts can no longer be edited. Experience and stats were already awarded
           automatically as people posted. Items and coins are assigned by an admin
@@ -118,7 +118,7 @@ export default function CloseThreadModal(props: {
         </Text>
         {xpRows.length > 0 ? (
           <Box p={10} style={{ background: "#2E2D2E", borderRadius: 8 }}>
-            <Text fz={13} c="white" fw={600} mb={6}>
+            <Text fz={14} c="white" fw={600} mb={6}>
               Experience awarded this thread
             </Text>
             <ScrollArea.Autosize mah={220}>
@@ -131,12 +131,12 @@ export default function CloseThreadModal(props: {
                       size={24}
                       radius="xl"
                     />
-                    <Text fz={13} c="white" style={{ minWidth: 0 }} truncate>
+                    <Text fz={14} c="white" style={{ minWidth: 0 }} truncate>
                       {row.name}
                     </Text>
                     <Group gap={8} wrap="wrap" style={{ flex: 1, justifyContent: "flex-end" }}>
                       {XP_FIELDS.filter((f) => row[f] > 0).map((f) => (
-                        <Text key={f} fz={12} c="dimmed" tt="capitalize">
+                        <Text key={f} fz={14} c="dimmed" tt="capitalize">
                           {f.slice(0, 4)}{" "}
                           <Text span c="teal.4" fw={700}>
                             +{row[f]}
@@ -152,7 +152,7 @@ export default function CloseThreadModal(props: {
         ) : (
           perPost > 0 && (
             <Box p={10} style={{ background: "#2E2D2E", borderRadius: 8 }}>
-              <Text fz={13} c="dimmed">
+              <Text fz={14} c="dimmed">
                 Team pokemon earn about {perPost} experience per qualifying post,
                 awarded automatically as people post.
               </Text>
@@ -161,17 +161,17 @@ export default function CloseThreadModal(props: {
         )}
         {itemsUsed.length > 0 && (
           <Box p={10} style={{ background: "#2E2D2E", borderRadius: 8 }}>
-            <Text fz={13} c="white" fw={600} mb={6}>
+            <Text fz={14} c="white" fw={600} mb={6}>
               Items used in this thread
             </Text>
             <ScrollArea.Autosize mah={140}>
               <Stack gap={2}>
                 {itemsUsed.map((i) => (
                   <Group key={i.id} justify="space-between" wrap="nowrap">
-                    <Text fz={13} c="rgba(255,255,255,0.8)" truncate>
+                    <Text fz={14} c="rgba(255,255,255,0.8)" truncate>
                       {i.name}
                     </Text>
-                    <Text fz={13} c="dimmed">
+                    <Text fz={14} c="dimmed">
                       x{i.qty}
                     </Text>
                   </Group>
@@ -189,7 +189,7 @@ export default function CloseThreadModal(props: {
               borderRadius: 8,
             }}
           >
-            <Text fz={13} c="pink.0" fw={700}>
+            <Text fz={14} c="pink.0" fw={700}>
               This thread is paused after a team wipe. A staff member decides whether
               it resumes or closes.
             </Text>
@@ -204,16 +204,16 @@ export default function CloseThreadModal(props: {
               borderRadius: 8,
             }}
           >
-            <Text fz={13} c="pink.0" fw={700} mb={4}>
+            <Text fz={14} c="pink.0" fw={700} mb={4}>
               Mission requirement not met
             </Text>
-            <Text fz={13} c="rgba(255,255,255,0.8)">
+            <Text fz={14} c="rgba(255,255,255,0.8)">
               This mission still requires you to beat:{" "}
               {unmetTargets.map(nameOf).join(", ")}. Face each one from the encounter
               picker and wear its health down (or catch it), then close the thread.
             </Text>
             {staffOverride && (
-              <Text fz={12} c="dimmed" mt={6}>
+              <Text fz={14} c="dimmed" mt={6}>
                 You have staff review powers, so you can close it anyway; the grader
                 will see the unmet targets.
               </Text>
@@ -230,7 +230,7 @@ export default function CloseThreadModal(props: {
           styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
         />
         {error && (
-          <Text fz={13} c="red.4" role="status" aria-live="polite">
+          <Text fz={14} c="red.4" role="status" aria-live="polite">
             {error}
           </Text>
         )}

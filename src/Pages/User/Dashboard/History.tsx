@@ -54,10 +54,10 @@ function ThreadRow({ thread }: { thread: MyThreadItem }) {
     <RowShell to={`/Forum/${thread.forum}/thread/${thread.id}`}>
       <Group justify="space-between" wrap="nowrap" gap={10}>
         <Box style={{ minWidth: 0 }}>
-          <Text fz={14} fw={600} c="white" lineClamp={1}>
+          <Text fz={16} fw={600} c="white" lineClamp={1}>
             {thread.title}
           </Text>
-          <Text fz={12} c="dimmed" lineClamp={1}>
+          <Text fz={14} c="dimmed" lineClamp={1}>
             {forumLabel(thread.forum)}
             {formatDate(thread.createdAt) ? ` · started ${formatDate(thread.createdAt)}` : ""}
             {typeof thread.replyCount === "number" ? ` · ${thread.replyCount} replies` : ""}
@@ -86,15 +86,15 @@ function ThreadRow({ thread }: { thread: MyThreadItem }) {
 function PostRow({ post }: { post: MyPostItem }) {
   return (
     <RowShell to={`/Forum/${post.forum}/thread/${post.threadId}/last`}>
-      <Text fz={14} fw={600} c="white" lineClamp={1}>
+      <Text fz={16} fw={600} c="white" lineClamp={1}>
         {post.threadTitle}
       </Text>
       {post.snippet && (
-        <Text fz={13} c="gray.4" lineClamp={2} mt={2}>
+        <Text fz={14} c="gray.4" lineClamp={2} mt={2}>
           {post.snippet}
         </Text>
       )}
-      <Text fz={12} c="dimmed" mt={4}>
+      <Text fz={14} c="dimmed" mt={4}>
         {forumLabel(post.forum)}
         {formatDate(post.timePosted) ? ` · ${formatDate(post.timePosted)}` : ""}
       </Text>
@@ -124,10 +124,10 @@ export default function History() {
     <Box className="bg-[#403C43] max-w-full flex-1 overflow-auto p-4 rounded-[22px]">
       <Stack gap={12}>
         <Box>
-          <Text fz={18} fw={700} c="white">
+          <Text fz={22} fw={700} c="white">
             Your Forum History
           </Text>
-          <Text fz={13} c="dimmed">
+          <Text fz={14} c="dimmed">
             Only you can see this. Threads you started and your latest posts, newest first.
           </Text>
         </Box>
@@ -152,7 +152,7 @@ export default function History() {
                   <PostRow key={`${post.threadId}-${post.id}`} post={post} />
                 ))}
                 {posts.length >= MY_POSTS_LIMIT && (
-                  <Text fz={12} c="dimmed" ta="center">
+                  <Text fz={14} c="dimmed" ta="center">
                     Showing your latest {MY_POSTS_LIMIT} posts.
                   </Text>
                 )}

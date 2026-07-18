@@ -32,7 +32,7 @@ function YesNo(props: {
 }) {
   return (
     <Stack gap={4}>
-      <Text fz={13} c="white">
+      <Text fz={14} c="white">
         {props.label}
       </Text>
       <Radio.Group
@@ -124,7 +124,7 @@ export function EncounterSetupPanel(props: {
                 styles={{ input: { background: "#2E2D2E" } }}
               />
               <Group gap={6}>
-                <Text fz={12} c="white">
+                <Text fz={14} c="white">
                   Encounters per player:
                 </Text>
                 <NumberInput
@@ -176,7 +176,7 @@ export function EncounterSetupPanel(props: {
                 color="pink.0"
                 checked={!!value.disabled}
                 onChange={(e) => onChange({ ...value, disabled: e.currentTarget.checked })}
-                styles={{ label: { color: "white", fontSize: 13 } }}
+                styles={{ label: { color: "white", fontSize: 14 } }}
               />
             )}
           </>
@@ -228,11 +228,11 @@ function SafariEncounterControls(props: {
       </GameResultText>
       <Stack gap={2}>
         <Progress value={healthPct} color="red.6" size="lg" radius="xl" striped animated />
-        <Text fz={12} c="dimmed">
+        <Text fz={14} c="dimmed">
           Health: {healthLeft}/{postsToDefeat}. Knock it out and it is gone, so catch it first.
         </Text>
       </Stack>
-      <Text fz={12} c="dimmed">
+      <Text fz={14} c="dimmed">
         Catch bonus so far: +{fightBonus + berryBonus}% (weakened +{fightBonus}%, berries +{berryBonus}
         %). Your ball sets the base rate.
       </Text>
@@ -240,7 +240,7 @@ function SafariEncounterControls(props: {
         label="What do you do this post?"
         value={action}
         onChange={(v) => onAction((v as "fight" | "berry" | "ball") ?? "fight")}
-        styles={{ label: { color: "white", fontSize: 13, marginBottom: 4 } }}
+        styles={{ label: { color: "white", fontSize: 14, marginBottom: 4 } }}
       >
         <Stack gap={4}>
           <Radio value="fight" color="pink.0" size="xs" label="Fight it (wear its health down)" />
@@ -342,7 +342,7 @@ export function EncounterPostPanel(props: {
       />
       {wantsEncounter && (
         <>
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             You have {remaining} pokemon left to encounter on this thread.
           </Text>
           <MultiSelect
@@ -417,7 +417,7 @@ export function EncounterPostPanel(props: {
       ))}
 
       {config.disabled ? (
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           The host has turned off new encounters in this thread.
         </Text>
       ) : value && isSafari && value.star ? (
@@ -451,7 +451,7 @@ export function EncounterPostPanel(props: {
                 size="lg"
                 radius="xl"
               />
-              <Text fz={12} c="dimmed">
+              <Text fz={14} c="dimmed">
                 {(value.progress ?? 0) >= value.required
                   ? "It's beaten. Use a Poke Ball in this post to catch it, or roll a new encounter to move on."
                   : `Health: ${
@@ -465,7 +465,7 @@ export function EncounterPostPanel(props: {
           {valueBeaten && remaining > 0 && rollSection}
         </Stack>
       ) : remaining <= 0 ? (
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           You have no pokemon left to encounter on this thread.
         </Text>
       ) : (

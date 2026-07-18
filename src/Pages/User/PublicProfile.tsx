@@ -134,10 +134,10 @@ function characterTypeColor(type?: Character["type"]): string {
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <Card withBorder radius="md" p="md" bg="#1f1e20">
-      <Text fz={26} fw={700} c="white" lh={1.1}>
+      <Text fz={30} fw={700} c="white" lh={1.1}>
         {value}
       </Text>
-      <Text fz={11} c="dimmed" tt="uppercase" mt={4}>
+      <Text fz={14} c="dimmed" tt="uppercase" mt={4}>
         {label}
       </Text>
     </Card>
@@ -247,7 +247,7 @@ export default function PublicProfile() {
       >
         {profile?.coverBG && (
           <Text
-            fz={10}
+            fz={14}
             c="rgba(255,255,255,0.6)"
             ff="monospace"
             style={{ position: "absolute", bottom: 6, right: 10 }}
@@ -269,16 +269,16 @@ export default function PublicProfile() {
                 radius="100%"
                 style={{ border: "4px solid #1a191b" }}
               />
-              <Title order={1} c="white" fw={600} fz={22} ta="center">
+              <Title order={1} c="white" fw={600} fz={26} ta="center">
                 {user.username}
               </Title>
               {user.permissions && (
-                <Text fz={11} c="dimmed" tt="uppercase" fw={600}>
+                <Text fz={14} c="dimmed" tt="uppercase" fw={600}>
                   {user.permissions}
                 </Text>
               )}
               {user.joinedAt?.seconds && (
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Joined {formatJoined(user.joinedAt)}
                 </Text>
               )}
@@ -306,7 +306,7 @@ export default function PublicProfile() {
             {/* Featured picks */}
             {(featuredCharacter || featuredPokemon || featuredTeam) && (
               <Stack gap={10} mt="lg">
-                <Text fz={11} c="dimmed" tt="uppercase" fw={700}>
+                <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
                   Featured
                 </Text>
                 {featuredCharacter && (
@@ -318,10 +318,10 @@ export default function PublicProfile() {
                       radius="md"
                     />
                     <Box style={{ minWidth: 0 }}>
-                      <Text fz={14} c="white" truncate>
+                      <Text fz={16} c="white" truncate>
                         {featuredCharacter.name}
                       </Text>
-                      <Text fz={11} c="dimmed">
+                      <Text fz={14} c="dimmed">
                         Character
                       </Text>
                     </Box>
@@ -332,7 +332,7 @@ export default function PublicProfile() {
                     <PokemonSprite pokemon={featuredPokemon} size={44} />
                     <Box style={{ minWidth: 0 }}>
                       <Group gap={6} wrap="nowrap">
-                        <Text fz={14} c="white" truncate>
+                        <Text fz={16} c="white" truncate>
                           {featuredPokemon.name}
                         </Text>
                         {featuredPokemon.shiny && (
@@ -341,7 +341,7 @@ export default function PublicProfile() {
                           </Badge>
                         )}
                       </Group>
-                      <Text fz={11} c="dimmed">
+                      <Text fz={14} c="dimmed">
                         Pokemon
                       </Text>
                     </Box>
@@ -355,10 +355,10 @@ export default function PublicProfile() {
                       ))}
                     </Group>
                     <Box style={{ minWidth: 0 }}>
-                      <Text fz={14} c="white" truncate>
+                      <Text fz={16} c="white" truncate>
                         {featuredTeam.team_name || "Team"}
                       </Text>
-                      <Text fz={11} c="dimmed">
+                      <Text fz={14} c="dimmed">
                         Team - {featuredTeam.times_battled || 0} battles
                       </Text>
                     </Box>
@@ -370,7 +370,7 @@ export default function PublicProfile() {
             {/* Badges */}
             {!!user.badges?.length && (
               <Stack gap={8} mt="lg">
-                <Text fz={11} c="dimmed" tt="uppercase" fw={700}>
+                <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
                   Badges
                 </Text>
                 <Group gap={6}>
@@ -390,7 +390,7 @@ export default function PublicProfile() {
             {/* Emotes */}
             {!!emojis.length && (
               <Stack gap={8} mt="lg">
-                <Text fz={11} c="dimmed" tt="uppercase" fw={700}>
+                <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
                   Emotes
                 </Text>
                 <Group gap={6}>
@@ -440,7 +440,7 @@ export default function PublicProfile() {
 
             {/* Characters */}
             <Card withBorder radius="md" p="md" bg="#1f1e20">
-              <Text fz={13} c="dimmed" tt="uppercase" fw={700} mb="sm">
+              <Text fz={14} c="dimmed" tt="uppercase" fw={700} mb="sm">
                 Characters
               </Text>
               {characterList.length ? (
@@ -455,7 +455,7 @@ export default function PublicProfile() {
                           radius="md"
                         />
                         <Box style={{ minWidth: 0 }}>
-                          <Text fz={14} c="white" fw={600} truncate>
+                          <Text fz={16} c="white" fw={600} truncate>
                             {c.name}
                           </Text>
                           <Badge
@@ -466,7 +466,7 @@ export default function PublicProfile() {
                           >
                             {c.type ?? "None"}
                           </Badge>
-                          <Text fz={11} c="dimmed" mt={4} lineClamp={2}>
+                          <Text fz={14} c="dimmed" mt={4} lineClamp={2}>
                             {[c.species, c.pronouns, c.age].filter(Boolean).join(" · ")}
                           </Text>
                         </Box>
@@ -475,7 +475,7 @@ export default function PublicProfile() {
                   ))}
                 </SimpleGrid>
               ) : (
-                <Text fz={13} c="dimmed">
+                <Text fz={14} c="dimmed">
                   No characters yet.
                 </Text>
               )}
@@ -483,7 +483,7 @@ export default function PublicProfile() {
 
             {/* Pokemon box */}
             <Card withBorder radius="md" p="md" bg="#1f1e20">
-              <Text fz={13} c="dimmed" tt="uppercase" fw={700} mb="sm">
+              <Text fz={14} c="dimmed" tt="uppercase" fw={700} mb="sm">
                 Pokemon Box
               </Text>
               {ownedList.length ? (
@@ -495,7 +495,7 @@ export default function PublicProfile() {
                   ))}
                 </SimpleGrid>
               ) : (
-                <Text fz={13} c="dimmed">
+                <Text fz={14} c="dimmed">
                   No Pokemon yet.
                 </Text>
               )}
@@ -503,7 +503,7 @@ export default function PublicProfile() {
 
             {/* Teams */}
             <Card withBorder radius="md" p="md" bg="#1f1e20">
-              <Text fz={13} c="dimmed" tt="uppercase" fw={700} mb="sm">
+              <Text fz={14} c="dimmed" tt="uppercase" fw={700} mb="sm">
                 Teams
               </Text>
               {teamList.length ? (
@@ -511,7 +511,7 @@ export default function PublicProfile() {
                   {teamList.map((team) => (
                     <Group key={team.id} justify="space-between" wrap="nowrap" gap="sm">
                       <Box style={{ minWidth: 0 }}>
-                        <Text fz={14} c="white" fw={600} truncate>
+                        <Text fz={16} c="white" fw={600} truncate>
                           {team.team_name || "Team"}
                         </Text>
                         <Group gap={2} mt={4} wrap="nowrap">
@@ -520,14 +520,14 @@ export default function PublicProfile() {
                           ))}
                         </Group>
                       </Box>
-                      <Text fz={12} c="dimmed" style={{ whiteSpace: "nowrap" }}>
+                      <Text fz={14} c="dimmed" style={{ whiteSpace: "nowrap" }}>
                         {team.times_battled || 0} battles
                       </Text>
                     </Group>
                   ))}
                 </Stack>
               ) : (
-                <Text fz={13} c="dimmed">
+                <Text fz={14} c="dimmed">
                   No teams yet.
                 </Text>
               )}
@@ -537,17 +537,17 @@ export default function PublicProfile() {
                 placeholder; signed-in members see the section. */}
             <Card withBorder radius="md" p="md" bg="#1f1e20">
               <Group gap={6} mb="sm">
-                <Text fz={13} c="dimmed" tt="uppercase" fw={700}>
+                <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
                   Recent Activity
                 </Text>
                 {!viewer && <IconLock size={13} color="var(--mantine-color-dimmed)" />}
               </Group>
               {viewer ? (
-                <Text fz={13} c="dimmed">
+                <Text fz={14} c="dimmed">
                   No recent activity.
                 </Text>
               ) : (
-                <Text fz={13} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Sign in to see this member's recent activity.
                 </Text>
               )}
@@ -558,13 +558,13 @@ export default function PublicProfile() {
               <Box ta="center" mt="sm">
                 <Box
                   c="gray.5"
-                  fz={13}
+                  fz={14}
                   style={{ wordBreak: "break-word" }}
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(user.signature),
                   }}
                 />
-                <Text fz={10} c="dimmed" ff="monospace" mt={4}>
+                <Text fz={14} c="dimmed" ff="monospace" mt={4}>
                   signature
                 </Text>
               </Box>

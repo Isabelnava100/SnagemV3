@@ -80,10 +80,10 @@ function isEmptyEntry(entry: LoreEntry): boolean {
 function AuthorLine(props: { name?: string; uid?: string }) {
   if (!props.name) return null;
   return (
-    <Text fz={12} c="dimmed">
+    <Text fz={14} c="dimmed">
       by{" "}
       {props.uid ? (
-        <Anchor component={Link} to={`/Users/${props.name}`} fz={12}>
+        <Anchor component={Link} to={`/Users/${props.name}`} fz={14}>
           {props.name}
         </Anchor>
       ) : (
@@ -99,7 +99,7 @@ function AuthorLine(props: { name?: string; uid?: string }) {
 function LoreProse(props: { html: string }) {
   return (
     <Box
-      fz={14}
+      fz={16}
       c="rgba(255,255,255,0.85)"
       style={{ lineHeight: 1.7, wordBreak: "break-word" }}
       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(props.html) }}
@@ -114,7 +114,7 @@ function AttributeList(props: { attributes: Record<string, string> }) {
   return (
     <Stack gap={2}>
       {rows.map(([key, value]) => (
-        <Text key={key} fz={13} c="rgba(255,255,255,0.75)">
+        <Text key={key} fz={14} c="rgba(255,255,255,0.75)">
           <Text component="span" fw={700} c="white">
             {key}:
           </Text>{" "}
@@ -133,11 +133,11 @@ function EntryCard(props: { entry: LoreEntry; canEdit: boolean; onEdit: () => vo
         <Group justify="space-between" wrap="nowrap" align="flex-start" gap={8}>
           <Box style={{ minWidth: 0 }}>
             {entry.category && (
-              <Text fz={11} c="dimmed" tt="uppercase" fw={700}>
+              <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
                 {entry.category}
               </Text>
             )}
-            <Text fz={16} c="white" fw={600}>
+            <Text fz={20} c="white" fw={600}>
               {entry.title}
             </Text>
             <AuthorLine name={entry.authorName} uid={entry.authorUid} />
@@ -243,7 +243,7 @@ function BookEditor(props: {
           onChange={(v) => setDraft({ ...draft, order: typeof v === "number" ? v : 0 })}
         />
         {mutation.isError && (
-          <Text role="status" aria-live="polite" c="red" fz={13}>
+          <Text role="status" aria-live="polite" c="red" fz={14}>
             Could not save. You may not have permission.
           </Text>
         )}
@@ -286,7 +286,7 @@ function AttributeEditor(props: {
 
   return (
     <Stack gap={6}>
-      <Text fz={13} fw={600} c="white">
+      <Text fz={14} fw={600} c="white">
         Structured fields (optional)
       </Text>
       {rows.map(([key, val], i) => (
@@ -398,14 +398,14 @@ function EntryEditor(props: {
         />
         {draft.body.trim() && (
           <Card bg="#1c1b1f" p={10} radius="md" withBorder>
-            <Text fz={11} c="dimmed" mb={4}>
+            <Text fz={14} c="dimmed" mb={4}>
               Preview
             </Text>
             <LoreProse html={draft.body} />
           </Card>
         )}
         {mutation.isError && (
-          <Text role="status" aria-live="polite" c="red" fz={13}>
+          <Text role="status" aria-live="polite" c="red" fz={14}>
             Could not save. You may not have permission.
           </Text>
         )}
@@ -478,17 +478,17 @@ function BookView(props: { book: LoreBook; canEdit: boolean; onBack: () => void 
       </Group>
 
       <Box>
-        <Title order={2} c="white" size={24} fw={600}>
+        <Title order={2} c="white" size={28} fw={600}>
           {book.title}
         </Title>
         <Group gap={8} wrap="wrap">
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             {typeLabel(book.type)}
           </Text>
           <AuthorLine name={book.authorName} uid={book.authorUid} />
         </Group>
         {book.description && (
-          <Text fz={14} c="rgba(255,255,255,0.8)" mt={6}>
+          <Text fz={16} c="rgba(255,255,255,0.8)" mt={6}>
             {book.description}
           </Text>
         )}
@@ -626,7 +626,7 @@ export default function LoreTab() {
             Delete {(books ?? []).filter((b) => !booksWithContent.has(b.id)).length} empty book
             {(books ?? []).filter((b) => !booksWithContent.has(b.id)).length === 1 ? "" : "s"}
           </Button>
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Empty books never show to readers; this clears them out for good.
           </Text>
         </Group>
@@ -645,7 +645,7 @@ export default function LoreTab() {
               <Stack gap={8} style={{ height: "100%" }}>
                 <Group gap={8} wrap="nowrap">
                   <IconBook size={20} color="#b088e6" />
-                  <Text fz={16} c="white" fw={600} lineClamp={2}>
+                  <Text fz={20} c="white" fw={600} lineClamp={2}>
                     {book.title}
                   </Text>
                 </Group>
@@ -660,7 +660,7 @@ export default function LoreTab() {
                   )}
                 </Group>
                 {book.description && (
-                  <Text fz={13} c="dimmed" lineClamp={3}>
+                  <Text fz={14} c="dimmed" lineClamp={3}>
                     {book.description}
                   </Text>
                 )}

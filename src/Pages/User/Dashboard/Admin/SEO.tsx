@@ -57,10 +57,10 @@ export default function SEO() {
 
   return (
     <Stack gap={14} maw={640}>
-      <Title order={2} c="white" size={24} fw={400}>
+      <Title order={2} c="white" size={28} fw={400}>
         SEO &amp; Search
       </Title>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         The site's default search and social-share details. They set the browser
         tab title, the description that shows up in search results, and the preview
         card people see when a link is shared. Page-specific overrides come in a
@@ -129,7 +129,7 @@ export default function SEO() {
       />
 
       {saved && (
-        <Text fz={13} c="green.0" role="status" aria-live="polite">
+        <Text fz={14} c="green.0" role="status" aria-live="polite">
           SEO settings saved.
         </Text>
       )}

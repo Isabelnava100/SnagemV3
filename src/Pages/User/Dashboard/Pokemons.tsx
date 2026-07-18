@@ -391,7 +391,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
           />
         ) : (
           teamCharacterName && (
-            <Text fz={11} c="dimmed">
+            <Text fz={14} c="dimmed">
               Character: {teamCharacterName}
             </Text>
           )
@@ -471,7 +471,7 @@ function CreateNewTeam() {
   return (
     <Stack gap={4} align="end">
       {teamCount >= TEAM_WARNING_AT && (
-        <Text fz={12} c="#E54156">
+        <Text fz={14} c="#E54156">
           {teamCount >= MAX_TEAMS
             ? `You've reached the ${MAX_TEAMS}-team limit. Delete a team to make room.`
             : `${teamCount}/${MAX_TEAMS} teams. You're getting close to the limit.`}
@@ -664,7 +664,7 @@ function OwnedPokemons(props: EditingProps) {
                   onClick={resetFilters}
                   underline="always"
                   c="#4DABF7"
-                  fz={14}
+                  fz={16}
                   fw={600}
                   ta="center"
                   style={{ opacity: activeFilterCount ? 1 : 0.5 }}
@@ -687,7 +687,7 @@ function OwnedPokemons(props: EditingProps) {
               />
             ))
           ) : (
-            <Text fz={13} c="dimmed">
+            <Text fz={14} c="dimmed">
               No pokemon match these filters.
             </Text>
           )}
@@ -791,7 +791,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         />
         <Stack gap={3}>
           <Group gap={6}>
-            <Title order={3} size={16}>
+            <Title order={3} size={20}>
               {pokemon.species} ({pokemon.gender})
             </Title>
             {shadowed && (
@@ -814,7 +814,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
       </Group>
       {/* Provenance: written by the forum catch flow (publishForumPost). */}
       {pokemon.caughtIn && (
-        <Text fz={13}>
+        <Text fz={14}>
           Caught in{" "}
           <Link
             to={`/Forum/${pokemon.caughtIn.forum}/thread/${pokemon.caughtIn.threadId}/last`}
@@ -828,19 +828,19 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
       <LevelBar experience={pokemon.experience} />
       {/* Game stats: friendship/shadow/purification run 0..100 (see Library). */}
       <Stack gap={2}>
-        <Text fz={12}>Experience pts: {pokemon.experience ?? 0}</Text>
-        <Text fz={12}>Friendship pts: {pokemon.friendship ?? 0} / {STAT_MAX}</Text>
-        <Text fz={12}>Purification pts: {pokemon.purification ?? 0} / {STAT_MAX}</Text>
-        <Text fz={12}>Shadow pts: {pokemon.shadow ?? 0} / {STAT_MAX}</Text>
-        <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={11} c="grape.3">
+        <Text fz={14}>Experience pts: {pokemon.experience ?? 0}</Text>
+        <Text fz={14}>Friendship pts: {pokemon.friendship ?? 0} / {STAT_MAX}</Text>
+        <Text fz={14}>Purification pts: {pokemon.purification ?? 0} / {STAT_MAX}</Text>
+        <Text fz={14}>Shadow pts: {pokemon.shadow ?? 0} / {STAT_MAX}</Text>
+        <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={14} c="grape.3">
           What do these stats mean?
         </Anchor>
       </Stack>
       <Box>
-        <Text fz={11} c="dimmed" tt="uppercase" fw={700}>
+        <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
           Owned by
         </Text>
-        <Text fz={13} c="white">
+        <Text fz={14} c="white">
           {ownerName ?? "Unassigned"}
         </Text>
       </Box>
@@ -909,7 +909,7 @@ function SinglePokemon(props: {
             <PokemonDetails pokemon={pokemon} />
             {canAddToTeam &&
               (isAlreadyInTeam ? (
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Already in this team.
                 </Text>
               ) : (

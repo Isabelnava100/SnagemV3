@@ -133,7 +133,7 @@ export default function AdjustLists() {
         </Title>
         <CreateList />
       </Flex>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Reusable encounter pools a host can attach to a roleplay. Set the rule to <b>Only</b> to
         limit a thread to just the pokemon you pick, or <b>All Except</b> to allow everything but
         them. <b>Public</b> lists show up in the Library&apos;s Field Registers for every host to
@@ -279,7 +279,7 @@ function EditSingleListItem(props: {
         />
       </Group>
       <Stack gap={6}>
-        <Title fw={700} order={3} c="white" size={14} tt="uppercase">
+        <Title fw={700} order={3} c="white" size={16} tt="uppercase">
           LIST OF POKEMON
         </Title>
         <Box p={20} sx={{ borderRadius: 22 }} w="100%" bg="#5A545F">
@@ -397,7 +397,7 @@ function SingleListItem(props: { list: AdminPokemonList }) {
     <div className="bg-[#1E1D2080] p-3 rounded-[8px] flex flex-col gap-3 lg:grid lg:grid-cols-4 lg:gap-0 lg:items-start w-full text-white">
       {/* Name + duplicate */}
       <Stack align="start" gap={8}>
-        <Text fz={16} fw={600}>
+        <Text fz={20} fw={600}>
           {list.name || "Untitled"}
         </Text>
         <DuplicateListItem listItem={list} />
@@ -405,7 +405,7 @@ function SingleListItem(props: { list: AdminPokemonList }) {
 
       {/* Created by + visibility */}
       <Group gap={8} align="center">
-        <Text fz={13} c="dimmed" className="lg:hidden">
+        <Text fz={14} c="dimmed" className="lg:hidden">
           Created by
         </Text>
         <Text>{list.creator}</Text>
@@ -422,7 +422,7 @@ function SingleListItem(props: { list: AdminPokemonList }) {
 
       {/* Rule + pokemon list */}
       <Stack w="100%" gap={4}>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           {list.rule === "only" ? "Only these pokemon" : "All except these pokemon"}
         </Text>
         <PokemonList pokemons={list.pokemons} />

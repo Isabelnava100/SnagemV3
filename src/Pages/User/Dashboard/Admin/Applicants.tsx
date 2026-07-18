@@ -47,21 +47,21 @@ export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () =
             </Badge>
           )}
         </Group>
-        <Text fz={12} c="dimmed">
+        <Text fz={14} c="dimmed">
           {applicant.email}
         </Text>
       </Group>
       {applicant.application ? (
         <Box p={10} mb={8} bg="#211f21" style={{ borderRadius: 8 }}>
-          <Text fz={11} fw={700} c="dimmed" tt="uppercase" mb={2}>
+          <Text fz={14} fw={700} c="dimmed" tt="uppercase" mb={2}>
             Application
           </Text>
-          <Text fz={13} c="rgba(255,255,255,0.8)" style={{ whiteSpace: "pre-wrap" }}>
+          <Text fz={14} c="rgba(255,255,255,0.8)" style={{ whiteSpace: "pre-wrap" }}>
             {applicant.application}
           </Text>
         </Box>
       ) : (
-        <Text fz={12} c="dimmed" mb={8}>
+        <Text fz={14} c="dimmed" mb={8}>
           No written application on file.
         </Text>
       )}
@@ -105,7 +105,7 @@ export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () =
         </Button>
       </Group>
       {message && (
-        <Text fz={12} c="#E54156" mt={6} role="status" aria-live="polite">
+        <Text fz={14} c="#E54156" mt={6} role="status" aria-live="polite">
           {message}
         </Text>
       )}
@@ -127,10 +127,10 @@ export default function Applicants() {
   return (
     <SimpleSectionWrapper>
       <Stack gap={14}>
-        <Title order={2} c="white" size={24} fw={400}>
+        <Title order={2} c="white" size={28} fw={400}>
           Member Approvals
         </Title>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           New members who registered are waiting here. Approving one creates their
           account in the members list with the chosen role; rejecting removes the
           application.

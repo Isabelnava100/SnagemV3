@@ -102,10 +102,10 @@ function StatTile(props: { label: string; value: React.ReactNode }) {
   return (
     <Card bg="#201e2b" radius="md" p={12} withBorder style={{ borderColor: "#3a3550" }}>
       <Stack gap={2} align="center">
-        <Text fz={22} fw={700} c="white">
+        <Text fz={26} fw={700} c="white">
           {props.value}
         </Text>
-        <Text fz={10} c="dimmed" tt="uppercase" ta="center">
+        <Text fz={14} c="dimmed" tt="uppercase" ta="center">
           {props.label}
         </Text>
       </Stack>
@@ -158,7 +158,7 @@ function TrainingTargetCard({ pokemon }: { pokemon: OwnedPokemon }) {
         </Box>
         <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
           <Group gap={6} wrap="nowrap">
-            <Text fz={14} fw={700} c="white" lineClamp={1}>
+            <Text fz={16} fw={700} c="white" lineClamp={1}>
               {pokemon.name || pokemon.species}
             </Text>
             {pokemon.shiny && (
@@ -174,8 +174,8 @@ function TrainingTargetCard({ pokemon }: { pokemon: OwnedPokemon }) {
           </Group>
           <SimpleGrid cols={2} spacing={2} verticalSpacing={2}>
             {details.map(([label, value]) => (
-              <Text key={label} fz={11} c="dimmed" lineClamp={1}>
-                {label}: <Text component="span" fz={11} c="gray.3">{value}</Text>
+              <Text key={label} fz={14} c="dimmed" lineClamp={1}>
+                {label}: <Text component="span" fz={14} c="gray.3">{value}</Text>
               </Text>
             ))}
           </SimpleGrid>
@@ -253,7 +253,7 @@ function TrainingRoomTab() {
 
   if (!uid) {
     return (
-      <Text fz={13} c="dimmed" py={24}>
+      <Text fz={14} c="dimmed" py={24}>
         Sign in to use the Super Training Room and log training posts.
       </Text>
     );
@@ -287,7 +287,7 @@ function TrainingRoomTab() {
         <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
           <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
             <Group justify="space-between" align="flex-start" wrap="nowrap" mb="md">
-              <Text fz={12} fw={700} c="grape.3" tt="uppercase">
+              <Text fz={14} fw={700} c="grape.3" tt="uppercase">
                 Session Live . Super Training Room
               </Text>
               <Badge color="grape" variant="light" leftSection={<IconBolt size={12} />}>
@@ -303,10 +303,10 @@ function TrainingRoomTab() {
                 sections={[{ value: pct, color: "grape" }]}
                 label={
                   <Stack gap={0} align="center">
-                    <Text fz={13} fw={700} c="white" ta="center" lineClamp={1}>
+                    <Text fz={14} fw={700} c="white" ta="center" lineClamp={1}>
                       {selected?.name || "No target"}
                     </Text>
-                    <Text fz={10} c="dimmed" ta="center">
+                    <Text fz={14} c="dimmed" ta="center">
                       {levelInfo.isMax ? "Level 100 (max)" : `Lv ${levelInfo.level} · ${pct}% to next`}
                     </Text>
                   </Stack>
@@ -343,18 +343,18 @@ function TrainingRoomTab() {
               </Button>
 
               {atPostCap && (
-                <Text fz={12} c="gold.1" role="status" aria-live="polite">
+                <Text fz={14} c="gold.1" role="status" aria-live="polite">
                   You reached the {MAX_TRAINING_POSTS}-post limit for this training window.
                 </Text>
               )}
               {onLastPost && (
-                <Text fz={12} c="gold.1" role="status" aria-live="polite">
+                <Text fz={14} c="gold.1" role="status" aria-live="polite">
                   Heads up: your next post is the last one of this training window.
                 </Text>
               )}
 
               <Group justify="space-between" wrap="nowrap">
-                <Text fz={11} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Opens the pinned training thread. Next post earns {nextEvoPts} evolution pts.
                 </Text>
                 <Button
@@ -369,7 +369,7 @@ function TrainingRoomTab() {
               </Group>
 
               {status && (
-                <Text fz={12} c="grape.3" role="status" aria-live="polite">
+                <Text fz={14} c="grape.3" role="status" aria-live="polite">
                   {status}
                 </Text>
               )}
@@ -380,23 +380,23 @@ function TrainingRoomTab() {
         <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
           <Stack gap="md">
             <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-              <Text fz={12} fw={700} c="grape.3" tt="uppercase" mb="xs">
+              <Text fz={14} fw={700} c="grape.3" tt="uppercase" mb="xs">
                 Session Rules
               </Text>
               <Stack gap={6}>
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Once per day, 2-hour limit.
                 </Text>
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Train in a pair for a 4-hour window.
                 </Text>
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Maximum {MAX_TRAINING_POSTS} posts per training window.
                 </Text>
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Shadow Pokemon earn Purification instead.
                 </Text>
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Regional forms (Alolan, Galarian, Hisuian) allowed.
                 </Text>
               </Stack>
@@ -405,11 +405,11 @@ function TrainingRoomTab() {
             <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
               <Group gap={6} mb="xs">
                 <IconFlame size={16} color="var(--mantine-color-orange-4)" />
-                <Text fz={12} fw={700} c="gold.1" tt="uppercase">
+                <Text fz={14} fw={700} c="gold.1" tt="uppercase">
                   Coach's Tip
                 </Text>
               </Group>
-              <Text fz={12} c="dimmed">
+              <Text fz={14} c="dimmed">
                 High-effort posts catch a grader's eye. Detailed training scenes can earn a
                 random bonus on top of your base points.
               </Text>
@@ -419,25 +419,25 @@ function TrainingRoomTab() {
       </Flex>
 
       <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-        <Text fz={12} fw={700} c="grape.3" tt="uppercase" mb="sm">
+        <Text fz={14} fw={700} c="grape.3" tt="uppercase" mb="sm">
           How Training Scores
         </Text>
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Posts 1-5: 1.0 evolution pt each (solo).
           </Text>
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Posts 6+: 0.75 pt each, pace yourself.
           </Text>
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Partner mode: 1.0 pt through post 10 plus a 4-hour window.
           </Text>
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Shadow Pokemon: training earns Purification Points at the same rates
             instead of evolution points. A full purification bar (100) clears the
             shadow; forum posts can also roll purification as you play.
           </Text>
-          <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={12} c="grape.3">
+          <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={14} c="grape.3">
             How exp, friendship, shadow and purification work →
           </Anchor>
         </SimpleGrid>
@@ -449,7 +449,7 @@ function TrainingRoomTab() {
 /** Section heading shared across the redesigned tabs. */
 function SectionLabel({ children, mb = "sm" }: { children: React.ReactNode; mb?: string | number }) {
   return (
-    <Text fz={13} fw={800} c="white" tt="uppercase" mb={mb} style={{ letterSpacing: 1 }}>
+    <Text fz={14} fw={800} c="white" tt="uppercase" mb={mb} style={{ letterSpacing: 1 }}>
       {children}
     </Text>
   );
@@ -483,7 +483,7 @@ const SCORING = [
 function Movement({ value }: { value?: number }) {
   if (!value) {
     return (
-      <Text fz={12} c="dimmed" w={14} ta="center" aria-label="No change">
+      <Text fz={14} c="dimmed" w={14} ta="center" aria-label="No change">
         &ndash;
       </Text>
     );
@@ -525,7 +525,7 @@ function StandingRow({
     <Table.Tr>
       <Table.Td>
         <Group gap={8} wrap="nowrap">
-          <Text fz={20} fw={800} c={rankColor} style={{ fontVariantNumeric: "tabular-nums", minWidth: 22 }}>
+          <Text fz={24} fw={800} c={rankColor} style={{ fontVariantNumeric: "tabular-nums", minWidth: 22 }}>
             {rank}
           </Text>
           <Movement value={row.movement} />
@@ -542,14 +542,14 @@ function StandingRow({
               flexShrink: 0,
             }}
           />
-          <Text fz={14} fw={700} c="white" lineClamp={1}>
+          <Text fz={16} fw={700} c="white" lineClamp={1}>
             {row.username || row.id}
           </Text>
         </Group>
       </Table.Td>
       {showWL && (
         <Table.Td ta="center">
-          <Text fz={13} c="dimmed" style={{ fontVariantNumeric: "tabular-nums" }}>
+          <Text fz={14} c="dimmed" style={{ fontVariantNumeric: "tabular-nums" }}>
             {row.wins ?? 0}&ndash;{row.losses ?? 0}
           </Text>
         </Table.Td>
@@ -560,7 +560,7 @@ function StandingRow({
         </Table.Td>
       )}
       <Table.Td ta="right">
-        <Text fz={18} fw={800} c="gold.1" style={{ fontVariantNumeric: "tabular-nums" }}>
+        <Text fz={22} fw={800} c="gold.1" style={{ fontVariantNumeric: "tabular-nums" }}>
           {row.points ?? 0}
         </Text>
       </Table.Td>
@@ -581,16 +581,16 @@ function PointsPanel() {
             py={10}
             style={{ borderTop: i ? "1px solid #2a2637" : undefined }}
           >
-            <Text fz={13} c="gray.3">
+            <Text fz={14} c="gray.3">
               {s.label}
             </Text>
-            <Text fz={15} fw={800} c={`${s.color}.4`}>
+            <Text fz={16} fw={800} c={`${s.color}.4`}>
               {s.value}
             </Text>
           </Group>
         ))}
       </Stack>
-      <Text fz={11} c="dimmed" mt="sm" pt="sm" style={{ borderTop: "1px solid #2a2637" }}>
+      <Text fz={14} c="dimmed" mt="sm" pt="sm" style={{ borderTop: "1px solid #2a2637" }}>
         Points are entered by admins from reported battles, no self-scoring.
       </Text>
     </Card>
@@ -623,7 +623,7 @@ function RankingsTab() {
               <SectionLoader />
             </Box>
           ) : !rows.length ? (
-            <Text fz={13} c="dimmed" p="md">
+            <Text fz={14} c="dimmed" p="md">
               No ranked players yet. Battle results will populate the ladder.
             </Text>
           ) : (
@@ -697,16 +697,16 @@ function ChampionCard({ entry }: { entry: HallOfFameEntry }) {
           <IconTrophy size={28} color="#3a2a05" />
         </Box>
         <Box style={{ minWidth: 0 }}>
-          <Text fz={17} fw={800} c="white" tt="uppercase" lineClamp={1}>
+          <Text fz={21} fw={800} c="white" tt="uppercase" lineClamp={1}>
             {entry.tournament_name}
           </Text>
-          <Text fz={13} fw={700} c="gold.1" lineClamp={1}>
+          <Text fz={14} fw={700} c="gold.1" lineClamp={1}>
             {entry.year != null ? `${entry.year} Champion` : "Champion"} . {entry.winner || "Unknown"}
           </Text>
         </Box>
       </Group>
 
-      <Text fz={11} fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
+      <Text fz={14} fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
         Champion's Team
       </Text>
       <Group gap={8}>
@@ -730,7 +730,7 @@ function ChampionCard({ entry }: { entry: HallOfFameEntry }) {
             </Box>
           ))
         ) : (
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Team roster not recorded.
           </Text>
         )}
@@ -750,7 +750,7 @@ function HallOfFameTab() {
   const entries = data ?? [];
   if (!entries.length) {
     return (
-      <Text fz={13} c="dimmed" py={24}>
+      <Text fz={14} c="dimmed" py={24}>
         No champions recorded yet. Tournament winners will be enshrined here.
       </Text>
     );
@@ -803,10 +803,10 @@ function daysUntil(ts?: { seconds: number }): number | null {
 function HeroStat({ value, label }: { value: string; label: string }) {
   return (
     <Box>
-      <Text fz={30} fw={800} c="white" lh={1}>
+      <Text fz={34} fw={800} c="white" lh={1}>
         {value}
       </Text>
-      <Text fz={10} c="dimmed" tt="uppercase" mt={4} style={{ letterSpacing: 1 }}>
+      <Text fz={14} c="dimmed" tt="uppercase" mt={4} style={{ letterSpacing: 1 }}>
         {label}
       </Text>
     </Box>
@@ -818,7 +818,7 @@ function RulesCard({ html }: { html: string }) {
     <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
       <SectionLabel>Rules</SectionLabel>
       <Box
-        fz={13}
+        fz={14}
         c="dimmed"
         sx={{
           "& ul": { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 },
@@ -857,14 +857,14 @@ function PrizesCard({ prizes }: { prizes: Record<string, string[]> }) {
             py={12}
             style={{ borderTop: i ? "1px solid #2a2637" : undefined }}
           >
-            <Text fz={22} style={{ lineHeight: 1 }}>
+            <Text fz={26} style={{ lineHeight: 1 }}>
               {PRIZE_ICON[k] ?? "\u{1F3C5}"}
             </Text>
             <Box style={{ minWidth: 0 }}>
-              <Text fz={13} fw={700} c="white">
+              <Text fz={14} fw={700} c="white">
                 {PRIZE_LABEL[k] ?? k}
               </Text>
-              <Text fz={12} c="dimmed">
+              <Text fz={14} c="dimmed">
                 {(prizes[k] ?? []).join(" . ")}
               </Text>
             </Box>
@@ -951,11 +951,11 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
     >
       <SectionLabel>Register</SectionLabel>
       {!uid ? (
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           Sign in to register for this tournament.
         </Text>
       ) : closed ? (
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           Sign-ups for this event are closed.
         </Text>
       ) : (
@@ -1006,7 +1006,7 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
             </Button>
           )}
           {status && (
-            <Text fz={12} c="grape.3" role="status" aria-live="polite">
+            <Text fz={14} c="grape.3" role="status" aria-live="polite">
               {status}
             </Text>
           )}
@@ -1041,7 +1041,7 @@ function BracketSlot({
       }}
     >
       <Text
-        fz={12}
+        fz={14}
         fw={won ? 700 : 500}
         c={name ? (won || !decided ? "white" : "dimmed") : "dimmed"}
         lineClamp={1}
@@ -1049,7 +1049,7 @@ function BracketSlot({
         {name || "TBD"}
       </Text>
       {score != null && (
-        <Text fz={12} fw={700} c={won ? "grape.3" : "dimmed"} style={{ fontVariantNumeric: "tabular-nums" }}>
+        <Text fz={14} fw={700} c={won ? "grape.3" : "dimmed"} style={{ fontVariantNumeric: "tabular-nums" }}>
           {score}
         </Text>
       )}
@@ -1071,7 +1071,7 @@ function BracketCard({ bracket }: { bracket: BracketRound[] }) {
         <Flex gap="md" align="flex-start" style={{ minWidth: "min-content" }}>
           {bracket.map((round) => (
             <Stack key={round.name} gap="sm" style={{ minWidth: 190, flexShrink: 0 }}>
-              <Text fz={11} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 1 }}>
+              <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 1 }}>
                 {round.name}
               </Text>
               <Stack gap="sm" justify="center" style={{ flex: 1 }}>
@@ -1129,16 +1129,16 @@ function FeaturedTournament({ t }: { t: Tournament }) {
                 </Badge>
               )}
               {t.game_generation && (
-                <Text fz={12} c="dimmed">
+                <Text fz={14} c="dimmed">
                   {t.game_generation}
                 </Text>
               )}
             </Group>
-            <Title order={2} c="white" fw={800} tt="uppercase" size={30} mb={8}>
+            <Title order={2} c="white" fw={800} tt="uppercase" size={34} mb={8}>
               {t.name}
             </Title>
             {t.format && (
-              <Text fz={13} c="dimmed" mb="lg">
+              <Text fz={14} c="dimmed" mb="lg">
                 {t.format}
               </Text>
             )}
@@ -1170,7 +1170,7 @@ function CompactTournament({ t }: { t: Tournament }) {
   return (
     <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
       <Group justify="space-between" wrap="nowrap" mb={6}>
-        <Text fz={16} fw={700} c="white" lineClamp={1}>
+        <Text fz={20} fw={700} c="white" lineClamp={1}>
           {t.name}
         </Text>
         {t.status && (
@@ -1181,17 +1181,17 @@ function CompactTournament({ t }: { t: Tournament }) {
       </Group>
       <Group gap="md">
         {t.game_generation && (
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             {t.game_generation}
           </Text>
         )}
         {t.format && (
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             {t.format}
           </Text>
         )}
         {days != null && (
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             {days === 0 ? "Started" : `Starts in ${days}d`}
           </Text>
         )}
@@ -1211,7 +1211,7 @@ function TournamentsTab() {
   const tournaments = data ?? [];
   if (!tournaments.length) {
     return (
-      <Text fz={13} c="dimmed" py={24}>
+      <Text fz={14} c="dimmed" py={24}>
         No tournaments scheduled right now. Check back for the next bracket event.
       </Text>
     );
@@ -1275,7 +1275,7 @@ export default function Colosseum() {
             <Badge color="red" variant="filled" radius="sm">
               LIVE
             </Badge>
-            <Text fz={12} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
+            <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
               Season 4 . Week 9
             </Text>
           </Group>

@@ -75,11 +75,11 @@ function ThreadRow(props: { thread: ForumThread; forum: string }) {
             Pinned
           </Badge>
         )}
-        <Text fz={16} c="white" fw={500}>
+        <Text fz={20} c="white" fw={500}>
           {thread.title}
         </Text>
       </Group>
-      <Text fz={11} c="dimmed">
+      <Text fz={14} c="dimmed">
         By <span style={{ color: FORUM_LINK_COLOR }}>{thread.createdBy}</span>{" "}
         {formatFireDate(thread.createdAt ?? thread.timePosted)}
       </Text>
@@ -108,10 +108,10 @@ function ThreadRow(props: { thread: ForumThread; forum: string }) {
           radius="xl"
         />
         <Stack gap={0}>
-          <Text fz={11} c="dimmed">
+          <Text fz={14} c="dimmed">
             by <span style={{ color: FORUM_LINK_COLOR }}>{thread.lastPost.by}</span>
           </Text>
-          <Text fz={12} c="white">
+          <Text fz={14} c="white">
             {formatFireTime(thread.lastPost.at)}
           </Text>
         </Stack>
@@ -120,7 +120,7 @@ function ThreadRow(props: { thread: ForumThread; forum: string }) {
   ) : (
     <Link
       to={`/Forum/${forum}/thread/${thread.id}/last`}
-      style={{ textDecoration: "none", color: FORUM_LINK_COLOR, fontSize: 12 }}
+      style={{ textDecoration: "none", color: FORUM_LINK_COLOR, fontSize: 14 }}
     >
       {formatFireTime(thread.timePosted)}
     </Link>
@@ -132,13 +132,13 @@ function ThreadRow(props: { thread: ForumThread; forum: string }) {
         {title}
         <Flex justify="space-between" align="center" mt={8} gap={8} wrap="wrap">
           <Stack gap={2}>
-            <Text fz={10} c="dimmed" tt="uppercase" fw={700}>
+            <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
               Latest post
             </Text>
             {lastPost}
           </Stack>
           <Stack gap={2} align="flex-end">
-            <Text fz={12} c="dimmed">
+            <Text fz={14} c="dimmed">
               {posts} post{posts === 1 ? "" : "s"}
             </Text>
             <ParticipantAvatars thread={thread} />
@@ -154,7 +154,7 @@ function ThreadRow(props: { thread: ForumThread; forum: string }) {
       <Box style={{ flex: 2, minWidth: 0 }}>{lastPost}</Box>
       <Stack gap={2} align="flex-end" style={{ flex: 1 }}>
         <ParticipantAvatars thread={thread} />
-        <Text fz={12} c="dimmed">
+        <Text fz={14} c="dimmed">
           {posts} post{posts === 1 ? "" : "s"}
         </Text>
       </Stack>
@@ -277,16 +277,16 @@ export default function ForumIndex() {
         style={{ background: FORUM_ACCENT, borderRadius: 6 }}
         justify="space-between"
       >
-        <Text fz={12} fw={700} c="white" tt="uppercase" style={{ flex: 3 }}>
+        <Text fz={14} fw={700} c="white" tt="uppercase" style={{ flex: 3 }}>
           Topics
         </Text>
         {isOverSm && (
-          <Text fz={12} fw={700} c="white" tt="uppercase" style={{ flex: 2 }}>
+          <Text fz={14} fw={700} c="white" tt="uppercase" style={{ flex: 2 }}>
             Latest post
           </Text>
         )}
         <Text
-          fz={12}
+          fz={14}
           fw={700}
           c="white"
           tt="uppercase"
@@ -306,7 +306,7 @@ export default function ForumIndex() {
             <ThreadRow key={thread.id} thread={thread} forum={activeLink} />
           ))}
           {!pageThreads.length && (
-            <Text fz={14} c="dimmed" ta="center" py={30}>
+            <Text fz={16} c="dimmed" ta="center" py={30}>
               {archive ? "No archived threads here." : "No threads here yet."}
             </Text>
           )}
@@ -322,7 +322,7 @@ export default function ForumIndex() {
             setArchive(e.currentTarget.checked);
             setPage(1);
           }}
-          styles={{ label: { color: "white", fontSize: 13 } }}
+          styles={{ label: { color: "white", fontSize: 14 } }}
         />
         {totalPages > 1 && (
           <Pagination
@@ -353,7 +353,7 @@ function CategoryDisclaimer(props: { link: string }) {
       <>
         Mission threads cannot be created here directly. Pick up a mission from
         the{" "}
-        <Anchor component={Link} to="/Missions" c="blue.3" fz={11}>
+        <Anchor component={Link} to="/Missions" c="blue.3" fz={14}>
           Mission hub
         </Anchor>{" "}
         and your thread is created for you.
@@ -368,7 +368,7 @@ function CategoryDisclaimer(props: { link: string }) {
     "The-Colosseum": (
       <>
         Colosseum threads are hosted by staff; training posts start from the{" "}
-        <Anchor component={Link} to="/Colosseum" c="blue.3" fz={11}>
+        <Anchor component={Link} to="/Colosseum" c="blue.3" fz={14}>
           Colosseum page
         </Anchor>
         .
@@ -377,7 +377,7 @@ function CategoryDisclaimer(props: { link: string }) {
     "Master-Mission": (
       <>
         Master Missions are requested from the{" "}
-        <Anchor component={Link} to="/Research" c="blue.3" fz={11}>
+        <Anchor component={Link} to="/Research" c="blue.3" fz={14}>
           Research page
         </Anchor>{" "}
         and visible to Master members.
@@ -388,9 +388,9 @@ function CategoryDisclaimer(props: { link: string }) {
   if (!note) return null;
   return (
     <Group justify="flex-end" mt={16}>
-      <Text fz={11} c="dimmed" ta="right" maw={420}>
+      <Text fz={14} c="dimmed" ta="right" maw={420}>
         {note}{" "}
-        <Anchor component={Link} to="/Library?tab=forums" c="blue.3" fz={11}>
+        <Anchor component={Link} to="/Library?tab=forums" c="blue.3" fz={14}>
           Forum guide
         </Anchor>
       </Text>

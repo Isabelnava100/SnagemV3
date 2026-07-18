@@ -91,7 +91,7 @@ function EmojiModal(props: Props) {
 
         {!!ownedEmotes.length && (
           <>
-            <Text fz={13} fw={600}>
+            <Text fz={14} fw={600}>
               Your Emotes
             </Text>
             <SimpleGrid cols={6} spacing={6} style={{ maxWidth: 340 }}>

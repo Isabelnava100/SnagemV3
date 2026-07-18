@@ -44,7 +44,7 @@ export default function ShadowVaccineButton(props: { pokemon: OwnedPokemon }) {
         Use Shadow Vaccine (purify)
       </Button>
       {message && (
-        <Text fz={11} c="grape.3" role="status" aria-live="polite">
+        <Text fz={14} c="grape.3" role="status" aria-live="polite">
           {message}
         </Text>
       )}

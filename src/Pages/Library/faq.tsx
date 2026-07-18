@@ -11,7 +11,7 @@ import { Accordion, Box, List, Stack, Text, Title } from "@mantine/core";
 
 function P(props: { children: React.ReactNode }) {
   return (
-    <Text fz={14} c="rgba(255,255,255,0.8)" style={{ lineHeight: 1.7 }}>
+    <Text fz={16} c="rgba(255,255,255,0.8)" style={{ lineHeight: 1.7 }}>
       {props.children}
     </Text>
   );
@@ -19,7 +19,7 @@ function P(props: { children: React.ReactNode }) {
 
 function SubTitle(props: { children: React.ReactNode }) {
   return (
-    <Text fz={13} fw={700} c="white" mt={8}>
+    <Text fz={14} fw={700} c="white" mt={8}>
       {props.children}
     </Text>
   );
@@ -566,7 +566,7 @@ const FAQ: FaqItem[] = [
 export default function FaqTab() {
   return (
     <Stack gap={12}>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Some of the most commonly asked questions and their answers. Tap a question
         to expand it. If your question is not here, contact the staff and we may add
         it for future reference.
@@ -575,7 +575,7 @@ export default function FaqTab() {
         {FAQ.map((item, i) => (
           <Accordion.Item key={i} value={`faq-${i}`} bg="#2b2a2b">
             <Accordion.Control>
-              <Text fz={14} c="white" fw={600}>
+              <Text fz={16} c="white" fw={600}>
                 {item.q}
               </Text>
             </Accordion.Control>

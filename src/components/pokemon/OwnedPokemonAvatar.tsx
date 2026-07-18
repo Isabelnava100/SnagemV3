@@ -36,7 +36,7 @@ export default function OwnedPokemonAvatar(props: {
       <HoverCard.Dropdown bg="#1a1622" style={{ border: "1px solid #2a2637" }}>
         <Stack gap={6}>
           <Group gap={6} wrap="wrap">
-            <Text c="white" fw={700} fz={14}>
+            <Text c="white" fw={700} fz={16}>
               {name}
               {pokemon.gender ? ` (${pokemon.gender})` : ""}
             </Text>
@@ -59,16 +59,16 @@ export default function OwnedPokemonAvatar(props: {
           </Group>
           <LevelBar experience={pokemon.experience} />
           <Stack gap={2}>
-            <Text fz={12} c="gray.4">
+            <Text fz={14} c="gray.4">
               Experience: {pokemon.experience ?? 0}
             </Text>
-            <Text fz={12} c="gray.4">
+            <Text fz={14} c="gray.4">
               Friendship: {pokemon.friendship ?? 0} / {STAT_MAX}
             </Text>
-            <Text fz={12} c="gray.4">
+            <Text fz={14} c="gray.4">
               Purification: {pokemon.purification ?? 0} / {STAT_MAX}
             </Text>
-            <Text fz={12} c="gray.4">
+            <Text fz={14} c="gray.4">
               Shadow: {pokemon.shadow ?? 0} / {STAT_MAX}
             </Text>
           </Stack>

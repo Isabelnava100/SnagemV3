@@ -35,7 +35,7 @@
   border-radius: 4px;
   text-decoration: none;
   color: #1c1c1e;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -65,6 +65,6 @@
     .linkMainNav:hover {
         border-radius: 0!important;
       }
-      .linkMainNav{font-size:16px!important;padding:18px 12px!important;}
+      .linkMainNav{font-size: 20px!important;padding:18px 12px!important;}
       
 }

@@ -167,16 +167,16 @@ function InputWrapper(props: {
   return (
     <Paper w="100%" bg="#525151" py={3} px={7} radius={8}>
       <Flex align="center">
-        <Text w={65} fz={14} lineClamp={1}>
+        <Text w={65} fz={16} lineClamp={1}>
           {title}:
         </Text>
         {!editable ? (
           <Group gap={6} justify="space-between" wrap="nowrap" sx={{ flex: 1 }}>
-            <Text lineClamp={1} fz={18} color="white" px={2}>
+            <Text lineClamp={1} fz={22} color="white" px={2}>
               {form.values[name as keyof FormFields]?.toString()}
             </Text>
             {isEditing && locked && (
-              <Text fz={11} c="dimmed" style={{ whiteSpace: "nowrap" }}>
+              <Text fz={14} c="dimmed" style={{ whiteSpace: "nowrap" }}>
                 Masters only
               </Text>
             )}
@@ -227,11 +227,11 @@ function TextareaWrapper(props: {
   return (
     <Stack h="100%" p={8} sx={{ borderRadius: 8 }} bg="#525151" gap={8}>
       <Group gap={6} justify="space-between" wrap="nowrap">
-        <Title order={3} size={14}>
+        <Title order={3} size={16}>
           {title}
         </Title>
         {isEditing && locked && (
-          <Text fz={11} c="dimmed" style={{ whiteSpace: "nowrap" }}>
+          <Text fz={14} c="dimmed" style={{ whiteSpace: "nowrap" }}>
             Masters only
           </Text>
         )}
@@ -426,7 +426,7 @@ function SingleCharacter(props: Character) {
             {isEditing ? (
               <TextInput {...form.getInputProps("name")} />
             ) : (
-              <Text fz={24} color="white" bg="#2E2D2E" px={20} py={5} sx={{ borderRadius: 8 }}>
+              <Text fz={28} color="white" bg="#2E2D2E" px={20} py={5} sx={{ borderRadius: 8 }}>
                 {form.values.name}
               </Text>
             )}

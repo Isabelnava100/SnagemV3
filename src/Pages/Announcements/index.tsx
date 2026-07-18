@@ -116,7 +116,7 @@ export default function Announcements() {
 
       <Stack gap={32}>
         <Box component="section" aria-labelledby="dev-updates-heading">
-          <Title id="dev-updates-heading" order={2} c="white" size={22} fw={700} mb={16}>
+          <Title id="dev-updates-heading" order={2} c="white" size={26} fw={700} mb={16}>
             Development updates
           </Title>
           <Stack gap={16}>
@@ -134,14 +134,14 @@ export default function Announcements() {
                       {a.tag}
                     </Badge>
                   )}
-                  <Text fz={12} c="dimmed" tt="uppercase" fw={600} style={{ letterSpacing: 0.5 }}>
+                  <Text fz={14} c="dimmed" tt="uppercase" fw={600} style={{ letterSpacing: 0.5 }}>
                     {a.date}
                   </Text>
                 </Group>
-                <Title order={3} c="white" size={18} fw={600} mb={6}>
+                <Title order={3} c="white" size={22} fw={600} mb={6}>
                   {a.title}
                 </Title>
-                <Text c="rgba(255,255,255,0.75)" fz={14} style={{ lineHeight: 1.7 }}>
+                <Text c="rgba(255,255,255,0.75)" fz={16} style={{ lineHeight: 1.7 }}>
                   {a.body}
                 </Text>
               </Card>
@@ -150,10 +150,10 @@ export default function Announcements() {
         </Box>
 
         <Box component="section" aria-labelledby="features-heading">
-          <Title id="features-heading" order={2} c="white" size={22} fw={700} mb={4}>
+          <Title id="features-heading" order={2} c="white" size={26} fw={700} mb={4}>
             Everything you can do
           </Title>
-          <Text c="dimmed" fz={14} mb={16}>
+          <Text c="dimmed" fz={16} mb={16}>
             A quick summary of the guild's features. There is more waiting inside.
           </Text>
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={16}>
@@ -169,7 +169,7 @@ export default function Announcements() {
                   <Box c="grape.3" style={{ display: "flex" }}>
                     {group.icon}
                   </Box>
-                  <Title order={3} c="white" size={16} fw={600}>
+                  <Title order={3} c="white" size={20} fw={600}>
                     {group.title}
                   </Title>
                 </Group>

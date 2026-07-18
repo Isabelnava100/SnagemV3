@@ -144,7 +144,7 @@ function SingleBookmark(props: Bookmark) {
           }}
         >
           <Stack gap={8}>
-            <Text c="white" fz={14}>
+            <Text c="white" fz={16}>
               Remove this bookmark?
             </Text>
             <Group gap={8} justify="flex-end">

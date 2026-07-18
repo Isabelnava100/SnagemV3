@@ -275,7 +275,7 @@ function Avatars() {
       />
       <Stack w="100%" maw="100%" sx={{ flex: 1, overflow: "hidden" }}>
         <Flex w="100%" justify="space-between" align="center">
-          <Text fz={16} color="white">
+          <Text fz={20} color="white">
             Avatars
           </Text>
           <UploadAndCropImage
@@ -292,7 +292,7 @@ function Avatars() {
           />
         </Flex>
         {!canUpload && (
-          <Text fz={12} c="#E54156">
+          <Text fz={14} c="#E54156">
             You&apos;ve reached the max of {MAX_ITEMS_COUNT} avatars. Remove one before adding more.
           </Text>
         )}
@@ -466,7 +466,7 @@ function CoverBackgrounds() {
     <Wrapper p={16}>
       <Stack>
         <Flex w="100%" justify="space-between" align="center">
-          <Text fz={16} color="white">
+          <Text fz={20} color="white">
             Cover Background
           </Text>
           <UploadAndCropImage
@@ -483,7 +483,7 @@ function CoverBackgrounds() {
           />
         </Flex>
         {!canUpload && (
-          <Text fz={12} c="#E54156">
+          <Text fz={14} c="#E54156">
             You&apos;ve reached the max of 6 cover backgrounds. Remove one before adding more.
           </Text>
         )}
@@ -530,7 +530,7 @@ function CoverBackgrounds() {
                                 background: "rgba(0,0,0,0.55)",
                               }}
                             >
-                              <Text tt="uppercase" c="white" ta="center" fw="bold" fz={12}>
+                              <Text tt="uppercase" c="white" ta="center" fw="bold" fz={14}>
                                 Selected
                               </Text>
                             </Box>
@@ -614,7 +614,7 @@ function Tags() {
     <Wrapper p={16}>
       <Stack>
         <Flex align="start" justify="center">
-          <Text fz={16} color="white">
+          <Text fz={20} color="white">
             Tags
           </Text>
           <Alert icon={<IconInfoCircle />} py={0} color="gray" bg="transparent" sx={{ flex: 1 }}>
@@ -674,7 +674,7 @@ function RightSideContent() {
     <Stack sx={{ flex: 1 }}>
       <Wrapper id="profile-save-anchor" sx={{ flex: 1, borderRadius: 22 }}>
         <Flex justify="space-between" align="center">
-          <Title c="white" order={2} size={24}>
+          <Title c="white" order={2} size={28}>
             Description
           </Title>
           {isLoading && <Text>Saving changes...</Text>}

@@ -79,10 +79,10 @@ export default function Announcements() {
 
   return (
     <Stack maw={560}>
-      <Title order={2} size={24} c="white" fw={400}>
+      <Title order={2} size={28} c="white" fw={400}>
         Dashboard Announcement
       </Title>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Shown at the top of everyone&apos;s Snag Dashboard until they mark it as read. Saving
         resets everyone&apos;s read state.
       </Text>
@@ -120,7 +120,7 @@ export default function Announcements() {
         styles={{ label: { color: "white" } }}
       />
       {sent && (
-        <Text fz={13} c="green.0" fw={600} role="status" aria-live="polite">
+        <Text fz={14} c="green.0" fw={600} role="status" aria-live="polite">
           Announcement Sent!
         </Text>
       )}
@@ -149,7 +149,7 @@ function AnnouncementHistory(props: { liveId: string | null }) {
 
   return (
     <Stack gap={10}>
-      <Title order={3} size={16} c="white" fw={700} tt="uppercase">
+      <Title order={3} size={20} c="white" fw={700} tt="uppercase">
         Sent Announcements
       </Title>
       {isPending ? (
@@ -204,7 +204,7 @@ function HistoryRow(props: { item: Announcement; isLive: boolean }) {
     >
       <Stack gap={4} style={{ minWidth: 0 }}>
         <Group gap={8} wrap="nowrap">
-          <Text fz={15} fw={600} c="white" lineClamp={1}>
+          <Text fz={16} fw={600} c="white" lineClamp={1}>
             {item.title || "Untitled"}
           </Text>
           {isLive && item.active ? (
@@ -213,11 +213,11 @@ function HistoryRow(props: { item: Announcement; isLive: boolean }) {
             </Badge>
           ) : null}
         </Group>
-        <Text fz={13} c="dimmed" lineClamp={2}>
+        <Text fz={14} c="dimmed" lineClamp={2}>
           {item.body}
         </Text>
         {sentOn && (
-          <Text fz={11} c="dimmed">
+          <Text fz={14} c="dimmed">
             Sent {sentOn}
           </Text>
         )}
@@ -249,7 +249,7 @@ function DeleteConfirm(props: { isLive: boolean; loading: boolean; onConfirm: ()
       </Popover.Target>
       <Popover.Dropdown>
         <Stack gap={10}>
-          <Text fz={13}>
+          <Text fz={14}>
             {props.isLive
               ? "This is live on dashboards. Deleting will also remove the banner. Continue?"
               : "Delete this announcement from the history?"}

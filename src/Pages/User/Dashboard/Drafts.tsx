@@ -73,7 +73,7 @@ function DraftsHeader(props: { count: number }) {
 
   return (
     <Flex justify="space-between" align="center" gap={10} wrap="wrap">
-      <Text c={count >= 55 ? "#E54156" : "dimmed"} fz={13}>
+      <Text c={count >= 55 ? "#E54156" : "dimmed"} fz={14}>
         {count}/60 drafts
         {count >= 60
           ? ". You're at the limit; delete drafts to save new ones."
@@ -84,7 +84,7 @@ function DraftsHeader(props: { count: number }) {
       {count >= 40 &&
         (confirming ? (
           <Group gap={6}>
-            <Text fz={13} c="white">
+            <Text fz={14} c="white">
               Delete ALL {count} drafts?
             </Text>
             <ActionIcon
@@ -102,7 +102,7 @@ function DraftsHeader(props: { count: number }) {
           </Group>
         ) : (
           <Text
-            fz={13}
+            fz={14}
             c="#E54156"
             td="underline"
             style={{ cursor: "pointer" }}
@@ -150,7 +150,7 @@ function DeleteDraft(props: { draftId: string }) {
       </Popover.Target>
       <Popover.Dropdown bg="#1E1D20">
         <Stack gap={8}>
-          <Text c="white" fz={14}>
+          <Text c="white" fz={16}>
             Delete this draft? This can&apos;t be undone.
           </Text>
           <Group gap={8} justify="flex-end">
@@ -193,7 +193,7 @@ function SingleDraft(props: Draft) {
           style={{ flex: 1, minWidth: 0 }}
         >
           <Stack gap={6} style={{ minWidth: 0 }}>
-            <Title order={3} size={20} c="white">
+            <Title order={3} size={24} c="white">
               {props.title_thread}
             </Title>
             <Badge

@@ -29,10 +29,10 @@ export default function Accessibility() {
 
   return (
     <Stack maw={520}>
-      <Title order={2} size={24} c="white" fw={400}>
+      <Title order={2} size={28} c="white" fw={400}>
         Reading Text Size
       </Title>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Use this to size the reading text across the site; navigation stays compact.
         The minimum is 16px.
       </Text>
@@ -48,7 +48,7 @@ export default function Accessibility() {
 
       {/* Preview is fixed-px so it always shows the chosen size directly. */}
       <Stack gap={6} p="md" bg="#1E1D20" style={{ borderRadius: 12 }}>
-        <Text fz={11} c="dimmed" tt="uppercase" fw={700}>
+        <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
           Preview ({size}px)
         </Text>
         <Text c="white" style={{ fontSize: size, lineHeight: 1.5 }}>
@@ -59,10 +59,10 @@ export default function Accessibility() {
 
       <Divider color="#4a464a" my={6} />
 
-      <Title order={2} size={24} c="white" fw={400}>
+      <Title order={2} size={28} c="white" fw={400}>
         Pinch to Zoom
       </Title>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Zoom is turned off by default so the site feels like an app. Turn it on if
         you would like to pinch-zoom pages on your device. This takes effect right
         away.

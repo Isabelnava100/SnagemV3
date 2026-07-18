@@ -98,9 +98,9 @@ export function PostActionsPanel(props: {
               // Once a roll is submitted it locks in, so it can't be unchecked.
               disabled={diceMutation.isPending || diceMutation.isSuccess}
               onChange={(e) => setDiceOn(e.currentTarget.checked)}
-              styles={{ label: { color: "white", fontSize: 14 } }}
+              styles={{ label: { color: "white", fontSize: 16 } }}
             />
-            <Text fz={11} c="dimmed" pl={30}>
+            <Text fz={14} c="dimmed" pl={30}>
               Once rolled, it will be published with your post and it cannot be re-rolled or
               changed.
             </Text>
@@ -116,7 +116,7 @@ export function PostActionsPanel(props: {
                   styles={{ input: { background: "#2E2D2E" } }}
                 />
                 <Group gap={4}>
-                  <Text fz={12} c="white">
+                  <Text fz={14} c="white">
                     Number of Dice:
                   </Text>
                   <NumberInput
@@ -159,15 +159,15 @@ export function PostActionsPanel(props: {
               // Once generated it locks in, so it can't be unchecked.
               disabled={randomMutation.isPending || randomMutation.isSuccess}
               onChange={(e) => setRandomOn(e.currentTarget.checked)}
-              styles={{ label: { color: "white", fontSize: 14 } }}
+              styles={{ label: { color: "white", fontSize: 16 } }}
             />
-            <Text fz={11} c="dimmed" pl={30}>
+            <Text fz={14} c="dimmed" pl={30}>
               Generate a random number from lowest to highest.
             </Text>
             {randomOn && (
               <Group gap={8} pl={30} wrap="wrap">
                 <Group gap={4}>
-                  <Text fz={12} c="white">
+                  <Text fz={14} c="white">
                     Lowest:
                   </Text>
                   <NumberInput
@@ -179,7 +179,7 @@ export function PostActionsPanel(props: {
                   />
                 </Group>
                 <Group gap={4}>
-                  <Text fz={12} c="white">
+                  <Text fz={14} c="white">
                     Highest:
                   </Text>
                   <NumberInput
@@ -240,9 +240,9 @@ export function PollBuilderPanel(props: {
         color="green.0"
         checked={enabled}
         onChange={(e) => toggle(e.currentTarget.checked)}
-        styles={{ label: { color: "white", fontSize: 14 } }}
+        styles={{ label: { color: "white", fontSize: 16 } }}
       />
-      <Text fz={11} c="dimmed" pl={30}>
+      <Text fz={14} c="dimmed" pl={30}>
         Create a poll for people to vote in.
       </Text>
       {enabled && value && (

@@ -58,9 +58,9 @@ function ClearanceRequestCard(props: { request: MasterClearanceRequest; onDone: 
 
   return (
     <Stack gap="sm">
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         {request.username || "A member"} wants master clearance for{" "}
-        <Text component="span" fz={13} c="white" fw={600}>
+        <Text component="span" fz={14} c="white" fw={600}>
           {request.characterName || request.characterId}
         </Text>
         {request.track ? ` and asked for the ${request.track} track.` : "."} Approving sets the
@@ -95,7 +95,7 @@ function ClearanceRequestCard(props: { request: MasterClearanceRequest; onDone: 
         </Button>
       </Group>
       {error && (
-        <Text fz={12} c="red.4" role="status" aria-live="polite">
+        <Text fz={14} c="red.4" role="status" aria-live="polite">
           {error}
         </Text>
       )}
@@ -126,9 +126,9 @@ function ChallengeRequestCard(props: { request: ChallengeRequest; onDone: () => 
 
   return (
     <Stack gap="sm">
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         {request.username || "A member"} wants to start{" "}
-        <Text component="span" fz={13} c="white" fw={600}>
+        <Text component="span" fz={14} c="white" fw={600}>
           {request.stageTitle || request.stageId}
         </Text>{" "}
         ({request.kind === "gym" ? "gym run" : "island trial"}, {request.regionOrIsland}).
@@ -163,7 +163,7 @@ function ChallengeRequestCard(props: { request: ChallengeRequest; onDone: () => 
         </Button>
       </Group>
       {error && (
-        <Text fz={12} c="red.4" role="status" aria-live="polite">
+        <Text fz={14} c="red.4" role="status" aria-live="polite">
           {error}
         </Text>
       )}
@@ -200,7 +200,7 @@ function InboxRow(props: {
               {props.title}
             </Text>
             {props.subtitle && (
-              <Text fz={13} c="dimmed" lineClamp={1}>
+              <Text fz={14} c="dimmed" lineClamp={1}>
                 {props.subtitle}
               </Text>
             )}
@@ -239,10 +239,10 @@ function CountPill(props: { label: string; count: number }) {
       p={12}
       style={{ borderRadius: 12, background: "rgba(0,0,0,0.3)", border: "1px solid #2a2637", minWidth: 96 }}
     >
-      <Text fz={22} fw={800} c={props.count ? "#ff6b6b" : "dimmed"} lh={1}>
+      <Text fz={26} fw={800} c={props.count ? "#ff6b6b" : "dimmed"} lh={1}>
         {props.count}
       </Text>
-      <Text fz={10} c="dimmed" tt="uppercase" mt={4} style={{ letterSpacing: 1 }}>
+      <Text fz={14} c="dimmed" tt="uppercase" mt={4} style={{ letterSpacing: 1 }}>
         {props.label}
       </Text>
     </Box>
@@ -339,10 +339,10 @@ export default function Inbox() {
     <Stack gap="lg">
       <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
         <Box>
-          <Text fz={30} fw={800} c="white">
+          <Text fz={34} fw={800} c="white">
             Inbox
           </Text>
-          <Text fz={14} c="dimmed" mt={4}>
+          <Text fz={16} c="dimmed" mt={4}>
             Triage every pending request from one stream.
           </Text>
         </Box>
@@ -360,7 +360,7 @@ export default function Inbox() {
         Pending
       </Badge>
 
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         One stream for every pending review: applications, imports, mission submissions and master
         requests. Act on each without hunting through tabs.
       </Text>

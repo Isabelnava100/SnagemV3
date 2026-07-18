@@ -214,7 +214,7 @@ function DrawerGrid({ onNavigate, bottomUp }: { onNavigate: () => void; bottomUp
         <Link key={tile.label} to={tile.link} onClick={onNavigate} style={{ textDecoration: "none" }}>
           <DrawerTile>
             <DrawerTileIcon tile={tile} />
-            <Text fz={11} c="white" tt="uppercase">
+            <Text fz={14} c="white" tt="uppercase">
               {tile.label}
             </Text>
           </DrawerTile>
@@ -257,7 +257,7 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
     >
       <NavGlyph icon={icon} size={isUnder900 ? 40 : 64} title={label} />
       {!isUnder900 && (
-        <Text c="white" tt="uppercase" fz={16}>
+        <Text c="white" tt="uppercase" fz={20}>
           {label}
         </Text>
       )}
@@ -295,14 +295,14 @@ function AlertsDropdown(props: { onClose: () => void }) {
 
   return (
     <Stack gap={8} w={290}>
-      <Text fw={700} c="white" fz={14}>
+      <Text fw={700} c="white" fz={16}>
         Alerts
       </Text>
 
       {staffPending > 0 && (
         <Link to="/Admin" onClick={props.onClose} style={linkStyle}>
           <Box style={{ ...rowStyle, border: "1px solid #7a5a1e" }}>
-            <Text fz={13} fw={600} c="#F5C842">
+            <Text fz={14} fw={600} c="#F5C842">
               {staffPending} item{staffPending === 1 ? "" : "s"} waiting in the staff inbox
             </Text>
           </Box>
@@ -312,7 +312,7 @@ function AlertsDropdown(props: { onClose: () => void }) {
       {unseenAnnouncement && (
         <Link to="/Dashboard" onClick={props.onClose} style={linkStyle}>
           <Box style={{ ...rowStyle, border: "1px solid #5a3fb0" }}>
-            <Text fz={13} fw={600} c="grape.3">
+            <Text fz={14} fw={600} c="grape.3">
               New announcement on your dashboard
             </Text>
           </Box>
@@ -320,14 +320,14 @@ function AlertsDropdown(props: { onClose: () => void }) {
       )}
 
       {items.length === 0 && !staffPending && !unseenAnnouncement ? (
-        <Text fz={13} c="dimmed" py={6}>
+        <Text fz={14} c="dimmed" py={6}>
           You&apos;re all caught up.
         </Text>
       ) : (
         items.map((n) => (
           <Link key={n.id} to={n.link || "/Dashboard"} onClick={props.onClose} style={linkStyle}>
             <Box style={rowStyle}>
-              <Text fz={13} c="white" lineClamp={2}>
+              <Text fz={14} c="white" lineClamp={2}>
                 {n.text}
               </Text>
             </Box>
@@ -402,7 +402,7 @@ function AlertsSideButton() {
             <AlertDot show={show} />
           </Box>
           {!isUnder900 && (
-            <Text c="white" tt="uppercase" fz={16}>
+            <Text c="white" tt="uppercase" fz={20}>
               Alerts
             </Text>
           )}
@@ -437,7 +437,7 @@ function MoreSideButton(props: { onClick: () => void }) {
     >
       <SnagIcon name="menu" size={isUnder900 ? 40 : 64} title="Menu" />
       {!isUnder900 && (
-        <Text c="white" tt="uppercase" fz={16}>
+        <Text c="white" tt="uppercase" fz={20}>
           Menu
         </Text>
       )}
@@ -476,7 +476,7 @@ function TabButton(props: { item: NavItem }) {
         >
           <NavGlyph icon={item.icon} size={22} title={item.label} opacity={isActive ? 1 : 0.65} />
         </Box>
-        <Text fz={9} fw={isActive ? 700 : 500} c={isActive ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
+        <Text fz={14} fw={isActive ? 700 : 500} c={isActive ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           {item.label}
         </Text>
       </Stack>
@@ -517,7 +517,7 @@ function AlertsTabButton() {
               <AlertDot show={show} />
             </Box>
             <Text
-              fz={9}
+              fz={14}
               fw={opened ? 700 : 500}
               c={opened ? "white" : "rgba(255,255,255,0.6)"}
               tt="uppercase"
@@ -553,7 +553,7 @@ function MoreButton(props: { active: boolean; onClick: () => void }) {
         >
           <SnagIcon name="menu" size={22} title="Menu" style={{ opacity: props.active ? 1 : 0.65 }} />
         </Box>
-        <Text fz={9} fw={props.active ? 700 : 500} c={props.active ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
+        <Text fz={14} fw={props.active ? 700 : 500} c={props.active ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           Menu
         </Text>
       </Stack>

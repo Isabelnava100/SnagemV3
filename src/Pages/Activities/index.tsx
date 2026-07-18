@@ -156,10 +156,10 @@ function TaskCard(props: { task: TaskDef; done: boolean }) {
         </Box>
       </Group>
 
-      <Text fz={17} fw={700} c="white" mb={4}>
+      <Text fz={21} fw={700} c="white" mb={4}>
         {task.title}
       </Text>
-      <Text fz={13} c="dimmed" mb="md">
+      <Text fz={14} c="dimmed" mb="md">
         {task.desc}
       </Text>
 
@@ -167,7 +167,7 @@ function TaskCard(props: { task: TaskDef; done: boolean }) {
         <Badge variant="light" color="gold.1" radius="xl" size="lg">
           {task.pts}
         </Badge>
-        <Text component={Link} to={task.link} fz={13} fw={600} c="grape.3" td="none">
+        <Text component={Link} to={task.link} fz={14} fw={600} c="grape.3" td="none">
           {task.linkLabel} &rarr;
         </Text>
       </Group>
@@ -230,23 +230,23 @@ export default function Activities() {
                 sections={[{ value: (doneCount / SNAG_TASKS.length) * 100, color: "teal" }]}
                 label={
                   <Stack gap={0} align="center">
-                    <Text fz={16} fw={800} c="white" lh={1}>
+                    <Text fz={20} fw={800} c="white" lh={1}>
                       {doneCount}/6
                     </Text>
-                    <Text fz={8} c="dimmed" tt="uppercase">
+                    <Text fz={14} c="dimmed" tt="uppercase">
                       done
                     </Text>
                   </Stack>
                 }
               />
               <Box>
-                <Text fz={10} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
+                <Text fz={14} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
                   Resets in
                 </Text>
-                <Text fz={22} fw={800} c="#F5C842" lh={1.1}>
+                <Text fz={26} fw={800} c="#F5C842" lh={1.1}>
                   {resetCountdown()}
                 </Text>
-                <Text fz={11} c="dimmed">
+                <Text fz={14} c="dimmed">
                   Monday, 00:00 UTC
                 </Text>
               </Box>
@@ -256,7 +256,7 @@ export default function Activities() {
       />
 
       {!uid ? (
-        <Text fz={14} c="dimmed" py={20}>
+        <Text fz={16} c="dimmed" py={20}>
           Sign in to track your weekly Snag List.
         </Text>
       ) : isPending ? (
@@ -288,13 +288,13 @@ export default function Activities() {
                   <IconGift size={30} color={allDone && !boxClaimed ? "#F5C842" : "#6a6580"} />
                 </Box>
                 <Box style={{ minWidth: 0 }}>
-                  <Text fz={11} fw={700} c="#F5C842" tt="uppercase" style={{ letterSpacing: 2 }}>
+                  <Text fz={14} fw={700} c="#F5C842" tt="uppercase" style={{ letterSpacing: 2 }}>
                     Weekly Mystery Box Choice
                   </Text>
-                  <Text fz={20} fw={800} c="white">
+                  <Text fz={24} fw={800} c="white">
                     Finish all six, pick your box
                   </Text>
-                  <Text fz={13} c="dimmed" mb={10}>
+                  <Text fz={14} c="dimmed" mb={10}>
                     Inside your pick: a random Mall item, a coin stash, or an egg that hatches on
                     the spot.
                   </Text>
@@ -346,7 +346,7 @@ export default function Activities() {
             </Group>
             {claimMessage && (
               <Text
-                fz={13}
+                fz={14}
                 mt="sm"
                 c={/could not|error|finish|already/i.test(claimMessage) ? "#E54156" : "teal.4"}
                 role="status"
@@ -359,7 +359,7 @@ export default function Activities() {
 
           <Group gap={8} wrap="nowrap" align="flex-start">
             <IconInfoCircle size={16} color="#74c0fc" style={{ flexShrink: 0, marginTop: 2 }} />
-            <Text fz={13} c="dimmed">
+            <Text fz={14} c="dimmed">
               More activities are coming soon. The Snag List is the first of the weekly events;
               seasonal games and community challenges will join it here.
             </Text>

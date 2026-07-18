@@ -34,18 +34,18 @@ function Section(props: { index: string; eyebrow: string; title: string; hint?: 
   return (
     <Box component="section" aria-label={props.title}>
       <Group gap={10} align="baseline" mb={4} wrap="nowrap">
-        <Text ff="monospace" fz={13} c="grape.3" fw={700}>
+        <Text ff="monospace" fz={14} c="grape.3" fw={700}>
           {props.index}
         </Text>
-        <Text ff="monospace" fz={11} c="dimmed" tt="uppercase" style={{ letterSpacing: 2 }}>
+        <Text ff="monospace" fz={14} c="dimmed" tt="uppercase" style={{ letterSpacing: 2 }}>
           {props.eyebrow}
         </Text>
       </Group>
-      <Title order={2} c="white" fz={{ base: 22, sm: 26 }} fw={800} mb={props.hint ? 2 : 14}>
+      <Title order={2} c="white" fz={{ base: 26, sm: 30 }} fw={800} mb={props.hint ? 2 : 14}>
         {props.title}
       </Title>
       {props.hint && (
-        <Text c="dimmed" fz={14} mb={14} maw={640}>
+        <Text c="dimmed" fz={16} mb={14} maw={640}>
           {props.hint}
         </Text>
       )}
@@ -60,14 +60,14 @@ function Swatch(props: { color: string; name: string; role?: string }) {
     <Box style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #232028", background: "#141318" }}>
       <Box style={{ background: props.color, height: 56 }} />
       <Box p={10}>
-        <Text fz={13} fw={700} c="white" lh={1.2}>
+        <Text fz={14} fw={700} c="white" lh={1.2}>
           {props.name}
         </Text>
-        <Text ff="monospace" fz={12} c="dimmed" tt="uppercase">
+        <Text ff="monospace" fz={14} c="dimmed" tt="uppercase">
           {props.color}
         </Text>
         {props.role && (
-          <Text fz={11} c="dimmed" mt={2} lh={1.3}>
+          <Text fz={14} c="dimmed" mt={2} lh={1.3}>
             {props.role}
           </Text>
         )}
@@ -80,10 +80,10 @@ function TupleRow(props: { label: string; role: string; colors: readonly string[
   return (
     <Box>
       <Group justify="space-between" mb={6} wrap="nowrap">
-        <Text fz={13} fw={700} c="white">
+        <Text fz={14} fw={700} c="white">
           {props.label}
         </Text>
-        <Text fz={11} c="dimmed">
+        <Text fz={14} c="dimmed">
           {props.role}
         </Text>
       </Group>
@@ -103,10 +103,10 @@ function TupleRow(props: { label: string; role: string; colors: readonly string[
 function Spec(props: { label: string; value: string }) {
   return (
     <Group justify="space-between" wrap="nowrap" gap="md">
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         {props.label}
       </Text>
-      <Text ff="monospace" fz={13} c="white" ta="right">
+      <Text ff="monospace" fz={14} c="white" ta="right">
         {props.value}
       </Text>
     </Group>
@@ -143,12 +143,14 @@ const CTA_COLORS: { color: string; name: string; role: string }[] = [
   { color: "#4049C9", name: "Murkrow Blue", role: "indigo.0 · saturated CTA blue" },
 ];
 
+// The 14px floor scale: nothing renders below 14, body text is 16, and the
+// larger steps shifted up by four.
 const TYPE_SCALE: { label: string; size: string; sample: string; fz: number; fw: number; c?: string }[] = [
-  { label: "Hero H1", size: "28 → 40 / 800", sample: "The Snagem Guild", fz: 34, fw: 800 },
-  { label: "Section H2", size: "22 → 26 / 800", sample: "Everything you can do", fz: 24, fw: 800 },
-  { label: "Card title", size: "16 → 22 / 700", sample: "The Pokédex", fz: 20, fw: 700 },
-  { label: "Body", size: "14 → 16 / 400", sample: "We created this platform for roleplay.", fz: 15, fw: 400, c: "rgba(255,255,255,0.75)" },
-  { label: "Label / eyebrow", size: "10 → 12 / 700 · caps", sample: "WHAT'S NEW", fz: 12, fw: 700 },
+  { label: "Hero H1", size: "32 → 44 / 800", sample: "The Snagem Guild", fz: 38, fw: 800 },
+  { label: "Section H2", size: "26 → 30 / 800", sample: "Everything you can do", fz: 28, fw: 800 },
+  { label: "Card title", size: "20 → 26 / 700", sample: "The Pokédex", fz: 24, fw: 700 },
+  { label: "Body", size: "16 → 20 / 400", sample: "We created this platform for roleplay.", fz: 16, fw: 400, c: "rgba(255,255,255,0.75)" },
+  { label: "Label / eyebrow", size: "14 / 700 · caps (the floor)", sample: "WHAT'S NEW", fz: 14, fw: 700 },
 ];
 
 /* ------------------------------- component ------------------------------- */
@@ -167,17 +169,17 @@ export default function DesignSystem() {
           border: "1px solid #3a3550",
         }}
       >
-        <Text ff="monospace" fz={12} c="grape.3" tt="uppercase" mb={8} style={{ letterSpacing: 3 }}>
+        <Text ff="monospace" fz={14} c="grape.3" tt="uppercase" mb={8} style={{ letterSpacing: 3 }}>
           Brand Kit · Reference only
         </Text>
-        <Title order={1} c="white" fz={{ base: 30, sm: 44 }} fw={800} lh={1.05}>
+        <Title order={1} c="white" fz={{ base: 34, sm: 48 }} fw={800} lh={1.05}>
           Snagem Guild Design System
         </Title>
-        <Text c="gray.4" fz={{ base: 14, sm: 16 }} mt={10} maw={620}>
+        <Text c="gray.4" fz={{ base: 16, sm: 20 }} mt={10} maw={620}>
           The single source of truth for colors, type and components. Match new work to
           what you see here so the site stays consistent across the board.
         </Text>
-        <Text ff="monospace" fz={12} c="dimmed" mt={16}>
+        <Text ff="monospace" fz={14} c="dimmed" mt={16}>
           {VERSION}
         </Text>
       </Box>
@@ -211,7 +213,7 @@ export default function DesignSystem() {
           </Panel>
 
           <Box>
-            <Text fz={13} fw={700} c="white" mb={8}>
+            <Text fz={14} fw={700} c="white" mb={8}>
               Surfaces & lines (dark theme)
             </Text>
             <SimpleGrid cols={{ base: 2, xs: 3, sm: 6 }} spacing={12}>
@@ -245,24 +247,24 @@ export default function DesignSystem() {
                   {t.sample}
                 </Text>
                 <Box style={{ flexShrink: 0, textAlign: "right" }}>
-                  <Text fz={12} fw={600} c="white">
+                  <Text fz={14} fw={600} c="white">
                     {t.label}
                   </Text>
-                  <Text ff="monospace" fz={11} c="dimmed">
+                  <Text ff="monospace" fz={14} c="dimmed">
                     {t.size}
                   </Text>
                 </Box>
               </Group>
             ))}
             <Group justify="space-between" align="baseline" wrap="nowrap" gap="lg">
-              <Text ff="monospace" fz={15} c="grape.3" fw={700}>
+              <Text ff="monospace" fz={16} c="grape.3" fw={700}>
                 QL · 700 · 1,025
               </Text>
               <Box style={{ flexShrink: 0, textAlign: "right" }}>
-                <Text fz={12} fw={600} c="white">
+                <Text fz={14} fw={600} c="white">
                   Data / mono
                 </Text>
-                <Text ff="monospace" fz={11} c="dimmed">
+                <Text ff="monospace" fz={14} c="dimmed">
                   monospace · codes & counts
                 </Text>
               </Box>
@@ -281,7 +283,7 @@ export default function DesignSystem() {
         <Panel>
           <Stack gap={20}>
             <Box>
-              <Text fz={11} c="dimmed" tt="uppercase" mb={10} style={{ letterSpacing: 1 }}>
+              <Text fz={14} c="dimmed" tt="uppercase" mb={10} style={{ letterSpacing: 1 }}>
                 Variants (radius xl)
               </Text>
               <Group gap={12}>
@@ -310,7 +312,7 @@ export default function DesignSystem() {
             </Box>
 
             <Box>
-              <Text fz={11} c="dimmed" tt="uppercase" mb={10} style={{ letterSpacing: 1 }}>
+              <Text fz={14} c="dimmed" tt="uppercase" mb={10} style={{ letterSpacing: 1 }}>
                 Sizes
               </Text>
               <Group gap={12} align="center">
@@ -330,7 +332,7 @@ export default function DesignSystem() {
             </Box>
 
             <Box>
-              <Text fz={11} c="dimmed" tt="uppercase" mb={10} style={{ letterSpacing: 1 }}>
+              <Text fz={14} c="dimmed" tt="uppercase" mb={10} style={{ letterSpacing: 1 }}>
                 Specs
               </Text>
               <Stack gap={8} maw={360}>
@@ -354,7 +356,7 @@ export default function DesignSystem() {
       >
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={16}>
           <Panel>
-            <Text fz={13} fw={700} c="white" mb={12}>
+            <Text fz={14} fw={700} c="white" mb={12}>
               Radius scale
             </Text>
             <Group gap={14} align="flex-end">
@@ -374,7 +376,7 @@ export default function DesignSystem() {
                       border: "1px solid #3C3A3C",
                     }}
                   />
-                  <Text ff="monospace" fz={11} c="dimmed">
+                  <Text ff="monospace" fz={14} c="dimmed">
                     {name}
                   </Text>
                 </Stack>
@@ -383,7 +385,7 @@ export default function DesignSystem() {
           </Panel>
 
           <Panel>
-            <Text fz={13} fw={700} c="white" mb={12}>
+            <Text fz={14} fw={700} c="white" mb={12}>
               Badges & chips
             </Text>
             <Group gap={10} mb={14}>
@@ -411,25 +413,25 @@ export default function DesignSystem() {
                 Beta
               </Badge>
             </Group>
-            <Text fz={12} c="dimmed" mb={10}>
+            <Text fz={14} c="dimmed" mb={10}>
               Badge colors come from the same family: grape (purple), pink (Magikarp
               Red), cyan for success ("Done" instead of green), gold for featured,
               indigo (Murkrow Blue) for info.
             </Text>
             <Group gap={10}>
               <Box px={16} py={10} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #3a3550", minWidth: 96 }}>
-                <Text fz={22} fw={800} c="#F5C842" lh={1.1}>
+                <Text fz={26} fw={800} c="#F5C842" lh={1.1}>
                   1,025
                 </Text>
-                <Text fz={10} fw={600} c="dimmed" tt="uppercase" mt={2} style={{ letterSpacing: 0.5 }}>
+                <Text fz={14} fw={600} c="dimmed" tt="uppercase" mt={2} style={{ letterSpacing: 0.5 }}>
                   Species
                 </Text>
               </Box>
               <Box px={16} py={10} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #3a3550", minWidth: 96 }}>
-                <Text fz={22} fw={800} c="white" lh={1.1}>
+                <Text fz={26} fw={800} c="white" lh={1.1}>
                   994
                 </Text>
-                <Text fz={10} fw={600} c="dimmed" tt="uppercase" mt={2} style={{ letterSpacing: 0.5 }}>
+                <Text fz={14} fw={600} c="dimmed" tt="uppercase" mt={2} style={{ letterSpacing: 0.5 }}>
                   Items
                 </Text>
               </Box>
@@ -453,10 +455,10 @@ export default function DesignSystem() {
             ] as const).map(([label, role, frac]) => (
               <Box key={label}>
                 <Group justify="space-between" mb={4} wrap="nowrap">
-                  <Text ff="monospace" fz={12} c="white">
+                  <Text ff="monospace" fz={14} c="white">
                     {label}
                   </Text>
-                  <Text fz={12} c="dimmed" ta="right">
+                  <Text fz={14} c="dimmed" ta="right">
                     {role}
                   </Text>
                 </Group>
@@ -496,47 +498,47 @@ export default function DesignSystem() {
               border: "1px solid #3a3550",
             }}
           >
-            <Text fz={11} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
+            <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
               Page hero
             </Text>
-            <Text fz={18} fw={800} c="white">
+            <Text fz={22} fw={800} c="white">
               PageHero: striped gradient, eyebrow, fw 800 title
             </Text>
-            <Text fz={12} c="gray.4">
+            <Text fz={14} c="gray.4">
               Every main section opens with this banner (src/components/common/PageHero.tsx).
             </Text>
           </Box>
           <SimpleGrid cols={{ base: 1, sm: 3 }} spacing={12}>
             <Box p={12} style={{ background: "#2a1a1e", border: "1px solid #E54156", borderRadius: 10 }}>
-              <Text fz={13} fw={700} c="white" mb={2}>
+              <Text fz={14} fw={700} c="white" mb={2}>
                 Boss battle banner
               </Text>
-              <Text ff="monospace" fz={11} c="dimmed">
+              <Text ff="monospace" fz={14} c="dimmed">
                 bg #2a1a1e · border Magikarp Red
               </Text>
-              <Text fz={12} c="dimmed" mt={4}>
+              <Text fz={14} c="dimmed" mt={4}>
                 Shared boss with a red draining health bar; pinned for everyone.
               </Text>
             </Box>
             <Box p={12} style={{ background: "#14252a", border: "1px solid #1f6f7a", borderRadius: 10 }}>
-              <Text fz={13} fw={700} c="white" mb={2}>
+              <Text fz={14} fw={700} c="white" mb={2}>
                 Encounter banner
               </Text>
-              <Text ff="monospace" fz={11} c="dimmed">
+              <Text ff="monospace" fz={14} c="dimmed">
                 bg #14252a · border #1f6f7a
               </Text>
-              <Text fz={12} c="dimmed" mt={4}>
+              <Text fz={14} c="dimmed" mt={4}>
                 Personal wild encounter: star, traits and health; only the roller sees it.
               </Text>
             </Box>
             <Box p={12} style={{ background: "#241f2e", border: "1px solid #4b3f63", borderRadius: 10 }}>
-              <Text fz={13} fw={700} c="white" mb={2}>
+              <Text fz={14} fw={700} c="white" mb={2}>
                 Mission targets banner
               </Text>
-              <Text ff="monospace" fz={11} c="dimmed">
+              <Text ff="monospace" fz={14} c="dimmed">
                 bg #241f2e · border #4b3f63
               </Text>
-              <Text fz={12} c="dimmed" mt={4}>
+              <Text fz={14} c="dimmed" mt={4}>
                 Purple checklist of required foes with cyan checks when beaten.
               </Text>
             </Box>
@@ -556,7 +558,7 @@ export default function DesignSystem() {
             {SNAG_ICON_NAMES.map((name) => (
               <Stack key={name} gap={4} align="center">
                 <SnagIcon name={name} size={28} cut="#141318" title={name} />
-                <Text ff="monospace" fz={10} c="dimmed" ta="center" style={{ wordBreak: "break-all" }}>
+                <Text ff="monospace" fz={14} c="dimmed" ta="center" style={{ wordBreak: "break-all" }}>
                   {name}
                 </Text>
               </Stack>
@@ -574,26 +576,26 @@ export default function DesignSystem() {
       >
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={16}>
           <Card withBorder radius="md" padding="lg" style={{ background: "rgba(18,183,182,0.08)", borderColor: "#12B7B6" }}>
-            <Text fz={13} fw={700} c="green.0" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
+            <Text fz={14} fw={700} c="green.0" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
               On brand
             </Text>
             <Stack gap={6}>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Single font family (Roboto); serif removed from the Library.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Button radius standardized to xl (pill) app-wide via the theme.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">One gold: the three near-identical golds unified into the Pikachu Gold ramp.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Greens retired: success states now render in Suicune Cyan everywhere.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Pinks now carry Magikarp Red; grape accents share the Gengar Purple ramp.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Homepage blue saturated up into Murkrow Blue and used by the indigo gradients.</Text>
+              <Text fz={16} c="rgba(255,255,255,0.8)">Single font family (Roboto); serif removed from the Library.</Text>
+              <Text fz={16} c="rgba(255,255,255,0.8)">Button radius standardized to xl (pill) app-wide via the theme.</Text>
+              <Text fz={16} c="rgba(255,255,255,0.8)">One gold: the three near-identical golds unified into the Pikachu Gold ramp.</Text>
+              <Text fz={16} c="rgba(255,255,255,0.8)">Greens retired: success states now render in Suicune Cyan everywhere.</Text>
+              <Text fz={16} c="rgba(255,255,255,0.8)">Pinks now carry Magikarp Red; grape accents share the Gengar Purple ramp.</Text>
+              <Text fz={16} c="rgba(255,255,255,0.8)">Homepage blue saturated up into Murkrow Blue and used by the indigo gradients.</Text>
             </Stack>
           </Card>
           <Card withBorder radius="md" padding="lg" style={{ background: "rgba(245,200,66,0.06)", borderColor: "#7a5a1e" }}>
-            <Text fz={13} fw={700} c="#F5C842" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
+            <Text fz={14} fw={700} c="#F5C842" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
               Still worth aligning
             </Text>
             <Stack gap={6}>
-              <Text fz={14} c="rgba(255,255,255,0.8)">A few one-off button colors per section could route through Primary / Secondary.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Casino per-game accents (teal, pink, purple) are close to the palette but not tokens yet.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Mall storefront accent rotation is its own set; consider deriving from the theme.</Text>
+              <Text fz={16} c="rgba(255,255,255,0.8)">A few one-off button colors per section could route through Primary / Secondary.</Text>
+              <Text fz={16} c="rgba(255,255,255,0.8)">Casino per-game accents (teal, pink, purple) are close to the palette but not tokens yet.</Text>
+              <Text fz={16} c="rgba(255,255,255,0.8)">Mall storefront accent rotation is its own set; consider deriving from the theme.</Text>
             </Stack>
           </Card>
         </SimpleGrid>

@@ -254,7 +254,7 @@ export default function ThreadRewards() {
       <Title order={1} fz={isOverSm ? 30 : 20} c="white" fw={400}>
         Close &amp; Reward: {session.threadTitle}
       </Title>
-      <Text fz={13} c="dimmed" mt={4}>
+      <Text fz={14} c="dimmed" mt={4}>
         Award money and items to everyone who participated. Rewards are optional. You can also
         finalize with none.
       </Text>
@@ -275,7 +275,7 @@ export default function ThreadRewards() {
                   py={4}
                   style={{ borderRadius: 999, background: "#211f21", border: "1px solid #3C3A3C" }}
                 >
-                  <Text fz={12} c="rgba(255,255,255,0.85)">
+                  <Text fz={14} c="rgba(255,255,255,0.85)">
                     {i.name} <Text span c="dimmed">x{i.qty}</Text>
                   </Text>
                 </Box>
@@ -286,7 +286,7 @@ export default function ThreadRewards() {
 
       {finalized ? (
         <ForumPanel title="Rewards Sent" mt={16}>
-          <Text fz={14} c="green.0" role="status" aria-live="polite">
+          <Text fz={16} c="green.0" role="status" aria-live="polite">
             This thread&apos;s rewards were already finalized and delivered.
           </Text>
         </ForumPanel>
@@ -357,7 +357,7 @@ export default function ThreadRewards() {
                     <Flex justify="space-between" align="center" gap={8} wrap="wrap">
                       <Group gap={8}>
                         <Avatar src={participant.avatar || undefined} alt={`${participant.name ?? "User"} avatar`} size={30} radius="xl" />
-                        <Text c="white" fz={14} fw={600}>
+                        <Text c="white" fz={16} fw={600}>
                           {participant.name}
                         </Text>
                       </Group>
@@ -458,7 +458,7 @@ export default function ThreadRewards() {
                       {!entry.items.length &&
                         !(entry.pokemon ?? []).length &&
                         !CURRENCIES.some((c) => entry.currencies[c.value] > 0) && (
-                          <Text fz={12} c="dimmed">
+                          <Text fz={14} c="dimmed">
                             No rewards yet.
                           </Text>
                         )}
@@ -468,10 +468,10 @@ export default function ThreadRewards() {
                         team pokemon that posted. */}
                     {entry.pokemonXp && Object.keys(entry.pokemonXp).length > 0 && (
                       <Stack gap={6} mt={10}>
-                        <Text fz={11} fw={700} c="white" tt="uppercase">
+                        <Text fz={14} fw={700} c="white" tt="uppercase">
                           Bonus team XP to assign
                         </Text>
-                        <Text fz={11} c="dimmed">
+                        <Text fz={14} c="dimmed">
                           Optional, added on top of the exp/stats already earned per post.
                         </Text>
                         {Object.entries(entry.pokemonXp).map(([pokeId, xp]) => (
@@ -483,7 +483,7 @@ export default function ThreadRewards() {
                                 size={26}
                                 radius="xl"
                               />
-                              <Text fz={13} c="white" fw={500}>
+                              <Text fz={14} c="white" fw={500}>
                                 {xp.name ?? pokeId}
                               </Text>
                             </Group>
@@ -491,7 +491,7 @@ export default function ThreadRewards() {
                               {(["experience", "friendship", "purification", "shadow"] as const).map(
                                 (field) => (
                                   <Stack gap={0} key={field}>
-                                    <Text fz={10} c="dimmed" tt="capitalize">
+                                    <Text fz={14} c="dimmed" tt="capitalize">
                                       {field}
                                     </Text>
                                     <NumberInput
@@ -516,7 +516,7 @@ export default function ThreadRewards() {
                 );
               })}
               {!participantIds.length && (
-                <Text fz={13} c="dimmed">
+                <Text fz={14} c="dimmed">
                   No participants were recorded on this thread.
                 </Text>
               )}

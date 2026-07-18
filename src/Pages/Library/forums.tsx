@@ -12,10 +12,10 @@ import { FORUM_CATEGORIES } from "../forum/config";
 function Section(props: { title: string; children: React.ReactNode }) {
   return (
     <Stack gap={6}>
-      <Title order={3} c="white" size={18} fw={600}>
+      <Title order={3} c="white" size={22} fw={600}>
         {props.title}
       </Title>
-      <Box c="rgba(255,255,255,0.75)" fz={14} style={{ lineHeight: 1.7 }}>
+      <Box c="rgba(255,255,255,0.75)" fz={16} style={{ lineHeight: 1.7 }}>
         {props.children}
       </Box>
     </Stack>
@@ -41,7 +41,7 @@ export default function ForumGuideTab() {
           thread) reply; creating threads is what differs.
         </Text>
         <ScrollArea type="auto">
-          <Table withTableBorder withColumnBorders fz={13} miw={560}>
+          <Table withTableBorder withColumnBorders fz={14} miw={560}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Category</Table.Th>

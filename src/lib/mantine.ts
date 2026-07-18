@@ -62,6 +62,15 @@ export const theme = createTheme({
     xl: "1440px",
   },
   fontFamily: "'Roboto', sans-serif",
+  // Site-wide 14px text floor: token sizes lifted so xs/sm meet the minimum
+  // and the larger steps shift up in kind (was 12/14/16/18/20).
+  fontSizes: {
+    xs: "14px",
+    sm: "16px",
+    md: "20px",
+    lg: "22px",
+    xl: "24px",
+  },
   // Standardize button shape site-wide: xl (pill) is already the dominant radius
   // and matches the homepage CTAs, so every Button defaults to it unless a call
   // site overrides. Keeps borders/sizes consistent across the app.

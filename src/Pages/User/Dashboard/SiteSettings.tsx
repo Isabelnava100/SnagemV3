@@ -33,10 +33,10 @@ function DiscordConfigSection() {
 
   return (
     <Stack gap={10} maw={640}>
-      <Title order={2} c="white" size={24} fw={400}>
+      <Title order={2} c="white" size={28} fw={400}>
         Discord
       </Title>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Connects the site to your Discord server. The client id is set in the
         site's environment ({DISCORD_CLIENT_ID ? "configured" : "not set yet"}); the
         client secret and channel webhook are stored here, admin-only. In the
@@ -63,7 +63,7 @@ function DiscordConfigSection() {
         styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
       />
       {saved && (
-        <Text fz={13} c="green.0" role="status" aria-live="polite">
+        <Text fz={14} c="green.0" role="status" aria-live="polite">
           Discord settings saved.
         </Text>
       )}
@@ -92,7 +92,7 @@ export default function SiteSettings() {
   return (
     <Container size="lg" py={{ base: 24, sm: 32 }} px={{ base: 16, sm: 24 }}>
       <Stack gap={16}>
-        <Title order={1} c="white" size={30} fw={600}>
+        <Title order={1} c="white" size={34} fw={600}>
           Site Settings
         </Title>
         <SEO />

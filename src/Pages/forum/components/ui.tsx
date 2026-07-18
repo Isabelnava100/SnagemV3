@@ -35,7 +35,7 @@ export function ForumPanel(props: {
 /** Small dimmed helper text used under panel headers in the design. */
 export function PanelHint(props: { children: React.ReactNode }) {
   return (
-    <Text fz={11} c="dimmed" mb={8}>
+    <Text fz={14} c="dimmed" mb={8}>
       {props.children}
     </Text>
   );
@@ -93,7 +93,7 @@ export function ConfirmModal(props: {
       centered
       radius={12}
     >
-      <Text fz={14}>{props.message}</Text>
+      <Text fz={16}>{props.message}</Text>
       <Group justify="flex-end" mt="lg">
         <Button variant="subtle" color="gray" onClick={props.onClose}>
           Cancel
@@ -109,7 +109,7 @@ export function ConfirmModal(props: {
 /** Pink game-result text used inside post blocks ("A D20 has been rolled..."). */
 export function GameResultText(props: { children: React.ReactNode }) {
   return (
-    <Text fz={13} c="#E54156" fw={500}>
+    <Text fz={14} c="#E54156" fw={500}>
       {props.children}
     </Text>
   );

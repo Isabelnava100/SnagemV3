@@ -73,16 +73,16 @@ export function EvolveItemModal(props: {
       radius={12}
     >
       {done ? (
-        <Text fz={15} c="green.0" role="status" aria-live="polite">
+        <Text fz={16} c="green.0" role="status" aria-live="polite">
           {done}
         </Text>
       ) : choices.length === 0 ? (
-        <Text fz={14} c="dimmed">
+        <Text fz={16} c="dimmed">
           You have no Pokemon to evolve with a {item?.name} right now.
         </Text>
       ) : (
         <Stack gap={10}>
-          <Text fz={13} c="dimmed">
+          <Text fz={14} c="dimmed">
             Pick a Pokemon to evolve. Using the {item?.name} spends one from your bag.
           </Text>
           {choices.map((choice, i) => {
@@ -103,10 +103,10 @@ export function EvolveItemModal(props: {
                       <img src={POKEMON_SPRITE_FALLBACK} alt="" width={28} height={28} />
                     </Avatar>
                     <Stack gap={0} style={{ minWidth: 0 }}>
-                      <Text c="white" fz={14} truncate>
+                      <Text c="white" fz={16} truncate>
                         {poke.species} (Lv {level})
                       </Text>
-                      <Text c="dimmed" fz={12} truncate>
+                      <Text c="dimmed" fz={14} truncate>
                         Evolves into {option.toName}
                       </Text>
                     </Stack>
@@ -130,7 +130,7 @@ export function EvolveItemModal(props: {
                         size={48}
                         imageProps={{ style: { imageRendering: "pixelated" } }}
                       />
-                      <Text c="dimmed" fz={20}>
+                      <Text c="dimmed" fz={24}>
                         →
                       </Text>
                       <Avatar
@@ -143,22 +143,22 @@ export function EvolveItemModal(props: {
                       </Avatar>
                     </Group>
                     <Stack gap={2}>
-                      <Text fz={12} c="white">
+                      <Text fz={14} c="white">
                         Level {level} · {poke.gender}
                       </Text>
-                      <Text fz={12} c="white">
+                      <Text fz={14} c="white">
                         Experience: {poke.experience ?? 0}
                       </Text>
-                      <Text fz={12} c="white">
+                      <Text fz={14} c="white">
                         Friendship: {poke.friendship ?? 0}
                       </Text>
                       {poke.shadow ? (
-                        <Text fz={12} c="white">
+                        <Text fz={14} c="white">
                           Shadow: {poke.shadow}
                         </Text>
                       ) : null}
                       {poke.purification ? (
-                        <Text fz={12} c="white">
+                        <Text fz={14} c="white">
                           Purification: {poke.purification}
                         </Text>
                       ) : null}

@@ -59,7 +59,7 @@ function StatusLine(props: { message: string; error?: boolean }) {
   if (!props.message) return null;
   return (
     <Text
-      fz={12}
+      fz={14}
       mt={6}
       c={props.error ? "#E54156" : "#7CD992"}
       role="status"
@@ -119,11 +119,11 @@ export function SubmissionCard(props: { submission: PendingSubmission; onDone: (
         <Text c="white" fw={600}>
           {submission.submitterName || "Unknown member"}
         </Text>
-        <Text fz={12} c="dimmed">
+        <Text fz={14} c="dimmed">
           {formatDate(submission.submittedAt?.seconds)}
         </Text>
       </Group>
-      <Text fz={13} c="rgba(255,255,255,0.8)" mb={4}>
+      <Text fz={14} c="rgba(255,255,255,0.8)" mb={4}>
         Mission: {submission.missionId || "Unknown"}
       </Text>
       {submission.threadLink && (
@@ -131,7 +131,7 @@ export function SubmissionCard(props: { submission: PendingSubmission; onDone: (
           href={submission.threadLink}
           target="_blank"
           rel="noopener noreferrer"
-          fz={13}
+          fz={14}
           mb={8}
           style={{ display: "inline-block" }}
         >
@@ -219,14 +219,14 @@ export function MMRequestCard(props: { request: PendingMMRequest; onDone: () => 
         <Text c="white" fw={600}>
           {request.username || "Unknown member"}
         </Text>
-        <Text fz={12} c="dimmed">
+        <Text fz={14} c="dimmed">
           {formatDate(request.createdAt?.seconds)}
         </Text>
       </Group>
-      <Text fz={13} c="rgba(255,255,255,0.8)" mb={2}>
+      <Text fz={14} c="rgba(255,255,255,0.8)" mb={2}>
         Character {request.characterId || "Unknown"}
       </Text>
-      <Text fz={13} c="dimmed" mb={8}>
+      <Text fz={14} c="dimmed" mb={8}>
         {request.type || "Unknown"} Master Mission #{request.number ?? "?"}
       </Text>
       <Group gap={10} align="end" wrap="wrap">
@@ -286,7 +286,7 @@ export function BattleRankingsForm() {
           Battle Rankings
         </Text>
       </Group>
-      <Text fz={13} c="dimmed" mb={10}>
+      <Text fz={14} c="dimmed" mb={10}>
         Adjust a member's battle ranking points. Points may be negative.
       </Text>
       <Group gap={12} align="end" wrap="wrap">
@@ -396,7 +396,7 @@ export function BattleReportForm() {
           Battle Report
         </Text>
       </Group>
-      <Text fz={13} c="dimmed" mb={10}>
+      <Text fz={14} c="dimmed" mb={10}>
         Enter what happened in a reported battle and the point total is computed for you,
         then awarded to the member. For a plain manual adjustment use Battle Rankings above.
       </Text>
@@ -472,10 +472,10 @@ export function BattleReportForm() {
             <Stack gap={4}>
               {breakdown.map((r) => (
                 <Group key={r.label} justify="space-between" wrap="nowrap">
-                  <Text fz={12} c="rgba(255,255,255,0.8)">
+                  <Text fz={14} c="rgba(255,255,255,0.8)">
                     {r.label}
                   </Text>
-                  <Text fz={12} c="#7CD992" fw={600}>
+                  <Text fz={14} c="#7CD992" fw={600}>
                     +{r.pts}
                   </Text>
                 </Group>
@@ -487,16 +487,16 @@ export function BattleReportForm() {
                 mt={2}
                 style={{ borderTop: "1px solid #3a3550" }}
               >
-                <Text fz={13} c="white" fw={700}>
+                <Text fz={14} c="white" fw={700}>
                   Total to award
                 </Text>
-                <Text fz={16} c="#F0C674" fw={800}>
+                <Text fz={20} c="#F0C674" fw={800}>
                   {total}
                 </Text>
               </Group>
             </Stack>
           ) : (
-            <Text fz={12} c="dimmed">
+            <Text fz={14} c="dimmed">
               Fill in the battle result to see the point total.
             </Text>
           )}
@@ -554,7 +554,7 @@ export function ChallengeStepForm() {
       <Text c="white" fw={600} mb={4}>
         Challenge Step
       </Text>
-      <Text fz={13} c="dimmed" mb={10}>
+      <Text fz={14} c="dimmed" mb={10}>
         Record a badge, trial, grand trial, Elite Four, or champion clear for a member.
       </Text>
       <Group gap={12} align="end" wrap="wrap">
@@ -649,10 +649,10 @@ export default function Grading() {
   return (
     <Stack gap={18}>
       <Stack gap={6}>
-        <Title order={2} c="white" size={24} fw={400}>
+        <Title order={2} c="white" size={28} fw={400}>
           Grading
         </Title>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           Approve completed missions and grant progression. Rewards apply through
           server-side functions.
         </Text>

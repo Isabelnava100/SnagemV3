@@ -63,10 +63,10 @@ export default function Signature() {
 
   return (
     <Stack w="100%" maw={640} gap={12}>
-      <Title order={2} c="white" size={24} fw={400}>
+      <Title order={2} c="white" size={28} fw={400}>
         Post Signature
       </Title>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Shown under your forum posts when &quot;Attach Signature&quot; is checked in the
         composer. Keep it tasteful; hosts can ask you to change it.
       </Text>
@@ -77,12 +77,12 @@ export default function Signature() {
       {/* Live preview, rendered the same way posts render it */}
       {html.replace(/<[^>]*>/g, "").trim().length > 0 && (
         <Box p={12} bg="#2b2a2b" sx={{ borderRadius: 10 }}>
-          <Text fz={11} c="dimmed" tt="uppercase" fw={700}>
+          <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
             Preview
           </Text>
           <Divider color="#4a464a" my={6} />
           <Text
-            fz={12}
+            fz={14}
             c="gray.4"
             className="forum-post-body"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
@@ -91,7 +91,7 @@ export default function Signature() {
       )}
 
       {saved && (
-        <Text fz={13} c="green.0">
+        <Text fz={14} c="green.0">
           Signature saved.
         </Text>
       )}

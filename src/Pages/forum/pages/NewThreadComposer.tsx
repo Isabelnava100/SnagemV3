@@ -301,7 +301,7 @@ export default function NewThreadComposer() {
                 <Divider color="#4a464a" />
 
                 <Box>
-                  <Text fz={12} fw={700} c="white" tt="uppercase">
+                  <Text fz={14} fw={700} c="white" tt="uppercase">
                     Restrictions
                   </Text>
                   <PanelHint>
@@ -336,7 +336,7 @@ export default function NewThreadComposer() {
                 <Divider color="#4a464a" />
 
                 <Box>
-                  <Text fz={12} fw={700} c="white" tt="uppercase">
+                  <Text fz={14} fw={700} c="white" tt="uppercase">
                     Tags
                   </Text>
                   <PanelHint>
@@ -373,7 +373,7 @@ export default function NewThreadComposer() {
                     checked={noXp}
                     onChange={(e) => setNoXp(e.currentTarget.checked)}
                     color="green.0"
-                    styles={{ label: { color: "white", fontSize: 13 } }}
+                    styles={{ label: { color: "white", fontSize: 14 } }}
                   />
                 </Tooltip>
 
@@ -388,7 +388,7 @@ export default function NewThreadComposer() {
                     checked={allowTeamChanges}
                     onChange={(e) => setAllowTeamChanges(e.currentTarget.checked)}
                     color="green.0"
-                    styles={{ label: { color: "white", fontSize: 13 } }}
+                    styles={{ label: { color: "white", fontSize: 14 } }}
                   />
                 </Tooltip>
               </Stack>
@@ -413,7 +413,7 @@ export default function NewThreadComposer() {
                       color="green.0"
                       checked={useDefaultXp}
                       onChange={(e) => setUseDefaultXp(e.currentTarget.checked)}
-                      styles={{ label: { color: "white", fontSize: 13 } }}
+                      styles={{ label: { color: "white", fontSize: 14 } }}
                     />
                   </>
                 )}
@@ -426,7 +426,7 @@ export default function NewThreadComposer() {
                 <Stack gap={8}>
                   {XP_STAT_FIELDS.map((stat) => (
                     <Group gap={6} key={stat.key} justify="space-between" maw={280}>
-                      <Text fz={12} c="white">
+                      <Text fz={14} c="white">
                         {stat.label} per post:
                       </Text>
                       <NumberInput
@@ -445,7 +445,7 @@ export default function NewThreadComposer() {
                     </Group>
                   ))}
                   <Group gap={6} justify="space-between" maw={280}>
-                    <Text fz={12} c="white">
+                    <Text fz={14} c="white">
                       Minimum post length:
                     </Text>
                     <NumberInput
@@ -476,7 +476,7 @@ export default function NewThreadComposer() {
               <ForumPanel title="Safari Contest">
                 {safariConfig ? (
                   <Stack gap={8}>
-                    <Text fz={15} fw={700} c="white">
+                    <Text fz={16} fw={700} c="white">
                       {safariConfig.name}
                     </Text>
                     <PanelHint>
@@ -486,7 +486,7 @@ export default function NewThreadComposer() {
                     </PanelHint>
                     <Stack gap={2}>
                       {safariConfig.tiers.map((t) => (
-                        <Text key={t.star} fz={12} c="dimmed">
+                        <Text key={t.star} fz={14} c="dimmed">
                           {"★".repeat(t.star)} {t.star} Star: rate {t.rate}, {t.pokemons.length} pokemon,{" "}
                           {t.postsToDefeat} posts to defeat
                         </Text>
@@ -513,16 +513,16 @@ export default function NewThreadComposer() {
               color="green.0"
               checked={attachSignature}
               onChange={(e) => setAttachSignature(e.currentTarget.checked)}
-              styles={{ label: { color: "white", fontSize: 13 } }}
+              styles={{ label: { color: "white", fontSize: 14 } }}
             />
-            <Text fz={12} c="dimmed">
+            <Text fz={14} c="dimmed">
               Your roleplay rewards will be sent over after the thread is closed
               and approved by an admin.
             </Text>
 
             {error && <GameResultText>{error}</GameResultText>}
             {draftMessage && (
-              <Text fz={13} c="green.0">
+              <Text fz={14} c="green.0">
                 {draftMessage}
               </Text>
             )}

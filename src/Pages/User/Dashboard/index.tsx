@@ -99,7 +99,7 @@ function DashboardHeader() {
     return (
       <Flex justify="space-between" align="center" px={14} py={12} gap={8} style={banner}>
         <Group gap={6} style={{ minWidth: 0 }} wrap="nowrap">
-          <Text c="white" fw={700} fz={18} lineClamp={1}>
+          <Text c="white" fw={700} fz={22} lineClamp={1}>
             Welcome, {user?.displayName}!
           </Text>
           {/* Logout lives here (not the nav) to avoid an accidental misclick. */}
@@ -122,10 +122,10 @@ function DashboardHeader() {
     <Stack gap={13} p={{ base: 20, sm: 28 }} style={banner}>
       <Flex justify="space-between" align="center">
         <Box>
-          <Text fz={12} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }} mb={8}>
+          <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }} mb={8}>
             Guild Member Hub
           </Text>
-          <Text component="h1" c="white" fw={800} fz={{ base: 28, sm: 40 }} style={{ lineHeight: 1.1, margin: 0 }}>
+          <Text component="h1" c="white" fw={800} fz={{ base: 32, sm: 44 }} style={{ lineHeight: 1.1, margin: 0 }}>
             Snag Dashboard
           </Text>
         </Box>
@@ -135,7 +135,7 @@ function DashboardHeader() {
       </Flex>
       <Group>
         <NotificationBell />
-        <Text c="white" fz={18}>
+        <Text c="white" fz={22}>
           Welcome, {user?.displayName}!
         </Text>
       </Group>
@@ -172,7 +172,7 @@ function ImportBanner() {
   return (
     <Alert color="grape" variant="light" title="Restore your collection">
       <Group justify="space-between" align="center" wrap="wrap" gap={10}>
-        <Text fz={14} c="white">
+        <Text fz={16} c="white">
           {message}
         </Text>
         <Button component={Link} to="/Onboarding" size="xs" radius="xl" variant="white">
@@ -223,7 +223,7 @@ function NotificationBell() {
                 borderRadius: "100%",
                 minWidth: 20,
                 height: 20,
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: 700,
                 display: "flex",
                 alignItems: "center",
@@ -237,7 +237,7 @@ function NotificationBell() {
         </UnstyledButton>
       </Popover.Target>
       <Popover.Dropdown bg="#1E1D20" p={8}>
-        <Text c="white" fw={700} fz={14} mb={6} px={4}>
+        <Text c="white" fw={700} fz={16} mb={6} px={4}>
           Notifications
         </Text>
         {notifications?.length ? (
@@ -248,7 +248,7 @@ function NotificationBell() {
                   key={n.id}
                   component={Link}
                   to={n.link || "/Dashboard"}
-                  fz={13}
+                  fz={14}
                   c="gray.3"
                   px={8}
                   py={6}
@@ -260,7 +260,7 @@ function NotificationBell() {
             </Stack>
           </ScrollArea.Autosize>
         ) : (
-          <Text fz={13} c="dimmed" ta="center" py={16}>
+          <Text fz={14} c="dimmed" ta="center" py={16}>
             You have no notifications yet.
           </Text>
         )}
@@ -303,10 +303,10 @@ function CurrencyChip(props: { amount: number | string; name: string; color: str
               <Image src={props.icon} w={34} h={34} style={{ objectFit: "contain" }} alt={props.name} />
             </Box>
             <Stack gap={0} style={{ minWidth: 0 }}>
-              <Text c="white" fz={20} fw={700} lh={1.1}>
+              <Text c="white" fz={24} fw={700} lh={1.1}>
                 {amount}
               </Text>
-              <Text c="white" fz={11} lineClamp={1}>
+              <Text c="white" fz={14} lineClamp={1}>
                 {props.name}
               </Text>
             </Stack>
@@ -319,10 +319,10 @@ function CurrencyChip(props: { amount: number | string; name: string; color: str
             <Image src={props.icon} w="100%" h="100%" fit="contain" alt={props.name} />
           </Box>
           <Stack gap={0}>
-            <Text c="white" fw={700} fz={14}>
+            <Text c="white" fw={700} fz={16}>
               {props.name}
             </Text>
-            <Text c="gray.4" fz={12}>
+            <Text c="gray.4" fz={14}>
               Balance: {amount}
             </Text>
           </Stack>

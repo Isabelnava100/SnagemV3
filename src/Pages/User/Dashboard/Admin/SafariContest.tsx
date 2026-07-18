@@ -56,7 +56,7 @@ const PokemonOption = React.forwardRef<HTMLDivElement, PokemonItemProps>(
     <div ref={ref} {...others}>
       <Group wrap="nowrap" gap={8}>
         <Avatar size="sm" src={image} alt={label} />
-        <Text c="white" fz={14}>
+        <Text c="white" fz={16}>
           {label}
         </Text>
       </Group>
@@ -69,15 +69,15 @@ function StarTierEditor(props: { tier: SafariTier; onChange: (tier: SafariTier) 
   return (
     <Box p="md" style={{ borderRadius: 12, background: "#1E1D20", border: "1px solid #2a2637" }}>
       <Group justify="space-between" mb={8} wrap="wrap">
-        <Text fw={800} c="white" fz={16}>
+        <Text fw={800} c="white" fz={20}>
           {"★".repeat(tier.star)}{" "}
-          <Text span c="dimmed" fz={13} fw={500}>
+          <Text span c="dimmed" fz={14} fw={500}>
             {tier.star} Star
           </Text>
         </Text>
         <Group gap={12} wrap="wrap">
           <Group gap={6}>
-            <Text fz={12} c="white">
+            <Text fz={14} c="white">
               Encounter rate
             </Text>
             <NumberInput
@@ -93,7 +93,7 @@ function StarTierEditor(props: { tier: SafariTier; onChange: (tier: SafariTier) 
             />
           </Group>
           <Group gap={6}>
-            <Text fz={12} c="white">
+            <Text fz={14} c="white">
               Posts to defeat
             </Text>
             <NumberInput
@@ -235,7 +235,7 @@ export default function SafariContest() {
 
   return (
     <Stack gap={18}>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Zones are saved encounter lists you can reuse. Load one from the dropdown, edit it, then save
         it back to that zone or as a brand new one, and launch it into an Event thread.
       </Text>
@@ -280,7 +280,7 @@ export default function SafariContest() {
             </Button>
           )}
         </Group>
-        <Text fz={12} c="dimmed" mt={8}>
+        <Text fz={14} c="dimmed" mt={8}>
           {loadedId ? `Editing saved zone: ${config.name}` : "Editing a new, unsaved zone."}
         </Text>
       </Box>
@@ -308,7 +308,7 @@ export default function SafariContest() {
       {config.tiers.map((tier) => (
         <StarTierEditor key={tier.star} tier={tier} onChange={(t) => setTier(tier.star as SafariStar, t)} />
       ))}
-      <Text fz={12} c={totalRate > 0 ? "dimmed" : "red.4"}>
+      <Text fz={14} c={totalRate > 0 ? "dimmed" : "red.4"}>
         Total weight: {totalRate}
         {SAFARI_STARS.map(
           (s) =>
@@ -320,7 +320,7 @@ export default function SafariContest() {
         )}
       </Text>
       {emptyTiers.length > 0 && (
-        <Text fz={12} c="gold.1" role="status" aria-live="polite">
+        <Text fz={14} c="gold.1" role="status" aria-live="polite">
           {emptyTiers.map((t) => `${t.star}★`).join(", ")} {emptyTiers.length === 1 ? "has" : "have"} a
           rate but no pokemon. Add pokemon or set the rate to 0.
         </Text>
@@ -400,7 +400,7 @@ export default function SafariContest() {
       </Group>
 
       {message && (
-        <Text fz={13} c="green.4" role="status" aria-live="polite">
+        <Text fz={14} c="green.4" role="status" aria-live="polite">
           {message}
         </Text>
       )}
@@ -439,7 +439,7 @@ export default function SafariContest() {
         </Button>
       </Group>
       {!canLaunch && (
-        <Text fz={12} c="dimmed">
+        <Text fz={14} c="dimmed">
           You can edit and save zones, but launching a contest needs the Host Events capability.
         </Text>
       )}

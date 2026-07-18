@@ -77,18 +77,18 @@ function BossBanner(props: { boss: NonNullable<ForumThread["bossBattle"]> }) {
         <Avatar src={getPokemonImageURL(boss.slug)} alt={`${boss.name} sprite`} size={52} radius="xl" bg="#2b2a2b" />
         <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
           <Group gap={8} wrap="wrap">
-            <Text fz={14} c="white" fw={700}>
+            <Text fz={16} c="white" fw={700}>
               Boss Battle: {boss.name}
             </Text>
             <Badge color="red" variant="light" size="sm">
               Shared boss, everyone in the thread
             </Badge>
           </Group>
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Wild {boss.name}, the boss for this thread.
           </Text>
           <Progress value={healthPct} color="red.6" size="lg" radius="xl" striped animated />
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             {need
               ? `${remaining} of ${need} attack posts left to defeat it.`
               : "Check people's posts to wear it down."}
@@ -131,14 +131,14 @@ function PausedBanner(props: {
       style={{ background: "#2a1a1e", border: "1px solid #E54156", borderRadius: 10 }}
     >
       <Group gap={8} wrap="wrap" align="center">
-        <Text fz={14} c="white" fw={700}>
+        <Text fz={16} c="white" fw={700}>
           Thread paused: {props.thread.paused?.name ?? "a member"}&apos;s whole team fainted.
         </Text>
         <Badge color="pink" variant="light" size="sm">
           Staff decision needed
         </Badge>
       </Group>
-      <Text fz={12} c="dimmed" mt={4}>
+      <Text fz={14} c="dimmed" mt={4}>
         No new posts until a staff member decides: revive the team and resume, resume
         as-is so the member recovers with potions and revives, or close the thread as
         a loss (rewards are reviewed at close).
@@ -174,7 +174,7 @@ function PausedBanner(props: {
         </Group>
       )}
       {error && (
-        <Text fz={13} c="red.4" mt={6} role="status" aria-live="polite">
+        <Text fz={14} c="red.4" mt={6} role="status" aria-live="polite">
           {error}
         </Text>
       )}
@@ -200,7 +200,7 @@ function MissionTargetsBanner(props: { thread: ForumThread }) {
       style={{ background: "#241f2e", border: "1px solid #4b3f63", borderRadius: 10 }}
     >
       <Group gap={8} mb={8} wrap="wrap">
-        <Text fz={14} c="white" fw={700}>
+        <Text fz={16} c="white" fw={700}>
           Mission targets
         </Text>
         <Badge color={remaining.length ? "gold.1" : "green"} variant="light" size="sm">
@@ -232,7 +232,7 @@ function MissionTargetsBanner(props: { thread: ForumThread }) {
                 radius="xl"
                 style={done ? undefined : { filter: "grayscale(1)" }}
               />
-              <Text fz={12} c={done ? "green.0" : "dimmed"} fw={600}>
+              <Text fz={14} c={done ? "green.0" : "dimmed"} fw={600}>
                 {speciesNameBySlug.get(slug) ?? slug}
                 {done ? " ✓" : ""}
               </Text>
@@ -240,7 +240,7 @@ function MissionTargetsBanner(props: { thread: ForumThread }) {
           );
         })}
       </Group>
-      <Text fz={11} c="dimmed" mt={8}>
+      <Text fz={14} c="dimmed" mt={8}>
         Beat every target (wear its health down or catch it) before closing the thread for grading.
       </Text>
     </Box>
@@ -280,7 +280,7 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
         <Avatar src={getPokemonImageURL(enc.slug)} alt={`${enc.name} sprite`} size={52} radius="xl" bg="#12201f" />
         <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
           <Group gap={8} wrap="wrap">
-            <Text fz={14} c="white" fw={700}>
+            <Text fz={16} c="white" fw={700}>
               You encountered a wild {enc.name}!
             </Text>
             <Badge color="cyan" variant="light" size="sm">
@@ -297,14 +297,14 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
               </Badge>
             )}
           </Group>
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             Species: {enc.name}
             {enc.gender ? ` · ${enc.gender === "F" ? "Female" : "Male"}` : ""}
           </Text>
           {isSafari ? (
             <>
               <Progress value={safariHealthPct} color="red.6" size="lg" radius="xl" striped animated />
-              <Text fz={12} c="dimmed">
+              <Text fz={14} c="dimmed">
                 Health {safariHealthLeft}/{postsToDefeat}. Catch bonus so far +{bonus}%. Knock it out and
                 it is gone, so catch it first.
               </Text>
@@ -319,7 +319,7 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
                 striped={!beaten}
                 animated={!beaten}
               />
-              <Text fz={12} c="dimmed">
+              <Text fz={14} c="dimmed">
                 {beaten
                   ? enc.catchable
                     ? "Beaten! Throw a ball in your next post to catch it, or roll a new encounter to move on."
@@ -332,11 +332,11 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
               </Text>
             </>
           ) : (
-            <Text fz={12} c="dimmed">
+            <Text fz={14} c="dimmed">
               {enc.catchable ? "Continue it in your next post." : "This one cannot be caught."}
             </Text>
           )}
-          <Text fz={11} c="dimmed">
+          <Text fz={14} c="dimmed">
             Pick it back up in your next post on this thread.
           </Text>
         </Stack>
@@ -452,12 +452,12 @@ export default function ThreadView() {
           p={12}
           style={{ background: "#1f2a3a", border: "1px solid #2b4a7a", borderRadius: 10 }}
         >
-          <Text fz={13} c="white" fw={600}>
+          <Text fz={14} c="white" fw={600}>
             This is a mission thread.{" "}
             <Text
               component={Link}
               to={`/Missions/${thread.missionId}`}
-              fz={13}
+              fz={14}
               fw={700}
               c="blue.3"
               td="underline"
@@ -476,9 +476,9 @@ export default function ThreadView() {
           p={12}
           style={{ background: "#2a1f3a", border: "1px solid #5a3fb0", borderRadius: 10 }}
         >
-          <Text fz={13} c="white" fw={600}>
+          <Text fz={14} c="white" fw={600}>
             Super Training Room log. Posts here start from the{" "}
-            <Text component={Link} to="/Colosseum" fz={13} fw={700} c="grape.3" td="underline">
+            <Text component={Link} to="/Colosseum" fz={14} fw={700} c="grape.3" td="underline">
               Colosseum Training Room
             </Text>
             , once per day, up to 10 posts inside your training window.
@@ -555,7 +555,7 @@ export default function ThreadView() {
       </Flex>
 
       {thread.restricted && (
-        <Text fz={12} c="dimmed" mt={6}>
+        <Text fz={14} c="dimmed" mt={6}>
           The host limited who can post on this thread. Everyone can still read it.
         </Text>
       )}

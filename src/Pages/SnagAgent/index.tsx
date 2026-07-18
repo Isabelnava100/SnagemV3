@@ -436,14 +436,14 @@ export default function SnagAgent() {
                     border: m.from === "user" ? "none" : "1px solid #2a2637",
                   }}
                 >
-                  <Text fz={14} c="white" style={{ lineHeight: 1.55, wordBreak: "break-word" }}>
+                  <Text fz={16} c="white" style={{ lineHeight: 1.55, wordBreak: "break-word" }}>
                     {m.node}
                   </Text>
                 </Box>
               </Group>
             ))}
             {busy && (
-              <Text fz={12} c="dimmed" role="status" aria-live="polite">
+              <Text fz={14} c="dimmed" role="status" aria-live="polite">
                 S.N.A.G. is checking...
               </Text>
             )}
@@ -504,7 +504,7 @@ export default function SnagAgent() {
             </Button>
           </Group>
           {intake && (
-            <Text fz={11} c="gold.1" mt={6} role="status" aria-live="polite">
+            <Text fz={14} c="gold.1" mt={6} role="status" aria-live="polite">
               {intake === "suggestion"
                 ? "Recording a suggestion. Your next message goes to the staff."
                 : intake === "bug"
@@ -513,7 +513,7 @@ export default function SnagAgent() {
               <Anchor
                 component="button"
                 type="button"
-                fz={11}
+                fz={14}
                 c="blue.3"
                 onClick={() => {
                   setIntake(null);
@@ -527,7 +527,7 @@ export default function SnagAgent() {
         </Box>
       </Box>
 
-      <Text fz={11} c="dimmed" mt={10} ta="right">
+      <Text fz={14} c="dimmed" mt={10} ta="right">
         S.N.A.G. answers from the guild&apos;s own manuals and your progress; it is not
         connected to an external AI. Anything it cannot answer can be sent to the staff.
       </Text>

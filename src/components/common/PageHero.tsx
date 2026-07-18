@@ -35,7 +35,7 @@ export function PageHero(props: {
   const eyebrow =
     typeof props.eyebrow === "string" ? (
       <Text
-        fz={12}
+        fz={14}
         fw={700}
         c={props.eyebrowColor ?? "grape.3"}
         tt="uppercase"
@@ -70,7 +70,7 @@ export function PageHero(props: {
               component="h1"
               c="white"
               fw={800}
-              fz={{ base: 28, sm: 40 }}
+              fz={{ base: 32, sm: 44 }}
               style={{ lineHeight: 1.1, margin: 0 }}
             >
               {props.title}
@@ -78,7 +78,7 @@ export function PageHero(props: {
             {props.titleSuffix}
           </Group>
           {props.subtitle && (
-            <Text fz={{ base: 13, sm: 15 }} c="gray.4" mt={8} maw={680}>
+            <Text fz={{ base: 14, sm: 16 }} c="gray.4" mt={8} maw={680}>
               {props.subtitle}
             </Text>
           )}
@@ -103,10 +103,10 @@ export function HeroStat(props: { value: React.ReactNode; label: string; gold?: 
         minWidth: 96,
       }}
     >
-      <Text fz={24} fw={800} c={props.gold ? "#F5C842" : "white"} lh={1.1}>
+      <Text fz={28} fw={800} c={props.gold ? "#F5C842" : "white"} lh={1.1}>
         {props.value}
       </Text>
-      <Text fz={10} fw={600} c="dimmed" tt="uppercase" mt={2} style={{ letterSpacing: 0.5 }}>
+      <Text fz={14} fw={600} c="dimmed" tt="uppercase" mt={2} style={{ letterSpacing: 0.5 }}>
         {props.label}
       </Text>
     </Box>

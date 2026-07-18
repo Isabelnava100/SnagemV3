@@ -4,6 +4,34 @@ Living list of everything known-missing, deferred, or rough. Not blockers, thing
 to polish or finish when there's time. Grouped by kind. Newest additions from the
 July 2026 build-out are marked (2026-07).
 
+## Audits (2026-07, owner-requested)
+
+- **Item sprites, remote 404s.** Every catalog row has a `Filename`, so the
+  gaps are remote: sprites load from the CDN and a wrong path renders blank.
+  To enumerate real 404s, run a HEAD-request sweep over
+  `getItemImageURL(filePath)` for all 994 items from a machine with network
+  access and record the failures here. Known suspects: hand-added items
+  (Shadow Vaccine) and custom shop/recipe art (see Assets below).
+- **Buttons without links.** No `to="/"` placeholders remain (the homepage
+  "See Anticipated Updates" was the last and now goes to /Announcements).
+  The S.N.A.G. suggestion box is the place to catch any stragglers members
+  find; nothing else surfaced in a static sweep of Button/Link usage.
+- **Visibility concerns for public/regular users:**
+  - `users/{uid}` docs are readable by ANY signed-in member
+    (firestore.rules) and carry emails and settings. The members roster only
+    displays safe fields, but the raw doc is fetchable. Consider a public
+    profile subdocument or field-level split.
+  - `tickets` accepts writes from any signed-in user with arbitrary
+    payloads (S.N.A.G. relies on this). Fine for now; rate-limit or move
+    behind a callable if spam appears.
+  - `admin/star_overrides` and `admin/email_templates` are writable by the
+    generic admin/{doc} rule, which includes ManageLists/ManageBadges/
+    ManageSEO directors, wider than the admin-only UI implies.
+  - The Discord notify endpoint is still public in the bundle (known, below).
+  - Lore/announcement admin reads are gated by UI only in a few places; the
+    Firestore rules are the real boundary and were spot-checked, but a full
+    rules review before opening registration is recommended.
+
 ## Assets & sprites
 
 - **Shadow Vaccine sprite** (2026-07). The Shadow Vaccine item was added to the

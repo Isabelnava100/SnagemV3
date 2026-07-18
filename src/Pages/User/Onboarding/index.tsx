@@ -123,10 +123,10 @@ export default function Onboarding() {
     <Box maw={860} mx="auto" p={{ base: 16, sm: 24 }}>
       <Stack gap={16}>
         <Stack gap={4}>
-          <Title order={1} c="white" size={28} fw={600}>
+          <Title order={1} c="white" size={32} fw={600}>
             Welcome back! Import your collection
           </Title>
-          <Text fz={14} c="dimmed">
+          <Text fz={16} c="dimmed">
             Returning from the Gaia guild? Add the currency, items, and Pokemon you had so a staff
             member can restore them. Add things by hand below, or use the spreadsheet if you have a
             lot. You can come back to this page any time until you mark it complete.
@@ -178,7 +178,7 @@ export default function Onboarding() {
               }}
             />
             {uploadInfo && (
-              <Text fz={13} c="dimmed">
+              <Text fz={14} c="dimmed">
                 {uploadInfo}
               </Text>
             )}
@@ -195,7 +195,7 @@ export default function Onboarding() {
             />
 
             {message && (
-              <Text fz={13} c="green.0" role="status" aria-live="polite">
+              <Text fz={14} c="green.0" role="status" aria-live="polite">
                 {message}
               </Text>
             )}
@@ -328,7 +328,7 @@ function ItemsSection(props: { items: ImportItem[]; onChange: (i: ImportItem[]) 
         {props.items.map((it, i) => (
           <Group key={i} gap={8} wrap="nowrap">
             {it.filePath && <Avatar src={getItemImageURL(it.filePath)} alt={it.name} size={24} />}
-            <Text fz={13} c="white">
+            <Text fz={14} c="white">
               {it.qty}x {it.name}
             </Text>
             <ActionIcon
@@ -342,7 +342,7 @@ function ItemsSection(props: { items: ImportItem[]; onChange: (i: ImportItem[]) 
           </Group>
         ))}
         {!props.items.length && (
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             No items added yet.
           </Text>
         )}
@@ -480,7 +480,7 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
             >
               <img src={POKEMON_SPRITE_FALLBACK} alt="" width={20} height={20} />
             </Avatar>
-            <Text fz={13} c="white">
+            <Text fz={14} c="white">
               {p.species} · Lv {p.level} · {p.gender}
               {p.shiny ? " · Shiny" : ""}
             </Text>
@@ -495,7 +495,7 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           </Group>
         ))}
         {!props.pokemon.length && (
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             No Pokemon added yet.
           </Text>
         )}
@@ -525,7 +525,7 @@ function BulkUpload(props: {
 
   return (
     <SectionCard title="Bulk import from a spreadsheet">
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Have a lot to add? Download a template, fill it in (in Google Sheets or Excel), export it as
         CSV, and upload it here. You can review and edit everything before submitting.
       </Text>
@@ -607,18 +607,18 @@ function SubmittedPreview(props: { entries: ImportEntries }) {
       </Group>
       <Stack gap={4}>
         {items.map((it, i) => (
-          <Text key={i} fz={13} c="white">
+          <Text key={i} fz={14} c="white">
             {it.qty}x {it.name}
           </Text>
         ))}
         {pokemon.map((p, i) => (
-          <Text key={i} fz={13} c="white">
+          <Text key={i} fz={14} c="white">
             {p.species} · Lv {p.level} · {p.gender}
             {p.shiny ? " · Shiny" : ""}
           </Text>
         ))}
         {!items.length && !pokemon.length && (
-          <Text fz={12} c="dimmed">
+          <Text fz={14} c="dimmed">
             No items or Pokemon in this submission.
           </Text>
         )}
@@ -650,10 +650,10 @@ function CompleteConfirm(props: { loading: boolean; onConfirm: () => void; onClo
         onClick={(e) => e.stopPropagation()}
       >
         <Stack gap={12}>
-          <Text c="white" fw={600} fz={18}>
+          <Text c="white" fw={600} fz={22}>
             Finish importing?
           </Text>
-          <Text fz={14} c="dimmed">
+          <Text fz={16} c="dimmed">
             "My import is complete" ends the import process. This onboarding page will close and you
             will not be able to submit more imports. Anything already approved stays in your account.
             You are not just closing a window: you are done importing.

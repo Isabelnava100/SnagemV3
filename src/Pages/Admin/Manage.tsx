@@ -4,6 +4,7 @@ import React from "react";
 import { ActivityLog } from "../../components/admin/ActivityLog";
 import DesignSystem from "../../components/admin/DesignSystem";
 import DevBoard from "../User/Dashboard/Admin/DevBoard";
+import EmailTemplates from "../User/Dashboard/Admin/EmailTemplates";
 import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import { hasCapability, isAdmin } from "../../lib/permissions";
@@ -34,6 +35,7 @@ type ToolKey =
   | "costs"
   | "design"
   | "devboard"
+  | "emails"
   | "logs";
 
 interface Tool {
@@ -160,6 +162,13 @@ const GROUPS: ToolGroup[] = [
     dot: "#a78bfa",
     tools: [
       {
+        key: "emails",
+        label: "Email Templates",
+        desc: "Build branded emails with a live preview; copy the HTML to send.",
+        cap: null,
+        render: () => <EmailTemplates />,
+      },
+      {
         key: "devboard",
         label: "Dev Board",
         desc: "Member suggestions and bug reports, dev tickets, and admin planning notes.",
@@ -198,7 +207,7 @@ function ToolCard(props: { tool: Tool; onOpen: () => void }) {
         <Text fw={700} c="white" mb={2}>
           {props.tool.label}
         </Text>
-        <Text fz={13} c="dimmed">
+        <Text fz={14} c="dimmed">
           {props.tool.desc}
         </Text>
       </Box>
@@ -233,10 +242,10 @@ export default function Manage() {
     return (
       <Stack gap="md">
         <Box>
-          <Text fz={30} fw={800} c="white">
+          <Text fz={34} fw={800} c="white">
             {active.label}
           </Text>
-          <Text fz={14} c="dimmed" mt={4}>
+          <Text fz={16} c="dimmed" mt={4}>
             {active.desc}
           </Text>
         </Box>
@@ -263,10 +272,10 @@ export default function Manage() {
   return (
     <Stack gap="xl">
       <Box>
-        <Text fz={30} fw={800} c="white">
+        <Text fz={34} fw={800} c="white">
           Manage
         </Text>
-        <Text fz={14} c="dimmed" mt={4}>
+        <Text fz={16} c="dimmed" mt={4}>
           All editors and config, grouped into {visibleGroups.length}{" "}
           {visibleGroups.length === 1 ? "area" : "areas"}.
         </Text>
@@ -280,11 +289,11 @@ export default function Manage() {
         >
           <Group gap={10} mb={4}>
             <Box style={{ width: 10, height: 10, borderRadius: "50%", background: g.dot }} />
-            <Text fz={20} fw={800} c="white">
+            <Text fz={24} fw={800} c="white">
               {g.title}
             </Text>
           </Group>
-          <Text fz={13} c="dimmed" mb="md">
+          <Text fz={14} c="dimmed" mb="md">
             {g.subtitle}
           </Text>
           <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={12}>
@@ -295,7 +304,7 @@ export default function Manage() {
         </Box>
       ))}
 
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Every tool from the old admin tabs lives under one of these groups. Directors only see the
         groups they have a capability for.
       </Text>

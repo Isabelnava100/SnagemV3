@@ -81,10 +81,10 @@ export default function FeaturedPicks() {
 
   return (
     <Stack gap={12} p={16} sx={{ background: "#403C43", borderRadius: 22 }}>
-      <Title order={2} c="white" size={22} fw={400}>
+      <Title order={2} c="white" size={26} fw={400}>
         Featured on Your Profile
       </Title>
-      <Text fz={13} c="dimmed">
+      <Text fz={14} c="dimmed">
         Pick a character, a team and a caught pokemon to showcase at the top of your public
         profile. (The public layout is coming; this just sets what shows.)
       </Text>
@@ -131,7 +131,7 @@ export default function FeaturedPicks() {
       />
 
       {saved && (
-        <Text fz={13} c="green.0">
+        <Text fz={14} c="green.0">
           Featured picks saved.
         </Text>
       )}

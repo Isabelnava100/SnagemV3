@@ -476,7 +476,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
-      <Title order={1} fz={{ base: 20, sm: 30 }} c="white" fw={400} mb={16}>
+      <Title order={1} fz={{ base: 24, sm: 34 }} c="white" fw={400} mb={16}>
         Make a Post on {thread.title}
       </Title>
 
@@ -491,7 +491,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
               hint="Choose the characters you want to include in this post to make it clearer for everyone. Doing so will issue your character and team experience."
             />
             {mode === "new" && !!restrictTeams && (
-              <Text fz={12} c="gold.1" role="status" aria-live="polite">
+              <Text fz={14} c="gold.1" role="status" aria-live="polite">
                 You are locked to the team you first posted with on this thread, so everyone earns XP
                 and takes battle damage on the same team throughout it.
               </Text>
@@ -530,7 +530,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
             {trainingActive && (
               <ForumPanel title="Training Post">
                 <Stack gap={10}>
-                  <Text fz={14} c="gold.1" fw={600} role="status" aria-live="polite">
+                  <Text fz={16} c="gold.1" fw={600} role="status" aria-live="polite">
                     You are logging a training post. The whole training session needs to be
                     written out and posted within this post.
                   </Text>
@@ -543,7 +543,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                         radius="xl"
                       />
                       <Stack gap={2}>
-                        <Text fz={14} c="white" fw={600}>
+                        <Text fz={16} c="white" fw={600}>
                           Training target: {trainingTarget.name || trainingTarget.species}
                           {trainingTarget.name && trainingTarget.name !== trainingTarget.species
                             ? ` (${trainingTarget.species})`
@@ -562,13 +562,13 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                     {MAX_TRAINING_POSTS}.
                   </PanelHint>
                   {trainingOnLastPost && (
-                    <Text fz={13} c="gold.1" fw={600} role="status" aria-live="polite">
+                    <Text fz={14} c="gold.1" fw={600} role="status" aria-live="polite">
                       Heads up: this is going to be your last post of the{" "}
                       {trainingPartner ? "4-hour" : "2-hour"} limit.
                     </Text>
                   )}
                   {trainingAtCap && (
-                    <Text fz={13} c="red.4" fw={600} role="status" aria-live="polite">
+                    <Text fz={14} c="red.4" fw={600} role="status" aria-live="polite">
                       You reached the {MAX_TRAINING_POSTS}-post limit for this training window.
                       Come back tomorrow for a new session.
                     </Text>
@@ -601,7 +601,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                     color="green.0"
                     checked={attackBoss}
                     onChange={(e) => setAttackBoss(e.currentTarget.checked)}
-                    styles={{ label: { color: "white", fontSize: 14 } }}
+                    styles={{ label: { color: "white", fontSize: 16 } }}
                   />
                 )}
                 {mode === "new" && (
@@ -681,14 +681,14 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                         });
                       })()}
                     </Progress.Root>
-                    <Text fz={12} c="dimmed">
+                    <Text fz={14} c="dimmed">
                       HP {chosenFighter.hpLeft}/{chosenFighter.maxHp} (level{" "}
                       {levelProgress(chosenFighter.pokemon.experience ?? 0).level}). This
                       post's incoming hit: {hitDmg} damage
                       {attackBoss && bossActive ? " (boss attack)" : ""}.
                     </Text>
                     {battleOngoing && (
-                      <Text fz={12} c="dimmed">
+                      <Text fz={14} c="dimmed">
                         Type matchup ({fighterTypes.join("/")} vs {enemyTypes.join("/")}):
                         your posts are {effectivenessLabel(attackMult)}; its hits on you
                         are {effectivenessLabel(defenseMult)}.
@@ -702,7 +702,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                   enemy's hit lands.
                 </PanelHint>
                 {lockedTeamWiped && (
-                  <Text fz={12} c="gold.1" role="status" aria-live="polite">
+                  <Text fz={14} c="gold.1" role="status" aria-live="polite">
                     Your locked team was wiped. You may bring another team or
                     character; you will be locked to the new team.
                   </Text>
@@ -714,7 +714,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                       color="green.0"
                       checked={fleeAttempt}
                       onChange={(e) => setFleeAttempt(e.currentTarget.checked)}
-                      styles={{ label: { color: "white", fontSize: 14 } }}
+                      styles={{ label: { color: "white", fontSize: 16 } }}
                     />
                     <PanelHint>
                       Success ends the encounter and your post goes through safely. On
@@ -742,13 +742,13 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                 color="green.0"
                 checked={attachSignature}
                 onChange={(e) => setAttachSignature(e.currentTarget.checked)}
-                styles={{ label: { color: "white", fontSize: 13 } }}
+                styles={{ label: { color: "white", fontSize: 14 } }}
               />
             )}
 
             {error && <GameResultText>{error}</GameResultText>}
             {draftMessage && (
-              <Text fz={13} c="green.0">
+              <Text fz={14} c="green.0">
                 {draftMessage}
               </Text>
             )}
