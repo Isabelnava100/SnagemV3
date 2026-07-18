@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import "/src/assets/styles/authentication.css";
 
 // Gradients pulled from the dashboard mockups; header echoes the site brand palette.
-export const warmGradient = { from: "#7E2C75", to: "#E35C65", deg: 90 };
+export const warmGradient = { from: "#7E2C75", to: "#E54156", deg: 90 };
 export const coolGradient = { from: "#4D14C4", to: "#12B7B6", deg: 90 };
 
 export function AuthCard({

@@ -35,7 +35,7 @@ export function NewRegister() {
   const [draftSaved, setDraftSaved] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const strength = getStrength(value);
-  const color = strength === 100 ? "teal" : strength > 50 ? "yellow" : "red";
+  const color = strength === 100 ? "teal" : strength > 50 ? "gold.1" : "red";
 
   const checks = requirements.map((requirement, index) => (
     <PasswordRequirement key={index} label={requirement.label} meets={requirement.re.test(value)} />
@@ -202,7 +202,7 @@ export function NewRegister() {
                 {...form.getInputProps("email")}
               />
               {emailExists && (
-                <Text c="yellow" size="xs" mt={4}>
+                <Text c="gold.1" size="xs" mt={4}>
                   An account already exists for this email.{" "}
                   <Anchor component={Link} to="/Login" size="xs">
                     Log in instead

@@ -144,7 +144,7 @@ function EntryCard(props: { entry: LoreEntry; canEdit: boolean; onEdit: () => vo
           </Box>
           <Group gap={4} wrap="nowrap">
             {entry.status === "stub" && (
-              <Badge size="sm" variant="light" color="yellow">
+              <Badge size="sm" variant="light" color="gold.1">
                 To be finished
               </Badge>
             )}

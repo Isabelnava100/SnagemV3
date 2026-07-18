@@ -62,7 +62,7 @@ export const DEFAULT_BADGES: BadgeDef[] = [
   {
     id: "master",
     name: "Master",
-    background: "linear-gradient(90deg, #762B77 0%, #E35C65 100%)",
+    background: "linear-gradient(90deg, #762B77 0%, #E54156 100%)",
     description: "Assigned to anyone with any permissions/capabilities.",
     isDefault: true,
   },

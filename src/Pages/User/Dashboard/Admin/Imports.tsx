@@ -113,7 +113,7 @@ export function ReviewCard(props: { req: ImportRequest & { uid: string }; userna
           <Text c="white" fw={600}>
             {username}
           </Text>
-          <Badge variant="light" color="yellow">
+          <Badge variant="light" color="gold.1">
             Pending
           </Badge>
         </Group>
@@ -193,7 +193,7 @@ export function ReviewCard(props: { req: ImportRequest & { uid: string }; userna
             fz={13}
             role="status"
             aria-live="polite"
-            c={message.startsWith("Could not") ? "#E35C65" : "green.0"}
+            c={message.startsWith("Could not") ? "#E54156" : "green.0"}
           >
             {message}
           </Text>

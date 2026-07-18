@@ -134,7 +134,7 @@ export default function Onboarding() {
         </Stack>
 
         {status === "pending" && (
-          <Alert color="yellow" title="Waiting for approval">
+          <Alert color="gold.1" title="Waiting for approval">
             You submitted your import for review. You can see it below. Once a staff member approves
             it, the items land in your account and you can add more or finish.
           </Alert>

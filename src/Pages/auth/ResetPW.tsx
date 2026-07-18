@@ -23,7 +23,7 @@ export function ResetPW() {
   const [value, setValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const strength = getStrength(value);
-  const color = strength === 100 ? "teal" : strength > 50 ? "yellow" : "red";
+  const color = strength === 100 ? "teal" : strength > 50 ? "gold.1" : "red";
 
   const checks = requirements.map((requirement, index) => (
     <PasswordRequirement

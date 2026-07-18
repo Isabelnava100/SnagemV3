@@ -202,7 +202,7 @@ function MysteryBoxModal(props: {
             </Text>
           )}
           {error && (
-            <Text fz={13} c="#E35C65">
+            <Text fz={13} c="#E54156">
               {error}
             </Text>
           )}

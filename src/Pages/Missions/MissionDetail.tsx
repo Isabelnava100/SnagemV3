@@ -195,7 +195,7 @@ function EncountersPanel({ mission }: { mission: Mission }) {
                 {pokemonNameBySlug.get(slug) ?? slug}
               </Text>
               {required.has(slug) && (
-                <Badge size="xs" color="orange" variant="light">
+                <Badge size="xs" color="gold.2" variant="light">
                   Required
                 </Badge>
               )}
@@ -434,7 +434,7 @@ export default function MissionDetail() {
                 Pick Up Mission
               </Button>
               {pickUpError && (
-                <Text fz={13} c="#E35C65" ta="center" role="status" aria-live="polite">
+                <Text fz={13} c="#E54156" ta="center" role="status" aria-live="polite">
                   {pickUpError}
                 </Text>
               )}

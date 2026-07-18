@@ -320,7 +320,7 @@ export default function SafariContest() {
         )}
       </Text>
       {emptyTiers.length > 0 && (
-        <Text fz={12} c="orange.4" role="status" aria-live="polite">
+        <Text fz={12} c="gold.1" role="status" aria-live="polite">
           {emptyTiers.map((t) => `${t.star}★`).join(", ")} {emptyTiers.length === 1 ? "has" : "have"} a
           rate but no pokemon. Add pokemon or set the rate to 0.
         </Text>

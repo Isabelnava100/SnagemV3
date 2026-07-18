@@ -105,7 +105,7 @@ export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () =
         </Button>
       </Group>
       {message && (
-        <Text fz={12} c="#E35C65" mt={6} role="status" aria-live="polite">
+        <Text fz={12} c="#E54156" mt={6} role="status" aria-live="polite">
           {message}
         </Text>
       )}

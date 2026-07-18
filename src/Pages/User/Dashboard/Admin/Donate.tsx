@@ -453,7 +453,7 @@ function GivePokemonSection() {
       {message && (
         <Text
           fz={13}
-          c={message === "Pokemon sent!" ? "green.0" : "#E35C65"}
+          c={message === "Pokemon sent!" ? "green.0" : "#E54156"}
           role="status"
           aria-live="polite"
         >
@@ -561,7 +561,7 @@ function GiveCurrencySection() {
         )}
       </Flex>
       {message && (
-        <Text fz={13} c={message === "Currency sent!" ? "green.0" : "#E35C65"}>
+        <Text fz={13} c={message === "Currency sent!" ? "green.0" : "#E54156"}>
           {message}
         </Text>
       )}

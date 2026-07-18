@@ -441,7 +441,7 @@ export default function MysteryBoxes() {
           </Text>
 
           {archived && (
-            <Text fz={12} c="orange.3">
+            <Text fz={12} c="gold.1">
               This box is archived. It cannot be given out, but members who already own one can
               still open it.
             </Text>
@@ -465,7 +465,7 @@ export default function MysteryBoxes() {
             {boxes?.[boxItemId] && (
               <Button
                 variant="light"
-                color={archived ? "cyan" : "orange"}
+                color={archived ? "cyan" : "gold.2"}
                 radius="xl"
                 loading={archiveMutation.isPending}
                 onClick={() => archiveMutation.mutate(!archived)}

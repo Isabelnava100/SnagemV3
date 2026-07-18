@@ -218,7 +218,7 @@ function NotificationBell() {
                 position: "absolute",
                 top: -4,
                 right: -6,
-                background: "#E35C65",
+                background: "#E54156",
                 color: "white",
                 borderRadius: "100%",
                 minWidth: 20,

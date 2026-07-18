@@ -133,13 +133,13 @@ const SURFACES: { color: string; name: string; role: string }[] = [
   { color: "#3C3A3C", name: "Raised", role: "Nav tiles / chips" },
 ];
 
-// The homepage CTA classes (src/assets/styles/homepage.css) now reference the
-// theme tokens via Mantine CSS variables; listed here with their token names.
+// The homepage CTA classes (src/assets/styles/homepage.css) reference the
+// theme tokens via Mantine CSS variables; listed here with their fun names.
 const CTA_COLORS: { color: string; name: string; role: string }[] = [
-  { color: "#E35C65", name: "CTA Red", role: "pink.0 · primary homepage action" },
-  { color: "#772976", name: "CTA Purple", role: "brand.5 · secondary action" },
-  { color: "#FFD074", name: "CTA Yellow", role: "gold.0 · tertiary (dark text)" },
-  { color: "#4D14C4", name: "CTA Blue", role: "violet.0 · rare accent" },
+  { color: "#E54156", name: "Magikarp Red", role: "pink.0 · CTAs, alerts, red text" },
+  { color: "#772976", name: "Gengar Purple", role: "brand.5 · the primary purple" },
+  { color: "#FFD074", name: "Pikachu Gold", role: "gold.0 · gold fills (dark text)" },
+  { color: "#4049C9", name: "Great Ball Blue", role: "indigo.0 · saturated CTA blue" },
 ];
 
 const TYPE_SCALE: { label: string; size: string; sample: string; fz: number; fw: number; c?: string }[] = [
@@ -186,37 +186,29 @@ export default function DesignSystem() {
         index="01"
         eyebrow="Palette"
         title="Brand colors"
-        hint="Brand purple is the primary. Pink/violet/cyan are accents and gradients; green is success. Use these tokens (theme.colors) instead of raw hex in new code."
+        hint="One tight family: the homepage colors, the 10-shade Gengar Purple ramp, and the Espeon Violet to Suicune Cyan gradient pair. Cyan doubles as the success color (greens are retired). Use these tokens (theme.colors) instead of raw hex in new code."
       >
         <Stack gap={18}>
-          <SimpleGrid cols={{ base: 2, xs: 3, sm: 5 }} spacing={12}>
-            <Swatch color={theme.colors.brand[5]} name="Brand 5" role="Primary · buttons, active" />
-            <Swatch color={theme.colors.brand[3]} name="Brand 3" role="Hover / lighter fill" />
-            <Swatch color={theme.colors.pink[0]} name="Pink 0" role="Alerts, gradient start" />
-            <Swatch color={theme.colors.violet[0]} name="Violet 0" role="Gradient start" />
-            <Swatch color={theme.colors.cyan[0]} name="Cyan 0" role="Gradient end, links" />
-            <Swatch color={theme.colors.green[0]} name="Green 0" role="Success / positive" />
+          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing={12}>
+            {CTA_COLORS.map((c) => (
+              <Swatch key={c.color} {...c} />
+            ))}
+          </SimpleGrid>
+          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing={12}>
+            <Swatch color={theme.colors.brand[3]} name="Guild Lilac" role="brand.3 · light purple accents" />
+            <Swatch color={theme.colors.violet[0]} name="Espeon Violet" role="violet.0 · gradient start" />
+            <Swatch color={theme.colors.cyan[0]} name="Suicune Cyan" role="cyan.0 · gradient end, success" />
+            <Swatch color={theme.colors.gold[1]} name="Zapdos Spark" role="gold.1 · gold text on dark" />
           </SimpleGrid>
 
           <Panel>
             <Stack gap={14}>
-              <TupleRow label="brand" role="10 shades · primary" colors={theme.colors.brand} />
-              <TupleRow label="pink" role="alerts + gradients" colors={theme.colors.pink} />
-              <TupleRow label="gold" role="fills + accents (one gold everywhere)" colors={theme.colors.gold.slice(0, 4)} />
-              <TupleRow label="violet / cyan" role="secondary gradient" colors={[...theme.colors.violet.slice(0, 1), ...theme.colors.cyan.slice(0, 2)]} />
+              <TupleRow label="Gengar Purple ramp" role="brand, 10 shades · primary" colors={theme.colors.brand} />
+              <TupleRow label="Magikarp Red ramp" role="pink.* · alerts + primary gradient" colors={theme.colors.pink.slice(0, 4)} />
+              <TupleRow label="Pikachu Gold ramp" role="gold.* · fills + accents" colors={theme.colors.gold.slice(0, 4)} />
+              <TupleRow label="Violet / Cyan pair" role="violet.0 + cyan.* · secondary gradient" colors={[...theme.colors.violet.slice(0, 1), ...theme.colors.cyan.slice(0, 2)]} />
             </Stack>
           </Panel>
-
-          <Box>
-            <Text fz={13} fw={700} c="white" mb={8}>
-              Homepage CTA palette
-            </Text>
-            <SimpleGrid cols={{ base: 2, sm: 4 }} spacing={12}>
-              {CTA_COLORS.map((c) => (
-                <Swatch key={c.color} {...c} />
-              ))}
-            </SimpleGrid>
-          </Box>
 
           <Box>
             <Text fz={13} fw={700} c="white" mb={8}>
@@ -399,15 +391,26 @@ export default function DesignSystem() {
                 New
               </Badge>
               <Badge color="pink" variant="light" radius="sm">
-                Update
+                Alert
               </Badge>
-              <Badge color="green" variant="light" radius="sm">
+              <Badge color="cyan" variant="light" radius="sm">
                 Done
+              </Badge>
+              <Badge color="gold.1" variant="light" radius="sm">
+                Featured
+              </Badge>
+              <Badge color="indigo" variant="light" radius="sm">
+                Info
               </Badge>
               <Badge color="cyan" variant="outline" radius="sm">
                 Beta
               </Badge>
             </Group>
+            <Text fz={12} c="dimmed" mb={10}>
+              Badge colors come from the same family: grape (purple), pink (Magikarp
+              Red), cyan for success ("Done" instead of green), gold for featured,
+              indigo (Great Ball Blue) for info.
+            </Text>
             <Group gap={10}>
               <Box px={16} py={10} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #3a3550", minWidth: 96 }}>
                 <Text fz={22} fw={800} c="#F5C842" lh={1.1}>
@@ -430,25 +433,132 @@ export default function DesignSystem() {
         </SimpleGrid>
       </Section>
 
-      {/* 05 Status notes */}
+      {/* 05 Content width */}
       <Section
         index="05"
+        eyebrow="Layout"
+        title="Content width"
+        hint="Pages sit in a centered Mantine Container. Reading pages use size md, wide tool pages use size lg; both share the same vertical and horizontal padding scale."
+      >
+        <Panel>
+          <Stack gap={14}>
+            {([
+              ["md · 960px", "Reading pages: Policies, Announcements, Library, About", 0.72],
+              ["lg · 1140px", "Wide tool pages: Admin, Forum, Dashboard, Shop", 0.86],
+              ["100% · fluid", "The homepage hero and full-bleed banners", 1],
+            ] as const).map(([label, role, frac]) => (
+              <Box key={label}>
+                <Group justify="space-between" mb={4} wrap="nowrap">
+                  <Text ff="monospace" fz={12} c="white">
+                    {label}
+                  </Text>
+                  <Text fz={12} c="dimmed" ta="right">
+                    {role}
+                  </Text>
+                </Group>
+                <Box
+                  h={10}
+                  w={`${frac * 100}%`}
+                  style={{
+                    borderRadius: 999,
+                    background: "linear-gradient(90deg, #772976, #4D14C4)",
+                  }}
+                />
+              </Box>
+            ))}
+            <Stack gap={8} maw={420}>
+              <Spec label="Page padding (mobile)" value="py 24 / px 16" />
+              <Spec label="Page padding (desktop)" value="py 40 / px 24" />
+              <Spec label="Body copy measure" value="maw 620-680" />
+              <Spec label="Breakpoints" value="xs 480 · sm 800 · md 900 · lg 1200" />
+            </Stack>
+          </Stack>
+        </Panel>
+      </Section>
+
+      {/* 06 Banner styles */}
+      <Section
+        index="06"
+        eyebrow="Layout"
+        title="Banner styles"
+        hint="Two banner families: the page hero every section opens with, and the in-thread game banners (boss, encounter, mission targets). Each has a fixed surface + border pair."
+      >
+        <Stack gap={12}>
+          <Box
+            p={16}
+            style={{
+              borderRadius: 16,
+              background: `${HERO_STRIPES}, ${HERO_GRADIENT}`,
+              border: "1px solid #3a3550",
+            }}
+          >
+            <Text fz={11} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
+              Page hero
+            </Text>
+            <Text fz={18} fw={800} c="white">
+              PageHero: striped gradient, eyebrow, fw 800 title
+            </Text>
+            <Text fz={12} c="gray.4">
+              Every main section opens with this banner (src/components/common/PageHero.tsx).
+            </Text>
+          </Box>
+          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing={12}>
+            <Box p={12} style={{ background: "#2a1a1e", border: "1px solid #E54156", borderRadius: 10 }}>
+              <Text fz={13} fw={700} c="white" mb={2}>
+                Boss battle banner
+              </Text>
+              <Text ff="monospace" fz={11} c="dimmed">
+                bg #2a1a1e · border Magikarp Red
+              </Text>
+              <Text fz={12} c="dimmed" mt={4}>
+                Shared boss with a red draining health bar; pinned for everyone.
+              </Text>
+            </Box>
+            <Box p={12} style={{ background: "#14252a", border: "1px solid #1f6f7a", borderRadius: 10 }}>
+              <Text fz={13} fw={700} c="white" mb={2}>
+                Encounter banner
+              </Text>
+              <Text ff="monospace" fz={11} c="dimmed">
+                bg #14252a · border #1f6f7a
+              </Text>
+              <Text fz={12} c="dimmed" mt={4}>
+                Personal wild encounter: star, traits and health; only the roller sees it.
+              </Text>
+            </Box>
+            <Box p={12} style={{ background: "#241f2e", border: "1px solid #4b3f63", borderRadius: 10 }}>
+              <Text fz={13} fw={700} c="white" mb={2}>
+                Mission targets banner
+              </Text>
+              <Text ff="monospace" fz={11} c="dimmed">
+                bg #241f2e · border #4b3f63
+              </Text>
+              <Text fz={12} c="dimmed" mt={4}>
+                Purple checklist of required foes with cyan checks when beaten.
+              </Text>
+            </Box>
+          </SimpleGrid>
+        </Stack>
+      </Section>
+
+      {/* 07 Status notes */}
+      <Section
+        index="07"
         eyebrow="Status"
         title="Consistency notes"
         hint="What was recently brought on brand, and what is still worth aligning. Use this as a punch list."
       >
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={16}>
-          <Card withBorder radius="md" padding="lg" style={{ background: "rgba(34,181,115,0.08)", borderColor: "#22b573" }}>
+          <Card withBorder radius="md" padding="lg" style={{ background: "rgba(18,183,182,0.08)", borderColor: "#12B7B6" }}>
             <Text fz={13} fw={700} c="green.0" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
               On brand
             </Text>
             <Stack gap={6}>
               <Text fz={14} c="rgba(255,255,255,0.8)">Single font family (Roboto); serif removed from the Library.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Unused Inter web font dropped from the page load.</Text>
               <Text fz={14} c="rgba(255,255,255,0.8)">Button radius standardized to xl (pill) app-wide via the theme.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">One gold: the three near-identical golds unified into the gold ramp.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Casino play button moved from orange to the brand gold gradient.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Homepage CTA colors now reference theme tokens (pink, brand, gold, violet).</Text>
+              <Text fz={14} c="rgba(255,255,255,0.8)">One gold: the three near-identical golds unified into the Pikachu Gold ramp.</Text>
+              <Text fz={14} c="rgba(255,255,255,0.8)">Greens retired: success states now render in Suicune Cyan everywhere.</Text>
+              <Text fz={14} c="rgba(255,255,255,0.8)">Pinks now carry Magikarp Red; grape accents share the Gengar Purple ramp.</Text>
+              <Text fz={14} c="rgba(255,255,255,0.8)">Homepage blue saturated up into Great Ball Blue and used by the indigo gradients.</Text>
             </Stack>
           </Card>
           <Card withBorder radius="md" padding="lg" style={{ background: "rgba(245,200,66,0.06)", borderColor: "#7a5a1e" }}>

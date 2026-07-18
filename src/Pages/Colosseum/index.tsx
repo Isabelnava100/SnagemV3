@@ -161,7 +161,7 @@ function TrainingTargetCard({ pokemon }: { pokemon: OwnedPokemon }) {
               {pokemon.name || pokemon.species}
             </Text>
             {pokemon.shiny && (
-              <Badge color="yellow" variant="light" size="xs">
+              <Badge color="gold.1" variant="light" size="xs">
                 Shiny
               </Badge>
             )}
@@ -339,12 +339,12 @@ function TrainingRoomTab() {
               </Button>
 
               {atPostCap && (
-                <Text fz={12} c="orange.4" role="status" aria-live="polite">
+                <Text fz={12} c="gold.1" role="status" aria-live="polite">
                   You reached the {MAX_TRAINING_POSTS}-post limit for this training window.
                 </Text>
               )}
               {onLastPost && (
-                <Text fz={12} c="orange.4" role="status" aria-live="polite">
+                <Text fz={12} c="gold.1" role="status" aria-live="polite">
                   Heads up: your next post is the last one of this training window.
                 </Text>
               )}
@@ -401,7 +401,7 @@ function TrainingRoomTab() {
             <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
               <Group gap={6} mb="xs">
                 <IconFlame size={16} color="var(--mantine-color-orange-4)" />
-                <Text fz={12} fw={700} c="orange.4" tt="uppercase">
+                <Text fz={12} fw={700} c="gold.1" tt="uppercase">
                   Coach's Tip
                 </Text>
               </Group>
@@ -469,9 +469,9 @@ const SCORING = [
   { label: "Defeat a Pokemon", value: "+1", color: "cyan" },
   { label: "Your Pokemon survives", value: "+1", color: "cyan" },
   { label: "Win the battle", value: "+3", color: "green" },
-  { label: "Beat the champion", value: "+5", color: "yellow" },
+  { label: "Beat the champion", value: "+5", color: "gold.1" },
   { label: "Upset (per rank gap)", value: "+0.4", color: "violet" },
-  { label: "Tournament win", value: "+10", color: "yellow" },
+  { label: "Tournament win", value: "+10", color: "gold.1" },
 ];
 
 function Movement({ value }: { value?: number }) {
@@ -554,7 +554,7 @@ function StandingRow({
         </Table.Td>
       )}
       <Table.Td ta="right">
-        <Text fz={18} fw={800} c="yellow.4" style={{ fontVariantNumeric: "tabular-nums" }}>
+        <Text fz={18} fw={800} c="gold.1" style={{ fontVariantNumeric: "tabular-nums" }}>
           {row.points ?? 0}
         </Text>
       </Table.Td>
@@ -694,7 +694,7 @@ function ChampionCard({ entry }: { entry: HallOfFameEntry }) {
           <Text fz={17} fw={800} c="white" tt="uppercase" lineClamp={1}>
             {entry.tournament_name}
           </Text>
-          <Text fz={13} fw={700} c="yellow.4" lineClamp={1}>
+          <Text fz={13} fw={700} c="gold.1" lineClamp={1}>
             {entry.year != null ? `${entry.year} Champion` : "Champion"} . {entry.winner || "Unknown"}
           </Text>
         </Box>

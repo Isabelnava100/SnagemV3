@@ -371,7 +371,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
               hint="Choose the characters you want to include in this post to make it clearer for everyone. Doing so will issue your character and team experience."
             />
             {mode === "new" && !!thread?.lockedTeams?.[user?.uid ?? ""]?.length && (
-              <Text fz={12} c="orange.4" role="status" aria-live="polite">
+              <Text fz={12} c="gold.1" role="status" aria-live="polite">
                 You are locked to the team you first posted with on this thread, so everyone earns XP
                 on the same team throughout it.
               </Text>
@@ -410,7 +410,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
             {trainingActive && (
               <ForumPanel title="Training Post">
                 <Stack gap={10}>
-                  <Text fz={14} c="orange.3" fw={600} role="status" aria-live="polite">
+                  <Text fz={14} c="gold.1" fw={600} role="status" aria-live="polite">
                     You are logging a training post. The whole training session needs to be
                     written out and posted within this post.
                   </Text>
@@ -442,7 +442,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                     {MAX_TRAINING_POSTS}.
                   </PanelHint>
                   {trainingOnLastPost && (
-                    <Text fz={13} c="orange.4" fw={600} role="status" aria-live="polite">
+                    <Text fz={13} c="gold.1" fw={600} role="status" aria-live="polite">
                       Heads up: this is going to be your last post of the{" "}
                       {trainingPartner ? "4-hour" : "2-hour"} limit.
                     </Text>

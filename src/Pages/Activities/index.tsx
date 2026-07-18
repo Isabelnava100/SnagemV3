@@ -164,7 +164,7 @@ function TaskCard(props: { task: TaskDef; done: boolean }) {
       </Text>
 
       <Group gap={10}>
-        <Badge variant="light" color="yellow" radius="xl" size="lg">
+        <Badge variant="light" color="gold.1" radius="xl" size="lg">
           {task.pts}
         </Badge>
         <Text component={Link} to={task.link} fz={13} fw={600} c="grape.3" td="none">
@@ -305,7 +305,7 @@ export default function Activities() {
                         size="xs"
                         radius="xl"
                         variant={choice === b.value ? "gradient" : "default"}
-                        gradient={{ from: "yellow", to: "orange", deg: 90 }}
+                        gradient={{ from: "gold.0", to: "gold.3", deg: 90 }}
                         leftSection={<SnagIcon name={b.icon} size={14} title="" />}
                         onClick={() => setChoice(b.value)}
                         aria-pressed={choice === b.value}
@@ -326,7 +326,7 @@ export default function Activities() {
                 ) : allDone ? (
                   <Button
                     variant="gradient"
-                    gradient={{ from: "yellow", to: "orange", deg: 90 }}
+                    gradient={{ from: "gold.0", to: "gold.3", deg: 90 }}
                     radius="xl"
                     size="md"
                     loading={claimMutation.isPending}
@@ -348,7 +348,7 @@ export default function Activities() {
               <Text
                 fz={13}
                 mt="sm"
-                c={/could not|error|finish|already/i.test(claimMessage) ? "#E35C65" : "teal.4"}
+                c={/could not|error|finish|already/i.test(claimMessage) ? "#E54156" : "teal.4"}
                 role="status"
                 aria-live="polite"
               >

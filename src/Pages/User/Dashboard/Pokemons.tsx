@@ -471,7 +471,7 @@ function CreateNewTeam() {
   return (
     <Stack gap={4} align="end">
       {teamCount >= TEAM_WARNING_AT && (
-        <Text fz={12} c="#E35C65">
+        <Text fz={12} c="#E54156">
           {teamCount >= MAX_TEAMS
             ? `You've reached the ${MAX_TEAMS}-team limit. Delete a team to make room.`
             : `${teamCount}/${MAX_TEAMS} teams. You're getting close to the limit.`}

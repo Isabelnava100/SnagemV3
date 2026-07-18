@@ -117,7 +117,7 @@ export default function SafariJudgePanel(props: {
                       </Group>
                     </Table.Td>
                     <Table.Td>
-                      <Text c="yellow.4">{"★".repeat(r.star)}</Text>
+                      <Text c="gold.1">{"★".repeat(r.star)}</Text>
                     </Table.Td>
                     <Table.Td>
                       <Text c="dimmed">{r.quality}</Text>

@@ -51,7 +51,7 @@ const TIER_COLOR: Record<string, string> = {
   Story: "grape",
   Standard: "teal",
   Master: "violet",
-  Exceptional: "orange",
+  Exceptional: "gold.2",
 };
 
 const REWARD_LABEL: Record<string, string> = {
@@ -170,7 +170,7 @@ function MissionCard(props: { mission: Mission }) {
         )}
         {mission.emblem_eligible && (
           <Badge
-            color="yellow"
+            color="gold.1"
             variant="filled"
             size="sm"
             leftSection={<IconStar size={11} />}

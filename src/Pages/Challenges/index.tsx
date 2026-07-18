@@ -360,7 +360,7 @@ function TimelineItem(props: { stage: Stage } & StageRequestProps) {
               <Button variant="default" radius="xl" disabled w="fit-content">
                 Challenge requested
               </Button>
-              <Text fz={12} c="orange.3" role="status" aria-live="polite">
+              <Text fz={12} c="gold.1" role="status" aria-live="polite">
                 Your challenge has been requested. Please wait until an admin accepts it and
                 sets up your thread.
               </Text>

@@ -349,7 +349,7 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
                 This character already holds master clearance.
               </Text>
             ) : props.requestPending ? (
-              <Text fz={14} c="orange.3" ta="right" role="status" aria-live="polite" maw={320}>
+              <Text fz={14} c="gold.1" ta="right" role="status" aria-live="polite" maw={320}>
                 Clearance review requested. An admin will review your character and open the
                 console once approved.
               </Text>

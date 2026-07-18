@@ -334,7 +334,7 @@ export default function PostCard(props: {
               component={Link}
               to={`/Forum/${forum}/thread/${threadId}/edit/${post.id}`}
               variant="gradient"
-              gradient={{ from: "#E35C65", to: "#912691" }}
+              gradient={{ from: "#E54156", to: "#912691" }}
               style={{ cursor: "pointer", textTransform: "none" }}
             >
               Edit ✎

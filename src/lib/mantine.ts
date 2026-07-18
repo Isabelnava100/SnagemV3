@@ -20,15 +20,39 @@ export const theme = createTheme({
       "#3B053A",
       "#2A0229"
     ),
-    pink: shades("#E35C65", "#B1446D", "#7E2C75", "#912691"),
+    // Alert/action red family; 0 is the homepage CTA red (Magikarp Red).
+    pink: shades("#E54156", "#B1446D", "#7E2C75", "#912691"),
     // Single gold ramp for the whole site: 0 = fill (dark text on it),
     // 1 = accent text on dark, deeper shades for gradients.
     gold: shades("#FFD074", "#F5C842", "#E8B32A", "#C9940F"),
-    green: shades("#22B573"),
+    // Success/positive states use the brand cyan (greens retired by request);
+    // remapping the green and teal names recolors every existing usage.
+    green: shades("#12B7B6", "#14B1B6"),
+    teal: shades("#5FD6D5", "#3ACCCB", "#22C4C3", "#12B7B6"),
     violet: shades("#4D14C4"),
     cyan: shades("#12B7B6", "#14B1B6"),
+    // The homepage CTA blue, saturated up from the old #474D9B. Overriding
+    // `indigo` also pulls the existing grape-to-indigo gradients on brand.
+    indigo: shades("#4049C9", "#3B42B0", "#343A96"),
+    // Purple accents (badges, tabs, eyebrows) share the brand ramp so there is
+    // only one purple family on the site.
+    grape: shades(
+      "#F7DBF7",
+      "#E4BFE4",
+      "#D1A2D1",
+      "#C17DC1",
+      "#AC5DAB",
+      "#772976",
+      "#651664",
+      "#4C094B",
+      "#3B053A",
+      "#2A0229"
+    ),
   },
   primaryColor: "brand",
+  // Filled components in dark mode use the canonical mid shade (brand.5
+  // purple) instead of Mantine's near-black shade 8.
+  primaryShade: { light: 6, dark: 5 },
   white: "#FFFFFF",
   breakpoints: {
     xs: "480px",

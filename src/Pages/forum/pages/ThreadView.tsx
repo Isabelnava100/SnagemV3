@@ -134,8 +134,8 @@ function MissionTargetsBanner(props: { thread: ForumThread }) {
               py={4}
               style={{
                 borderRadius: 999,
-                background: done ? "rgba(34,181,115,0.15)" : "rgba(0,0,0,0.3)",
-                border: `1px solid ${done ? "#22B573" : "#4b3f63"}`,
+                background: done ? "rgba(18,183,182,0.15)" : "rgba(0,0,0,0.3)",
+                border: `1px solid ${done ? "#12B7B6" : "#4b3f63"}`,
               }}
             >
               <Avatar

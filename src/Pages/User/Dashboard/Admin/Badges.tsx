@@ -245,7 +245,7 @@ export default function Badges() {
           styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
         />
         {message && (
-          <Text fz={13} c={message.includes("Could not") || message.includes("Give") ? "#E35C65" : "green.0"}>
+          <Text fz={13} c={message.includes("Could not") || message.includes("Give") ? "#E54156" : "green.0"}>
             {message}
           </Text>
         )}
@@ -427,7 +427,7 @@ function AssignBadges(props: { catalog: BadgeDef[] }) {
         </GradientButtonSecondary>
       </Group>
       {message && (
-        <Text fz={13} c={message.startsWith("Could not") ? "#E35C65" : "green.0"}>
+        <Text fz={13} c={message.startsWith("Could not") ? "#E54156" : "green.0"}>
           {message}
         </Text>
       )}

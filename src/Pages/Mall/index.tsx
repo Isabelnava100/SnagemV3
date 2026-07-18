@@ -892,7 +892,7 @@ function TourBody() {
                 {result.item.name}
               </Text>
               {result.bonusRareCandy && (
-                <Text fz={12} c="yellow">
+                <Text fz={12} c="gold.1">
                   Rare Candy bonus!
                 </Text>
               )}

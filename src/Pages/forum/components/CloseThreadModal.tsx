@@ -156,8 +156,8 @@ export default function CloseThreadModal(props: {
           <Box
             p={10}
             style={{
-              background: "rgba(227,92,101,0.08)",
-              border: "1px solid rgba(227,92,101,0.45)",
+              background: "rgba(229,65,86,0.08)",
+              border: "1px solid rgba(229,65,86,0.45)",
               borderRadius: 8,
             }}
           >

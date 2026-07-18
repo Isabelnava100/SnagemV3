@@ -336,7 +336,7 @@ export default function PublicProfile() {
                           {featuredPokemon.name}
                         </Text>
                         {featuredPokemon.shiny && (
-                          <Badge size="xs" color="yellow" variant="light">
+                          <Badge size="xs" color="gold.1" variant="light">
                             SHINY
                           </Badge>
                         )}

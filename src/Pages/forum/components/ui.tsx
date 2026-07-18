@@ -109,7 +109,7 @@ export function ConfirmModal(props: {
 /** Pink game-result text used inside post blocks ("A D20 has been rolled..."). */
 export function GameResultText(props: { children: React.ReactNode }) {
   return (
-    <Text fz={13} c="#E35C65" fw={500}>
+    <Text fz={13} c="#E54156" fw={500}>
       {props.children}
     </Text>
   );

@@ -73,7 +73,7 @@ function DraftsHeader(props: { count: number }) {
 
   return (
     <Flex justify="space-between" align="center" gap={10} wrap="wrap">
-      <Text c={count >= 55 ? "#E35C65" : "dimmed"} fz={13}>
+      <Text c={count >= 55 ? "#E54156" : "dimmed"} fz={13}>
         {count}/60 drafts
         {count >= 60
           ? ". You're at the limit; delete drafts to save new ones."
@@ -103,7 +103,7 @@ function DraftsHeader(props: { count: number }) {
         ) : (
           <Text
             fz={13}
-            c="#E35C65"
+            c="#E54156"
             td="underline"
             style={{ cursor: "pointer" }}
             {...clickable(() => setConfirming(true))}

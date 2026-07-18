@@ -435,7 +435,7 @@ export default function About() {
               component={Link}
               to="/Register"
               variant="gradient"
-              gradient={{ from: "orange", to: "yellow", deg: 90 }}
+              gradient={{ from: "gold.3", to: "gold.0", deg: 90 }}
               radius="xl"
               size="lg"
               leftSection={<IconTargetArrow size={20} />}

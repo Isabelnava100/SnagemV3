@@ -82,7 +82,7 @@
      (src/lib/mantine.ts) so the homepage CTAs stay in lockstep with the
      rest of the site's palette. */
   a.red {
-    background-color: var(--mantine-color-pink-0, #E35C65);
+    background-color: var(--mantine-color-pink-0, #E54156);
   }
 
   a.purple {
@@ -95,7 +95,7 @@
     color:#1A1B1E!important;
   }
   a.blue {
-      background-color: var(--mantine-color-violet-0, #4D14C4);
+      background-color: var(--mantine-color-indigo-0, #4049C9);
   }
 
   /*second module*/
@@ -131,7 +131,7 @@ color:white;line-height: 1.1em;margin:0;}
   .innerHold2 span.paragraph2{display:block;font-size: 1.4em;color:white;
 width:320px;margin:20px 0 26px 0;line-height: 1.4em;}
 
-span.red-text {color: var(--mantine-color-pink-0, #E35C65)!important; }
+span.red-text {color: var(--mantine-color-pink-0, #E54156)!important; }
 .innerHold2 span.paragraph2 + a.button {
 margin-top:0;
 

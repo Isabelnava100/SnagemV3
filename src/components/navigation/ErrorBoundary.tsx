@@ -84,7 +84,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
             <Text
               ff="monospace"
               fz={12}
-              c="#E35C65"
+              c="#E54156"
               ta="center"
               maw={420}
               style={{ wordBreak: "break-word" }}

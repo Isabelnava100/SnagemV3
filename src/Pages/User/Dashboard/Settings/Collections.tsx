@@ -318,7 +318,7 @@ function Badges() {
         )}
       </Flex>
       {toggleMutation.error && (
-        <Text fz={13} c="#E35C65">
+        <Text fz={13} c="#E54156">
           {toggleMutation.error}
         </Text>
       )}
@@ -487,7 +487,7 @@ function EmojiCollection() {
                       sx={{
                         borderRadius: "100%",
                         border: "4px solid",
-                        borderColor: existingEmoji ? "#22B573" : "white",
+                        borderColor: existingEmoji ? "#12B7B6" : "white",
                         flexShrink: 0,
                       }}
                     >
@@ -586,14 +586,14 @@ function BadgesCollection() {
                   <Flex justify="space-between" align="center">
                     {existingUserBadge ? (
                       <>
-                        <Text fz={14} fw={500} c="#22B573">
+                        <Text fz={14} fw={500} c="#12B7B6">
                           You have this badge
                         </Text>
                         <Image src={CheckCircleIcon} alt="Check circle icon" w={22} h={22} fit="contain" />
                       </>
                     ) : (
                       <>
-                        <Text fz={14} fw={500} c="#E35C65">
+                        <Text fz={14} fw={500} c="#E54156">
                           You don&apos;t have this badge
                         </Text>
                         <Image src={CrossCircleIcon} alt="Cross circle icon" w={22} h={22} fit="contain" />
@@ -635,7 +635,7 @@ export default function Collections() {
       <Stack align="end">
         <button
           onClick={() => setShowCollections((pre) => !pre)}
-          className="text-[#E35C65] bg-transparent border-none outline-none text-[16px] font-[400] underline cursor-pointer"
+          className="text-[#E54156] bg-transparent border-none outline-none text-[16px] font-[400] underline cursor-pointer"
         >
           {showCollections ? "Hide all collections" : "Show all collections"}
         </button>

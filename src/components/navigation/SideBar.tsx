@@ -78,7 +78,7 @@ function AlertDot({ show }: { show: boolean }) {
         width: 10,
         height: 10,
         borderRadius: "50%",
-        background: "#E35C65",
+        background: "#E54156",
         border: "2px solid #1E1D20",
       }}
     />

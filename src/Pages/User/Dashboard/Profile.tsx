@@ -292,7 +292,7 @@ function Avatars() {
           />
         </Flex>
         {!canUpload && (
-          <Text fz={12} c="#E35C65">
+          <Text fz={12} c="#E54156">
             You&apos;ve reached the max of {MAX_ITEMS_COUNT} avatars. Remove one before adding more.
           </Text>
         )}
@@ -483,7 +483,7 @@ function CoverBackgrounds() {
           />
         </Flex>
         {!canUpload && (
-          <Text fz={12} c="#E35C65">
+          <Text fz={12} c="#E54156">
             You&apos;ve reached the max of 6 cover backgrounds. Remove one before adding more.
           </Text>
         )}

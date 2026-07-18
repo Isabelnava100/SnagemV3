@@ -61,7 +61,7 @@ function StatusLine(props: { message: string; error?: boolean }) {
     <Text
       fz={12}
       mt={6}
-      c={props.error ? "#E35C65" : "#7CD992"}
+      c={props.error ? "#E54156" : "#7CD992"}
       role="status"
       aria-live="polite"
     >
