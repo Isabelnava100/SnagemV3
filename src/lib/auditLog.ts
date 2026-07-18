@@ -18,7 +18,8 @@ export type AuditAction =
   | "badge.delete"
   | "seo.edit"
   | "thread.close"
-  | "event.host";
+  | "event.host"
+  | "stars.edit";
 
 export type AuditEntry = {
   action: AuditAction | string;
@@ -47,6 +48,7 @@ const ACTION_TITLES: Record<string, string> = {
   "seo.edit": "Updated SEO settings",
   "thread.close": "Closed a thread",
   "event.host": "Hosted an event",
+  "stars.edit": "Changed a species star rating",
 };
 
 export const auditTitle = (action: string): string => ACTION_TITLES[action] ?? action;

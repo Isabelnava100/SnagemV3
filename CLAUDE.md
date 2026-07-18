@@ -105,7 +105,9 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
   health bar, and count as beaten at zero; mission threads track
   `defeatedEncounters` vs `requiredEncounters` and CloseThreadModal blocks
   close (with staff override) until all set foes are beaten. Safari keeps its
-  own 1..5 scale. Details: docs/FORUM.md.
+  own 1..5 scale. Admins can override any species' star from the Library
+  Pokedex (stored in `admin/star_overrides`, read by `rollEncounter`, audited
+  as `stars.edit`). Details: docs/FORUM.md.
 - Forum-first flows (July 2026) need a functions + rules deploy before they work live: new callables `ensureTrainingThread`, `pickUpMission`, `requestChallenge`, `resolveChallengeRequest`, `requestMasterClearance`, `resolveMasterClearance`, updated `buyLottoTicket`/`logTrainingPost`/`onThreadClosed`, plus the `challengeRequests` and `masterClearanceRequests` rules blocks. After deploying, run `node scripts/seed-mission-encounters.mjs` from `functions/` (gcloud ADC; `--check` validates slugs offline) to seed per-mission encounter lists. Mission-default lists carry `missionDefault: true` and stay hidden from Field Registers and the host encounter picker.
 - Training posts now flow through the forum: the Colosseum "Log a Training Post" button opens the pinned "Super Training Room Log" thread (`trainingLog: true`, created on first use) and the composer calls `logTrainingPost` (10-post window cap) before publishing. Direct replies to that thread bounce to /Colosseum.
 - Mission grading: closing a thread with `missionId` auto-files the pending `missionSubmissions` doc (onThreadClosed); the manual submit form was removed from the mission brief.

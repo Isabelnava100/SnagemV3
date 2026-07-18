@@ -530,8 +530,17 @@ export const rollEncounter = onCall(async (request) => {
     .map((c: unknown) => String(c).slice(0, 60));
   await loadMember(uid);
 
-  const listsSnap = await db.doc("admin/pokemon_lists").get();
+  const [listsSnap, starsSnap] = await Promise.all([
+    db.doc("admin/pokemon_lists").get(),
+    db.doc("admin/star_overrides").get(),
+  ]);
   const lists = (listsSnap.data() as Record<string, any>) ?? {};
+  // Admin star overrides (set from the Library Pokedex) beat the baked map.
+  const starOverrides = (starsSnap.data() ?? {}) as Record<string, unknown>;
+  const starFor = (idx: number): number => {
+    const o = Math.trunc(Number(starOverrides[String(idx)]));
+    return o >= 1 && o <= 7 ? o : starForDex(idx);
+  };
 
   const encounter = await db.runTransaction(async (tx) => {
     const [threadSnap, pendingSnap] = await Promise.all([
@@ -617,7 +626,7 @@ export const rollEncounter = onCall(async (request) => {
       }
 
       const idx = Number(catalogBySlug.get(slug)?.idx ?? 0);
-      const star = starForDex(idx);
+      const star = starFor(idx);
       const required = postsToBeatStar(star);
       result = {
         slug,

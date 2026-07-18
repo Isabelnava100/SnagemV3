@@ -14,7 +14,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { pokemonData } from "../../../../data/pokemon";
-import { getPokemonLists } from "../../../../queries/admin";
+import { getPokemonLists, getStarOverrides } from "../../../../queries/admin";
 import { getCharacters } from "../../../../queries/dashboard";
 import { DEFAULT_ENCOUNTERS_PER_USER } from "../../config";
 import { callRollEncounter, callableMessage } from "../../functionsClient";
@@ -297,6 +297,13 @@ export function EncounterPostPanel(props: {
     enabled: !!user && !!config?.enabled,
   });
 
+  // Admin star overrides so the picker's difficulty labels match the server.
+  const { data: starOverrides } = useQuery({
+    queryKey: ["star-overrides"],
+    queryFn: getStarOverrides,
+    enabled: !!user && !!config?.enabled && config.mode === "choose",
+  });
+
   if (!config?.enabled) return null;
 
   const mainList = allLists?.formattedData.find((l) => l.id === config.listId);
@@ -370,7 +377,9 @@ export function EncounterPostPanel(props: {
               searchable
               data={pool.map((slug) => {
                 const species = pokemonData.find((p) => p.slug === slug);
-                const star = species ? starForDex(species.idx) : undefined;
+                const star = species
+                  ? starOverrides?.[String(Number(species.idx))] ?? starForDex(species.idx)
+                  : undefined;
                 return {
                   value: slug,
                   label:

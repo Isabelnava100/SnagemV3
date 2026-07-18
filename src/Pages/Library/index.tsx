@@ -7,6 +7,7 @@ import {
   Flex,
   Group,
   Image,
+  Modal,
   Select,
   SimpleGrid,
   Stack,
@@ -16,15 +17,19 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { IconArrowRight } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
+import { useAuth } from "../../context/AuthContext";
 import { itemData } from "../../data/item";
 import { pokemonData } from "../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "../../helpers";
+import { actorFrom, logAuditEvent } from "../../lib/auditLog";
+import { postsToBeatStar, starForDex } from "../../lib/encounterStars";
+import { isAdmin } from "../../lib/permissions";
 import { resolveListSlugs } from "../forum/queries";
-import { getPokemonLists } from "../../queries/admin";
+import { getPokemonLists, getStarOverrides, setStarOverride } from "../../queries/admin";
 import FaqTab from "./faq";
 import ShadowGuideTab from "./shadow";
 import LoreTab from "./lore";
@@ -75,9 +80,131 @@ function LoadMore(props: { hasMore: boolean; onClick: () => void }) {
   );
 }
 
+type PokedexEntry = (typeof pokemonData)[number];
+
+/**
+ * Admin editor for one species' star rating. The star sets how many posts an
+ * encounter of this species takes to beat in the forum game; overrides are
+ * stored in admin/star_overrides and picked up by the server on the next roll.
+ */
+function StarEditorModal(props: {
+  entry: PokedexEntry | null;
+  overrides: Record<string, number>;
+  onClose: () => void;
+}) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [value, setValue] = React.useState<string | null>(null);
+  const [error, setError] = React.useState("");
+  const entry = props.entry;
+  const key = entry ? String(Number(entry.idx)) : "";
+  const defaultStar = entry ? starForDex(entry.idx) : 3;
+  const currentStar = entry ? props.overrides[key] ?? defaultStar : 3;
+
+  React.useEffect(() => {
+    setValue(null);
+    setError("");
+  }, [entry?.idx]);
+
+  const mutation = useMutation({
+    mutationFn: async (star: number | null) => {
+      if (!entry || !user) return;
+      await setStarOverride(entry.idx, star);
+      await logAuditEvent({
+        action: "stars.edit",
+        ...actorFrom(user),
+        targetPath: "admin/star_overrides",
+        details: {
+          species: entry.name,
+          dex: key,
+          star: star ?? `default (${defaultStar})`,
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["star-overrides"] });
+      props.onClose();
+    },
+    onError: (e) => setError((e as Error).message || "Could not save the star. Try again."),
+  });
+
+  const picked = value !== null ? Number(value) : currentStar;
+
+  return (
+    <Modal
+      opened={!!entry}
+      onClose={props.onClose}
+      title={<Text fw={700}>Star rating: {entry?.name}</Text>}
+      centered
+      radius={12}
+    >
+      {entry && (
+        <Stack gap={12}>
+          <Group gap={12} wrap="nowrap">
+            <Image
+              src={getPokemonImageURL(entry.slug)}
+              fallbackSrc={POKEMON_SPRITE_FALLBACK}
+              alt={entry.name}
+              w={56}
+              h={56}
+              fit="contain"
+            />
+            <Text fz={13} c="dimmed">
+              The star sets how many posts it takes to beat this species in an
+              encounter. Default: {defaultStar} star ({postsToBeatStar(defaultStar)}{" "}
+              posts), from its base stats.
+            </Text>
+          </Group>
+          <Select
+            label="Star rating"
+            value={String(picked)}
+            onChange={setValue}
+            data={[1, 2, 3, 4, 5, 6, 7].map((s) => ({
+              value: String(s),
+              label: `${"★".repeat(s)} ${s} star (${postsToBeatStar(s)} posts to beat)${
+                s === defaultStar ? " · default" : ""
+              }`,
+            }))}
+            allowDeselect={false}
+            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          />
+          {error && (
+            <Text fz={13} c="red.4" role="status" aria-live="polite">
+              {error}
+            </Text>
+          )}
+          <Group justify="space-between">
+            <Button
+              variant="subtle"
+              color="gray"
+              radius="xl"
+              disabled={!(key in props.overrides)}
+              loading={mutation.isPending && mutation.variables === null}
+              onClick={() => mutation.mutate(null)}
+            >
+              Reset to default
+            </Button>
+            <Button
+              color="grape"
+              radius="xl"
+              loading={mutation.isPending && mutation.variables !== null}
+              onClick={() => mutation.mutate(picked === defaultStar ? null : picked)}
+            >
+              Save
+            </Button>
+          </Group>
+        </Stack>
+      )}
+    </Modal>
+  );
+}
+
 function PokedexTab() {
+  const { user } = useAuth();
+  const admin = isAdmin(user);
   const [search, setSearch] = React.useState("");
   const [shiny, setShiny] = React.useState(false);
+  const [editing, setEditing] = React.useState<PokedexEntry | null>(null);
   const q = search.trim().toLowerCase();
   const matches = React.useMemo(() => {
     if (!q) return pokemonData;
@@ -86,6 +213,14 @@ function PokedexTab() {
     );
   }, [q]);
   const { shown, hasMore, loadMore } = usePagedList(matches, [q]);
+
+  // Star overrides need a signed-in read (rules); visitors see the defaults.
+  const { data: overrides } = useQuery({
+    queryKey: ["star-overrides"],
+    queryFn: getStarOverrides,
+    enabled: !!user,
+  });
+  const starOf = (p: PokedexEntry) => overrides?.[String(Number(p.idx))] ?? starForDex(p.idx);
 
   return (
     <Stack gap={12}>
@@ -108,9 +243,17 @@ function PokedexTab() {
         />
       </Group>
       <ResultCount shown={shown.length} total={matches.length} noun="Pokemon" />
+      {admin && (
+        <Text fz={12} c="dimmed">
+          Admin: select any Pokemon to change its star rating (posts to beat in
+          encounters).
+        </Text>
+      )}
       <SimpleGrid cols={{ base: 3, xs: 4, sm: 6 }} spacing="xs">
-        {shown.map((p) => (
-          <Card key={p.idx} bg="#2b2a2b" radius="md" p={8} withBorder>
+        {shown.map((p) => {
+          const star = starOf(p);
+          const overridden = !!overrides && String(Number(p.idx)) in overrides;
+          const body = (
             <Stack gap={2} align="center">
               <Image
                 src={getPokemonImageURL(p.slug, shiny)}
@@ -127,9 +270,28 @@ function PokedexTab() {
               <Text fz={11} c="white" ta="center" lineClamp={1}>
                 {p.name}
               </Text>
+              <Text fz={10} c="gold.1" fw={700}>
+                {star}★{overridden ? " (set)" : ""}
+              </Text>
             </Stack>
-          </Card>
-        ))}
+          );
+          return admin ? (
+            <UnstyledButton
+              key={p.idx}
+              onClick={() => setEditing(p)}
+              aria-label={`Edit star rating for ${p.name}, currently ${star} star`}
+              style={{ display: "block" }}
+            >
+              <Card bg="#2b2a2b" radius="md" p={8} withBorder h="100%">
+                {body}
+              </Card>
+            </UnstyledButton>
+          ) : (
+            <Card key={p.idx} bg="#2b2a2b" radius="md" p={8} withBorder>
+              {body}
+            </Card>
+          );
+        })}
       </SimpleGrid>
       {!shown.length && (
         <Text fz={13} c="dimmed" ta="center" py={20}>
@@ -137,6 +299,13 @@ function PokedexTab() {
         </Text>
       )}
       <LoadMore hasMore={hasMore} onClick={loadMore} />
+      {admin && (
+        <StarEditorModal
+          entry={editing}
+          overrides={overrides ?? {}}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </Stack>
   );
 }
