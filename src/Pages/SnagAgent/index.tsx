@@ -239,7 +239,7 @@ const KB: KbEntry[] = [
     match: /where.*(team|pokemon|character|profile|dashboard)|my (team|pokemon|character)/i,
     answer: () => (
       <>
-        Your <L to="/Dashboard">Trainer dashboard</L> holds your characters, teams,
+        Your <L to="/Dashboard">Console dashboard</L> holds your characters, teams,
         pokemon boxes, items, drafts and settings. Teams are managed under Pokemon,
         characters under Characters.
       </>
@@ -395,7 +395,7 @@ export default function SnagAgent() {
   ];
 
   return (
-    <Container size="md" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+    <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
       <PageHero
         eyebrow="Support Network Assistance Gadget"
         title="S.N.A.G."

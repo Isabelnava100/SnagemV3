@@ -58,6 +58,7 @@ import {
 } from "../../queries/colosseum";
 import { getMyFriendCode, saveFriendCode } from "../../queries/settings";
 import { getOwnedPokemons } from "../../queries/dashboard";
+import { levelProgress } from "../../lib/leveling";
 import { OwnedPokemon } from "../../components/types/typesUsed";
 
 /**
@@ -215,8 +216,11 @@ function TrainingRoomTab() {
   const selected = pokemons.find((p) => p.id === selectedId);
   const countdown = useSessionCountdown(session, partner);
 
+  // Level progress under the current leveling curve (the old flat /25 scale
+  // predates the level-based experience system).
   const experience = selected?.experience ?? 0;
-  const pct = Math.min(100, Math.round((experience / 25) * 100));
+  const levelInfo = levelProgress(experience);
+  const pct = Math.round(levelInfo.ratio * 100);
   // Session counters only apply to today's window (the server resets by date).
   const today = new Date().toISOString().slice(0, 10);
   const sessionIsToday = session?.date === today;
@@ -303,7 +307,7 @@ function TrainingRoomTab() {
                       {selected?.name || "No target"}
                     </Text>
                     <Text fz={10} c="dimmed" ta="center">
-                      {pct}% to evolve
+                      {levelInfo.isMax ? "Level 100 (max)" : `Lv ${levelInfo.level} · ${pct}% to next`}
                     </Text>
                   </Stack>
                 }
@@ -429,7 +433,9 @@ function TrainingRoomTab() {
             Partner mode: 1.0 pt through post 10 plus a 4-hour window.
           </Text>
           <Text fz={12} c="dimmed">
-            Shadow Pokemon: earn Purification at the same rates.
+            Shadow Pokemon: training earns Purification Points at the same rates
+            instead of evolution points. A full purification bar (100) clears the
+            shadow; forum posts can also roll purification as you play.
           </Text>
           <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={12} c="grape.3">
             How exp, friendship, shadow and purification work →

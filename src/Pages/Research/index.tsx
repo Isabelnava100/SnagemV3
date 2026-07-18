@@ -268,7 +268,6 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
           Four steps stand between you and the Ascension Track. None can be skipped, that's the point.
         </Text>
         <Box style={{ position: "relative" }}>
-          <Box style={{ position: "absolute", left: 27, top: 30, bottom: 30, borderLeft: "2px dotted #322d40" }} />
           <Stack gap="md">
             {STEPS.map((s, i) => (
               <Group key={s.title} gap="lg" wrap="nowrap" align="flex-start">

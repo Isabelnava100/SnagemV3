@@ -547,20 +547,19 @@ export default function LoreTab() {
 
   const { data: books, isPending } = useQuery({ queryKey: ["lore-books"], queryFn: getLoreBooks });
 
-  // Readers only see books that hold at least one substantive entry; editors
-  // keep seeing empty shelves so they can fill them.
+  // Only books that hold at least one substantive entry appear on the shelf;
+  // editors additionally see the empty ones marked so they can fill them.
   const { data: allEntries } = useQuery({
     queryKey: ["lore-entries-all"],
     queryFn: getAllLoreEntries,
-    enabled: !canEdit,
   });
   const booksWithContent = React.useMemo(() => {
-    if (canEdit || !allEntries) return null;
+    if (!allEntries) return null;
     const filled = new Set(
       allEntries.filter((e) => !isEmptyEntry(e)).map((e) => e.bookId)
     );
     return filled;
-  }, [allEntries, canEdit]);
+  }, [allEntries]);
 
   const del = useMutation({
     mutationFn: (bookId: string) => deleteLoreBook(bookId),
@@ -573,12 +572,13 @@ export default function LoreTab() {
   const q = search.trim().toLowerCase();
   const shelf = React.useMemo(() => {
     let list = books ?? [];
-    if (booksWithContent) list = list.filter((b) => booksWithContent.has(b.id));
+    // Empty books are hidden from readers; editors keep them (badged) to fill.
+    if (booksWithContent && !canEdit) list = list.filter((b) => booksWithContent.has(b.id));
     if (!q) return list;
     return list.filter(
       (b) => b.title.toLowerCase().includes(q) || (b.description ?? "").toLowerCase().includes(q)
     );
-  }, [books, q, booksWithContent]);
+  }, [books, q, booksWithContent, canEdit]);
 
   if (openBook) {
     return <BookView book={openBook} canEdit={canEdit} onBack={() => setOpenBookId(null)} />;
@@ -609,6 +609,28 @@ export default function LoreTab() {
           </Button>
         )}
       </Group>
+      {canEdit && booksWithContent && (books ?? []).some((b) => !booksWithContent.has(b.id)) && (
+        <Group gap={8}>
+          <Button
+            variant="light"
+            color="pink"
+            size="xs"
+            radius="xl"
+            loading={del.isPending}
+            onClick={() => {
+              (books ?? [])
+                .filter((b) => !booksWithContent.has(b.id))
+                .forEach((b) => del.mutate(b.id));
+            }}
+          >
+            Delete {(books ?? []).filter((b) => !booksWithContent.has(b.id)).length} empty book
+            {(books ?? []).filter((b) => !booksWithContent.has(b.id)).length === 1 ? "" : "s"}
+          </Button>
+          <Text fz={12} c="dimmed">
+            Empty books never show to readers; this clears them out for good.
+          </Text>
+        </Group>
+      )}
 
       {isPending ? (
         <SectionLoader />
@@ -627,9 +649,16 @@ export default function LoreTab() {
                     {book.title}
                   </Text>
                 </Group>
-                <Badge size="sm" variant="light" color="grape" w="fit-content">
-                  {typeLabel(book.type)}
-                </Badge>
+                <Group gap={6}>
+                  <Badge size="sm" variant="light" color="grape" w="fit-content">
+                    {typeLabel(book.type)}
+                  </Badge>
+                  {canEdit && booksWithContent && !booksWithContent.has(book.id) && (
+                    <Badge size="sm" variant="light" color="pink" w="fit-content">
+                      Empty, hidden from readers
+                    </Badge>
+                  )}
+                </Group>
                 {book.description && (
                   <Text fz={13} c="dimmed" lineClamp={3}>
                     {book.description}

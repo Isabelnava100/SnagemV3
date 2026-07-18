@@ -1,4 +1,4 @@
-import { Box, Button, Divider, Group, Stack, Text } from "@mantine/core";
+import { Box, Button, Divider, Group, SimpleGrid, Stack, Text } from "@mantine/core";
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import React from "react";
 import { ActivityLog } from "../../components/admin/ActivityLog";
@@ -188,14 +188,13 @@ const ALL_TOOLS: Tool[] = GROUPS.flatMap((g) => g.tools);
 
 function ToolCard(props: { tool: Tool; onOpen: () => void }) {
   return (
-    <Group
-      justify="space-between"
-      wrap="nowrap"
-      gap="md"
+    <Stack
+      gap={8}
       p="md"
+      h="100%"
       style={{ borderRadius: 12, background: "#141318", border: "1px solid #232028" }}
     >
-      <Box style={{ minWidth: 0 }}>
+      <Box style={{ minWidth: 0, flex: 1 }}>
         <Text fw={700} c="white" mb={2}>
           {props.tool.label}
         </Text>
@@ -206,13 +205,13 @@ function ToolCard(props: { tool: Tool; onOpen: () => void }) {
       <Button
         variant="default"
         radius="xl"
+        w="fit-content"
         rightSection={<IconArrowRight size={16} />}
         onClick={props.onOpen}
-        style={{ flexShrink: 0 }}
       >
         Open
       </Button>
-    </Group>
+    </Stack>
   );
 }
 
@@ -288,11 +287,11 @@ export default function Manage() {
           <Text fz={13} c="dimmed" mb="md">
             {g.subtitle}
           </Text>
-          <Stack gap={12}>
+          <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={12}>
             {g.tools.map((t) => (
               <ToolCard key={t.key} tool={t} onOpen={() => setSelected(t.key)} />
             ))}
-          </Stack>
+          </SimpleGrid>
         </Box>
       ))}
 

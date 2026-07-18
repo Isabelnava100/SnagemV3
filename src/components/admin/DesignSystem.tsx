@@ -11,6 +11,7 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { HERO_GRADIENT, HERO_STRIPES } from "../common/PageHero";
+import { SNAG_ICON_NAMES, SnagIcon } from "../../icons/SnagIcon";
 
 /**
  * Admin-only "brand kit" / design-system reference. This is a READ-ONLY status
@@ -139,7 +140,7 @@ const CTA_COLORS: { color: string; name: string; role: string }[] = [
   { color: "#E54156", name: "Magikarp Red", role: "pink.0 · CTAs, alerts, red text" },
   { color: "#772976", name: "Gengar Purple", role: "brand.5 · the primary purple" },
   { color: "#FFD074", name: "Pikachu Gold", role: "gold.0 · gold fills (dark text)" },
-  { color: "#4049C9", name: "Great Ball Blue", role: "indigo.0 · saturated CTA blue" },
+  { color: "#4049C9", name: "Murkrow Blue", role: "indigo.0 · saturated CTA blue" },
 ];
 
 const TYPE_SCALE: { label: string; size: string; sample: string; fz: number; fw: number; c?: string }[] = [
@@ -186,7 +187,7 @@ export default function DesignSystem() {
         index="01"
         eyebrow="Palette"
         title="Brand colors"
-        hint="One tight family: the homepage colors, the 10-shade Gengar Purple ramp, and the Espeon Violet to Suicune Cyan gradient pair. Cyan doubles as the success color (greens are retired). Use these tokens (theme.colors) instead of raw hex in new code."
+        hint="One tight family: the homepage colors, the 10-shade Gengar Purple ramp, and the Crobat Violet to Suicune Cyan gradient pair. Cyan doubles as the success color (greens are retired). Use these tokens (theme.colors) instead of raw hex in new code."
       >
         <Stack gap={18}>
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing={12}>
@@ -195,8 +196,8 @@ export default function DesignSystem() {
             ))}
           </SimpleGrid>
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing={12}>
-            <Swatch color={theme.colors.brand[3]} name="Guild Lilac" role="brand.3 · light purple accents" />
-            <Swatch color={theme.colors.violet[0]} name="Espeon Violet" role="violet.0 · gradient start" />
+            <Swatch color={theme.colors.brand[3]} name="Espeon Lilac" role="brand.3 · light purple accents" />
+            <Swatch color={theme.colors.violet[0]} name="Crobat Violet" role="violet.0 · gradient start" />
             <Swatch color={theme.colors.cyan[0]} name="Suicune Cyan" role="cyan.0 · gradient end, success" />
             <Swatch color={theme.colors.gold[1]} name="Zapdos Spark" role="gold.1 · gold text on dark" />
           </SimpleGrid>
@@ -206,7 +207,6 @@ export default function DesignSystem() {
               <TupleRow label="Gengar Purple ramp" role="brand, 10 shades · primary" colors={theme.colors.brand} />
               <TupleRow label="Magikarp Red ramp" role="pink.* · alerts + primary gradient" colors={theme.colors.pink.slice(0, 4)} />
               <TupleRow label="Pikachu Gold ramp" role="gold.* · fills + accents" colors={theme.colors.gold.slice(0, 4)} />
-              <TupleRow label="Violet / Cyan pair" role="violet.0 + cyan.* · secondary gradient" colors={[...theme.colors.violet.slice(0, 1), ...theme.colors.cyan.slice(0, 2)]} />
             </Stack>
           </Panel>
 
@@ -396,7 +396,12 @@ export default function DesignSystem() {
               <Badge color="cyan" variant="light" radius="sm">
                 Done
               </Badge>
-              <Badge color="gold.1" variant="light" radius="sm">
+              <Badge
+                color="gold.0"
+                variant="filled"
+                radius="sm"
+                styles={{ label: { color: "#1A1B1E" } }}
+              >
                 Featured
               </Badge>
               <Badge color="indigo" variant="light" radius="sm">
@@ -409,7 +414,7 @@ export default function DesignSystem() {
             <Text fz={12} c="dimmed" mb={10}>
               Badge colors come from the same family: grape (purple), pink (Magikarp
               Red), cyan for success ("Done" instead of green), gold for featured,
-              indigo (Great Ball Blue) for info.
+              indigo (Murkrow Blue) for info.
             </Text>
             <Group gap={10}>
               <Box px={16} py={10} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #3a3550", minWidth: 96 }}>
@@ -438,13 +443,12 @@ export default function DesignSystem() {
         index="05"
         eyebrow="Layout"
         title="Content width"
-        hint="Pages sit in a centered Mantine Container. Reading pages use size md, wide tool pages use size lg; both share the same vertical and horizontal padding scale."
+        hint="Pages sit in a centered Mantine Container at size lg across the site, sharing the same vertical and horizontal padding scale."
       >
         <Panel>
           <Stack gap={14}>
             {([
-              ["md · 960px", "Reading pages: Policies, Announcements, Library, About", 0.72],
-              ["lg · 1140px", "Wide tool pages: Admin, Forum, Dashboard, Shop", 0.86],
+              ["lg · 1140px", "All content pages: Library, Admin, Forum, Dashboard, Shop, Policies", 0.86],
               ["100% · fluid", "The homepage hero and full-bleed banners", 1],
             ] as const).map(([label, role, frac]) => (
               <Box key={label}>
@@ -540,9 +544,30 @@ export default function DesignSystem() {
         </Stack>
       </Section>
 
-      {/* 07 Status notes */}
+      {/* 07 Icons */}
       <Section
         index="07"
+        eyebrow="Icons"
+        title="The Snag icon set"
+        hint="The guild's own solid-fill glyph set (src/icons/SnagIcon.tsx), used across the nav, dashboards and game UI. Supporting sets: @tabler/icons-react for utility icons, plus the original nav image icons (src/icons/*.svg)."
+      >
+        <Panel>
+          <SimpleGrid cols={{ base: 4, xs: 6, sm: 10 }} spacing={12}>
+            {SNAG_ICON_NAMES.map((name) => (
+              <Stack key={name} gap={4} align="center">
+                <SnagIcon name={name} size={28} cut="#141318" title={name} />
+                <Text ff="monospace" fz={10} c="dimmed" ta="center" style={{ wordBreak: "break-all" }}>
+                  {name}
+                </Text>
+              </Stack>
+            ))}
+          </SimpleGrid>
+        </Panel>
+      </Section>
+
+      {/* 08 Status notes */}
+      <Section
+        index="08"
         eyebrow="Status"
         title="Consistency notes"
         hint="What was recently brought on brand, and what is still worth aligning. Use this as a punch list."
@@ -558,7 +583,7 @@ export default function DesignSystem() {
               <Text fz={14} c="rgba(255,255,255,0.8)">One gold: the three near-identical golds unified into the Pikachu Gold ramp.</Text>
               <Text fz={14} c="rgba(255,255,255,0.8)">Greens retired: success states now render in Suicune Cyan everywhere.</Text>
               <Text fz={14} c="rgba(255,255,255,0.8)">Pinks now carry Magikarp Red; grape accents share the Gengar Purple ramp.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Homepage blue saturated up into Great Ball Blue and used by the indigo gradients.</Text>
+              <Text fz={14} c="rgba(255,255,255,0.8)">Homepage blue saturated up into Murkrow Blue and used by the indigo gradients.</Text>
             </Stack>
           </Card>
           <Card withBorder radius="md" padding="lg" style={{ background: "rgba(245,200,66,0.06)", borderColor: "#7a5a1e" }}>

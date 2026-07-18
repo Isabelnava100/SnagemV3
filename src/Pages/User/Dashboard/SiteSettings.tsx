@@ -90,7 +90,7 @@ export default function SiteSettings() {
   if (!canView) return <Navigate to="/Dashboard" replace />;
 
   return (
-    <Container size="md" py={{ base: 24, sm: 32 }} px={{ base: 16, sm: 24 }}>
+    <Container size="lg" py={{ base: 24, sm: 32 }} px={{ base: 16, sm: 24 }}>
       <Stack gap={16}>
         <Title order={1} c="white" size={30} fw={600}>
           Site Settings

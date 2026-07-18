@@ -167,7 +167,19 @@ function GameCard(props: {
   children: React.ReactNode;
 }) {
   return (
-    <Box p={{ base: "md", sm: "lg" }} style={{ background: PANEL, border: `1px solid ${PANEL_BORDER}`, borderRadius: 20 }}>
+    <Box
+      p={{ base: "md", sm: "lg" }}
+      style={{
+        background: PANEL,
+        border: `1px solid ${PANEL_BORDER}`,
+        borderRadius: 20,
+        // Fill the grid row and let each game's Play button push to the
+        // bottom so the buttons align across cards.
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Group justify="space-between" wrap="nowrap" align="flex-start" mb={6}>
         <Group gap={12} wrap="nowrap">
           <Box
@@ -193,7 +205,7 @@ function GameCard(props: {
       <Text fz={14} c="gray.5" mb="md">
         {props.blurb}
       </Text>
-      {props.children}
+      <Box style={{ flex: 1, display: "flex", flexDirection: "column" }}>{props.children}</Box>
     </Box>
   );
 }
@@ -467,7 +479,7 @@ function HexRoulette(props: { uid: string; tokens: number }) {
       </Group>
       <Button
         fullWidth
-        mt="md"
+        mt="auto" pt="md"
         size="md"
         radius="md"
         variant="gradient"
@@ -535,7 +547,7 @@ function DreamDice(props: { uid: string; tokens: number }) {
       </Group>
       <Button
         fullWidth
-        mt="md"
+        mt="auto" pt="md"
         size="md"
         radius="md"
         variant="gradient"
@@ -603,7 +615,7 @@ function PaybackPyramid(props: { uid: string; tokens: number }) {
       </Group>
       <Button
         fullWidth
-        mt="md"
+        mt="auto" pt="md"
         size="md"
         radius="md"
         variant="gradient"

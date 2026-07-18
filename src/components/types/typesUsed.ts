@@ -434,4 +434,6 @@ export interface Settings {
   discordNotifications: boolean;
   postsAndBookmarkedThreadsNotification: boolean;
   siteNotifications: boolean;
+  /** Announcement/update emails. Account emails (password resets) always send. */
+  emailUpdates: boolean;
 }

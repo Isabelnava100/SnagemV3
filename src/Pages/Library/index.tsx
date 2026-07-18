@@ -14,6 +14,7 @@ import {
   Switch,
   Text,
   TextInput,
+  Title,
   UnstyledButton,
 } from "@mantine/core";
 import { IconArrowRight } from "@tabler/icons-react";
@@ -396,6 +397,77 @@ function ItemsTab() {
   );
 }
 
+/** Safari Contest zones (admin/safari_config), shown as read-only registers. */
+function SafariZonesSection() {
+  const { user } = useAuth();
+  const { data: zones } = useQuery({
+    queryKey: ["safari-zones-public"],
+    queryFn: async () => {
+      const { getDoc, doc } = await import("firebase/firestore");
+      const { db } = await import("../../context/firebase");
+      const data = (await getDoc(doc(db, "admin", "safari_config"))).data() ?? {};
+      const zoneMap = (data.zones ?? { default: data }) as Record<string, any>;
+      return Object.entries(zoneMap)
+        .map(([id, z]) => ({
+          id,
+          name: String(z?.name ?? id),
+          tiers: (Array.isArray(z?.tiers) ? z.tiers : []) as Array<{
+            star?: number;
+            pokemons?: string[];
+          }>,
+        }))
+        .filter((z) => z.tiers.some((t) => (t.pokemons ?? []).length));
+    },
+    enabled: !!user,
+  });
+
+  if (!zones?.length) return null;
+  return (
+    <Stack gap={12} mt={8}>
+      <Title order={3} c="white" size={18} fw={600}>
+        Safari Contest zones
+      </Title>
+      <Text fz={13} c="dimmed">
+        The star-tiered pools staff can launch as a Safari Contest. Higher stars are
+        rarer rolls.
+      </Text>
+      {zones.map((zone) => (
+        <Card key={zone.id} bg="#2b2a2b" radius="md" p={14} withBorder>
+          <Text fz={15} c="white" fw={600} mb={8}>
+            {zone.name}
+          </Text>
+          <Stack gap={8}>
+            {zone.tiers.map((tier, i) => (
+              <Group key={i} gap={8} wrap="wrap" align="center">
+                <Badge variant="light" color="gold.1" w={70}>
+                  {"★".repeat(Math.max(1, Math.min(5, tier.star ?? i + 1)))}
+                </Badge>
+                {(tier.pokemons ?? []).slice(0, 16).map((slug) => (
+                  <Image
+                    key={slug}
+                    src={getPokemonImageURL(slug)}
+                    fallbackSrc={POKEMON_SPRITE_FALLBACK}
+                    alt={slug}
+                    w={32}
+                    h={32}
+                    fit="contain"
+                    loading="lazy"
+                  />
+                ))}
+                {(tier.pokemons ?? []).length > 16 && (
+                  <Text fz={12} c="dimmed">
+                    +{(tier.pokemons ?? []).length - 16} more
+                  </Text>
+                )}
+              </Group>
+            ))}
+          </Stack>
+        </Card>
+      ))}
+    </Stack>
+  );
+}
+
 function ListsTab() {
   const { data, isPending } = useQuery({
     queryKey: ["public-pokemon-lists"],
@@ -415,9 +487,12 @@ function ListsTab() {
 
   if (!publicLists.length) {
     return (
-      <Text fz={13} c="dimmed" py={20}>
-        There are no public encounter lists to show yet.
-      </Text>
+      <Stack gap={8} py={20}>
+        <Text fz={13} c="dimmed">
+          There are no public encounter lists to show yet.
+        </Text>
+        <SafariZonesSection />
+      </Stack>
     );
   }
 
@@ -460,6 +535,7 @@ function ListsTab() {
           </Card>
         );
       })}
+      <SafariZonesSection />
     </Stack>
   );
 }

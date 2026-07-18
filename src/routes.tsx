@@ -4,7 +4,7 @@ import { MantineEmotionProvider, emotionTransform } from "@mantine/emotion";
 import { Notifications as MantineNotifications } from "@mantine/notifications";
 import "@mantine/notifications/styles.css";
 import "@mantine/tiptap/styles.css";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "./assets/styles/index.css";
 
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -121,6 +121,15 @@ const { default: Accessibility } = lazyImport(
   "default"
 );
 
+/** Scroll to the top whenever the route changes (browser SPA default is to keep the old position). */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 export default function AppRoutes() {
   return (
     <MantineProvider theme={theme} defaultColorScheme="dark" stylesTransform={emotionTransform}>
@@ -129,6 +138,7 @@ export default function AppRoutes() {
     <AuthContextProvider>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
+              <ScrollToTop />
               <ErrorBoundary>
               <React.Suspense fallback={<Loader />}>
                 <Routes>

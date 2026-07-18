@@ -167,7 +167,7 @@ export default function Users() {
         <PageHero
           eyebrow="The Guild Roster"
           title="Snagem Members"
-          subtitle={`${members.length} of ${total} trainers`}
+          subtitle={isPending ? "Loading the roster..." : `${members.length} of ${total} trainers`}
           aside={
             <TextInput
               value={search}

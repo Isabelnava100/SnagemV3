@@ -54,14 +54,14 @@ const ALL_LINKS: NavItem[] = [
   { link: "/Users", label: "Users", icon: { snag: "users" } },
   { link: "/Activities", label: "Activities", icon: { snag: "ferris" } },
   { link: "/Forum/Main-Forum", label: "Forum", icon: { img: Forum } },
-  { link: "/Dashboard", label: "Trainer", icon: { img: TeamSangem } },
+  { link: "/Dashboard", label: "Console", icon: { img: TeamSangem } },
   { link: "/SNAG", label: "S.N.A.G.", icon: { snag: "walkie" } },
 ];
 
 // Only these stay pinned to the main nav (the desktop rail and the mobile
 // bottom bar). Everything else lives behind "More" so the rail stays clean and
 // the bar stays thumb-friendly.
-const PRIMARY_LABELS = ["Forum", "Trainer", "Shop", "S.N.A.G."];
+const PRIMARY_LABELS = ["Forum", "Console", "Shop", "S.N.A.G."];
 
 const primaryLinks = PRIMARY_LABELS.map((label) => ALL_LINKS.find((l) => l.label === label)!);
 const overflowLinks = ALL_LINKS.filter((l) => !PRIMARY_LABELS.includes(l.label));

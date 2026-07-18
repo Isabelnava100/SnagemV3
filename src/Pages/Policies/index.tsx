@@ -364,15 +364,42 @@ function Credits() {
 
       <PolicySection title="Art">
         <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
-          <li>Seviyummy (Pokemon art)</li>
-          <li>Batsky (Team art)</li>
+          <li>
+            <a
+              href="https://www.instagram.com/seviyummy/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Seviyummy
+            </a>{" "}
+            (Pokemon art)
+          </li>
+          <li>
+            <a
+              href="https://www.instagram.com/batskystarman/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Batsky
+            </a>{" "}
+            (Team art)
+          </li>
           <li>Dan (Menu icon designs)</li>
         </ul>
       </PolicySection>
 
       <PolicySection title="Site build">
         <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
-          <li>inavaCL (Website build and management)</li>
+          <li>
+            <a
+              href="https://www.linkedin.com/in/isabel-virginia-nava/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              inavaCL
+            </a>{" "}
+            (Website build and management)
+          </li>
         </ul>
       </PolicySection>
     </Stack>
@@ -395,7 +422,7 @@ export default function Policies() {
   const active = TABS.some((t) => t.value === requested) ? requested : TABS[0].value;
 
   return (
-    <Container size="md" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+    <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
       <PageHero
         eyebrow="House Rules"
         title="Policies"

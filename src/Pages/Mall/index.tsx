@@ -583,18 +583,19 @@ function RecycleItemsTab(props: {
         <Text c="dimmed">Your bag has nothing to recycle right now.</Text>
       ) : (
         <>
-          <Stack gap={6}>
+          <SimpleGrid cols={{ base: 2, xs: 4, sm: 6, lg: 8 }} spacing={20}>
             {bag.map((item) => {
               const units = recycleUnits(item.category);
               const recyclable = units > 0;
               const hint = !recyclable ? "not recyclable" : units === 0.5 ? "half value" : null;
+              const picked = recyclable && selected.includes(item.id);
               return (
                 <Card
                   key={item.id}
                   withBorder
                   radius="md"
-                  p={10}
-                  bg="#26252a"
+                  p={12}
+                  bg={picked ? "#332b3d" : "#26252a"}
                   {...(recyclable
                     ? {
                         ...clickable(() => toggle(item.id)),
@@ -604,37 +605,36 @@ function RecycleItemsTab(props: {
                   style={{
                     cursor: recyclable ? "pointer" : "not-allowed",
                     opacity: recyclable ? 1 : 0.5,
+                    borderColor: picked ? "#772976" : undefined,
                   }}
                 >
-                  <Group gap={10} wrap="nowrap">
+                  <Stack gap={6} align="center">
+                    <Image
+                      src={item.filePath ? getItemImageURL(item.filePath) : undefined}
+                      alt={item.name}
+                      w={44}
+                      h={44}
+                      fit="contain"
+                    />
+                    <Text fz={16} c="white" ta="center" lineClamp={1}>
+                      {item.name}
+                    </Text>
+                    <Text fz={14} c="dimmed" ta="center" tt="capitalize" lineClamp={1}>
+                      x{item.quantity}
+                      {hint ? ` · ${hint}` : ""}
+                    </Text>
                     <Checkbox
-                      checked={recyclable && selected.includes(item.id)}
+                      checked={picked}
                       readOnly
                       disabled={!recyclable}
                       tabIndex={-1}
                       aria-hidden
                     />
-                    <Image
-                      src={item.filePath ? getItemImageURL(item.filePath) : undefined}
-                      alt={item.name}
-                      w={30}
-                      h={30}
-                      fit="contain"
-                    />
-                    <Box style={{ minWidth: 0, flex: 1 }}>
-                      <Text fz={13} c="white" lineClamp={1}>
-                        {item.name}
-                      </Text>
-                      <Text fz={10} c="dimmed" tt="capitalize">
-                        {item.category} x{item.quantity}
-                        {hint ? ` · ${hint}` : ""}
-                      </Text>
-                    </Box>
-                  </Group>
+                  </Stack>
                 </Card>
               );
             })}
-          </Stack>
+          </SimpleGrid>
 
           <Card withBorder radius="md" p={12} bg="#181719">
             <Group justify="space-between">
@@ -1292,7 +1292,9 @@ export default function Mall() {
     enabled: !!user?.uid,
   });
 
-  const shopList = shops ?? [];
+  // The E.V.O. wing is a Master-tier service: hide the storefront entirely
+  // from everyone else (the server still gates the purchases).
+  const shopList = (shops ?? []).filter((s) => s.kind !== "evo" || isMaster(user));
   const activeShop = activeShopId
     ? shopList.find((s) => s.id === activeShopId) ?? null
     : null;
@@ -1321,7 +1323,7 @@ export default function Mall() {
             <Group gap={8}>
               <IconShoppingBag size={16} color="var(--mantine-color-grape-3)" />
               <Text fz={12} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
-                The Arcade &middot; Open Daily
+                Snag Mall Storefronts &middot; Always Open
               </Text>
             </Group>
           }

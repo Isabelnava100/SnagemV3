@@ -106,7 +106,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
 
 export default function Announcements() {
   return (
-    <Container size="md" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+    <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
       <PageHero
         eyebrow="What's New"
         title="Announcements"

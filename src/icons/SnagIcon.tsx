@@ -105,6 +105,11 @@ function iconSet(fg: string, cut: string, label: string): Record<string, string>
   };
 }
 
+/** Every glyph in the set, for the Design System's icon reference. */
+export const SNAG_ICON_NAMES = Object.keys(
+  iconSet("#fff", "#000", "")
+) as SnagIconName[];
+
 export type SnagIconName =
   | "trophy" | "burst" | "map" | "flask" | "gengar" | "users" | "ferris" | "snaghand"
   | "book" | "shieldcheck" | "pokeball" | "coin" | "gift" | "flame" | "dice" | "chat"

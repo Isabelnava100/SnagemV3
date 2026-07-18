@@ -337,6 +337,7 @@ export default function Notifications() {
       discordNotifications: false,
       postsAndBookmarkedThreadsNotification: false,
       siteNotifications: false,
+      emailUpdates: true,
     },
   });
   const [debouncedValue] = useDebouncedValue(values, 100);
@@ -410,6 +411,16 @@ export default function Notifications() {
           {...getInputProps("directPingNotifications", { type: "checkbox" })}
           label="Receive notifications for direct pings"
         />
+        <Stack gap={2}>
+          <CustomSwitch
+            {...getInputProps("emailUpdates", { type: "checkbox" })}
+            label="Receive information via Email"
+          />
+          <Text fz={12} c="dimmed">
+            Announcements and site updates by email. Account emails such as password
+            resets always come through, even with this off.
+          </Text>
+        </Stack>
       </Stack>
     </Box>
   );
