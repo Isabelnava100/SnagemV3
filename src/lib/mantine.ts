@@ -14,13 +14,16 @@ export const theme = createTheme({
       "#D1A2D1",
       "#C17DC1",
       "#AC5DAB",
-      "#782A77",
+      "#772976",
       "#651664",
       "#4C094B",
       "#3B053A",
       "#2A0229"
     ),
     pink: shades("#E35C65", "#B1446D", "#7E2C75", "#912691"),
+    // Single gold ramp for the whole site: 0 = fill (dark text on it),
+    // 1 = accent text on dark, deeper shades for gradients.
+    gold: shades("#FFD074", "#F5C842", "#E8B32A", "#C9940F"),
     green: shades("#22B573"),
     violet: shades("#4D14C4"),
     cyan: shades("#12B7B6", "#14B1B6"),

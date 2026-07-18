@@ -78,22 +78,24 @@
     left: 0; /* Slide in from the left */
   }
   
-  /* Button-specific colors */
+  /* Button-specific colors. These pull from the Mantine theme tokens
+     (src/lib/mantine.ts) so the homepage CTAs stay in lockstep with the
+     rest of the site's palette. */
   a.red {
-    background-color: #E54156;
+    background-color: var(--mantine-color-pink-0, #E35C65);
   }
-  
+
   a.purple {
-    background-color: #772976;
+    background-color: var(--mantine-color-brand-5, #772976);
   }
   a.yellow {
-      background-color: #FFD074;
+      background-color: var(--mantine-color-gold-0, #FFD074);
   }
   a.button.yellow{
     color:#1A1B1E!important;
   }
   a.blue {
-      background-color: #474D9B;
+      background-color: var(--mantine-color-violet-0, #4D14C4);
   }
 
   /*second module*/
@@ -112,7 +114,7 @@
   .innerHold2 h2 {font-size: 4em; font-weight: 400;
 color:white;line-height: 1.1em;margin:0;}
 
-  .innerHold2 h2 span {color:#FFD074;}
+  .innerHold2 h2 span {color:var(--mantine-color-gold-0, #FFD074);}
 
 .oneM{
     background-position: bottom right;
@@ -129,7 +131,7 @@ color:white;line-height: 1.1em;margin:0;}
   .innerHold2 span.paragraph2{display:block;font-size: 1.4em;color:white;
 width:320px;margin:20px 0 26px 0;line-height: 1.4em;}
 
-span.red-text {color: #E54156!important; }
+span.red-text {color: var(--mantine-color-pink-0, #E35C65)!important; }
 .innerHold2 span.paragraph2 + a.button {
 margin-top:0;
 

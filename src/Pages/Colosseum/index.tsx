@@ -462,7 +462,7 @@ function avatarColor(id: string): string {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-const RANK_COLORS = ["#f5c518", "#c9d1d9", "#cd7f32"]; // gold, silver, bronze for 1-3
+const RANK_COLORS = ["#F5C842", "#c9d1d9", "#cd7f32"]; // gold, silver, bronze for 1-3
 
 /** How-points-work panel content, mirrors docs/COLOSSEUM_DATA.md scoring. */
 const SCORING = [

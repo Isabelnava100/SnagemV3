@@ -328,7 +328,7 @@ const WINGS: Wing[] = [
     callNo: "TS · 200",
     meta: `${itemData.length.toLocaleString()} items`,
     blurb: "The full item catalog: balls, berries, and rare relics.",
-    accent: "#f5c518",
+    accent: "#F5C842",
     content: <ItemsTab />,
   },
   {
@@ -398,7 +398,7 @@ function DirectoryItem(props: {
         padding: "12px 14px",
         borderRadius: 12,
         background: props.active ? "#1c1430" : "transparent",
-        borderLeft: `3px solid ${props.active ? "#f5c518" : "transparent"}`,
+        borderLeft: `3px solid ${props.active ? "#F5C842" : "transparent"}`,
       }}
     >
       <Group justify="space-between" wrap="nowrap" gap={8}>
@@ -411,7 +411,7 @@ function DirectoryItem(props: {
           </Text>
         )}
       </Group>
-      <Text fz={12} c={props.active ? "#f5c518" : "dimmed"} mt={2}>
+      <Text fz={12} c={props.active ? "#F5C842" : "dimmed"} mt={2}>
         {props.subtitle}
       </Text>
     </UnstyledButton>

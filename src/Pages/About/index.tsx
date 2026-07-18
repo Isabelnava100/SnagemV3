@@ -32,7 +32,7 @@ const PANEL_BORDER = "#232028";
 
 /* -------------------------------- Shared bits ------------------------------ */
 
-function Eyebrow({ children, color = "#f5c518" }: { children: React.ReactNode; color?: string }) {
+function Eyebrow({ children, color = "#F5C842" }: { children: React.ReactNode; color?: string }) {
   return (
     <Group gap={8} justify="inherit">
       <IconDiamond size={12} color={color} fill={color} />
@@ -64,7 +64,7 @@ const FEATURES: {
     body: "Build characters, form teams, and manage every Pokemon you own: level, evolve and all.",
   },
   {
-    icon: <IconBriefcase size={26} color="#f5c518" />,
+    icon: <IconBriefcase size={26} color="#F5C842" />,
     accent: "rgba(245,197,24,0.14)",
     title: "The Mission Vault",
     body: "Pick up jobs across the regions, play them out, and get graded for Snag Coins, eggs and rare rewards.",
@@ -115,7 +115,7 @@ const CURRENCIES: {
   body: string;
 }[] = [
   {
-    icon: <IconCoin size={26} color="#f5c518" />,
+    icon: <IconCoin size={26} color="#F5C842" />,
     iconBg: "#231d10",
     border: "#b89b2e",
     title: "Snag Coins",
@@ -144,7 +144,7 @@ const STEPS = [
 ];
 
 const ROLE_PILLS: { label: string; color: string; border: string }[] = [
-  { label: "Legacy", color: "#f5c518", border: "#b89b2e" },
+  { label: "Legacy", color: "#F5C842", border: "#b89b2e" },
   { label: "Hybrid", color: "#b197fc", border: "#5a3fb0" },
   { label: "Master", color: "#69db7c", border: "#2f7d4f" },
   { label: "+ more", color: "#9a94a8", border: PANEL_BORDER },
@@ -391,7 +391,7 @@ export default function About() {
               Ready to run with us?
             </Text>
             <Text fz={{ base: 15, sm: 18 }} c="gray.4">
-              Three steps to start. Team Snagem is <Text span c="#f5c518" fw={700}>always recruiting.</Text>
+              Three steps to start. Team Snagem is <Text span c="#F5C842" fw={700}>always recruiting.</Text>
             </Text>
           </Stack>
 

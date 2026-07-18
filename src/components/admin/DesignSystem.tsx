@@ -133,12 +133,13 @@ const SURFACES: { color: string; name: string; role: string }[] = [
   { color: "#3C3A3C", name: "Raised", role: "Nav tiles / chips" },
 ];
 
-// The homepage CTA buttons use their own CSS palette (src/assets/styles/homepage.css).
+// The homepage CTA classes (src/assets/styles/homepage.css) now reference the
+// theme tokens via Mantine CSS variables; listed here with their token names.
 const CTA_COLORS: { color: string; name: string; role: string }[] = [
-  { color: "#E54156", name: "CTA Red", role: "Primary homepage action" },
-  { color: "#772976", name: "CTA Purple", role: "Secondary homepage action" },
-  { color: "#FFD074", name: "CTA Yellow", role: "Tertiary (dark text)" },
-  { color: "#474D9B", name: "CTA Blue", role: "Rarely used accent" },
+  { color: "#E35C65", name: "CTA Red", role: "pink.0 · primary homepage action" },
+  { color: "#772976", name: "CTA Purple", role: "brand.5 · secondary action" },
+  { color: "#FFD074", name: "CTA Yellow", role: "gold.0 · tertiary (dark text)" },
+  { color: "#4D14C4", name: "CTA Blue", role: "violet.0 · rare accent" },
 ];
 
 const TYPE_SCALE: { label: string; size: string; sample: string; fz: number; fw: number; c?: string }[] = [
@@ -201,6 +202,7 @@ export default function DesignSystem() {
             <Stack gap={14}>
               <TupleRow label="brand" role="10 shades · primary" colors={theme.colors.brand} />
               <TupleRow label="pink" role="alerts + gradients" colors={theme.colors.pink} />
+              <TupleRow label="gold" role="fills + accents (one gold everywhere)" colors={theme.colors.gold.slice(0, 4)} />
               <TupleRow label="violet / cyan" role="secondary gradient" colors={[...theme.colors.violet.slice(0, 1), ...theme.colors.cyan.slice(0, 2)]} />
             </Stack>
           </Panel>
@@ -444,6 +446,9 @@ export default function DesignSystem() {
               <Text fz={14} c="rgba(255,255,255,0.8)">Single font family (Roboto); serif removed from the Library.</Text>
               <Text fz={14} c="rgba(255,255,255,0.8)">Unused Inter web font dropped from the page load.</Text>
               <Text fz={14} c="rgba(255,255,255,0.8)">Button radius standardized to xl (pill) app-wide via the theme.</Text>
+              <Text fz={14} c="rgba(255,255,255,0.8)">One gold: the three near-identical golds unified into the gold ramp.</Text>
+              <Text fz={14} c="rgba(255,255,255,0.8)">Casino play button moved from orange to the brand gold gradient.</Text>
+              <Text fz={14} c="rgba(255,255,255,0.8)">Homepage CTA colors now reference theme tokens (pink, brand, gold, violet).</Text>
             </Stack>
           </Card>
           <Card withBorder radius="md" padding="lg" style={{ background: "rgba(245,200,66,0.06)", borderColor: "#7a5a1e" }}>
@@ -451,9 +456,9 @@ export default function DesignSystem() {
               Still worth aligning
             </Text>
             <Stack gap={6}>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Casino uses an off-palette orange gradient; move to brand or define it as an official accent.</Text>
-              <Text fz={14} c="rgba(255,255,255,0.8)">Homepage CTA colors live in CSS, not theme tokens; fold into the palette.</Text>
               <Text fz={14} c="rgba(255,255,255,0.8)">A few one-off button colors per section could route through Primary / Secondary.</Text>
+              <Text fz={14} c="rgba(255,255,255,0.8)">Casino per-game accents (teal, pink, purple) are close to the palette but not tokens yet.</Text>
+              <Text fz={14} c="rgba(255,255,255,0.8)">Mall storefront accent rotation is its own set; consider deriving from the theme.</Text>
             </Stack>
           </Card>
         </SimpleGrid>

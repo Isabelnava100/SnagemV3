@@ -217,7 +217,7 @@ export default function Activities() {
             ? `${streak}-week streak · keep it alive`
             : "Weekly checklist · resets Monday"
         }
-        eyebrowColor="#f5c518"
+        eyebrowColor="#F5C842"
         title="The Snag List"
         subtitle="Knock out these six and open your Weekly Mystery Box. Everything resets Monday, so pace yourself."
         aside={
@@ -243,7 +243,7 @@ export default function Activities() {
                 <Text fz={10} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
                   Resets in
                 </Text>
-                <Text fz={22} fw={800} c="#f5c518" lh={1.1}>
+                <Text fz={22} fw={800} c="#F5C842" lh={1.1}>
                   {resetCountdown()}
                 </Text>
                 <Text fz={11} c="dimmed">
@@ -285,10 +285,10 @@ export default function Activities() {
                     flexShrink: 0,
                   }}
                 >
-                  <IconGift size={30} color={allDone && !boxClaimed ? "#f5c518" : "#6a6580"} />
+                  <IconGift size={30} color={allDone && !boxClaimed ? "#F5C842" : "#6a6580"} />
                 </Box>
                 <Box style={{ minWidth: 0 }}>
-                  <Text fz={11} fw={700} c="#f5c518" tt="uppercase" style={{ letterSpacing: 2 }}>
+                  <Text fz={11} fw={700} c="#F5C842" tt="uppercase" style={{ letterSpacing: 2 }}>
                     Weekly Mystery Box Choice
                   </Text>
                   <Text fz={20} fw={800} c="white">

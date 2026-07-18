@@ -180,8 +180,8 @@ function ProgressHero(props: {
           }}
         >
           <Group gap={6} mb={6}>
-            <IconStar size={16} color="#f5c518" />
-            <Text fz={12} fw={800} c="#f5c518" tt="uppercase" style={{ letterSpacing: 0.5 }}>
+            <IconStar size={16} color="#F5C842" />
+            <Text fz={12} fw={800} c="#F5C842" tt="uppercase" style={{ letterSpacing: 0.5 }}>
               Final Prize
             </Text>
           </Group>
@@ -262,7 +262,7 @@ function TimelineNode(props: { order: number; state: NodeState; color: string })
             bottom: -12,
             padding: "1px 8px",
             borderRadius: 999,
-            background: "#f5c518",
+            background: "#F5C842",
           }}
         >
           <Text fz={9} fw={800} c="#1a1626" tt="uppercase">

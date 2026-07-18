@@ -301,7 +301,7 @@ function AlertsDropdown(props: { onClose: () => void }) {
       {staffPending > 0 && (
         <Link to="/Admin" onClick={props.onClose} style={linkStyle}>
           <Box style={{ ...rowStyle, border: "1px solid #7a5a1e" }}>
-            <Text fz={13} fw={600} c="#f5c518">
+            <Text fz={13} fw={600} c="#F5C842">
               {staffPending} item{staffPending === 1 ? "" : "s"} waiting in the staff inbox
             </Text>
           </Box>

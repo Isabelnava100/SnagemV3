@@ -236,7 +236,7 @@ function RouletteWheel(props: { number: number }) {
           height: 0,
           borderLeft: "8px solid transparent",
           borderRight: "8px solid transparent",
-          borderTop: "12px solid #f5c518",
+          borderTop: "12px solid #F5C842",
           zIndex: 2,
         }}
       />
@@ -446,7 +446,7 @@ function HexRoulette(props: { uid: string; tokens: number }) {
       iconBg="#2a1526"
       title="Hex Roulette"
       blurb="Pick a number 1 to 36 and bet up to 5 tokens. Land it and take twenty times the pot."
-      badge={<PayoutBadge color="#f5c518">Win 20x</PayoutBadge>}
+      badge={<PayoutBadge color="#F5C842">Win 20x</PayoutBadge>}
     >
       <Group gap="md" wrap="nowrap" align="center">
         <RouletteWheel number={number} />
@@ -574,20 +574,20 @@ function PaybackPyramid(props: { uid: string; tokens: number }) {
 
   return (
     <GameCard
-      icon={<IconTriangleInverted size={20} color="#f5c518" />}
+      icon={<IconTriangleInverted size={20} color="#F5C842" />}
       iconBg="#2a2410"
       title="Payback Pyramid"
       blurb="Call even or odd on a d4 roll. Simple, spooky, 50/50."
-      badge={<PayoutBadge color="#f5c518">Win 2x</PayoutBadge>}
+      badge={<PayoutBadge color="#F5C842">Win 2x</PayoutBadge>}
     >
       <Group justify="center" my={6}>
-        <PipDie value={face} bg="#f2d675" pip="#2a2410" size={78} />
+        <PipDie value={face} bg="#FFD074" pip="#2a2410" size={78} />
       </Group>
       <Group gap="md" align="flex-end" mt="sm" wrap="nowrap">
         <SegmentedControl
           value={pick}
           onChange={(v) => setPick(v as "even" | "odd")}
-          color="yellow"
+          color="gold.2"
           data={[
             { label: "Even", value: "even" },
             { label: "Odd", value: "odd" },
@@ -597,7 +597,7 @@ function PaybackPyramid(props: { uid: string; tokens: number }) {
         <Box style={{ flex: 1, minWidth: 0 }}>
           <Caption>Bet 1-5</Caption>
           <Box mt={4}>
-            <Stepper label="Bet" value={bet} onChange={setBet} min={1} max={5} accent="#f5c518" />
+            <Stepper label="Bet" value={bet} onChange={setBet} min={1} max={5} accent="#F5C842" />
           </Box>
         </Box>
       </Group>
@@ -607,7 +607,7 @@ function PaybackPyramid(props: { uid: string; tokens: number }) {
         size="md"
         radius="md"
         variant="gradient"
-        gradient={{ from: "yellow", to: "orange", deg: 90 }}
+        gradient={{ from: "gold.0", to: "gold.3", deg: 90 }}
         c="#2a2410"
         leftSection={<IconPlayerPlayFilled size={16} />}
         onClick={() => {
@@ -827,7 +827,7 @@ export default function Casino() {
             uid ? (
               <Group gap={12} wrap="wrap">
                 <CurrencyCard
-                  icon={<IconCoin size={22} color="#f5c518" />}
+                  icon={<IconCoin size={22} color="#F5C842" />}
                   iconBg="#2a2410"
                   label="Snag Coins"
                   value={snagCoins}

@@ -439,8 +439,8 @@ function StoreBody(props: { shop: Shop; balance: number }) {
         <Box>
           <Group justify="space-between" align="center" mb="md" wrap="wrap">
             <Group gap={8}>
-              <IconSparkles size={16} color="#f5c518" />
-              <Text fz={13} fw={800} c="#f5c518" tt="uppercase" style={{ letterSpacing: 2 }}>
+              <IconSparkles size={16} color="#F5C842" />
+              <Text fz={13} fw={800} c="#F5C842" tt="uppercase" style={{ letterSpacing: 2 }}>
                 Today's Rare Wares
               </Text>
             </Group>
@@ -572,7 +572,7 @@ function RecycleItemsTab(props: {
   return (
     <Stack gap="xl">
       {/* Rate reference table (informational; the server is authoritative) */}
-      <RatePanel title="Items → Snag Coins" rows={RECYCLE_RATES} note="Consumables pay half (rounded down). Medicines excluded. Items bought for 1 coin can't be recycled." valueColor="#f5c518" />
+      <RatePanel title="Items → Snag Coins" rows={RECYCLE_RATES} note="Consumables pay half (rounded down). Medicines excluded. Items bought for 1 coin can't be recycled." valueColor="#F5C842" />
 
       <Divider color="#232028" label="Bring your junk" labelPosition="center" />
 
@@ -1053,7 +1053,7 @@ function EvoBody() {
               </Box>
             </Group>
             <Group gap="md" wrap="nowrap" style={{ flexShrink: 0 }}>
-              <Text fz={14} fw={800} c="#f5c518" ta="right" style={{ whiteSpace: "nowrap" }}>
+              <Text fz={14} fw={800} c="#F5C842" ta="right" style={{ whiteSpace: "nowrap" }}>
                 {svc.price}
               </Text>
               <Button
@@ -1111,7 +1111,7 @@ function PriceBadge(props: { currency: Shop["currency"]; value: number | string 
           {b.letter}
         </Text>
       </Box>
-      <Text fz={14} fw={800} c="#f5c518">
+      <Text fz={14} fw={800} c="#F5C842">
         {props.value}
       </Text>
     </Group>

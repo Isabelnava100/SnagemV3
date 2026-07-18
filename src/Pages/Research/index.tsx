@@ -122,7 +122,7 @@ function AccessBadge({ granted }: { granted: boolean }) {
       style={{
         letterSpacing: 1,
         borderRadius: 999,
-        color: granted ? "#0b0a10" : "#f5c518",
+        color: granted ? "#0b0a10" : "#F5C842",
         background: granted ? "#69db7c" : "transparent",
         border: granted ? "none" : "1px solid #b89b2e",
         boxShadow: granted ? "0 0 20px rgba(105,219,124,0.5)" : "none",
@@ -133,7 +133,7 @@ function AccessBadge({ granted }: { granted: boolean }) {
   );
 }
 
-function SectionLabel({ children, color = "#f5c518" }: { children: React.ReactNode; color?: string }) {
+function SectionLabel({ children, color = "#F5C842" }: { children: React.ReactNode; color?: string }) {
   return (
     <Group gap={12} align="center" mb="md">
       <Text fz={13} fw={700} c={color} style={{ letterSpacing: 3 }}>
@@ -166,7 +166,7 @@ const BENEFITS = [
     body: "The Restricted Library is the only path to capturing Legendaries, and to Legendary hybrids. Story-driven, by request.",
   },
   {
-    icon: <IconStar size={22} color="#f5c518" />,
+    icon: <IconStar size={22} color="#F5C842" />,
     bg: "#231d10",
     title: "Grand Master Prestige",
     body: "A title, a badge, and standing few ever reach. The end-game credential of the whole community.",
@@ -327,7 +327,7 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
                     {c.ok ? (
                       <IconCheck size={14} color="#69db7c" />
                     ) : (
-                      <IconAlertTriangle size={13} color="#f5c518" />
+                      <IconAlertTriangle size={13} color="#F5C842" />
                     )}
                   </Box>
                   <Box>
@@ -1141,7 +1141,7 @@ export default function Research() {
 
   const loading = configQuery.isPending || (!!uid && (charactersQuery.isPending || progressQuery.isPending));
   const granted = view === "console" && canAct;
-  const accentColor = granted ? "#b197fc" : "#f5c518";
+  const accentColor = granted ? "#b197fc" : "#F5C842";
 
   return (
     <Box style={{ background: "#0b0a10", minHeight: "100%" }}>

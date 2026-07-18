@@ -119,7 +119,7 @@ function CoinIcon() {
     <Box
       style={{
         width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
-        background: "#f5c518", display: "flex", alignItems: "center", justifyContent: "center",
+        background: "#F5C842", display: "flex", alignItems: "center", justifyContent: "center",
       }}
     >
       <Text fz={15} fw={800} c="#3a2a05">
@@ -393,7 +393,7 @@ export default function MissionDetail() {
                     <RewardRow icon={<DotIcon color="#3B82F6" />} title={mission.special_item} sub="special item" />
                   )}
                   {mission.emblem_eligible && (
-                    <RewardRow icon={<DotIcon color="#f5c518" />} title="Snag Emblem Piece" sub="if eligible" />
+                    <RewardRow icon={<DotIcon color="#F5C842" />} title="Snag Emblem Piece" sub="if eligible" />
                   )}
                   {!mission.coins && !rewardLabel && !mission.special_item && !mission.emblem_eligible && (
                     <Text fz={13} c="dimmed">
