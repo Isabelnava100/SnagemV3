@@ -262,9 +262,6 @@ function ArcadeView(props: { shops: Shop[]; onEnter: (id: string) => void }) {
           />
         ))}
       </SimpleGrid>
-      <Text fz={12} c="dimmed" ta="center">
-        stroll the arcade
-      </Text>
     </Stack>
   );
 }
@@ -1329,7 +1326,7 @@ export default function Mall() {
             </Group>
           }
           title="The Snag Mall"
-          subtitle="Stroll the arcade, step through any storefront to shop."
+          subtitle="Step through any storefront to shop."
           aside={
             <Group gap={10} wrap="wrap">
               <CurrencyChip badge="C" label="Snag Coins" value={String(snagCoins)} />

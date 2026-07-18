@@ -298,7 +298,6 @@ function ListsTab() {
  * each wing; the Reading Room is the landing that introduces them all. The wing
  * `value`s double as the `?tab=` deep-link keys (kept stable from the old tabs).
  */
-const SERIF = 'Georgia, "Times New Roman", serif';
 const BG = "#0d0a14";
 const PANEL = "#171022";
 const PANEL_BORDER = "#271e38";
@@ -403,7 +402,7 @@ function DirectoryItem(props: {
       }}
     >
       <Group justify="space-between" wrap="nowrap" gap={8}>
-        <Text fz={16} fw={700} c="white" style={{ fontFamily: SERIF }} lineClamp={1}>
+        <Text fz={16} fw={700} c="white" lineClamp={1}>
           {props.title}
         </Text>
         {props.callNo && (
@@ -424,7 +423,7 @@ function ReadingRoom(props: { onOpen: (value: string) => void }) {
   return (
     <Stack gap="lg">
       <Box>
-        <Text component="h2" fz={{ base: 30, sm: 40 }} fw={700} c="#f4efe3" style={{ fontFamily: SERIF, lineHeight: 1.1 }}>
+        <Text component="h2" fz={{ base: 30, sm: 40 }} fw={700} c="#f4efe3" style={{ lineHeight: 1.1 }}>
           Welcome, reader.
         </Text>
         <Text fz={15} c="gray.4" mt={8} maw={720}>
@@ -453,7 +452,7 @@ function ReadingRoom(props: { onOpen: (value: string) => void }) {
             <Text fz={11} c="dimmed" ff="monospace" mb={10} style={{ letterSpacing: 2 }}>
               {w.callNo}
             </Text>
-            <Text fz={22} fw={700} c="white" mb={8} style={{ fontFamily: SERIF }}>
+            <Text fz={22} fw={700} c="white" mb={8}>
               {w.name}
             </Text>
             <Text fz={14} c="gray.5" mb={16}>
@@ -530,7 +529,7 @@ export default function Library() {
                   <Text fz={11} c="dimmed" ff="monospace" mb={4} style={{ letterSpacing: 2 }}>
                     {openWing.callNo}
                   </Text>
-                  <Text component="h2" fz={{ base: 26, sm: 32 }} fw={700} c="#f4efe3" style={{ fontFamily: SERIF, lineHeight: 1.1 }}>
+                  <Text component="h2" fz={{ base: 26, sm: 32 }} fw={700} c="#f4efe3" style={{ lineHeight: 1.1 }}>
                     {openWing.name}
                   </Text>
                   <Text fz={14} c="gray.5" mt={4}>

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 
 const PANEL = "#171022";
 const PANEL_BORDER = "#271e38";
-const SERIF = 'Georgia, "Times New Roman", serif';
 
 function Section(props: { title: string; children: React.ReactNode }) {
   return (
@@ -11,7 +10,7 @@ function Section(props: { title: string; children: React.ReactNode }) {
       p="lg"
       style={{ background: PANEL, border: `1px solid ${PANEL_BORDER}`, borderRadius: 14 }}
     >
-      <Title order={3} c="white" fz={20} mb={8} style={{ fontFamily: SERIF }}>
+      <Title order={3} c="white" fz={20} mb={8}>
         {props.title}
       </Title>
       {props.children}
@@ -28,7 +27,7 @@ export default function ShadowGuideTab() {
   return (
     <Stack gap={16}>
       <Box>
-        <Title order={2} c="white" style={{ fontFamily: SERIF }}>
+        <Title order={2} c="white">
           Growth, Shadow &amp; Purification
         </Title>
         <Text c="gray.4" fz={14} mt={4}>
