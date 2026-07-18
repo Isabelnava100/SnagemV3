@@ -31,6 +31,7 @@ import {
 import pokemonJSON from "./pokemon.json";
 import battleStages from "./battleStages.json";
 import starByDex from "./starByDex.json";
+import typesByDex from "./typesByDex.json";
 import evolutionsJSON from "./evolutions.json";
 import levelingCurveJSON from "./levelingCurve.json";
 
@@ -122,6 +123,46 @@ const starForDex = (idx: number): number => {
   const star = (starByDex as Record<string, number>)[String(idx)];
   return star && star >= 1 && star <= 7 ? star : 3;
 };
+// Type effectiveness by POKEMON TYPE (mirrors src/lib/typeChart.ts; keep in
+// sync). Battle posts' progress and the enemy's counter-attack are both
+// scaled by the attacker-vs-defender matchup, clamped to 0.5x..2x so battles
+// never soft-lock on an immunity.
+const TYPE_CHART: Record<string, Record<string, number>> = {
+  Normal: { Rock: 0.5, Ghost: 0, Steel: 0.5 },
+  Fire: { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 2, Bug: 2, Rock: 0.5, Dragon: 0.5, Steel: 2 },
+  Water: { Fire: 2, Water: 0.5, Grass: 0.5, Ground: 2, Rock: 2, Dragon: 0.5 },
+  Electric: { Water: 2, Electric: 0.5, Grass: 0.5, Ground: 0, Flying: 2, Dragon: 0.5 },
+  Grass: { Fire: 0.5, Water: 2, Grass: 0.5, Poison: 0.5, Ground: 2, Flying: 0.5, Bug: 0.5, Rock: 2, Dragon: 0.5, Steel: 0.5 },
+  Ice: { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 0.5, Ground: 2, Flying: 2, Dragon: 2, Steel: 0.5 },
+  Fighting: { Normal: 2, Ice: 2, Poison: 0.5, Flying: 0.5, Psychic: 0.5, Bug: 0.5, Rock: 2, Ghost: 0, Dark: 2, Steel: 2, Fairy: 0.5 },
+  Poison: { Grass: 2, Poison: 0.5, Ground: 0.5, Rock: 0.5, Ghost: 0.5, Steel: 0, Fairy: 2 },
+  Ground: { Fire: 2, Electric: 2, Grass: 0.5, Poison: 2, Flying: 0, Bug: 0.5, Rock: 2, Steel: 2 },
+  Flying: { Electric: 0.5, Grass: 2, Fighting: 2, Bug: 2, Rock: 0.5, Steel: 0.5 },
+  Psychic: { Fighting: 2, Poison: 2, Psychic: 0.5, Dark: 0, Steel: 0.5 },
+  Bug: { Fire: 0.5, Grass: 2, Fighting: 0.5, Poison: 0.5, Flying: 0.5, Psychic: 2, Ghost: 0.5, Dark: 2, Steel: 0.5, Fairy: 0.5 },
+  Rock: { Fire: 2, Ice: 2, Fighting: 0.5, Ground: 0.5, Flying: 2, Bug: 2, Steel: 0.5 },
+  Ghost: { Normal: 0, Psychic: 2, Ghost: 2, Dark: 0.5 },
+  Dragon: { Dragon: 2, Steel: 0.5, Fairy: 0 },
+  Dark: { Fighting: 0.5, Psychic: 2, Ghost: 2, Dark: 0.5, Fairy: 0.5 },
+  Steel: { Fire: 0.5, Water: 0.5, Electric: 0.5, Ice: 2, Rock: 2, Steel: 0.5, Fairy: 2 },
+  Fairy: { Fire: 0.5, Fighting: 2, Poison: 0.5, Dragon: 2, Dark: 2, Steel: 0.5 },
+};
+const typesForDex = (idx: number): string[] => {
+  const t = (typesByDex as Record<string, string[]>)[String(idx)];
+  return t && t.length ? t : ["Normal"];
+};
+function typeEffectiveness(attacker: string[], defender: string[]): number {
+  let best = 0;
+  for (const atk of attacker.length ? attacker : ["Normal"]) {
+    let mult = 1;
+    for (const def of defender.length ? defender : ["Normal"]) {
+      const m = TYPE_CHART[atk]?.[def];
+      mult *= m === undefined ? 1 : m;
+    }
+    best = Math.max(best, mult);
+  }
+  return Math.max(0.5, Math.min(2, best));
+}
 const postsToBeatStar = (star: number): number => STAR_POSTS_TO_BEAT[star] ?? 5;
 const fleeChanceForStar = (star: number): number => STAR_FLEE_CHANCE[star] ?? 60;
 const GEN_CAPS = [151, 251, 386, 493, 649, 721, 809, 905, 1025];
@@ -914,6 +955,19 @@ export const publishForumPost = onCall(async (request) => {
       };
     });
 
+    // The pokemon taking and dealing this post's battle damage: the requested
+    // fighter when it is on the post's team(s), else the first conscious one.
+    // Its type(s) drive both effectiveness directions.
+    const battleFighterId =
+      !editPostId && teamPokemonIds.length
+        ? fighterIdReq && teamPokemonIds.includes(fighterIdReq)
+          ? fighterIdReq
+          : teamPokemonIds.find((id) => !isFainted(id)) ?? teamPokemonIds[0]
+        : "";
+    const fighterTypes = battleFighterId
+      ? typesForDex(Number(ownedForXp[battleFighterId]?.pokedex ?? 0))
+      : ["Normal"];
+
     const pending = pendingSnap.data() ?? {};
     const encounter = pending.encounter ? { ...pending.encounter } : undefined;
     let encounterCaught = false;
@@ -923,6 +977,8 @@ export const publishForumPost = onCall(async (request) => {
     // Run-away resolution and how hard the enemy hits back this post.
     let encounterFled = false;
     let enemyAttackDmg = 0;
+    // Effectiveness of the fighter's type against the boss (attack posts scale).
+    let bossAttackMult = 1;
     // Safari encounters clear (fled / knocked out) without being caught.
     let safariCleared = false;
     const safariCfg = thread.safariContest;
@@ -1005,9 +1061,13 @@ export const publishForumPost = onCall(async (request) => {
       encounterForCharacter = forIds[0] ?? "";
       const postCharIds = characters.map((c: any) => c.id);
       const qualifies = forIds.length === 0 || postCharIds.some((id: string) => forIds.includes(id));
-      const enemyStar =
-        Number(encounter.star) ||
-        starForDex(Number(catalogBySlug.get(String(encounter.slug))?.idx ?? 0));
+      const enemyIdx = Number(catalogBySlug.get(String(encounter.slug))?.idx ?? 0);
+      const enemyStar = Number(encounter.star) || starForDex(enemyIdx);
+      // Type effectiveness, both directions (clamped 0.5x..2x).
+      const enemyTypes = typesForDex(enemyIdx);
+      const attackMult = typeEffectiveness(fighterTypes, enemyTypes);
+      const defenseMult = typeEffectiveness(enemyTypes, fighterTypes);
+      const enemyHit = Math.max(1, Math.round(starDamageFrom(battleCfg, enemyStar) * defenseMult));
       let progress = Number(encounter.progress) || 0;
       const wasBeaten = progress >= required;
       const ball = itemsUsed.find((i) => i.isBall);
@@ -1030,12 +1090,18 @@ export const publishForumPost = onCall(async (request) => {
           // The escape fails: the turn is spent running, no progress is
           // landed, and the enemy still gets its hit in.
           encounter.outcome = "flee_failed";
-          if (qualifies) enemyAttackDmg = starDamageFrom(battleCfg, enemyStar);
+          if (qualifies) enemyAttackDmg = enemyHit;
         }
       } else if (!editPostId) {
-        if (qualifies && progress < required) progress += 1;
+        // A battle post lands progress scaled by the fighter's type matchup
+        // (a super effective fighter wears the foe down twice as fast).
+        if (qualifies && progress < required) {
+          progress = Math.round((progress + attackMult) * 100) / 100;
+          encounter.attackEffect = attackMult;
+          encounter.defenseEffect = defenseMult;
+        }
         // The enemy hits back on every battle post it survives.
-        if (qualifies && progress < required) enemyAttackDmg = starDamageFrom(battleCfg, enemyStar);
+        if (qualifies && progress < required) enemyAttackDmg = enemyHit;
       }
       encounter.progress = progress;
       encounter.caught =
@@ -1052,8 +1118,6 @@ export const publishForumPost = onCall(async (request) => {
     // -- healing items: applied before the enemy's hit (potions heal the
     // fighter, revives restore a fainted team pokemon). Auto-targeted.
     const heals: Array<{ itemName: string; pokemonId: string; pokemonName: string; amount: number; revive: boolean }> = [];
-    const fighterCandidate =
-      fighterIdReq && teamPokemonIds.includes(fighterIdReq) ? fighterIdReq : undefined;
     if (!editPostId && teamPokemonIds.length) {
       for (const item of itemsUsed) {
         if (String((item as any).category ?? "").toLowerCase() !== "medicine") continue;
@@ -1075,8 +1139,8 @@ export const publishForumPost = onCall(async (request) => {
             });
           } else if (effect.heal) {
             const target =
-              fighterCandidate && !isFainted(fighterCandidate)
-                ? fighterCandidate
+              battleFighterId && !isFainted(battleFighterId)
+                ? battleFighterId
                 : teamPokemonIds.find((id) => (Number(damageNow[id]) || 0) > 0 && !isFainted(id));
             if (!target) break;
             const amount =
@@ -1103,21 +1167,28 @@ export const publishForumPost = onCall(async (request) => {
     // harder hit lands so a single post never doubles up.
     if (!editPostId && request.data?.attackBoss === true && bossActiveForUser) {
       const boss = thread.bossBattle;
+      const bossIdx = Number(catalogBySlug.get(String(boss.slug))?.idx ?? 0);
+      const bossTypes = typesForDex(bossIdx);
+      // Attack posts land scaled by the fighter's type matchup vs the boss.
+      bossAttackMult = typeEffectiveness(fighterTypes, bossTypes);
       const bossFalls =
-        (Number(boss.attackPosts) || 0) + 1 >= (Number(boss.requiredPosts) || Infinity);
+        (Number(boss.attackPosts) || 0) + bossAttackMult >=
+        (Number(boss.requiredPosts) || Infinity);
       if (!bossFalls) {
-        const bossIdx = Number(catalogBySlug.get(String(boss.slug))?.idx ?? 0);
-        const bossDmg =
+        const bossBase =
           Number(boss.attackDamage) > 0
             ? Math.trunc(Number(boss.attackDamage))
             : starDamageFrom(battleCfg, starForDex(bossIdx));
+        const bossDmg = Math.max(
+          1,
+          Math.round(bossBase * typeEffectiveness(bossTypes, fighterTypes))
+        );
         enemyAttackDmg = Math.max(enemyAttackDmg, bossDmg);
       }
     }
     let battleBlock: Record<string, unknown> | null = null;
     if (!editPostId && enemyAttackDmg > 0 && teamPokemonIds.length) {
-      const fighterId =
-        fighterCandidate ?? teamPokemonIds.find((id) => !isFainted(id)) ?? teamPokemonIds[0];
+      const fighterId = battleFighterId || teamPokemonIds[0];
       if (isFainted(fighterId)) {
         throw new HttpsError(
           "failed-precondition",
@@ -1391,8 +1462,10 @@ export const publishForumPost = onCall(async (request) => {
       if (attackBoss && bossActiveForUser) {
         const boss = thread.bossBattle;
         const required = Number(boss.requiredPosts) || Infinity;
-        const next = (Number(boss.attackPosts) || 0) + 1;
-        bossExtra["bossBattle.attackPosts"] = FieldValue.increment(1);
+        // Attack posts land scaled by the fighter's type effectiveness.
+        const next =
+          Math.round(((Number(boss.attackPosts) || 0) + bossAttackMult) * 100) / 100;
+        bossExtra["bossBattle.attackPosts"] = FieldValue.increment(bossAttackMult);
         if (next >= required) {
           bossExtra["bossBattle.active"] = false;
           bossDefeated = true;

@@ -46,6 +46,9 @@ function iconSet(fg: string, cut: string, label: string): Record<string, string>
     swords: `<g transform="rotate(45 24 24)"><rect x="21.2" y="3" width="5.6" height="27" rx="2.4" fill="${fg}"/><rect x="15" y="31" width="18" height="4.5" rx="2.2" fill="${fg}"/><rect x="21.2" y="36" width="5.6" height="9" rx="2.8" fill="${fg}"/></g><g transform="rotate(-45 24 24)"><rect x="21.2" y="3" width="5.6" height="27" rx="2.4" fill="${fg}"/><rect x="15" y="31" width="18" height="4.5" rx="2.2" fill="${fg}"/><rect x="21.2" y="36" width="5.6" height="9" rx="2.8" fill="${fg}"/></g>`,
     duo: `<circle cx="15.5" cy="15" r="6" fill="${fg}"/><path d="M15.5 23 c7 0 10.5 4.8 10.5 10 v4.5 H5 V33 c0 -5.2 3.5 -10 10.5 -10 z" fill="${fg}"/><circle cx="33" cy="15" r="6" fill="${fg}" stroke="${cut}" stroke-width="2.4"/><path d="M33 23 c7 0 10.5 4.8 10.5 10 v4.5 H22.5 V33 c0 -5.2 3.5 -10 10.5 -10 z" fill="${fg}" stroke="${cut}" stroke-width="2.4"/>`,
     target: `<circle cx="24" cy="24" r="17" fill="none" stroke="${fg}" stroke-width="3.5"/><circle cx="24" cy="24" r="9.5" fill="none" stroke="${fg}" stroke-width="3.5"/><circle cx="24" cy="24" r="3" fill="${fg}"/>`,
+    // The S.N.A.G. device: an old-school walkie-talkie (antenna, screen,
+    // speaker grill, side talk button). Drawn in-set, not ported.
+    walkie: `<rect x="16" y="2.5" width="4.2" height="11" rx="2.1" fill="${fg}"/><rect x="12.5" y="11" width="23" height="34" rx="5.5" fill="${fg}"/><rect x="17" y="16.5" width="14" height="8" rx="2" fill="${cut}"/><line x1="17.5" y1="30" x2="30.5" y2="30" stroke="${cut}" stroke-width="2.2" stroke-linecap="round"/><line x1="17.5" y1="34.5" x2="30.5" y2="34.5" stroke="${cut}" stroke-width="2.2" stroke-linecap="round"/><line x1="17.5" y1="39" x2="26" y2="39" stroke="${cut}" stroke-width="2.2" stroke-linecap="round"/><rect x="36.5" y="18" width="4" height="9" rx="2" fill="${fg}"/>`,
     pin: `<path d="M24 4 c7.2 0 13 5.8 13 13 c0 9.5 -13 27 -13 27 S11 26.5 11 17 C11 9.8 16.8 4 24 4 z" fill="${fg}"/><circle cx="24" cy="17" r="5" fill="${cut}"/>`,
     medal: `<path d="M17.5 21 L11 4 h10.5 l4 10 z" fill="${fg}"/><path d="M30.5 21 L37 4 H26.5 l-4 10 z" fill="${fg}"/><circle cx="24" cy="30" r="12.5" fill="${fg}"/><circle cx="24" cy="30" r="8.5" fill="none" stroke="${cut}" stroke-width="2"/>${label ? `<text x="24" y="34.5" text-anchor="middle" font-size="13" font-weight="900" fill="${cut}" font-family="sans-serif">${label}</text>` : ""}`,
     chart: `<rect x="8" y="26" width="7" height="16" rx="2" fill="${fg}"/><rect x="20.5" y="16" width="7" height="26" rx="2" fill="${fg}"/><rect x="33" y="8" width="7" height="34" rx="2" fill="${fg}"/>`,
@@ -112,7 +115,8 @@ export type SnagIconName =
   | "exchange" | "play" | "arrow" | "circleo" | "menu" | "boulder" | "cascade" | "thunderbadge"
   | "rainbow" | "soul" | "marsh" | "volcano" | "earth" | "zephyr" | "hive" | "plainbadge"
   | "fogbadge" | "storm" | "mineral" | "glacier" | "rising" | "stonebadge" | "knuckle"
-  | "dynamo" | "heat" | "balance" | "feather" | "mind" | "rainbadge" | "zcrystal";
+  | "dynamo" | "heat" | "balance" | "feather" | "mind" | "rainbadge" | "zcrystal"
+  | "walkie";
 
 export interface SnagIconProps {
   name: SnagIconName;

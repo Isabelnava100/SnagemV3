@@ -63,7 +63,7 @@ export function userMayPost(thread: ForumThread | null | undefined, user: Return
 function BossBanner(props: { boss: NonNullable<ForumThread["bossBattle"]> }) {
   const { boss } = props;
   const need = boss.requiredPosts ?? 0;
-  const done = Math.min(boss.attackPosts ?? 0, need || Infinity);
+  const done = Math.round(Math.min(boss.attackPosts ?? 0, need || Infinity) * 10) / 10;
   const remaining = need ? Math.max(0, need - done) : 0;
   const healthPct = need ? Math.max(0, Math.round(((need - done) / need) * 100)) : 100;
 
@@ -265,7 +265,8 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
   const required = enc.required ?? 0;
   const progress = enc.progress ?? 0;
   const beaten = required > 0 && progress >= required;
-  const healthLeft = Math.max(0, required - progress);
+  // Progress can be fractional (type effectiveness); show one decimal.
+  const healthLeft = Math.round(Math.max(0, required - progress) * 10) / 10;
   const healthPct = required ? Math.round((healthLeft / required) * 100) : 100;
   const bonus = isSafari ? safariFightBonus(fightPosts, postsToDefeat) + (enc.catchBonus ?? 0) : 0;
 

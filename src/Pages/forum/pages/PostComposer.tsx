@@ -59,6 +59,7 @@ import {
 import { levelProgress } from "../../../lib/leveling";
 import { pokemonData } from "../../../data/pokemon";
 import { getBattleConfig } from "../../../queries/game";
+import { effectivenessLabel, typeEffectiveness, typesForDex } from "../../../lib/typeChart";
 import { userMayPost } from "./ThreadView";
 import "../forum.css";
 
@@ -298,15 +299,27 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const canFlee = battleOngoing && !!encounter!.catchable;
   const fighterNeeded = battleOngoing || (mode === "new" && attackBoss && bossActive);
   const enemyStar = encounter?.star ?? 3;
+  // Type effectiveness both ways, from the chosen fighter's type vs the enemy's.
+  const fighterTypes = (() => {
+    const chosen = evoTeamPokemon.find((p) => p.id === fighterId);
+    return typesForDex(chosen?.pokedex ?? 0);
+  })();
+  const enemyIdx = pokemonData.find((p) => p.slug === encounter?.slug)?.idx ?? 0;
+  const enemyTypes = typesForDex(enemyIdx);
+  const attackMult = battleOngoing ? typeEffectiveness(fighterTypes, enemyTypes) : 1;
+  const defenseMult = battleOngoing ? typeEffectiveness(enemyTypes, fighterTypes) : 1;
   // Boss hit: the stored per-boss value, else its species' star damage.
   const bossHit = (() => {
     if (!(attackBoss && bossActive && thread?.bossBattle)) return 0;
     const stored = Number(thread.bossBattle.attackDamage);
-    if (stored > 0) return stored;
     const idx = pokemonData.find((p) => p.slug === thread.bossBattle!.slug)?.idx;
-    return starDmg(starForDex(idx ?? 0));
+    const base = stored > 0 ? stored : starDmg(starForDex(idx ?? 0));
+    return Math.max(1, Math.round(base * typeEffectiveness(typesForDex(idx ?? 0), fighterTypes)));
   })();
-  const hitDmg = Math.max(battleOngoing ? starDmg(enemyStar) : 0, bossHit);
+  const hitDmg = Math.max(
+    battleOngoing ? Math.max(1, Math.round(starDmg(enemyStar) * defenseMult)) : 0,
+    bossHit
+  );
   // Default the fighter to the first conscious team member.
   React.useEffect(() => {
     if (!fighterNeeded) return;
@@ -674,6 +687,13 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                       post's incoming hit: {hitDmg} damage
                       {attackBoss && bossActive ? " (boss attack)" : ""}.
                     </Text>
+                    {battleOngoing && (
+                      <Text fz={12} c="dimmed">
+                        Type matchup ({fighterTypes.join("/")} vs {enemyTypes.join("/")}):
+                        your posts are {effectivenessLabel(attackMult)}; its hits on you
+                        are {effectivenessLabel(defenseMult)}.
+                      </Text>
+                    )}
                   </Stack>
                 )}
                 <PanelHint>

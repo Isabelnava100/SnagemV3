@@ -1,4 +1,5 @@
 import {
+  Anchor,
   Avatar,
   Badge,
   Box,
@@ -334,6 +335,65 @@ export default function ForumIndex() {
           />
         )}
       </Flex>
+      <CategoryDisclaimer link={activeLink} />
     </Container>
+  );
+}
+
+/**
+ * Small bottom-right note explaining this category's creation limits, so
+ * members know where gated threads actually start (with the link to go
+ * there). Full details live in Library > The Charter.
+ */
+function CategoryDisclaimer(props: { link: string }) {
+  const notes: Record<string, React.ReactNode> = {
+    "Main-Forum": "Main Adventure threads are created by admins and directors.",
+    "Side-Roleplay": "Any member can start a Side Story thread here.",
+    Quests: (
+      <>
+        Mission threads cannot be created here directly. Pick up a mission from
+        the{" "}
+        <Anchor component={Link} to="/Missions" c="blue.3" fz={11}>
+          Mission hub
+        </Anchor>{" "}
+        and your thread is created for you.
+      </>
+    ),
+    Events: (
+      <>
+        Event threads are launched by admins and event hosts (Safari Contests
+        from Admin &gt; Manage).
+      </>
+    ),
+    "The-Colosseum": (
+      <>
+        Colosseum threads are hosted by staff; training posts start from the{" "}
+        <Anchor component={Link} to="/Colosseum" c="blue.3" fz={11}>
+          Colosseum page
+        </Anchor>
+        .
+      </>
+    ),
+    "Master-Mission": (
+      <>
+        Master Missions are requested from the{" "}
+        <Anchor component={Link} to="/Research" c="blue.3" fz={11}>
+          Research page
+        </Anchor>{" "}
+        and visible to Master members.
+      </>
+    ),
+  };
+  const note = notes[props.link];
+  if (!note) return null;
+  return (
+    <Group justify="flex-end" mt={16}>
+      <Text fz={11} c="dimmed" ta="right" maw={420}>
+        {note}{" "}
+        <Anchor component={Link} to="/Library?tab=forums" c="blue.3" fz={11}>
+          Forum guide
+        </Anchor>
+      </Text>
+    </Group>
   );
 }

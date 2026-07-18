@@ -61,6 +61,10 @@ export interface EncounterBlock {
   outcome?: "weakened" | "fed" | "fled" | "ko" | "caught" | "missed" | "flee_failed";
   /** The success chance (percent) shown when a run-away was attempted. */
   fleeChance?: number;
+  /** Type effectiveness of the fighter's post against this enemy (0.5..2). */
+  attackEffect?: number;
+  /** Type effectiveness of this enemy's hits against the fighter (0.5..2). */
+  defenseEffect?: number;
   /** The catch chance shown when a ball was thrown (for the post log). */
   catchChance?: number;
 }

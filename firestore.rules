@@ -165,6 +165,14 @@ service cloud.firestore {
       allow write: if isSignedIn();
     }
 
+    // ---- Dev Board (admin collab) -----------------------------------------
+    // Development tickets and admin-to-admin planning notes, managed from
+    // Admin > Manage > Dev Board. Member suggestions/bug reports arrive via
+    // the tickets collection (written by S.N.A.G.) and are promoted here.
+    match /devBoard/{doc} {
+      allow read, write: if isAdmin();
+    }
+
     // ---- Thread-close reward sessions ---------------------------------------
     // Draft state for awarding money/items/XP when a thread closes. Reward
     // granters (GiveItems / Admin) and ReviewRewards directors can see or edit;

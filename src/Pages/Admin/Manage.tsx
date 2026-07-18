@@ -3,6 +3,7 @@ import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import React from "react";
 import { ActivityLog } from "../../components/admin/ActivityLog";
 import DesignSystem from "../../components/admin/DesignSystem";
+import DevBoard from "../User/Dashboard/Admin/DevBoard";
 import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import { hasCapability, isAdmin } from "../../lib/permissions";
@@ -32,6 +33,7 @@ type ToolKey =
   | "xp"
   | "costs"
   | "design"
+  | "devboard"
   | "logs";
 
 interface Tool {
@@ -157,6 +159,13 @@ const GROUPS: ToolGroup[] = [
     subtitle: "Brand and design guidance, plus the staff audit trail.",
     dot: "#a78bfa",
     tools: [
+      {
+        key: "devboard",
+        label: "Dev Board",
+        desc: "Member suggestions and bug reports, dev tickets, and admin planning notes.",
+        cap: null,
+        render: () => <DevBoard />,
+      },
       {
         key: "design",
         label: "Design System",

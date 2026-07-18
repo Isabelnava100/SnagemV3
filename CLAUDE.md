@@ -129,6 +129,20 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
   creation-only "Members may change teams between posts" checkbox
   (`thread.allowTeamChanges`). Constants live in `src/lib/encounterStars.ts`
   + mirrored in `functions/src/index.ts`.
+- Type effectiveness + S.N.A.G. + Dev Board (July 2026) need a rules +
+  functions deploy (`firebase deploy --only firestore:rules,functions`):
+  battle damage/progress now scale by pokemon-type matchup (0.5x..2x clamp,
+  chart in `src/lib/typeChart.ts` mirrored in functions; species types in
+  `typesByDex.json`, regenerate with `scripts/gen-types.mjs`). S.N.A.G.
+  (/SNAG, main nav, walkie icon) is a self-contained FAQ/SOP chat (NOT
+  connected to external AI) that answers from a built-in knowledge base +
+  member progress and files suggestions/bugs/questions into `tickets`
+  (types dev_suggestion/dev_bug/member_question, status new). Admin >
+  Manage > Dev Board triages those (discard or promote), tracks dev
+  tickets, and holds admin-only planning notes (`devBoard` collection,
+  admin-only rules). Dashboard nav renamed Snag -> Trainer. Library gained
+  The War Room (battle guide, live config numbers) and The Charter (forum
+  permissions); forum pages show a small bottom-right category disclaimer.
 - Forum-first flows (July 2026) need a functions + rules deploy before they work live: new callables `ensureTrainingThread`, `pickUpMission`, `requestChallenge`, `resolveChallengeRequest`, `requestMasterClearance`, `resolveMasterClearance`, updated `buyLottoTicket`/`logTrainingPost`/`onThreadClosed`, plus the `challengeRequests` and `masterClearanceRequests` rules blocks. After deploying, run `node scripts/seed-mission-encounters.mjs` from `functions/` (gcloud ADC; `--check` validates slugs offline) to seed per-mission encounter lists. Mission-default lists carry `missionDefault: true` and stay hidden from Field Registers and the host encounter picker.
 - Training posts now flow through the forum: the Colosseum "Log a Training Post" button opens the pinned "Super Training Room Log" thread (`trainingLog: true`, created on first use) and the composer calls `logTrainingPost` (10-post window cap) before publishing. Direct replies to that thread bounce to /Colosseum.
 - Mission grading: closing a thread with `missionId` auto-files the pending `missionSubmissions` doc (onThreadClosed); the manual submit form was removed from the mission brief.

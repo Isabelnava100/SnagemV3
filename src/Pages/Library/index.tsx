@@ -34,6 +34,8 @@ import FaqTab from "./faq";
 import ShadowGuideTab from "./shadow";
 import LoreTab from "./lore";
 import MovesTab from "./moves";
+import BattleGuideTab from "./battle";
+import ForumGuideTab from "./forums";
 
 /**
  * Public data library. Any visitor (signed in or not) can browse the system's
@@ -517,6 +519,24 @@ const WINGS: Wing[] = [
     blurb: "Experience, friendship, shadow and purification, and how to cure a shadowed pokemon.",
     accent: "#9775fa",
     content: <ShadowGuideTab />,
+  },
+  {
+    value: "battle",
+    name: "The War Room",
+    callNo: "GN · 030",
+    meta: "Battle guide",
+    blurb: "Stars, health, damage, run-away and type effectiveness: how posting fights work.",
+    accent: "#E54156",
+    content: <BattleGuideTab />,
+  },
+  {
+    value: "forums",
+    name: "The Charter",
+    callNo: "GN · 020",
+    meta: "Forum guide",
+    blurb: "What each forum is for, who can create threads, and where gated things start.",
+    accent: "#4049C9",
+    content: <ForumGuideTab />,
   },
   {
     value: "lists",

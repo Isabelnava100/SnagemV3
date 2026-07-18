@@ -454,7 +454,11 @@ export function EncounterPostPanel(props: {
               <Text fz={12} c="dimmed">
                 {(value.progress ?? 0) >= value.required
                   ? "It's beaten. Use a Poke Ball in this post to catch it, or roll a new encounter to move on."
-                  : `Health: ${value.required - Math.min(value.progress ?? 0, value.required)}/${value.required} posts. Keep posting to wear it down, then throw a ball.`}
+                  : `Health: ${
+                      Math.round(
+                        (value.required - Math.min(value.progress ?? 0, value.required)) * 10
+                      ) / 10
+                    }/${value.required} posts. Keep posting to wear it down, then throw a ball.`}
               </Text>
             </Stack>
           )}

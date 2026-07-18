@@ -98,6 +98,7 @@ const { default: Policies } = lazyImport(() => import("./Pages/Policies"), "defa
 const { default: Library } = lazyImport(() => import("./Pages/Library"), "default");
 const { default: About } = lazyImport(() => import("./Pages/About"), "default");
 const { default: Announcements } = lazyImport(() => import("./Pages/Announcements"), "default");
+const { default: SnagAgent } = lazyImport(() => import("./Pages/SnagAgent"), "default");
 
 const { default: Settings } = lazyImport(
   () => import("./Pages/User/Dashboard/Settings"),
@@ -201,6 +202,7 @@ export default function AppRoutes() {
                     />
                     <Route path="/About" element={<About />} />
                     <Route path="/Announcements" element={<Announcements />} />
+                    <Route path="/SNAG" element={<SnagAgent />} />
                     <Route path="/Policies" element={<Policies />} />
                     <Route path="/Library" element={<Library />} />
                     <Route path="/Login" element={<Login />} />
