@@ -259,6 +259,31 @@ export default function ThreadRewards() {
         finalize with none.
       </Text>
 
+      {/* Everything the participants spent during the run, so the reviewer can
+          factor consumed balls/potions/berries into the reward decision. */}
+      {Object.keys(thread?.itemsUsedTally ?? {}).length > 0 && (
+        <ForumPanel title="Items Used in This Thread" mt={16}>
+          <Group gap={8} wrap="wrap">
+            {Object.entries(thread!.itemsUsedTally!)
+              .map(([id, v]) => ({ id, name: v?.name ?? id, qty: Number(v?.qty) || 0 }))
+              .filter((i) => i.qty > 0)
+              .sort((a, b) => b.qty - a.qty)
+              .map((i) => (
+                <Box
+                  key={i.id}
+                  px={10}
+                  py={4}
+                  style={{ borderRadius: 999, background: "#211f21", border: "1px solid #3C3A3C" }}
+                >
+                  <Text fz={12} c="rgba(255,255,255,0.85)">
+                    {i.name} <Text span c="dimmed">x{i.qty}</Text>
+                  </Text>
+                </Box>
+              ))}
+          </Group>
+        </ForumPanel>
+      )}
+
       {finalized ? (
         <ForumPanel title="Rewards Sent" mt={16}>
           <Text fz={14} c="green.0" role="status" aria-live="polite">

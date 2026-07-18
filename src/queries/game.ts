@@ -130,14 +130,28 @@ export interface StageCosts {
   legendary: number;
 }
 
+/** Level-based max HP scaling: base at level 1, +low per level up to the
+ * split, +high per level after it. */
+export interface HpScaling {
+  base: number;
+  low: number;
+  high: number;
+  split: number;
+}
+
 export interface BattleConfig {
   boss: StageCosts;
   encounter: StageCosts;
+  hp: HpScaling;
+  /** Flat damage an enemy of each star (1..7) deals per battle post. */
+  starDamage: Record<string, number>;
 }
 
 export const DEFAULT_BATTLE_CONFIG: BattleConfig = {
   boss: { stage1: 5, stage2: 10, stage3: 15, legendary: 20 },
   encounter: { stage1: 4, stage2: 7, stage3: 10, legendary: 13 },
+  hp: { base: 100, low: 2, high: 4, split: 50 },
+  starDamage: { 1: 20, 2: 30, 3: 45, 4: 60, 5: 80, 6: 100, 7: 140 },
 };
 
 const readStageCosts = (data: unknown, fallback: StageCosts): StageCosts => {
@@ -153,9 +167,25 @@ const readStageCosts = (data: unknown, fallback: StageCosts): StageCosts => {
 export const getBattleConfig = async (): Promise<BattleConfig> => {
   const { doc, getDoc } = await import("firebase/firestore");
   const data = (await getDoc(doc(db, "admin", "battle_config"))).data();
+  const hpRaw = (data?.hp ?? {}) as Partial<HpScaling>;
+  const dmgRaw = (data?.starDamage ?? {}) as Record<string, unknown>;
   return {
     boss: readStageCosts(data?.boss, DEFAULT_BATTLE_CONFIG.boss),
     encounter: readStageCosts(data?.encounter, DEFAULT_BATTLE_CONFIG.encounter),
+    hp: {
+      base: Number(hpRaw.base) || DEFAULT_BATTLE_CONFIG.hp.base,
+      low: Number.isFinite(Number(hpRaw.low)) ? Number(hpRaw.low) : DEFAULT_BATTLE_CONFIG.hp.low,
+      high: Number.isFinite(Number(hpRaw.high)) ? Number(hpRaw.high) : DEFAULT_BATTLE_CONFIG.hp.high,
+      split: Number(hpRaw.split) || DEFAULT_BATTLE_CONFIG.hp.split,
+    },
+    starDamage: Object.fromEntries(
+      [1, 2, 3, 4, 5, 6, 7].map((s) => [
+        String(s),
+        Number(dmgRaw[String(s)]) > 0
+          ? Number(dmgRaw[String(s)])
+          : DEFAULT_BATTLE_CONFIG.starDamage[String(s)],
+      ])
+    ),
   };
 };
 

@@ -77,17 +77,53 @@ const STAR_POSTS_TO_BEAT: Record<number, number> = { 1: 2, 2: 3, 3: 5, 4: 7, 5: 
 // Chance (percent) a run-away attempt succeeds, by the enemy's star. Bosses
 // and trainer-owned (non-catchable) Pokemon cannot be fled.
 const STAR_FLEE_CHANCE: Record<number, number> = { 1: 80, 2: 70, 3: 60, 4: 50, 5: 40, 6: 30, 7: 20 };
-// Damage (percent of the defender's full bar) one enemy attack deals, by the
-// enemy's star; bosses hit hardest. Applied to the post's chosen fighter.
-const STAR_ATTACK_DAMAGE: Record<number, number> = { 1: 25, 2: 30, 3: 35, 4: 40, 5: 45, 6: 50, 7: 60 };
-const BOSS_ATTACK_DAMAGE = 75;
+// Flat damage one enemy attack deals, by the enemy's star. The defender's max
+// HP is level-based (see hpConfigFrom). The user's pokemon always strikes
+// first: an enemy beaten (or a boss felled) on this post does not hit back.
+// Admins can override these per star in admin/battle_config.starDamage; a
+// boss uses its species' star damage unless the host set a custom value.
+const DEFAULT_STAR_DAMAGE: Record<number, number> = {
+  1: 20,
+  2: 30,
+  3: 45,
+  4: 60,
+  5: 80,
+  6: 100,
+  7: 140,
+};
+// Level-based max HP: level 1 = base, +low per level up to the split, +high
+// per level after it. Editable in admin/battle_config.hp.
+const DEFAULT_HP_CONFIG = { base: 100, low: 2, high: 4, split: 50 };
+function hpConfigFrom(cfg: FirebaseFirestore.DocumentData | undefined) {
+  const raw = (cfg?.hp ?? {}) as Record<string, unknown>;
+  const num = (v: unknown, d: number, max: number) => {
+    const n = Math.trunc(Number(v));
+    return Number.isFinite(n) && n >= 0 && n <= max ? n : d;
+  };
+  return {
+    base: num(raw.base, DEFAULT_HP_CONFIG.base, 100000) || DEFAULT_HP_CONFIG.base,
+    low: num(raw.low, DEFAULT_HP_CONFIG.low, 1000),
+    high: num(raw.high, DEFAULT_HP_CONFIG.high, 1000),
+    split: num(raw.split, DEFAULT_HP_CONFIG.split, 100) || DEFAULT_HP_CONFIG.split,
+  };
+}
+function maxHpForLevel(level: number, hp: ReturnType<typeof hpConfigFrom>): number {
+  const lvl = Math.max(1, Math.min(100, Math.trunc(level) || 1));
+  const lowLevels = Math.min(lvl, hp.split) - 1;
+  const highLevels = Math.max(0, lvl - hp.split);
+  return hp.base + hp.low * lowLevels + hp.high * highLevels;
+}
+function starDamageFrom(cfg: FirebaseFirestore.DocumentData | undefined, star: number): number {
+  const configured = Math.trunc(Number((cfg?.starDamage ?? {})[String(star)]));
+  if (Number.isFinite(configured) && configured > 0 && configured <= 100000) return configured;
+  return DEFAULT_STAR_DAMAGE[star] ?? DEFAULT_STAR_DAMAGE[3];
+}
 const starForDex = (idx: number): number => {
   const star = (starByDex as Record<string, number>)[String(idx)];
   return star && star >= 1 && star <= 7 ? star : 3;
 };
 const postsToBeatStar = (star: number): number => STAR_POSTS_TO_BEAT[star] ?? 5;
 const fleeChanceForStar = (star: number): number => STAR_FLEE_CHANCE[star] ?? 60;
-const attackDamageForStar = (star: number): number => STAR_ATTACK_DAMAGE[star] ?? 25;
 const GEN_CAPS = [151, 251, 386, 493, 649, 721, 809, 905, 1025];
 const GEN_NAMES = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
 
@@ -207,7 +243,27 @@ function assertOpenThread(snap: DocumentSnapshot): FirebaseFirestore.DocumentDat
   if (!snap.exists) throw new HttpsError("not-found", "Thread not found.");
   const data = snap.data()!;
   if (data.closed) throw new HttpsError("failed-precondition", "This thread is archived.");
+  if (data.paused?.active) {
+    throw new HttpsError(
+      "failed-precondition",
+      "This thread is paused after a team wipe. A staff member decides how it continues."
+    );
+  }
   return data;
+}
+
+// Battle healing: what a medicine item does when used in a battle post.
+// Potions heal the post's fighter; revives restore a fainted team pokemon.
+// Matched on the item's display name; unmatched medicine has no battle effect.
+function healEffectFor(name: string): { heal?: number; revive?: number } | null {
+  const n = name.toLowerCase();
+  if (n.includes("max revive")) return { revive: 100 };
+  if (n.includes("revive")) return { revive: 50 };
+  if (n.includes("full restore") || n.includes("max potion")) return { heal: 100 };
+  if (n.includes("hyper potion")) return { heal: 60 };
+  if (n.includes("super potion")) return { heal: 40 };
+  if (n.includes("potion")) return { heal: 20 };
+  return null;
 }
 
 function isHost(thread: FirebaseFirestore.DocumentData, member: Member): boolean {
@@ -711,7 +767,12 @@ export const publishForumPost = onCall(async (request) => {
         }
       : null;
   const member = await loadMember(uid);
-  const curve = evolveReq && evolveReq.pokemonId && evolveReq.toIdx ? await loadLevelingCurve() : [];
+  // The curve feeds both evolve-on-post and level-based battle HP; the battle
+  // config carries the admin-tunable HP scaling and per-star damage.
+  const [curve, battleCfg] = await Promise.all([
+    loadLevelingCurve(),
+    db.doc("admin/battle_config").get().then((s) => s.data()),
+  ]);
 
   const tRef = threadRef(forum, threadId);
   const pRef = pendingRef(forum, threadId, uid);
@@ -764,11 +825,12 @@ export const publishForumPost = onCall(async (request) => {
     const xpQualifies = strippedLength >= (xpConfig.minPostLength ?? 0);
     let teamPokemonIds: string[] = [];
     let ownedForXp: Record<string, any> = {};
+    let teamsData: Record<string, { pokemon_ids?: string[] }> = {};
     if (!editPostId && teamIds.length) {
       const teamsSnap = await tx.get(teamsRef);
-      const teams = (teamsSnap.data() as Record<string, { pokemon_ids?: string[] }>) ?? {};
+      teamsData = (teamsSnap.data() as Record<string, { pokemon_ids?: string[] }>) ?? {};
       teamPokemonIds = [
-        ...new Set(teamIds.flatMap((teamId) => teams[teamId]?.pokemon_ids ?? [])),
+        ...new Set(teamIds.flatMap((teamId) => teamsData[teamId]?.pokemon_ids ?? [])),
       ];
       if (teamPokemonIds.length || evolveReq) {
         ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
@@ -776,6 +838,20 @@ export const publishForumPost = onCall(async (request) => {
     } else if (evolveReq && !editPostId) {
       ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
     }
+
+    // Battle HP bookkeeping for this member: flat damage per pokemon per
+    // thread; a pokemon faints when damage reaches its level-based max HP.
+    const hpCfg = hpConfigFrom(battleCfg);
+    const damageNow: Record<string, number> = {
+      ...(((thread.battleDamage as Record<string, Record<string, number>>) ?? {})[uid] ?? {}),
+    };
+    const maxHpOf = (pokemonId: string): number =>
+      maxHpForLevel(
+        levelForXp(Number(ownedForXp[pokemonId]?.experience ?? 0), curve),
+        hpCfg
+      );
+    const isFainted = (pokemonId: string): boolean =>
+      (Number(damageNow[pokemonId]) || 0) >= maxHpOf(pokemonId);
 
     // Team lock: on a normal exp-earning thread a poster is pinned to the
     // team(s) they first posted with, so they cannot rotate teams to farm XP
@@ -789,10 +865,19 @@ export const publishForumPost = onCall(async (request) => {
     if (!editPostId && teamLockable && postTeamIds.length) {
       if (lockedTeams && lockedTeams.length) {
         if (!postTeamIds.every((t) => lockedTeams.includes(t))) {
-          throw new HttpsError(
-            "failed-precondition",
-            "You are locked to the team you first posted with on this thread."
-          );
+          // Wipe exception: a member whose whole locked team has fainted on
+          // this thread may bring a fresh team (and is re-locked to it). This
+          // only helps when the thread is not paused (a paused solo run is
+          // resolved by staff instead).
+          const lockedPokemon = lockedTeams.flatMap((t) => teamsData[t]?.pokemon_ids ?? []);
+          const wiped = lockedPokemon.length > 0 && lockedPokemon.every((id) => isFainted(id));
+          if (!wiped) {
+            throw new HttpsError(
+              "failed-precondition",
+              "You are locked to the team you first posted with on this thread."
+            );
+          }
+          setTeamLock = true; // wiped: re-lock to the fresh team
         }
       } else {
         setTeamLock = true; // first post here: remember this team
@@ -824,6 +909,7 @@ export const publishForumPost = onCall(async (request) => {
         qty: req.qty,
         isBall,
         isFood,
+        category: String(owned.category ?? ""),
         ...(req.note ? { note: req.note } : {}),
       };
     });
@@ -836,7 +922,7 @@ export const publishForumPost = onCall(async (request) => {
     let encounterBeatenSlug = "";
     // Run-away resolution and how hard the enemy hits back this post.
     let encounterFled = false;
-    let enemyAttackPct = 0;
+    let enemyAttackDmg = 0;
     // Safari encounters clear (fled / knocked out) without being caught.
     let safariCleared = false;
     const safariCfg = thread.safariContest;
@@ -944,12 +1030,12 @@ export const publishForumPost = onCall(async (request) => {
           // The escape fails: the turn is spent running, no progress is
           // landed, and the enemy still gets its hit in.
           encounter.outcome = "flee_failed";
-          if (qualifies) enemyAttackPct = attackDamageForStar(enemyStar);
+          if (qualifies) enemyAttackDmg = starDamageFrom(battleCfg, enemyStar);
         }
       } else if (!editPostId) {
         if (qualifies && progress < required) progress += 1;
         // The enemy hits back on every battle post it survives.
-        if (qualifies && progress < required) enemyAttackPct = attackDamageForStar(enemyStar);
+        if (qualifies && progress < required) enemyAttackDmg = starDamageFrom(battleCfg, enemyStar);
       }
       encounter.progress = progress;
       encounter.caught =
@@ -963,43 +1049,123 @@ export const publishForumPost = onCall(async (request) => {
       }
     }
 
-    // -- damage: the enemy's counter-attack lands on this post's fighter -----
-    // Attacking the boss also draws its (heaviest) counter-attack; if both a
-    // wild battle and a boss attack happen on one post, only the harder hit
-    // lands so a single post never doubles up.
+    // -- healing items: applied before the enemy's hit (potions heal the
+    // fighter, revives restore a fainted team pokemon). Auto-targeted.
+    const heals: Array<{ itemName: string; pokemonId: string; pokemonName: string; amount: number; revive: boolean }> = [];
+    const fighterCandidate =
+      fighterIdReq && teamPokemonIds.includes(fighterIdReq) ? fighterIdReq : undefined;
+    if (!editPostId && teamPokemonIds.length) {
+      for (const item of itemsUsed) {
+        if (String((item as any).category ?? "").toLowerCase() !== "medicine") continue;
+        const effect = healEffectFor(item.name ?? "");
+        if (!effect) continue;
+        for (let n = 0; n < item.qty; n++) {
+          if (effect.revive) {
+            const target = teamPokemonIds.find((id) => isFainted(id));
+            if (!target) break;
+            const maxHp = maxHpOf(target);
+            const restored = Math.round((maxHp * effect.revive) / 100);
+            damageNow[target] = Math.max(0, maxHp - restored);
+            heals.push({
+              itemName: item.name,
+              pokemonId: target,
+              pokemonName: String(ownedForXp[target]?.species ?? ownedForXp[target]?.name ?? "A pokemon"),
+              amount: restored,
+              revive: true,
+            });
+          } else if (effect.heal) {
+            const target =
+              fighterCandidate && !isFainted(fighterCandidate)
+                ? fighterCandidate
+                : teamPokemonIds.find((id) => (Number(damageNow[id]) || 0) > 0 && !isFainted(id));
+            if (!target) break;
+            const amount =
+              effect.heal >= 100
+                ? Number(damageNow[target]) || 0
+                : Math.min(Number(damageNow[target]) || 0, effect.heal);
+            damageNow[target] = Math.max(0, (Number(damageNow[target]) || 0) - amount);
+            heals.push({
+              itemName: item.name,
+              pokemonId: target,
+              pokemonName: String(ownedForXp[target]?.species ?? ownedForXp[target]?.name ?? "A pokemon"),
+              amount,
+              revive: false,
+            });
+          }
+        }
+      }
+    }
+
+    // -- damage: the enemy's counter-attack lands on this post's fighter.
+    // The user's pokemon always strikes first, so an enemy beaten this post
+    // never hits back; the same applies to a boss felled by this attack post.
+    // If both a wild battle and a boss attack happen on one post, only the
+    // harder hit lands so a single post never doubles up.
     if (!editPostId && request.data?.attackBoss === true && bossActiveForUser) {
-      enemyAttackPct = Math.max(enemyAttackPct, BOSS_ATTACK_DAMAGE);
+      const boss = thread.bossBattle;
+      const bossFalls =
+        (Number(boss.attackPosts) || 0) + 1 >= (Number(boss.requiredPosts) || Infinity);
+      if (!bossFalls) {
+        const bossIdx = Number(catalogBySlug.get(String(boss.slug))?.idx ?? 0);
+        const bossDmg =
+          Number(boss.attackDamage) > 0
+            ? Math.trunc(Number(boss.attackDamage))
+            : starDamageFrom(battleCfg, starForDex(bossIdx));
+        enemyAttackDmg = Math.max(enemyAttackDmg, bossDmg);
+      }
     }
     let battleBlock: Record<string, unknown> | null = null;
-    if (!editPostId && enemyAttackPct > 0 && teamPokemonIds.length) {
+    if (!editPostId && enemyAttackDmg > 0 && teamPokemonIds.length) {
       const fighterId =
-        fighterIdReq && teamPokemonIds.includes(fighterIdReq) ? fighterIdReq : teamPokemonIds[0];
-      const damageMap =
-        ((thread.battleDamage as Record<string, Record<string, number>>) ?? {})[uid] ?? {};
-      const current = Math.max(0, Math.min(100, Number(damageMap[fighterId]) || 0));
-      if (current >= 100) {
+        fighterCandidate ?? teamPokemonIds.find((id) => !isFainted(id)) ?? teamPokemonIds[0];
+      if (isFainted(fighterId)) {
         throw new HttpsError(
           "failed-precondition",
           "That pokemon has fainted on this thread. Choose another team pokemon to fight."
         );
       }
-      const total = Math.min(100, current + enemyAttackPct);
+      const maxHp = maxHpOf(fighterId);
+      const total = Math.min(maxHp, (Number(damageNow[fighterId]) || 0) + enemyAttackDmg);
+      damageNow[fighterId] = total;
       const fighterInfo = ownedForXp[fighterId] ?? {};
       battleBlock = {
         fighterId,
         fighterName: String(fighterInfo.species ?? fighterInfo.name ?? "Your pokemon"),
         fighterSlug: String(fighterInfo.image_slug ?? ""),
-        damageTaken: enemyAttackPct,
-        hpLeft: 100 - total,
-        fainted: total >= 100,
+        damageTaken: enemyAttackDmg,
+        maxHp,
+        hpLeft: maxHp - total,
+        fainted: total >= maxHp,
       };
+    }
+    if (battleBlock && heals.length) (battleBlock as any).heals = heals;
+    const healsOnlyBlock =
+      !battleBlock && heals.length
+        ? { heals, fighterId: "", fighterName: "", fighterSlug: "", damageTaken: 0, maxHp: 0, hpLeft: 0, fainted: false }
+        : null;
+
+    // -- team wipe: pausing the thread is the fallback when the member cannot
+    // recover on their own. With other participants in the thread the member
+    // simply brings another team/character next post (lock lifts on a wipe).
+    let pauseThread = false;
+    if (
+      !editPostId &&
+      battleBlock?.fainted &&
+      teamPokemonIds.length &&
+      teamPokemonIds.every((id) => isFainted(id))
+    ) {
+      const others = Object.keys((thread.participants as Record<string, unknown>) ?? {}).filter(
+        (k) => k !== uid
+      );
+      if (!others.length) pauseThread = true;
     }
 
     const blocks: Record<string, unknown> = {};
     if (encounter) blocks.encounters = [encounter];
     if (battleBlock) blocks.battle = battleBlock;
+    else if (healsOnlyBlock) blocks.battle = healsOnlyBlock;
     if (itemsUsed.length) {
-      blocks.itemsUsed = itemsUsed.map(({ isBall, isFood, ...item }) => item);
+      blocks.itemsUsed = itemsUsed.map(({ isBall, isFood, category, ...item }) => item);
     }
     if (pending.dice) blocks.dice = [pending.dice];
     if (pending.random) blocks.randoms = [pending.random];
@@ -1185,6 +1351,19 @@ export const publishForumPost = onCall(async (request) => {
         randoms: [...(prevBlocks.randoms ?? []), ...((blocks.randoms as any[]) ?? [])],
       };
       tx.update(editSnap.ref, { text: html, blocks: merged, editedAt: now });
+      // Items added during an edit still count toward the thread's tally.
+      if (itemsUsed.length) {
+        tx.update(
+          tRef,
+          Object.fromEntries(
+            itemsUsed.flatMap((i) => [
+              [`itemsUsedTally.${i.itemId}.qty`, FieldValue.increment(i.qty)],
+              [`itemsUsedTally.${i.itemId}.name`, i.name],
+              [`itemsUsedTally.${i.itemId}.filePath`, i.filePath ?? ""],
+            ])
+          )
+        );
+      }
       resultPostId = editPostId;
     } else {
       tx.create(newPostRef!, {
@@ -1229,11 +1408,39 @@ export const publishForumPost = onCall(async (request) => {
           ...(encounterBeatenSlug
             ? { defeatedEncounters: FieldValue.arrayUnion(encounterBeatenSlug) }
             : {}),
-          // Damage is per pokemon per thread; 100 = fainted for this thread.
-          ...(battleBlock
+          // Per-pokemon damage entries that changed this post (heals + hit).
+          ...Object.fromEntries(
+            Object.entries(damageNow)
+              .filter(
+                ([id, v]) =>
+                  (Number(
+                    (((thread.battleDamage as Record<string, Record<string, number>>) ?? {})[
+                      uid
+                    ] ?? {})[id]
+                  ) || 0) !== v
+              )
+              .map(([id, v]) => [`battleDamage.${uid}.${id}`, v])
+          ),
+          // Running tally of every item spent on this thread, shown to the
+          // staff reviewer at close.
+          ...Object.fromEntries(
+            itemsUsed.flatMap((i) => [
+              [`itemsUsedTally.${i.itemId}.qty`, FieldValue.increment(i.qty)],
+              [`itemsUsedTally.${i.itemId}.name`, i.name],
+              [`itemsUsedTally.${i.itemId}.filePath`, i.filePath ?? ""],
+            ])
+          ),
+          // A solo team wipe pauses the thread until staff decide how it
+          // continues (revive, item recovery, or close as a loss).
+          ...(pauseThread
             ? {
-                [`battleDamage.${uid}.${battleBlock.fighterId}`]:
-                  100 - Number(battleBlock.hpLeft),
+                paused: {
+                  active: true,
+                  uid,
+                  name: member.username,
+                  reason: "team_wiped",
+                  at: now,
+                },
               }
             : {}),
         })
@@ -1302,9 +1509,27 @@ export const publishForumPost = onCall(async (request) => {
       snagCaught: encounterCaught,
       evolved: evolvedInfo,
       shadowed: shadowedNames,
+      paused: pauseThread,
     };
   });
   const { postId, snagCaught, evolved: evolvedInfo, shadowed: shadowedNames } = txResult;
+
+  // A team wipe paused the thread: tell the member and ping the staff who can
+  // resolve it (revive, allow item recovery, or close as a loss).
+  if (txResult.paused && !editPostId) {
+    const link = `/Forum/${forum}/thread/${threadId}/last`;
+    await notifyUsers([uid], {
+      type: "thread_paused",
+      text: "Your whole team fainted, so the thread is paused while staff decide how it continues.",
+      link,
+    });
+    const staff = await staffUidsWithCaps(["GiveItems", "ReviewRewards"]);
+    await notifyUsers(staff, {
+      type: "thread_paused",
+      text: `${member.username}'s team was wiped; a paused thread needs a staff decision.`,
+      link,
+    });
+  }
 
   // Post-commit notifications: bookmark watchers + @mentions (Q7).
   if (!editPostId && threadForNotify) {
@@ -2488,9 +2713,10 @@ export const setBossBattle = onCall(async (request) => {
     legendary: 20,
   };
   let bossRequiredPosts = DEFAULT_BOSS_COSTS[bossStage];
+  let bossBattleCfg: FirebaseFirestore.DocumentData | undefined;
   if (action === "start") {
-    const cfg = (await db.doc("admin/battle_config").get()).data();
-    const configured = Number(cfg?.boss?.[bossStage]);
+    bossBattleCfg = (await db.doc("admin/battle_config").get()).data();
+    const configured = Number(bossBattleCfg?.boss?.[bossStage]);
     if (Number.isFinite(configured) && configured > 0) {
       bossRequiredPosts = Math.min(200, configured);
     }
@@ -2518,6 +2744,13 @@ export const setBossBattle = onCall(async (request) => {
         .slice(0, 100)
         .map((n: unknown) => String(n).slice(0, 100));
 
+      // How hard the boss hits back per attack post. Defaults to its species'
+      // star damage; the host/admin can override it when starting the battle.
+      const requestedDmg = Math.trunc(Number(request.data?.attackDamage));
+      const attackDamage =
+        Number.isFinite(requestedDmg) && requestedDmg > 0 && requestedDmg <= 100000
+          ? requestedDmg
+          : starDamageFrom(bossBattleCfg, starForDex(Number(info.idx ?? 0)));
       const boss = {
         active: true,
         slug,
@@ -2528,6 +2761,7 @@ export const setBossBattle = onCall(async (request) => {
         stage: bossStage,
         requiredPosts: bossRequiredPosts,
         attackPosts: 0,
+        attackDamage,
       };
       bossName = info.name;
       participantsToNotify = Object.keys(thread.participants ?? {}).filter((p) => p !== uid);
@@ -2856,6 +3090,64 @@ export const onThreadClosed = onDocumentUpdated(
     });
   }
 );
+
+/**
+ * Staff decision on a paused thread (a member's whole team fainted on a solo
+ * run). "revive" clears that member's battle damage and resumes the thread;
+ * "resume" resumes it with the damage kept so the member recovers with
+ * potion/revive items in their next posts. Closing as a loss is the normal
+ * close flow (the pause does not block staff from closing).
+ */
+export const resolveThreadPause = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  if (!isAdmin(member) && !member.capabilities.includes("ReviewRewards")) {
+    throw new HttpsError("permission-denied", "Only staff can resolve a paused thread.");
+  }
+  const forum = requireString(request.data?.forum, "forum", 60);
+  const threadId = requireString(request.data?.threadId, "threadId", 20);
+  const action = request.data?.action;
+  if (action !== "revive" && action !== "resume") {
+    throw new HttpsError("invalid-argument", "Unknown pause action.");
+  }
+
+  let pausedUid = "";
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(threadRef(forum, threadId));
+    if (!snap.exists) throw new HttpsError("not-found", "Thread not found.");
+    const thread = snap.data()!;
+    if (!thread.paused?.active) {
+      throw new HttpsError("failed-precondition", "This thread is not paused.");
+    }
+    pausedUid = String(thread.paused.uid ?? "");
+    tx.update(threadRef(forum, threadId), {
+      paused: {
+        active: false,
+        uid: pausedUid,
+        name: String(thread.paused.name ?? ""),
+        reason: String(thread.paused.reason ?? ""),
+        resolvedBy: member.username,
+        action,
+        resolvedAt: new Date(),
+      },
+      ...(action === "revive" && pausedUid
+        ? { [`battleDamage.${pausedUid}`]: FieldValue.delete() }
+        : {}),
+    });
+  });
+
+  if (pausedUid) {
+    await notifyUsers([pausedUid], {
+      type: "thread_resumed",
+      text:
+        action === "revive"
+          ? "A staff member revived your team; the thread is open again."
+          : "The thread is open again. Use potions or revives in your next post to recover your team.",
+      link: `/Forum/${forum}/thread/${threadId}/last`,
+    });
+  }
+  return { ok: true };
+});
 
 // ===========================================================================
 // Snag Mall, Missions, and Research economy callables

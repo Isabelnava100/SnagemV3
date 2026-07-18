@@ -41,21 +41,34 @@ export const STAR_FLEE_CHANCE: Record<EncounterStar, number> = {
 };
 
 /**
- * Damage (percent of the defender's full health bar) an enemy of this star
- * deals with one attack (one battle post). A pokemon's own health bar is
- * always 100%, drawn with as many segments as its own star's posts-to-beat.
- * Bosses hit hardest; trainer-owned Pokemon hit like wilds of their star.
+ * Flat damage an enemy of this star deals with one attack (one battle post).
+ * The defender's max HP is level-based (see maxHpForLevel); its bar renders
+ * with as many segments as its own star's posts-to-beat. The user's pokemon
+ * always strikes first, so an enemy beaten this post never hits back. Admins
+ * can override these per star (and the HP scaling) in Admin > Battle Costs;
+ * a boss uses its species' star damage unless the host set a custom value.
  */
 export const STAR_ATTACK_DAMAGE: Record<EncounterStar, number> = {
-  1: 25,
+  1: 20,
   2: 30,
-  3: 35,
-  4: 40,
-  5: 45,
-  6: 50,
-  7: 60,
+  3: 45,
+  4: 60,
+  5: 80,
+  6: 100,
+  7: 140,
 };
-export const BOSS_ATTACK_DAMAGE = 75;
+
+/** Default level-based max HP scaling (admin-editable in Battle Costs). */
+export const DEFAULT_HP_SCALING = { base: 100, low: 2, high: 4, split: 50 };
+
+/** Max HP for a pokemon of this level under the given (or default) scaling. */
+export function maxHpForLevel(
+  level: number,
+  hp: { base: number; low: number; high: number; split: number } = DEFAULT_HP_SCALING
+): number {
+  const lvl = Math.max(1, Math.min(100, Math.trunc(level) || 1));
+  return hp.base + hp.low * (Math.min(lvl, hp.split) - 1) + hp.high * Math.max(0, lvl - hp.split);
+}
 
 /** Star rating for a national dex number (defaults to 3 for unknown). */
 export function starForDex(idx: number | string): EncounterStar {

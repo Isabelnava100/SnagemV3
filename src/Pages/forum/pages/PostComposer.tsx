@@ -49,12 +49,16 @@ import UseItemsPanel, {
 import { PostActionsPanel } from "../components/composer/PostActionsPanel";
 import { ForumPanel, GameResultText, PanelHint } from "../components/ui";
 import {
-  BOSS_ATTACK_DAMAGE,
-  attackDamageForStar,
+  DEFAULT_HP_SCALING,
+  STAR_ATTACK_DAMAGE,
   fleeChanceForStar,
+  maxHpForLevel,
   postsToBeatStar,
   starForDex,
 } from "../../../lib/encounterStars";
+import { levelProgress } from "../../../lib/leveling";
+import { pokemonData } from "../../../data/pokemon";
+import { getBattleConfig } from "../../../queries/game";
 import { userMayPost } from "./ThreadView";
 import "../forum.css";
 
@@ -247,10 +251,44 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
 
   // -- battle state (wild/trainer encounters outside Safari mode) ------------
   // A live battle means the enemy hits back this post, so a fighter must be
-  // chosen from the team(s) brought into the post.
+  // chosen from the team(s) brought into the post. Damage is flat against a
+  // level-based max HP; scaling and per-star damage are admin-tunable.
+  const { data: liveBattleCfg } = useQuery({
+    queryKey: ["battle-config"],
+    queryFn: getBattleConfig,
+    enabled: mode === "new" && !thread?.safariContest,
+  });
+  const hpScaling = liveBattleCfg?.hp ?? DEFAULT_HP_SCALING;
+  const starDmg = (star: number) =>
+    Number(liveBattleCfg?.starDamage?.[String(star)]) ||
+    STAR_ATTACK_DAMAGE[(star >= 1 && star <= 7 ? star : 3) as keyof typeof STAR_ATTACK_DAMAGE];
+  const myDamage = React.useMemo(
+    () => thread?.battleDamage?.[user?.uid ?? ""] ?? {},
+    [thread, user]
+  );
+  const fighterPool = evoTeamPokemon.map((p) => {
+    const maxHp = maxHpForLevel(levelProgress(p.experience ?? 0).level, hpScaling);
+    const dmg = Math.min(maxHp, Math.max(0, myDamage[p.id] ?? 0));
+    return { pokemon: p, dmg, maxHp, hpLeft: maxHp - dmg, fainted: dmg >= maxHp };
+  });
   const myLockedTeams = thread?.lockedTeams?.[user?.uid ?? ""] ?? [];
+  // Wipe exception: a fully fainted locked team lifts the lock so the member
+  // can bring another team/character (they re-lock to the new one).
+  const lockedTeamWiped = React.useMemo(() => {
+    if (!myLockedTeams.length || !teamsRaw || !ownedForTraining) return false;
+    const ids = myLockedTeams.flatMap(
+      (tid) => teamsRaw.find((t) => t.id === tid)?.pokemon_ids ?? []
+    );
+    if (!ids.length) return false;
+    const byId = new Map(ownedForTraining.sortedData.map((p) => [p.id, p]));
+    return ids.every((id) => {
+      const poke = byId.get(id);
+      const maxHp = maxHpForLevel(levelProgress(poke?.experience ?? 0).level, hpScaling);
+      return (myDamage[id] ?? 0) >= maxHp;
+    });
+  }, [myLockedTeams, teamsRaw, ownedForTraining, myDamage, hpScaling]);
   const restrictTeams =
-    mode === "new" && !thread?.allowTeamChanges && myLockedTeams.length > 0
+    mode === "new" && !thread?.allowTeamChanges && myLockedTeams.length > 0 && !lockedTeamWiped
       ? myLockedTeams
       : undefined;
   const wildBattle =
@@ -260,18 +298,15 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const canFlee = battleOngoing && !!encounter!.catchable;
   const fighterNeeded = battleOngoing || (mode === "new" && attackBoss && bossActive);
   const enemyStar = encounter?.star ?? 3;
-  const hitPct = Math.max(
-    battleOngoing ? attackDamageForStar(enemyStar) : 0,
-    attackBoss && bossActive ? BOSS_ATTACK_DAMAGE : 0
-  );
-  const myDamage = React.useMemo(
-    () => thread?.battleDamage?.[user?.uid ?? ""] ?? {},
-    [thread, user]
-  );
-  const fighterPool = evoTeamPokemon.map((p) => {
-    const dmg = Math.min(100, Math.max(0, myDamage[p.id] ?? 0));
-    return { pokemon: p, dmg, fainted: dmg >= 100 };
-  });
+  // Boss hit: the stored per-boss value, else its species' star damage.
+  const bossHit = (() => {
+    if (!(attackBoss && bossActive && thread?.bossBattle)) return 0;
+    const stored = Number(thread.bossBattle.attackDamage);
+    if (stored > 0) return stored;
+    const idx = pokemonData.find((p) => p.slug === thread.bossBattle!.slug)?.idx;
+    return starDmg(starForDex(idx ?? 0));
+  })();
+  const hitDmg = Math.max(battleOngoing ? starDmg(enemyStar) : 0, bossHit);
   // Default the fighter to the first conscious team member.
   React.useEffect(() => {
     if (!fighterNeeded) return;
@@ -584,9 +619,9 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
             {fighterNeeded && (
               <ForumPanel title="Battle">
                 <PanelHint>
-                  The enemy hits back on every battle post. Pick which of your team
-                  pokemon takes the hit; at 100% damage it faints for the rest of
-                  this thread.
+                  Your pokemon strikes first, then the enemy hits back (unless your
+                  strike beats it). Pick which of your team pokemon takes the hit;
+                  when its HP hits zero it faints for the rest of this thread.
                 </PanelHint>
                 <Select
                   label="Your fighting pokemon"
@@ -597,7 +632,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                   }
                   data={fighterPool.map((f) => ({
                     value: f.pokemon.id,
-                    label: `${f.pokemon.species || f.pokemon.name} · HP ${100 - f.dmg}%${
+                    label: `${f.pokemon.species || f.pokemon.name} · HP ${f.hpLeft}/${f.maxHp}${
                       f.fainted ? " (fainted)" : ""
                     }`,
                     disabled: f.fainted,
@@ -615,14 +650,11 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                         const segments = postsToBeatStar(
                           starForDex(chosenFighter.pokemon.pokedex ?? 0)
                         );
-                        const hpLeft = 100 - chosenFighter.dmg;
+                        const hpPct = (chosenFighter.hpLeft / chosenFighter.maxHp) * 100;
                         return Array.from({ length: segments }).map((_, i) => {
                           const segStart = (i / segments) * 100;
                           const segSize = 100 / segments;
-                          const filled = Math.max(
-                            0,
-                            Math.min(segSize, hpLeft - segStart)
-                          );
+                          const filled = Math.max(0, Math.min(segSize, hpPct - segStart));
                           return (
                             <Progress.Section
                               key={i}
@@ -637,11 +669,23 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                       })()}
                     </Progress.Root>
                     <Text fz={12} c="dimmed">
-                      HP {100 - chosenFighter.dmg}%. This post's incoming hit: {hitPct}%
-                      of the bar
+                      HP {chosenFighter.hpLeft}/{chosenFighter.maxHp} (level{" "}
+                      {levelProgress(chosenFighter.pokemon.experience ?? 0).level}). This
+                      post's incoming hit: {hitDmg} damage
                       {attackBoss && bossActive ? " (boss attack)" : ""}.
                     </Text>
                   </Stack>
+                )}
+                <PanelHint>
+                  Healing items added under Use Items work automatically: potions heal
+                  your fighter, revives restore your first fainted pokemon, before the
+                  enemy's hit lands.
+                </PanelHint>
+                {lockedTeamWiped && (
+                  <Text fz={12} c="gold.1" role="status" aria-live="polite">
+                    Your locked team was wiped. You may bring another team or
+                    character; you will be locked to the new team.
+                  </Text>
                 )}
                 {canFlee && (
                   <Stack gap={4} mt={8}>

@@ -100,16 +100,26 @@ export interface PostBlocks {
   evolution?: { fromName: string; fromSlug: string; toName: string; toSlug: string };
   /** Pokemon that became fully shadowed on this post (shadowed system card). */
   shadowed?: { names: string[] };
-  /** The enemy's counter-attack on this post's chosen fighter. */
+  /** The enemy's counter-attack on this post's chosen fighter (flat HP). */
   battle?: {
     fighterId: string;
     fighterName: string;
     fighterSlug: string;
-    /** Percent of the fighter's full bar this hit took. */
+    /** Flat damage this hit took off the fighter (0 on a heals-only post). */
     damageTaken: number;
-    /** Percent of the bar left after the hit (0 = fainted for the thread). */
+    /** The fighter's level-based max HP at the time of the hit. */
+    maxHp?: number;
+    /** HP left after the hit (0 = fainted for the thread). */
     hpLeft: number;
     fainted: boolean;
+    /** Healing items applied this post (potions/revives, auto-targeted). */
+    heals?: Array<{
+      itemName: string;
+      pokemonId: string;
+      pokemonName: string;
+      amount: number;
+      revive: boolean;
+    }>;
   };
 }
 
@@ -169,6 +179,8 @@ export interface BossBattle {
   requiredPosts?: number;
   /** Attack posts landed so far, totalled across everyone. */
   attackPosts?: number;
+  /** Flat damage the boss deals per attack post (host override or its species' star damage). */
+  attackDamage?: number;
 }
 
 export interface ThreadParticipant {
@@ -297,8 +309,19 @@ export interface ForumThread {
   lockedTeams?: Record<string, string[]>;
   /** Host choice at creation: members may swap teams between posts. */
   allowTeamChanges?: boolean;
-  /** uid -> owned pokemon id -> damage taken on this thread (100 = fainted). */
+  /** uid -> owned pokemon id -> flat damage taken on this thread (fainted at its max HP). */
   battleDamage?: Record<string, Record<string, number>>;
+  /** Set when a solo team wipe paused the thread pending a staff decision. */
+  paused?: {
+    active: boolean;
+    uid?: string;
+    name?: string;
+    reason?: string;
+    resolvedBy?: string;
+    action?: string;
+  };
+  /** Running tally of items spent on this thread (shown to staff at close). */
+  itemsUsedTally?: Record<string, { name?: string; filePath?: string; qty?: number }>;
 }
 
 /**

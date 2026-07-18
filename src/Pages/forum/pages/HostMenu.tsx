@@ -7,6 +7,7 @@ import {
   Flex,
   Group,
   MultiSelect,
+  NumberInput,
   Radio,
   Select,
   Stack,
@@ -82,6 +83,8 @@ export default function HostMenu() {
   const [encounterConfig, setEncounterConfig] = React.useState<EncounterConfig | null>(null);
   const [bossSlug, setBossSlug] = React.useState<string | null>(null);
   const [bossDescription, setBossDescription] = React.useState("");
+  // Optional damage-per-attack-post override; empty = the species' star damage.
+  const [bossDamage, setBossDamage] = React.useState<number | "">("");
   const [bossExcluded, setBossExcluded] = React.useState<string[]>([]);
   const [saved, setSaved] = React.useState(false);
   const [saveError, setSaveError] = React.useState("");
@@ -198,6 +201,9 @@ export default function HostMenu() {
         description: bossDescription,
         excluded: bossExcluded,
         stage: battleStage(dex),
+        ...(typeof bossDamage === "number" && bossDamage > 0
+          ? { attackDamage: Math.trunc(bossDamage) }
+          : {}),
       });
     },
     onSuccess: () => {
@@ -415,6 +421,16 @@ export default function HostMenu() {
                   onChange={(e) => setBossDescription(e.currentTarget.value)}
                   autosize
                   minRows={2}
+                  styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+                />
+                <NumberInput
+                  label="Attack damage (optional)"
+                  description="Damage the boss deals to a fighter per attack post. Leave empty for its species' star damage."
+                  placeholder="Default: species star damage"
+                  value={bossDamage}
+                  onChange={(v: number | string) => setBossDamage(typeof v === "number" ? v : "")}
+                  min={1}
+                  w={isOverSm ? 260 : "100%"}
                   styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
                 />
                 <Box>

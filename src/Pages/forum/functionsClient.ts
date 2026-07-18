@@ -130,7 +130,16 @@ export const callSetBossBattle = (input: {
   excluded?: string[];
   /** Battle stage of the boss; server reads the post count from config. */
   stage?: string;
+  /** Optional flat damage per attack post; defaults to the species' star damage. */
+  attackDamage?: number;
 }) => call<{ ok: boolean }>("setBossBattle", input);
+
+/** Staff decision on a paused (team-wiped) thread: revive the team or resume as-is. */
+export const callResolveThreadPause = (input: {
+  forum: string;
+  threadId: string;
+  action: "revive" | "resume";
+}) => call<{ ok: boolean }>("resolveThreadPause", input);
 
 /**
  * Launch a Safari Contest: builds the Event thread + first post server-side and

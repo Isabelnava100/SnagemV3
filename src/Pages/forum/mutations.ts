@@ -86,7 +86,14 @@ export async function votePoll(
 export async function startBossBattle(
   forum: string,
   threadId: string,
-  boss: { slug: string; description: string; excluded: string[]; stage: string }
+  boss: {
+    slug: string;
+    description: string;
+    excluded: string[];
+    stage: string;
+    /** Optional flat damage per attack post (empty = the species' star damage). */
+    attackDamage?: number;
+  }
 ): Promise<void> {
   await callSetBossBattle({ forum, threadId, action: "start", ...boss });
 }

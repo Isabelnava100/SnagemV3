@@ -67,6 +67,13 @@ export default function CloseThreadModal(props: {
   const requirementBlocked = !!props.thread.missionId && unmetTargets.length > 0;
   const staffOverride = isAdmin(user) || canGiveRewards(user);
   const nameOf = (slug: string) => pokemonData.find((p) => p.slug === slug)?.name ?? slug;
+  // A paused (team-wiped) thread is a staff decision: the host cannot close it.
+  const pausedBlocked = !!props.thread.paused?.active && !staffOverride;
+  // Everything the participants spent on this thread, for the reviewer.
+  const itemsUsed = Object.entries(props.thread.itemsUsedTally ?? {})
+    .map(([id, v]) => ({ id, name: v?.name ?? id, qty: Number(v?.qty) || 0 }))
+    .filter((i) => i.qty > 0)
+    .sort((a, b) => b.qty - a.qty);
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async () => {
@@ -152,6 +159,42 @@ export default function CloseThreadModal(props: {
             </Box>
           )
         )}
+        {itemsUsed.length > 0 && (
+          <Box p={10} style={{ background: "#2E2D2E", borderRadius: 8 }}>
+            <Text fz={13} c="white" fw={600} mb={6}>
+              Items used in this thread
+            </Text>
+            <ScrollArea.Autosize mah={140}>
+              <Stack gap={2}>
+                {itemsUsed.map((i) => (
+                  <Group key={i.id} justify="space-between" wrap="nowrap">
+                    <Text fz={13} c="rgba(255,255,255,0.8)" truncate>
+                      {i.name}
+                    </Text>
+                    <Text fz={13} c="dimmed">
+                      x{i.qty}
+                    </Text>
+                  </Group>
+                ))}
+              </Stack>
+            </ScrollArea.Autosize>
+          </Box>
+        )}
+        {pausedBlocked && (
+          <Box
+            p={10}
+            style={{
+              background: "rgba(229,65,86,0.08)",
+              border: "1px solid rgba(229,65,86,0.45)",
+              borderRadius: 8,
+            }}
+          >
+            <Text fz={13} c="pink.0" fw={700}>
+              This thread is paused after a team wipe. A staff member decides whether
+              it resumes or closes.
+            </Text>
+          </Box>
+        )}
         {requirementBlocked && (
           <Box
             p={10}
@@ -198,10 +241,12 @@ export default function CloseThreadModal(props: {
           <GradientButtonPrimary
             radius="xl"
             loading={isPending}
-            disabled={requirementBlocked && !staffOverride}
+            disabled={(requirementBlocked && !staffOverride) || pausedBlocked}
             onClick={() => mutateAsync()}
           >
-            {requirementBlocked && staffOverride ? "Close Anyway (staff)" : "Close Thread"}
+            {(requirementBlocked || props.thread.paused?.active) && staffOverride
+              ? "Close Anyway (staff)"
+              : "Close Thread"}
           </GradientButtonPrimary>
         </Group>
       </Stack>

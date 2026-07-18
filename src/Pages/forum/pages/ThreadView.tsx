@@ -26,6 +26,10 @@ import { FORUM_ACCENT, POSTS_PER_PAGE } from "../config";
 import { safariFightBonus } from "../../../lib/safari";
 import { attackDamageForStar } from "../../../lib/encounterStars";
 import { addBookmark, removeBookmark } from "../mutations";
+import { callResolveThreadPause } from "../functionsClient";
+import { hasCapability } from "../../../lib/permissions";
+import { Capability } from "../../../components/types/typesUsed";
+import CloseThreadModal from "../components/CloseThreadModal";
 import { getForumBookmarks, getPendingActions, getPostsCount, getPostsPage, getThread } from "../queries";
 import { EncounterBlock, ForumThread } from "../types";
 import { pokemonData } from "../../../data/pokemon";
@@ -48,6 +52,7 @@ export function userIsHost(thread: ForumThread | null | undefined, user: ReturnT
 export function userMayPost(thread: ForumThread | null | undefined, user: ReturnType<typeof useAuth>["user"]): boolean {
   if (!thread || !user) return false;
   if (thread.closed) return false; // archived threads are read-only
+  if (thread.paused?.active) return false; // team wipe: staff decide first
   if (isAdmin(user) || userIsHost(thread, user)) return true;
   if (!thread.restricted) return true;
   const name = user.displayName ?? user.username;
@@ -95,6 +100,87 @@ function BossBanner(props: { boss: NonNullable<ForumThread["bossBattle"]> }) {
 }
 
 const speciesNameBySlug = new Map(pokemonData.map((p) => [p.slug, p.name]));
+
+/**
+ * Pinned banner while a thread is paused after a solo team wipe. Everyone sees
+ * why posting is blocked; staff (admin or ReviewRewards) get the resolution
+ * actions: revive the team, resume with the damage kept (item recovery), or
+ * close the thread as a loss (the normal close + rewards review).
+ */
+function PausedBanner(props: {
+  forum: string;
+  thread: ForumThread;
+  isStaff: boolean;
+  onCloseAsLoss: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [error, setError] = React.useState("");
+  const resolveMutation = useMutation({
+    mutationFn: (action: "revive" | "resume") =>
+      callResolveThreadPause({ forum: props.forum, threadId: props.thread.id, action }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["forum-thread", props.forum, props.thread.id] });
+    },
+    onError: (e) => setError((e as Error).message || "Could not resolve the pause. Try again."),
+  });
+
+  return (
+    <Box
+      mt={12}
+      p={12}
+      style={{ background: "#2a1a1e", border: "1px solid #E54156", borderRadius: 10 }}
+    >
+      <Group gap={8} wrap="wrap" align="center">
+        <Text fz={14} c="white" fw={700}>
+          Thread paused: {props.thread.paused?.name ?? "a member"}&apos;s whole team fainted.
+        </Text>
+        <Badge color="pink" variant="light" size="sm">
+          Staff decision needed
+        </Badge>
+      </Group>
+      <Text fz={12} c="dimmed" mt={4}>
+        No new posts until a staff member decides: revive the team and resume, resume
+        as-is so the member recovers with potions and revives, or close the thread as
+        a loss (rewards are reviewed at close).
+      </Text>
+      {props.isStaff && (
+        <Group gap={8} mt={10} wrap="wrap">
+          <GradientButtonPrimary
+            radius="xl"
+            size="xs"
+            loading={resolveMutation.isPending && resolveMutation.variables === "revive"}
+            onClick={() => {
+              setError("");
+              resolveMutation.mutate("revive");
+            }}
+          >
+            Revive Team & Resume
+          </GradientButtonPrimary>
+          <GradientButtonSecondary
+            radius="xl"
+            size="xs"
+            variant="light"
+            loading={resolveMutation.isPending && resolveMutation.variables === "resume"}
+            onClick={() => {
+              setError("");
+              resolveMutation.mutate("resume");
+            }}
+          >
+            Resume, Keep Damage
+          </GradientButtonSecondary>
+          <GradientButtonSecondary radius="xl" size="xs" variant="subtle" onClick={props.onCloseAsLoss}>
+            Close as a Loss
+          </GradientButtonSecondary>
+        </Group>
+      )}
+      {error && (
+        <Text fz={13} c="red.4" mt={6} role="status" aria-live="polite">
+          {error}
+        </Text>
+      )}
+    </Box>
+  );
+}
 
 /**
  * Pinned checklist on mission threads that have set foes: shows every required
@@ -239,7 +325,7 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
                     : "Beaten! It cannot be caught; it clears with your next post."
                   : `Health ${healthLeft}/${required} posts. It hits your fighter for ${attackDamageForStar(
                       enc.star ?? 3
-                    )}% each battle post. Keep posting to wear it down${
+                    )} damage each battle post. Keep posting to wear it down${
                       enc.catchable ? ", then a ball can catch it" : ""
                     }.`}
               </Text>
@@ -266,6 +352,8 @@ export default function ThreadView() {
   const { isOverSm } = useMediaQuery();
   const queryClient = useQueryClient();
 
+  // Staff "close as a loss" modal, opened from the paused-thread banner.
+  const [lossModalOpen, setLossModalOpen] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState<number>(
     isNumeric(page) ? Number(page) : 1
   );
@@ -398,6 +486,22 @@ export default function ThreadView() {
       )}
 
       {thread.bossBattle?.active && <BossBanner boss={thread.bossBattle} />}
+      {thread.paused?.active && (
+        <PausedBanner
+          forum={forum}
+          thread={thread}
+          isStaff={isAdmin(user) || hasCapability(user, Capability.ReviewRewards)}
+          onCloseAsLoss={() => setLossModalOpen(true)}
+        />
+      )}
+      {(isAdmin(user) || hasCapability(user, Capability.ReviewRewards)) && (
+        <CloseThreadModal
+          opened={lossModalOpen}
+          onClose={() => setLossModalOpen(false)}
+          forum={forum}
+          thread={thread}
+        />
+      )}
       {!!thread.missionId && !thread.closed && <MissionTargetsBanner thread={thread} />}
 
       {pending?.encounter?.slug && <EncounterBanner encounter={pending.encounter} />}

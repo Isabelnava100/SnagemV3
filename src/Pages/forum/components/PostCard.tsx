@@ -161,6 +161,19 @@ export function GameBlocks(props: { post: ForumPost }) {
   });
   if (blocks.battle) {
     const b = blocks.battle;
+    const healLines = (b.heals ?? []).map((h) =>
+      h.revive
+        ? `${h.itemName} revived ${h.pokemonName} (+${h.amount} HP).`
+        : `${h.itemName} healed ${h.pokemonName} for ${h.amount} HP.`
+    );
+    const hitLine =
+      b.damageTaken > 0
+        ? b.fainted
+          ? `${b.fighterName} took ${b.damageTaken} damage and fainted!`
+          : `${b.fighterName} took ${b.damageTaken} damage (HP ${b.hpLeft}${
+              b.maxHp ? `/${b.maxHp}` : ""
+            } left).`
+        : "";
     cards.push(
       <Flex key="battle" align="center" gap={8} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
         {b.fighterSlug && (
@@ -171,11 +184,7 @@ export function GameBlocks(props: { post: ForumPost }) {
             radius="xl"
           />
         )}
-        <GameResultText>
-          {b.fainted
-            ? `${b.fighterName} took ${b.damageTaken}% damage and fainted!`
-            : `${b.fighterName} took ${b.damageTaken}% damage (HP ${b.hpLeft}% left).`}
-        </GameResultText>
+        <GameResultText>{[...healLines, hitLine].filter(Boolean).join(" ")}</GameResultText>
       </Flex>
     );
   }

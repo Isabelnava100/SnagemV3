@@ -207,19 +207,35 @@ post as before. Bosses stay defeat-only on the older stage-based costs
 (`admin/battle_config` boss table; its encounter table is superseded by stars).
 
 ### Battle damage + run-away (needs functions deploy)
-Each battle post the enemy hits back. The poster picks a FIGHTER from the
-team(s) brought into the post (composer Battle panel); the enemy's star sets
-the hit: 25/30/35/40/45/50/60% of the fighter's bar for 1..7 star, boss 75%.
-Damage accumulates per pokemon per thread in `thread.battleDamage.{uid}.{pokemonId}`
-(100 = fainted for that thread; fainted pokemon cannot fight). A fighter's own
-health bar renders with as many segments as its own star's posts-to-beat.
+Each battle post the poster picks a FIGHTER from the team(s) brought into the
+post (composer Battle panel). Priority order: the player's pokemon strikes
+first, so an enemy beaten this post (or a boss felled by this attack post)
+never hits back. Otherwise the enemy deals FLAT damage by its star:
+20/30/45/60/80/100/140 for 1..7 star (admin-editable per star in Battle
+Costs). Max HP is level-based: 100 at level 1, +2 per level to 50, +4 per
+level after (level 100 = 398; all four values admin-editable). Bosses hit for
+their species' star damage unless the host sets a custom value at battle
+start (`bossBattle.attackDamage`). Damage accumulates per pokemon per thread
+in `thread.battleDamage.{uid}.{pokemonId}`; at max HP the pokemon faints for
+that thread. Healing items used in a post apply before the enemy's hit,
+auto-targeted (potions heal the fighter: Potion 20 / Super 40 / Hyper 60 /
+Max Potion + Full Restore full; revives restore the first fainted pokemon:
+Revive to half, Max Revive to full).
 Run-away: wild catchable encounters can be fled at post time (star-based
 success 80/70/60/50/40/30/20%); success clears the encounter, failure wastes
 the turn (no progress) and the enemy still hits. Bosses and trainer-owned
 (non-catchable) encounters cannot be fled or caught; trainer-owned ones now
-persist as full battles and auto-clear once beaten. Team lock shows in the
-composer (locked team read-only per character); hosts may untick it per
-thread ONLY at creation via "Members may change teams between posts"
+persist as full battles and auto-clear once beaten.
+Team wipe: if a member's whole team faints on a solo thread, the thread
+PAUSES (`thread.paused`, posting blocked) until staff (admin/ReviewRewards)
+resolve it from the pinned banner via `resolveThreadPause`: revive the team,
+resume with damage kept (item recovery), or close as a loss through the
+normal close + rewards review. With other participants present there is no
+pause: the wiped member's team lock lifts and they re-lock to a fresh team.
+`thread.itemsUsedTally` records every item spent; CloseThreadModal and
+ThreadRewards show it to the reviewer. Team lock shows in the composer
+(locked team read-only per character); hosts may untick it per thread ONLY at
+creation via "Members may change teams between posts"
 (`thread.allowTeamChanges`).
 
 ### Mission close requirements (needs functions deploy)

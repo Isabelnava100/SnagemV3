@@ -507,6 +507,74 @@ export function BattleCostsSection() {
         label="Encounter capture (posts)"
         hint="Posts needed before a rolled encounter can be caught."
       />
+
+      <Stack gap={8} maw={560}>
+        <Title order={3} c="white" size={16} fw={600}>
+          Pokemon health (level scaling)
+        </Title>
+        <Text fz={12} c="dimmed">
+          Max HP is level-based: base HP at level 1, plus the lower gain per level
+          up to the split level, then the higher gain per level after it. Defaults:
+          100 base, +2 to level 50, +4 after (level 100 = 398 HP).
+        </Text>
+        <SimpleGrid cols={{ base: 2, xs: 4 }} spacing={10}>
+          {(
+            [
+              ["base", "Base HP (level 1)"],
+              ["low", "Gain / level (early)"],
+              ["high", "Gain / level (late)"],
+              ["split", "Split level"],
+            ] as const
+          ).map(([key, label]) => (
+            <Stack gap={2} key={key}>
+              <Text fz={11} c="dimmed">
+                {label}
+              </Text>
+              <NumberInput
+                value={form.hp[key]}
+                onChange={(v) => {
+                  setSaved(false);
+                  setForm({ ...form, hp: { ...form.hp, [key]: Math.max(0, Number(v) || 0) } });
+                }}
+                min={0}
+                styles={{ input: { background: "#2E2D2E" } }}
+              />
+            </Stack>
+          ))}
+        </SimpleGrid>
+      </Stack>
+
+      <Stack gap={8} maw={560}>
+        <Title order={3} c="white" size={16} fw={600}>
+          Enemy attack damage (by star)
+        </Title>
+        <Text fz={12} c="dimmed">
+          Flat damage an enemy of each star deals to the chosen fighter per battle
+          post. Bosses use their species&apos; star damage unless the host sets a
+          custom value at battle start. Defaults: 20 / 30 / 45 / 60 / 80 / 100 / 140.
+        </Text>
+        <SimpleGrid cols={{ base: 4, xs: 7 }} spacing={10}>
+          {[1, 2, 3, 4, 5, 6, 7].map((star) => (
+            <Stack gap={2} key={star}>
+              <Text fz={11} c="dimmed">
+                {star}★
+              </Text>
+              <NumberInput
+                value={form.starDamage[String(star)]}
+                onChange={(v) => {
+                  setSaved(false);
+                  setForm({
+                    ...form,
+                    starDamage: { ...form.starDamage, [String(star)]: Math.max(1, Number(v) || 1) },
+                  });
+                }}
+                min={1}
+                styles={{ input: { background: "#2E2D2E" } }}
+              />
+            </Stack>
+          ))}
+        </SimpleGrid>
+      </Stack>
       {saved && (
         <Text fz={13} c="green.0" role="status" aria-live="polite">
           Battle costs saved.
