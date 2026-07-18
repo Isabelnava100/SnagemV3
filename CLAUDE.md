@@ -100,14 +100,25 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 - Encounter stars + mission close requirements (July 2026) need a functions
   deploy: every species has a star 1..7 (`scripts/gen-stars.mjs` regenerates
   `starByDex.json` in both `functions/src/` and `src/data/pokemon/`; 6 star =
-  pseudo-legendary = 8 posts, 7 star = legendary/mythical = 12 posts, 1..5 =
-  3/4/5/6/7 posts). Normal encounters now roll gender/shiny up front, drain a
+  pseudo-legendary, 7 star = legendary/mythical). Posts to beat by star:
+  2/3/5/7/9/12/20. Normal encounters roll gender/shiny up front, drain a
   health bar, and count as beaten at zero; mission threads track
   `defeatedEncounters` vs `requiredEncounters` and CloseThreadModal blocks
   close (with staff override) until all set foes are beaten. Safari keeps its
   own 1..5 scale. Admins can override any species' star from the Library
   Pokedex (stored in `admin/star_overrides`, read by `rollEncounter`, audited
   as `stars.edit`). Details: docs/FORUM.md.
+- Battle damage + run-away (July 2026) need a functions deploy: wild
+  encounters can be fled at post time (success 80/70/60/50/40/30/20% by star;
+  failure wastes the turn and the enemy still hits); trainer-owned
+  (non-catchable) encounters battle to the end (no flee, no catch,
+  auto-clear when beaten). Every battle post picks a fighter from the locked
+  team; the enemy hits it for 25/30/35/40/45/50/60% by star (boss 75%),
+  tracked in `thread.battleDamage` (100 = fainted for that thread). Team lock
+  is now also enforced in the composer UI (locked team shown read-only), and
+  hosts can opt out with the creation-only "Members may change teams between
+  posts" checkbox (`thread.allowTeamChanges`). Constants live in
+  `src/lib/encounterStars.ts` + mirrored in `functions/src/index.ts`.
 - Forum-first flows (July 2026) need a functions + rules deploy before they work live: new callables `ensureTrainingThread`, `pickUpMission`, `requestChallenge`, `resolveChallengeRequest`, `requestMasterClearance`, `resolveMasterClearance`, updated `buyLottoTicket`/`logTrainingPost`/`onThreadClosed`, plus the `challengeRequests` and `masterClearanceRequests` rules blocks. After deploying, run `node scripts/seed-mission-encounters.mjs` from `functions/` (gcloud ADC; `--check` validates slugs offline) to seed per-mission encounter lists. Mission-default lists carry `missionDefault: true` and stay hidden from Field Registers and the host encounter picker.
 - Training posts now flow through the forum: the Colosseum "Log a Training Post" button opens the pinned "Super Training Room Log" thread (`trainingLog: true`, created on first use) and the composer calls `logTrainingPost` (10-post window cap) before publishing. Direct replies to that thread bounce to /Colosseum.
 - Mission grading: closing a thread with `missionId` auto-files the pending `missionSubmissions` doc (onThreadClosed); the manual submit form was removed from the mission brief.

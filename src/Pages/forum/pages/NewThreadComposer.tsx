@@ -76,6 +76,7 @@ export default function NewThreadComposer() {
   const [tags, setTags] = React.useState<string[]>([]);
   const [instructions, setInstructions] = React.useState("");
   const [noXp, setNoXp] = React.useState(false);
+  const [allowTeamChanges, setAllowTeamChanges] = React.useState(false);
   const [characters, setCharacters] = React.useState<PostCharacter[]>([]);
   const [encounterConfig, setEncounterConfig] = React.useState<EncounterConfig | null>(null);
   const [poll, setPoll] = React.useState<ThreadPoll | null>(null);
@@ -133,6 +134,7 @@ export default function NewThreadComposer() {
       if (typeof s.instructions === "string") setInstructions(s.instructions);
       if (typeof s.pinned === "boolean") setPinned(s.pinned);
       if (typeof s.restricted === "boolean") setRestricted(s.restricted);
+      if (typeof s.allowTeamChanges === "boolean") setAllowTeamChanges(s.allowTeamChanges);
       if (s.allowedPosters) setAllowedPosters(s.allowedPosters);
       if (s.characters) setCharacters(s.characters);
       if (s.encounterConfig !== undefined) setEncounterConfig(s.encounterConfig);
@@ -184,6 +186,7 @@ export default function NewThreadComposer() {
         restricted,
         allowedPosters: restricted ? allowedPosters : [],
         noXp,
+        allowTeamChanges,
         poll,
         encounterConfig,
         characters,
@@ -210,6 +213,7 @@ export default function NewThreadComposer() {
         pinned,
         restricted,
         allowedPosters,
+        allowTeamChanges,
         characters,
         encounterConfig,
         poll,
@@ -368,6 +372,21 @@ export default function NewThreadComposer() {
                     label="Posting in this thread does not give experience or stats"
                     checked={noXp}
                     onChange={(e) => setNoXp(e.currentTarget.checked)}
+                    color="green.0"
+                    styles={{ label: { color: "white", fontSize: 13 } }}
+                  />
+                </Tooltip>
+
+                <Tooltip
+                  multiline
+                  w={280}
+                  withArrow
+                  label="Normally each member is locked to the team they bring in their first post here, and battle damage sticks to those pokemon. Check this to let members swap teams between posts. This choice is only available now, at creation."
+                >
+                  <Checkbox
+                    label="Members may change teams between posts"
+                    checked={allowTeamChanges}
+                    onChange={(e) => setAllowTeamChanges(e.currentTarget.checked)}
                     color="green.0"
                     styles={{ label: { color: "white", fontSize: 13 } }}
                   />

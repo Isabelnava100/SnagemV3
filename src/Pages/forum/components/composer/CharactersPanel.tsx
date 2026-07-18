@@ -25,10 +25,17 @@ export default function CharactersPanel(props: {
   onChange: (next: PostCharacter[]) => void;
   /** Edit mode: published characters are read-only. */
   locked?: boolean;
+  /**
+   * Team lock: after the first post on a locked thread, characters can only
+   * bring these team ids. With a single locked team it is auto-assigned and
+   * shown read-only.
+   */
+  restrictToTeamIds?: string[];
   hint?: string;
 }) {
   const { user } = useAuth();
   const { value, onChange, locked } = props;
+  const restrictTo = props.restrictToTeamIds?.length ? props.restrictToTeamIds : null;
 
   const { data: characters } = useQuery({
     queryKey: ["get-characters", user?.uid],
@@ -56,6 +63,7 @@ export default function CharactersPanel(props: {
     (characterId: string) =>
       (teams?.sortedData ?? [])
         .filter((team) => !team.characterId || team.characterId === characterId)
+        .filter((team) => !restrictTo || restrictTo.includes(team.id))
         .map((team) => ({
           value: team.id,
           label: `${team.team_name || "Unnamed team"}: ${team.pokemons
@@ -63,7 +71,7 @@ export default function CharactersPanel(props: {
             .slice(0, 4)
             .join(", ")}${team.pokemons.length > 4 ? "..." : ""}`,
         })),
-    [teams]
+    [teams, restrictTo]
   );
 
   const toggleCharacter = (characterId: string, checked: boolean) => {
@@ -73,13 +81,26 @@ export default function CharactersPanel(props: {
       onChange(value.filter((c) => c.id !== characterId));
       return;
     }
+    // On a team-locked thread with a single locked team, assign it right away
+    // so the member never has to (or can) pick.
+    const lockedTeam =
+      restrictTo && restrictTo.length === 1
+        ? teams?.sortedData.find((t) => t.id === restrictTo[0])
+        : undefined;
     onChange([
       ...value,
       {
         id: character.id,
         name: character.name,
         imageURL: character.imageURL ?? "",
-        pokemon: [],
+        ...(lockedTeam
+          ? { teamId: lockedTeam.id, teamName: lockedTeam.team_name }
+          : {}),
+        pokemon: lockedTeam
+          ? (lockedTeam.pokemons ?? [])
+              .slice(0, 6)
+              .map((p) => ({ slug: p.image_slug, name: p.name }))
+          : [],
       },
     ]);
   };
@@ -154,16 +175,29 @@ export default function CharactersPanel(props: {
                 />
                 {picked && (
                   <Stack gap={6} pl={30}>
-                    <Text fz={11} c="dimmed">
-                      Select the team to use. Its Pokemon are the ones that earn
-                      experience and rewards from this post.
-                    </Text>
+                    {restrictTo ? (
+                      <Text fz={11} c="dimmed">
+                        You are locked to the team from your first post on this
+                        thread. This is the team fighting with you here.
+                      </Text>
+                    ) : (
+                      <Text fz={11} c="dimmed">
+                        Select the team to use. Its Pokemon are the ones that earn
+                        experience and rewards from this post.
+                      </Text>
+                    )}
                     <Select
                       placeholder="Select the team to use"
+                      aria-label="Team for this character"
                       data={teamOptionsFor(character.id)}
                       value={picked.teamId ?? null}
                       onChange={(teamId) => pickTeam(character.id, teamId)}
-                      clearable
+                      clearable={!restrictTo}
+                      disabled={
+                        !!restrictTo &&
+                        !!picked.teamId &&
+                        teamOptionsFor(character.id).length <= 1
+                      }
                       size="xs"
                       nothingFoundMessage="No teams for this character yet"
                       searchable

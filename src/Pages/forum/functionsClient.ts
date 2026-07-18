@@ -48,6 +48,10 @@ export const callPublishPost = (input: {
   attackBoss?: boolean;
   /** Safari Contest turn: fight the wild Pokemon, feed it, or throw a ball. */
   safariAction?: "fight" | "berry" | "ball";
+  /** Try to run away from the wild encounter this post (star-based roll). */
+  fleeAttempt?: boolean;
+  /** Owned pokemon id (from the locked team) taking the enemy's hits. */
+  fighterId?: string;
   /** Evolve a team pokemon on publish (validated + applied server-side). */
   evolve?: { pokemonId: string; toIdx: number } | null;
 }) => call<{ postId: string }>("publishForumPost", input);
@@ -70,6 +74,8 @@ export const callPublishThread = (input: {
   xpAward?: "instant" | "onClose";
   /** When true, posting in this thread earns no experience/stats. */
   noXp?: boolean;
+  /** Host choice at creation: members may swap teams between posts. */
+  allowTeamChanges?: boolean;
   attachSignature?: boolean;
 }) => call<{ threadId: string }>("publishForumThread", input);
 

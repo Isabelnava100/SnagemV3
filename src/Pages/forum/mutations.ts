@@ -35,6 +35,7 @@ export interface PublishThreadInput {
   xpConfig?: Record<string, number> | null;
   xpAward?: "instant" | "onClose";
   noXp?: boolean;
+  allowTeamChanges?: boolean;
   attachSignature?: boolean;
 }
 
@@ -57,6 +58,10 @@ export interface PublishPostInput {
   attackBoss?: boolean;
   /** Safari Contest turn: fight the wild Pokemon, feed it, or throw a ball. */
   safariAction?: "fight" | "berry" | "ball";
+  /** Try to run away from the wild encounter this post (star-based roll). */
+  fleeAttempt?: boolean;
+  /** Owned pokemon id (from the locked team) taking the enemy's hits. */
+  fighterId?: string;
   /** Evolve a team pokemon on publish (validated + applied server-side). */
   evolve?: { pokemonId: string; toIdx: number } | null;
 }

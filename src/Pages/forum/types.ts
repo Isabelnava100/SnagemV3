@@ -58,7 +58,9 @@ export interface EncounterBlock {
   /** Failed ball throws so far (some balls key off this). */
   failCount?: number;
   /** What happened on the post this block is attached to. */
-  outcome?: "weakened" | "fed" | "fled" | "ko" | "caught" | "missed";
+  outcome?: "weakened" | "fed" | "fled" | "ko" | "caught" | "missed" | "flee_failed";
+  /** The success chance (percent) shown when a run-away was attempted. */
+  fleeChance?: number;
   /** The catch chance shown when a ball was thrown (for the post log). */
   catchChance?: number;
 }
@@ -98,6 +100,17 @@ export interface PostBlocks {
   evolution?: { fromName: string; fromSlug: string; toName: string; toSlug: string };
   /** Pokemon that became fully shadowed on this post (shadowed system card). */
   shadowed?: { names: string[] };
+  /** The enemy's counter-attack on this post's chosen fighter. */
+  battle?: {
+    fighterId: string;
+    fighterName: string;
+    fighterSlug: string;
+    /** Percent of the fighter's full bar this hit took. */
+    damageTaken: number;
+    /** Percent of the bar left after the hit (0 = fainted for the thread). */
+    hpLeft: number;
+    fainted: boolean;
+  };
 }
 
 export type PostType = "user" | "boss_start" | "boss_end" | "evolution" | "shadowed";
@@ -282,6 +295,10 @@ export interface ForumThread {
   noXp?: boolean;
   /** uid -> the team(s) that user is locked to on this thread (anti-farm). */
   lockedTeams?: Record<string, string[]>;
+  /** Host choice at creation: members may swap teams between posts. */
+  allowTeamChanges?: boolean;
+  /** uid -> owned pokemon id -> damage taken on this thread (100 = fainted). */
+  battleDamage?: Record<string, Record<string, number>>;
 }
 
 /**
@@ -296,6 +313,7 @@ export interface ComposerDraftSettings {
   pinned?: boolean;
   restricted?: boolean;
   allowedPosters?: string[];
+  allowTeamChanges?: boolean;
   characters?: PostCharacter[];
   encounterConfig?: EncounterConfig | null;
   poll?: ThreadPoll | null;

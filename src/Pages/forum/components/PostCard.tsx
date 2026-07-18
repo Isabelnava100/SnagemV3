@@ -135,13 +135,20 @@ export function GameBlocks(props: { post: ForumPost }) {
     );
   }
   blocks.encounters?.forEach((enc, i) => {
+    const fleeLine =
+      enc.outcome === "fled"
+        ? ` They tried to run away (${enc.fleeChance ?? "?"}% chance) and escaped!`
+        : enc.outcome === "flee_failed"
+        ? ` They tried to run away (${enc.fleeChance ?? "?"}% chance) but the ${enc.name} blocked the escape!`
+        : "";
     cards.push(
       <Flex key={`enc${i}`} align="center" gap={8} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
         <GameResultText>
           {enc.mode === "roll"
             ? `A pokemon has been encountered... it's a ${enc.name}!`
             : `An encounter has been chosen... it's a ${enc.name}!`}
-          {!enc.catchable && " (It cannot be caught.)"}
+          {!enc.catchable && " (It is owned by a trainer and cannot be caught.)"}
+          {fleeLine}
         </GameResultText>
         <Avatar
           src={getPokemonImageURL(enc.slug)}
@@ -152,6 +159,26 @@ export function GameBlocks(props: { post: ForumPost }) {
       </Flex>
     );
   });
+  if (blocks.battle) {
+    const b = blocks.battle;
+    cards.push(
+      <Flex key="battle" align="center" gap={8} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
+        {b.fighterSlug && (
+          <Avatar
+            src={getPokemonImageURL(b.fighterSlug)}
+            alt={`${b.fighterName} sprite`}
+            size={36}
+            radius="xl"
+          />
+        )}
+        <GameResultText>
+          {b.fainted
+            ? `${b.fighterName} took ${b.damageTaken}% damage and fainted!`
+            : `${b.fighterName} took ${b.damageTaken}% damage (HP ${b.hpLeft}% left).`}
+        </GameResultText>
+      </Flex>
+    );
+  }
   blocks.itemsUsed?.forEach((item, i) => {
     // Resolve the display name + sprite from the canonical catalog by id so
     // older posts (stored with raw slug names) show the full name too.

@@ -1,4 +1,16 @@
-import { Avatar, Checkbox, Container, Flex, Grid, Group, Stack, Text, Title } from "@mantine/core";
+import {
+  Avatar,
+  Checkbox,
+  Container,
+  Flex,
+  Grid,
+  Group,
+  Progress,
+  Select,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -36,6 +48,13 @@ import UseItemsPanel, {
 } from "../components/composer/ItemsPanel";
 import { PostActionsPanel } from "../components/composer/PostActionsPanel";
 import { ForumPanel, GameResultText, PanelHint } from "../components/ui";
+import {
+  BOSS_ATTACK_DAMAGE,
+  attackDamageForStar,
+  fleeChanceForStar,
+  postsToBeatStar,
+  starForDex,
+} from "../../../lib/encounterStars";
 import { userMayPost } from "./ThreadView";
 import "../forum.css";
 
@@ -66,6 +85,8 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const [attachSignature, setAttachSignature] = React.useState(true);
   const [attackBoss, setAttackBoss] = React.useState(false);
   const [safariAction, setSafariAction] = React.useState<"fight" | "berry" | "ball">("fight");
+  const [fleeAttempt, setFleeAttempt] = React.useState(false);
+  const [fighterId, setFighterId] = React.useState<string | null>(null);
   const [evolve, setEvolve] = React.useState<{ pokemonId: string; toIdx: number } | null>(null);
   const [loadedEdit, setLoadedEdit] = React.useState(false);
 
@@ -224,6 +245,44 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     !!thread?.bossBattle?.active &&
     !(thread.bossBattle.excluded ?? []).includes(user?.displayName ?? user?.username ?? "");
 
+  // -- battle state (wild/trainer encounters outside Safari mode) ------------
+  // A live battle means the enemy hits back this post, so a fighter must be
+  // chosen from the team(s) brought into the post.
+  const myLockedTeams = thread?.lockedTeams?.[user?.uid ?? ""] ?? [];
+  const restrictTeams =
+    mode === "new" && !thread?.allowTeamChanges && myLockedTeams.length > 0
+      ? myLockedTeams
+      : undefined;
+  const wildBattle =
+    mode === "new" && !thread?.safariContest && !!encounter && !!encounter.required;
+  const battleOngoing =
+    wildBattle && (encounter!.progress ?? 0) < (encounter!.required ?? 1);
+  const canFlee = battleOngoing && !!encounter!.catchable;
+  const fighterNeeded = battleOngoing || (mode === "new" && attackBoss && bossActive);
+  const enemyStar = encounter?.star ?? 3;
+  const hitPct = Math.max(
+    battleOngoing ? attackDamageForStar(enemyStar) : 0,
+    attackBoss && bossActive ? BOSS_ATTACK_DAMAGE : 0
+  );
+  const myDamage = React.useMemo(
+    () => thread?.battleDamage?.[user?.uid ?? ""] ?? {},
+    [thread, user]
+  );
+  const fighterPool = evoTeamPokemon.map((p) => {
+    const dmg = Math.min(100, Math.max(0, myDamage[p.id] ?? 0));
+    return { pokemon: p, dmg, fainted: dmg >= 100 };
+  });
+  // Default the fighter to the first conscious team member.
+  React.useEffect(() => {
+    if (!fighterNeeded) return;
+    const current = fighterPool.find((f) => f.pokemon.id === fighterId);
+    if (current && !current.fainted) return;
+    const firstUp = fighterPool.find((f) => !f.fainted);
+    setFighterId(firstUp ? firstUp.pokemon.id : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fighterNeeded, evoTeamPokemon.map((p) => p.id).join(","), fighterId]);
+  const chosenFighter = fighterPool.find((f) => f.pokemon.id === fighterId);
+
   const validate = (): string => {
     // Character + team are required on new posts (edit mode locks them, and
     // legacy posts may predate teams, so don't block edits).
@@ -244,6 +303,16 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
       const item = (inventory ?? []).find((i) => i.id === selection.itemId);
       if (item && selection.qty > item.quantity)
         return `You only have ${item.quantity}x ${item.name}.`;
+    }
+    // Battle posts need a conscious fighter to take the enemy's hit.
+    if (fighterNeeded) {
+      if (!chosenFighter) {
+        return fighterPool.length
+          ? "Your whole team has fainted on this thread. You cannot battle this post."
+          : "Choose which pokemon is fighting this post (select a character and team first).";
+      }
+      if (chosenFighter.fainted)
+        return "That pokemon has fainted on this thread. Choose another fighter.";
     }
     return "";
   };
@@ -270,6 +339,8 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
         attachSignature,
         ...(mode === "new" && attackBoss ? { attackBoss: true } : {}),
         ...(mode === "new" && thread?.safariContest && encounter ? { safariAction } : {}),
+        ...(mode === "new" && fleeAttempt && canFlee ? { fleeAttempt: true } : {}),
+        ...(mode === "new" && fighterNeeded && fighterId ? { fighterId } : {}),
         ...(mode === "new" && evolve ? { evolve } : {}),
         ...(mode === "edit" ? { editPostId: postId } : {}),
       });
@@ -368,12 +439,13 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
               value={characters}
               onChange={setCharacters}
               locked={mode === "edit"}
+              restrictToTeamIds={restrictTeams}
               hint="Choose the characters you want to include in this post to make it clearer for everyone. Doing so will issue your character and team experience."
             />
-            {mode === "new" && !!thread?.lockedTeams?.[user?.uid ?? ""]?.length && (
+            {mode === "new" && !!restrictTeams && (
               <Text fz={12} c="gold.1" role="status" aria-live="polite">
                 You are locked to the team you first posted with on this thread, so everyone earns XP
-                on the same team throughout it.
+                and takes battle damage on the same team throughout it.
               </Text>
             )}
             {mode === "edit" && (
@@ -508,6 +580,93 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
               safariAction={safariAction}
               onSafariAction={setSafariAction}
             />
+
+            {fighterNeeded && (
+              <ForumPanel title="Battle">
+                <PanelHint>
+                  The enemy hits back on every battle post. Pick which of your team
+                  pokemon takes the hit; at 100% damage it faints for the rest of
+                  this thread.
+                </PanelHint>
+                <Select
+                  label="Your fighting pokemon"
+                  placeholder={
+                    fighterPool.length
+                      ? "Choose a team pokemon"
+                      : "Select a character and team first"
+                  }
+                  data={fighterPool.map((f) => ({
+                    value: f.pokemon.id,
+                    label: `${f.pokemon.species || f.pokemon.name} · HP ${100 - f.dmg}%${
+                      f.fainted ? " (fainted)" : ""
+                    }`,
+                    disabled: f.fainted,
+                  }))}
+                  value={fighterId}
+                  onChange={setFighterId}
+                  allowDeselect={false}
+                  size="xs"
+                  styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+                />
+                {chosenFighter && (
+                  <Stack gap={4} mt={6}>
+                    <Progress.Root size="lg" radius="xl">
+                      {(() => {
+                        const segments = postsToBeatStar(
+                          starForDex(chosenFighter.pokemon.pokedex ?? 0)
+                        );
+                        const hpLeft = 100 - chosenFighter.dmg;
+                        return Array.from({ length: segments }).map((_, i) => {
+                          const segStart = (i / segments) * 100;
+                          const segSize = 100 / segments;
+                          const filled = Math.max(
+                            0,
+                            Math.min(segSize, hpLeft - segStart)
+                          );
+                          return (
+                            <Progress.Section
+                              key={i}
+                              value={Math.max(0.5, filled)}
+                              color={filled > 0 ? "cyan.0" : "rgba(255,255,255,0.08)"}
+                              style={{
+                                marginRight: i < segments - 1 ? 2 : 0,
+                              }}
+                            />
+                          );
+                        });
+                      })()}
+                    </Progress.Root>
+                    <Text fz={12} c="dimmed">
+                      HP {100 - chosenFighter.dmg}%. This post's incoming hit: {hitPct}%
+                      of the bar
+                      {attackBoss && bossActive ? " (boss attack)" : ""}.
+                    </Text>
+                  </Stack>
+                )}
+                {canFlee && (
+                  <Stack gap={4} mt={8}>
+                    <Checkbox
+                      label={`Attempt to run away (${fleeChanceForStar(enemyStar)}% chance)`}
+                      color="green.0"
+                      checked={fleeAttempt}
+                      onChange={(e) => setFleeAttempt(e.currentTarget.checked)}
+                      styles={{ label: { color: "white", fontSize: 14 } }}
+                    />
+                    <PanelHint>
+                      Success ends the encounter and your post goes through safely. On
+                      a failed escape the turn is wasted: no damage is landed on the
+                      enemy and it still gets its hit in.
+                    </PanelHint>
+                  </Stack>
+                )}
+                {battleOngoing && !encounter?.catchable && (
+                  <PanelHint>
+                    This Pokemon is owned by a trainer: you cannot run away or catch
+                    it. Beat it to end the battle.
+                  </PanelHint>
+                )}
+              </ForumPanel>
+            )}
 
             <ForumPanel title="Write Your Post">
               <Editor editor={editor} />

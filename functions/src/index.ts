@@ -73,12 +73,21 @@ const stageForDex = (idx: number): string =>
 // is the pseudo-legendary class (Garchomp etc.), 7 star is legendaries and
 // mythicals (incl. Ultra Beasts and Paradox). Mirrors src/lib/encounterStars.ts;
 // keep the two in sync. The Safari Contest keeps its own 1..5 tier scale.
-const STAR_POSTS_TO_BEAT: Record<number, number> = { 1: 3, 2: 4, 3: 5, 4: 6, 5: 7, 6: 8, 7: 12 };
+const STAR_POSTS_TO_BEAT: Record<number, number> = { 1: 2, 2: 3, 3: 5, 4: 7, 5: 9, 6: 12, 7: 20 };
+// Chance (percent) a run-away attempt succeeds, by the enemy's star. Bosses
+// and trainer-owned (non-catchable) Pokemon cannot be fled.
+const STAR_FLEE_CHANCE: Record<number, number> = { 1: 80, 2: 70, 3: 60, 4: 50, 5: 40, 6: 30, 7: 20 };
+// Damage (percent of the defender's full bar) one enemy attack deals, by the
+// enemy's star; bosses hit hardest. Applied to the post's chosen fighter.
+const STAR_ATTACK_DAMAGE: Record<number, number> = { 1: 25, 2: 30, 3: 35, 4: 40, 5: 45, 6: 50, 7: 60 };
+const BOSS_ATTACK_DAMAGE = 75;
 const starForDex = (idx: number): number => {
   const star = (starByDex as Record<string, number>)[String(idx)];
   return star && star >= 1 && star <= 7 ? star : 3;
 };
 const postsToBeatStar = (star: number): number => STAR_POSTS_TO_BEAT[star] ?? 5;
+const fleeChanceForStar = (star: number): number => STAR_FLEE_CHANCE[star] ?? 60;
+const attackDamageForStar = (star: number): number => STAR_ATTACK_DAMAGE[star] ?? 25;
 const GEN_CAPS = [151, 251, 386, 493, 649, 721, 809, 905, 1025];
 const GEN_NAMES = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
 
@@ -688,6 +697,10 @@ export const publishForumPost = onCall(async (request) => {
   const itemRequests = readItemRequests(request.data?.items);
   // Gaia-style signature: attached by default, snapshotted at publish time.
   const attachSignature = request.data?.attachSignature !== false;
+  // Battle inputs: try to run away from the wild encounter this post, and
+  // which owned pokemon (from the poster's locked team) is doing the fighting.
+  const fleeAttempt = request.data?.fleeAttempt === true;
+  const fighterIdReq = request.data?.fighterId ? String(request.data.fighterId).slice(0, 80) : "";
   // Optional: evolve one of this post's team pokemon on publish (the composer
   // asks the poster to confirm first). Validated + applied server-side.
   const evolveReq =
@@ -766,8 +779,10 @@ export const publishForumPost = onCall(async (request) => {
 
     // Team lock: on a normal exp-earning thread a poster is pinned to the
     // team(s) they first posted with, so they cannot rotate teams to farm XP
-    // across their whole box. Event/safari/training/no-exp threads are exempt.
-    const teamLockable = !thread.noXp && !thread.safariContest && !thread.trainingLog;
+    // across their whole box. Event/safari/training/no-exp threads are exempt,
+    // and a host can open a thread with team changes allowed (set at creation).
+    const teamLockable =
+      !thread.noXp && !thread.safariContest && !thread.trainingLog && !thread.allowTeamChanges;
     const postTeamIds = [...new Set(teamIds)];
     const lockedTeams = (thread.lockedTeams as Record<string, string[]> | undefined)?.[uid] ?? null;
     let setTeamLock = false;
@@ -819,6 +834,9 @@ export const publishForumPost = onCall(async (request) => {
     let encounterForCharacter = "";
     // Slug of a mission foe beaten on this post (bar filled or caught).
     let encounterBeatenSlug = "";
+    // Run-away resolution and how hard the enemy hits back this post.
+    let encounterFled = false;
+    let enemyAttackPct = 0;
     // Safari encounters clear (fled / knocked out) without being caught.
     let safariCleared = false;
     const safariCfg = thread.safariContest;
@@ -901,11 +919,41 @@ export const publishForumPost = onCall(async (request) => {
       encounterForCharacter = forIds[0] ?? "";
       const postCharIds = characters.map((c: any) => c.id);
       const qualifies = forIds.length === 0 || postCharIds.some((id: string) => forIds.includes(id));
+      const enemyStar =
+        Number(encounter.star) ||
+        starForDex(Number(catalogBySlug.get(String(encounter.slug))?.idx ?? 0));
       let progress = Number(encounter.progress) || 0;
-      if (!editPostId && qualifies && progress < required) progress += 1;
-      encounter.progress = progress;
+      const wasBeaten = progress >= required;
       const ball = itemsUsed.find((i) => i.isBall);
-      encounter.caught = !!ball && !!encounter.catchable && progress >= required;
+
+      if (!editPostId && fleeAttempt && !wasBeaten) {
+        // Run-away attempt. Only wild catchable encounters can be fled; bosses
+        // and trainer-owned (non-catchable) Pokemon must be fought through.
+        if (!encounter.catchable) {
+          throw new HttpsError(
+            "failed-precondition",
+            "You cannot run away from a trainer's Pokemon. Beat it to end the battle."
+          );
+        }
+        const chance = fleeChanceForStar(enemyStar);
+        encounter.fleeChance = chance;
+        if (randomInt(100) < chance) {
+          encounter.outcome = "fled";
+          encounterFled = true;
+        } else {
+          // The escape fails: the turn is spent running, no progress is
+          // landed, and the enemy still gets its hit in.
+          encounter.outcome = "flee_failed";
+          if (qualifies) enemyAttackPct = attackDamageForStar(enemyStar);
+        }
+      } else if (!editPostId) {
+        if (qualifies && progress < required) progress += 1;
+        // The enemy hits back on every battle post it survives.
+        if (qualifies && progress < required) enemyAttackPct = attackDamageForStar(enemyStar);
+      }
+      encounter.progress = progress;
+      encounter.caught =
+        !!ball && !!encounter.catchable && !encounterFled && progress >= required;
       encounterCaught = !!encounter.caught;
       if (encounter.caught && ball) (ball as any).caughtPokemon = encounter.name;
       // A filled bar means the foe is beaten. Record it on mission threads so
@@ -915,8 +963,41 @@ export const publishForumPost = onCall(async (request) => {
       }
     }
 
+    // -- damage: the enemy's counter-attack lands on this post's fighter -----
+    // Attacking the boss also draws its (heaviest) counter-attack; if both a
+    // wild battle and a boss attack happen on one post, only the harder hit
+    // lands so a single post never doubles up.
+    if (!editPostId && request.data?.attackBoss === true && bossActiveForUser) {
+      enemyAttackPct = Math.max(enemyAttackPct, BOSS_ATTACK_DAMAGE);
+    }
+    let battleBlock: Record<string, unknown> | null = null;
+    if (!editPostId && enemyAttackPct > 0 && teamPokemonIds.length) {
+      const fighterId =
+        fighterIdReq && teamPokemonIds.includes(fighterIdReq) ? fighterIdReq : teamPokemonIds[0];
+      const damageMap =
+        ((thread.battleDamage as Record<string, Record<string, number>>) ?? {})[uid] ?? {};
+      const current = Math.max(0, Math.min(100, Number(damageMap[fighterId]) || 0));
+      if (current >= 100) {
+        throw new HttpsError(
+          "failed-precondition",
+          "That pokemon has fainted on this thread. Choose another team pokemon to fight."
+        );
+      }
+      const total = Math.min(100, current + enemyAttackPct);
+      const fighterInfo = ownedForXp[fighterId] ?? {};
+      battleBlock = {
+        fighterId,
+        fighterName: String(fighterInfo.species ?? fighterInfo.name ?? "Your pokemon"),
+        fighterSlug: String(fighterInfo.image_slug ?? ""),
+        damageTaken: enemyAttackPct,
+        hpLeft: 100 - total,
+        fainted: total >= 100,
+      };
+    }
+
     const blocks: Record<string, unknown> = {};
     if (encounter) blocks.encounters = [encounter];
+    if (battleBlock) blocks.battle = battleBlock;
     if (itemsUsed.length) {
       blocks.itemsUsed = itemsUsed.map(({ isBall, isFood, ...item }) => item);
     }
@@ -1148,6 +1229,13 @@ export const publishForumPost = onCall(async (request) => {
           ...(encounterBeatenSlug
             ? { defeatedEncounters: FieldValue.arrayUnion(encounterBeatenSlug) }
             : {}),
+          // Damage is per pokemon per thread; 100 = fainted for this thread.
+          ...(battleBlock
+            ? {
+                [`battleDamage.${uid}.${battleBlock.fighterId}`]:
+                  100 - Number(battleBlock.hpLeft),
+              }
+            : {}),
         })
       );
       if (bossDefeated) {
@@ -1188,10 +1276,23 @@ export const publishForumPost = onCall(async (request) => {
       resultPostId = newPostRef!.id;
     }
 
-    // Consume the per-post rolls. A catchable, uncaught encounter survives (with
-    // its new progress) so it can be weakened over several posts and caught
-    // later; non-catchable encounters are consumed as before.
-    if (!editPostId && encounter && encounter.catchable && !encounterCaught && !safariCleared) {
+    // Consume the per-post rolls. A catchable, uncaught encounter survives
+    // (with its new progress) until it is caught, fled, or replaced. A
+    // trainer-owned (non-catchable) encounter is a battle too: it survives
+    // until beaten, then auto-clears (it can never be caught or fled).
+    const trainerBattleOngoing =
+      !!encounter &&
+      !encounter.catchable &&
+      Number(encounter.required) > 0 &&
+      (Number(encounter.progress) || 0) < Number(encounter.required);
+    if (
+      !editPostId &&
+      encounter &&
+      !encounterCaught &&
+      !safariCleared &&
+      !encounterFled &&
+      (encounter.catchable || trainerBattleOngoing)
+    ) {
       tx.set(pRef, { encounter });
     } else if (pendingSnap.exists) {
       tx.delete(pRef);
@@ -1366,6 +1467,9 @@ export const publishForumThread = onCall(async (request) => {
     // When set, posting here earns no progression (experience/friendship/shadow/
     // purification). An admin can still assign bonuses at close.
     noXp: !!request.data?.noXp,
+    // Host choice, set only at creation: members may swap teams between posts
+    // (turns off the anti-farm team lock for this thread).
+    allowTeamChanges: !!request.data?.allowTeamChanges,
   });
   batch.create(tRef.collection("posts").doc(), {
     ...authorFields(member),

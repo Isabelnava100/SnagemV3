@@ -16,14 +16,46 @@ import starByDex from "../data/pokemon/starByDex.json";
 export type EncounterStar = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export const STAR_POSTS_TO_BEAT: Record<EncounterStar, number> = {
-  1: 3,
-  2: 4,
+  1: 2,
+  2: 3,
   3: 5,
-  4: 6,
-  5: 7,
-  6: 8,
-  7: 12,
+  4: 7,
+  5: 9,
+  6: 12,
+  7: 20,
 };
+
+/**
+ * Chance (percent) that an attempt to run away from a wild encounter succeeds,
+ * by the enemy's star. Bosses and trainer-owned (non-catchable) Pokemon cannot
+ * be fled; a failed attempt wastes the turn and the enemy still attacks.
+ */
+export const STAR_FLEE_CHANCE: Record<EncounterStar, number> = {
+  1: 80,
+  2: 70,
+  3: 60,
+  4: 50,
+  5: 40,
+  6: 30,
+  7: 20,
+};
+
+/**
+ * Damage (percent of the defender's full health bar) an enemy of this star
+ * deals with one attack (one battle post). A pokemon's own health bar is
+ * always 100%, drawn with as many segments as its own star's posts-to-beat.
+ * Bosses hit hardest; trainer-owned Pokemon hit like wilds of their star.
+ */
+export const STAR_ATTACK_DAMAGE: Record<EncounterStar, number> = {
+  1: 25,
+  2: 30,
+  3: 35,
+  4: 40,
+  5: 45,
+  6: 50,
+  7: 60,
+};
+export const BOSS_ATTACK_DAMAGE = 75;
 
 /** Star rating for a national dex number (defaults to 3 for unknown). */
 export function starForDex(idx: number | string): EncounterStar {
@@ -34,4 +66,14 @@ export function starForDex(idx: number | string): EncounterStar {
 /** Posts needed to beat an encounter of this star. */
 export function postsToBeatStar(star: number): number {
   return STAR_POSTS_TO_BEAT[(star >= 1 && star <= 7 ? star : 3) as EncounterStar];
+}
+
+/** Flee success chance (percent) against an enemy of this star. */
+export function fleeChanceForStar(star: number): number {
+  return STAR_FLEE_CHANCE[(star >= 1 && star <= 7 ? star : 3) as EncounterStar];
+}
+
+/** Attack damage (percent of the defender's bar) an enemy of this star deals. */
+export function attackDamageForStar(star: number): number {
+  return STAR_ATTACK_DAMAGE[(star >= 1 && star <= 7 ? star : 3) as EncounterStar];
 }

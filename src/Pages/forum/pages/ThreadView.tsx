@@ -24,6 +24,7 @@ import { isAdmin } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { FORUM_ACCENT, POSTS_PER_PAGE } from "../config";
 import { safariFightBonus } from "../../../lib/safari";
+import { attackDamageForStar } from "../../../lib/encounterStars";
 import { addBookmark, removeBookmark } from "../mutations";
 import { getForumBookmarks, getPendingActions, getPostsCount, getPostsPage, getThread } from "../queries";
 import { EncounterBlock, ForumThread } from "../types";
@@ -236,7 +237,9 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
                   ? enc.catchable
                     ? "Beaten! Throw a ball in your next post to catch it, or roll a new encounter to move on."
                     : "Beaten! It cannot be caught; it clears with your next post."
-                  : `Health ${healthLeft}/${required} posts. Keep posting to wear it down${
+                  : `Health ${healthLeft}/${required} posts. It hits your fighter for ${attackDamageForStar(
+                      enc.star ?? 3
+                    )}% each battle post. Keep posting to wear it down${
                       enc.catchable ? ", then a ball can catch it" : ""
                     }.`}
               </Text>
