@@ -2,6 +2,7 @@ import { Box, Button, Divider, Group, Stack, Text } from "@mantine/core";
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import React from "react";
 import { ActivityLog } from "../../components/admin/ActivityLog";
+import DesignSystem from "../../components/admin/DesignSystem";
 import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import { hasCapability, isAdmin } from "../../lib/permissions";
@@ -30,6 +31,7 @@ type ToolKey =
   | "badges"
   | "xp"
   | "costs"
+  | "design"
   | "logs";
 
 interface Tool {
@@ -151,10 +153,17 @@ const GROUPS: ToolGroup[] = [
     ],
   },
   {
-    title: "Logs",
-    subtitle: "Audit trail of every staff action.",
+    title: "Reference",
+    subtitle: "Brand and design guidance, plus the staff audit trail.",
     dot: "#a78bfa",
     tools: [
+      {
+        key: "design",
+        label: "Design System",
+        desc: "Brand kit: colors, fonts, buttons and surfaces at a glance.",
+        cap: null,
+        render: () => <DesignSystem />,
+      },
       {
         key: "logs",
         label: "Activity Log",

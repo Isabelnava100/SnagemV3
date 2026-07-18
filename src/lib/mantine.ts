@@ -1,4 +1,4 @@
-import { MantineColorsTuple, createTheme } from "@mantine/core";
+import { Button, MantineColorsTuple, createTheme } from "@mantine/core";
 
 // v9 requires exactly 10 shades per color; pad shorter palettes by repeating the last shade
 function shades(...colors: string[]): MantineColorsTuple {
@@ -35,4 +35,12 @@ export const theme = createTheme({
     xl: "1440px",
   },
   fontFamily: "'Roboto', sans-serif",
+  // Standardize button shape site-wide: xl (pill) is already the dominant radius
+  // and matches the homepage CTAs, so every Button defaults to it unless a call
+  // site overrides. Keeps borders/sizes consistent across the app.
+  components: {
+    Button: Button.extend({
+      defaultProps: { radius: "xl" },
+    }),
+  },
 });
