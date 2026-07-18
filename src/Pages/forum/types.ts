@@ -32,15 +32,22 @@ export interface EncounterBlock {
   /** True when this encounter came from the host's non-catchable list or a boss. */
   catchable: boolean;
   caught?: boolean;
-  /** Capture: battle stage, posts required, and posts landed so far. */
+  /** Capture: posts required (from the species' star) and posts landed so far. */
   stage?: string;
   required?: number;
   progress?: number;
   /** Characters the encounter is being caught for (empty = any of the roller's). */
   forCharacterIds?: string[];
+  /** Traits rolled when the encounter appeared (shown in the banner, kept on catch). */
+  gender?: "M" | "F";
+  shiny?: boolean;
 
-  // --- Safari Contest encounters (star-tiered wild hunt) -------------------
-  /** Star rarity 1-5 when rolled inside a Safari Contest. */
+  // --- Star rating ----------------------------------------------------------
+  /**
+   * Normal encounters: the species' strength star (1..7, 6 = pseudo-legendary,
+   * 7 = legendary/mythical) which sets `required`. Safari Contest encounters:
+   * the rolled rarity tier (1..5).
+   */
   star?: number;
   /** Fight posts needed to knock this wild Pokemon out (catch it before then). */
   postsToDefeat?: number;
@@ -267,6 +274,10 @@ export interface ForumThread {
   trainingLog?: boolean;
   /** Set on threads auto-created by pickUpMission; links back to /Missions/{id}. */
   missionId?: string;
+  /** Mission threads: the briefing's set foes (slugs) that must be beaten before close. */
+  requiredEncounters?: string[];
+  /** Mission threads: foes beaten so far (server-written as capture bars fill). */
+  defeatedEncounters?: string[];
   /** When true, posting here earns no progression (an admin can bonus at close). */
   noXp?: boolean;
   /** uid -> the team(s) that user is locked to on this thread (anti-farm). */

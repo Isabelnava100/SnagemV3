@@ -21,6 +21,7 @@ import { callRollEncounter, callableMessage } from "../../functionsClient";
 import { getEncounterLists, resolveListSlugs } from "../../queries";
 import { EncounterBlock, EncounterConfig, ForumThread } from "../../types";
 import { safariFightBonus } from "../../../../lib/safari";
+import { starForDex } from "../../../../lib/encounterStars";
 import { ForumPanel, ForumTextLink, GameResultText, PanelHint } from "../ui";
 
 function YesNo(props: {
@@ -312,6 +313,90 @@ export function EncounterPostPanel(props: {
   // The value being set means one claim was just consumed server-side.
   const remaining = Math.max(0, config.perUserLimit - claimed - (value ? 1 : 0));
 
+  // A fully worn-down (beaten) normal encounter no longer blocks a new roll:
+  // the player can skip the catch and pick their next target (the server
+  // records the defeat the moment the bar fills).
+  const valueBeaten =
+    !!value &&
+    value.postsToDefeat == null &&
+    !!value.required &&
+    (value.progress ?? 0) >= value.required;
+
+  const rollSection = (
+    <Stack gap={8}>
+      <YesNo
+        label={
+          valueBeaten
+            ? "Roll a new encounter instead? (This lets the beaten one go.)"
+            : "Would you like to encounter a pokemon within this post?"
+        }
+        value={wantsEncounter}
+        onChange={setWantsEncounter}
+      />
+      {wantsEncounter && (
+        <>
+          <Text fz={12} c="dimmed">
+            You have {remaining} pokemon left to encounter on this thread.
+          </Text>
+          <MultiSelect
+            label="Catch it for (optional)"
+            description="Leave empty to catch it yourself; the caught Pokemon joins the chosen character's box."
+            placeholder="Any of your characters"
+            data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
+            value={forCharacterIds}
+            onChange={setForCharacterIds}
+            clearable
+            size="xs"
+            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          />
+          {config.mode === "roll" ? (
+            <Button
+              size="xs"
+              radius="xl"
+              color="cyan.0"
+              w={160}
+              disabled={!pool.length}
+              loading={encounterMutation.isPending}
+              onClick={() => {
+                setEncounterError("");
+                encounterMutation.mutateAsync(undefined).catch(() => undefined);
+              }}
+            >
+              Roll an Encounter
+            </Button>
+          ) : (
+            <Select
+              placeholder="Search for pokemon within the list"
+              searchable
+              data={pool.map((slug) => {
+                const species = pokemonData.find((p) => p.slug === slug);
+                const star = species ? starForDex(species.idx) : undefined;
+                return {
+                  value: slug,
+                  label:
+                    (species?.name ?? slug) +
+                    (!isSafari && star ? ` (${star}★)` : "") +
+                    (nonCatchSlugs.has(slug) ? " (cannot be caught)" : ""),
+                };
+              })}
+              value={null}
+              disabled={encounterMutation.isPending}
+              onChange={(slug) => {
+                if (!slug) return;
+                setEncounterError("");
+                encounterMutation.mutateAsync(slug).catch(() => undefined);
+              }}
+              size="xs"
+              w={260}
+              styles={{ input: { background: "#2E2D2E" } }}
+            />
+          )}
+          {encounterError && <GameResultText>{encounterError}</GameResultText>}
+        </>
+      )}
+    </Stack>
+  );
+
   return (
     <ForumPanel title="Encounters">
       <PanelHint>In this thread, the list of possible encounters has been set by the host.</PanelHint>
@@ -337,92 +422,41 @@ export function EncounterPostPanel(props: {
         <Stack gap={6}>
           <GameResultText>
             {value.mode === "roll" ? "You've rolled an encounter..." : "You've chosen an encounter..."}{" "}
-            {value.name}!{!value.catchable && " (It cannot be caught.)"}
+            {value.star ? `a ${"★".repeat(Math.min(7, value.star))} ${value.star}-star ` : ""}
+            {value.name}!{value.shiny && " It's SHINY!"}
+            {value.gender ? ` (${value.gender === "F" ? "Female" : "Male"})` : ""}
+            {!value.catchable && " (It cannot be caught.)"}
           </GameResultText>
           {value.catchable && !!value.required && (
             <Stack gap={4}>
               <Progress
-                value={Math.min(100, Math.round(((value.progress ?? 0) / value.required) * 100))}
-                color="cyan.0"
+                value={Math.max(
+                  0,
+                  Math.round(
+                    ((value.required - Math.min(value.progress ?? 0, value.required)) /
+                      value.required) *
+                      100
+                  )
+                )}
+                color="red.6"
                 size="lg"
                 radius="xl"
               />
               <Text fz={12} c="dimmed">
                 {(value.progress ?? 0) >= value.required
-                  ? "It's worn down. Use a Poke Ball in this post to catch it."
-                  : `Capture progress: ${value.progress ?? 0}/${value.required} posts. Keep posting to weaken it, then throw a ball.`}
+                  ? "It's beaten. Use a Poke Ball in this post to catch it, or roll a new encounter to move on."
+                  : `Health: ${value.required - Math.min(value.progress ?? 0, value.required)}/${value.required} posts. Keep posting to wear it down, then throw a ball.`}
               </Text>
             </Stack>
           )}
+          {valueBeaten && remaining > 0 && rollSection}
         </Stack>
       ) : remaining <= 0 ? (
         <Text fz={13} c="dimmed">
           You have no pokemon left to encounter on this thread.
         </Text>
       ) : (
-        <Stack gap={8}>
-          <YesNo
-            label="Would you like to encounter a pokemon within this post?"
-            value={wantsEncounter}
-            onChange={setWantsEncounter}
-          />
-          {wantsEncounter && (
-            <>
-              <Text fz={12} c="dimmed">
-                You have {remaining} pokemon left to encounter on this thread.
-              </Text>
-              <MultiSelect
-                label="Catch it for (optional)"
-                description="Leave empty to catch it yourself; the caught Pokemon joins the chosen character's box."
-                placeholder="Any of your characters"
-                data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
-                value={forCharacterIds}
-                onChange={setForCharacterIds}
-                clearable
-                size="xs"
-                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-              />
-              {config.mode === "roll" ? (
-                <Button
-                  size="xs"
-                  radius="xl"
-                  color="cyan.0"
-                  w={160}
-                  disabled={!pool.length}
-                  loading={encounterMutation.isPending}
-                  onClick={() => {
-                    setEncounterError("");
-                    encounterMutation.mutateAsync(undefined).catch(() => undefined);
-                  }}
-                >
-                  Roll an Encounter
-                </Button>
-              ) : (
-                <Select
-                  placeholder="Search for pokemon within the list"
-                  searchable
-                  data={pool.map((slug) => ({
-                    value: slug,
-                    label:
-                      (pokemonData.find((p) => p.slug === slug)?.name ?? slug) +
-                      (nonCatchSlugs.has(slug) ? " (cannot be caught)" : ""),
-                  }))}
-                  value={null}
-                  disabled={encounterMutation.isPending}
-                  onChange={(slug) => {
-                    if (!slug) return;
-                    setEncounterError("");
-                    encounterMutation.mutateAsync(slug).catch(() => undefined);
-                  }}
-                  size="xs"
-                  w={260}
-                  styles={{ input: { background: "#2E2D2E" } }}
-                />
-              )}
-              {encounterError && <GameResultText>{encounterError}</GameResultText>}
-            </>
-          )}
-        </Stack>
+        rollSection
       )}
     </ForumPanel>
   );

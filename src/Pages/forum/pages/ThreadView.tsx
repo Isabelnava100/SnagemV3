@@ -27,6 +27,7 @@ import { safariFightBonus } from "../../../lib/safari";
 import { addBookmark, removeBookmark } from "../mutations";
 import { getForumBookmarks, getPendingActions, getPostsCount, getPostsPage, getThread } from "../queries";
 import { EncounterBlock, ForumThread } from "../types";
+import { pokemonData } from "../../../data/pokemon";
 import PollBlock from "../components/PollBlock";
 import PostCard from "../components/PostCard";
 import ScrollAids from "../components/ScrollAids";
@@ -92,6 +93,73 @@ function BossBanner(props: { boss: NonNullable<ForumThread["bossBattle"]> }) {
   );
 }
 
+const speciesNameBySlug = new Map(pokemonData.map((p) => [p.slug, p.name]));
+
+/**
+ * Pinned checklist on mission threads that have set foes: shows every required
+ * target with its beaten state so the party always knows what is left before
+ * the thread can be closed for grading.
+ */
+function MissionTargetsBanner(props: { thread: ForumThread }) {
+  const required = props.thread.requiredEncounters ?? [];
+  if (!required.length) return null;
+  const defeated = new Set(props.thread.defeatedEncounters ?? []);
+  const remaining = required.filter((slug) => !defeated.has(slug));
+
+  return (
+    <Box
+      mt={12}
+      p={12}
+      style={{ background: "#241f2e", border: "1px solid #4b3f63", borderRadius: 10 }}
+    >
+      <Group gap={8} mb={8} wrap="wrap">
+        <Text fz={14} c="white" fw={700}>
+          Mission targets
+        </Text>
+        <Badge color={remaining.length ? "gold.1" : "green"} variant="light" size="sm">
+          {remaining.length
+            ? `${required.length - remaining.length}/${required.length} beaten`
+            : "All beaten, ready to close"}
+        </Badge>
+      </Group>
+      <Group gap={8} wrap="wrap">
+        {required.map((slug) => {
+          const done = defeated.has(slug);
+          return (
+            <Group
+              key={slug}
+              gap={6}
+              wrap="nowrap"
+              px={8}
+              py={4}
+              style={{
+                borderRadius: 999,
+                background: done ? "rgba(34,181,115,0.15)" : "rgba(0,0,0,0.3)",
+                border: `1px solid ${done ? "#22B573" : "#4b3f63"}`,
+              }}
+            >
+              <Avatar
+                src={getPokemonImageURL(slug)}
+                alt=""
+                size={22}
+                radius="xl"
+                style={done ? undefined : { filter: "grayscale(1)" }}
+              />
+              <Text fz={12} c={done ? "green.0" : "dimmed"} fw={600}>
+                {speciesNameBySlug.get(slug) ?? slug}
+                {done ? " ✓" : ""}
+              </Text>
+            </Group>
+          );
+        })}
+      </Group>
+      <Text fz={11} c="dimmed" mt={8}>
+        Beat every target (wear its health down or catch it) before closing the thread for grading.
+      </Text>
+    </Box>
+  );
+}
+
 /**
  * Pinned banner for the reader's OWN active encounter on this thread (Safari or
  * a normal rolled encounter). Unlike the boss banner this is per-person: it
@@ -100,14 +168,18 @@ function BossBanner(props: { boss: NonNullable<ForumThread["bossBattle"]> }) {
  */
 function EncounterBanner(props: { encounter: EncounterBlock }) {
   const enc = props.encounter;
-  const isSafari = !!enc.star;
+  // Safari encounters carry postsToDefeat (fight turns); normal encounters
+  // carry required/progress. Both now have a star, so key off the field shape.
+  const isSafari = enc.postsToDefeat != null;
   const postsToDefeat = Math.max(3, enc.postsToDefeat ?? 3);
   const fightPosts = enc.fightPosts ?? 0;
-  const healthLeft = Math.max(0, postsToDefeat - fightPosts);
-  const healthPct = Math.round((healthLeft / postsToDefeat) * 100);
+  const safariHealthLeft = Math.max(0, postsToDefeat - fightPosts);
+  const safariHealthPct = Math.round((safariHealthLeft / postsToDefeat) * 100);
   const required = enc.required ?? 0;
   const progress = enc.progress ?? 0;
-  const capturePct = required ? Math.min(100, Math.round((progress / required) * 100)) : 0;
+  const beaten = required > 0 && progress >= required;
+  const healthLeft = Math.max(0, required - progress);
+  const healthPct = required ? Math.round((healthLeft / required) * 100) : 100;
   const bonus = isSafari ? safariFightBonus(fightPosts, postsToDefeat) + (enc.catchBonus ?? 0) : 0;
 
   return (
@@ -126,30 +198,47 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
             <Badge color="cyan" variant="light" size="sm">
               Your encounter, only you
             </Badge>
-            {isSafari && enc.star && (
-              <Badge color="yellow" variant="light" size="sm">
-                {"★".repeat(enc.star)} {enc.star} star
+            {!!enc.star && (
+              <Badge color="gold.1" variant="light" size="sm">
+                {"★".repeat(Math.min(7, enc.star))} {enc.star} star
+              </Badge>
+            )}
+            {enc.shiny && (
+              <Badge color="pink" variant="light" size="sm">
+                Shiny!
               </Badge>
             )}
           </Group>
           <Text fz={12} c="dimmed">
             Species: {enc.name}
+            {enc.gender ? ` · ${enc.gender === "F" ? "Female" : "Male"}` : ""}
           </Text>
           {isSafari ? (
             <>
-              <Progress value={healthPct} color="red.6" size="lg" radius="xl" striped animated />
+              <Progress value={safariHealthPct} color="red.6" size="lg" radius="xl" striped animated />
               <Text fz={12} c="dimmed">
-                Health {healthLeft}/{postsToDefeat}. Catch bonus so far +{bonus}%. Knock it out and
+                Health {safariHealthLeft}/{postsToDefeat}. Catch bonus so far +{bonus}%. Knock it out and
                 it is gone, so catch it first.
               </Text>
             </>
-          ) : enc.catchable && required ? (
+          ) : required ? (
             <>
-              <Progress value={capturePct} color="cyan.0" size="lg" radius="xl" />
+              <Progress
+                value={healthPct}
+                color="red.6"
+                size="lg"
+                radius="xl"
+                striped={!beaten}
+                animated={!beaten}
+              />
               <Text fz={12} c="dimmed">
-                {progress >= required
-                  ? "Worn down. Throw a ball in your next post to catch it."
-                  : `Capture progress ${progress}/${required} posts. Keep posting to weaken it.`}
+                {beaten
+                  ? enc.catchable
+                    ? "Beaten! Throw a ball in your next post to catch it, or roll a new encounter to move on."
+                    : "Beaten! It cannot be caught; it clears with your next post."
+                  : `Health ${healthLeft}/${required} posts. Keep posting to wear it down${
+                      enc.catchable ? ", then a ball can catch it" : ""
+                    }.`}
               </Text>
             </>
           ) : (
@@ -306,6 +395,7 @@ export default function ThreadView() {
       )}
 
       {thread.bossBattle?.active && <BossBanner boss={thread.bossBattle} />}
+      {!!thread.missionId && !thread.closed && <MissionTargetsBanner thread={thread} />}
 
       {pending?.encounter?.slug && <EncounterBanner encounter={pending.encounter} />}
 

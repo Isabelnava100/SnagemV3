@@ -97,6 +97,15 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 
 - Snag List (July 2026, /Activities) needs a functions + rules deploy: new callable `claimSnagBox`, `markSnagTask` hooks in the gameplay callables, and the `bag/snaglist` owner-write exclusion in rules. State: `users/{uid}/bag/snaglist` (server-written only). Weekly reset is Monday 00:00 UTC; streak counts consecutive completed weeks.
 
+- Encounter stars + mission close requirements (July 2026) need a functions
+  deploy: every species has a star 1..7 (`scripts/gen-stars.mjs` regenerates
+  `starByDex.json` in both `functions/src/` and `src/data/pokemon/`; 6 star =
+  pseudo-legendary = 8 posts, 7 star = legendary/mythical = 12 posts, 1..5 =
+  3/4/5/6/7 posts). Normal encounters now roll gender/shiny up front, drain a
+  health bar, and count as beaten at zero; mission threads track
+  `defeatedEncounters` vs `requiredEncounters` and CloseThreadModal blocks
+  close (with staff override) until all set foes are beaten. Safari keeps its
+  own 1..5 scale. Details: docs/FORUM.md.
 - Forum-first flows (July 2026) need a functions + rules deploy before they work live: new callables `ensureTrainingThread`, `pickUpMission`, `requestChallenge`, `resolveChallengeRequest`, `requestMasterClearance`, `resolveMasterClearance`, updated `buyLottoTicket`/`logTrainingPost`/`onThreadClosed`, plus the `challengeRequests` and `masterClearanceRequests` rules blocks. After deploying, run `node scripts/seed-mission-encounters.mjs` from `functions/` (gcloud ADC; `--check` validates slugs offline) to seed per-mission encounter lists. Mission-default lists carry `missionDefault: true` and stay hidden from Field Registers and the host encounter picker.
 - Training posts now flow through the forum: the Colosseum "Log a Training Post" button opens the pinned "Super Training Room Log" thread (`trainingLog: true`, created on first use) and the composer calls `logTrainingPost` (10-post window cap) before publishing. Direct replies to that thread bounce to /Colosseum.
 - Mission grading: closing a thread with `missionId` auto-files the pending `missionSubmissions` doc (onThreadClosed); the manual submit form was removed from the mission brief.

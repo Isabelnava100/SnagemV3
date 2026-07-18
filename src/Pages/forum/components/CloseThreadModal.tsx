@@ -8,10 +8,11 @@ import GradientButtonPrimary, {
 import { useAuth } from "../../../context/AuthContext";
 import { getPokemonImageURL } from "../../../helpers";
 import { actorFrom, logAuditEvent } from "../../../lib/auditLog";
-import { canGiveRewards } from "../../../lib/permissions";
+import { canGiveRewards, isAdmin } from "../../../lib/permissions";
 import { getXPDefaults } from "../../../queries/game";
 import { closeThread } from "../mutations";
 import { ForumThread } from "../types";
+import { pokemonData } from "../../../data/pokemon";
 
 const XP_FIELDS = ["experience", "friendship", "purification", "shadow"] as const;
 
@@ -57,6 +58,15 @@ export default function CloseThreadModal(props: {
   });
   const perPost = xpDefaults?.experiencePerPost ?? 0;
   const xpRows = xpSummaryRows(props.thread);
+
+  // Mission requirement gate: every set foe from the briefing must be beaten
+  // (its capture bar filled, or caught) before the run can close for grading.
+  // Staff can still force-close a stuck run.
+  const defeated = new Set(props.thread.defeatedEncounters ?? []);
+  const unmetTargets = (props.thread.requiredEncounters ?? []).filter((s) => !defeated.has(s));
+  const requirementBlocked = !!props.thread.missionId && unmetTargets.length > 0;
+  const staffOverride = isAdmin(user) || canGiveRewards(user);
+  const nameOf = (slug: string) => pokemonData.find((p) => p.slug === slug)?.name ?? slug;
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async () => {
@@ -142,6 +152,31 @@ export default function CloseThreadModal(props: {
             </Box>
           )
         )}
+        {requirementBlocked && (
+          <Box
+            p={10}
+            style={{
+              background: "rgba(227,92,101,0.08)",
+              border: "1px solid rgba(227,92,101,0.45)",
+              borderRadius: 8,
+            }}
+          >
+            <Text fz={13} c="pink.0" fw={700} mb={4}>
+              Mission requirement not met
+            </Text>
+            <Text fz={13} c="rgba(255,255,255,0.8)">
+              This mission still requires you to beat:{" "}
+              {unmetTargets.map(nameOf).join(", ")}. Face each one from the encounter
+              picker and wear its health down (or catch it), then close the thread.
+            </Text>
+            {staffOverride && (
+              <Text fz={12} c="dimmed" mt={6}>
+                You have staff review powers, so you can close it anyway; the grader
+                will see the unmet targets.
+              </Text>
+            )}
+          </Box>
+        )}
         <Textarea
           label="Rewards to review (optional)"
           placeholder="Tell the reviewers about any items, money or pokemon you roleplayed finding."
@@ -160,8 +195,13 @@ export default function CloseThreadModal(props: {
           <GradientButtonSecondary radius="xl" variant="subtle" onClick={props.onClose}>
             Cancel
           </GradientButtonSecondary>
-          <GradientButtonPrimary radius="xl" loading={isPending} onClick={() => mutateAsync()}>
-            Close Thread
+          <GradientButtonPrimary
+            radius="xl"
+            loading={isPending}
+            disabled={requirementBlocked && !staffOverride}
+            onClick={() => mutateAsync()}
+          >
+            {requirementBlocked && staffOverride ? "Close Anyway (staff)" : "Close Thread"}
           </GradientButtonPrimary>
         </Group>
       </Stack>
