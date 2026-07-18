@@ -162,12 +162,12 @@ function TrainingTargetCard({ pokemon }: { pokemon: OwnedPokemon }) {
               {pokemon.name || pokemon.species}
             </Text>
             {pokemon.shiny && (
-              <Badge color="gold.1" variant="light" size="xs">
+              <Badge color="gold.0" variant="filled" size="xs">
                 Shiny
               </Badge>
             )}
             {(pokemon.shadow ?? 0) > 0 && (
-              <Badge color="violet" variant="light" size="xs">
+              <Badge color="violet" variant="filled" size="xs">
                 Shadow
               </Badge>
             )}
@@ -290,7 +290,7 @@ function TrainingRoomTab() {
               <Text fz={14} fw={700} c="grape.3" tt="uppercase">
                 Session Live . Super Training Room
               </Text>
-              <Badge color="grape" variant="light" leftSection={<IconBolt size={12} />}>
+              <Badge color="grape" variant="filled" leftSection={<IconBolt size={12} />}>
                 {countdown}
               </Badge>
             </Group>
@@ -503,7 +503,7 @@ function StreakBadge({ streak }: { streak?: string }) {
   if (!streak) return null;
   const win = streak[0]?.toUpperCase() === "W";
   return (
-    <Badge color={win ? "teal" : "red"} variant="light" radius="sm" size="sm">
+    <Badge color={win ? "teal" : "red"} variant="filled" radius="sm" size="sm">
       {streak}
     </Badge>
   );
@@ -961,7 +961,7 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
       ) : (
         <Stack gap="sm">
           {mine && (
-            <Badge color="teal" variant="light" leftSection={<IconCheck size={12} />}>
+            <Badge color="teal" variant="filled" leftSection={<IconCheck size={12} />}>
               Registered
             </Badge>
           )}
@@ -1174,7 +1174,7 @@ function CompactTournament({ t }: { t: Tournament }) {
           {t.name}
         </Text>
         {t.status && (
-          <Badge color={STATUS_COLORS[t.status] ?? "gray"} variant="light">
+          <Badge color={STATUS_COLORS[t.status] ?? "gray"} variant="filled">
             {t.status.replace(/_/g, " ")}
           </Badge>
         )}

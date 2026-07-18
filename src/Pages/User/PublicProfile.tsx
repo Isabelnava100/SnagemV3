@@ -284,7 +284,7 @@ export default function PublicProfile() {
               )}
               {discord?.discordPublic && discord?.discordName && (
                 <Badge
-                  variant="light"
+                  variant="filled"
                   color="indigo"
                   leftSection={<IconBrandDiscord size={13} />}
                   radius="sm"
@@ -336,7 +336,7 @@ export default function PublicProfile() {
                           {featuredPokemon.name}
                         </Text>
                         {featuredPokemon.shiny && (
-                          <Badge size="xs" color="gold.1" variant="light">
+                          <Badge size="xs" color="gold.0" variant="filled">
                             SHINY
                           </Badge>
                         )}
@@ -461,7 +461,7 @@ export default function PublicProfile() {
                           <Badge
                             size="xs"
                             color={characterTypeColor(c.type)}
-                            variant="light"
+                            variant="filled"
                             mt={2}
                           >
                             {c.type ?? "None"}

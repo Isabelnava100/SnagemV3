@@ -80,7 +80,7 @@ function BossBanner(props: { boss: NonNullable<ForumThread["bossBattle"]> }) {
             <Text fz={16} c="white" fw={700}>
               Boss Battle: {boss.name}
             </Text>
-            <Badge color="red" variant="light" size="sm">
+            <Badge color="red" variant="filled" size="sm">
               Shared boss, everyone in the thread
             </Badge>
           </Group>
@@ -134,7 +134,7 @@ function PausedBanner(props: {
         <Text fz={16} c="white" fw={700}>
           Thread paused: {props.thread.paused?.name ?? "a member"}&apos;s whole team fainted.
         </Text>
-        <Badge color="pink" variant="light" size="sm">
+        <Badge color="pink" variant="filled" size="sm">
           Staff decision needed
         </Badge>
       </Group>
@@ -203,7 +203,7 @@ function MissionTargetsBanner(props: { thread: ForumThread }) {
         <Text fz={16} c="white" fw={700}>
           Mission targets
         </Text>
-        <Badge color={remaining.length ? "gold.1" : "green"} variant="light" size="sm">
+        <Badge color={remaining.length ? "gold.1" : "green"} variant="filled" size="sm">
           {remaining.length
             ? `${required.length - remaining.length}/${required.length} beaten`
             : "All beaten, ready to close"}
@@ -283,16 +283,16 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
             <Text fz={16} c="white" fw={700}>
               You encountered a wild {enc.name}!
             </Text>
-            <Badge color="cyan" variant="light" size="sm">
+            <Badge color="cyan" variant="filled" size="sm">
               Your encounter, only you
             </Badge>
             {!!enc.star && (
-              <Badge color="gold.1" variant="light" size="sm">
+              <Badge color="gold.0" variant="filled" size="sm">
                 {"★".repeat(Math.min(7, enc.star))} {enc.star} star
               </Badge>
             )}
             {enc.shiny && (
-              <Badge color="pink" variant="light" size="sm">
+              <Badge color="pink" variant="filled" size="sm">
                 Shiny!
               </Badge>
             )}

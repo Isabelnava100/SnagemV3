@@ -50,6 +50,10 @@ export const theme = createTheme({
     ),
   },
   primaryColor: "brand",
+  // Never render light-on-light: filled components on a light color (the gold
+  // ramp) automatically switch to dark text.
+  autoContrast: true,
+  luminanceThreshold: 0.4,
   // Filled components in dark mode use the canonical mid shade (brand.5
   // purple) instead of Mantine's near-black shade 8.
   primaryShade: { light: 6, dark: 5 },

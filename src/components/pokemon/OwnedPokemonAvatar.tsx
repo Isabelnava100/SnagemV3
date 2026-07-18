@@ -41,7 +41,7 @@ export default function OwnedPokemonAvatar(props: {
               {pokemon.gender ? ` (${pokemon.gender})` : ""}
             </Text>
             {pokemon.shiny && (
-              <Badge size="xs" color="gold.1">
+              <Badge size="xs" color="gold.0">
                 Shiny
               </Badge>
             )}

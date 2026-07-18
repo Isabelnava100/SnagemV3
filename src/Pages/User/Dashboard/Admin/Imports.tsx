@@ -113,7 +113,7 @@ export function ReviewCard(props: { req: ImportRequest & { uid: string }; userna
           <Text c="white" fw={600}>
             {username}
           </Text>
-          <Badge variant="light" color="gold.1">
+          <Badge variant="filled" color="gold.0">
             Pending
           </Badge>
         </Group>

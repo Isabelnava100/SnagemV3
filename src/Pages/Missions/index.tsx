@@ -170,7 +170,7 @@ function MissionCard(props: { mission: Mission }) {
         )}
         {mission.emblem_eligible && (
           <Badge
-            color="gold.1"
+            color="gold.0"
             variant="filled"
             size="sm"
             leftSection={<IconStar size={11} />}

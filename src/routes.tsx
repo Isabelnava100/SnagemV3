@@ -212,7 +212,14 @@ export default function AppRoutes() {
                     />
                     <Route path="/About" element={<About />} />
                     <Route path="/Announcements" element={<Announcements />} />
-                    <Route path="/SNAG" element={<SnagAgent />} />
+                    <Route
+                      path="/SNAG"
+                      element={
+                        <Protect>
+                          <SnagAgent />
+                        </Protect>
+                      }
+                    />
                     <Route path="/Policies" element={<Policies />} />
                     <Route path="/Library" element={<Library />} />
                     <Route path="/Login" element={<Login />} />

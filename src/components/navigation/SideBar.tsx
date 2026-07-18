@@ -64,6 +64,12 @@ const ALL_LINKS: NavItem[] = [
 const PRIMARY_LABELS = ["Forum", "Console", "Shop", "S.N.A.G."];
 
 const primaryLinks = PRIMARY_LABELS.map((label) => ALL_LINKS.find((l) => l.label === label)!);
+
+/** Primary links for this user: the S.N.A.G. device is members-only. */
+function usePrimaryLinks(): NavItem[] {
+  const { user } = useAuth();
+  return primaryLinks.filter((l) => l.label !== "S.N.A.G." || !!user);
+}
 const overflowLinks = ALL_LINKS.filter((l) => !PRIMARY_LABELS.includes(l.label));
 
 /** Red dot pinned to a nav icon when something needs the member's attention. */
@@ -239,8 +245,8 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
         display: "flex",
         height: "100%",
         flexDirection: "column",
-        paddingTop: 14,
-        paddingBottom: 14,
+        paddingTop: 8,
+        paddingBottom: 8,
         paddingLeft: isOverSm ? 30 : 20,
         paddingRight: isOverSm ? 30 : 20,
         gap: "8px",
@@ -255,9 +261,9 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
         borderBottomRightRadius: isOverMd ? 30 : 15,
       })}
     >
-      <NavGlyph icon={icon} size={isUnder900 ? 40 : 64} title={label} />
+      <NavGlyph icon={icon} size={isUnder900 ? 40 : 44} title={label} />
       {!isUnder900 && (
-        <Text c="white" tt="uppercase" fz={20}>
+        <Text c="white" tt="uppercase" fz={14}>
           {label}
         </Text>
       )}
@@ -388,8 +394,8 @@ function AlertsSideButton() {
             display: "flex",
             width: "100%",
             flexDirection: "column",
-            paddingTop: 14,
-            paddingBottom: 14,
+            paddingTop: 8,
+            paddingBottom: 8,
             paddingLeft: isOverSm ? 30 : 20,
             paddingRight: isOverSm ? 30 : 20,
             gap: 8,
@@ -398,11 +404,11 @@ function AlertsSideButton() {
           }}
         >
           <Box style={{ position: "relative" }}>
-            <SnagIcon name="burst" size={isUnder900 ? 40 : 64} title="Alerts" />
+            <SnagIcon name="burst" size={isUnder900 ? 40 : 44} title="Alerts" />
             <AlertDot show={show} />
           </Box>
           {!isUnder900 && (
-            <Text c="white" tt="uppercase" fz={20}>
+            <Text c="white" tt="uppercase" fz={14}>
               Alerts
             </Text>
           )}
@@ -426,8 +432,8 @@ function MoreSideButton(props: { onClick: () => void }) {
         display: "flex",
         width: "100%",
         flexDirection: "column",
-        paddingTop: 14,
-        paddingBottom: 14,
+        paddingTop: 8,
+        paddingBottom: 8,
         paddingLeft: isOverSm ? 30 : 20,
         paddingRight: isOverSm ? 30 : 20,
         gap: 8,
@@ -435,9 +441,9 @@ function MoreSideButton(props: { onClick: () => void }) {
         alignItems: "center",
       }}
     >
-      <SnagIcon name="menu" size={isUnder900 ? 40 : 64} title="Menu" />
+      <SnagIcon name="menu" size={isUnder900 ? 40 : 44} title="Menu" />
       {!isUnder900 && (
-        <Text c="white" tt="uppercase" fz={20}>
+        <Text c="white" tt="uppercase" fz={14}>
           Menu
         </Text>
       )}
@@ -563,6 +569,7 @@ function MoreButton(props: { active: boolean; onClick: () => void }) {
 
 function MobileTabBar() {
   const [opened, { open, close }] = useDisclosure(false);
+  const visibleLinks = usePrimaryLinks();
 
   return (
     <>
@@ -583,7 +590,7 @@ function MobileTabBar() {
         <Box style={{ display: "flex", alignItems: "stretch" }}>
           <MoreButton active={opened} onClick={open} />
           <AlertsTabButton />
-          {[...primaryLinks].reverse().map((item) => (
+          {[...visibleLinks].reverse().map((item) => (
             <TabButton key={item.label} item={item} />
           ))}
         </Box>
@@ -632,6 +639,7 @@ function MobileTabBar() {
 export const SideBar = () => {
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
   const [opened, { open, close }] = useDisclosure(false);
+  const visibleLinks = usePrimaryLinks();
 
   if (isUnder900) return <MobileTabBar />;
 
@@ -650,7 +658,7 @@ export const SideBar = () => {
           justifyContent: "safe center",
         }}
       >
-        {primaryLinks.map((link) => (
+        {visibleLinks.map((link) => (
           <SingleLink {...link} key={link.label} />
         ))}
         <AlertsSideButton />

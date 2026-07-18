@@ -600,7 +600,7 @@ function SubmittedPreview(props: { entries: ImportEntries }) {
     <SectionCard title="Your submitted import">
       <Group gap={8} wrap="wrap">
         {CURRENCY_LABELS.filter((c) => currency[c.key] > 0).map((c) => (
-          <Badge key={c.key} variant="light" color="cyan.0">
+          <Badge key={c.key} variant="filled" color="cyan.0">
             {currency[c.key]} {c.label}
           </Badge>
         ))}

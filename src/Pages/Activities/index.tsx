@@ -164,7 +164,7 @@ function TaskCard(props: { task: TaskDef; done: boolean }) {
       </Text>
 
       <Group gap={10}>
-        <Badge variant="light" color="gold.1" radius="xl" size="lg">
+        <Badge variant="filled" color="gold.0" radius="xl" size="lg">
           {task.pts}
         </Badge>
         <Text component={Link} to={task.link} fz={14} fw={600} c="grape.3" td="none">
@@ -320,7 +320,7 @@ export default function Activities() {
 
               <Stack gap={6} align="flex-end" style={{ flexShrink: 0 }}>
                 {boxClaimed ? (
-                  <Badge color="teal" variant="light" size="lg" radius="xl">
+                  <Badge color="teal" variant="filled" size="lg" radius="xl">
                     Opened this week
                   </Badge>
                 ) : allDone ? (

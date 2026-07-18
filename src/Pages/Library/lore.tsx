@@ -144,7 +144,7 @@ function EntryCard(props: { entry: LoreEntry; canEdit: boolean; onEdit: () => vo
           </Box>
           <Group gap={4} wrap="nowrap">
             {entry.status === "stub" && (
-              <Badge size="sm" variant="light" color="gold.1">
+              <Badge size="sm" variant="filled" color="gold.0">
                 To be finished
               </Badge>
             )}
@@ -650,11 +650,11 @@ export default function LoreTab() {
                   </Text>
                 </Group>
                 <Group gap={6}>
-                  <Badge size="sm" variant="light" color="grape" w="fit-content">
+                  <Badge size="sm" variant="filled" color="grape" w="fit-content">
                     {typeLabel(book.type)}
                   </Badge>
                   {canEdit && booksWithContent && !booksWithContent.has(book.id) && (
-                    <Badge size="sm" variant="light" color="pink" w="fit-content">
+                    <Badge size="sm" variant="filled" color="pink" w="fit-content">
                       Empty, hidden from readers
                     </Badge>
                   )}

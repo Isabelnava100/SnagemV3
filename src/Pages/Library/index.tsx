@@ -439,7 +439,7 @@ function SafariZonesSection() {
           <Stack gap={8}>
             {zone.tiers.map((tier, i) => (
               <Group key={i} gap={8} wrap="wrap" align="center">
-                <Badge variant="light" color="gold.1" w={70}>
+                <Badge variant="filled" color="gold.0" w={70}>
                   {"★".repeat(Math.max(1, Math.min(5, tier.star ?? i + 1)))}
                 </Badge>
                 {(tier.pokemons ?? []).slice(0, 16).map((slug) => (
@@ -510,7 +510,7 @@ function ListsTab() {
               <Text fz={16} c="white" fw={600} lineClamp={1}>
                 {list.name || "Untitled list"}
               </Text>
-              <Badge variant="light" color="grape">
+              <Badge variant="filled" color="grape">
                 {slugs.length} Pokemon
               </Badge>
             </Group>
@@ -579,13 +579,13 @@ const WINGS: Wing[] = [
     content: <ItemsTab />,
   },
   {
-    value: "moves",
-    name: "The Shadow Codex",
-    callNo: "GN · 050",
-    meta: "Shadow Moves",
-    blurb: "Shadow Moves by class, and the rules that govern them.",
-    accent: "#b197fc",
-    content: <MovesTab />,
+    value: "battle",
+    name: "The War Room",
+    callNo: "GN · 030",
+    meta: "Battle guide",
+    blurb: "Stars, health, damage, run-away and type effectiveness: how posting fights work.",
+    accent: "#E54156",
+    content: <BattleGuideTab />,
   },
   {
     value: "shadow",
@@ -597,22 +597,13 @@ const WINGS: Wing[] = [
     content: <ShadowGuideTab />,
   },
   {
-    value: "battle",
-    name: "The War Room",
-    callNo: "GN · 030",
-    meta: "Battle guide",
-    blurb: "Stars, health, damage, run-away and type effectiveness: how posting fights work.",
-    accent: "#E54156",
-    content: <BattleGuideTab />,
-  },
-  {
-    value: "forums",
-    name: "The Charter",
-    callNo: "GN · 020",
-    meta: "Forum guide",
-    blurb: "What each forum is for, who can create threads, and where gated things start.",
-    accent: "#4049C9",
-    content: <ForumGuideTab />,
+    value: "moves",
+    name: "The Shadow Codex",
+    callNo: "GN · 050",
+    meta: "Shadow Moves",
+    blurb: "Shadow Moves by class, and the rules that govern them.",
+    accent: "#b197fc",
+    content: <MovesTab />,
   },
   {
     value: "lists",
@@ -622,6 +613,15 @@ const WINGS: Wing[] = [
     blurb: "Shared encounter lists hosts can attach to a roleplay.",
     accent: "#5eead4",
     content: <ListsTab />,
+  },
+  {
+    value: "forums",
+    name: "The Charter",
+    callNo: "GN · 020",
+    meta: "Forum guide",
+    blurb: "What each forum is for, who can create threads, and where gated things start.",
+    accent: "#4049C9",
+    content: <ForumGuideTab />,
   },
   {
     value: "lore",
