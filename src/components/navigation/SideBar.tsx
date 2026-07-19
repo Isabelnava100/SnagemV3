@@ -223,7 +223,7 @@ function DrawerGrid({ onNavigate, bottomUp }: { onNavigate: () => void; bottomUp
         <Link key={tile.label} to={tile.link} onClick={onNavigate} style={{ textDecoration: "none" }}>
           <DrawerTile>
             <DrawerTileIcon tile={tile} />
-            <Text fz={14} c="white" tt="uppercase">
+            <Text fz={14} c="white" tt="uppercase" ta="center">
               {tile.label}
             </Text>
           </DrawerTile>
