@@ -23,6 +23,7 @@ import DOMPurify from "dompurify";
 import React from "react";
 import { Link } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { isMaster } from "../../lib/permissions";
@@ -1318,6 +1319,7 @@ export default function Mall() {
 
   return (
     <Box>
+      <Seo page="/Shop" />
       <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
         <PageHero
           eyebrow={

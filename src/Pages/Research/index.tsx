@@ -17,6 +17,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { Character } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
@@ -1144,6 +1145,7 @@ export default function Research() {
 
   return (
     <Box style={{ background: "#0b0a10", minHeight: "100%" }}>
+      <Seo page="/Research" />
       <Container size="lg" py={{ base: 20, sm: 32 }} px={{ base: 16, sm: 24 }}>
         {/* VIEW AS toggle + character picker */}
         <Group justify="space-between" align="flex-end" wrap="wrap" gap="md" mb="xl">

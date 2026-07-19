@@ -10,3 +10,36 @@
   from="/*"
   to="/index.html"
   status="200"
+
+# Security headers (owner QA standard; keep securityheaders.com passing).
+# Netlify serves HTTPS only, so HSTS is safe to preload. The CSP allows
+# Google Fonts, Firebase (Firestore, Auth, Storage, Functions), and inline
+# styles (Mantine/Emotion inject style tags at runtime). When adding a new
+# third-party origin, extend the matching CSP directive here.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' https: wss:; frame-src 'self' https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests"
+    X-XSS-Protection = "0"
+
+# Long-lived caching for fingerprinted build assets.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Keep crawler files fresh.
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"

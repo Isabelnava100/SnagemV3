@@ -17,6 +17,7 @@ import DOMPurify from "dompurify";
 import React from "react";
 import { Link } from "react-router-dom";
 import { HeroStat, PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getCurrencies } from "../../queries/dashboard";
@@ -264,6 +265,7 @@ export default function Missions() {
 
   return (
     <Box>
+      <Seo page="/Missions" />
       <Container size="xl" pt={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
         <PageHero
           eyebrow="The Mission Vault"

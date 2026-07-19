@@ -1,43 +1,39 @@
 import { db } from "../context/firebase";
 
 /**
- * Site-wide SEO settings. Stored at admin/seo (readable by signed-in users,
- * writable by Admin or a director with ManageSEO per Firestore rules). These
- * are the defaults used for meta tags and social share cards. Per-page
- * overrides and how these get applied to crawlers are a later pass.
+ * Site-wide SEO settings, stored at admin/seo (public read per Firestore
+ * rules since it holds no PII; writable by Admin or a director with
+ * ManageSEO). Titles, descriptions, canonicals, robots, sitemap, and schema
+ * are all assigned automatically (see src/components/common/Seo.tsx and
+ * src/lib/seo/), so the only editable knobs are the standardized social
+ * share images and the X handle.
  */
 export interface SEOSettings {
-  /** Browser tab / default <title>. */
-  siteTitle: string;
-  /** Appended after page titles, e.g. "Page Name | Snagem Guild". */
-  titleSuffix: string;
-  /** Default meta description (aim for 150 to 160 characters). */
-  metaDescription: string;
-  /** Comma-separated keywords (low SEO value now, kept for completeness). */
-  keywords: string;
-  /** Canonical site URL, e.g. https://snagemguild.com. */
-  canonicalUrl: string;
   /** Absolute URL of the default social share image (1200x630 works best). */
   ogImageUrl: string;
-  /** Twitter/X handle including the @, e.g. @snagemguild. */
+  /** Optional X/Twitter-specific share image; falls back to ogImageUrl. */
+  twitterImageUrl: string;
+  /** X/Twitter handle including the @, e.g. @snagemguild. */
   twitterHandle: string;
 }
 
 export const DEFAULT_SEO: SEOSettings = {
-  siteTitle: "Snagem Guild",
-  titleSuffix: " | Snagem Guild",
-  metaDescription: "",
-  keywords: "",
-  canonicalUrl: "https://snagemguild.com",
   ogImageUrl: "",
+  twitterImageUrl: "",
   twitterHandle: "",
 };
 
 export const getSEOSettings = async (): Promise<SEOSettings> => {
-  const { doc, getDoc } = await import("firebase/firestore");
-  const snap = await getDoc(doc(db, "admin", "seo"));
-  const data = snap.data() as Partial<SEOSettings> | undefined;
-  return { ...DEFAULT_SEO, ...(data ?? {}) };
+  try {
+    const { doc, getDoc } = await import("firebase/firestore");
+    const snap = await getDoc(doc(db, "admin", "seo"));
+    const data = snap.data() as Partial<SEOSettings> | undefined;
+    return { ...DEFAULT_SEO, ...(data ?? {}) };
+  } catch {
+    // Rules may not allow anonymous reads until the next rules deploy; the
+    // baked defaults in src/lib/seo/site.ts cover that case.
+    return DEFAULT_SEO;
+  }
 };
 
 export const saveSEOSettings = async (settings: SEOSettings): Promise<void> => {

@@ -2,6 +2,7 @@ import { Box, Container, Stack, Tabs, Text, Title } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { useSearchParams } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 
 /**
  * Public policies hub. Anyone (signed in or not) can read these. Tabbed so we
@@ -421,8 +422,15 @@ export default function Policies() {
   const requested = searchParams.get("tab");
   const active = TABS.some((t) => t.value === requested) ? requested : TABS[0].value;
 
+  const activeTab = TABS.find((t) => t.value === active);
+
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+      {/* Tab deep links keep the base /Policies canonical; only the title varies. */}
+      <Seo
+        page="/Policies"
+        title={requested && activeTab ? `${activeTab.label} | Snagem Guild` : undefined}
+      />
       <PageHero
         eyebrow="House Rules"
         title="Policies"

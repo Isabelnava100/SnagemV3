@@ -30,7 +30,8 @@ interface FaqItem {
   a: React.ReactNode;
 }
 
-const FAQ: FaqItem[] = [
+/** Exported so the Library page can build FAQPage JSON-LD from the entries. */
+export const FAQ: FaqItem[] = [
   {
     q: "What is a Snag Machine?",
     a: (

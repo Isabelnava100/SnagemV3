@@ -1,17 +1,18 @@
-import { Stack, Text, TextInput, Textarea, Title } from "@mantine/core";
+import { List, Stack, Text, TextInput, Title } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import GradientButtonPrimary from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
+import { DEFAULT_OG_IMAGE } from "../../../../lib/seo/site";
 import { SEOSettings, getSEOSettings, saveSEOSettings } from "../../../../queries/seo";
 
 /**
- * Admin/ManageSEO editor for the site-wide SEO defaults. This is the starting
- * scaffold: it stores the standard meta and social-share fields at admin/seo.
- * How these get applied for crawlers, plus any per-page overrides, is a later
- * pass once the SEO approach is settled.
+ * Site Settings SEO panel. Titles, descriptions, canonicals, robots, the
+ * sitemap, and structured data are all assigned automatically (Seo component
+ * plus src/lib/seo/pages.json plus scripts/gen-sitemap.mjs), so this panel
+ * only manages the standardized social share images and the X handle.
  */
 export default function SEO() {
   const { user } = useAuth();
@@ -37,7 +38,7 @@ export default function SEO() {
         action: "seo.edit",
         ...actorFrom(user),
         targetPath: "admin/seo",
-        details: { siteTitle: form.siteTitle },
+        details: { ogImageUrl: form.ogImageUrl },
       });
     },
     onSuccess: () => {
@@ -61,68 +62,52 @@ export default function SEO() {
         SEO &amp; Search
       </Title>
       <Text fz={14} c="dimmed">
-        The site's default search and social-share details. They set the browser
-        tab title, the description that shows up in search results, and the preview
-        card people see when a link is shared. Page-specific overrides come in a
-        later update.
+        Search engine details are handled automatically, so there is nothing to
+        fill in for them here:
+      </Text>
+      <List fz={14} c="dimmed" spacing={4}>
+        <List.Item>
+          Every page gets a unique meta title (60 characters max) and meta
+          description; threads use their thread name and the first post's text,
+          with "Page X" added on paginated pages.
+        </List.Item>
+        <List.Item>
+          Canonical tags, robots rules, and structured data (WebPage, FAQ,
+          forum post schemas) are assigned per page. Private pages are kept out
+          of search results.
+        </List.Item>
+        <List.Item>
+          sitemap.xml regenerates on every deploy from the main public pages;
+          robots.txt and llms.txt live alongside it.
+        </List.Item>
+      </List>
+
+      <Text fz={14} c="dimmed">
+        The share images below are standardized site-wide: they are the preview
+        card people see when any page is shared on Discord, X, Facebook, and
+        friends. 1200x630 works best.
       </Text>
 
       <TextInput
-        label="Site title"
-        description="Shown in the browser tab and used as the default page title."
-        value={form.siteTitle}
-        onChange={(e) => setField("siteTitle", e.currentTarget.value)}
-        maxLength={70}
-        styles={inputStyles}
-      />
-
-      <TextInput
-        label="Title suffix"
-        description="Added after page names, for example ' | Snagem Guild'."
-        value={form.titleSuffix}
-        onChange={(e) => setField("titleSuffix", e.currentTarget.value)}
-        maxLength={40}
-        styles={inputStyles}
-      />
-
-      <Textarea
-        label="Meta description"
-        description="The summary search engines show. Aim for 150 to 160 characters."
-        value={form.metaDescription}
-        onChange={(e) => setField("metaDescription", e.currentTarget.value)}
-        autosize
-        minRows={2}
-        maxLength={200}
-        styles={inputStyles}
-      />
-
-      <TextInput
-        label="Keywords"
-        description="Comma-separated. Optional, most engines ignore these now."
-        value={form.keywords}
-        onChange={(e) => setField("keywords", e.currentTarget.value)}
-        styles={inputStyles}
-      />
-
-      <TextInput
-        label="Canonical URL"
-        description="The site's primary address, for example https://snagemguild.com."
-        value={form.canonicalUrl}
-        onChange={(e) => setField("canonicalUrl", e.currentTarget.value)}
-        styles={inputStyles}
-      />
-
-      <TextInput
         label="Social share image URL"
-        description="Absolute URL of the default preview image. 1200x630 works best."
+        description={`Used for all link previews. Leave blank for the default (${DEFAULT_OG_IMAGE}).`}
         value={form.ogImageUrl}
         onChange={(e) => setField("ogImageUrl", e.currentTarget.value)}
+        placeholder={DEFAULT_OG_IMAGE}
         styles={inputStyles}
       />
 
       <TextInput
-        label="Twitter/X handle"
-        description="Include the @, for example @snagemguild."
+        label="X/Twitter share image URL"
+        description="Optional X-specific image. Falls back to the social share image."
+        value={form.twitterImageUrl}
+        onChange={(e) => setField("twitterImageUrl", e.currentTarget.value)}
+        styles={inputStyles}
+      />
+
+      <TextInput
+        label="X/Twitter handle"
+        description="Include the @, for example @snagemguild. Shown on X share cards."
         value={form.twitterHandle}
         onChange={(e) => setField("twitterHandle", e.currentTarget.value)}
         styles={inputStyles}

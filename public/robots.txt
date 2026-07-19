@@ -1,0 +1,64 @@
+# robots.txt for https://snagemguild.com
+# The forums, member hub, and private member areas are off limits to all
+# crawlers. Public community pages stay crawlable so people (and assistants)
+# can learn what the Snagem Guild is about. See also /llms.txt.
+
+User-agent: *
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+Disallow: /Admin
+Disallow: /SNAG
+Disallow: /Onboarding
+Disallow: /Daycare
+Disallow: /Trading
+Disallow: /Login
+Disallow: /Register
+Disallow: /Forgot
+Disallow: /Reset
+
+# AI and LLM training crawlers: same limits as everyone else. Public pages
+# and /llms.txt are open so assistants can describe the guild accurately;
+# member-written roleplay threads and profiles are not for scraping.
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: anthropic-ai
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: CCBot
+User-agent: Bytespider
+User-agent: meta-externalagent
+User-agent: FacebookBot
+User-agent: cohere-ai
+User-agent: cohere-training-data-crawler
+User-agent: Diffbot
+User-agent: omgili
+User-agent: omgilibot
+User-agent: Timpibot
+User-agent: AI2Bot
+User-agent: Amazonbot
+User-agent: YouBot
+User-agent: DuckAssistBot
+User-agent: MistralAI-User
+User-agent: PanguBot
+User-agent: SemrushBot-OCOB
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+Disallow: /Admin
+Disallow: /SNAG
+Disallow: /Onboarding
+Disallow: /Daycare
+Disallow: /Trading
+Disallow: /Login
+Disallow: /Register
+Disallow: /Forgot
+Disallow: /Reset
+
+Sitemap: https://snagemguild.com/sitemap.xml

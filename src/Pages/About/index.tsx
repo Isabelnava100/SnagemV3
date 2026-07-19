@@ -19,6 +19,7 @@ import {
 } from "@tabler/icons-react";
 import React from "react";
 import { Link } from "react-router-dom";
+import Seo from "../../components/common/Seo";
 
 /**
  * Public "About the Snagem Guild" page. Marketing/landing content only: no auth,
@@ -155,6 +156,7 @@ const ROLE_PILLS: { label: string; color: string; border: string }[] = [
 export default function About() {
   return (
     <Box style={{ background: BG, minHeight: "100%" }}>
+      <Seo page="/About" />
       <Container size="lg" py={{ base: 40, sm: 72 }} px={{ base: 16, sm: 24 }}>
         {/* ------------------------------- Hero ------------------------------- */}
         <Stack gap="lg" align="center" mb={{ base: 64, sm: 120 }} ta="center">

@@ -19,8 +19,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
+import Seo from "../../../components/common/Seo";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
+import { withSuffix } from "../../../lib/seo/site";
+import { stripHtml, truncate } from "../../../lib/seo/text";
 import { isAdmin } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { FORUM_ACCENT, POSTS_PER_PAGE } from "../config";
@@ -441,8 +444,38 @@ export default function ThreadView() {
     navigate(`/Forum/${forum}/thread/${threadId}/${p}`);
   };
 
+  // Unique per-page meta: the thread name (max 60 chars) plus "Page X" past
+  // page 1, described by the first 160 characters of the page's opening post.
+  // Paginated pages self-canonicalize to their own page URL, never to page 1.
+  const seoTitle = withSuffix(
+    currentPage > 1
+      ? `${truncate(thread.title, 46)} Page ${currentPage}`
+      : truncate(thread.title, 60),
+  );
+  const firstPostText = posts?.length ? stripHtml(posts[0].text ?? "") : "";
+  const seoDescription = firstPostText
+    ? truncate(firstPostText, 160)
+    : `${truncate(thread.title, 80)}, a Pokemon roleplay thread on the Snagem Guild forums.`;
+  const seoCanonical =
+    currentPage > 1
+      ? `/Forum/${forum}/thread/${threadId}/${currentPage}`
+      : `/Forum/${forum}/thread/${threadId}`;
+
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        canonicalPath={seoCanonical}
+        ogType="article"
+        schema={{
+          "@type": "DiscussionForumPosting",
+          headline: truncate(thread.title, 110),
+          url: `https://snagemguild.com${seoCanonical}`,
+          author: { "@type": "Person", name: thread.createdBy },
+          isPartOf: { "@type": "WebSite", name: "Snagem Guild", url: "https://snagemguild.com" },
+        }}
+      />
       <Title order={1} fz={isOverSm ? 30 : 20} c="white" fw={400}>
         {thread.title}
         {thread.closed ? " (Archived)" : ""}

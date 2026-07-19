@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
+import Seo from "../components/common/Seo";
 import "/src/assets/styles/homepage.css";
 
 export const HomePage = () => {
   return (
     <div className="homepage">
+    <Seo page="/" />
     <div className="heroIMGcontainer">
            <div className="centered-container">
               <h1>The Snagem Guild</h1>

@@ -33,7 +33,9 @@ import { eggGroupsForDex } from "../../lib/eggGroups";
 import { isAdmin } from "../../lib/permissions";
 import { resolveListSlugs } from "../forum/queries";
 import { getPokemonLists, getStarOverrides, setStarOverride } from "../../queries/admin";
-import FaqTab from "./faq";
+import Seo from "../../components/common/Seo";
+import { textFromNode, truncate } from "../../lib/seo/text";
+import FaqTab, { FAQ } from "./faq";
 import ShadowGuideTab from "./shadow";
 import LoreTab from "./lore";
 import MovesTab from "./moves";
@@ -757,9 +759,27 @@ export default function Library() {
   const open = (value: string) => setSearchParams({ tab: value }, { replace: true });
   const openWing = WINGS.find((w) => w.value === active);
 
+  // Tab variants keep the base /Library canonical (query-param pages never
+  // self-canonicalize) but get their own tab title, and the Help Desk wing
+  // ships its Q&A as FAQPage structured data.
+  const seoTitle = openWing ? `${openWing.name} | Snagem Library` : undefined;
+  const seoDescription = openWing ? truncate(`${openWing.blurb} ${openWing.name} is part of the Snagem Guild's public Pokemon roleplay library.`, 160) : undefined;
+  const faqSchema =
+    active === "faq"
+      ? {
+          "@type": "FAQPage",
+          mainEntity: FAQ.map((item) => ({
+            "@type": "Question",
+            name: item.q,
+            acceptedAnswer: { "@type": "Answer", text: textFromNode(item.a) },
+          })),
+        }
+      : undefined;
+
   return (
     <Box style={{ background: BG, minHeight: "100%" }}>
       <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+        <Seo page="/Library" title={seoTitle} description={seoDescription} schema={faqSchema} />
         <PageHero
           eyebrow="The Great Snagem Library &middot; Est. 2022"
           eyebrowColor="#c9a94a"

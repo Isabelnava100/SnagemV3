@@ -35,6 +35,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { SHADOW_GUIDE_LINK } from "../../lib/shadow";
 import { HeroStat as HeroStatChip, PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { getPokemonImageURL } from "../../helpers";
 import { pokemonData } from "../../data/pokemon";
@@ -1269,6 +1270,7 @@ export default function Colosseum() {
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+      <Seo page="/Colosseum" />
       <PageHero
         eyebrow={
           <Group gap={8}>

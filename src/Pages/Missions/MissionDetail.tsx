@@ -4,11 +4,14 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
 import { pokemonData } from "../../data/pokemon";
 import { postsToBeatStar, starForDex } from "../../lib/encounterStars";
+import { withSuffix } from "../../lib/seo/site";
+import { stripHtml, truncate } from "../../lib/seo/text";
 import { Mission, getMission, pickUpMission } from "../../queries/missions";
 
 /**
@@ -281,9 +284,18 @@ export default function MissionDetail() {
   const poolSlugs = mission.encounters ?? [];
   const threatStar = poolSlugs.length ? Math.max(...poolSlugs.map(starOfSlug)) : 0;
   const requiredPosts = requiredSlugs.reduce((sum, s) => sum + postsToBeatStar(starOfSlug(s)), 0);
+  const seoDescription = truncate(
+    stripHtml(mission.story || "") || [...objectives, ...oppositions].join(" "),
+    160
+  );
 
   return (
     <Box>
+      <Seo
+        title={withSuffix(mission.title)}
+        description={seoDescription || undefined}
+        canonicalPath={`/Missions/${id}`}
+      />
       {/* Full-bleed striped hero */}
       <Box
         px={{ base: 16, sm: 40 }}

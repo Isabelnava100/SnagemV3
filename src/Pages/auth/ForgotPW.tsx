@@ -11,6 +11,7 @@ import { useForm } from "@mantine/form";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { IconArrowLeft } from "@tabler/icons-react";
+import Seo from "../../components/common/Seo";
 import { auth } from "../../context/firebase";
 import { AuthCard, warmGradient } from "./components/AuthCard";
 
@@ -46,6 +47,7 @@ export function ForgotPassword() {
 
   return (
     <Container size={640} my={40}>
+      <Seo noindex title="Forgot Password | Snagem Guild" />
       <AuthCard title="Enter your email to get a reset link.">
         <form
           onSubmit={form.onSubmit((values) => {

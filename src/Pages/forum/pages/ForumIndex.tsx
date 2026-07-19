@@ -19,6 +19,7 @@ import React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { GradientButtonSecondary } from "../../../components/common/GradientButton";
 import { PageHero } from "../../../components/common/PageHero";
+import Seo from "../../../components/common/Seo";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { canAccessForum } from "../../../lib/permissions";
@@ -209,6 +210,18 @@ export default function ForumIndex() {
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
+      {/* Boards are crawl-blocked in robots.txt; the meta still names the tab
+          and share cards. Board-list pagination is local state, so the
+          canonical stays the board URL. */}
+      <Seo
+        title={`${category?.label ?? "Snagem Forums"} | Snagem Guild Forums`}
+        description={
+          category
+            ? `${category.description} Roleplay board on the Snagem Guild's Pokemon roleplay forums.`
+            : "The Snagem Guild's Pokemon roleplay boards. Pick a board, join a thread, or start your own story."
+        }
+        canonicalPath={`/Forum/${activeLink}`}
+      />
       <PageHero
         eyebrow="The Roleplay Boards"
         title="Snagem Forums"
