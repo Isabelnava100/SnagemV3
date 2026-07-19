@@ -27,6 +27,20 @@
     Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' https: wss:; frame-src 'self' https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests"
     X-XSS-Protection = "0"
 
+# Forums, threads, and member profiles are never crawlable or indexable, by
+# anyone: robots.txt blocks crawling, this header blocks indexing even for
+# bots that fetch anyway (it is served before any JavaScript runs), and the
+# pages also emit noindex meta.
+[[headers]]
+  for = "/Forum/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/Users/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
 # Long-lived caching for fingerprinted build assets.
 [[headers]]
   for = "/assets/*"

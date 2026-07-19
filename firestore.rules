@@ -357,12 +357,16 @@ service cloud.firestore {
     //   2. the thread host editing details -> title/instructions/tags/
     //      restricted/allowedPosters/encounterConfig/closed only
     // Everything else is admin-only (console escape hatch).
+    // Main-Forum (the flagship roleplay board) is publicly viewable so
+    // visitors can sample the guild's stories before joining; every other
+    // board stays members-only. Crawlers are still blocked from all forum
+    // pages via robots.txt, X-Robots-Tag, and noindex meta.
     match /forum/{forum} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() || forum == 'Main-Forum';
       allow write: if isAdmin();
 
       match /threads/{threadId} {
-        allow read: if isSignedIn();
+        allow read: if isSignedIn() || forum == 'Main-Forum';
         allow create: if isAdmin();   // publishForumThread enforces the category matrix
         allow update: if isAdmin()
           || (isSignedIn()
@@ -393,7 +397,7 @@ service cloud.firestore {
         // Dice, randoms, encounters and item blocks are server-generated and
         // therefore write-once by construction.
         match /posts/{postId} {
-          allow read: if isSignedIn();
+          allow read: if isSignedIn() || forum == 'Main-Forum';
           allow create, update, delete: if isAdmin();
         }
 

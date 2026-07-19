@@ -363,16 +363,20 @@ export default function ThreadView() {
     isNumeric(page) ? Number(page) : 1
   );
 
+  // Main-Forum threads are publicly viewable; other boards are members-only
+  // (mirrored in firestore.rules, which is the real enforcement).
+  const publicOnly = !user && forum !== "Main-Forum";
+
   const { data: thread, isPending: threadPending } = useQuery({
     queryKey: ["forum-thread", forum, threadId],
     queryFn: () => getThread(forum, threadId!),
-    enabled: !!threadId,
+    enabled: !!threadId && !publicOnly,
   });
 
   const { data: totalPosts } = useQuery({
     queryKey: ["forum-posts-count", forum, threadId],
     queryFn: () => getPostsCount(forum, threadId!),
-    enabled: !!threadId,
+    enabled: !!threadId && !publicOnly,
   });
 
   // "last" resolves to the numeric last page once the count is known.
@@ -418,6 +422,22 @@ export default function ThreadView() {
     },
   });
 
+  if (publicOnly) {
+    return (
+      <Container size="lg" mt={40}>
+        <Seo noindex title="Members Only | Snagem Guild Forums" />
+        <Stack gap={10} align="center" py={40}>
+          <Text fz={16} c="white" ta="center">
+            This thread is on a members-only board. Log in to read it, or
+            browse the public Main Adventures board.
+          </Text>
+          <GradientButtonSecondary radius="xl" size="xs" onClick={() => navigate("/Login")}>
+            Log In
+          </GradientButtonSecondary>
+        </Stack>
+      </Container>
+    );
+  }
   if (threadPending) {
     return (
       <Container size="lg" mt={20}>
@@ -446,7 +466,8 @@ export default function ThreadView() {
 
   // Unique per-page meta: the thread name (max 60 chars) plus "Page X" past
   // page 1, described by the first 160 characters of the page's opening post.
-  // Paginated pages self-canonicalize to their own page URL, never to page 1.
+  // Threads are never crawlable (robots.txt, X-Robots-Tag, and this noindex),
+  // so the meta serves tabs, bookmarks, and member-shared links.
   const seoTitle = withSuffix(
     currentPage > 1
       ? `${truncate(thread.title, 46)} Page ${currentPage}`
@@ -456,26 +477,10 @@ export default function ThreadView() {
   const seoDescription = firstPostText
     ? truncate(firstPostText, 160)
     : `${truncate(thread.title, 80)}, a Pokemon roleplay thread on the Snagem Guild forums.`;
-  const seoCanonical =
-    currentPage > 1
-      ? `/Forum/${forum}/thread/${threadId}/${currentPage}`
-      : `/Forum/${forum}/thread/${threadId}`;
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
-      <Seo
-        title={seoTitle}
-        description={seoDescription}
-        canonicalPath={seoCanonical}
-        ogType="article"
-        schema={{
-          "@type": "DiscussionForumPosting",
-          headline: truncate(thread.title, 110),
-          url: `https://snagemguild.com${seoCanonical}`,
-          author: { "@type": "Person", name: thread.createdBy },
-          isPartOf: { "@type": "WebSite", name: "Snagem Guild", url: "https://snagemguild.com" },
-        }}
-      />
+      <Seo noindex title={seoTitle} description={seoDescription} ogType="article" />
       <Title order={1} fz={isOverSm ? 30 : 20} c="white" fw={400}>
         {thread.title}
         {thread.closed ? " (Archived)" : ""}

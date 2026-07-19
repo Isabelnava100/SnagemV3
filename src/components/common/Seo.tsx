@@ -42,6 +42,12 @@ export interface SeoProps {
   /** Open Graph type, defaults to website. Threads use article. */
   ogType?: "website" | "article";
   /**
+   * schema.org type of the page's default block, defaults to WebPage.
+   * Use a specific subtype where one fits: AboutPage, CollectionPage,
+   * ContactPage, ProfilePage.
+   */
+  pageType?: string;
+  /**
    * Extra JSON-LD blocks (FAQPage, DiscussionForumPosting, ProfilePage...)
    * appended after the default WebPage schema.
    */
@@ -89,6 +95,7 @@ export default function Seo({
   canonicalPath,
   noindex = false,
   ogType = "website",
+  pageType = "WebPage",
   schema,
 }: SeoProps) {
   const location = useLocation();
@@ -113,7 +120,7 @@ export default function Seo({
         [
           {
             "@context": "https://schema.org",
-            "@type": "WebPage",
+            "@type": pageType,
             name: finalTitle,
             description: finalDescription,
             url: canonical,

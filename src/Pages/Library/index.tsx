@@ -779,7 +779,13 @@ export default function Library() {
   return (
     <Box style={{ background: BG, minHeight: "100%" }}>
       <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
-        <Seo page="/Library" title={seoTitle} description={seoDescription} schema={faqSchema} />
+        <Seo
+          page="/Library"
+          pageType="CollectionPage"
+          title={seoTitle}
+          description={seoDescription}
+          schema={faqSchema}
+        />
         <PageHero
           eyebrow="The Great Snagem Library &middot; Est. 2022"
           eyebrowColor="#c9a94a"

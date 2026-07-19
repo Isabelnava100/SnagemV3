@@ -34,6 +34,12 @@ July 2026 build-out are marked (2026-07).
 
 ## Assets & sprites
 
+- **New social share (OG) image** (2026-07, owner-requested). The current
+  `public/og-image.png` is a placeholder generated from an SVG
+  (`scripts/gen-og-image.mjs`): gradient banner, guild name, tagline. Replace
+  it with real branded art (guild logo/mascot art, 1200x630). Once made, either
+  overwrite the file or paste its URL into Dashboard > Site Settings > SEO.
+
 - **Shadow Vaccine sprite** (2026-07). The Shadow Vaccine item was added to the
   catalog (`src/data/item/item.json`, item 994) with `Filename:
   medicine/shadow-vaccine.png`, which may not exist yet, so it can render a blank

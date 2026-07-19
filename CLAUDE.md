@@ -77,7 +77,7 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 
 ## Known deferred work
 
-- SEO build (July 2026): full system documented in `docs/SEO.md` (registry `src/lib/seo/pages.json`, `Seo` component, sitemap/robots/llms.txt, netlify.toml security headers). Needs `firebase deploy --only firestore:rules` for the public-read `admin/seo` rule (share image settings for logged-out visitors; baked defaults cover it until then). After the next Netlify deploy, verify headers at securityheaders.com and submit sitemap.xml in Search Console.
+- SEO build (July 2026): full system documented in `docs/SEO.md` (registry `src/lib/seo/pages.json`, `Seo` component, sitemap/robots/llms.txt, netlify.toml security headers). Needs `firebase deploy --only firestore:rules` for the public-read `admin/seo` rule AND the Main-Forum public-read forum rules (Main-Forum viewable logged-out, other boards members-only). Forums/threads/profiles are never indexable: robots.txt + X-Robots-Tag headers + noindex meta. After the next Netlify deploy, verify headers at securityheaders.com and submit sitemap.xml in Search Console. Backlog: replace the placeholder og-image.png with branded art.
 
 - Forum post mechanics need a functions deploy (`firebase deploy --only
   functions`) to run live. Progression stats friendship/shadow/purification are

@@ -21,10 +21,13 @@ Built July 2026 to the owner's agency QA checklist (see CLAUDE.md "SEO rules"). 
 ## Behavior rules
 
 - Titles max 60 chars, descriptions 50 to 160, unique per page.
-- Threads: title is the thread name (truncated), with " Page X" appended past page 1; description is the first 160 characters of the page's opening post; paginated pages self-canonicalize to their own page URL, never to page 1.
+- Threads: title is the thread name (truncated), with " Page X" appended past page 1; description is the first 160 characters of the page's opening post.
+- Forums, threads, and member profiles are never crawlable or indexable, by anyone (search engines, AI, LLM bots alike): robots.txt disallows `/Forum` and `/Users`, netlify.toml serves `X-Robots-Tag: noindex, nofollow` on those paths (works before any JavaScript runs), and the pages emit noindex meta.
+- Forum visibility: Main-Forum is publicly viewable (visitors can sample stories); every other board is members-only, enforced in `firestore.rules` (`isSignedIn() || forum == 'Main-Forum'`) and mirrored with login prompts in ForumIndex/ThreadView.
 - Query-param variants (Library wings `?tab=`, Policies tabs) keep the base page canonical and only vary the title.
 - Library Help Desk (`/Library?tab=faq`) emits FAQPage JSON-LD from the `FAQ` export in `src/Pages/Library/faq.tsx`.
-- Threads emit DiscussionForumPosting, profiles ProfilePage, everything indexable a WebPage block; Organization + WebSite live statically in `index.html`.
+- Schema coverage: Organization + WebSite statically in `index.html`; every indexable page a WebPage block (subtype via the `pageType` prop: AboutPage on /About, CollectionPage on /Library); FAQPage on the Help Desk. Noindexed pages intentionally emit no schema.
+- Every page has exactly one h1 (PageHero) and at least one h2.
 - Private/auth pages (`Dashboard`, `Admin`, auth flows, Daycare, Trading, SNAG, Onboarding) mount `<Seo noindex title="..."/>` and never appear in the sitemap.
 
 ## Deploy dependencies
