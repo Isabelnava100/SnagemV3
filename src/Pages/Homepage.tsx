@@ -1,6 +1,12 @@
+import { preload } from "react-dom";
 import { Link } from "react-router-dom";
 import Seo from "../components/common/Seo";
 import "/src/assets/styles/homepage.css";
+
+// The hero background is the LCP image but lives in CSS, where the browser
+// only discovers it after the stylesheet parses. Preload it as soon as the
+// homepage chunk executes; never lazy-load it.
+preload("/images/hero-bg.webp", { as: "image", fetchPriority: "high" });
 
 export const HomePage = () => {
   return (
@@ -45,8 +51,12 @@ export const HomePage = () => {
       </span>
       <img
         className="teamGroupIMG"
-        src="https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/site%2Fteamgroup.png?alt=media&token=acde80c2-f735-45ac-a8a2-730b186090ea"
+        src="/images/team-group.webp"
         alt="Team Snagem members and their Pokemon"
+        width={1113}
+        height={1466}
+        loading="lazy"
+        decoding="async"
       />
     </div>
 

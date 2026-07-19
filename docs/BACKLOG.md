@@ -206,6 +206,19 @@ Status as of 2026-07:
   kept above it for manual adjustments. Wins/losses/streak still adjust manually. Visual QA
   pending a logged-in staff pass.
 
+## Performance
+
+- **Firebase compat-to-modular migration** (2026-07). The eager firebase
+  bundle is ~764KB minified (~230KB gzip), the single biggest first-paint
+  cost, because `src/context/firebase.ts` initializes via
+  `firebase/compat/*` (app + auth + firestore + storage all load up front).
+  Migrating init and the auth call sites to the modular SDK would cut a
+  large share of it. Touches every auth flow, so it needs its own careful
+  pass with logged-in QA.
+- **Font subsetting** (2026-07). Roboto now loads as the Google Fonts
+  variable font (2 files, swap). Self-hosting a subset woff2 would shave a
+  bit more, at the cost of manual font upkeep.
+
 ## Backend / integrity
 
 - **Currency stored as strings** DONE, APPLIED + DEPLOYED (2026-07). All server writes emit

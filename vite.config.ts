@@ -11,9 +11,11 @@ export default defineConfig({
           if (!id.includes("node_modules")) return;
           if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom)\//.test(id))
             return "react";
-          if (id.includes("node_modules/@mantine/")) return "mantine";
+          // Mantine and tiptap are intentionally NOT force-grouped: letting
+          // the bundler split them per route keeps first paint from
+          // downloading every component used anywhere in the app. Forcing
+          // them into one chunk previously made the whole bundle eager.
           if (/node_modules\/(@firebase|firebase)\//.test(id)) return "firebase";
-          if (/node_modules\/(@tiptap|prosemirror)/.test(id)) return "tiptap";
         },
       },
     },

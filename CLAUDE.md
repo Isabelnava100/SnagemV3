@@ -72,7 +72,8 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 ## Build & dev
 
 - `npm run dev` / `bun run dev` (vite), `npm run build` = `tsc && vite build`. Both must pass before commit.
-- vite.config.ts `manualChunks` is a function (rolldown requires it).
+- vite.config.ts `manualChunks` is a function (rolldown requires it). Only react and firebase are force-grouped; do NOT re-add mantine/tiptap groups, forcing them made the whole bundle load eagerly (~600KB extra on first paint).
+- Homepage hero + team images are self-hosted WebP in `public/images/` (converted from the old Firebase Storage originals). Keep new site imagery WebP, self-hosted, with width/height set; lazy-load below the fold only.
 - Typecheck: `npx tsc --noEmit`. Keep at zero errors.
 - This repo lives in iCloud-synced Documents: if builds hang on file reads, node_modules was evicted: run `brctl download node_modules` and wait.
 

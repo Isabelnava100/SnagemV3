@@ -5,7 +5,7 @@
 }
 .heroIMGcontainer {
     padding: 40vh 20px 25vh 20px;
-    background-image: url('https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/edit_Bg_Compress.jpg?alt=media&token=69d117aa-15b7-4cee-868b-04b5835e87e4'); /* Replace with your image URL */
+    background-image: url('/images/hero-bg.webp'); /* self-hosted WebP, preloaded in Homepage.tsx */
     background-size: cover;
     background-position: bottom;
     background-repeat: no-repeat;
