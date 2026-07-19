@@ -49,6 +49,27 @@ export const requirements = [
 
 //List of users pre-approved
   export const Gusers:Array<string>=[
+      // Members found in the July 2026 Gaia profile export (scripts/gaia-export)
+      // who were missing from the original list; their onboarding prefill
+      // packets exist, so they must be able to register with their Gaia name.
+      "Anamineh",
+      "KomradeKarina",
+      "Tsuki the Lunar Wind",
+      "Youko Kenshi",
+      "avem xxvii",
+      "DeoLux",
+      "Feather Weather",
+      "HauntMyCroissant",
+      "kanna2012",
+      "KiIala",
+      "nahobinokami",
+      "Rae Guns",
+      "sintaurs",
+      "Socordiasomnia",
+      "swarm0fbees",
+      "TheRangaTan",
+      "Ulla_Hanabi",
+      "Zane Belazarus",
       "SubonicXP",
       "Reno Vantas",
       "Darksol88",

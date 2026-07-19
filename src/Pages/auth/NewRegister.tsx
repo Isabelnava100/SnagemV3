@@ -128,11 +128,16 @@ export function NewRegister() {
   const handleSubmitReg = useCallback(async (values: typeof form.values) => {
     setWhenSubmit(true);
     try {
+      // Store the canonical pre-approved spelling, not the typed casing, so the
+      // saved gaiaName always matches the onboarding export packets.
+      const canonicalGaiaName =
+        Gusers.find((g) => g.toLowerCase() === values.gaiaName.trim().toLowerCase()) ??
+        values.gaiaName.trim();
       const results = await registerUser(
         values.email,
         values.password,
         values.application,
-        values.gaiaName,
+        values.gaiaName ? canonicalGaiaName : "",
         values.username
       );
 
