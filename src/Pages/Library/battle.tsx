@@ -239,18 +239,19 @@ export default function BattleGuideTab() {
         <Text>
           Mid-thread you can spend a POST visiting the Pokemon Center (no coins,
           the trip is the price). It only opens when nothing is being fought: no
-          live encounter, no boss, and your latest post on the thread was
-          battle-free. The nurse fully heals and cures your own team&apos;s
-          wounds from that thread only, and you cannot roll encounters or battle
-          on the visit post or your next one there.
+          live encounter, no boss, and the visiting character&apos;s latest post
+          was battle-free. The nurse heals and cures ONLY the team brought on
+          that post, and only its wounds from that thread. The visit locks that
+          one character out of encounters and battles for the visit post and
+          their next one; your other characters fight on unaffected.
         </Text>
       </Section>
 
       <Section title="The Daycare and the Trading Post">
         <Text>
           The Daycare (main nav) takes one pair at a time: one male and one
-          female sharing an egg group, or anything breedable with a Ditto.
-          Legendaries, mythicals and Undiscovered-group pokemon cannot breed.
+          female sharing an egg group, or ANYTHING paired with a Ditto (the
+          universal partner). Only legendaries and mythicals can never breed.
           The egg is ready after {cfg.mechanics.hatchDays} days or{" "}
           {cfg.mechanics.hatchPosts} qualifying posts, whichever comes first,
           and hatches into the base form of the mother&apos;s (or non-Ditto
@@ -283,12 +284,12 @@ export default function BattleGuideTab() {
       <Section title="The Fishing Pond">
         <Text>
           Fishing lives on its own pinned thread in Events (reach it from the
-          Activities page). Bring any rod from the Snag Mall and cast once a
-          week with the character of your choice: bites are 1★ to 3★
-          Water-types, rolled at 60/30/10 (a 3★ bite is the 10% catch of the
-          day). Battle it down and throw a ball, or release it for 1 Snag Coin.
-          The pond is fishing-only: no other encounters or battles happen
-          there, and it restocks Monday 00:00 UTC.
+          Activities page). Bring a rod from the Snag Mall and cast once a week
+          with the character of your choice; a better rod means better bites.
+          Old Rod: 1★ 65% / 2★ 30% / 3★ 5%. Good Rod: 60/30/10. Super Rod:
+          55/30/10 plus a 5% chance of a 4★ bite, the pond&apos;s biggest
+          catch. Battle it down and throw a ball, or release it for 1 Snag
+          Coin. The pond is fishing-only and restocks Monday 00:00 UTC.
         </Text>
       </Section>
 

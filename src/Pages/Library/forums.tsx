@@ -125,7 +125,14 @@ export default function ForumGuideTab() {
           <Text>
             <Text span fw={600} c="white">Hosts</Text> (the thread creator) manage
             their thread from the Host Menu: edit details, restrict who can post,
-            run boss battles, and close the thread when the story wraps.
+            run boss battles, retune the weather at any time, and close the
+            thread when the story wraps.
+          </Text>
+          <Text>
+            <Text span fw={600} c="white">Battle staff:</Text> only admins and
+            members holding the ManageBattles capability can turn battle mode
+            (encounters) on or off, and they hold host access on every thread,
+            hosted by them or not.
           </Text>
           <Text>
             <Text span fw={600} c="white">Team lock:</Text> on normal roleplay

@@ -134,7 +134,7 @@ export default function Daycare() {
         eyebrow="Breeding · One pair at a time"
         eyebrowColor="pink.0"
         title="The Daycare"
-        subtitle={`Drop one Pokemon in each slot: a male and a female sharing an egg group (or anything with a Ditto). Legendaries and Undiscovered-group pokemon cannot breed. The Egg appears after ${mech.hatchDays ?? 15} days or ${mech.hatchPosts} posts, whichever comes first.`}
+        subtitle={`Drop one Pokemon in each slot: a male and a female sharing an egg group, or ANYTHING paired with a Ditto. Only legendaries and mythicals can never breed. The Egg appears after ${mech.hatchDays ?? 15} days or ${mech.hatchPosts} posts, whichever comes first.`}
         aside={
           <Box px={16} py={12} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #3a3550" }}>
             <Text ff="monospace" fz={12} c="dimmed" tt="uppercase">

@@ -267,15 +267,30 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     () => thread?.battleDamage?.[user?.uid ?? ""] ?? {},
     [thread, user]
   );
-  // Pokemon Center: the post itself is the price. Available only after a full
-  // battle-free post, with no live encounter or boss, and it locks battling
-  // out of this post and the next (all server-enforced too).
+  // Pokemon Center: the post itself is the price, and the lock binds to the
+  // CHARACTER visiting (their team on this post is what gets healed; the
+  // member's other characters battle on unaffected). Server-enforced too.
   const [centerVisit, setCenterVisit] = React.useState(false);
-  const myBattleLog = thread?.battleLog?.[user?.uid ?? ""] ?? {};
-  const myThreadPosts = Number(myBattleLog.posts) || 0;
-  const myLastBattlePost = Number(myBattleLog.lastBattle) || 0;
-  const myCenterAt = Number(myBattleLog.centerAt) || 0;
-  const centerCooldown = myCenterAt > 0 && myThreadPosts + 1 <= myCenterAt + 1;
+  const myCharLogs = thread?.battleLog?.[user?.uid ?? ""]?.chars ?? {};
+  const postCharLog = (charId: string) => {
+    const l = myCharLogs[charId] ?? {};
+    return {
+      posts: Number(l.posts) || 0,
+      lastBattle: Number(l.lastBattle) || 0,
+      centerAt: Number(l.centerAt) || 0,
+    };
+  };
+  const postCharIds = characters.map((c) => c.id);
+  const centerCooldown = postCharIds.some((c) => {
+    const l = postCharLog(c);
+    return l.centerAt > 0 && l.posts + 1 <= l.centerAt + 1;
+  });
+  const charsRested =
+    postCharIds.length > 0 &&
+    postCharIds.every((c) => {
+      const l = postCharLog(c);
+      return l.lastBattle === 0 || l.lastBattle < l.posts;
+    });
   const fighterPool = evoTeamPokemon.map((p) => {
     const maxHp = maxHpForLevel(levelProgress(p.experience ?? 0).level, hpScaling);
     const dmg = Math.min(maxHp, Math.max(0, myDamage[p.id] ?? 0));
@@ -751,27 +766,29 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
               !battleOngoing &&
               !(attackBoss && bossActive) &&
               (() => {
-                const hasDamageHere =
-                  Object.values(myDamage).some((v) => Number(v) > 0) ||
-                  Object.keys(thread?.battleStatus?.[user?.uid ?? ""] ?? {}).length > 0;
-                const restedFully = myLastBattlePost === 0 || myLastBattlePost < myThreadPosts;
+                const teamIds = evoTeamPokemon.map((p) => p.id);
+                const statusMap = thread?.battleStatus?.[user?.uid ?? ""] ?? {};
+                const teamHurt = teamIds.some(
+                  (id) => (Number(myDamage[id]) || 0) > 0 || !!statusMap[id]
+                );
                 if (centerCooldown) {
                   return (
                     <ForumPanel title="Pokemon Center">
                       <Text fz={14} c="dimmed">
-                        You are just back from the Pokemon Center: no encounters or battles
-                        until your next post.
+                        This character is just back from the Pokemon Center: no encounters
+                        or battles for them until their next post. Your other characters
+                        are free to fight.
                       </Text>
                     </ForumPanel>
                   );
                 }
-                if (!hasDamageHere || bossActive) return null;
-                if (!restedFully) {
+                if (!teamHurt || bossActive || !postCharIds.length) return null;
+                if (!charsRested) {
                   return (
                     <ForumPanel title="Pokemon Center">
                       <Text fz={14} c="dimmed">
-                        The Pokemon Center takes you in after one battle-free post. Post
-                        without fighting first, then the visit opens up.
+                        The Pokemon Center takes a character in after one battle-free post.
+                        Post without fighting first, then the visit opens up.
                       </Text>
                     </ForumPanel>
                   );
@@ -787,7 +804,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                         if (
                           on &&
                           !window.confirm(
-                            "Visit the Pokemon Center? This post becomes the trip: your team on this thread is fully healed and cured, and you cannot roll encounters or battle in this post or your next one here."
+                            "Visit the Pokemon Center? This post becomes the trip: the team on this post is fully healed and cured of its wounds from this thread, and this character cannot roll encounters or battle in this post or their next one here."
                           )
                         ) {
                           return;
@@ -797,9 +814,9 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                       styles={{ label: { color: "white", fontSize: 15 } }}
                     />
                     <PanelHint>
-                      Nurse Joy heals only your own team, and only its wounds from this
-                      thread. The post is the price: no coins, but no battling this post or
-                      the next.
+                      Nurse Joy heals only the team brought on this post, and only its
+                      wounds from this thread. The post is the price: no coins, but this
+                      character cannot battle on this post or their next.
                     </PanelHint>
                   </ForumPanel>
                 );

@@ -197,10 +197,10 @@ const KB: KbEntry[] = [
     answer: () => (
       <>
         The <L to="/Daycare">Daycare</L> takes one pair at a time: one male and one
-        female sharing an egg group, or anything breedable with a Ditto. Legendaries and
-        Undiscovered-group pokemon cannot breed. The egg hatches into the base form of
-        the mother&apos;s line after the configured days or posts. Egg groups show on
-        each pokemon&apos;s info box in your <L to="/Dashboard">Console</L>.
+        female sharing an egg group, or ANYTHING paired with a Ditto. Only legendaries
+        and mythicals can never breed. The egg hatches into the base form of the
+        mother&apos;s line after the configured days or posts. Egg groups show on each
+        pokemon&apos;s info box in your <L to="/Dashboard">Console</L>.
       </>
     ),
   },
@@ -208,11 +208,13 @@ const KB: KbEntry[] = [
     match: /fish|rod|pond|angler/i,
     answer: () => (
       <>
-        The Fishing Pond is a weekly activity: grab any rod from the{" "}
+        The Fishing Pond is a weekly activity: grab a rod from the{" "}
         <L to="/Shop">Snag Mall</L>, then head to the pond from the{" "}
         <L to="/Activities">Activities page</L>. One cast per week with the character of
-        your choice; bites are 1★ to 3★ Water-types (3★ is a 10% roll), and releasing
-        your catch pays 1 Snag Coin. The pond thread is fishing-only.
+        your choice; a better rod means better bites (the Super Rod even lands a 5% 4★
+        bite), and releasing your catch pays 1 Snag Coin. The pond thread is
+        fishing-only. Odds table:{" "}
+        <L to="/Library?tab=battle">Library &gt; The War Room</L>.
       </>
     ),
   },
@@ -242,9 +244,10 @@ const KB: KbEntry[] = [
     answer: () => (
       <>
         Mid-thread you can spend a POST visiting the Pokemon Center (no coins). It opens
-        after one battle-free post with no live encounter or boss, fully heals and cures
-        your team&apos;s wounds from that thread, and blocks battling on the visit post
-        and your next one. Details:{" "}
+        after one battle-free post with no live encounter or boss, and heals ONLY the
+        team the visiting character brings on that post (wounds from that thread only).
+        That one character sits out of battles for the visit post and their next one;
+        your other characters are unaffected. Details:{" "}
         <L to="/Library?tab=battle">Library &gt; The War Room</L>.
       </>
     ),

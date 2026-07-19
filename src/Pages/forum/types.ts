@@ -340,8 +340,12 @@ export interface ForumThread {
   weather?: string | null;
   /** uid -> pokemon id -> active status condition (burn/poison/paralysis). */
   battleStatus?: Record<string, Record<string, string>>;
-  /** Per-user battle log: post count, last battle post, Center visit post. */
-  battleLog?: Record<string, { posts?: number; lastBattle?: number; centerAt?: number }>;
+  /** Per-user, per-CHARACTER battle log: post count, last battle post, and
+   * Pokemon Center visit post (the Center lock binds to one character). */
+  battleLog?: Record<
+    string,
+    { chars?: Record<string, { posts?: number; lastBattle?: number; centerAt?: number }> }
+  >;
   /** The weekly Fishing Pond thread (fishing-only posts). */
   fishingPond?: boolean;
   /** uid -> weekId of their last cast at the Fishing Pond. */

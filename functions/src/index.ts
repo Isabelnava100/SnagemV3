@@ -755,19 +755,29 @@ export const rollEncounter = onCall(async (request) => {
   await loadMember(uid);
 
   // Fishing (the Fishing Pond thread only): any rod from the Snag Mall gets
-  // you a weekly cast. Star odds are 60/30/10 for 1/2/3 star Water-types.
+  // you a weekly cast, and a better rod means better bites. Star odds by
+  // best rod owned (1/2/3/4 star): Old 65/30/5/0, Good 60/30/10/0,
+  // Super 55/30/10/5 (the Super Rod's 5% reaches the next star level up).
+  const ROD_ODDS: Record<number, number[]> = {
+    1: [65, 30, 5, 0],
+    2: [60, 30, 10, 0],
+    3: [55, 30, 10, 5],
+  };
   let rodName = "";
+  let rodTier = 0;
   if (fishing) {
     const bag = (await db.doc(`users/${uid}/bag/items`).get()).data() ?? {};
     for (const entry of Object.values(bag as Record<string, any>)) {
       if ((Number(entry?.quantity) || 0) <= 0) continue;
       const key = itemKeyOf(entry?.name);
-      if (["super-rod", "good-rod", "old-rod", "fishing-rod"].includes(key)) {
+      const tier =
+        key === "super-rod" ? 3 : key === "good-rod" ? 2 : key === "old-rod" || key === "fishing-rod" ? 1 : 0;
+      if (tier > rodTier) {
+        rodTier = tier;
         rodName = String(entry?.name ?? "rod");
-        break;
       }
     }
-    if (!rodName) {
+    if (!rodTier) {
       throw new HttpsError("failed-precondition", "You need a fishing rod. The Snag Mall sells them.");
     }
   }
@@ -813,15 +823,22 @@ export const rollEncounter = onCall(async (request) => {
     if ((claims[uid] ?? 0) >= (config.perUserLimit ?? 0)) {
       throw new HttpsError("failed-precondition", "You have no encounters left on this thread.");
     }
-    // Fresh from the Pokemon Center: the visit post and the next stay
-    // battle-free, so no new encounter can be rolled for that next post.
-    const rollerLog = (((thread.battleLog as Record<string, any>) ?? {})[uid] ?? {}) as Record<string, unknown>;
-    const rollerNextPost = (Number(rollerLog.posts) || 0) + 1;
-    const rollerCenterAt = Number(rollerLog.centerAt) || 0;
-    if (rollerCenterAt > 0 && rollerNextPost <= rollerCenterAt + 1) {
+    // Fresh from the Pokemon Center: a character inside their two-post
+    // battle-free window cannot have an encounter rolled FOR them. (Posting
+    // itself re-checks the cooldown for whichever characters end up on the
+    // post, so an unscoped roll is caught there.)
+    const rollerChars = ((((thread.battleLog as Record<string, any>) ?? {})[uid] ?? {}).chars ??
+      {}) as Record<string, any>;
+    const charCoolingDown = (charId: string) => {
+      const l = rollerChars[charId] ?? {};
+      const posts = Number(l.posts) || 0;
+      const centerAt = Number(l.centerAt) || 0;
+      return centerAt > 0 && posts + 1 <= centerAt + 1;
+    };
+    if (forCharacterIds.some((c: string) => charCoolingDown(c))) {
       throw new HttpsError(
         "failed-precondition",
-        "You are just back from the Pokemon Center. Encounters reopen on the post after next."
+        "That character is just back from the Pokemon Center. Encounters reopen on their post after next."
       );
     }
 
@@ -875,8 +892,16 @@ export const rollEncounter = onCall(async (request) => {
           "You already fished this week. The pond restocks Monday 00:00 UTC."
         );
       }
-      const starRollValue = randomInt(100);
-      const fishStar = starRollValue < 60 ? 1 : starRollValue < 90 ? 2 : 3;
+      const odds = ROD_ODDS[rodTier] ?? ROD_ODDS[1];
+      let starRollValue = randomInt(100);
+      let fishStar = 1;
+      for (let s = 0; s < odds.length; s++) {
+        if (starRollValue < odds[s]) {
+          fishStar = s + 1;
+          break;
+        }
+        starRollValue -= odds[s];
+      }
       const waterPool = catalog.filter(
         (c) => typesForDex(Number(c.idx)).includes("Water") && starFor(Number(c.idx)) === fishStar
       );
@@ -1176,15 +1201,28 @@ export const publishForumPost = onCall(async (request) => {
       ...(((thread.battleStatus as Record<string, Record<string, string>>) ?? {})[uid] ?? {}),
     };
     const battleNotes: string[] = [];
-    // Per-user battle log on this thread: post count, the post number of the
-    // last battle action, and the post number of a Pokemon Center visit.
-    const myLog = (((thread.battleLog as Record<string, any>) ?? {})[uid] ?? {}) as Record<string, unknown>;
-    const myPriorPosts = Number(myLog.posts) || 0;
-    const myPostNum = myPriorPosts + 1;
-    const myLastBattle = Number(myLog.lastBattle) || 0;
-    const myCenterAt = Number(myLog.centerAt) || 0;
-    // Fresh from the Center: no battling on the visit post or the one after.
-    const centerCooldown = myCenterAt > 0 && myPostNum <= myCenterAt + 1;
+    // Per-CHARACTER battle log on this thread (post count, last battle post,
+    // Center visit post). The Pokemon Center lock binds to the character who
+    // visited and their team; the member's other characters are unaffected.
+    const myCharIds: string[] = characters
+      .map((c: any) => String(c?.id ?? ""))
+      .filter(Boolean);
+    const charLogsRaw = ((((thread.battleLog as Record<string, any>) ?? {})[uid] ?? {}).chars ??
+      {}) as Record<string, any>;
+    const logOf = (charId: string) => {
+      const l = charLogsRaw[charId] ?? {};
+      return {
+        posts: Number(l.posts) || 0,
+        lastBattle: Number(l.lastBattle) || 0,
+        centerAt: Number(l.centerAt) || 0,
+      };
+    };
+    // Fresh from the Center: a character on this post is inside their
+    // two-post battle-free window.
+    const centerCooldown = myCharIds.some((c) => {
+      const l = logOf(c);
+      return l.centerAt > 0 && l.posts + 1 <= l.centerAt + 1;
+    });
     let battledThisPost = false;
 
     const pending = pendingSnap.data() ?? {};
@@ -1435,8 +1473,10 @@ export const publishForumPost = onCall(async (request) => {
 
     // -- Pokemon Center: the post is the price. Only when nothing is being
     // fought: no unbeaten pending encounter, no boss active for this member,
-    // and the member's latest post was battle-free. It heals ONLY this
-    // member's team on THIS thread, and blocks battling this post + the next.
+    // and the VISITING CHARACTER's latest post was battle-free. It heals only
+    // the team brought on this post (that character's team on this thread),
+    // and blocks battling for that character this post + the next. The
+    // member's other characters are unaffected.
     if (centerVisit && !editPostId) {
       if (battledThisPost || fleeAttempt) {
         throw new HttpsError(
@@ -1460,24 +1500,37 @@ export const publishForumPost = onCall(async (request) => {
           "Finish or flee your current encounter before heading to the Pokemon Center."
         );
       }
-      if (myLastBattle > 0 && myLastBattle >= myPriorPosts) {
+      if (!myCharIds.length || !teamPokemonIds.length) {
         throw new HttpsError(
           "failed-precondition",
-          "You need one battle-free post before the Pokemon Center will take you in."
+          "Bring the character (and their team) who is visiting the Pokemon Center on this post."
         );
       }
-      const hasDamage =
-        Object.keys(((thread.battleDamage as Record<string, any>) ?? {})[uid] ?? {}).length > 0 ||
-        Object.keys(((thread.battleStatus as Record<string, any>) ?? {})[uid] ?? {}).length > 0;
-      if (!hasDamage) {
-        throw new HttpsError("failed-precondition", "Your team is already in perfect shape here.");
+      const charInBattle = myCharIds.some((c) => {
+        const l = logOf(c);
+        return l.lastBattle > 0 && l.lastBattle >= l.posts;
+      });
+      if (charInBattle) {
+        throw new HttpsError(
+          "failed-precondition",
+          "This character needs one battle-free post before the Pokemon Center takes them in."
+        );
+      }
+      const myDamageMap = ((thread.battleDamage as Record<string, any>) ?? {})[uid] ?? {};
+      const myStatusMap = ((thread.battleStatus as Record<string, any>) ?? {})[uid] ?? {};
+      const teamHurt = teamPokemonIds.some(
+        (id) => (Number(myDamageMap[id]) || 0) > 0 || !!myStatusMap[id]
+      );
+      if (!teamHurt) {
+        throw new HttpsError("failed-precondition", "This team is already in perfect shape here.");
       }
     }
-    // Fresh from the Center: this post and the next stay battle-free.
+    // Fresh from the Center: the visiting character's post and the next stay
+    // battle-free (swap to another character to keep battling).
     if (centerCooldown && !editPostId && (battledThisPost || fleeAttempt)) {
       throw new HttpsError(
         "failed-precondition",
-        "You are just back from the Pokemon Center. No encounters or battles until your next post."
+        "This character is just back from the Pokemon Center. No encounters or battles for them until their next post."
       );
     }
 
@@ -1902,16 +1955,28 @@ export const publishForumPost = onCall(async (request) => {
         activityUpdate(member, now, {
           replyCount: FieldValue.increment(1),
           ...bossExtra,
-          // Per-user battle log: powers the Pokemon Center's "out of battle
-          // for a full post" gate and its two-post cooldown.
-          [`battleLog.${uid}.posts`]: FieldValue.increment(1),
-          ...(battledThisPost ? { [`battleLog.${uid}.lastBattle`]: myPostNum } : {}),
+          // Per-character battle log: powers the Pokemon Center's "out of
+          // battle for a full post" gate and its two-post cooldown, scoped to
+          // the character who visited.
+          ...Object.fromEntries(
+            myCharIds.flatMap((c) => {
+              const l = logOf(c);
+              const base = `battleLog.${uid}.chars.${c}`;
+              return [
+                [`${base}.posts`, FieldValue.increment(1)],
+                ...(battledThisPost ? [[`${base}.lastBattle`, l.posts + 1]] : []),
+                ...(centerVisit ? [[`${base}.centerAt`, l.posts + 1]] : []),
+              ];
+            })
+          ),
+          // Center heal: only the pokemon on THIS post's team recover.
           ...(centerVisit
-            ? {
-                [`battleLog.${uid}.centerAt`]: myPostNum,
-                [`battleDamage.${uid}`]: FieldValue.delete(),
-                [`battleStatus.${uid}`]: FieldValue.delete(),
-              }
+            ? Object.fromEntries(
+                teamPokemonIds.flatMap((id) => [
+                  [`battleDamage.${uid}.${id}`, FieldValue.delete()],
+                  [`battleStatus.${uid}.${id}`, FieldValue.delete()],
+                ])
+              )
             : {}),
           // Mission requirement bookkeeping: a beaten (or caught) foe joins the
           // thread's defeated list, checked when the host closes the thread.
@@ -3752,18 +3817,14 @@ export const breedPokemon = onCall(async (request) => {
     if (!left || !right) throw new HttpsError("not-found", "Both parents must be in your box.");
     const lIdx = Number(left.pokedex) || 0;
     const rIdx = Number(right.pokedex) || 0;
-    // Breeding rules: no legendaries/mythicals (7 star), no Undiscovered egg
-    // group at all; otherwise parents need a shared egg group and opposite
-    // genders, or one parent is a Ditto (which pairs with anything breedable).
+    // Breeding rules: legendaries/mythicals (7 star) never breed, full stop.
+    // A Ditto is the universal exception otherwise: it pairs with ANY
+    // non-legendary, Undiscovered group included. Without a Ditto, parents
+    // need a shared (non-Undiscovered) egg group and opposite genders.
     if (starForDex(lIdx) >= 7 || starForDex(rIdx) >= 7) {
-      throw new HttpsError("failed-precondition", "Legendary and mythical pokemon cannot breed.");
-    }
-    const lGroups = eggGroupsForDex(lIdx);
-    const rGroups = eggGroupsForDex(rIdx);
-    if (lGroups.includes("Undiscovered") || rGroups.includes("Undiscovered")) {
       throw new HttpsError(
         "failed-precondition",
-        "One of these pokemon is in the Undiscovered egg group: it cannot breed, not even with a Ditto."
+        "Legendary and mythical pokemon cannot breed, not even with a Ditto."
       );
     }
     const hasDitto = lIdx === DITTO_IDX || rIdx === DITTO_IDX;
@@ -3771,7 +3832,15 @@ export const breedPokemon = onCall(async (request) => {
       throw new HttpsError("failed-precondition", "Two Ditto cannot breed with each other.");
     }
     if (!hasDitto) {
-      const shareGroup = lGroups.some((g) => rGroups.includes(g));
+      const lGroups = eggGroupsForDex(lIdx);
+      const rGroups = eggGroupsForDex(rIdx);
+      if (lGroups.includes("Undiscovered") || rGroups.includes("Undiscovered")) {
+        throw new HttpsError(
+          "failed-precondition",
+          "One of these pokemon is in the Undiscovered egg group: it only breeds with a Ditto."
+        );
+      }
+      const shareGroup = lGroups.some((g) => g !== "Undiscovered" && rGroups.includes(g));
       if (!shareGroup) {
         throw new HttpsError(
           "failed-precondition",

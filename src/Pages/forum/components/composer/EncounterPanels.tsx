@@ -305,13 +305,18 @@ export function EncounterPostPanel(props: {
     queryFn: () => getItems(user!.uid),
     enabled: !!user && isPond,
   });
+  // Best rod owned sets the bite odds (mirrors ROD_ODDS server-side):
+  // Old 65/30/5, Good 60/30/10, Super 55/30/10 plus a 5% 4-star bite.
   const myRod = React.useMemo(() => {
-    const rod = (bagItems ?? []).find((i) => {
-      if (Number(i.quantity) <= 0) return false;
+    let best: { name: string; tier: number } | null = null;
+    (bagItems ?? []).forEach((i) => {
+      if (Number(i.quantity) <= 0) return;
       const key = i.name.toLowerCase().replace(/\s+/g, "-");
-      return ["super-rod", "good-rod", "old-rod", "fishing-rod"].includes(key);
+      const tier =
+        key === "super-rod" ? 3 : key === "good-rod" ? 2 : key === "old-rod" || key === "fishing-rod" ? 1 : 0;
+      if (tier > (best?.tier ?? 0)) best = { name: i.name, tier };
     });
-    return rod?.name ?? null;
+    return best as { name: string; tier: number } | null;
   }, [bagItems]);
   const fishedThisWeek = !!user && thread.fishingClaims?.[user.uid] === currentWeekId();
 
@@ -528,10 +533,16 @@ export function EncounterPostPanel(props: {
                     fishingMutation.mutateAsync().catch(() => undefined);
                   }}
                 >
-                  Cast your line ({myRod})
+                  Cast your line ({myRod.name})
                 </Button>
                 <Text fz={13} c="dimmed">
-                  Once a week. Bites are 1★ to 3★ Water-types (3★ is a 10% catch of the day).
+                  Once a week. Water-type bites:{" "}
+                  {myRod.tier >= 3
+                    ? "1★ 55% / 2★ 30% / 3★ 10%, plus a 5% 4★ bite (Super Rod)"
+                    : myRod.tier === 2
+                      ? "1★ 60% / 2★ 30% / 3★ 10%"
+                      : "1★ 65% / 2★ 30% / 3★ 5% (a better rod means better bites)"}
+                  .
                 </Text>
               </Group>
             </>

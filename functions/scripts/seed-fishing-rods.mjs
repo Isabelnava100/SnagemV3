@@ -1,8 +1,9 @@
 // Add the "Angler's Corner" (fishing rods) section to the Golden Sarcophagus
 // shop so members can buy rods for the forum fishing encounter roll.
 //
-// Rod tiers gate the fishing pool's star ceiling (server: rollEncounter):
-//   Old Rod 2 stars / Good Rod 4 stars / Super Rod 6 stars.
+// Rod tiers set the Fishing Pond's bite odds (server: rollEncounter ROD_ODDS):
+//   Old Rod 65/30/5 (1/2/3 star), Good Rod 60/30/10,
+//   Super Rod 55/30/10 plus a 5% 4-star bite.
 //
 // Idempotent: replaces the section by title if it already exists.
 //
@@ -24,7 +25,7 @@ const RODS = [
     category: "key-item",
     price: 5,
     description:
-      "A beat-up rod that still gets the job done. Fish up Water-type Pokemon of up to 2 stars.",
+      "A beat-up rod that still gets the job done. Bites: 1-star 65%, 2-star 30%, 3-star 5%.",
   },
   {
     itemId: "item_0446",
@@ -32,7 +33,7 @@ const RODS = [
     filePath: "key-item/good-rod.png",
     category: "key-item",
     price: 15,
-    description: "A dependable rod for serious anglers. Fish up Water-types of up to 4 stars.",
+    description: "A dependable rod for serious anglers. Bites: 1-star 60%, 2-star 30%, 3-star 10%.",
   },
   {
     itemId: "item_0447",
@@ -41,7 +42,7 @@ const RODS = [
     category: "key-item",
     price: 40,
     description:
-      "The best rod money can buy. Fish up Water-types of up to 6 stars, pseudo-legendaries included.",
+      "The best rod money can buy. Bites: 1-star 55%, 2-star 30%, 3-star 10%, and a 5% shot at a 4-star catch.",
   },
 ];
 

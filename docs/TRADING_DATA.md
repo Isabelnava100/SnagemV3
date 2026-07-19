@@ -1,7 +1,18 @@
 # Snagem: Trading Center (Poke Swap) Data Reference (for AI prompting)
 
-Machine-readable inventory for the **Trading Center** page. No route exists yet.
-Paste any section into another AI tool as context.
+> **SUPERSEDED (2026-07).** The Trading Post SHIPPED as a listing board at
+> `/Trading`: `tradeListings` collection (members read; writes via the
+> `createTradeListing` / `cancelTradeListing` / `makeTradeOffer` /
+> `respondTradeOffer` callables), pokemon-for-pokemon only (the strict rule
+> won), dynamic "what you'd accept" criteria (species/types/shiny/min level/
+> min star + note), offer notifications, battle-thread trade locks
+> (`users/{uid}/bag/threadLocks`), and free self-trades between own
+> characters via `assignPokemonCharacter`. See CLAUDE.md and
+> `src/Pages/Trading/index.tsx`. The planning notes below are kept for
+> reference only; the `trades/{tradeId}` schema was never built.
+
+Machine-readable inventory for the **Trading Center** page as originally
+planned. Paste any section into another AI tool as context.
 
 Legend. `visibility`: public · admin. `effort`: stored · computed · new.
 

@@ -8,6 +8,7 @@ import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
 import { pokemonData } from "../../data/pokemon";
+import { postsToBeatStar, starForDex } from "../../lib/encounterStars";
 import { Mission, getMission, pickUpMission } from "../../queries/missions";
 
 /**
@@ -145,6 +146,8 @@ function DotIcon({ color }: { color: string }) {
 /* ------------------------------- Encounters -------------------------------- */
 
 const pokemonNameBySlug = new Map(pokemonData.map((p) => [p.slug, p.name]));
+const pokemonIdxBySlug = new Map(pokemonData.map((p) => [p.slug, Number(p.idx)]));
+const starOfSlug = (slug: string) => starForDex(pokemonIdxBySlug.get(slug) ?? 0);
 
 /**
  * The mission's default encounter pool so members know what they can run into
@@ -193,6 +196,9 @@ function EncountersPanel({ mission }: { mission: Mission }) {
               </Box>
               <Text fz={14} c="gray.4" ta="center" lineClamp={1} w="100%">
                 {pokemonNameBySlug.get(slug) ?? slug}
+              </Text>
+              <Text fz={12} c="gold.1" fw={700}>
+                {starOfSlug(slug)}★ · {postsToBeatStar(starOfSlug(slug))} posts
               </Text>
               {required.has(slug) && (
                 <Badge size="xs" color="gold.2" variant="light">
@@ -269,6 +275,12 @@ export default function MissionDetail() {
   const oppositions = toLines(mission.opposition);
   const rewardLabel = mission.pokemon_reward ? REWARD_LABEL[mission.pokemon_reward.kind] : undefined;
   const tierColor = mission.tier ? TIER_COLOR[mission.tier] ?? "#8a8399" : "#8a8399";
+  // Threat reading from the encounter pool: the toughest star on the job and
+  // the minimum battle posts to clear every required foe.
+  const requiredSlugs = mission.requiredEncounters ?? [];
+  const poolSlugs = mission.encounters ?? [];
+  const threatStar = poolSlugs.length ? Math.max(...poolSlugs.map(starOfSlug)) : 0;
+  const requiredPosts = requiredSlugs.reduce((sum, s) => sum + postsToBeatStar(starOfSlug(s)), 0);
 
   return (
     <Box>
@@ -329,6 +341,30 @@ export default function MissionDetail() {
               </Text>
             )}
           </Group>
+          {(threatStar > 0 || requiredSlugs.length > 0) && (
+            <Group gap={10} mt={16} wrap="wrap">
+              {threatStar > 0 && (
+                <Box px={14} py={8} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #4a4368" }}>
+                  <Text fz={12} c="dimmed" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
+                    Threat level
+                  </Text>
+                  <Text fz={18} fw={800} c="#F5C842">
+                    {"★".repeat(threatStar)} up to {threatStar}★
+                  </Text>
+                </Box>
+              )}
+              {requiredSlugs.length > 0 && (
+                <Box px={14} py={8} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #4a4368" }}>
+                  <Text fz={12} c="dimmed" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
+                    Set foes
+                  </Text>
+                  <Text fz={18} fw={800} c="white">
+                    {requiredSlugs.length} to beat · about {requiredPosts} battle posts
+                  </Text>
+                </Box>
+              )}
+            </Group>
+          )}
         </Container>
       </Box>
 

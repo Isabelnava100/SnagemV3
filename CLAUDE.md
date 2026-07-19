@@ -172,22 +172,26 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
     Reach the page from the Snag Mall footer cards.
   - The Fishing Pond: `ensureFishingThread` creates a pinned fishing-only
     thread in Events on first use (like the training log). One cast per member
-    per week (snagWeekId, `thread.fishingClaims`), any rod required (seed the
-    Mall's Angler's Corner: `node scripts/seed-fishing-rods.mjs` from
-    `functions/`), bites roll 1/2/3 star at 60/30/10 Water-types, releasing
-    the catch pays 1 Snag Coin (`fleeAttempt` on the pond always succeeds).
-    Entry card on /Activities.
+    per week (snagWeekId, `thread.fishingClaims`); a rod is required and the
+    BEST rod owned sets the bite odds (`ROD_ODDS`: Old 65/30/5 for 1/2/3
+    star, Good 60/30/10, Super 55/30/10 + a 5% 4-star bite). Seed the Mall's
+    Angler's Corner: `node scripts/seed-fishing-rods.mjs` from `functions/`.
+    Releasing the catch pays 1 Snag Coin (`fleeAttempt` on the pond always
+    succeeds). Entry card on /Activities.
   - Pokemon Center: no coins; a POST is the price (`centerVisit` on
-    publishForumPost). Needs one battle-free post first, no live encounter or
-    boss, heals only the caller's team on that thread, blocks
-    encounters/battles on the visit post + the next (thread.battleLog per
-    user; rollEncounter honors the cooldown). `pokemonCenterHeal` and
-    `mechanics.centerCost` are gone.
-  - Breeding: parents need opposite genders + a shared egg group, or a Ditto;
-    7 star and Undiscovered-group species never breed (eggGroupsByDex.json via
-    `scripts/gen-egggroups.mjs`, mirrored in functions + src/data/pokemon).
-    Offspring = mother's (or non-Ditto parent's) base form. Info boxes show
-    nature, gender, star and egg group (catch banners intentionally do not).
+    publishForumPost), and the lock is PER CHARACTER: it heals only the team
+    brought on the visit post, and only that character sits out battles on
+    the visit post + their next (`thread.battleLog.{uid}.chars.{charId}`;
+    rollEncounter honors the cooldown for encounters rolled for that
+    character). The member's other characters are unaffected.
+    `pokemonCenterHeal` and `mechanics.centerCost` are gone.
+  - Breeding: one male + one female sharing a (non-Undiscovered) egg group,
+    OR anything paired with a Ditto (the universal partner, Undiscovered
+    included). Only 7 star legendaries/mythicals never breed
+    (eggGroupsByDex.json via `scripts/gen-egggroups.mjs`, mirrored in
+    functions + src/data/pokemon). Offspring = mother's (or non-Ditto
+    parent's) base form. Info boxes show nature, gender, star and egg group
+    (catch banners intentionally do not).
   - New capability `ManageBattles` (battle staff): only admins/holders may
     toggle battle mode (`encounterConfig`, enforced in firestore.rules thread
     key sets) and they get host access on ANY thread (HostMenu, boss battles,

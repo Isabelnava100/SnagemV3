@@ -74,8 +74,14 @@ July 2026 build-out are marked (2026-07).
   1-120, not the full ~30-row forum tables. Consumable-half payout and exclusions are
   not modeled. NOTE (corrected 2026-07): the full ~30-row tables are NOT in the repo. The
   earlier "captured in research and can be ported" claim points to an external research
-  session, not a file here. Porting requires re-fetching the biome tables from the forum
-  (logged in) or recovering those notes; there is nothing in-repo to port from.
+  session, not a file here. REFETCH ATTEMPTED (2026-07): Gaia guild threads return HTTP
+  403 to automated fetchers (bot protection), so the tables cannot be pulled from a
+  build session even though the threads are public, and no thread URL for the K&L
+  Market is recorded in-repo. OWNER ACTION: open the K&L Nature Tours thread in a
+  browser and paste (or screenshot) the five biome tables (Cool Canyon, Beautiful
+  Meadow, Cute Forest, Clever Swamp, Tough Peak; slots 1-120 each, noting the two
+  Clever Swamp transcription gaps at slots 33 and 38). Porting them into
+  `functions/scripts/seed.mjs` (`kl` map) is then mechanical.
 - **Research canon tables incomplete** (2026-07). Partial breakdown:
   - **Fossil <-> Pokemon map** DONE + BUG FIX (2026-07). `fossilMap` now covers the full
     canon revivable set (11: Old Amber/Helix/Dome/Root/Claw/Skull/Armor/Cover/Plume/Jaw/Sail
@@ -127,8 +133,9 @@ Status as of 2026-07:
   cast per member per week, any rod required, 1/2/3 star Water bites at
   60/30/10, release pays 1 Snag Coin, fishing-only posts. Seed the Mall's
   "Angler's Corner" with `node scripts/seed-fishing-rods.mjs` from `functions/`.
-  NOTE: rod tiers currently only gate ACCESS (any rod works, same odds); if
-  better rods should improve the 2-3 star odds, that is an owner call.
+  RESOLVED (2026-07, owner call): rod tiers now shape the odds. Old Rod
+  65/30/5 (1/2/3 star), Good Rod 60/30/10, Super Rod 55/30/10 plus a 5%
+  4-star bite (`ROD_ODDS` in rollEncounter; rod card copy matches).
 - **Berry farming** DONE (2026-07). The Berry Farm on /Activities:
   `plantBerry`/`harvestBerry` callables, state in `users/{uid}/bag/farm`
   (server-written only per rules), grow days / yield / plot count admin-tunable.
@@ -152,6 +159,9 @@ Status as of 2026-07:
   Short Stories (Frozen Bond both parts, Amaya's Riddle Part 1 stub) and the 5 gem stubs
   (aliases present, descriptions blank on Gaia) were already faithful. To publish: run
   `node functions/scripts/seed-lore.mjs` (owner-confirmed DB write, not done here).
+  GREENLIT by the owner (2026-07): run it from the repo root (or `functions/`) with
+  gcloud application-default credentials, same auth as the other seed scripts. NOTE
+  the script reads `lore-data.json` relative to itself, so both working dirs work.
   NOT a gap: the 9 "missing" type books (Fire, Grass, Electric, Ground, Rock, Flying, Fighting,
   Ice, Steel) were NEVER WRITTEN on Gaia and do not exist -- creating them is fresh authoring, an
   OWNER DECISION, not a migration. OWNER DECISION also: Team Shout vs Team Yell (the Gaia
@@ -170,8 +180,11 @@ Status as of 2026-07:
   Authoring the `bracket`/standings fields is admin-only and needs a Firestore write rule
   on `tournaments/{id}` (console) before a client editor can be shipped; today the field is
   populated via seed/console.
-- **Dedicated mission detail design** (2026-07). `/Missions/:id` is a functional page;
-  a bespoke design from the owner is still pending.
+- **Dedicated mission detail design** DONE (2026-07, owner greenlit building it
+  in-house). `/Missions/:id` keeps the striped hero + two-column brief and now
+  reads threat at a glance: hero chips for Threat level (toughest star in the
+  pool) and Set foes (count + estimated battle posts), and every encounter chip
+  shows its star + posts-to-beat. Further art direction welcome any time.
 - **Colosseum battle-report entry** DONE (2026-07). Admin > Grading now has a `BattleReportForm`
   (`src/Pages/User/Dashboard/Admin/Grading.tsx`) that itemizes a reported battle (Pokemon
   defeated/survived, win, champion, upset rank gap, tournament win), computes the point total
