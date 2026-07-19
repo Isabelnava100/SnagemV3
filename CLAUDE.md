@@ -25,6 +25,19 @@ Live: snagemguild.com. Deploy: Netlify (`netlify.toml`, SPA redirect to index.ht
 - Icons: `@tabler/icons-react` (NOT dead `@tabler/icons` v1) or existing `tabler-icons-react`.
 - **Everything must be mobile responsive.** Any new or edited UI must work at 375px width with no horizontal scroll: use Mantine responsive props (`span={{ base: 12, xs: 6 }}`, responsive style props), relative widths (`maw` + `w="100%"`) over fixed px, and verify at the mobile viewport before committing. Theme breakpoints: xs=480, sm=800 (`src/lib/mantine.ts`).
 
+## SEO rules (owner's QA standard, apply to every new or edited page)
+
+Source: the owner's agency QA checklist (Google Doc "QA Checklist"). These are requirements, not suggestions:
+
+- **Meta title** 30-70 chars (aim under 60), **meta description** 50-160 chars, unique per page. New pages must ship with both via the shared `<Seo>` helper (`src/components/common/Seo.tsx`); never leave a page on the generic fallback.
+- **Headings**: exactly one H1 per page, at least one H2, no skipped levels.
+- **Canonicals**: every indexable page gets a self-referential canonical. Paginated pages self-canonicalize to their own page URL (NOT to page 1) and append "Page X" to the title. Query-parameter variants (search, filters, tabs that don't merit indexing) canonicalize back to the parent/base page.
+- **Indexability**: private pages (dashboard, editor, settings, admin, auth) get `noindex` meta AND are excluded from the sitemap. Only unique, indexable, canonical pages belong in `public/sitemap.xml` (generated at build by `scripts/gen-sitemap.mjs` from `src/lib/seo/pages.ts`; new public routes must be added there). robots.txt links the sitemap.
+- **Images**: every image has alt text (descriptive, weave in pokemon/roleplay/Snagem keywords where natural; decorative images get `alt=""`). Prefer WebP/SVG, size to container, lazy-load below the fold only; never lazy-load LCP/above-the-fold images or anything functional.
+- **Schema**: add relevant schema.org JSON-LD (via `<Seo schema=...>`) for new content types; validate with validator.schema.org / Google rich results test.
+- **Security headers** live in `netlify.toml`: HSTS (max-age 31536000, includeSubDomains, preload), CSP, X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy. Keep them passing on securityheaders.com; when adding a third-party origin (script/frame/api), update the CSP.
+- **Performance**: keep Core Web Vitals passing; reserve image dimensions to avoid layout shift.
+
 ## Accessibility rules
 
 Bake these in for every new/edited UI (a11y is a first-class requirement, not a follow-up):
