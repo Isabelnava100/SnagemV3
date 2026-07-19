@@ -184,9 +184,9 @@ function MissionCard(props: { mission: Mission }) {
 
       <Stack gap={8} p={12}>
         <Box>
-          <Text c="white" fw={600} fz={16} lineClamp={1}>
+          <Title order={2} c="white" fw={600} fz={16} lh="md" lineClamp={1}>
             {mission.title}
-          </Text>
+          </Title>
           {mission.location && (
             <Text c="dimmed" fz={14} lineClamp={1}>
               {mission.location}

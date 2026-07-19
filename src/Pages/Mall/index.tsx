@@ -1356,9 +1356,9 @@ export default function Mall() {
             p="md"
             style={{ flex: "1 1 280px", background: "#141822", borderColor: "#28324a", textDecoration: "none" }}
           >
-            <Text fz={14} fw={700} c="cyan.3" tt="uppercase" style={{ letterSpacing: 2 }}>
+            <Title order={2} fz={14} fw={700} c="cyan.3" tt="uppercase" lh="md" style={{ letterSpacing: 2 }}>
               The Trading Post
-            </Text>
+            </Title>
             <Text fz={16} fw={700} c="white">
               Swap Pokemon with other members
             </Text>
@@ -1374,9 +1374,9 @@ export default function Mall() {
             p="md"
             style={{ flex: "1 1 280px", background: "#1a1420", borderColor: "#3a2a45", textDecoration: "none" }}
           >
-            <Text fz={14} fw={700} c="pink.3" tt="uppercase" style={{ letterSpacing: 2 }}>
+            <Title order={2} fz={14} fw={700} c="pink.3" tt="uppercase" lh="md" style={{ letterSpacing: 2 }}>
               The Daycare
-            </Text>
+            </Title>
             <Text fz={16} fw={700} c="white">
               Leave a pair, hatch an egg
             </Text>

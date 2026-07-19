@@ -6,6 +6,13 @@ July 2026 build-out are marked (2026-07).
 
 ## Audits (2026-07, owner-requested)
 
+- **Annual security header renewal, due 2027-07.** The HSTS policy in
+  `netlify.toml` runs on a 1 year max-age (set 2026-07). Any dev work in or
+  after July 2027 must renew it: confirm the header is still served, re-test
+  at securityheaders.com, and update HSTS/CSP/the rest to current best
+  practice. Repeat yearly. Also noted in CLAUDE.md SEO rules so it surfaces
+  in every session.
+
 - **Item sprites, remote 404s.** Every catalog row has a `Filename`, so the
   gaps are remote: sprites load from the CDN and a wrong path renders blank.
   To enumerate real 404s, run a HEAD-request sweep over

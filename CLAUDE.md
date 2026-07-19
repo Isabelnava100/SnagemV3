@@ -36,6 +36,7 @@ Source: the owner's agency QA checklist (Google Doc "QA Checklist"). These are r
 - **Images**: every image has alt text (descriptive, weave in pokemon/roleplay/Snagem keywords where natural; decorative images get `alt=""`). Prefer WebP/SVG, size to container, lazy-load below the fold only; never lazy-load LCP/above-the-fold images or anything functional.
 - **Schema**: add relevant schema.org JSON-LD (via `<Seo schema=...>`) for new content types; validate with validator.schema.org / Google rich results test.
 - **Security headers** live in `netlify.toml`: HSTS (max-age 31536000, includeSubDomains, preload), CSP, X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy. Keep them passing on securityheaders.com; when adding a third-party origin (script/frame/api), update the CSP.
+- **ANNUAL SECURITY RENEWAL (owner-requested): the HSTS policy is set for 1 year (set July 2026). If you are developing in this repo in or after July 2027, re-verify and renew the security setup as part of that work**: confirm the HSTS header is still served with max-age 31536000, re-test everything at securityheaders.com, and refresh the header set against current best practice. The max-age window refreshes on every visit, but treat July of each year as the audit date. Also tracked in docs/BACKLOG.md.
 - **Performance**: keep Core Web Vitals passing; reserve image dimensions to avoid layout shift.
 
 ## Accessibility rules

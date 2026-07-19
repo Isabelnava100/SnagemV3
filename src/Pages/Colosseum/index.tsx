@@ -254,9 +254,9 @@ function TrainingRoomTab() {
 
   if (!uid) {
     return (
-      <Text fz={14} c="dimmed" py={24}>
+      <Title order={2} fz={14} fw={400} c="dimmed" py={24} lh="md">
         Sign in to use the Super Training Room and log training posts.
-      </Text>
+      </Title>
     );
   }
 
@@ -288,9 +288,9 @@ function TrainingRoomTab() {
         <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
           <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
             <Group justify="space-between" align="flex-start" wrap="nowrap" mb="md">
-              <Text fz={14} fw={700} c="grape.3" tt="uppercase">
+              <Title order={2} fz={14} fw={700} c="grape.3" tt="uppercase" lh="md">
                 Session Live . Super Training Room
-              </Text>
+              </Title>
               <Badge color="grape" variant="filled" leftSection={<IconBolt size={12} />}>
                 {countdown}
               </Badge>
@@ -450,9 +450,9 @@ function TrainingRoomTab() {
 /** Section heading shared across the redesigned tabs. */
 function SectionLabel({ children, mb = "sm" }: { children: React.ReactNode; mb?: string | number }) {
   return (
-    <Text fz={14} fw={800} c="white" tt="uppercase" mb={mb} style={{ letterSpacing: 1 }}>
+    <Title order={2} fz={14} fw={800} c="white" tt="uppercase" lh="md" mb={mb} style={{ letterSpacing: 1 }}>
       {children}
-    </Text>
+    </Title>
   );
 }
 

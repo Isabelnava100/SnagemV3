@@ -1,4 +1,4 @@
-import { Box, Button, Container, Flex, Group, Progress, Select, Stack, Text } from "@mantine/core";
+import { Box, Button, Container, Flex, Group, Progress, Select, Stack, Text, Title } from "@mantine/core";
 import {
   IconAlertTriangle,
   IconArrowRight,
@@ -137,9 +137,9 @@ function AccessBadge({ granted }: { granted: boolean }) {
 function SectionLabel({ children, color = "#F5C842" }: { children: React.ReactNode; color?: string }) {
   return (
     <Group gap={12} align="center" mb="md">
-      <Text fz={14} fw={700} c={color} style={{ letterSpacing: 3 }}>
+      <Title order={2} fz={14} fw={700} c={color} lh="md" style={{ letterSpacing: 3 }}>
         {children}
-      </Text>
+      </Title>
       <Box style={{ flex: 1, height: 1, background: "#232028" }} />
     </Group>
   );

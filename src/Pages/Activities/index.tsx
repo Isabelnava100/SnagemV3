@@ -9,6 +9,7 @@ import {
   SimpleGrid,
   Stack,
   Text,
+  Title,
 } from "@mantine/core";
 import { IconCheck, IconGift, IconInfoCircle, IconLock } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -238,9 +239,9 @@ function BerryFarm(props: { uid: string }) {
       <Text fz={14} fw={700} c="#8CE99A" tt="uppercase" style={{ letterSpacing: 2 }}>
         The Berry Farm
       </Text>
-      <Text fz={24} fw={800} c="white">
+      <Title order={2} fz={24} fw={800} c="white" lh="md">
         Plant one, harvest {Math.max(1, mech.berryYield)}
-      </Text>
+      </Title>
       <Text fz={14} c="dimmed" mb={12}>
         Drop a bag berry in an open plot; it is ready to pick after {mech.berryGrowDays}{" "}
         {mech.berryGrowDays === 1 ? "day" : "days"}.
@@ -467,9 +468,9 @@ export default function Activities() {
       />
 
       {!uid ? (
-        <Text fz={16} c="dimmed" py={20}>
+        <Title order={2} fz={16} fw={400} c="dimmed" py={20} lh="md">
           Sign in to track your weekly Snag List.
-        </Text>
+        </Title>
       ) : isPending ? (
         <SectionLoader />
       ) : (
@@ -502,9 +503,9 @@ export default function Activities() {
                   <Text fz={14} fw={700} c="#F5C842" tt="uppercase" style={{ letterSpacing: 2 }}>
                     Weekly Mystery Box Choice
                   </Text>
-                  <Text fz={24} fw={800} c="white">
+                  <Title order={2} fz={24} fw={800} c="white" lh="md">
                     Finish all six, pick your box
-                  </Text>
+                  </Title>
                   <Text fz={14} c="dimmed" mb={10}>
                     Inside your pick: a random Mall item, a coin stash, or an egg that hatches on
                     the spot.

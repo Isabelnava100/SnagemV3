@@ -1,4 +1,4 @@
-import { Box, Button, Card, Container, Flex, Group, Stack, Text } from "@mantine/core";
+import { Box, Button, Card, Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { IconArrowRight, IconCheck, IconExternalLink, IconStar } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
@@ -809,9 +809,9 @@ interface TabRequestProps {
 function HowChallengesWork() {
   return (
     <Card bg="#141019" radius="lg" p="lg" withBorder style={{ borderColor: "#2a2637" }} mb="xl">
-      <Text fz={14} fw={800} c="white" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
+      <Title order={2} fz={14} fw={800} c="white" tt="uppercase" lh="md" mb={8} style={{ letterSpacing: 1 }}>
         How challenges work
-      </Text>
+      </Title>
       <Stack gap={6}>
         <Text fz={14} c="dimmed">
           1. Press Start this Challenge on your next glowing stage. That sends a request to the
