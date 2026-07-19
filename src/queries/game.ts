@@ -139,19 +139,64 @@ export interface HpScaling {
   split: number;
 }
 
+/** Tunable battle mechanics (all admin-editable in Battle Costs). */
+export interface BattleMechanics {
+  /** Same-type attack bonus multiplier on every player attack. */
+  stab: number;
+  /** Critical hit chance (percent), both directions. */
+  critChance: number;
+  /** Damage/progress multiplier on a critical hit. */
+  critMult: number;
+  /** How much an attack/defense nature helps (percent). */
+  natureEffect: number;
+  /** Chance (percent) an enemy hit inflicts a status (by its type). */
+  statusChance: number;
+  /** Flat damage burn/poison deal to the fighter each battle post. */
+  statusTick: number;
+  /** Attack progress multiplier while paralyzed. */
+  paralysisMult: number;
+  /** Weather boost multiplier for favored types (weakened = 1/boost). */
+  weatherBoost: number;
+  /** Snag Coin cost of a mid-thread Pokemon Center heal. */
+  centerCost: number;
+  /** Extra catch percent for a fully beaten (worn down) encounter. */
+  ballWornBonus: number;
+  /** Qualifying posts for a bred egg to hatch. */
+  hatchPosts: number;
+  /** Days for a bred egg to hatch (whichever comes first with hatchPosts). */
+  hatchDays: number;
+}
+
 export interface BattleConfig {
   boss: StageCosts;
   encounter: StageCosts;
   hp: HpScaling;
   /** Flat damage an enemy of each star (1..7) deals per battle post. */
   starDamage: Record<string, number>;
+  mechanics: BattleMechanics;
 }
+
+export const DEFAULT_BATTLE_MECHANICS: BattleMechanics = {
+  stab: 1.1,
+  critChance: 3,
+  critMult: 1.5,
+  natureEffect: 5,
+  statusChance: 10,
+  statusTick: 10,
+  paralysisMult: 0.5,
+  weatherBoost: 1.2,
+  centerCost: 10,
+  ballWornBonus: 40,
+  hatchPosts: 10,
+  hatchDays: 15,
+};
 
 export const DEFAULT_BATTLE_CONFIG: BattleConfig = {
   boss: { stage1: 5, stage2: 10, stage3: 15, legendary: 20 },
   encounter: { stage1: 4, stage2: 7, stage3: 10, legendary: 13 },
   hp: { base: 100, low: 2, high: 4, split: 50 },
   starDamage: { 1: 20, 2: 30, 3: 45, 4: 60, 5: 80, 6: 100, 7: 140 },
+  mechanics: DEFAULT_BATTLE_MECHANICS,
 };
 
 const readStageCosts = (data: unknown, fallback: StageCosts): StageCosts => {
@@ -169,7 +214,15 @@ export const getBattleConfig = async (): Promise<BattleConfig> => {
   const data = (await getDoc(doc(db, "admin", "battle_config"))).data();
   const hpRaw = (data?.hp ?? {}) as Partial<HpScaling>;
   const dmgRaw = (data?.starDamage ?? {}) as Record<string, unknown>;
+  const mechRaw = (data?.mechanics ?? {}) as Partial<Record<keyof BattleMechanics, unknown>>;
+  const mech = Object.fromEntries(
+    (Object.keys(DEFAULT_BATTLE_MECHANICS) as Array<keyof BattleMechanics>).map((k) => {
+      const n = Number(mechRaw[k]);
+      return [k, Number.isFinite(n) && n >= 0 ? n : DEFAULT_BATTLE_MECHANICS[k]];
+    })
+  ) as unknown as BattleMechanics;
   return {
+    mechanics: mech,
     boss: readStageCosts(data?.boss, DEFAULT_BATTLE_CONFIG.boss),
     encounter: readStageCosts(data?.encounter, DEFAULT_BATTLE_CONFIG.encounter),
     hp: {
@@ -236,3 +289,84 @@ export const saveMysteryBox = async (
     { merge: true }
   );
 };
+
+// ---- Daycare (breeding) + Poke Swap (trading) callables ---------------------
+// Both live server-side (functions/src/index.ts); the client only reads state
+// and invokes the callables.
+
+async function callGame<TResult>(name: string, data: unknown): Promise<TResult> {
+  const { getFunctions, httpsCallable } = await import("firebase/functions");
+  await import("../context/firebase"); // ensure the app is initialized
+  const result = await httpsCallable(getFunctions(), name)(data);
+  return result.data as TResult;
+}
+
+/** The one Daycare pair per member (users/{uid}/bag/daycare, server-written). */
+export interface DaycareState {
+  active?: boolean;
+  leftId?: string;
+  rightId?: string;
+  leftName?: string;
+  rightName?: string;
+  offspringIdx?: number;
+  startedAt?: { seconds: number };
+  startPostCount?: number;
+  lastHatched?: string;
+}
+
+export const getDaycare = async (uid: string): Promise<DaycareState | null> => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  const snap = await getDoc(doc(db, "users", uid, "bag", "daycare"));
+  return snap.exists() ? (snap.data() as DaycareState) : null;
+};
+
+export const callBreedPokemon = (leftId: string, rightId: string) =>
+  callGame<{ ok: boolean }>("breedPokemon", { leftId, rightId });
+
+export const callHatchEgg = async (): Promise<string> => {
+  const result = await callGame<{ ok: boolean; hatched: string }>("hatchEgg", {});
+  return result.hatched;
+};
+
+/** A Poke Swap trade doc (trades collection; all writes go through callables). */
+export interface Trade {
+  id: string;
+  fromUid: string;
+  fromName: string;
+  toUid: string;
+  toName: string;
+  offerId: string;
+  offerName: string;
+  offerSlug?: string;
+  counterId?: string;
+  counterName?: string;
+  status: "pending" | "accepted" | "declined" | "cancelled";
+  createdAt?: { seconds: number };
+}
+
+export const getMyTrades = async (uid: string): Promise<Trade[]> => {
+  const { collection, getDocs, limit, query, where } = await import("firebase/firestore");
+  const base = collection(db, "trades");
+  // Two simple where() reads (sent + received) merged client-side; ordering by
+  // createdAt in the query would need a composite index for each direction.
+  const [sent, received] = await Promise.all([
+    getDocs(query(base, where("fromUid", "==", uid), limit(50))),
+    getDocs(query(base, where("toUid", "==", uid), limit(50))),
+  ]);
+  const byId = new Map<string, Trade>();
+  [...sent.docs, ...received.docs].forEach((d) =>
+    byId.set(d.id, { id: d.id, ...d.data() } as Trade)
+  );
+  return [...byId.values()].sort(
+    (a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)
+  );
+};
+
+export const callProposeTrade = (targetUsername: string, pokemonId: string) =>
+  callGame<{ ok: boolean; tradeId: string }>("proposeTrade", { targetUsername, pokemonId });
+
+export const callRespondTrade = (
+  tradeId: string,
+  action: "accept" | "decline" | "cancel",
+  counterId?: string
+) => callGame<{ ok: boolean }>("respondTrade", { tradeId, action, counterId: counterId ?? "" });

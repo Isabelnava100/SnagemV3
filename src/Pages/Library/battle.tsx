@@ -158,6 +158,74 @@ export default function BattleGuideTab() {
         </Group>
       </Section>
 
+      <Section title="STAB, critical hits, and natures">
+        <Text>
+          Attacking with your own typing always earns the same-type attack bonus:
+          every strike is boosted x{cfg.mechanics.stab}. Both sides can land a
+          critical hit ({cfg.mechanics.critChance}% chance) for x
+          {cfg.mechanics.critMult} damage. Every pokemon also has one of 25
+          natures, assigned when it is caught or hatched: an attack nature adds{" "}
+          {cfg.mechanics.natureEffect}% to your strikes, a defense nature shaves{" "}
+          {cfg.mechanics.natureEffect}% off incoming hits, and a speed nature adds{" "}
+          {cfg.mechanics.natureEffect}% to run-away rolls. Neutral natures do
+          nothing. All of these numbers are staff-tunable.
+        </Text>
+      </Section>
+
+      <Section title="Status conditions">
+        <Text>
+          A surviving enemy&apos;s hit has a {cfg.mechanics.statusChance}% chance
+          to inflict a status flavored by its typing: burn (Fire types), poison
+          (Poison and Bug), or paralysis (Electric). Burn and poison deal{" "}
+          {cfg.mechanics.statusTick} extra damage to your fighter each battle
+          post; paralysis scales your attack progress by x
+          {cfg.mechanics.paralysisMult}. Cures work in-post from
+          Use Items: Burn Heal, Antidote, Paralyze Heal, or a Full Heal / Full
+          Restore for anything. A status also clears when the pokemon faints or
+          the thread ends.
+        </Text>
+      </Section>
+
+      <Section title="Weather">
+        <Text>
+          Hosts can set the weather when creating a thread: sun, rain, sandstorm,
+          or snow. Favored types (for example Fire in sun, Water in rain) attack
+          at x{cfg.mechanics.weatherBoost}; disfavored types are weakened by the
+          same amount. Weather lasts the whole thread.
+        </Text>
+      </Section>
+
+      <Section title="Catching: ball odds">
+        <Text>
+          Throwing a ball at a beaten wild pokemon is a percentage roll based on
+          the ball&apos;s tier, plus a +{cfg.mechanics.ballWornBonus}% worn-down
+          bonus for fully beating it first (capped at 95%; a Master Ball never
+          fails). A miss spends the ball but the pokemon stays beaten, so you can
+          throw again next post.
+        </Text>
+      </Section>
+
+      <Section title="The Pokemon Center">
+        <Text>
+          Mid-thread you can visit the Pokemon Center from the composer&apos;s
+          Battle panel: for {cfg.mechanics.centerCost} Snag Coins the nurse fully
+          heals your whole team on that thread and cures every status. Fainted
+          pokemon wake up too.
+        </Text>
+      </Section>
+
+      <Section title="The Daycare and the Trading Station">
+        <Text>
+          The Daycare (main nav) takes one pair at a time: two pokemon that share
+          a type, share a species, or include a Ditto. Their egg is ready after{" "}
+          {cfg.mechanics.hatchDays} days or {cfg.mechanics.hatchPosts} qualifying
+          posts, whichever comes first, and hatches into the base form of the
+          non-Ditto parent&apos;s line. The Trading Station handles the only way
+          a pokemon changes trainers: a pokemon-for-pokemon swap, proposed and
+          accepted by both sides.
+        </Text>
+      </Section>
+
       <Section title="Team lock">
         <Text>
           On normal roleplay threads you are locked to the team you bring in your

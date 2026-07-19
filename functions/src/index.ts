@@ -114,6 +114,85 @@ function maxHpForLevel(level: number, hp: ReturnType<typeof hpConfigFrom>): numb
   const highLevels = Math.max(0, lvl - hp.split);
   return hp.base + hp.low * lowLevels + hp.high * highLevels;
 }
+// Tunable battle mechanics, all admin-editable in admin/battle_config.mechanics
+// (mirrors DEFAULT_BATTLE_MECHANICS in src/queries/game.ts).
+const DEFAULT_MECHANICS = {
+  stab: 1.1,
+  critChance: 3,
+  critMult: 1.5,
+  natureEffect: 5,
+  statusChance: 10,
+  statusTick: 10,
+  paralysisMult: 0.5,
+  weatherBoost: 1.2,
+  centerCost: 10,
+  ballWornBonus: 40,
+  hatchPosts: 10,
+  hatchDays: 15,
+};
+type Mechanics = typeof DEFAULT_MECHANICS;
+function mechanicsFrom(cfg: FirebaseFirestore.DocumentData | undefined): Mechanics {
+  const raw = (cfg?.mechanics ?? {}) as Record<string, unknown>;
+  const out = { ...DEFAULT_MECHANICS };
+  (Object.keys(DEFAULT_MECHANICS) as Array<keyof Mechanics>).forEach((k) => {
+    const n = Number(raw[k]);
+    if (Number.isFinite(n) && n >= 0) out[k] = n;
+  });
+  return out;
+}
+
+// The 25 classic natures, grouped by what they help in this system: attack
+// natures boost attack progress, defense natures shave incoming damage, speed
+// natures raise flee odds; neutral natures do nothing. A pokemon without a
+// stored nature derives one deterministically from its id (no migration).
+const NATURES: Record<string, "attack" | "defense" | "speed" | "neutral"> = {
+  Adamant: "attack", Brave: "attack", Naughty: "attack", Lonely: "attack",
+  Modest: "attack", Mild: "attack", Quiet: "attack", Rash: "attack",
+  Bold: "defense", Impish: "defense", Lax: "defense", Relaxed: "defense",
+  Calm: "defense", Careful: "defense", Gentle: "defense", Sassy: "defense",
+  Timid: "speed", Hasty: "speed", Jolly: "speed", Naive: "speed",
+  Hardy: "neutral", Docile: "neutral", Serious: "neutral", Bashful: "neutral", Quirky: "neutral",
+};
+const NATURE_NAMES = Object.keys(NATURES);
+function natureOf(poke: Record<string, unknown> | undefined, pokemonId: string): string {
+  const stored = String(poke?.nature ?? "");
+  if (NATURES[stored]) return stored;
+  let h = 0;
+  for (const ch of pokemonId) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return NATURE_NAMES[h % NATURE_NAMES.length];
+}
+
+// Weather (set by the host at thread creation): favored types attack at the
+// boost, disfavored at 1/boost, applied to whoever is attacking.
+const WEATHER_TYPES: Record<string, { up: string[]; down: string[] }> = {
+  sun: { up: ["Fire", "Grass"], down: ["Water"] },
+  rain: { up: ["Water", "Electric"], down: ["Fire"] },
+  sandstorm: { up: ["Rock", "Ground", "Steel"], down: ["Flying"] },
+  snow: { up: ["Ice"], down: ["Grass"] },
+};
+function weatherMult(weather: string | undefined, attackerTypes: string[], boost: number): number {
+  const w = WEATHER_TYPES[String(weather ?? "")];
+  if (!w || boost <= 1) return 1;
+  if (attackerTypes.some((t) => w.up.includes(t))) return boost;
+  if (attackerTypes.some((t) => w.down.includes(t))) return 1 / boost;
+  return 1;
+}
+
+// Status a hit can inflict, flavored by the attacker's type.
+function statusForTypes(types: string[]): "burn" | "poison" | "paralysis" | null {
+  if (types.includes("Fire")) return "burn";
+  if (types.includes("Poison") || types.includes("Bug") || types.includes("Grass")) return "poison";
+  if (types.includes("Electric")) return "paralysis";
+  return null;
+}
+const STATUS_CURES: Record<string, Array<"burn" | "poison" | "paralysis">> = {
+  antidote: ["poison"],
+  "burn heal": ["burn"],
+  "paralyze heal": ["paralysis"],
+  "full heal": ["burn", "poison", "paralysis"],
+  "full restore": ["burn", "poison", "paralysis"],
+};
+
 function starDamageFrom(cfg: FirebaseFirestore.DocumentData | undefined, star: number): number {
   const configured = Math.trunc(Number((cfg?.starDamage ?? {})[String(star)]));
   if (Number.isFinite(configured) && configured > 0 && configured <= 100000) return configured;
@@ -191,6 +270,7 @@ function buildOwnedPokemon(
     regiondex: "",
     species: info?.name ?? slug,
     type1: "Unknown",
+    nature: NATURE_NAMES[randomInt(NATURE_NAMES.length)],
     shiny: !!opts.shiny,
     ...(opts.characterId ? { characterId: opts.characterId } : {}),
     ...(opts.caughtIn ? { caughtIn: opts.caughtIn } : {}),
@@ -967,6 +1047,17 @@ export const publishForumPost = onCall(async (request) => {
     const fighterTypes = battleFighterId
       ? typesForDex(Number(ownedForXp[battleFighterId]?.pokedex ?? 0))
       : ["Normal"];
+    const mech = mechanicsFrom(battleCfg);
+    const fighterNature = battleFighterId
+      ? natureOf(ownedForXp[battleFighterId], battleFighterId)
+      : "Hardy";
+    const natureKind = NATURES[fighterNature] ?? "neutral";
+    const threadWeather = String(thread.weather ?? "");
+    // Per-thread status conditions (burn/poison/paralysis), per pokemon.
+    const statusNow: Record<string, string> = {
+      ...(((thread.battleStatus as Record<string, Record<string, string>>) ?? {})[uid] ?? {}),
+    };
+    const battleNotes: string[] = [];
 
     const pending = pendingSnap.data() ?? {};
     const encounter = pending.encounter ? { ...pending.encounter } : undefined;
@@ -1063,11 +1154,35 @@ export const publishForumPost = onCall(async (request) => {
       const qualifies = forIds.length === 0 || postCharIds.some((id: string) => forIds.includes(id));
       const enemyIdx = Number(catalogBySlug.get(String(encounter.slug))?.idx ?? 0);
       const enemyStar = Number(encounter.star) || starForDex(enemyIdx);
-      // Type effectiveness, both directions (clamped 0.5x..2x).
+      // Type effectiveness, both directions (clamped 0.5x..2x), then the rest
+      // of the battle modifiers: STAB (attacks always use the fighter's own
+      // typing), weather, natures, paralysis, and critical hits.
       const enemyTypes = typesForDex(enemyIdx);
-      const attackMult = typeEffectiveness(fighterTypes, enemyTypes);
-      const defenseMult = typeEffectiveness(enemyTypes, fighterTypes);
-      const enemyHit = Math.max(1, Math.round(starDamageFrom(battleCfg, enemyStar) * defenseMult));
+      let attackMult = typeEffectiveness(fighterTypes, enemyTypes) * (mech.stab || 1);
+      attackMult *= weatherMult(threadWeather, fighterTypes, mech.weatherBoost);
+      if (natureKind === "attack") attackMult *= 1 + mech.natureEffect / 100;
+      const fighterStatus = battleFighterId ? statusNow[battleFighterId] : undefined;
+      if (fighterStatus === "paralysis") {
+        attackMult *= mech.paralysisMult;
+        battleNotes.push("Paralyzed: attack halved this post.");
+      }
+      const playerCrit = randomInt(10000) < Math.round(mech.critChance * 100);
+      if (playerCrit) {
+        attackMult *= mech.critMult;
+        battleNotes.push("Critical hit!");
+      }
+      attackMult = Math.round(attackMult * 100) / 100;
+      let defenseMult = typeEffectiveness(enemyTypes, fighterTypes);
+      defenseMult *= weatherMult(threadWeather, enemyTypes, mech.weatherBoost);
+      if (natureKind === "defense") defenseMult *= 1 - mech.natureEffect / 100;
+      const enemyCrit = randomInt(10000) < Math.round(mech.critChance * 100);
+      const enemyHit = Math.max(
+        1,
+        Math.round(
+          starDamageFrom(battleCfg, enemyStar) * defenseMult * (enemyCrit ? mech.critMult : 1)
+        )
+      );
+      if (enemyCrit) battleNotes.push(`The wild ${encounter.name} landed a critical hit!`);
       let progress = Number(encounter.progress) || 0;
       const wasBeaten = progress >= required;
       const ball = itemsUsed.find((i) => i.isBall);
@@ -1081,7 +1196,10 @@ export const publishForumPost = onCall(async (request) => {
             "You cannot run away from a trainer's Pokemon. Beat it to end the battle."
           );
         }
-        const chance = fleeChanceForStar(enemyStar);
+        const chance = Math.min(
+          95,
+          fleeChanceForStar(enemyStar) + (natureKind === "speed" ? mech.natureEffect : 0)
+        );
         encounter.fleeChance = chance;
         if (randomInt(100) < chance) {
           encounter.outcome = "fled";
@@ -1100,12 +1218,49 @@ export const publishForumPost = onCall(async (request) => {
           encounter.attackEffect = attackMult;
           encounter.defenseEffect = defenseMult;
         }
-        // The enemy hits back on every battle post it survives.
-        if (qualifies && progress < required) enemyAttackDmg = enemyHit;
+        // The enemy hits back on every battle post it survives, and its hit
+        // can inflict a type-flavored status (burn/poison/paralysis).
+        if (qualifies && progress < required) {
+          enemyAttackDmg = enemyHit;
+          const inflict = statusForTypes(enemyTypes);
+          if (
+            battleFighterId &&
+            inflict &&
+            !statusNow[battleFighterId] &&
+            randomInt(100) < mech.statusChance
+          ) {
+            statusNow[battleFighterId] = inflict;
+            battleNotes.push(`${String(ownedForXp[battleFighterId]?.species ?? "Your fighter")} was ${inflict === "paralysis" ? "paralyzed" : inflict === "burn" ? "burned" : "poisoned"}!`);
+          }
+        }
+        // Burn/poison tick damage while battling.
+        if (
+          qualifies &&
+          battleFighterId &&
+          (statusNow[battleFighterId] === "burn" || statusNow[battleFighterId] === "poison") &&
+          mech.statusTick > 0
+        ) {
+          enemyAttackDmg += mech.statusTick;
+          battleNotes.push(`${statusNow[battleFighterId] === "burn" ? "Burn" : "Poison"} dealt ${mech.statusTick} extra damage.`);
+        }
       }
       encounter.progress = progress;
-      encounter.caught =
-        !!ball && !!encounter.catchable && !encounterFled && progress >= required;
+      // Catching a beaten wild is a percentage roll by ball tier (Poke 50 /
+      // Great 60 / Ultra 70 / Master 100) plus the worn-down bonus, capped at
+      // 95 so only a Master Ball is a sure thing. A miss spends the ball.
+      encounter.caught = false;
+      if (!editPostId && ball && encounter.catchable && !encounterFled && progress >= required) {
+        const ballKey = safariBallKey(ball.filePath || "", ball.name || "");
+        const base = safariBallBaseRate(ballKey, { firstStage: isFirstStageDex(enemyIdx) });
+        const chance = base >= 100 ? 100 : Math.min(95, base + mech.ballWornBonus);
+        encounter.catchChance = chance;
+        if (randomInt(100) < chance) {
+          encounter.caught = true;
+        } else {
+          encounter.outcome = "missed";
+          battleNotes.push(`The ${ball.name} missed! The worn-down ${encounter.name} is still there.`);
+        }
+      }
       encounterCaught = !!encounter.caught;
       if (encounter.caught && ball) (ball as any).caughtPokemon = encounter.name;
       // A filled bar means the foe is beaten. Record it on mission threads so
@@ -1121,6 +1276,11 @@ export const publishForumPost = onCall(async (request) => {
     if (!editPostId && teamPokemonIds.length) {
       for (const item of itemsUsed) {
         if (String((item as any).category ?? "").toLowerCase() !== "medicine") continue;
+        const cures = STATUS_CURES[String(item.name ?? "").toLowerCase()];
+        if (cures && battleFighterId && cures.includes(statusNow[battleFighterId] as any)) {
+          battleNotes.push(`${item.name} cured the ${statusNow[battleFighterId]}.`);
+          delete statusNow[battleFighterId];
+        }
         const effect = healEffectFor(item.name ?? "");
         if (!effect) continue;
         for (let n = 0; n < item.qty; n++) {
@@ -1208,6 +1368,10 @@ export const publishForumPost = onCall(async (request) => {
         hpLeft: maxHp - total,
         fainted: total >= maxHp,
       };
+    }
+    if (battleBlock) {
+      (battleBlock as any).nature = fighterNature;
+      if (battleNotes.length) (battleBlock as any).notes = battleNotes;
     }
     if (battleBlock && heals.length) (battleBlock as any).heals = heals;
     const healsOnlyBlock =
@@ -1496,6 +1660,12 @@ export const publishForumPost = onCall(async (request) => {
           ),
           // Running tally of every item spent on this thread, shown to the
           // staff reviewer at close.
+          // Status conditions that changed this post (inflicted or cured).
+          ...Object.fromEntries(
+            Object.keys({ ...statusNow, ...((((thread.battleStatus as Record<string, Record<string, string>>) ?? {})[uid]) ?? {}) })
+              .filter((id) => (statusNow[id] ?? null) !== (((((thread.battleStatus as Record<string, Record<string, string>>) ?? {})[uid]) ?? {})[id] ?? null))
+              .map((id) => [`battleStatus.${uid}.${id}`, statusNow[id] ?? FieldValue.delete()])
+          ),
           ...Object.fromEntries(
             itemsUsed.flatMap((i) => [
               [`itemsUsedTally.${i.itemId}.qty`, FieldValue.increment(i.qty)],
@@ -1768,6 +1938,10 @@ export const publishForumThread = onCall(async (request) => {
     // Host choice, set only at creation: members may swap teams between posts
     // (turns off the anti-farm team lock for this thread).
     allowTeamChanges: !!request.data?.allowTeamChanges,
+    // Host-set weather (creation only): favors/weakens attack types in battle.
+    weather: ["sun", "rain", "sandstorm", "snow"].includes(String(request.data?.weather))
+      ? String(request.data.weather)
+      : null,
   });
   batch.create(tRef.collection("posts").doc(), {
     ...authorFields(member),
@@ -3219,6 +3393,229 @@ export const resolveThreadPause = onCall(async (request) => {
       link: `/Forum/${forum}/thread/${threadId}/last`,
     });
   }
+  return { ok: true };
+});
+
+
+// ===========================================================================
+// Pokemon Center, Daycare (breeding), and Poke Swap (trading)
+// ===========================================================================
+
+/** Mid-thread Pokemon Center visit: pay Snag Coins, clear your battle damage
+ * and statuses on that thread. Cost is admin-editable (mechanics.centerCost). */
+export const pokemonCenterHeal = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const forum = requireString(request.data?.forum, "forum", 60);
+  const threadId = requireString(request.data?.threadId, "threadId", 20);
+  const mech = mechanicsFrom((await db.doc("admin/battle_config").get()).data());
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  await db.runTransaction(async (tx) => {
+    const [threadSnap, curSnap] = await Promise.all([
+      tx.get(threadRef(forum, threadId)),
+      tx.get(currencyRef),
+    ]);
+    assertOpenThread(threadSnap);
+    const coins = Number(curSnap.data()?.pokecoin) || 0;
+    if (coins < mech.centerCost) {
+      throw new HttpsError("failed-precondition", `A Center visit costs ${mech.centerCost} Snag Coins.`);
+    }
+    tx.set(currencyRef, { pokecoin: coins - mech.centerCost }, { merge: true });
+    tx.update(threadRef(forum, threadId), {
+      [`battleDamage.${uid}`]: FieldValue.delete(),
+      [`battleStatus.${uid}`]: FieldValue.delete(),
+    });
+  });
+  return { ok: true, cost: mech.centerCost };
+});
+
+// Reverse evolution edges so we can find a line's base form for eggs.
+const preEvoByIdx: Record<number, number> = {};
+Object.entries(evolutionsJSON as Record<string, Array<{ toIdx: number }>>).forEach(([from, tos]) => {
+  (tos ?? []).forEach((t) => {
+    if (t?.toIdx) preEvoByIdx[Number(t.toIdx)] = Number(from);
+  });
+});
+function baseFormIdx(idx: number): number {
+  let cur = idx;
+  const seen = new Set<number>();
+  while (preEvoByIdx[cur] && !seen.has(cur)) {
+    seen.add(cur);
+    cur = preEvoByIdx[cur];
+  }
+  return cur;
+}
+const DITTO_IDX = 132;
+
+/** The Daycare: leave one pair, get an egg after mechanics.hatchPosts
+ * qualifying posts OR mechanics.hatchDays days, whichever comes first.
+ * Parents must share a type, share a species, or include a Ditto. */
+export const breedPokemon = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const leftId = requireString(request.data?.leftId, "left parent", 80);
+  const rightId = requireString(request.data?.rightId, "right parent", 80);
+  if (leftId === rightId) throw new HttpsError("invalid-argument", "Pick two different pokemon.");
+  const member = await loadMember(uid);
+  const daycareRef = db.doc(`users/${uid}/bag/daycare`);
+  await db.runTransaction(async (tx) => {
+    const [ownedSnap, daycareSnap] = await Promise.all([
+      tx.get(db.doc(`users/${uid}/bag/owned_pokemons`)),
+      tx.get(daycareRef),
+    ]);
+    if (daycareSnap.data()?.active) {
+      throw new HttpsError("failed-precondition", "The Daycare already has a pair. One pair at a time.");
+    }
+    const owned = (ownedSnap.data() as Record<string, any>) ?? {};
+    const left = owned[leftId];
+    const right = owned[rightId];
+    if (!left || !right) throw new HttpsError("not-found", "Both parents must be in your box.");
+    const lIdx = Number(left.pokedex) || 0;
+    const rIdx = Number(right.pokedex) || 0;
+    const lTypes = typesForDex(lIdx);
+    const rTypes = typesForDex(rIdx);
+    const compatible =
+      lIdx === rIdx ||
+      lIdx === DITTO_IDX ||
+      rIdx === DITTO_IDX ||
+      lTypes.some((t) => rTypes.includes(t));
+    if (!compatible) {
+      throw new HttpsError("failed-precondition", "These two do not get along. Try a shared type, the same species, or a Ditto.");
+    }
+    // Offspring line comes from the non-Ditto parent (left wins a Ditto tie).
+    const lineIdx = lIdx === DITTO_IDX ? rIdx : lIdx;
+    tx.set(daycareRef, {
+      active: true,
+      leftId,
+      rightId,
+      leftName: String(left.species ?? left.name ?? ""),
+      rightName: String(right.species ?? right.name ?? ""),
+      offspringIdx: baseFormIdx(lineIdx),
+      startedAt: new Date(),
+      startPostCount: Number((await db.doc(`users/${uid}`).get()).data()?.postCount) || 0,
+    });
+  });
+  return { ok: true };
+});
+
+/** Claim the Daycare egg once the timer is up; the hatchling joins the box. */
+export const hatchEgg = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const mech = mechanicsFrom((await db.doc("admin/battle_config").get()).data());
+  const daycareRef = db.doc(`users/${uid}/bag/daycare`);
+  let hatchedName = "";
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(daycareRef);
+    const d = snap.data();
+    if (!d?.active) throw new HttpsError("failed-precondition", "No pair is at the Daycare.");
+    const nowCount = Number((await db.doc(`users/${uid}`).get()).data()?.postCount) || 0;
+    const posts = nowCount - (Number(d.startPostCount) || 0);
+    const started = d.startedAt?.toDate ? d.startedAt.toDate().getTime() : Date.now();
+    const days = (Date.now() - started) / 86_400_000;
+    if (posts < mech.hatchPosts && days < mech.hatchDays) {
+      throw new HttpsError(
+        "failed-precondition",
+        `The egg is not ready: ${Math.max(0, mech.hatchPosts - posts)} posts or ${Math.max(0, Math.ceil(mech.hatchDays - days))} days to go.`
+      );
+    }
+    const idx = Number(d.offspringIdx) || 1;
+    const entry = catalog.find((c) => Number(c.idx) === idx);
+    if (!entry) throw new HttpsError("internal", "Unknown offspring species.");
+    hatchedName = entry.name;
+    tx.set(
+      db.doc(`users/${uid}/bag/owned_pokemons`),
+      { [randomUUID()]: buildOwnedPokemon(entry.slug, new Date(), { shiny: rollShiny() }) },
+      { merge: true }
+    );
+    tx.set(daycareRef, { active: false, lastHatched: entry.name, hatchedAt: new Date() });
+  });
+  await notifyUsers([uid], { type: "egg", text: `The egg hatched into ${hatchedName}!`, link: "/Daycare" });
+  return { ok: true, hatched: hatchedName };
+});
+
+/** Poke Swap: propose a pokemon-for-pokemon trade to another member. */
+export const proposeTrade = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const targetName = requireString(request.data?.targetUsername, "member", 100);
+  const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
+  if (targetName === member.username) throw new HttpsError("invalid-argument", "You cannot trade with yourself.");
+  const targetSnap = await db.collection("users").where("username", "==", targetName).limit(1).get();
+  if (targetSnap.empty) throw new HttpsError("not-found", "No member by that username.");
+  const owned = (await db.doc(`users/${uid}/bag/owned_pokemons`).get()).data() ?? {};
+  const offer = (owned as Record<string, any>)[pokemonId];
+  if (!offer) throw new HttpsError("not-found", "That pokemon is not in your box.");
+  const ref = await db.collection("trades").add({
+    fromUid: uid,
+    fromName: member.username,
+    toUid: targetSnap.docs[0].id,
+    toName: targetName,
+    offerId: pokemonId,
+    offerName: String(offer.species ?? offer.name ?? ""),
+    offerSlug: String(offer.image_slug ?? ""),
+    status: "pending",
+    createdAt: new Date(),
+  });
+  await notifyUsers([targetSnap.docs[0].id], {
+    type: "trade",
+    text: `${member.username} proposed a trade: their ${offer.species ?? "pokemon"} for one of yours.`,
+    link: "/Trading",
+  });
+  return { ok: true, tradeId: ref.id };
+});
+
+/** Accept (with your counter pokemon), decline, or cancel a trade. The swap
+ * moves both pokemon between boxes in one transaction; trade-only, no gifting. */
+export const respondTrade = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const tradeId = requireString(request.data?.tradeId, "trade", 80);
+  const action = request.data?.action;
+  const counterId = request.data?.counterId ? String(request.data.counterId).slice(0, 80) : "";
+  if (!["accept", "decline", "cancel"].includes(action)) {
+    throw new HttpsError("invalid-argument", "Unknown trade action.");
+  }
+  const tradeRef = db.doc(`trades/${tradeId}`);
+  let notify: { uids: string[]; text: string } | null = null;
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(tradeRef);
+    const t = snap.data();
+    if (!t || t.status !== "pending") throw new HttpsError("failed-precondition", "This trade is no longer open.");
+    if (action === "cancel") {
+      if (t.fromUid !== uid) throw new HttpsError("permission-denied", "Only the proposer can cancel.");
+      tx.update(tradeRef, { status: "cancelled", resolvedAt: new Date() });
+      return;
+    }
+    if (t.toUid !== uid) throw new HttpsError("permission-denied", "This trade is not for you.");
+    if (action === "decline") {
+      tx.update(tradeRef, { status: "declined", resolvedAt: new Date() });
+      notify = { uids: [t.fromUid], text: `${t.toName} declined your trade.` };
+      return;
+    }
+    if (!counterId) throw new HttpsError("invalid-argument", "Pick the pokemon you are trading back.");
+    const fromRef = db.doc(`users/${t.fromUid}/bag/owned_pokemons`);
+    const toRef = db.doc(`users/${t.toUid}/bag/owned_pokemons`);
+    const [fromSnap, toSnap] = await Promise.all([tx.get(fromRef), tx.get(toRef)]);
+    const fromOwned = (fromSnap.data() as Record<string, any>) ?? {};
+    const toOwned = (toSnap.data() as Record<string, any>) ?? {};
+    const offered = fromOwned[t.offerId];
+    const counter = toOwned[counterId];
+    if (!offered) throw new HttpsError("failed-precondition", "The offered pokemon is no longer available.");
+    if (!counter) throw new HttpsError("not-found", "That pokemon is not in your box.");
+    // Swap: each pokemon changes boxes; character/team ties do not travel.
+    const strip = (p: Record<string, unknown>) => {
+      const { characterId, ...rest } = p;
+      return rest;
+    };
+    tx.update(fromRef, { [t.offerId]: FieldValue.delete(), [randomUUID()]: strip(counter) });
+    tx.update(toRef, { [counterId]: FieldValue.delete(), [randomUUID()]: strip(offered) });
+    tx.update(tradeRef, {
+      status: "accepted",
+      counterId,
+      counterName: String(counter.species ?? counter.name ?? ""),
+      resolvedAt: new Date(),
+    });
+    notify = { uids: [t.fromUid], text: `${t.toName} accepted the trade: ${counter.species ?? "a pokemon"} for your ${t.offerName}.` };
+  });
+  if (notify) await notifyUsers((notify as any).uids, { type: "trade", text: (notify as any).text, link: "/Trading" });
   return { ok: true };
 });
 

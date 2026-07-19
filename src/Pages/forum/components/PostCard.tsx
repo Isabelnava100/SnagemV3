@@ -184,7 +184,7 @@ export function GameBlocks(props: { post: ForumPost }) {
             radius="xl"
           />
         )}
-        <GameResultText>{[...healLines, hitLine].filter(Boolean).join(" ")}</GameResultText>
+        <GameResultText>{[...(b.notes ?? []), ...healLines, hitLine].filter(Boolean).join(" ")}</GameResultText>
       </Flex>
     );
   }

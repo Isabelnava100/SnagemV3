@@ -77,6 +77,7 @@ export default function NewThreadComposer() {
   const [instructions, setInstructions] = React.useState("");
   const [noXp, setNoXp] = React.useState(false);
   const [allowTeamChanges, setAllowTeamChanges] = React.useState(false);
+  const [weather, setWeather] = React.useState<string | null>(null);
   const [characters, setCharacters] = React.useState<PostCharacter[]>([]);
   const [encounterConfig, setEncounterConfig] = React.useState<EncounterConfig | null>(null);
   const [poll, setPoll] = React.useState<ThreadPoll | null>(null);
@@ -187,6 +188,7 @@ export default function NewThreadComposer() {
         allowedPosters: restricted ? allowedPosters : [],
         noXp,
         allowTeamChanges,
+        weather,
         poll,
         encounterConfig,
         characters,
@@ -376,6 +378,23 @@ export default function NewThreadComposer() {
                     styles={{ label: { color: "white", fontSize: 14 } }}
                   />
                 </Tooltip>
+
+                <Select
+                  label="Weather (optional, battle flavor)"
+                  description="Favors matching attack types in battles here: sun boosts Fire/Grass, rain boosts Water/Electric, sandstorm boosts Rock/Ground/Steel, snow boosts Ice."
+                  placeholder="No weather"
+                  clearable
+                  data={[
+                    { value: "sun", label: "Harsh sun" },
+                    { value: "rain", label: "Rain" },
+                    { value: "sandstorm", label: "Sandstorm" },
+                    { value: "snow", label: "Snow" },
+                  ]}
+                  value={weather}
+                  onChange={setWeather}
+                  maw={320}
+                  styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+                />
 
                 <Tooltip
                   multiline

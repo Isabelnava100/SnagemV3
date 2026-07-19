@@ -12,6 +12,15 @@ import {
 } from "@mantine/core";
 import { HERO_GRADIENT, HERO_STRIPES } from "../common/PageHero";
 import { SNAG_ICON_NAMES, SnagIcon } from "../../icons/SnagIcon";
+import {
+  AdminAccessIcon,
+  Forum as ForumIcon,
+  GengarCoins,
+  Marketplace,
+  Quests,
+  SettingsIcon,
+  TeamSangem,
+} from "../../icons";
 
 /**
  * Admin-only "brand kit" / design-system reference. This is a READ-ONLY status
@@ -27,6 +36,20 @@ import { SNAG_ICON_NAMES, SnagIcon } from "../../icons/SnagIcon";
  */
 
 const VERSION = "v1.0 · 2026 · Snagem Guild";
+
+// Retired/unused glyphs stay in the codebase but out of the reference sheet.
+const HIDDEN_GLYPHS = new Set(["gengar", "snaghand"]);
+
+// The original image icons still in use across the main nav (src/icons).
+const NAV_IMAGE_ICONS = [
+  { src: TeamSangem, label: "team_snagem" },
+  { src: ForumIcon, label: "forum" },
+  { src: Marketplace, label: "marketplace" },
+  { src: Quests, label: "quests" },
+  { src: GengarCoins, label: "gengar_coins" },
+  { src: AdminAccessIcon, label: "admin-access" },
+  { src: SettingsIcon, label: "settings" },
+];
 
 /* -------------------------------- helpers -------------------------------- */
 
@@ -201,7 +224,6 @@ export default function DesignSystem() {
             <Swatch color={theme.colors.brand[3]} name="Espeon Lilac" role="brand.3 · light purple accents" />
             <Swatch color={theme.colors.violet[0]} name="Crobat Violet" role="violet.0 · gradient start" />
             <Swatch color={theme.colors.cyan[0]} name="Suicune Cyan" role="cyan.0 · gradient end, success" />
-            <Swatch color={theme.colors.gold[1]} name="Zapdos Spark" role="gold.1 · gold text on dark" />
           </SimpleGrid>
 
           <Panel>
@@ -551,11 +573,27 @@ export default function DesignSystem() {
         index="07"
         eyebrow="Icons"
         title="The Snag icon set"
-        hint="The guild's own solid-fill glyph set (src/icons/SnagIcon.tsx), used across the nav, dashboards and game UI. Supporting sets: @tabler/icons-react for utility icons, plus the original nav image icons (src/icons/*.svg)."
+        hint="The guild's own solid-fill glyph set (src/icons/SnagIcon.tsx), used across the nav, dashboards and game UI. Supporting sets: @tabler/icons-react for utility icons, plus the original nav image icons below."
       >
         <Panel>
+          <Text fz={14} fw={700} c="white" mb={10}>
+            Original nav icons (image files)
+          </Text>
+          <SimpleGrid cols={{ base: 4, xs: 6, sm: 10 }} spacing={12} mb={16}>
+            {NAV_IMAGE_ICONS.map((icon) => (
+              <Stack key={icon.label} gap={4} align="center">
+                <img src={icon.src} alt={icon.label} width={28} height={28} style={{ objectFit: "contain" }} />
+                <Text ff="monospace" fz={10} c="dimmed" ta="center">
+                  {icon.label}
+                </Text>
+              </Stack>
+            ))}
+          </SimpleGrid>
+          <Text fz={14} fw={700} c="white" mb={10}>
+            Snag glyph set
+          </Text>
           <SimpleGrid cols={{ base: 4, xs: 6, sm: 10 }} spacing={12}>
-            {SNAG_ICON_NAMES.map((name) => (
+            {SNAG_ICON_NAMES.filter((n) => !HIDDEN_GLYPHS.has(n)).map((name) => (
               <Stack key={name} gap={4} align="center">
                 <SnagIcon name={name} size={28} cut="#141318" title={name} />
                 <Text ff="monospace" fz={14} c="dimmed" ta="center" style={{ wordBreak: "break-all" }}>

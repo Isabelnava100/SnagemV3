@@ -129,6 +129,26 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
   creation-only "Members may change teams between posts" checkbox
   (`thread.allowTeamChanges`). Constants live in `src/lib/encounterStars.ts`
   + mirrored in `functions/src/index.ts`.
+- Battle mechanics pack + Daycare + Trading (July 2026) need a rules + functions
+  deploy (`firebase deploy --only firestore:rules,functions`): STAB (x1.1),
+  critical hits (3% / x1.5 both directions), 25 natures (attack/defense/speed/
+  neutral; hash-derived for existing pokemon, random at catch/hatch), status
+  conditions (burn/poison/paralysis, type-flavored, cured by the matching
+  medicine items), thread weather (host sets sun/rain/sandstorm/snow at
+  creation; boosts/weakens attacker types), ball-tier catch odds on beaten
+  wilds (worn-down bonus, cap 95, Master Ball 100), and the mid-thread
+  `pokemonCenterHeal` callable (Snag Coins, clears `battleDamage` +
+  `battleStatus` for the caller). Every knob lives in
+  `admin/battle_config.mechanics` (editable in Admin > Permissions > Battle
+  Costs); client mirror `DEFAULT_BATTLE_MECHANICS` in `src/queries/game.ts`,
+  server mirror `DEFAULT_MECHANICS`/`mechanicsFrom` in `functions/src/index.ts`;
+  keep them in sync. New pages: /Daycare (breeding: one pair per member in
+  `users/{uid}/bag/daycare`, server-written only per rules; egg hatches after
+  mechanics.hatchDays days OR hatchPosts posts, offspring = base form of the
+  non-Ditto parent's line) and /Trading (Poke Swap: `trades` collection,
+  parties+admin read, writes via `proposeTrade`/`respondTrade` callables,
+  transactional box swap). Held items are still deferred (needs a dashboard
+  equip UI pass). Guide: Library > The War Room reads the live config.
 - Type effectiveness + S.N.A.G. + Dev Board (July 2026) need a rules +
   functions deploy (`firebase deploy --only firestore:rules,functions`):
   battle damage/progress now scale by pokemon-type matchup (0.5x..2x clamp,

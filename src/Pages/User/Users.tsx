@@ -163,7 +163,7 @@ export default function Users() {
 
   return (
     <Box>
-      <Container size="xl" pt={{ base: 24, sm: 40 }} px={{ base: 12, sm: 20 }}>
+      <Container size="lg" pt={{ base: 24, sm: 40 }} px={{ base: 12, sm: 20 }}>
         <PageHero
           eyebrow="The Guild Roster"
           title="Snagem Members"
@@ -184,7 +184,7 @@ export default function Users() {
         />
       </Container>
 
-      <Container size="xl" py={20} px={{ base: 12, sm: 20 }}>
+      <Container size="lg" py={20} px={{ base: 12, sm: 20 }}>
         <Group justify="space-between" align="center" mb={18} wrap="wrap" gap={12}>
           <Group gap={8}>
             {ROLES.map((r) => (

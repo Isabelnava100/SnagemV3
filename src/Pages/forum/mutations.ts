@@ -36,6 +36,8 @@ export interface PublishThreadInput {
   xpAward?: "instant" | "onClose";
   noXp?: boolean;
   allowTeamChanges?: boolean;
+  /** Host-set battle weather (sun/rain/sandstorm/snow). */
+  weather?: string | null;
   attachSignature?: boolean;
 }
 

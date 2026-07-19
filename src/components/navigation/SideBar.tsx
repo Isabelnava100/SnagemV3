@@ -155,6 +155,8 @@ type DrawerTileDef = { link: string; label: string; tabler?: typeof IconHome; ic
 const BASE_DRAWER_TILES: DrawerTileDef[] = [
   { link: "/", label: "Home", tabler: IconHome },
   ...overflowLinks.map((l) => ({ link: l.link, label: l.label, icon: l.icon })),
+  { link: "/Daycare", label: "Daycare", icon: { snag: "egg" } },
+  { link: "/Trading", label: "Trading", icon: { snag: "exchange" } },
   { link: "/Announcements", label: "News", tabler: IconSpeakerphone },
   // About reuses the Admin Access icon per the owner's request.
   { link: "/About", label: "About", icon: { img: AdminAccessIcon } },

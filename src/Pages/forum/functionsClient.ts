@@ -76,6 +76,8 @@ export const callPublishThread = (input: {
   noXp?: boolean;
   /** Host choice at creation: members may swap teams between posts. */
   allowTeamChanges?: boolean;
+  /** Host-set battle weather (sun/rain/sandstorm/snow). */
+  weather?: string | null;
   attachSignature?: boolean;
 }) => call<{ threadId: string }>("publishForumThread", input);
 
@@ -164,3 +166,8 @@ export const callFinalizeSafariContest = (input: {
   threadId: string;
   results: Array<{ uid: string; coins: number }>;
 }) => call<{ ok: boolean; paid: number }>("finalizeSafariContest", input);
+
+/** Mid-thread Pokemon Center visit: pay Snag Coins, clear your team's battle
+ * damage + statuses on this thread. Cost is admin-set (mechanics.centerCost). */
+export const callPokemonCenterHeal = (forum: string, threadId: string) =>
+  call<{ ok: boolean; cost: number }>("pokemonCenterHeal", { forum, threadId });

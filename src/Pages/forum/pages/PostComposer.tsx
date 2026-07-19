@@ -29,7 +29,7 @@ import {
   MAX_TRAINING_POSTS,
 } from "../../../queries/colosseum";
 import { queryClient } from "../../../lib/react-query";
-import { callableMessage } from "../functionsClient";
+import { callPokemonCenterHeal, callableMessage } from "../functionsClient";
 import {
   DRAFT_WARNING_AT,
   MAX_DRAFTS,
@@ -267,6 +267,16 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     () => thread?.battleDamage?.[user?.uid ?? ""] ?? {},
     [thread, user]
   );
+  const [centerMessage, setCenterMessage] = React.useState("");
+  const centerHeal = useMutation({
+    mutationFn: () => callPokemonCenterHeal(forum, threadId!),
+    onSuccess: (result) => {
+      setCenterMessage(`The nurse healed your team! (${result.cost} Snag Coins)`);
+      queryClient.invalidateQueries({ queryKey: ["forum-thread", forum, threadId] });
+    },
+    onError: (e) =>
+      setCenterMessage(callableMessage(e, "The Pokemon Center could not heal you right now.")),
+  });
   const fighterPool = evoTeamPokemon.map((p) => {
     const maxHp = maxHpForLevel(levelProgress(p.experience ?? 0).level, hpScaling);
     const dmg = Math.min(maxHp, Math.max(0, myDamage[p.id] ?? 0));
@@ -701,6 +711,25 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                   your fighter, revives restore your first fainted pokemon, before the
                   enemy's hit lands.
                 </PanelHint>
+                <Group gap={8} mt={6} align="center">
+                  <GradientButtonSecondary
+                    radius="xl"
+                    size="compact-sm"
+                    loading={centerHeal.isPending}
+                    onClick={() => centerHeal.mutate()}
+                  >
+                    Visit the Pokemon Center ({liveBattleCfg?.mechanics.centerCost ?? 10} Snag
+                    Coins)
+                  </GradientButtonSecondary>
+                  <Text fz={14} c="dimmed">
+                    Fully heals and cures your whole team on this thread.
+                  </Text>
+                </Group>
+                {centerMessage && (
+                  <Text fz={14} c="gold.1" role="status" aria-live="polite">
+                    {centerMessage}
+                  </Text>
+                )}
                 {lockedTeamWiped && (
                   <Text fz={14} c="gold.1" role="status" aria-live="polite">
                     Your locked team was wiped. You may bring another team or

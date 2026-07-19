@@ -1,4 +1,5 @@
 import {
+  Anchor,
   Avatar,
   Badge,
   Box,
@@ -486,6 +487,9 @@ export default function ThreadView() {
         </Box>
       )}
 
+      <Anchor component={Link} to={`/Forum/${forum}`} fz={14} c="blue.3">
+        &larr; Back to the {forum.replace(/-/g, " ")} board
+      </Anchor>
       {thread.bossBattle?.active && <BossBanner boss={thread.bossBattle} />}
       {thread.paused?.active && (
         <PausedBanner

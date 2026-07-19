@@ -95,12 +95,14 @@ service cloud.firestore {
       // All other per-user data: owner (or admin) only. Note bag/items stays
       // owner-writable because the client-side evolution flow decrements a spend
       // item there; closing that fully means moving evolvePokemon to a callable.
-      // 'snaglist' (the weekly activities checklist) is excluded: only the
-      // Cloud Functions write it, so members cannot check their own boxes.
+      // 'snaglist' (the weekly activities checklist) and 'daycare' (the
+      // breeding pair + egg timer) are excluded: only the Cloud Functions
+      // write them, so members cannot check their own boxes or forge an egg.
       match /bag/{doc} {
         allow read: if request.auth.uid == uid || isAdmin();
         allow write: if isAdmin()
-                     || (request.auth.uid == uid && doc != 'badges' && doc != 'snaglist');
+                     || (request.auth.uid == uid
+                         && doc != 'badges' && doc != 'snaglist' && doc != 'daycare');
       }
       match /bookmarks/{doc} {
         allow read, write: if request.auth.uid == uid || isAdmin();
@@ -171,6 +173,13 @@ service cloud.firestore {
     // the tickets collection (written by S.N.A.G.) and are promoted here.
     match /devBoard/{doc} {
       allow read, write: if isAdmin();
+    }
+
+    // ---- Poke Swap trades (written by callables; parties may read) --------
+    match /trades/{doc} {
+      allow read: if isSignedIn() &&
+        (resource.data.fromUid == request.auth.uid ||
+         resource.data.toUid == request.auth.uid || isAdmin());
     }
 
     // ---- Thread-close reward sessions ---------------------------------------

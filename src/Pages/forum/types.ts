@@ -116,6 +116,10 @@ export interface PostBlocks {
     /** HP left after the hit (0 = fainted for the thread). */
     hpLeft: number;
     fainted: boolean;
+    /** The fighter's nature (battle modifier). */
+    nature?: string;
+    /** Human-readable battle events: crits, statuses, missed balls. */
+    notes?: string[];
     /** Healing items applied this post (potions/revives, auto-targeted). */
     heals?: Array<{
       itemName: string;
@@ -324,6 +328,10 @@ export interface ForumThread {
     resolvedBy?: string;
     action?: string;
   };
+  /** Host-set battle weather (sun/rain/sandstorm/snow). */
+  weather?: string | null;
+  /** uid -> pokemon id -> active status condition (burn/poison/paralysis). */
+  battleStatus?: Record<string, Record<string, string>>;
   /** Running tally of items spent on this thread (shown to staff at close). */
   itemsUsedTally?: Record<string, { name?: string; filePath?: string; qty?: number }>;
 }

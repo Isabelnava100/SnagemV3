@@ -26,7 +26,9 @@ import { db } from "../../../../context/firebase";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import {
   BattleConfig,
+  BattleMechanics,
   DEFAULT_BATTLE_CONFIG,
+  DEFAULT_BATTLE_MECHANICS,
   StageCosts,
   XPDefaults,
   XP_STAT_FIELDS,
@@ -430,6 +432,27 @@ export function LevelingCurveSection() {
 
 const STAGE_KEYS: BattleStage[] = ["stage1", "stage2", "stage3", "legendary"];
 
+/** Labels + steps for every admin-tunable battle mechanic (queries/game.ts). */
+const MECHANICS_FIELDS: Array<{
+  key: keyof BattleMechanics;
+  label: string;
+  hint: string;
+  step: number;
+}> = [
+  { key: "stab", label: "STAB multiplier", hint: "Same-type attack bonus on every player attack (1 = off).", step: 0.05 },
+  { key: "critChance", label: "Crit chance (%)", hint: "Chance of a critical hit, both directions.", step: 1 },
+  { key: "critMult", label: "Crit multiplier", hint: "Damage and progress multiplier on a critical hit.", step: 0.1 },
+  { key: "natureEffect", label: "Nature effect (%)", hint: "How much an attack/defense/speed nature helps.", step: 1 },
+  { key: "statusChance", label: "Status chance (%)", hint: "Chance an enemy hit inflicts burn, poison or paralysis.", step: 1 },
+  { key: "statusTick", label: "Status tick damage", hint: "Flat damage burn and poison deal each battle post.", step: 1 },
+  { key: "paralysisMult", label: "Paralysis attack mult", hint: "Attack progress multiplier while paralyzed.", step: 0.05 },
+  { key: "weatherBoost", label: "Weather boost", hint: "Multiplier for weather-favored types (weakened types get the inverse).", step: 0.05 },
+  { key: "centerCost", label: "Center cost (coins)", hint: "Snag Coin cost of a mid-thread Pokemon Center heal.", step: 1 },
+  { key: "ballWornBonus", label: "Worn catch bonus (%)", hint: "Extra catch chance on a fully beaten encounter.", step: 1 },
+  { key: "hatchPosts", label: "Egg hatch (posts)", hint: "Qualifying posts for a Daycare egg to hatch.", step: 1 },
+  { key: "hatchDays", label: "Egg hatch (days)", hint: "Days for a Daycare egg to hatch (whichever comes first).", step: 1 },
+];
+
 export function BattleCostsSection() {
   const queryClient = useQueryClient();
   const { data, isPending } = useQuery({ queryKey: ["battle-config"], queryFn: getBattleConfig });
@@ -569,6 +592,44 @@ export function BattleCostsSection() {
                   });
                 }}
                 min={1}
+                styles={{ input: { background: "#2E2D2E" } }}
+              />
+            </Stack>
+          ))}
+        </SimpleGrid>
+      </Stack>
+      <Stack gap={8} maw={720}>
+        <Title order={3} c="white" size={20} fw={600}>
+          Battle mechanics
+        </Title>
+        <Text fz={14} c="dimmed">
+          Every tunable knob in the battle engine. Multipliers are plain numbers
+          (1 = off); percentages are 0 to 100. Changes apply to the next battle
+          post after saving.
+        </Text>
+        <SimpleGrid cols={{ base: 2, xs: 3, sm: 4 }} spacing={10}>
+          {MECHANICS_FIELDS.map((f) => (
+            <Stack gap={2} key={f.key}>
+              <Text fz={14} c="dimmed" title={f.hint}>
+                {f.label}
+              </Text>
+              <NumberInput
+                value={form.mechanics[f.key]}
+                onChange={(v) => {
+                  setSaved(false);
+                  const n = Number(v);
+                  setForm({
+                    ...form,
+                    mechanics: {
+                      ...form.mechanics,
+                      [f.key]: Number.isFinite(n) && n >= 0 ? n : DEFAULT_BATTLE_MECHANICS[f.key],
+                    },
+                  });
+                }}
+                min={0}
+                step={f.step}
+                decimalScale={f.step < 1 ? 2 : 0}
+                aria-label={f.label}
                 styles={{ input: { background: "#2E2D2E" } }}
               />
             </Stack>
