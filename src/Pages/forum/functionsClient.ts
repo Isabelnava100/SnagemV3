@@ -33,8 +33,16 @@ export const callRollEncounter = (
   forum: string,
   threadId: string,
   chosenSlug?: string,
-  forCharacterIds?: string[]
-) => call<EncounterBlock>("rollEncounter", { forum, threadId, chosenSlug, forCharacterIds });
+  forCharacterIds?: string[],
+  fishing?: boolean
+) =>
+  call<EncounterBlock>("rollEncounter", {
+    forum,
+    threadId,
+    chosenSlug,
+    forCharacterIds,
+    fishing: fishing === true,
+  });
 
 export const callPublishPost = (input: {
   forum: string;

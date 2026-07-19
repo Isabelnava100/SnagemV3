@@ -41,6 +41,10 @@ export interface EncounterBlock {
   /** Traits rolled when the encounter appeared (shown in the banner, kept on catch). */
   gender?: "M" | "F";
   shiny?: boolean;
+  /** "fishing" when the encounter was reeled in with a rod. */
+  method?: string;
+  /** The rod used for a fishing encounter. */
+  rod?: string;
 
   // --- Star rating ----------------------------------------------------------
   /**

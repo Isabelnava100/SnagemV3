@@ -226,6 +226,51 @@ export default function BattleGuideTab() {
         </Text>
       </Section>
 
+      <Section title="Held items">
+        <Text>
+          Equip one item per pokemon from your dashboard box (Held item, under
+          the pokemon&apos;s details). Equipping spends the item from your bag;
+          removing it puts it back. The battle set: Muscle Band (+
+          {cfg.mechanics.heldAttackBonus}% attack), Assault Vest (
+          {cfg.mechanics.heldDefenseBonus}% off incoming hits), Leftovers and
+          Shell Bell (restore {cfg.mechanics.heldHealTick} HP each battle post),
+          Focus Sash (a hit from full HP always leaves 1 HP), Quick Claw (+
+          {cfg.mechanics.heldFleeBonus}% run-away), and Lucky Egg (+
+          {cfg.mechanics.luckyEggBoost}% experience for the holder). Anything
+          else from the hold-item shelf is cosmetic flavor for now.
+        </Text>
+      </Section>
+
+      <Section title="Fishing">
+        <Text>
+          Buy a rod at the Snag Mall and a Go Fishing cast appears next to the
+          encounter roll on any thread with encounters enabled. Fishing pulls
+          from the full Water-type pokedex instead of the host&apos;s list, up
+          to a star ceiling set by your best rod: Old Rod 2★, Good Rod 4★,
+          Super Rod 6★. A cast uses one of your thread encounters and the
+          battle plays out as usual.
+        </Text>
+      </Section>
+
+      <Section title="The Berry Farm">
+        <Text>
+          On the Activities page: plant a bag berry in an open plot and it is
+          ready after {cfg.mechanics.berryGrowDays}{" "}
+          {cfg.mechanics.berryGrowDays === 1 ? "day" : "days"}, harvesting{" "}
+          {cfg.mechanics.berryYield} of the same berry. {cfg.mechanics.farmPlots}{" "}
+          plots per member; harvesting counts as your weekly activity.
+        </Text>
+      </Section>
+
+      <Section title="Gym rematches">
+        <Text>
+          Any gym leader you hold a badge from can be rechallenged on the
+          Challenges page (Rematch Ladder). Each tier is a harder fight, about
+          one star stronger per round, hosted by staff like a normal gym run.
+          Wins climb your ladder tier per leader.
+        </Text>
+      </Section>
+
       <Section title="Team lock">
         <Text>
           On normal roleplay threads you are locked to the team you bring in your

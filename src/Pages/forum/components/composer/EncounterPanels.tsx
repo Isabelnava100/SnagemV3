@@ -15,7 +15,7 @@ import React from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { pokemonData } from "../../../../data/pokemon";
 import { getPokemonLists, getStarOverrides } from "../../../../queries/admin";
-import { getCharacters } from "../../../../queries/dashboard";
+import { getCharacters, getItems } from "../../../../queries/dashboard";
 import { DEFAULT_ENCOUNTERS_PER_USER } from "../../config";
 import { callRollEncounter, callableMessage } from "../../functionsClient";
 import { getEncounterLists, resolveListSlugs } from "../../queries";
@@ -289,6 +289,31 @@ export function EncounterPostPanel(props: {
     onError: (err) =>
       setEncounterError(callableMessage(err, "The encounter roll failed. Try again.")),
   });
+  const fishingMutation = useMutation({
+    mutationFn: () => callRollEncounter(forum, thread.id, undefined, forCharacterIds, true),
+    onSuccess: (result) => onChange(result),
+    onError: (err) =>
+      setEncounterError(callableMessage(err, "The cast failed. Try again.")),
+  });
+
+  // Rod ownership decides whether the Go Fishing cast shows (Water-type pool,
+  // star ceiling by rod tier; the server re-checks the bag).
+  const { data: bagItems } = useQuery({
+    queryKey: ["get-items", user?.uid],
+    queryFn: () => getItems(user!.uid),
+    enabled: !!user && !!config?.enabled,
+  });
+  const bestRod = React.useMemo(() => {
+    let best: { name: string; stars: number } | null = null;
+    (bagItems ?? []).forEach((i) => {
+      if (Number(i.quantity) <= 0) return;
+      const key = i.name.toLowerCase().replace(/\s+/g, "-");
+      const stars =
+        key === "super-rod" ? 6 : key === "good-rod" ? 4 : key === "old-rod" || key === "fishing-rod" ? 2 : 0;
+      if (stars > (best?.stars ?? 0)) best = { name: i.name, stars };
+    });
+    return best as { name: string; stars: number } | null;
+  }, [bagItems]);
 
   // Resolve the host's lists (all signed-in users can read the list library).
   const { data: allLists } = useQuery({
@@ -356,6 +381,26 @@ export function EncounterPostPanel(props: {
             size="xs"
             styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
           />
+          {!isSafari && bestRod && (
+            <Group gap={8} align="center">
+              <Button
+                size="xs"
+                radius="xl"
+                variant="light"
+                color="blue"
+                loading={fishingMutation.isPending}
+                onClick={() => {
+                  setEncounterError("");
+                  fishingMutation.mutateAsync().catch(() => undefined);
+                }}
+              >
+                Go Fishing ({bestRod.name})
+              </Button>
+              <Text fz={13} c="dimmed">
+                Water-type pool, up to {bestRod.stars}★. Uses one encounter.
+              </Text>
+            </Group>
+          )}
           {config.mode === "roll" ? (
             <Button
               size="xs"
@@ -363,7 +408,7 @@ export function EncounterPostPanel(props: {
               color="cyan.0"
               w={160}
               disabled={!pool.length}
-              loading={encounterMutation.isPending}
+              loading={encounterMutation.isPending || fishingMutation.isPending}
               onClick={() => {
                 setEncounterError("");
                 encounterMutation.mutateAsync(undefined).catch(() => undefined);
@@ -430,7 +475,11 @@ export function EncounterPostPanel(props: {
       ) : value ? (
         <Stack gap={6}>
           <GameResultText>
-            {value.mode === "roll" ? "You've rolled an encounter..." : "You've chosen an encounter..."}{" "}
+            {value.method === "fishing"
+              ? "You cast your line and reeled in..."
+              : value.mode === "roll"
+                ? "You've rolled an encounter..."
+                : "You've chosen an encounter..."}{" "}
             {value.star ? `a ${"★".repeat(Math.min(7, value.star))} ${value.star}-star ` : ""}
             {value.name}!{value.shiny && " It's SHINY!"}
             {value.gender ? ` (${value.gender === "F" ? "Female" : "Male"})` : ""}

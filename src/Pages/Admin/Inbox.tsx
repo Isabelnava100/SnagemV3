@@ -131,7 +131,13 @@ function ChallengeRequestCard(props: { request: ChallengeRequest; onDone: () => 
         <Text component="span" fz={14} c="white" fw={600}>
           {request.stageTitle || request.stageId}
         </Text>{" "}
-        ({request.kind === "gym" ? "gym run" : "island trial"}, {request.regionOrIsland}).
+        (
+        {request.kind === "gym"
+          ? "gym run"
+          : request.kind === "rematch"
+            ? `gym rematch, tier ${request.rematchTier ?? 1}, about ${Math.min(7, 3 + (request.rematchTier ?? 1))} star opposition`
+            : "island trial"}
+        , {request.regionOrIsland}).
         Create their thread in the forums, then accept. You can paste the thread link so
         their notification takes them straight there.
       </Text>

@@ -45,7 +45,10 @@ import { useAuth } from "../../../context/AuthContext";
 import { containsBlockedWord, excludeProperties, getPokemonImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
-import { getCharacters, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
+import { getCharacters, getItems, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
+import { callSetHeldItem } from "../../../queries/game";
+import { NATURE_GROUPS, NATURE_GROUP_LABEL, natureOf } from "../../../lib/natures";
+import { getItemImageURL } from "../../../helpers";
 import { EvolveButton, LevelBar } from "../../../components/pokemon/EvolveButton";
 import ShadowVaccineButton from "../../../components/pokemon/ShadowVaccineButton";
 import { SHADOW_GUIDE_LINK, STAT_MAX, isShadowed } from "../../../lib/shadow";
@@ -767,6 +770,91 @@ function RemovePokemonFromTeam(props: {
   );
 }
 
+/** Equip/remove a held item (battle effects run server-side; the curated set
+ * is listed in Library > The War Room). Spends one from the bag on equip. */
+function HeldItemSection(props: { pokemon: OwnedPokemon }) {
+  const { pokemon } = props;
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [choice, setChoice] = React.useState<string | null>(null);
+  const [message, setMessage] = React.useState("");
+  const { data: items } = useQuery({
+    queryKey: ["get-items", user?.uid],
+    queryFn: () => getItems(user!.uid),
+    enabled: !!user,
+  });
+  const holdables = (items ?? []).filter((i) => i.category === "hold-item" && Number(i.quantity) > 0);
+  const mutation = useMutation({
+    mutationFn: (itemId: string) => callSetHeldItem(pokemon.id, itemId),
+    onSuccess: () => {
+      setMessage("Updated!");
+      setChoice(null);
+      queryClient.invalidateQueries({ queryKey: ["get-owned-pokemons", user?.uid] });
+      queryClient.invalidateQueries({ queryKey: ["owned-pokemons", user?.uid] });
+      queryClient.invalidateQueries({ queryKey: ["get-items", user?.uid] });
+    },
+    onError: (e) => setMessage((e as Error).message || "That did not work."),
+  });
+
+  return (
+    <Box>
+      <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
+        Held item
+      </Text>
+      {pokemon.heldItem ? (
+        <Group gap={8} mt={4}>
+          {pokemon.heldItem.filePath && (
+            <Avatar src={getItemImageURL(pokemon.heldItem.filePath)} size={26} radius="sm" />
+          )}
+          <Text fz={14} c="white">
+            {pokemon.heldItem.name}
+          </Text>
+          <Button
+            size="compact-xs"
+            radius="xl"
+            variant="subtle"
+            color="gray"
+            loading={mutation.isPending}
+            onClick={() => mutation.mutate("")}
+          >
+            Remove
+          </Button>
+        </Group>
+      ) : (
+        <Group gap={8} mt={4} align="flex-end">
+          <Select
+            placeholder={holdables.length ? "Pick a held item" : "No held items in your bag"}
+            searchable
+            data={holdables.map((i) => ({ value: i.id, label: `${i.name} (x${i.quantity})` }))}
+            value={choice}
+            onChange={setChoice}
+            disabled={!holdables.length}
+            size="xs"
+            w={220}
+            aria-label="Pick a held item"
+            styles={{ input: { background: "#2E2D2E" } }}
+          />
+          <Button
+            size="compact-sm"
+            radius="xl"
+            color="grape"
+            disabled={!choice}
+            loading={mutation.isPending}
+            onClick={() => choice && mutation.mutate(choice)}
+          >
+            Equip
+          </Button>
+        </Group>
+      )}
+      {message && (
+        <Text fz={13} c="gold.1" mt={4} role="status" aria-live="polite">
+          {message}
+        </Text>
+      )}
+    </Box>
+  );
+}
+
 function PokemonDetails(props: { pokemon: OwnedPokemon }) {
   const { pokemon } = props;
   const { user } = useAuth();
@@ -832,10 +920,14 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         <Text fz={14}>Friendship pts: {pokemon.friendship ?? 0} / {STAT_MAX}</Text>
         <Text fz={14}>Purification pts: {pokemon.purification ?? 0} / {STAT_MAX}</Text>
         <Text fz={14}>Shadow pts: {pokemon.shadow ?? 0} / {STAT_MAX}</Text>
+        <Text fz={14}>
+          Nature: {natureOf(pokemon)} ({NATURE_GROUP_LABEL[NATURE_GROUPS[natureOf(pokemon)]]})
+        </Text>
         <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={14} c="grape.3">
           What do these stats mean?
         </Anchor>
       </Stack>
+      <HeldItemSection pokemon={pokemon} />
       <Box>
         <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
           Owned by

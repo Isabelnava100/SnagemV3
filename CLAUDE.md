@@ -147,8 +147,18 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
   mechanics.hatchDays days OR hatchPosts posts, offspring = base form of the
   non-Ditto parent's line) and /Trading (Poke Swap: `trades` collection,
   parties+admin read, writes via `proposeTrade`/`respondTrade` callables,
-  transactional box swap). Held items are still deferred (needs a dashboard
-  equip UI pass). Guide: Library > The War Room reads the live config.
+  transactional box swap). Guide: Library > The War Room reads the live config.
+- Held items + fishing + Berry Farm + gym rematches (July 2026) need a rules +
+  functions deploy: `setHeldItem` (equip from the dashboard box; battle effects
+  for Muscle Band / Assault Vest / Leftovers / Shell Bell / Focus Sash / Quick
+  Claw / Lucky Egg in `publishForumPost`, knobs in `mechanics.held*`),
+  `rollEncounter` `fishing: true` (Water pool capped by best rod: Old 2 / Good
+  4 / Super 6 star; seed rods with `node scripts/seed-fishing-rods.mjs` from
+  `functions/`), `plantBerry`/`harvestBerry` (`users/{uid}/bag/farm`,
+  server-written only, UI on /Activities), and challenge kind "rematch" on
+  `requestChallenge`/`grantChallengeStep` (Rematch Ladder on /Challenges, tier
+  = wins + 1, suggested star = 3 + tier). Abilities per species stay deferred
+  (docs/BACKLOG.md wishlist).
 - Type effectiveness + S.N.A.G. + Dev Board (July 2026) need a rules +
   functions deploy (`firebase deploy --only firestore:rules,functions`):
   battle damage/progress now scale by pokemon-type matchup (0.5x..2x clamp,

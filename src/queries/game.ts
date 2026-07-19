@@ -165,6 +165,22 @@ export interface BattleMechanics {
   hatchPosts: number;
   /** Days for a bred egg to hatch (whichever comes first with hatchPosts). */
   hatchDays: number;
+  /** Muscle Band: extra attack percent for the holder. */
+  heldAttackBonus: number;
+  /** Assault Vest: incoming damage shaved off (percent). */
+  heldDefenseBonus: number;
+  /** Leftovers / Shell Bell: HP restored each battle post. */
+  heldHealTick: number;
+  /** Lucky Egg: extra experience percent for the holder. */
+  luckyEggBoost: number;
+  /** Quick Claw: extra run-away percent for the holder. */
+  heldFleeBonus: number;
+  /** Days a planted berry takes to grow. */
+  berryGrowDays: number;
+  /** Berries harvested per grown plant. */
+  berryYield: number;
+  /** Berry Farm plots per member. */
+  farmPlots: number;
 }
 
 export interface BattleConfig {
@@ -189,6 +205,14 @@ export const DEFAULT_BATTLE_MECHANICS: BattleMechanics = {
   ballWornBonus: 40,
   hatchPosts: 10,
   hatchDays: 15,
+  heldAttackBonus: 10,
+  heldDefenseBonus: 10,
+  heldHealTick: 5,
+  luckyEggBoost: 50,
+  heldFleeBonus: 10,
+  berryGrowDays: 3,
+  berryYield: 3,
+  farmPlots: 3,
 };
 
 export const DEFAULT_BATTLE_CONFIG: BattleConfig = {
@@ -370,3 +394,30 @@ export const callRespondTrade = (
   action: "accept" | "decline" | "cancel",
   counterId?: string
 ) => callGame<{ ok: boolean }>("respondTrade", { tradeId, action, counterId: counterId ?? "" });
+
+/** Equip a held item on an owned pokemon (itemId "" removes it). */
+export const callSetHeldItem = (pokemonId: string, itemId: string) =>
+  callGame<{ ok: boolean }>("setHeldItem", { pokemonId, itemId });
+
+// ---- The Berry Farm ---------------------------------------------------------
+
+export interface FarmPlot {
+  itemId: string;
+  name: string;
+  filePath?: string;
+  plantedAt?: { seconds: number };
+}
+export interface FarmState {
+  plots?: Record<string, FarmPlot>;
+}
+
+export const getFarm = async (uid: string): Promise<FarmState> => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  return ((await getDoc(doc(db, "users", uid, "bag", "farm"))).data() ?? {}) as FarmState;
+};
+
+export const callPlantBerry = (itemId: string, slot: number) =>
+  callGame<{ ok: boolean }>("plantBerry", { itemId, slot });
+
+export const callHarvestBerry = (slot: number) =>
+  callGame<{ ok: boolean; harvested: string; qty: number }>("harvestBerry", { slot });

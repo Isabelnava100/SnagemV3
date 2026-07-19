@@ -625,7 +625,119 @@ function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress }
         requestingStageId={props.requestingStageId}
         signedIn={props.signedIn}
       />
+
+      <RematchLadder region={region} progress={progress} signedIn={props.signedIn} />
     </Stack>
+  );
+}
+
+/**
+ * The Rematch Ladder: any leader whose badge is earned can be challenged
+ * again, tier after tier, each round tougher than the last (staff host the
+ * thread and are nudged with a suggested star level for the tier). Wins are
+ * granted by graders with the "rematch" challenge kind.
+ */
+function RematchLadder(props: { region: GymRegion; progress: ChallengeProgress; signedIn: boolean }) {
+  const { region, progress } = props;
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [message, setMessage] = React.useState("");
+  const earned = progress.badges?.[region.id] ?? [];
+  const tiers = progress.rematches?.[region.id] ?? {};
+  const beatenGyms = [...(region.gyms ?? [])]
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .filter((g) => earned.includes(g.leaderName));
+
+  const mutation = useMutation({
+    mutationFn: (leader: string) =>
+      requestChallenge({
+        kind: "rematch",
+        regionOrIsland: region.id,
+        stageId: leader,
+        stageTitle: leader,
+      }),
+    onSuccess: (res) => {
+      setMessage(
+        res.duplicate
+          ? "That rematch request is already waiting for a host."
+          : "Rematch requested! A staff host will set up your thread."
+      );
+      queryClient.invalidateQueries({ queryKey: ["my-challenge-requests", user?.uid] });
+    },
+    onError: (e) => setMessage((e as Error).message || "Could not request that rematch."),
+  });
+
+  if (!props.signedIn || !beatenGyms.length) return null;
+
+  return (
+    <Card bg="#141019" radius="lg" p="lg" withBorder style={{ borderColor: "#2a2637" }} mt="xl">
+      <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 2 }}>
+        Rematch Ladder
+      </Text>
+      <Text fz={22} fw={800} c="white">
+        Beaten leaders want revenge
+      </Text>
+      <Text fz={14} c="dimmed" mb={12}>
+        Challenge any leader you hold a badge from to a rematch. Every tier is a tougher fight
+        with a stronger roster; your host sets the exact team.
+      </Text>
+      <Stack gap={8}>
+        {beatenGyms.map((g) => {
+          const wins = Number(tiers[g.leaderName]) || 0;
+          const nextTier = wins + 1;
+          const suggestedStar = Math.min(7, 3 + nextTier);
+          return (
+            <Group key={g.leaderName} justify="space-between" wrap="wrap" gap={8}>
+              <Group gap={10} wrap="nowrap" style={{ minWidth: 0 }}>
+                <Box
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 800,
+                    background: typeColor(g.type),
+                    color: TYPE_TEXT_DARK.has(typeColor(g.type)) ? "#1a1626" : "#fff",
+                    flexShrink: 0,
+                  }}
+                >
+                  {g.leaderName.charAt(0).toUpperCase()}
+                </Box>
+                <Box style={{ minWidth: 0 }}>
+                  <Text fz={15} fw={700} c="white">
+                    {g.leaderName}
+                  </Text>
+                  <Text fz={13} c="dimmed">
+                    {wins ? `${wins} rematch win${wins === 1 ? "" : "s"}` : "No rematches yet"} ·
+                    next: Tier {nextTier} (about {suggestedStar}★ opposition)
+                  </Text>
+                </Box>
+              </Group>
+              <Button
+                size="xs"
+                radius="xl"
+                variant="light"
+                color="grape"
+                loading={mutation.isPending && mutation.variables === g.leaderName}
+                onClick={() => {
+                  setMessage("");
+                  mutation.mutate(g.leaderName);
+                }}
+              >
+                Request Rematch
+              </Button>
+            </Group>
+          );
+        })}
+      </Stack>
+      {message && (
+        <Text fz={14} mt="sm" c="grape.2" role="status" aria-live="polite">
+          {message}
+        </Text>
+      )}
+    </Card>
   );
 }
 

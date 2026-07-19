@@ -41,6 +41,8 @@ export interface ChallengeProgress {
   trialsCompleted?: string[]; // island trial ids
   zCrystals?: string[];
   grandTrials?: string[];
+  /** region -> leader name -> rematch wins (the rematch ladder tier). */
+  rematches?: Record<string, Record<string, number>>;
 }
 
 export const getGymRegions = async (): Promise<GymRegion[]> => {
@@ -75,7 +77,7 @@ async function call<T>(name: string, data: unknown): Promise<T> {
 /** Grader action: mark a badge/trial/elite/champion step cleared for a member. */
 export const grantChallengeStep = (
   uid: string,
-  kind: "badge" | "trial" | "grandTrial" | "eliteFour" | "champion",
+  kind: "badge" | "trial" | "grandTrial" | "eliteFour" | "champion" | "rematch",
   regionOrIsland: string,
   stepId: string,
   zCrystal?: string
@@ -90,10 +92,12 @@ export interface ChallengeRequest {
   id: string;
   uid: string;
   username?: string;
-  kind: "gym" | "trial";
+  kind: "gym" | "trial" | "rematch";
   regionOrIsland: string;
   stageId: string;
   stageTitle?: string;
+  /** For rematch requests: which ladder tier this run is (1 = first rematch). */
+  rematchTier?: number;
   status: "requested" | "accepted" | "declined";
   threadLink?: string;
   handledBy?: string;
@@ -122,7 +126,7 @@ export const getPendingChallengeRequests = async (): Promise<ChallengeRequest[]>
 
 /** Files a challenge request and notifies hosting staff. */
 export const requestChallenge = (args: {
-  kind: "gym" | "trial";
+  kind: "gym" | "trial" | "rematch";
   regionOrIsland: string;
   stageId: string;
   stageTitle?: string;

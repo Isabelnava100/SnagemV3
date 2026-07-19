@@ -355,6 +355,10 @@ export interface OwnedPokemon {
   characterId?: string;
   /** True for a shiny Pokemon: swaps its sprite to the shiny variant. */
   shiny?: boolean;
+  /** One of the 25 natures (assigned at catch/hatch; older mons derive one). */
+  nature?: string;
+  /** Equipped held item (setHeldItem callable; battle effects server-side). */
+  heldItem?: { itemId: string; name: string; filePath?: string; category?: string };
 }
 
 export type Profile = Partial<{

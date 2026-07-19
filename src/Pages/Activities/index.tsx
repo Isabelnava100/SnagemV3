@@ -26,6 +26,14 @@ import {
   getSnagList,
   resetCountdown,
 } from "../../queries/activities";
+import { getItems } from "../../queries/dashboard";
+import {
+  DEFAULT_BATTLE_MECHANICS,
+  callHarvestBerry,
+  callPlantBerry,
+  getBattleConfig,
+  getFarm,
+} from "../../queries/game";
 
 /**
  * The Activities page: the Snag List, a weekly six-task checklist. Progress is
@@ -171,6 +179,153 @@ function TaskCard(props: { task: TaskDef; done: boolean }) {
           {task.linkLabel} &rarr;
         </Text>
       </Group>
+    </Card>
+  );
+}
+
+/**
+ * The Berry Farm: plant a berry from your bag in an open plot, wait the grow
+ * days, harvest a multiplied yield. All writes go through the plantBerry /
+ * harvestBerry callables; plot count, grow days and yield are admin-tunable.
+ */
+function BerryFarm(props: { uid: string }) {
+  const { uid } = props;
+  const queryClient = useQueryClient();
+  const [pickFor, setPickFor] = React.useState<number | null>(null);
+  const [message, setMessage] = React.useState("");
+
+  const { data: farm } = useQuery({ queryKey: ["farm", uid], queryFn: () => getFarm(uid) });
+  const { data: items } = useQuery({
+    queryKey: ["get-items", uid],
+    queryFn: () => getItems(uid),
+  });
+  const { data: cfg } = useQuery({ queryKey: ["battle-config"], queryFn: getBattleConfig });
+  const mech = cfg?.mechanics ?? DEFAULT_BATTLE_MECHANICS;
+  const berries = (items ?? []).filter((i) => i.category === "berry" && Number(i.quantity) > 0);
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["farm", uid] });
+    queryClient.invalidateQueries({ queryKey: ["get-items", uid] });
+  };
+  const plant = useMutation({
+    mutationFn: (input: { itemId: string; slot: number }) =>
+      callPlantBerry(input.itemId, input.slot),
+    onSuccess: () => {
+      setMessage("Planted! Come back when it has grown.");
+      setPickFor(null);
+      refresh();
+    },
+    onError: (e) => setMessage((e as Error).message || "That could not be planted."),
+  });
+  const harvest = useMutation({
+    mutationFn: (slot: number) => callHarvestBerry(slot),
+    onSuccess: (res) => {
+      setMessage(`Harvested ${res.qty}x ${res.harvested}!`);
+      refresh();
+    },
+    onError: (e) => setMessage((e as Error).message || "Not ready yet."),
+  });
+
+  const plots = farm?.plots ?? {};
+  const plotCount = Math.max(1, mech.farmPlots);
+  const daysGrown = (p: { plantedAt?: { seconds: number } }) =>
+    p.plantedAt?.seconds ? (Date.now() / 1000 - p.plantedAt.seconds) / 86_400 : 0;
+
+  return (
+    <Card bg="#141b14" radius="lg" p="lg" withBorder style={{ borderColor: "#26372a" }}>
+      <Text fz={14} fw={700} c="#8CE99A" tt="uppercase" style={{ letterSpacing: 2 }}>
+        The Berry Farm
+      </Text>
+      <Text fz={24} fw={800} c="white">
+        Plant one, harvest {Math.max(1, mech.berryYield)}
+      </Text>
+      <Text fz={14} c="dimmed" mb={12}>
+        Drop a bag berry in an open plot; it is ready to pick after {mech.berryGrowDays}{" "}
+        {mech.berryGrowDays === 1 ? "day" : "days"}.
+      </Text>
+      <SimpleGrid cols={{ base: 1, xs: Math.min(3, plotCount) }} spacing="md">
+        {Array.from({ length: plotCount }).map((_, slot) => {
+          const plot = plots[String(slot)];
+          const grown = plot ? daysGrown(plot) : 0;
+          const ready = plot && grown >= mech.berryGrowDays;
+          return (
+            <Card key={slot} bg="#101710" radius="md" p="md" withBorder style={{ borderColor: "#26372a", borderStyle: plot ? "solid" : "dashed" }}>
+              <Stack gap={6} align="center">
+                <Text fz={13} c="dimmed" tt="uppercase" fw={700}>
+                  Plot {slot + 1}
+                </Text>
+                {plot ? (
+                  <>
+                    <Text fz={16} fw={700} c="white" ta="center">
+                      {plot.name}
+                    </Text>
+                    <Text fz={13} c={ready ? "teal.4" : "dimmed"}>
+                      {ready
+                        ? "Ready to harvest!"
+                        : `About ${Math.max(1, Math.ceil(mech.berryGrowDays - grown))} day(s) to go`}
+                    </Text>
+                    <Button
+                      size="compact-sm"
+                      radius="xl"
+                      color="teal"
+                      variant={ready ? "filled" : "default"}
+                      loading={harvest.isPending}
+                      onClick={() => {
+                        setMessage("");
+                        harvest.mutate(slot);
+                      }}
+                    >
+                      Harvest
+                    </Button>
+                  </>
+                ) : pickFor === slot ? (
+                  <Stack gap={6} w="100%">
+                    {berries.length ? (
+                      berries.slice(0, 20).map((b) => (
+                        <Button
+                          key={b.id}
+                          size="compact-sm"
+                          radius="xl"
+                          variant="light"
+                          color="teal"
+                          loading={plant.isPending}
+                          onClick={() => {
+                            setMessage("");
+                            plant.mutate({ itemId: b.id, slot });
+                          }}
+                        >
+                          Plant {b.name} (x{b.quantity})
+                        </Button>
+                      ))
+                    ) : (
+                      <Text fz={13} c="dimmed" ta="center">
+                        No berries in your bag. The Mall and encounters drop them.
+                      </Text>
+                    )}
+                    <Button size="compact-xs" radius="xl" variant="subtle" color="gray" onClick={() => setPickFor(null)}>
+                      Cancel
+                    </Button>
+                  </Stack>
+                ) : (
+                  <>
+                    <Text fz={14} c="dimmed">
+                      Empty soil
+                    </Text>
+                    <Button size="compact-sm" radius="xl" color="teal" variant="default" onClick={() => setPickFor(slot)}>
+                      Plant a berry
+                    </Button>
+                  </>
+                )}
+              </Stack>
+            </Card>
+          );
+        })}
+      </SimpleGrid>
+      {message && (
+        <Text fz={14} mt="sm" c="teal.4" role="status" aria-live="polite">
+          {message}
+        </Text>
+      )}
     </Card>
   );
 }
@@ -356,6 +511,8 @@ export default function Activities() {
               </Text>
             )}
           </Card>
+
+          <BerryFarm uid={uid} />
 
           <Group gap={8} wrap="nowrap" align="flex-start">
             <IconInfoCircle size={16} color="#74c0fc" style={{ flexShrink: 0, marginTop: 2 }} />

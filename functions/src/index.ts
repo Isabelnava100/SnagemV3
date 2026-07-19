@@ -129,6 +129,14 @@ const DEFAULT_MECHANICS = {
   ballWornBonus: 40,
   hatchPosts: 10,
   hatchDays: 15,
+  heldAttackBonus: 10,
+  heldDefenseBonus: 10,
+  heldHealTick: 5,
+  luckyEggBoost: 50,
+  heldFleeBonus: 10,
+  berryGrowDays: 3,
+  berryYield: 3,
+  farmPlots: 3,
 };
 type Mechanics = typeof DEFAULT_MECHANICS;
 function mechanicsFrom(cfg: FirebaseFirestore.DocumentData | undefined): Mechanics {
@@ -192,6 +200,20 @@ const STATUS_CURES: Record<string, Array<"burn" | "poison" | "paralysis">> = {
   "full heal": ["burn", "poison", "paralysis"],
   "full restore": ["burn", "poison", "paralysis"],
 };
+
+// Normalized item key ("Muscle Band" / "muscle-band" -> "muscle-band") so held
+// items and rods match whether the bag stored a display or catalog name.
+function itemKeyOf(name: unknown): string {
+  return String(name ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-");
+}
+/** The held item key a pokemon carries ("" = holding nothing). */
+function heldKeyOf(poke: Record<string, unknown> | undefined): string {
+  const held = (poke?.heldItem ?? null) as { name?: unknown } | null;
+  return held ? itemKeyOf(held.name) : "";
+}
 
 function starDamageFrom(cfg: FirebaseFirestore.DocumentData | undefined, star: number): number {
   const configured = Math.trunc(Number((cfg?.starDamage ?? {})[String(star)]));
@@ -709,12 +731,34 @@ export const rollEncounter = onCall(async (request) => {
   const forum = requireString(request.data?.forum, "forum", 60);
   const threadId = requireString(request.data?.threadId, "threadId", 20);
   const chosenSlug = request.data?.chosenSlug ? String(request.data.chosenSlug) : undefined;
+  const fishing = request.data?.fishing === true;
   // Characters the roller is capturing this encounter for (their own). Empty =
   // personal: any of the roller's posts count toward the capture.
   const forCharacterIds = (Array.isArray(request.data?.forCharacterIds) ? request.data.forCharacterIds : [])
     .slice(0, 6)
     .map((c: unknown) => String(c).slice(0, 60));
   await loadMember(uid);
+
+  // Fishing: the best rod in the member's bag sets the star ceiling of the
+  // Water-type pool (Old 2 / Good 4 / Super 6). No rod, no fishing.
+  let rodMaxStar = 0;
+  let rodName = "";
+  if (fishing) {
+    const bag = (await db.doc(`users/${uid}/bag/items`).get()).data() ?? {};
+    for (const entry of Object.values(bag as Record<string, any>)) {
+      if ((Number(entry?.quantity) || 0) <= 0) continue;
+      const key = itemKeyOf(entry?.name);
+      const tier =
+        key === "super-rod" ? 6 : key === "good-rod" ? 4 : key === "old-rod" || key === "fishing-rod" ? 2 : 0;
+      if (tier > rodMaxStar) {
+        rodMaxStar = tier;
+        rodName = String(entry?.name ?? "rod");
+      }
+    }
+    if (!rodMaxStar) {
+      throw new HttpsError("failed-precondition", "You need a fishing rod. The Snag Mall sells them.");
+    }
+  }
 
   const [listsSnap, starsSnap] = await Promise.all([
     db.doc("admin/pokemon_lists").get(),
@@ -789,6 +833,29 @@ export const rollEncounter = onCall(async (request) => {
         failCount: 0,
         // Rolled up front so the wild Pokemon's traits show in the banner; the
         // catch write reuses them so what you saw is what you get.
+        gender: randomInt(2) === 0 ? "M" : "F",
+        shiny: rollShiny(),
+        forCharacterIds,
+      };
+    } else if (fishing) {
+      // Cast a line: uniform roll over every Water-type species within the
+      // rod's star ceiling. Uses a normal encounter claim on the thread.
+      const waterPool = catalog.filter(
+        (c) => typesForDex(Number(c.idx)).includes("Water") && starFor(Number(c.idx)) <= rodMaxStar
+      );
+      if (!waterPool.length) throw new HttpsError("internal", "The waters are empty.");
+      const pick = waterPool[randomInt(waterPool.length)];
+      const star = starFor(Number(pick.idx));
+      result = {
+        slug: pick.slug,
+        name: pick.name,
+        mode: "roll",
+        method: "fishing",
+        rod: rodName,
+        catchable: !thread.bossBattle?.active,
+        star,
+        required: postsToBeatStar(star),
+        progress: 0,
         gender: randomInt(2) === 0 ? "M" : "F",
         shiny: rollShiny(),
         forCharacterIds,
@@ -1052,6 +1119,9 @@ export const publishForumPost = onCall(async (request) => {
       ? natureOf(ownedForXp[battleFighterId], battleFighterId)
       : "Hardy";
     const natureKind = NATURES[fighterNature] ?? "neutral";
+    // Held item on the chosen fighter (equipped via setHeldItem); the curated
+    // battle set is checked by key below, anything else is cosmetic.
+    const fighterHeld = battleFighterId ? heldKeyOf(ownedForXp[battleFighterId]) : "";
     const threadWeather = String(thread.weather ?? "");
     // Per-thread status conditions (burn/poison/paralysis), per pokemon.
     const statusNow: Record<string, string> = {
@@ -1161,6 +1231,10 @@ export const publishForumPost = onCall(async (request) => {
       let attackMult = typeEffectiveness(fighterTypes, enemyTypes) * (mech.stab || 1);
       attackMult *= weatherMult(threadWeather, fighterTypes, mech.weatherBoost);
       if (natureKind === "attack") attackMult *= 1 + mech.natureEffect / 100;
+      if (fighterHeld === "muscle-band" && mech.heldAttackBonus > 0) {
+        attackMult *= 1 + mech.heldAttackBonus / 100;
+        battleNotes.push("The Muscle Band powered the attack up.");
+      }
       const fighterStatus = battleFighterId ? statusNow[battleFighterId] : undefined;
       if (fighterStatus === "paralysis") {
         attackMult *= mech.paralysisMult;
@@ -1175,6 +1249,9 @@ export const publishForumPost = onCall(async (request) => {
       let defenseMult = typeEffectiveness(enemyTypes, fighterTypes);
       defenseMult *= weatherMult(threadWeather, enemyTypes, mech.weatherBoost);
       if (natureKind === "defense") defenseMult *= 1 - mech.natureEffect / 100;
+      if (fighterHeld === "assault-vest" && mech.heldDefenseBonus > 0) {
+        defenseMult *= 1 - mech.heldDefenseBonus / 100;
+      }
       const enemyCrit = randomInt(10000) < Math.round(mech.critChance * 100);
       const enemyHit = Math.max(
         1,
@@ -1198,7 +1275,9 @@ export const publishForumPost = onCall(async (request) => {
         }
         const chance = Math.min(
           95,
-          fleeChanceForStar(enemyStar) + (natureKind === "speed" ? mech.natureEffect : 0)
+          fleeChanceForStar(enemyStar) +
+            (natureKind === "speed" ? mech.natureEffect : 0) +
+            (fighterHeld === "quick-claw" ? mech.heldFleeBonus : 0)
         );
         encounter.fleeChance = chance;
         if (randomInt(100) < chance) {
@@ -1341,7 +1420,13 @@ export const publishForumPost = onCall(async (request) => {
             : starDamageFrom(battleCfg, starForDex(bossIdx));
         const bossDmg = Math.max(
           1,
-          Math.round(bossBase * typeEffectiveness(bossTypes, fighterTypes))
+          Math.round(
+            bossBase *
+              typeEffectiveness(bossTypes, fighterTypes) *
+              (fighterHeld === "assault-vest" && mech.heldDefenseBonus > 0
+                ? 1 - mech.heldDefenseBonus / 100
+                : 1)
+          )
         );
         enemyAttackDmg = Math.max(enemyAttackDmg, bossDmg);
       }
@@ -1356,7 +1441,31 @@ export const publishForumPost = onCall(async (request) => {
         );
       }
       const maxHp = maxHpOf(fighterId);
-      const total = Math.min(maxHp, (Number(damageNow[fighterId]) || 0) + enemyAttackDmg);
+      const damageBefore = Number(damageNow[fighterId]) || 0;
+      // Leftovers / Shell Bell shave the incoming hit by the heal tick.
+      let healTick = 0;
+      if (
+        (fighterHeld === "leftovers" || fighterHeld === "shell-bell") &&
+        mech.heldHealTick > 0 &&
+        fighterId === battleFighterId
+      ) {
+        healTick = mech.heldHealTick;
+        battleNotes.push(
+          `${fighterHeld === "leftovers" ? "Leftovers" : "The Shell Bell"} restored ${healTick} HP.`
+        );
+      }
+      let total = Math.min(maxHp, Math.max(0, damageBefore + enemyAttackDmg - healTick));
+      // Focus Sash: a hit that would take the fighter from full HP to fainted
+      // leaves it standing at 1 HP instead.
+      if (
+        fighterHeld === "focus-sash" &&
+        fighterId === battleFighterId &&
+        damageBefore === 0 &&
+        total >= maxHp
+      ) {
+        total = maxHp - 1;
+        battleNotes.push("The Focus Sash kept it standing at 1 HP!");
+      }
       damageNow[fighterId] = total;
       const fighterInfo = ownedForXp[fighterId] ?? {};
       battleBlock = {
@@ -1497,13 +1606,18 @@ export const publishForumPost = onCall(async (request) => {
         const curPurif = Number(poke.purification ?? 0);
         const wasShadowed = isShadowedShadow(curShadow);
 
-        // Experience: capped at the level-100 total.
-        if (qualifies && expPerPost > 0 && curExp < maxXp) {
-          const gain = Math.min(expPerPost, maxXp - curExp);
+        // Experience: capped at the level-100 total. A held Lucky Egg boosts
+        // the holder's share (admin-tunable).
+        const pokeExpPerPost =
+          heldKeyOf(poke) === "lucky-egg" && mech.luckyEggBoost > 0
+            ? Math.round(expPerPost * (1 + mech.luckyEggBoost / 100))
+            : expPerPost;
+        if (qualifies && pokeExpPerPost > 0 && curExp < maxXp) {
+          const gain = Math.min(pokeExpPerPost, maxXp - curExp);
           update.experience = FieldValue.increment(gain);
           logEntry.experience = FieldValue.increment(gain);
           logged = true;
-          earned.experience = expPerPost;
+          earned.experience = pokeExpPerPost;
         }
         // Friendship: +2 per post, capped at 100 (a full bar unlocks friendship
         // evolutions).
@@ -3619,6 +3733,128 @@ export const respondTrade = onCall(async (request) => {
   return { ok: true };
 });
 
+/** Equip (or remove, itemId "") a held item on an owned pokemon. Equipping
+ * spends one from the bag; the previous held item goes back to the bag. */
+export const setHeldItem = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
+  const itemId = String(request.data?.itemId ?? "").slice(0, 100);
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const ownedRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  await db.runTransaction(async (tx) => {
+    const [bagSnap, ownedSnap] = await Promise.all([tx.get(bagRef), tx.get(ownedRef)]);
+    const owned = (ownedSnap.data() as Record<string, any>) ?? {};
+    const poke = owned[pokemonId];
+    if (!poke) throw new HttpsError("not-found", "That pokemon is not in your box.");
+    const prev = poke.heldItem as { itemId?: string; name?: string; filePath?: string; category?: string } | undefined;
+    // Return whatever it was holding to the bag.
+    if (prev?.itemId) {
+      bagIncrement(tx, bagRef, prev.itemId, prev, 1);
+    }
+    if (!itemId) {
+      if (!prev?.itemId) throw new HttpsError("failed-precondition", "It is not holding anything.");
+      tx.set(ownedRef, { [pokemonId]: { heldItem: FieldValue.delete() } }, { merge: true });
+      return;
+    }
+    const entry = ((bagSnap.data() as Record<string, any>) ?? {})[itemId];
+    if (!entry || (Number(entry.quantity) || 0) <= 0) {
+      throw new HttpsError("not-found", "That item is not in your bag.");
+    }
+    if (String(entry.category ?? "") !== "hold-item") {
+      throw new HttpsError("invalid-argument", "Only held items (the hold-item category) can be equipped.");
+    }
+    tx.set(bagRef, { [itemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
+    tx.set(
+      ownedRef,
+      {
+        [pokemonId]: {
+          heldItem: {
+            itemId,
+            name: String(entry.name ?? itemId),
+            filePath: String(entry.filePath ?? ""),
+            category: "hold-item",
+          },
+        },
+      },
+      { merge: true }
+    );
+  });
+  return { ok: true };
+});
+
+// ===========================================================================
+// The Berry Farm: plant a bag berry, wait, harvest a multiplied yield.
+// State lives in users/{uid}/bag/farm (server-written only per rules).
+// ===========================================================================
+
+export const plantBerry = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const itemId = requireString(request.data?.itemId, "berry", 100);
+  const mech = mechanicsFrom((await db.doc("admin/battle_config").get()).data());
+  const slot = requireInt(request.data?.slot ?? 0, "plot", 0, Math.max(0, mech.farmPlots - 1));
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const farmRef = db.doc(`users/${uid}/bag/farm`);
+  await db.runTransaction(async (tx) => {
+    const [bagSnap, farmSnap] = await Promise.all([tx.get(bagRef), tx.get(farmRef)]);
+    const plots = (farmSnap.data()?.plots as Record<string, unknown>) ?? {};
+    if (plots[String(slot)]) throw new HttpsError("failed-precondition", "That plot is already growing.");
+    const entry = ((bagSnap.data() as Record<string, any>) ?? {})[itemId];
+    if (!entry || (Number(entry.quantity) || 0) <= 0) {
+      throw new HttpsError("not-found", "That berry is not in your bag.");
+    }
+    if (String(entry.category ?? "") !== "berry") {
+      throw new HttpsError("invalid-argument", "Only berries can be planted.");
+    }
+    tx.set(bagRef, { [itemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
+    tx.set(
+      farmRef,
+      {
+        plots: {
+          [String(slot)]: {
+            itemId,
+            name: String(entry.name ?? itemId),
+            filePath: String(entry.filePath ?? ""),
+            category: "berry",
+            plantedAt: new Date(),
+          },
+        },
+      },
+      { merge: true }
+    );
+  });
+  return { ok: true };
+});
+
+export const harvestBerry = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const slot = requireInt(request.data?.slot ?? 0, "plot", 0, 20);
+  const mech = mechanicsFrom((await db.doc("admin/battle_config").get()).data());
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const farmRef = db.doc(`users/${uid}/bag/farm`);
+  let harvestedName = "";
+  await db.runTransaction(async (tx) => {
+    const farmSnap = await tx.get(farmRef);
+    const plot = ((farmSnap.data()?.plots as Record<string, any>) ?? {})[String(slot)];
+    if (!plot) throw new HttpsError("not-found", "Nothing is planted there.");
+    const planted = plot.plantedAt?.toDate ? plot.plantedAt.toDate().getTime() : Date.now();
+    const days = (Date.now() - planted) / 86_400_000;
+    if (days < mech.berryGrowDays) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Still growing: about ${Math.max(1, Math.ceil(mech.berryGrowDays - days))} more day(s).`
+      );
+    }
+    harvestedName = String(plot.name ?? "berry");
+    bagIncrement(tx, bagRef, String(plot.itemId), plot, Math.max(1, mech.berryYield));
+    tx.set(farmRef, { plots: { [String(slot)]: FieldValue.delete() } }, { merge: true });
+  });
+  await markSnagTask(uid, "activity");
+  return { ok: true, harvested: harvestedName, qty: Math.max(1, mech.berryYield) };
+});
+
 // ===========================================================================
 // Snag Mall, Missions, and Research economy callables
 // All spend/write actions are server-side; the client never mutates currency
@@ -4780,6 +5016,7 @@ export const grantChallengeStep = onCall(async (request) => {
   else if (kind === "champion") update.champion = { [region]: true };
   else if (kind === "trial") update.trialsCompleted = FieldValue.arrayUnion(stepId);
   else if (kind === "grandTrial") update.grandTrials = FieldValue.arrayUnion(stepId);
+  else if (kind === "rematch") update.rematches = { [region]: { [stepId]: FieldValue.increment(1) } };
   else throw new HttpsError("invalid-argument", "Unknown challenge kind.");
   if (zCrystal) update.zCrystals = FieldValue.arrayUnion(zCrystal);
 
@@ -4796,12 +5033,25 @@ export const requestChallenge = onCall(async (request) => {
   const uid = requireAuth(request);
   const member = await loadMember(uid);
   const kind = requireString(request.data?.kind, "kind", 20);
-  if (kind !== "gym" && kind !== "trial") {
+  if (kind !== "gym" && kind !== "trial" && kind !== "rematch") {
     throw new HttpsError("invalid-argument", "Unknown challenge kind.");
   }
   const regionOrIsland = requireString(request.data?.regionOrIsland, "region", 60);
   const stageId = requireString(request.data?.stageId, "stage", 120);
   const stageTitle = String(request.data?.stageTitle ?? "").slice(0, 120);
+
+  // Rematches are only open against a leader whose badge is already earned.
+  let rematchTier = 0;
+  if (kind === "rematch") {
+    const progress = (await db.doc(`users/${uid}/bag/challenges`).get()).data() ?? {};
+    const earned: string[] = (progress.badges as Record<string, string[]>)?.[regionOrIsland] ?? [];
+    const leader = stageTitle || stageId;
+    if (!earned.includes(leader)) {
+      throw new HttpsError("failed-precondition", "Earn this leader's badge before asking for a rematch.");
+    }
+    rematchTier =
+      (Number((progress.rematches as Record<string, Record<string, number>>)?.[regionOrIsland]?.[leader]) || 0) + 1;
+  }
 
   // One open request per member and stage; a repeat tap returns the first one.
   const dupSnap = await db
@@ -4820,13 +5070,16 @@ export const requestChallenge = onCall(async (request) => {
     regionOrIsland,
     stageId,
     stageTitle,
+    ...(rematchTier ? { rematchTier } : {}),
     status: "requested",
     createdAt: new Date(),
   });
   const staff = await staffUidsWithCaps(["HostMainForum", "ReviewRewards"]);
   await notifyUsers(staff, {
     type: "approval",
-    text: `${member.username} requested a challenge: ${stageTitle || stageId}. Accept it and create their thread.`,
+    text: rematchTier
+      ? `${member.username} requested a gym REMATCH vs ${stageTitle || stageId} (tier ${rematchTier}, suggested ${Math.min(7, 3 + rematchTier)} star team). Accept it and create their thread.`
+      : `${member.username} requested a challenge: ${stageTitle || stageId}. Accept it and create their thread.`,
     link: "/Dashboard/Admin-Access",
   });
   await markSnagTask(uid, "activity");

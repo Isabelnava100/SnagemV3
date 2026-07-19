@@ -110,6 +110,34 @@ July 2026 build-out are marked (2026-07).
   nowhere). SOURCE IS AN OWNER DECISION: pick a home (shop price, mission reward, or a drop) so
   players can obtain it and craft the Mystery Sack. Sprites still needed for both (blank icon).
 
+## Pokemon-game mechanics wishlist (2026-07 evaluation)
+
+Ideas evaluated from the mainline games after the battle-mechanics pack landed.
+Status as of 2026-07:
+
+- **Held items** DONE (2026-07). Equip/remove per pokemon from the dashboard box
+  (`setHeldItem` callable; equipping spends the bag item, removing returns it).
+  Battle set wired into `publishForumPost`: Muscle Band (attack), Assault Vest
+  (defense), Leftovers/Shell Bell (heal tick), Focus Sash (survive from full HP
+  at 1), Quick Claw (flee bonus), Lucky Egg (exp boost). All numbers are
+  admin-tunable in Battle Costs (`mechanics.held*`/`luckyEggBoost`). Other
+  hold-items equip but are cosmetic. Needs the functions deploy.
+- **Fishing** DONE (2026-07). Rods (Old 2-star / Good 4-star / Super 6-star) gate
+  a Water-type pool in `rollEncounter` (`fishing: true`); Go Fishing button in
+  the composer encounter panel when a rod is in the bag. Seed the Mall's
+  "Angler's Corner" with `node scripts/seed-fishing-rods.mjs` from `functions/`.
+- **Berry farming** DONE (2026-07). The Berry Farm on /Activities:
+  `plantBerry`/`harvestBerry` callables, state in `users/{uid}/bag/farm`
+  (server-written only per rules), grow days / yield / plot count admin-tunable.
+- **Gym rematch ladder** DONE (2026-07). Rematch Ladder card on /Challenges for
+  badge-holding leaders; `requestChallenge` kind "rematch" (validates the badge,
+  computes the tier, pings staff with a suggested star level),
+  `grantChallengeStep` kind "rematch" bumps the tier. Staff inbox + Grading form
+  updated.
+- **Abilities (one passive per species)** DEFERRED, owner call. A 1025-species
+  data lift for modest payoff; revisit after held items have seen play, since
+  the battle hook points are the same.
+
 ## Unbuilt features
 
 - **Lore Library content** — NO LONGER Gaia-blocked; real gaps FILLED (2026-07). The Lore tab

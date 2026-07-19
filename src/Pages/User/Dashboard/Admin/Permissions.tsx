@@ -451,6 +451,14 @@ const MECHANICS_FIELDS: Array<{
   { key: "ballWornBonus", label: "Worn catch bonus (%)", hint: "Extra catch chance on a fully beaten encounter.", step: 1 },
   { key: "hatchPosts", label: "Egg hatch (posts)", hint: "Qualifying posts for a Daycare egg to hatch.", step: 1 },
   { key: "hatchDays", label: "Egg hatch (days)", hint: "Days for a Daycare egg to hatch (whichever comes first).", step: 1 },
+  { key: "heldAttackBonus", label: "Muscle Band (%)", hint: "Extra attack percent for the holder.", step: 1 },
+  { key: "heldDefenseBonus", label: "Assault Vest (%)", hint: "Incoming damage shaved off for the holder.", step: 1 },
+  { key: "heldHealTick", label: "Leftovers heal (HP)", hint: "HP Leftovers / Shell Bell restore each battle post.", step: 1 },
+  { key: "luckyEggBoost", label: "Lucky Egg (%)", hint: "Extra experience percent for the holder.", step: 1 },
+  { key: "heldFleeBonus", label: "Quick Claw (%)", hint: "Extra run-away chance for the holder.", step: 1 },
+  { key: "berryGrowDays", label: "Berry grow (days)", hint: "Days a planted berry takes to be ready.", step: 1 },
+  { key: "berryYield", label: "Berry yield", hint: "Berries harvested per grown plant.", step: 1 },
+  { key: "farmPlots", label: "Farm plots", hint: "Berry Farm plots per member.", step: 1 },
 ];
 
 export function BattleCostsSection() {

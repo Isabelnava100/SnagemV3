@@ -523,7 +523,7 @@ export function BattleReportForm() {
   );
 }
 
-const KIND_OPTIONS = ["badge", "trial", "grandTrial", "eliteFour", "champion"];
+const KIND_OPTIONS = ["badge", "trial", "grandTrial", "eliteFour", "champion", "rematch"];
 
 export function ChallengeStepForm() {
   const [uid, setUid] = React.useState("");
@@ -555,7 +555,9 @@ export function ChallengeStepForm() {
         Challenge Step
       </Text>
       <Text fz={14} c="dimmed" mb={10}>
-        Record a badge, trial, grand trial, Elite Four, or champion clear for a member.
+        Record a badge, trial, grand trial, Elite Four, or champion clear for a member. For a
+        rematch win, use kind &quot;rematch&quot; with the leader&apos;s name as the step: it
+        bumps that leader&apos;s ladder tier.
       </Text>
       <Group gap={12} align="end" wrap="wrap">
         <TextInput
