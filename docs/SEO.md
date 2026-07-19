@@ -30,10 +30,6 @@ Built July 2026 to the owner's agency QA checklist (see CLAUDE.md "SEO rules"). 
 - Every page has exactly one h1 (PageHero) and at least one h2.
 - Private/auth pages (`Dashboard`, `Admin`, auth flows, Daycare, Trading, SNAG, Onboarding) mount `<Seo noindex title="..."/>` and never appear in the sitemap.
 
-## Leftover to delete
-
-`src/lib/seo.ts` and `src/lib/seoRoutes.json` are remnants of a parallel SEO build that landed on main from another session and was superseded by this system in the merge. Nothing imports them; delete both files when convenient.
-
 ## Deploy dependencies
 
 - `firestore.rules` now allows public read of `admin/seo` (share image settings for logged-out visitors). Needs `firebase deploy --only firestore:rules`; until then the baked defaults in `src/lib/seo/site.ts` are used, so nothing breaks.
