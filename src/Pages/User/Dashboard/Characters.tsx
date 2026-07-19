@@ -82,6 +82,7 @@ function useUpdateOrAddDocument(documentId?: string) {
             moveset: "",
             name: "No name",
             short_description: "",
+            history: "",
             // Non-masters get the default species and can't change it.
             species: "Human",
             pronouns: "",
@@ -115,6 +116,7 @@ function CreateNewCharacter() {
           moveset: "",
           name: trimmed,
           short_description: "",
+          history: "",
           species: "Human",
           pronouns: "",
           type: "None",
@@ -222,7 +224,7 @@ function TextareaWrapper(props: {
     }
   }
 
-  const value = form.values[name];
+  const value = form.values[name] ?? "";
 
   return (
     <Stack h="100%" p={8} sx={{ borderRadius: 8 }} bg="#525151" gap={8}>
@@ -372,7 +374,8 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
 function SingleCharacter(props: Character) {
   const [isEditing, setEditing] = useState(false);
   const form = useForm<FormFields>({
-    initialValues: { ...props },
+    // `history` default guards legacy characters saved before the field existed.
+    initialValues: { history: "", ...props },
   });
   const { user } = useAuth();
   const canEditType = isMaster(user);
@@ -499,6 +502,12 @@ function SingleCharacter(props: Character) {
                 form={form}
                 isEditing={isEditing}
                 title="Short description"
+              />
+              <TextareaWrapper
+                name="history"
+                form={form}
+                isEditing={isEditing}
+                title="History & profile info"
               />
             </Stack>
           </Flex>

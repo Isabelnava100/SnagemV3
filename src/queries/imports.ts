@@ -17,9 +17,12 @@ import { db } from "../context/firebase";
 export type ImportStatus = "draft" | "pending" | "granted" | "rejected" | "completed";
 
 export interface ImportCurrency {
+  /** Snag Coins (legacy key name kept for the stored doc field). */
   pokecoin: number;
   gengarcoin: number;
   snagemblem: number;
+  /** Cumulative emblem pieces; every 3 make one Snag Emblem. */
+  snagEmblemPieces: number;
 }
 
 export interface ImportItem {
@@ -63,7 +66,7 @@ export interface ImportRequest extends ImportEntries {
 }
 
 export const emptyEntries = (): ImportEntries => ({
-  currency: { pokecoin: 0, gengarcoin: 0, snagemblem: 0 },
+  currency: { pokecoin: 0, gengarcoin: 0, snagemblem: 0, snagEmblemPieces: 0 },
   items: [],
   pokemon: [],
 });

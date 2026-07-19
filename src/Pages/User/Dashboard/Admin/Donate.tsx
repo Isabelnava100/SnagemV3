@@ -495,7 +495,13 @@ function GiveCurrencySection() {
   });
 
   const currencyLabel =
-    currency === "pokecoin" ? "Poke Coins" : currency === "gengarcoin" ? "Gengar Coins" : "Snag Emblems";
+    currency === "pokecoin"
+      ? "Snag Coins"
+      : currency === "gengarcoin"
+      ? "Gengar Coins"
+      : currency === "snagEmblemPieces"
+      ? "Emblem Pieces"
+      : "Snag Emblems";
 
   return (
     <Stack gap={10} mt={20}>
@@ -515,9 +521,10 @@ function GiveCurrencySection() {
         />
         <Select
           data={[
-            { value: "pokecoin", label: "Poke Coin" },
+            { value: "pokecoin", label: "Snag Coin" },
             { value: "gengarcoin", label: "Gengar Coin" },
             { value: "snagemblem", label: "Snag Emblems" },
+            { value: "snagEmblemPieces", label: "Emblem Pieces" },
           ]}
           value={currency}
           onChange={(v) => setCurrency(v ?? "pokecoin")}

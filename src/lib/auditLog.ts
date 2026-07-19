@@ -77,7 +77,7 @@ const DETAIL_LABELS: Record<string, string> = {
 };
 
 const CURRENCY_NAMES: Record<string, string> = {
-  pokecoin: "Poke Coins",
+  pokecoin: "Snag Coins",
   gengarcoin: "Gengar Coins",
   snagemblem: "Snag Emblems",
 };

@@ -39,6 +39,9 @@ import {
 } from "../mutations";
 import { getDraft, getPendingActions, getPost, getThread } from "../queries";
 import { DiceBlock, EncounterBlock, PostCharacter, RandomBlock } from "../types";
+import OnboardingChecklist, {
+  useOnboardingStatus,
+} from "../../../components/onboarding/OnboardingChecklist";
 import CharactersPanel from "../components/composer/CharactersPanel";
 import EvolutionPanel from "../components/composer/EvolutionPanel";
 import { EncounterPostPanel } from "../components/composer/EncounterPanels";
@@ -78,6 +81,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const onboarding = useOnboardingStatus();
 
   const [characters, setCharacters] = React.useState<PostCharacter[]>([]);
   const [encounter, setEncounter] = React.useState<EncounterBlock | null>(null);
@@ -487,6 +491,20 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     return (
       <Container size="lg" mt={20}>
         <Text c="white">Only the author of a post can edit it.</Text>
+      </Container>
+    );
+  }
+
+  // Onboarding pre-gate for new replies: the publish callable requires a
+  // character plus a team with a pokemon, so guide people through setup
+  // instead of letting them write a post they cannot send.
+  if (mode === "new" && !onboarding.loading && !onboarding.complete) {
+    return (
+      <Container size="sm" style={{ marginTop: 20, paddingBottom: 100 }}>
+        <Title order={1} fz={{ base: 24, sm: 34 }} c="white" fw={400} mb={16}>
+          Almost ready to post
+        </Title>
+        <OnboardingChecklist intro="Before posting you need a character and a team with at least one pokemon. Here is where you stand:" />
       </Container>
     );
   }

@@ -41,6 +41,9 @@ import {
 } from "../mutations";
 import { getDraft } from "../queries";
 import { ComposerDraftSettings, EncounterConfig, PostCharacter, ThreadPoll } from "../types";
+import OnboardingChecklist, {
+  useOnboardingStatus,
+} from "../../../components/onboarding/OnboardingChecklist";
 import CharactersPanel from "../components/composer/CharactersPanel";
 import { EncounterSetupPanel } from "../components/composer/EncounterPanels";
 import { PollBuilderPanel } from "../components/composer/PostActionsPanel";
@@ -92,6 +95,7 @@ export default function NewThreadComposer() {
   // whether to use the site default XP settings.
   const canHostRoleplay = canCurateThreads(user);
   const [useDefaultXp, setUseDefaultXp] = React.useState(true);
+  const onboarding = useOnboardingStatus();
 
   // Site-wide XP defaults, shown as the panel's starting values.
   const { data: xpDefaults } = useQuery({
@@ -247,6 +251,20 @@ export default function NewThreadComposer() {
     setError(problem);
     if (!problem) publishMutation.mutateAsync();
   };
+
+  // Onboarding pre-gate: a thread needs a character and a stocked team, so
+  // steer new members through setup before they draft into a dead end. The
+  // publish callable enforces the same rule server-side.
+  if (!onboarding.loading && !onboarding.complete) {
+    return (
+      <Container size="sm" style={{ marginTop: 20, paddingBottom: 100 }}>
+        <Title order={1} fz={isOverSm ? 30 : 20} c="white" fw={400} mb={16}>
+          Almost ready to make a thread
+        </Title>
+        <OnboardingChecklist intro="Before starting a thread you need a character and a team with at least one pokemon. Here is where you stand:" />
+      </Container>
+    );
+  }
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>

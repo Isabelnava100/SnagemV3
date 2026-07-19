@@ -7,8 +7,85 @@ import { SectionLoader } from "../../../components/navigation/loading";
 import { Capability } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import { DISCORD_CLIENT_ID, DiscordConfig, discordRedirectUri, getDiscordConfig, saveDiscordConfig } from "../../../queries/discord";
+import { EmailConfig, getEmailConfig, saveEmailConfig } from "../../../queries/email";
 import { hasCapability, isAdmin } from "../../../lib/permissions";
 import SEO from "./Admin/SEO";
+
+/** Admin-only transactional email config (approval/rejection notices). */
+function EmailConfigSection() {
+  const queryClient = useQueryClient();
+  const { data, isPending } = useQuery({ queryKey: ["email-config"], queryFn: getEmailConfig });
+  const [form, setForm] = React.useState<EmailConfig | null>(null);
+  const [saved, setSaved] = React.useState(false);
+
+  React.useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data, form]);
+
+  const save = useMutation({
+    mutationFn: () => saveEmailConfig(form!),
+    onSuccess: () => {
+      setSaved(true);
+      queryClient.invalidateQueries({ queryKey: ["email-config"] });
+    },
+  });
+
+  if (isPending || !form) return <SectionLoader />;
+
+  const set = (patch: Partial<EmailConfig>) => {
+    setSaved(false);
+    setForm({ ...form, ...patch });
+  };
+
+  return (
+    <Stack gap={10} maw={640}>
+      <Title order={2} c="white" size={28} fw={400}>
+        Email notices
+      </Title>
+      <Text fz={14} c="dimmed">
+        Sends applicants an email when their registration is approved or rejected (they
+        cannot see in-app notifications before their first login). Uses SendGrid: create
+        a free account, add an API key with Mail Send permission, and verify the sender
+        address there. Until a key is saved, no emails are sent and approvals work as
+        before.
+      </Text>
+      <PasswordInput
+        label="SendGrid API key"
+        description="From SendGrid, Settings, API Keys. Stored here admin-only; used server-side."
+        value={form.sendgridApiKey}
+        onChange={(e) => set({ sendgridApiKey: e.currentTarget.value })}
+        styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+      />
+      <TextInput
+        label="From address"
+        description="Must be a sender verified in SendGrid (for example noreply@snagemguild.com)."
+        value={form.fromEmail}
+        onChange={(e) => set({ fromEmail: e.currentTarget.value })}
+        styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+      />
+      <TextInput
+        label="From name"
+        placeholder="Snagem Guild"
+        value={form.fromName}
+        onChange={(e) => set({ fromName: e.currentTarget.value })}
+        styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+      />
+      {saved && (
+        <Text fz={14} c="green.0" role="status" aria-live="polite">
+          Email settings saved.
+        </Text>
+      )}
+      <GradientButtonPrimary
+        radius="xl"
+        w="fit-content"
+        loading={save.isPending}
+        onClick={() => save.mutateAsync()}
+      >
+        Save Email Settings
+      </GradientButtonPrimary>
+    </Stack>
+  );
+}
 
 /** Admin-only Discord integration config (client secret + channel webhook). */
 function DiscordConfigSection() {
@@ -100,6 +177,8 @@ export default function SiteSettings() {
           <>
             <Divider color="#4a464a" />
             <DiscordConfigSection />
+            <Divider color="#4a464a" />
+            <EmailConfigSection />
           </>
         )}
       </Stack>

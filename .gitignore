@@ -29,3 +29,9 @@ dist-ssr
 
 # Currency migration backups (operational artifacts, contain user bag data)
 functions/scripts/backups/
+
+# Gaia profile export data (member content; regenerate with scrape.py/organize.py,
+# already uploaded to Firestore by upload-gaia-exports.mjs). Scripts stay tracked.
+scripts/gaia-export/raw/
+scripts/gaia-export/accounts.json
+scripts/gaia-export/gap-report.md

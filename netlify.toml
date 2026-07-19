@@ -41,6 +41,13 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
 
+# S.N.A.G. (the member help chat) is login-gated and never indexable: header +
+# robots.txt disallow + noindex meta, same belt-and-braces as the forums.
+[[headers]]
+  for = "/SNAG"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
 # Long-lived caching for fingerprinted build assets.
 [[headers]]
   for = "/assets/*"

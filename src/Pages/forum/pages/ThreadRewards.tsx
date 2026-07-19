@@ -44,7 +44,7 @@ import { ActivityLog } from "../../../components/admin/ActivityLog";
 import "../forum.css";
 
 const CURRENCIES = [
-  { value: "pokecoin", label: "Poke Coin" },
+  { value: "pokecoin", label: "Snag Coin" },
   { value: "gengarcoin", label: "Gengar Coin" },
   { value: "snagemblem", label: "Snag Emblems" },
 ] as const;

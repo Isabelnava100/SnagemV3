@@ -1,4 +1,5 @@
 import {
+  Alert,
   Anchor,
   Button,
   Container,
@@ -27,6 +28,9 @@ export function Login() {
   const navigate = useNavigate();
   const [submitted, setSub] = useState(false);
   const [googleError, setGoogleError] = useState("");
+  // Application still in the NewUsers queue: show a clear notice instead of a
+  // field error so applicants know a human is on it.
+  const [pendingNotice, setPendingNotice] = useState(false);
   const { setUser, user } = useAuth();
   const form = useForm({
     initialValues: {
@@ -51,7 +55,7 @@ export function Login() {
     if (result === "success") {
       navigate("/Dashboard");
     } else if (result === "pending") {
-      setGoogleError("Your application is still awaiting approval.");
+      setPendingNotice(true);
     } else if (result === "no-account") {
       setGoogleError("No account matches that Google email. Apply to join first.");
     } else if (result !== "auth/popup-closed-by-user" && result !== "auth/cancelled-popup-request") {
@@ -64,6 +68,20 @@ export function Login() {
     <Container size={680} my={40}>
       <Seo noindex title="Log In | Snagem Guild" />
       <AuthCard title="Access the Dashboard">
+        {pendingNotice && (
+          <Alert
+            color="yellow"
+            variant="light"
+            mb={16}
+            title="Application received"
+            role="status"
+            aria-live="polite"
+          >
+            Your registration is being checked manually by an admin. This usually takes a day or
+            two. You will be able to log in as soon as it is approved, and returning Gaia members
+            can then import their collection from the dashboard.
+          </Alert>
+        )}
         <form
           onSubmit={form.onSubmit(async (values) => {
             setSub(true);
@@ -76,7 +94,7 @@ export function Login() {
             } else if (results === "auth/too-many-requests") {
               form.setFieldError("email", "Too many attempts");
             } else if (results === "pending") {
-              form.setFieldError("email", "Your application is still awaiting approval.");
+              setPendingNotice(true);
             } else if (results === "unlinked") {
               form.setFieldError(
                 "email",

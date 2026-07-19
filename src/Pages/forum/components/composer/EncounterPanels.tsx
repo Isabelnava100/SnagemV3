@@ -19,6 +19,7 @@ import { getCharacters, getItems } from "../../../../queries/dashboard";
 import { currentWeekId } from "../../../../queries/activities";
 import { DEFAULT_ENCOUNTERS_PER_USER } from "../../config";
 import { callRollEncounter, callableMessage } from "../../functionsClient";
+import { isAdmin } from "../../../../lib/permissions";
 import { getEncounterLists, resolveListSlugs } from "../../queries";
 import { EncounterBlock, EncounterConfig, ForumThread } from "../../types";
 import { safariFightBonus } from "../../../../lib/safari";
@@ -62,8 +63,8 @@ export function EncounterSetupPanel(props: {
   const { user } = useAuth();
   const { value, onChange } = props;
   const { data: lists } = useQuery({
-    queryKey: ["forum-encounter-lists", user?.username],
-    queryFn: () => getEncounterLists(user?.username),
+    queryKey: ["forum-encounter-lists", user?.username, isAdmin(user)],
+    queryFn: () => getEncounterLists(user?.username, isAdmin(user)),
     enabled: !!user,
   });
 
@@ -141,6 +142,10 @@ export function EncounterSetupPanel(props: {
                 />
               </Group>
             </Group>
+            <PanelHint>
+              Rolls are star-weighted: 4 star and stronger species on the list are rare, appearing
+              on 5% of rolls.
+            </PanelHint>
 
             <YesNo
               label="Would you like to add pokemon encounters that cannot be caught? This may be edited later."

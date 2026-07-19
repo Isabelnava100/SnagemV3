@@ -181,6 +181,16 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // ---- Gaia profile exports ---------------------------------------------
+    // Scraped from the guild's PUBLIC Gaia Member Profiles board
+    // (scripts/gaia-export, uploaded by functions/scripts/upload-gaia-exports.mjs).
+    // Members read them to prefill their onboarding import; only the admin SDK
+    // writes them.
+    match /gaiaExports/{doc} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
     // ---- Discord link requests --------------------------------------------
     match /tickets/{doc} {
       allow read: if isAdmin();

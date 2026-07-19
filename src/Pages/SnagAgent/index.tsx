@@ -87,6 +87,119 @@ const KB: KbEntry[] = [
       ),
   },
   {
+    // New-member setup: the three-step gate before posting (July 2026).
+    match: /starter|first pokemon|getting started|new (member|user|trainer)|before.*post|set.*up.*account|can.?t.*post/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          New members set themselves up: the dashboard welcome checklist walks them
+          through creating a character, claiming a one-time starter (any 1★ species or a
+          classic starter, only while they own zero pokemon), and building a team. The
+          forum refuses posts until all three are done (server-enforced). Admins can
+          still grant extra pokemon via <L to="/Admin">Admin</L> tools; approving an
+          applicant no longer grants anything by itself.
+        </>
+      ) : (
+        <>
+          Before your first post you need three things, and your{" "}
+          <L to="/Dashboard">Console dashboard</L> checklist walks you through them:
+          create a character, claim your free starter (any 1★ species or a classic
+          starter), and build a team with at least one pokemon. After that, every post
+          brings a character and their team, and the team earns experience as you
+          roleplay.
+        </>
+      ),
+  },
+  {
+    // Returning Gaia members: the import/onboarding flow.
+    match: /gaia|import|returning|restore.*collection|old (account|profile)/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Returning Gaia members self-serve on the <L to="/Onboarding">Onboarding page</L>:
+          the guild&apos;s old Member Profiles board was exported, so they can prefill
+          their draft (characters, pokemon, items, coins, emblems) from their Gaia
+          account, then submit. Review submissions from <L to="/Admin">Admin</L>: items
+          without a catalog match and un-applied roster updates arrive in the reviewer
+          note. Approvals grant server-side.
+        </>
+      ) : (
+        <>
+          Returning from the Gaia guild? The <L to="/Onboarding">Onboarding page</L> can
+          prefill your import from your old Gaia profile: pick your Gaia account and it
+          fills in your characters (with their history), pokemon, items, coins and
+          emblems. Review everything, adjust, then submit; a staff member approves it
+          and it all lands in your account.
+        </>
+      ),
+  },
+  {
+    // Encounter lists / Field Registers, including the 4-star rarity rule.
+    match: /encounter list|field register|region list|rare.*encounter|4.?\s*star.*(rate|rare)|adjust list/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Encounter lists are managed in <L to="/Dashboard">Dashboard</L> &gt; Admin &gt;
+          Adjust Lists: the Public checkbox decides whether every member can pick a list
+          when creating a thread (admins see private lists too). Default public lists
+          exist per region and habitat (Grasslands, Mountains, Rivers, Cities; 1-4★
+          only). Rolled encounters are star-weighted: 4★+ species on a list appear on 5%
+          of rolls. Members browse public lists in{" "}
+          <L to="/Library?tab=lists">Library &gt; Field Registers</L>.
+        </>
+      ) : (
+        <>
+          Encounter lists decide which wild pokemon a thread can roll. Browse the public
+          ones (each region has Grasslands, Mountains, Rivers and Cities lists) in{" "}
+          <L to="/Library?tab=lists">Library &gt; Field Registers</L>; pick one when you
+          create a thread. Rare pulls are real: 4★ species only appear on about 5% of
+          rolls.
+        </>
+      ),
+  },
+  {
+    // Registration and manual verification.
+    match: /verif|application|register|sign.?up|join.*guild|new.*account|approv.*(member|registration|application|account)/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Applications queue in <L to="/Admin">Admin &gt; Inbox</L>: every registration
+          is verified manually (pick a role, approve or reject). Applicants see a
+          &quot;checked manually by an admin&quot; notice if they try to log in early.
+          Approving creates their member account; they then run the new-member
+          checklist themselves (character, starter, team).
+        </>
+      ) : (
+        <>
+          Every registration is checked manually by an admin, so there is a short wait
+          between applying and your first login. You will get a notification when you
+          are approved. Waiting on a friend&apos;s application? Tell them to watch
+          their email for the verification link first.
+        </>
+      ),
+  },
+  {
+    // Currencies.
+    match: /\bcoins?\b|currency|emblem|gengar token/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Currencies: Snag Coins (missions, events, reward reviews), Gengar Tokens
+          (Casino play), Snag Emblems and emblem pieces (mission bonuses; three pieces
+          make an emblem). Grant any of them from <L to="/Admin">Admin</L> &gt; Give
+          Items. Gaia imports carry Snag Coins, emblems and pieces straight over.
+        </>
+      ) : (
+        <>
+          Your balances show on the <L to="/Dashboard">Console dashboard</L>: Snag Coins
+          (earned in missions, events and reward reviews; spent at the{" "}
+          <L to="/Shop">Snag Mall</L>), Gengar Tokens (<L to="/Casino">Casino</L>), and
+          Snag Emblems with emblem pieces (mission bonuses; three pieces become an
+          emblem).
+        </>
+      ),
+  },
+  {
     match: /master\s*mission|hybrid|channeler|clearance/i,
     answer: () => (
       <>
@@ -361,6 +474,23 @@ const KB: KbEntry[] = [
     ),
   },
   {
+    // Where filed tickets end up.
+    match: /dev board|ticket|where.*(suggestion|bug report|question).*(go|end)/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Member suggestions, bug reports and questions filed through me land in the
+          tickets queue; triage them from <L to="/Admin">Admin &gt; Manage &gt; Dev
+          Board</L> (discard or promote to dev tickets, plus admin-only planning notes).
+        </>
+      ) : (
+        <>
+          Anything you send me (suggestions, bug reports, questions) goes straight to
+          the staff&apos;s inbox; they review every ticket and questions get a reply.
+        </>
+      ),
+  },
+  {
     match: /rule|conduct|policy|privacy|terms/i,
     answer: () => (
       <>
@@ -379,10 +509,20 @@ const GREETING: React.ReactNode = (
   </>
 );
 
+const ADMIN_GREETING: React.ReactNode = (
+  <>
+    S.N.A.G. online, staff mode. I answer member questions AND the admin manual: where
+    to approve applications and imports, manage encounter lists, launch Safari
+    Contests, or triage the Dev Board. Ask away.
+  </>
+);
+
 export default function SnagAgent() {
   const { user } = useAuth();
   const admin = isAdmin(user);
-  const [messages, setMessages] = React.useState<Msg[]>([{ from: "snag", node: GREETING }]);
+  const [messages, setMessages] = React.useState<Msg[]>([
+    { from: "snag", node: admin ? ADMIN_GREETING : GREETING },
+  ]);
   const [input, setInput] = React.useState("");
   const [intake, setIntake] = React.useState<Intake>(null);
   const [busy, setBusy] = React.useState(false);
@@ -494,6 +634,12 @@ export default function SnagAgent() {
     { label: "My weekly Snag List", text: "What am I missing for my weekly reward?" },
     { label: "Next badge", text: "What's the next badge I can battle for in Kanto?" },
     { label: "How do battles work?", text: "How do battles and damage work?" },
+    ...(admin
+      ? [
+          { label: "Approve applications", text: "Where do I approve new registrations?" },
+          { label: "Encounter lists", text: "How do I manage encounter lists?" },
+        ]
+      : [{ label: "Getting started", text: "How do I get started as a new member?" }]),
     { label: "Make a suggestion", action: () => startIntake("suggestion") },
     { label: "Report a bug", action: () => startIntake("bug") },
     { label: "Ask the staff", action: () => startIntake("question") },
@@ -557,7 +703,9 @@ export default function SnagAgent() {
         </ScrollArea>
 
         <Box p="sm" style={{ borderTop: "1px solid #232028" }}>
-          <Group gap={6} mb={8} wrap="wrap" visibleFrom="sm">
+          {/* Chips stay visible on mobile too: they are the only discoverable
+              way into the suggestion/bug/question intakes. */}
+          <Group gap={6} mb={8} wrap="wrap">
             {chips.map((c) => (
               <Button
                 key={c.label}

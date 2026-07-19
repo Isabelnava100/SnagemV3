@@ -44,7 +44,10 @@ import {
   getReadAnnouncements,
   markAnnouncementRead,
 } from "../../../queries/announcements";
-import { getCharacters, getCurrencies } from "../../../queries/dashboard";
+import OnboardingChecklist, {
+  useOnboardingStatus,
+} from "../../../components/onboarding/OnboardingChecklist";
+import { getCurrencies } from "../../../queries/dashboard";
 import { getNotifications, markNotificationsRead } from "../../../queries/game";
 import { getImportRequest } from "../../../queries/imports";
 import { RESET_READING_SCALE } from "../../../lib/readingSize";
@@ -344,7 +347,7 @@ function CurrencyBar() {
     queryFn: () => getCurrencies(user?.uid as string),
   });
   const chips = [
-    { icon: PokePesos, amount: data?.pokecoin || "0", name: "Poke Coin", color: theme.colors.pink[2] },
+    { icon: PokePesos, amount: data?.pokecoin || "0", name: "Snag Coin", color: theme.colors.pink[2] },
     { icon: GengarCoins, amount: data?.gengarcoin || "0", name: "Gengar Coin", color: theme.colors.pink[1] },
     { icon: SnagCoins, amount: data?.snagemblem || "0", name: "Snag Emblems", color: theme.colors.pink[0] },
   ];
@@ -490,11 +493,7 @@ function Announcements() {
     queryFn: () => getReadAnnouncements(user!.uid),
     enabled: !!user,
   });
-  const { data: characters } = useQuery({
-    queryKey: ["get-characters", user?.uid],
-    queryFn: () => getCharacters(user!.uid),
-    enabled: !!user,
-  });
+  const onboarding = useOnboardingStatus();
 
   const markRead = useMutation({
     mutationFn: async () => {
@@ -508,21 +507,12 @@ function Announcements() {
     },
   });
 
-  const handleClick = () => {
-    const nestedElement = document.querySelector("#app-layout-main");
-    if (nestedElement) {
-      navigate("/Dashboard/Characters");
-      setTimeout(() => {
-        nestedElement.scrollTo(0, nestedElement.scrollHeight);
-      }, 500);
-    }
-  };
-
   const adminAnnouncementVisible =
     !!announcement?.active && !!announcement.id && !(readIds ?? []).includes(announcement.id);
-  const showWelcome = !adminAnnouncementVisible && characters !== undefined
-    ? characters.sortedData.length === 0
-    : false;
+  // Setup checklist welcome: shows while any onboarding step (character,
+  // pokemon, stocked team) is incomplete, for brand-new members and Gaia
+  // returnees alike.
+  const showWelcome = !adminAnnouncementVisible && !onboarding.loading && !onboarding.complete;
 
   if (!adminAnnouncementVisible && !showWelcome) return null;
 
@@ -561,18 +551,7 @@ function Announcements() {
           </Stack>
         ) : (
           <Stack sx={{ flex: 1 }}>
-            <Text>
-              Welcome to the Snagem Guild! We truly appreciate your stay.
-              <br />
-              It looks like you haven&apos;t created a character yet.
-              <br />
-              Please go here to create a character and start your journey with Snagem!
-            </Text>
-            <Box>
-              <GradientButtonPrimary onClick={handleClick} fullWidth={!isOverMd}>
-                Create Your First Character
-              </GradientButtonPrimary>
-            </Box>
+            <OnboardingChecklist intro="Welcome to the Snagem Guild! Finish these three steps to start your journey on the forums:" />
           </Stack>
         )}
       </Flex>

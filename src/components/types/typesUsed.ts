@@ -297,6 +297,9 @@ export interface Character {
   moveset: string;
   name: string;
   short_description: string;
+  /** Long-form background, history and anything else about the character.
+   * Optional: legacy docs predate the field. Gaia profile imports land here. */
+  history?: string;
   species: string;
   pronouns: string;
   type: "None" | "Hybrid" | "Channeler";

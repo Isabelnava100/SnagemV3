@@ -224,6 +224,17 @@ const starForDex = (idx: number): number => {
   const star = (starByDex as Record<string, number>)[String(idx)];
   return star && star >= 1 && star <= 7 ? star : 3;
 };
+// Rolled list encounters treat 4+ star species as rare: the rare bucket as a
+// whole hits this % of rolls. Star overrides are honored via starFor at roll
+// time. Noted client-side in the host encounter picker hint.
+const RARE_ENCOUNTER_RATE = 5;
+// Classic starter lines' base forms (Bulbasaur through Sprigatito trios). New
+// members may pick one of these OR any 1-star species as their first pokemon
+// via chooseStarter. Mirror of src/lib/starters.ts; keep in sync.
+const STARTER_DEX = new Set<number>([
+  1, 4, 7, 152, 155, 158, 252, 255, 258, 387, 390, 393, 495, 498, 501, 650, 653, 656, 722, 725,
+  728, 810, 813, 816, 906, 909, 912,
+]);
 // Type effectiveness by POKEMON TYPE (mirrors src/lib/typeChart.ts; keep in
 // sync). Battle posts' progress and the enemy's counter-attack are both
 // scaled by the attacker-vs-defender matchup, clamped to 0.5x..2x so battles
@@ -468,6 +479,42 @@ function sanitizeCharacters(input: unknown): any[] {
 }
 
 /**
+ * Onboarding gate, server half of the composer rule: every new post or thread
+ * must bring at least one character and a team for each character. The teams
+ * themselves are verified non-empty where the bag doc is read (the client
+ * mirrors all of this in the composers plus the onboarding checklist).
+ */
+function assertCharactersWithTeams(characters: any[]): void {
+  if (!characters.length) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Attach at least one character to your post. Create one from your Dashboard first."
+    );
+  }
+  if (characters.some((c) => !c.teamId)) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Select a team for each character on your post. Build one under Dashboard, Pokemon."
+    );
+  }
+}
+
+/** Part two of the gate: every team brought must actually contain a pokemon. */
+function assertTeamsHavePokemon(
+  teamIds: string[],
+  teamsData: Record<string, { pokemon_ids?: string[] }>
+): void {
+  for (const teamId of teamIds) {
+    if (!(teamsData[teamId]?.pokemon_ids ?? []).length) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Each team you bring must have at least one pokemon on it. Add one under Dashboard, Pokemon."
+      );
+    }
+  }
+}
+
+/**
  * Fire-and-forget in-app notifications (users/{uid}/notifications). Recipients
  * who turned off site notifications (users/{uid}.settings.siteNotifications ===
  * false) are skipped; the default (unset) is on. Mention notifications also
@@ -561,8 +608,42 @@ function addCurrency(current: unknown, amount: number): number {
   return (Number.isFinite(parsed) ? parsed : 0) + amount;
 }
 
-const CURRENCY_KEYS = ["pokecoin", "gengarcoin", "snagemblem"] as const;
+const CURRENCY_KEYS = ["pokecoin", "gengarcoin", "snagemblem", "snagEmblemPieces"] as const;
 type CurrencyKey = (typeof CURRENCY_KEYS)[number];
+const CURRENCY_NAMES: Record<CurrencyKey, string> = {
+  pokecoin: "Snag Coins",
+  gengarcoin: "Gengar Coins",
+  snagemblem: "Snag Emblems",
+  snagEmblemPieces: "Emblem Pieces",
+};
+
+/**
+ * Transactional email (approval/rejection notices). Config lives in
+ * adminSecrets/email {sendgridApiKey, fromEmail, fromName}, editable from Site
+ * Settings; until an admin saves a key this is a silent no-op, same pattern as
+ * the Discord webhook. Errors never fail the calling flow.
+ */
+async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+  try {
+    if (!to) return;
+    const cfg = (await db.doc("adminSecrets/email").get()).data() ?? {};
+    const key = String(cfg.sendgridApiKey ?? "");
+    const from = String(cfg.fromEmail ?? "");
+    if (!key || !from) return;
+    await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: to }] }],
+        from: { email: from, name: String(cfg.fromName ?? "Snagem Guild") },
+        subject,
+        content: [{ type: "text/html", value: html }],
+      }),
+    });
+  } catch (err) {
+    console.warn("sendEmail failed", err);
+  }
+}
 
 // Per-post progression on a normal (exp-earning) thread. Friendship, shadow and
 // purification run on a 0..100 scale (100 = maxed); experience stays level-based
@@ -983,7 +1064,20 @@ export const rollEncounter = onCall(async (request) => {
         slug = chosenSlug;
         mode = "choose";
       } else {
-        slug = pool[randomInt(pool.length)];
+        // Star-weighted roll: 4+ star species on a list are rare pulls. The
+        // whole rare bucket shares a flat RARE_ENCOUNTER_RATE% chance per roll
+        // (uniform within it); everything else splits the rest. A list that is
+        // all-rare or all-common keeps the plain uniform roll.
+        const rare = new Set(
+          pool.filter((s) => starFor(Number(catalogBySlug.get(s)?.idx ?? 0)) >= 4)
+        );
+        const bucket =
+          rare.size && rare.size < pool.length
+            ? randomInt(100) < RARE_ENCOUNTER_RATE
+              ? [...rare]
+              : pool.filter((s) => !rare.has(s))
+            : pool;
+        slug = bucket[randomInt(bucket.length)];
         mode = "roll";
       }
 
@@ -1047,6 +1141,9 @@ export const publishForumPost = onCall(async (request) => {
   const html = requireString(request.data?.html, "post body", 100_000);
   const editPostId = request.data?.editPostId ? String(request.data.editPostId) : undefined;
   const characters = sanitizeCharacters(request.data?.characters);
+  // Edits keep whatever the original post carried; new posts must pass the
+  // character + team onboarding gate.
+  if (!editPostId) assertCharactersWithTeams(characters);
   const itemRequests = readItemRequests(request.data?.items);
   // Gaia-style signature: attached by default, snapshotted at publish time.
   const attachSignature = request.data?.attachSignature !== false;
@@ -1129,6 +1226,7 @@ export const publishForumPost = onCall(async (request) => {
     if (!editPostId && teamIds.length) {
       const teamsSnap = await tx.get(teamsRef);
       teamsData = (teamsSnap.data() as Record<string, { pokemon_ids?: string[] }>) ?? {};
+      assertTeamsHavePokemon(teamIds, teamsData);
       teamPokemonIds = [
         ...new Set(teamIds.flatMap((teamId) => teamsData[teamId]?.pokemon_ids ?? [])),
       ];
@@ -2215,6 +2313,16 @@ export const publishForumThread = onCall(async (request) => {
   const pinned = !!request.data?.pinned && isAdmin(member);
 
   const characters = sanitizeCharacters(request.data?.characters);
+  // Onboarding gate: a thread's first post needs a character and a stocked team
+  // just like any reply.
+  assertCharactersWithTeams(characters);
+  const gateTeamIds = [...new Set(characters.map((c: any) => c.teamId).filter(Boolean))] as string[];
+  const gateTeams =
+    ((await db.doc(`users/${uid}/bag/teams`).get()).data() as Record<
+      string,
+      { pokemon_ids?: string[] }
+    >) ?? {};
+  assertTeamsHavePokemon(gateTeamIds, gateTeams);
   const instructions = String(request.data?.instructions ?? "").slice(0, 2000);
   const tags = (Array.isArray(request.data?.tags) ? request.data.tags : [])
     .slice(0, 15)
@@ -2717,7 +2825,7 @@ export const grantCurrency = onCall(async (request) => {
   });
   await notifyUsers(userIds, {
     type: "currency",
-    text: `You received ${amount} ${currency === "pokecoin" ? "Poke Coins" : currency === "gengarcoin" ? "Gengar Coins" : "Snag Emblems"}!`,
+    text: `You received ${amount} ${CURRENCY_NAMES[currency as CurrencyKey] ?? currency}!`,
     link: "/Dashboard",
   });
 
@@ -2767,6 +2875,56 @@ export const grantPokemon = onCall(async (request) => {
   return { ok: true };
 });
 
+/**
+ * One-time starter pick for new members: any 1-star species or a classic
+ * starter line's base form (STARTER_DEX). Only available while the member owns
+ * zero pokemon, so it can never be farmed; the pick is stamped on the user doc
+ * and audited.
+ */
+export const chooseStarter = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const slug = requireString(request.data?.slug, "pokemon", 100);
+  const info = catalogBySlug.get(slug);
+  if (!info) throw new HttpsError("invalid-argument", "Unknown pokemon.");
+  const idx = Number(info.idx ?? 0);
+  // Library star overrides beat the static table, same as rollEncounter, so a
+  // species an admin bumped above 1 star stops being claimable.
+  const overrides = (await db.doc("admin/star_overrides").get()).data() ?? {};
+  const overrideStar = Math.trunc(Number(overrides[String(idx)]));
+  const star = overrideStar >= 1 && overrideStar <= 7 ? overrideStar : starForDex(idx);
+  if (star !== 1 && !STARTER_DEX.has(idx)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Starters must be a 1 star species or a classic starter."
+    );
+  }
+
+  const ownedRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  const now = new Date();
+  await db.runTransaction(async (tx) => {
+    const owned = ((await tx.get(ownedRef)).data() as Record<string, unknown>) ?? {};
+    if (Object.keys(owned).length) {
+      throw new HttpsError(
+        "failed-precondition",
+        "The starter pick is only for members with no pokemon yet."
+      );
+    }
+    tx.set(ownedRef, { [randomUUID()]: buildOwnedPokemon(slug, now, {}) }, { merge: true });
+    tx.set(db.doc(`users/${uid}`), { starterChosen: slug }, { merge: true });
+  });
+
+  await db.collection("auditLogs").add({
+    action: "starter.choose",
+    actorUid: uid,
+    actorName: member.username,
+    details: { slug, name: info.name },
+    createdAt: now,
+  });
+
+  return { ok: true, name: info.name };
+});
+
 // ---------------------------------------------------------------------------
 // New member approvals (NewUsers -> users)
 // ---------------------------------------------------------------------------
@@ -2797,6 +2955,9 @@ export const approveNewUser = onCall(async (request) => {
       capabilities: [],
       badges: Array.isArray(data.badges) ? data.badges : [],
       isGaia: data.isGaia ?? "No",
+      // Kept so the onboarding import can match the member to their Gaia
+      // profile export (scripts/gaia-export).
+      ...(data.gaiaName ? { gaiaName: data.gaiaName } : {}),
       ...(data.discordUID ? { discordUID: data.discordUID } : {}),
       ...(data.avatar ? { avatar: data.avatar } : {}),
       joinedAt:
@@ -2819,6 +2980,18 @@ export const approveNewUser = onCall(async (request) => {
     text: "Your membership was approved. Welcome to Snagem Guild!",
     link: "/Dashboard",
   });
+  // Applicants cannot see in-app notifications until they log in, so the
+  // approval also goes out by email (no-op until the admin saves a key).
+  await sendEmail(
+    String(data.email ?? ""),
+    "Your Snagem Guild membership is approved!",
+    `<p>Welcome to the Snagem Guild, ${String(data.username ?? "trainer")}!</p>
+     <p>An admin approved your application. You can now
+     <a href="https://snagemguild.com/Login">log in</a> and get started:
+     create your character, claim your starter pokemon, and build your first team.</p>
+     <p>Returning from the Gaia guild? The onboarding page can restore your
+     old collection once you are signed in.</p>`
+  );
 
   return { ok: true };
 });
@@ -2843,6 +3016,15 @@ export const rejectNewUser = onCall(async (request) => {
     details: { username: snap.data()?.username, note, targetUid },
     createdAt: new Date(),
   });
+  await sendEmail(
+    String(snap.data()?.email ?? ""),
+    "About your Snagem Guild application",
+    `<p>Thanks for applying to the Snagem Guild. Our team could not approve the
+     application this time.</p>
+     ${note ? `<p>Reviewer note: ${note.replace(/</g, "&lt;")}</p>` : ""}
+     <p>You are welcome to apply again at
+     <a href="https://snagemguild.com/Register">snagemguild.com</a>.</p>`
+  );
 
   return { ok: true };
 });
@@ -3234,7 +3416,7 @@ export const approveImport = onCall(async (request) => {
       importDocRef,
       {
         status: "granted",
-        currency: { pokecoin: 0, gengarcoin: 0, snagemblem: 0 },
+        currency: { pokecoin: 0, gengarcoin: 0, snagemblem: 0, snagEmblemPieces: 0 },
         items: [],
         pokemon: [],
         reviewedAt: now.getTime(),

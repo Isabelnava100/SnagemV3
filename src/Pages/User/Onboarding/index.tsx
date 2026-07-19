@@ -42,11 +42,13 @@ import {
   submitImportRequest,
 } from "../../../queries/imports";
 import { downloadCsv, parseImportCsv } from "./csv";
+import GaiaPrefill from "./GaiaPrefill";
 
 const CURRENCY_LABELS: { key: keyof ImportEntries["currency"]; label: string }[] = [
-  { key: "pokecoin", label: "Poke Coins" },
+  { key: "pokecoin", label: "Snag Coins" },
   { key: "gengarcoin", label: "Gengar Coins" },
   { key: "snagemblem", label: "Snag Emblems" },
+  { key: "snagEmblemPieces", label: "Emblem Pieces" },
 ];
 
 const pokemonByName = new Map(pokemonData.map((p) => [p.name.toLowerCase(), p]));
@@ -157,6 +159,18 @@ export default function Onboarding() {
           <SubmittedPreview entries={entries} />
         ) : (
           <>
+            <GaiaPrefill
+              onPrefill={(prefill, noteAppend) => {
+                // Merge, never clobber: anything already added by hand stays.
+                const hasCurrency = CURRENCY_LABELS.some((c) => entries.currency[c.key] > 0);
+                update({
+                  currency: hasCurrency ? entries.currency : prefill.currency,
+                  items: [...entries.items, ...prefill.items],
+                  pokemon: [...entries.pokemon, ...prefill.pokemon],
+                });
+                setNote((prev) => (prev ? `${prev}\n\n${noteAppend}` : noteAppend));
+              }}
+            />
             <CurrencySection
               currency={entries.currency}
               onChange={(currency) => update({ ...entries, currency })}

@@ -32,9 +32,10 @@ import {
 } from "../../../../queries/imports";
 
 const CURRENCY: { key: keyof ImportEntries["currency"]; label: string }[] = [
-  { key: "pokecoin", label: "Poke Coins" },
+  { key: "pokecoin", label: "Snag Coins" },
   { key: "gengarcoin", label: "Gengar Coins" },
   { key: "snagemblem", label: "Snag Emblems" },
+  { key: "snagEmblemPieces", label: "Emblem Pieces" },
 ];
 
 export default function Imports() {
