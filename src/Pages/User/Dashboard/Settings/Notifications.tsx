@@ -399,6 +399,11 @@ export default function Notifications() {
             {...getInputProps("discordNotifications", { type: "checkbox" })}
             label="Enable Discord notifications"
           />
+          <Text fz={14} c="dimmed">
+            Your site notifications also ping you in the guild's Discord
+            notifications channel (never a private message). Requires a
+            connected Discord account below.
+          </Text>
           <ConnectDiscord />
           <DiscordPublicToggle />
         </Stack>

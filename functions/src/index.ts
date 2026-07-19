@@ -470,7 +470,16 @@ function sanitizeCharacters(input: unknown): any[] {
 /**
  * Fire-and-forget in-app notifications (users/{uid}/notifications). Recipients
  * who turned off site notifications (users/{uid}.settings.siteNotifications ===
- * false) are skipped; the default (unset) is on.
+ * false) are skipped; the default (unset) is on. Mention notifications also
+ * honor the "direct ping" toggle (settings.directPingNotifications, default
+ * on).
+ *
+ * Discord mirror: recipients who opted in (settings.discordNotifications ===
+ * true, explicit opt-in) AND have linked Discord (users/{uid}.discordUID) are
+ * additionally pinged in the guild's configured Discord channel via the Site
+ * Settings webhook. One channel message per notification event, never DMs.
+ * If the webhook is not configured yet, this is a silent no-op, so the
+ * feature switches on the moment the admin saves the webhook URL.
  */
 async function notifyUsers(
   uids: string[],
@@ -481,20 +490,50 @@ async function notifyUsers(
   const settingSnaps = await Promise.all(
     unique.map((uid) => db.doc(`users/${uid}`).get().catch(() => null))
   );
-  const allowed = unique.filter(
-    (_, i) => (settingSnaps[i]?.data()?.settings?.siteNotifications ?? true) !== false
-  );
+  const rows = unique.map((uid, i) => ({ uid, data: settingSnaps[i]?.data() }));
+  const allowed = rows.filter((r) => {
+    const settings = r.data?.settings ?? {};
+    if ((settings.siteNotifications ?? true) === false) return false;
+    if (notification.type === "mention" && (settings.directPingNotifications ?? true) === false) {
+      return false;
+    }
+    return true;
+  });
   if (!allowed.length) return;
   const batch = db.batch();
   const now = new Date();
-  allowed.forEach((uid) => {
-    batch.create(db.collection(`users/${uid}/notifications`).doc(), {
+  allowed.forEach((r) => {
+    batch.create(db.collection(`users/${r.uid}/notifications`).doc(), {
       ...notification,
       read: false,
       createdAt: now,
     });
   });
   await batch.commit().catch(() => undefined); // never block the main action
+
+  const discordTargets = allowed.filter(
+    (r) => r.data?.settings?.discordNotifications === true && r.data?.discordUID
+  );
+  if (discordTargets.length) {
+    try {
+      const { webhookUrl } = await discordConfig();
+      if (!webhookUrl) return;
+      const pings = discordTargets.map((r) => `<@${r.data?.discordUID}>`).join(" ");
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: `${pings} ${notification.text}`.slice(0, 1900) +
+            `\nhttps://snagemguild.com${notification.link}`,
+          // Only user pings are honored, so notification text can never
+          // trigger @everyone/@here or role pings in the channel.
+          allowed_mentions: { parse: ["users"] },
+        }),
+      });
+    } catch {
+      // Discord being down or unconfigured never blocks the main action.
+    }
+  }
 }
 
 /** Resolve @mention usernames (data-id attributes in Tiptap HTML) to uids. */

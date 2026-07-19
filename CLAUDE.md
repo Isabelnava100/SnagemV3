@@ -97,7 +97,12 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
   Thread flag `noXp` (new-thread composer checkbox) disables all progression.
   Cleanup: `useShadowVaccine` callable + "Shadow Vaccine" catalog item (item 994
   in `src/data/item/item.json`; re-add if regenerated). `notifyUsers` honors
-  `users/{uid}.settings.siteNotifications`. Admins can still assign BONUS team XP
+  `users/{uid}.settings.siteNotifications`, honors
+  `settings.directPingNotifications` for mention notifications, and mirrors
+  every notification to Discord as a channel ping (never a DM) for recipients
+  with `settings.discordNotifications === true` AND a linked `discordUID`,
+  via the Site Settings webhook; silently inert until the admin saves the
+  webhook URL, then live immediately (needs a functions deploy). Admins can still assign BONUS team XP
   at close (`ThreadRewards` editable fields → `finalizeThreadRewards`, applied on
   top of earned XP). Stats scale + shadow/purification guide: `/Library?tab=shadow`
   (`src/Pages/Library/shadow.tsx`); shared helpers in `src/lib/shadow.ts`.
