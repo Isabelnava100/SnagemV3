@@ -181,6 +181,107 @@ const KB: KbEntry[] = [
     },
   },
   {
+    match: /trade|trading|swap|listing|offer.*pokemon|pokemon.*offer/i,
+    answer: () => (
+      <>
+        The <L to="/Trading">Trading Post</L> is the only way a pokemon changes trainers:
+        put one on the board with what you would accept in return, or make an offer on
+        someone else&apos;s listing (you get a notification when offers land). A pokemon
+        battling on a locked team stays untradable until that thread closes. You can also
+        move pokemon freely between your OWN characters there.
+      </>
+    ),
+  },
+  {
+    match: /breed|daycare|egg group|hatch|egg\b/i,
+    answer: () => (
+      <>
+        The <L to="/Daycare">Daycare</L> takes one pair at a time: one male and one
+        female sharing an egg group, or anything breedable with a Ditto. Legendaries and
+        Undiscovered-group pokemon cannot breed. The egg hatches into the base form of
+        the mother&apos;s line after the configured days or posts. Egg groups show on
+        each pokemon&apos;s info box in your <L to="/Dashboard">Console</L>.
+      </>
+    ),
+  },
+  {
+    match: /fish|rod|pond|angler/i,
+    answer: () => (
+      <>
+        The Fishing Pond is a weekly activity: grab any rod from the{" "}
+        <L to="/Shop">Snag Mall</L>, then head to the pond from the{" "}
+        <L to="/Activities">Activities page</L>. One cast per week with the character of
+        your choice; bites are 1★ to 3★ Water-types (3★ is a 10% roll), and releasing
+        your catch pays 1 Snag Coin. The pond thread is fishing-only.
+      </>
+    ),
+  },
+  {
+    match: /berry|farm|plant|harvest/i,
+    answer: () => (
+      <>
+        The Berry Farm lives on the <L to="/Activities">Activities page</L>: plant a bag
+        berry in an open plot and harvest a bigger yield after it grows (about a week by
+        default). Harvesting counts as your weekly activity task.
+      </>
+    ),
+  },
+  {
+    match: /held item|hold item|leftovers|muscle band|assault vest|focus sash|lucky egg|quick claw|shell bell/i,
+    answer: () => (
+      <>
+        Held items equip from your <L to="/Dashboard">Console&apos;s</L> pokemon box
+        (Held item, in each pokemon&apos;s details). The battle set: Muscle Band,
+        Assault Vest, Leftovers, Shell Bell, Focus Sash, Quick Claw and Lucky Egg; exact
+        numbers are in <L to="/Library?tab=battle">Library &gt; The War Room</L>.
+      </>
+    ),
+  },
+  {
+    match: /pokemon center|nurse|heal.*team|center.*visit/i,
+    answer: () => (
+      <>
+        Mid-thread you can spend a POST visiting the Pokemon Center (no coins). It opens
+        after one battle-free post with no live encounter or boss, fully heals and cures
+        your team&apos;s wounds from that thread, and blocks battling on the visit post
+        and your next one. Details:{" "}
+        <L to="/Library?tab=battle">Library &gt; The War Room</L>.
+      </>
+    ),
+  },
+  {
+    match: /nature/i,
+    answer: () => (
+      <>
+        Every pokemon has one of 25 natures, shown on its info box in your{" "}
+        <L to="/Dashboard">Console</L>. Attack natures hit harder, defense natures take
+        hits better, speed natures escape easier, neutral ones do nothing. The full list
+        and numbers live in <L to="/Library?tab=battle">Library &gt; The War Room</L>.
+      </>
+    ),
+  },
+  {
+    match: /weather|rain|sandstorm|sunlight|snow\b/i,
+    answer: () => (
+      <>
+        Thread weather (sun, rain, sandstorm, snow) boosts favored attacker types and
+        weakens the rest. Hosts set it at creation and can retune it any time from the
+        Host Menu. Numbers: <L to="/Library?tab=battle">Library &gt; The War Room</L>.
+      </>
+    ),
+  },
+  {
+    match: /rematch|elite four ladder|fight.*leader.*again/i,
+    answer: () => (
+      <>
+        Beaten a gym leader? The Rematch Ladder on the{" "}
+        <L to="/Challenges">Challenges page</L> lets you challenge them again, tier
+        after tier, each round about a star tougher. Staff host the thread like a normal
+        gym run.
+      </>
+    ),
+  },
+  {
     match: /requirement|what.*missing|close.*thread|mission target|finish.*mission/i,
     answer: () => (
       <>
@@ -451,7 +552,7 @@ export default function SnagAgent() {
         </ScrollArea>
 
         <Box p="sm" style={{ borderTop: "1px solid #232028" }}>
-          <Group gap={6} mb={8} wrap="wrap">
+          <Group gap={6} mb={8} wrap="wrap" visibleFrom="sm">
             {chips.map((c) => (
               <Button
                 key={c.label}

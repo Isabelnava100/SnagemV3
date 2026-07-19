@@ -17,6 +17,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
 import { SnagIcon } from "../../icons/SnagIcon";
 import { typesForDex } from "../../lib/typeChart";
+import { canBreed, eggGroupsForDex } from "../../lib/eggGroups";
 import { getOwnedPokemons } from "../../queries/dashboard";
 import {
   DEFAULT_BATTLE_MECHANICS,
@@ -133,7 +134,7 @@ export default function Daycare() {
         eyebrow="Breeding · One pair at a time"
         eyebrowColor="pink.0"
         title="The Daycare"
-        subtitle={`Drop one Pokemon in each slot. If they get along, an Egg appears after ${mech.hatchDays ?? 15} days or ${mech.hatchPosts} posts, whichever comes first.`}
+        subtitle={`Drop one Pokemon in each slot: a male and a female sharing an egg group (or anything with a Ditto). Legendaries and Undiscovered-group pokemon cannot breed. The Egg appears after ${mech.hatchDays ?? 15} days or ${mech.hatchPosts} posts, whichever comes first.`}
         aside={
           <Box px={16} py={12} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #3a3550" }}>
             <Text ff="monospace" fz={12} c="dimmed" tt="uppercase">
@@ -235,6 +236,15 @@ export default function Daycare() {
                         </Text>
                         <Text ff="monospace" fz={11} c="dimmed" tt="uppercase" ta="center">
                           {typesForDex(Number(p.pokedex) || 0).join(" · ")}
+                        </Text>
+                        <Text
+                          ff="monospace"
+                          fz={11}
+                          c={canBreed(p.pokedex ?? 0) ? "teal.4" : "pink.0"}
+                          tt="uppercase"
+                          ta="center"
+                        >
+                          {eggGroupsForDex(p.pokedex ?? 0).join(" / ")}
                         </Text>
                       </Stack>
                     </Card>

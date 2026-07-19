@@ -29,7 +29,7 @@ import {
   MAX_TRAINING_POSTS,
 } from "../../../queries/colosseum";
 import { queryClient } from "../../../lib/react-query";
-import { callPokemonCenterHeal, callableMessage } from "../functionsClient";
+import { callableMessage } from "../functionsClient";
 import {
   DRAFT_WARNING_AT,
   MAX_DRAFTS,
@@ -267,16 +267,15 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     () => thread?.battleDamage?.[user?.uid ?? ""] ?? {},
     [thread, user]
   );
-  const [centerMessage, setCenterMessage] = React.useState("");
-  const centerHeal = useMutation({
-    mutationFn: () => callPokemonCenterHeal(forum, threadId!),
-    onSuccess: (result) => {
-      setCenterMessage(`The nurse healed your team! (${result.cost} Snag Coins)`);
-      queryClient.invalidateQueries({ queryKey: ["forum-thread", forum, threadId] });
-    },
-    onError: (e) =>
-      setCenterMessage(callableMessage(e, "The Pokemon Center could not heal you right now.")),
-  });
+  // Pokemon Center: the post itself is the price. Available only after a full
+  // battle-free post, with no live encounter or boss, and it locks battling
+  // out of this post and the next (all server-enforced too).
+  const [centerVisit, setCenterVisit] = React.useState(false);
+  const myBattleLog = thread?.battleLog?.[user?.uid ?? ""] ?? {};
+  const myThreadPosts = Number(myBattleLog.posts) || 0;
+  const myLastBattlePost = Number(myBattleLog.lastBattle) || 0;
+  const myCenterAt = Number(myBattleLog.centerAt) || 0;
+  const centerCooldown = myCenterAt > 0 && myThreadPosts + 1 <= myCenterAt + 1;
   const fighterPool = evoTeamPokemon.map((p) => {
     const maxHp = maxHpForLevel(levelProgress(p.experience ?? 0).level, hpScaling);
     const dmg = Math.min(maxHp, Math.max(0, myDamage[p.id] ?? 0));
@@ -398,6 +397,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
         ...(mode === "new" && attackBoss ? { attackBoss: true } : {}),
         ...(mode === "new" && thread?.safariContest && encounter ? { safariAction } : {}),
         ...(mode === "new" && fleeAttempt && canFlee ? { fleeAttempt: true } : {}),
+        ...(mode === "new" && centerVisit ? { centerVisit: true } : {}),
         ...(mode === "new" && fighterNeeded && fighterId ? { fighterId } : {}),
         ...(mode === "new" && evolve ? { evolve } : {}),
         ...(mode === "edit" ? { editPostId: postId } : {}),
@@ -711,25 +711,6 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                   your fighter, revives restore your first fainted pokemon, before the
                   enemy's hit lands.
                 </PanelHint>
-                <Group gap={8} mt={6} align="center">
-                  <GradientButtonSecondary
-                    radius="xl"
-                    size="compact-sm"
-                    loading={centerHeal.isPending}
-                    onClick={() => centerHeal.mutate()}
-                  >
-                    Visit the Pokemon Center ({liveBattleCfg?.mechanics.centerCost ?? 10} Snag
-                    Coins)
-                  </GradientButtonSecondary>
-                  <Text fz={14} c="dimmed">
-                    Fully heals and cures your whole team on this thread.
-                  </Text>
-                </Group>
-                {centerMessage && (
-                  <Text fz={14} c="gold.1" role="status" aria-live="polite">
-                    {centerMessage}
-                  </Text>
-                )}
                 {lockedTeamWiped && (
                   <Text fz={14} c="gold.1" role="status" aria-live="polite">
                     Your locked team was wiped. You may bring another team or
@@ -739,16 +720,20 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                 {canFlee && (
                   <Stack gap={4} mt={8}>
                     <Checkbox
-                      label={`Attempt to run away (${fleeChanceForStar(enemyStar)}% chance)`}
+                      label={
+                        thread?.fishingPond
+                          ? "Let it go (+1 Snag Coin, always works)"
+                          : `Attempt to run away (${fleeChanceForStar(enemyStar)}% chance)`
+                      }
                       color="green.0"
                       checked={fleeAttempt}
                       onChange={(e) => setFleeAttempt(e.currentTarget.checked)}
                       styles={{ label: { color: "white", fontSize: 16 } }}
                     />
                     <PanelHint>
-                      Success ends the encounter and your post goes through safely. On
-                      a failed escape the turn is wasted: no damage is landed on the
-                      enemy and it still gets its hit in.
+                      {thread?.fishingPond
+                        ? "Releasing your catch ends the encounter and the pond pays you 1 Snag Coin for the sport."
+                        : "Success ends the encounter and your post goes through safely. On a failed escape the turn is wasted: no damage is landed on the enemy and it still gets its hit in."}
                     </PanelHint>
                   </Stack>
                 )}
@@ -760,6 +745,65 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                 )}
               </ForumPanel>
             )}
+
+            {mode === "new" &&
+              !thread?.safariContest &&
+              !battleOngoing &&
+              !(attackBoss && bossActive) &&
+              (() => {
+                const hasDamageHere =
+                  Object.values(myDamage).some((v) => Number(v) > 0) ||
+                  Object.keys(thread?.battleStatus?.[user?.uid ?? ""] ?? {}).length > 0;
+                const restedFully = myLastBattlePost === 0 || myLastBattlePost < myThreadPosts;
+                if (centerCooldown) {
+                  return (
+                    <ForumPanel title="Pokemon Center">
+                      <Text fz={14} c="dimmed">
+                        You are just back from the Pokemon Center: no encounters or battles
+                        until your next post.
+                      </Text>
+                    </ForumPanel>
+                  );
+                }
+                if (!hasDamageHere || bossActive) return null;
+                if (!restedFully) {
+                  return (
+                    <ForumPanel title="Pokemon Center">
+                      <Text fz={14} c="dimmed">
+                        The Pokemon Center takes you in after one battle-free post. Post
+                        without fighting first, then the visit opens up.
+                      </Text>
+                    </ForumPanel>
+                  );
+                }
+                return (
+                  <ForumPanel title="Pokemon Center">
+                    <Checkbox
+                      label="Spend this post visiting the Pokemon Center"
+                      color="green.0"
+                      checked={centerVisit}
+                      onChange={(e) => {
+                        const on = e.currentTarget.checked;
+                        if (
+                          on &&
+                          !window.confirm(
+                            "Visit the Pokemon Center? This post becomes the trip: your team on this thread is fully healed and cured, and you cannot roll encounters or battle in this post or your next one here."
+                          )
+                        ) {
+                          return;
+                        }
+                        setCenterVisit(on);
+                      }}
+                      styles={{ label: { color: "white", fontSize: 15 } }}
+                    />
+                    <PanelHint>
+                      Nurse Joy heals only your own team, and only its wounds from this
+                      thread. The post is the price: no coins, but no battling this post or
+                      the next.
+                    </PanelHint>
+                  </ForumPanel>
+                );
+              })()}
 
             <ForumPanel title="Write Your Post">
               <Editor editor={editor} />

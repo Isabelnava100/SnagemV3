@@ -207,6 +207,7 @@ export enum Capability {
   ApproveImports = "ApproveImports",
   HostMainForum = "HostMainForum",
   ManageLore = "ManageLore",
+  ManageBattles = "ManageBattles",
 }
 
 export const CAPABILITY_INFO: Record<Capability, string> = {
@@ -221,6 +222,8 @@ export const CAPABILITY_INFO: Record<Capability, string> = {
   [Capability.ApproveImports]: "Review and approve returning-member data imports (currency, items, Pokemon)",
   [Capability.HostMainForum]: "Create threads in Main Adventures",
   [Capability.ManageLore]: "Create and edit the Lore Library (books and entries)",
+  [Capability.ManageBattles]:
+    "Battle staff: enable/disable battle mode on any thread and act as host there (bosses, weather, encounters)",
 };
 
 export type SpecificUser = {

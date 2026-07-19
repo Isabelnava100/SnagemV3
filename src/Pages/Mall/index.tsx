@@ -21,6 +21,7 @@ import { IconArrowLeft, IconLock, IconRefresh, IconShoppingBag, IconSparkles } f
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
+import { Link } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
@@ -1342,6 +1343,46 @@ export default function Mall() {
         ) : (
           <ArcadeView shops={shopList} onEnter={(id) => setActiveShopId(id)} />
         )}
+
+        {/* Off-mall services: exchange and breeding live on their own pages. */}
+        <Group gap={12} mt={28} wrap="wrap">
+          <Card
+            component={Link}
+            to="/Trading"
+            withBorder
+            radius={16}
+            p="md"
+            style={{ flex: "1 1 280px", background: "#141822", borderColor: "#28324a", textDecoration: "none" }}
+          >
+            <Text fz={14} fw={700} c="cyan.3" tt="uppercase" style={{ letterSpacing: 2 }}>
+              The Trading Post
+            </Text>
+            <Text fz={16} fw={700} c="white">
+              Swap Pokemon with other members
+            </Text>
+            <Text fz={13} c="dimmed">
+              Put one on the board, browse listings, make an offer.
+            </Text>
+          </Card>
+          <Card
+            component={Link}
+            to="/Daycare"
+            withBorder
+            radius={16}
+            p="md"
+            style={{ flex: "1 1 280px", background: "#1a1420", borderColor: "#3a2a45", textDecoration: "none" }}
+          >
+            <Text fz={14} fw={700} c="pink.3" tt="uppercase" style={{ letterSpacing: 2 }}>
+              The Daycare
+            </Text>
+            <Text fz={16} fw={700} c="white">
+              Leave a pair, hatch an egg
+            </Text>
+            <Text fz={13} c="dimmed">
+              Shared egg group, one male + one female (or a Ditto).
+            </Text>
+          </Card>
+        </Group>
       </Container>
     </Box>
   );

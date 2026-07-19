@@ -28,6 +28,8 @@ import { pokemonData } from "../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "../../helpers";
 import { actorFrom, logAuditEvent } from "../../lib/auditLog";
 import { postsToBeatStar, starForDex } from "../../lib/encounterStars";
+import { typesForDex } from "../../lib/typeChart";
+import { eggGroupsForDex } from "../../lib/eggGroups";
 import { isAdmin } from "../../lib/permissions";
 import { resolveListSlugs } from "../forum/queries";
 import { getPokemonLists, getStarOverrides, setStarOverride } from "../../queries/admin";
@@ -275,6 +277,12 @@ function PokedexTab() {
               </Text>
               <Text fz={14} c="gold.1" fw={700}>
                 {star}★{overridden ? " (set)" : ""}
+              </Text>
+              <Text fz={12} c="dimmed" ta="center" lineClamp={1}>
+                {typesForDex(p.idx).join("/")}
+              </Text>
+              <Text fz={12} c="dimmed" ta="center" lineClamp={1}>
+                Egg: {eggGroupsForDex(p.idx).join("/")}
               </Text>
             </Stack>
           );

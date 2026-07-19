@@ -1,193 +1,895 @@
 import {
   Avatar,
   Badge,
+  Box,
   Button,
   Card,
   Container,
   Group,
+  MultiSelect,
+  NumberInput,
+  Popover,
   Select,
+  SimpleGrid,
   Stack,
   Text,
+  Textarea,
+  Tooltip,
 } from "@mantine/core";
+import { IconArrowsExchange, IconChartBar } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
+import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
-import { getOwnedPokemons } from "../../queries/dashboard";
-import { callProposeTrade, callRespondTrade, getMyTrades } from "../../queries/game";
-import { getUsers } from "../../queries/admin";
+import { clickable } from "../../lib/a11y";
+import { ALL_TYPES, typesForDex } from "../../lib/typeChart";
+import { pokemonData } from "../../data/pokemon";
+import { getCharacters, getOwnedPokemons, getTeamsRaw } from "../../queries/dashboard";
+import { assignPokemonCharacter } from "../../queries/evolution";
+import {
+  ThreadLockEntry,
+  TradeListing,
+  TradeSnapshot,
+  TradeWants,
+  callCancelTradeListing,
+  callCreateTradeListing,
+  callMakeTradeOffer,
+  callRespondTradeOffer,
+  getThreadLocks,
+  getTradeListings,
+} from "../../queries/game";
+import { OwnedPokemon } from "../../components/types/typesUsed";
 
 /**
- * Poke Swap (trading station): pokemon-for-pokemon only, per the guild rules
- * (no gifting or selling). Propose to a member; they accept with the pokemon
- * they trade back, decline, or you cancel. The swap is server-side.
+ * The Trading Post: a public board of listings. Put one pokemon up with what
+ * you would accept in return, or scan the board and make an offer on someone
+ * else's listing. All swaps run through Cloud Functions; a pokemon on a
+ * locked team in an open battle thread cannot be traded until that thread
+ * closes (greyed with a tooltip link to the thread). Members can also move
+ * pokemon between their OWN characters here, since ownership is
+ * character-level, not account-level.
+ *
+ * The "what you'd accept" criteria and the pokemon previews are data-driven
+ * (MUSTHAVE_OPTIONS + the server snapshot fields): new game mechanics extend
+ * those lists and this UI follows automatically.
  */
-export default function Trading() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [target, setTarget] = React.useState<string | null>(null);
-  const [offerId, setOfferId] = React.useState<string | null>(null);
-  const [counterFor, setCounterFor] = React.useState<Record<string, string | null>>({});
+
+const GENDER_COLOR = (g?: string) => (g === "F" ? "pink.3" : "blue.3");
+
+/** Must-have criteria chips. Add new entries as mechanics grow; the create
+ * form and the listing cards render whatever is in this list. */
+const MUSTHAVE_OPTIONS: Array<{
+  key: keyof TradeWants;
+  label: (w: TradeWants) => string;
+  active: (w: TradeWants) => boolean;
+  toggle: (w: TradeWants) => Partial<TradeWants>;
+}> = [
+  {
+    key: "shiny",
+    label: () => "Shiny",
+    active: (w) => w.shiny,
+    toggle: (w) => ({ shiny: !w.shiny }),
+  },
+  {
+    key: "minLevel",
+    label: (w) => (w.minLevel > 0 ? `Lv ${w.minLevel}+` : "Lv 40+"),
+    active: (w) => w.minLevel > 0,
+    toggle: (w) => ({ minLevel: w.minLevel > 0 ? 0 : 40 }),
+  },
+  {
+    key: "minStar",
+    label: (w) => (w.minStar > 0 ? `${w.minStar}★+` : "3★+"),
+    active: (w) => w.minStar > 0,
+    toggle: (w) => ({ minStar: w.minStar > 0 ? 0 : 3 }),
+  },
+];
+
+const EMPTY_WANTS: TradeWants = {
+  species: [],
+  types: [],
+  shiny: false,
+  minLevel: 0,
+  minStar: 0,
+  note: "",
+};
+
+function timeAgo(seconds?: number): string {
+  if (!seconds) return "";
+  const diff = Math.max(0, Date.now() / 1000 - seconds);
+  if (diff < 3600) return `${Math.max(1, Math.round(diff / 60))}m ago`;
+  if (diff < 86400) return `${Math.round(diff / 3600)}h ago`;
+  return `${Math.round(diff / 86400)}d ago`;
+}
+
+/** Compact info line for a snapshot; renders whatever fields are present so
+ * future snapshot additions (from the server) show up without UI changes. */
+function SnapshotChips(props: { p: TradeSnapshot }) {
+  const { p } = props;
+  const chips: string[] = [];
+  if (p.level) chips.push(`Lv ${p.level}`);
+  if (p.types?.length) chips.push(p.types.join("/"));
+  if (p.star) chips.push(`${p.star}★`);
+  if (p.nature) chips.push(p.nature);
+  if (p.eggGroups?.length) chips.push(`Egg: ${p.eggGroups.join("/")}`);
+  return (
+    <Text fz={13} c="dimmed" ta="center">
+      {chips.join(" · ")}
+    </Text>
+  );
+}
+
+/** Short wants summary: at most two chips + a popover with the full list, so
+ * long wish lists never break the card layout. */
+function WantsSummary(props: { wants: TradeWants }) {
+  const w = props.wants;
+  const chips: string[] = [];
+  w.species.forEach((slug) => {
+    const s = pokemonData.find((p) => p.slug === slug);
+    chips.push(s?.name ?? slug);
+  });
+  w.types.forEach((t) => chips.push(`Any ${t}-type`));
+  MUSTHAVE_OPTIONS.forEach((o) => {
+    if (o.active(w)) chips.push(o.label(w));
+  });
+  if (!chips.length) chips.push("Open to offers");
+  const shown = chips.slice(0, 2);
+  const extra = chips.length - shown.length;
+  return (
+    <Stack gap={4} align="center">
+      {shown.map((c) => (
+        <Badge key={c} variant="light" color="violet" size="sm" radius="xl">
+          {c}
+        </Badge>
+      ))}
+      {extra > 0 && (
+        <Popover width={260} position="bottom" withArrow shadow="md">
+          <Popover.Target>
+            <Badge
+              variant="outline"
+              color="gray"
+              size="sm"
+              radius="xl"
+              style={{ cursor: "pointer" }}
+              tabIndex={0}
+              aria-label="View the full wish list"
+            >
+              +{extra} more
+            </Badge>
+          </Popover.Target>
+          <Popover.Dropdown bg="#1c1a24">
+            <Text fz={13} fw={700} c="white" mb={6}>
+              Full wish list
+            </Text>
+            <Stack gap={4}>
+              {chips.map((c) => (
+                <Text key={c} fz={13} c="dimmed">
+                  · {c}
+                </Text>
+              ))}
+              {w.note && (
+                <Text fz={13} c="dimmed" fs="italic" mt={4}>
+                  &quot;{w.note}&quot;
+                </Text>
+              )}
+            </Stack>
+          </Popover.Dropdown>
+        </Popover>
+      )}
+      {w.note && extra <= 0 && (
+        <Text fz={12} c="dimmed" ta="center" lineClamp={1}>
+          {w.note}
+        </Text>
+      )}
+    </Stack>
+  );
+}
+
+/** The open battle thread pinning this pokemon's team, if any. */
+function lockFor(
+  pokemonId: string,
+  teams: Array<{ id: string; pokemon_ids?: string[] }> | undefined,
+  locks: Record<string, ThreadLockEntry> | undefined
+): ThreadLockEntry | null {
+  if (!teams || !locks) return null;
+  for (const lock of Object.values(locks)) {
+    for (const teamId of lock.teamIds ?? []) {
+      const team = teams.find((t) => t.id === teamId);
+      if (team?.pokemon_ids?.includes(pokemonId)) return lock;
+    }
+  }
+  return null;
+}
+
+function OwnPokemonCard(props: {
+  pokemon: OwnedPokemon;
+  selected: boolean;
+  lock: ThreadLockEntry | null;
+  onPick: () => void;
+}) {
+  const { pokemon: p, selected, lock } = props;
+  const navigate = useNavigate();
+  const card = (
+    <Card
+      withBorder
+      radius={12}
+      p={12}
+      style={{
+        background: selected ? "#20302a" : "#211f26",
+        borderColor: selected ? "#63E6BE" : lock ? "#2a2830" : "#3a3742",
+        cursor: "pointer",
+        opacity: lock ? 0.4 : 1,
+        filter: lock ? "grayscale(1)" : undefined,
+      }}
+      {...clickable(() =>
+        lock ? navigate(`/Forum/${lock.forum}/thread/${lock.threadId}`) : props.onPick()
+      )}
+      aria-label={
+        lock
+          ? `${p.name || p.species} is battling on ${lock.title || "a thread"}; open that thread`
+          : `Pick ${p.name || p.species}`
+      }
+    >
+      <Stack gap={4} align="center">
+        <Avatar src={getPokemonImageURL(p.image_slug, p.shiny)} size={52} radius="xl" />
+        <Text fz={14} fw={600} c="white" lineClamp={1}>
+          {p.name || p.species}{" "}
+          <Text span c={GENDER_COLOR(p.gender)} fw={700}>
+            {p.gender ?? ""}
+          </Text>
+        </Text>
+      </Stack>
+    </Card>
+  );
+  if (!lock) return card;
+  return (
+    <Tooltip
+      label={`Battling on "${lock.title || "an open thread"}". That thread must close before this pokemon can be traded. Click to open the thread.`}
+      multiline
+      w={240}
+    >
+      {card}
+    </Tooltip>
+  );
+}
+
+/* ----------------------------- Create a listing ---------------------------- */
+
+function CreateListing(props: {
+  owned: OwnedPokemon[];
+  teams: Array<{ id: string; pokemon_ids?: string[] }> | undefined;
+  locks: Record<string, ThreadLockEntry> | undefined;
+  onCreated: () => void;
+}) {
+  const [pokemonId, setPokemonId] = React.useState<string | null>(null);
+  const [wants, setWants] = React.useState<TradeWants>(EMPTY_WANTS);
   const [message, setMessage] = React.useState("");
 
-  const { data: owned } = useQuery({
-    queryKey: ["owned-pokemons", user?.uid],
-    queryFn: () => getOwnedPokemons(user!.uid),
-    enabled: !!user,
-  });
-  const { data: members } = useQuery({ queryKey: ["forum-all-users"], queryFn: getUsers, enabled: !!user });
-  const { data: trades } = useQuery({
-    queryKey: ["my-trades", user?.uid],
-    queryFn: () => getMyTrades(user!.uid),
-    enabled: !!user,
+  const create = useMutation({
+    mutationFn: () => callCreateTradeListing(pokemonId!, wants),
+    onSuccess: () => {
+      setMessage("Your listing is up on the board!");
+      setPokemonId(null);
+      setWants(EMPTY_WANTS);
+      props.onCreated();
+    },
+    onError: (e) => setMessage((e as Error).message || "Could not create the listing."),
   });
 
-  const refresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["my-trades", user?.uid] });
-    queryClient.invalidateQueries({ queryKey: ["owned-pokemons", user?.uid] });
-  };
+  const speciesOptions = React.useMemo(
+    () => pokemonData.map((p) => ({ value: p.slug, label: p.name })),
+    []
+  );
+
+  return (
+    <Stack gap={16}>
+      <Group align="stretch" gap={16} wrap="wrap">
+        <Card
+          withBorder
+          radius={16}
+          p="lg"
+          style={{
+            flex: "1 1 420px",
+            background: "#151a17",
+            borderColor: pokemonId ? "#63E6BE" : "#2a3530",
+          }}
+        >
+          <Text ff="monospace" fz={13} c="teal.4" tt="uppercase" style={{ letterSpacing: 2 }}>
+            You give
+          </Text>
+          <Text fz={20} fw={800} c="white" mb={12}>
+            Pick the Pokemon to trade away
+          </Text>
+          <SimpleGrid cols={{ base: 3, xs: 4, sm: 6 }} spacing={10}>
+            {props.owned.map((p) => (
+              <OwnPokemonCard
+                key={p.id}
+                pokemon={p}
+                selected={pokemonId === p.id}
+                lock={lockFor(p.id, props.teams, props.locks)}
+                onPick={() => setPokemonId(pokemonId === p.id ? null : p.id)}
+              />
+            ))}
+          </SimpleGrid>
+        </Card>
+
+        <Card
+          withBorder
+          radius={16}
+          p="lg"
+          style={{ flex: "1 1 380px", background: "#17151f", borderColor: "#332f45" }}
+        >
+          <Text ff="monospace" fz={13} c="violet.3" tt="uppercase" style={{ letterSpacing: 2 }}>
+            You&apos;re looking for
+          </Text>
+          <Text fz={20} fw={800} c="white" mb={12}>
+            Describe what you&apos;d accept
+          </Text>
+
+          <Text fz={13} fw={700} c="dimmed" tt="uppercase" mb={6}>
+            Species / anything in a type
+          </Text>
+          <Group gap={8} mb={8}>
+            {ALL_TYPES.map((t) => {
+              const active = wants.types.includes(t);
+              return (
+                <Badge
+                  key={t}
+                  variant={active ? "filled" : "outline"}
+                  color={active ? "violet" : "gray"}
+                  radius="xl"
+                  style={{ cursor: "pointer" }}
+                  {...clickable(() =>
+                    setWants((w) => ({
+                      ...w,
+                      types: active ? w.types.filter((x) => x !== t) : [...w.types, t],
+                    }))
+                  )}
+                  aria-label={`Accept any ${t}-type`}
+                >
+                  {t}
+                </Badge>
+              );
+            })}
+          </Group>
+          <MultiSelect
+            placeholder="Or specific species (pick as many as you like)"
+            searchable
+            data={speciesOptions}
+            value={wants.species}
+            onChange={(species) => setWants((w) => ({ ...w, species }))}
+            limit={20}
+            mb={12}
+            aria-label="Specific species you would accept"
+            styles={{ input: { background: "#2E2D2E" } }}
+          />
+
+          <Text fz={13} fw={700} c="dimmed" tt="uppercase" mb={6}>
+            Must-haves
+          </Text>
+          <Group gap={8} mb={8}>
+            {MUSTHAVE_OPTIONS.map((o) => (
+              <Badge
+                key={String(o.key)}
+                variant={o.active(wants) ? "filled" : "outline"}
+                color={o.active(wants) ? "gold.1" : "gray"}
+                c={o.active(wants) ? "#1a1626" : undefined}
+                radius="xl"
+                style={{ cursor: "pointer" }}
+                {...clickable(() => setWants((w) => ({ ...w, ...o.toggle(w) })))}
+                aria-label={`Toggle must-have: ${o.label(wants)}`}
+              >
+                {o.label(wants)}
+              </Badge>
+            ))}
+          </Group>
+          <Group gap={10} mb={12}>
+            {wants.minLevel > 0 && (
+              <NumberInput
+                label="Min level"
+                value={wants.minLevel}
+                onChange={(v) =>
+                  setWants((w) => ({ ...w, minLevel: Math.max(1, Number(v) || 1) }))
+                }
+                min={1}
+                max={100}
+                size="xs"
+                w={110}
+                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+              />
+            )}
+            {wants.minStar > 0 && (
+              <NumberInput
+                label="Min star"
+                value={wants.minStar}
+                onChange={(v) =>
+                  setWants((w) => ({ ...w, minStar: Math.max(1, Math.min(7, Number(v) || 1)) }))
+                }
+                min={1}
+                max={7}
+                size="xs"
+                w={110}
+                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+              />
+            )}
+          </Group>
+
+          <Textarea
+            label="Trade note"
+            placeholder="Anything else offers should know."
+            value={wants.note}
+            onChange={(e) => setWants((w) => ({ ...w, note: e.currentTarget.value }))}
+            autosize
+            minRows={2}
+            maxLength={300}
+            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          />
+        </Card>
+      </Group>
+
+      <Button
+        radius="xl"
+        size="md"
+        variant="gradient"
+        gradient={{ from: "blue", to: "cyan", deg: 90 }}
+        disabled={!pokemonId}
+        loading={create.isPending}
+        onClick={() => {
+          setMessage("");
+          create.mutate();
+        }}
+      >
+        {pokemonId ? "Put it on the board" : "Pick a Pokemon to offer first"}
+      </Button>
+      {message && (
+        <Text fz={14} c="gold.1" role="status" aria-live="polite">
+          {message}
+        </Text>
+      )}
+    </Stack>
+  );
+}
+
+/* ------------------------------ Browse the board --------------------------- */
+
+function ListingCard(props: {
+  listing: TradeListing;
+  myUid: string;
+  owned: OwnedPokemon[];
+  teams: Array<{ id: string; pokemon_ids?: string[] }> | undefined;
+  locks: Record<string, ThreadLockEntry> | undefined;
+  onChanged: () => void;
+}) {
+  const { listing: l, myUid } = props;
+  const mine = l.ownerUid === myUid;
+  const [offerFor, setOfferFor] = React.useState<string | null>(null);
+  const [picking, setPicking] = React.useState(false);
+  const [message, setMessage] = React.useState("");
+
   const act = useMutation({
     mutationFn: (job: () => Promise<unknown>) => job(),
     onSuccess: () => {
       setMessage("Done!");
-      refresh();
+      setPicking(false);
+      setOfferFor(null);
+      props.onChanged();
     },
     onError: (e) => setMessage((e as Error).message || "That did not go through."),
   });
 
-  if (!user) return null;
-  const box = owned?.sortedData ?? [];
-  const myOptions = box.map((p) => ({ value: p.id, label: `${p.name || p.species}` }));
+  const openOffers = Object.entries(l.offers ?? {}).filter(([, o]) => o.status === "open");
+  const offerOptions = props.owned
+    .filter((p) => !lockFor(p.id, props.teams, props.locks))
+    .map((p) => ({ value: p.id, label: `${p.name || p.species} (${p.gender ?? "?"})` }));
 
   return (
-    <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
-      <PageHero
-        eyebrow="Poke Swap"
-        title="Trading Station"
-        subtitle="Trade a Pokemon for a Pokemon. Never given, never sold: the official swap is the only way a Pokemon changes trainers."
-        mb={24}
-      />
-      {message && (
-        <Text fz={14} c="gold.1" mb={12} role="status" aria-live="polite">
-          {message}
-        </Text>
-      )}
-
-      <Card withBorder radius={16} p="md" mb={20} style={{ background: "#141318" }}>
-        <Text fw={700} c="white" mb={8}>
-          Propose a trade
-        </Text>
-        <Group gap={10} wrap="wrap" align="flex-end">
-          <Select
-            label="To member"
-            placeholder="Pick a member"
-            searchable
-            data={(members ?? [])
-              .map((m) => m.username)
-              .filter((n) => n && n !== (user.displayName ?? user.username))}
-            value={target}
-            onChange={setTarget}
-            w={220}
-            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-          />
-          <Select
-            label="Your offer"
-            placeholder="Pick your pokemon"
-            searchable
-            data={myOptions}
-            value={offerId}
-            onChange={setOfferId}
-            w={220}
-            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-          />
-          <Button
-            radius="xl"
-            color="grape"
-            disabled={!target || !offerId}
-            loading={act.isPending}
-            onClick={() => act.mutate(() => callProposeTrade(target!, offerId!))}
-          >
-            Send Offer
-          </Button>
+    <Card withBorder radius={16} p="md" style={{ background: "#16141c", borderColor: "#2a2734" }}>
+      <Group justify="space-between" mb={10}>
+        <Group gap={8}>
+          <Avatar src={l.ownerAvatar} size={30} radius="xl" color="grape">
+            {l.ownerName?.charAt(0).toUpperCase()}
+          </Avatar>
+          <Box>
+            <Text fz={14} fw={700} c="white">
+              {l.ownerName}
+            </Text>
+            <Text fz={12} c="dimmed">
+              {timeAgo(l.createdAt?.seconds)}
+            </Text>
+          </Box>
         </Group>
-      </Card>
+        <Badge variant="outline" color="teal" radius="xl" size="sm">
+          Open
+        </Badge>
+      </Group>
 
-      <Stack gap={12}>
-        <Text fw={700} c="white">
-          Your trades
-        </Text>
-        {!(trades ?? []).length && (
-          <Text fz={14} c="dimmed">
-            No trades yet. Send an offer above.
+      <Group justify="space-around" align="flex-start" wrap="nowrap" mb={8}>
+        <Stack gap={2} align="center" style={{ flex: 1, minWidth: 0 }}>
+          <Text fz={12} fw={700} c="teal.4" tt="uppercase" style={{ letterSpacing: 1 }}>
+            Offers
           </Text>
-        )}
-        {(trades ?? []).map((t) => {
-          const incoming = t.toUid === user.uid && t.status === "pending";
-          return (
-            <Card key={t.id} withBorder radius={12} p="md" style={{ background: "#141318" }}>
-              <Group gap={10} wrap="wrap" align="center">
-                {t.offerSlug && <Avatar src={getPokemonImageURL(t.offerSlug)} size={40} radius="xl" />}
-                <Text fz={15} c="rgba(255,255,255,0.85)" style={{ flex: 1, minWidth: 200 }}>
-                  {t.fromName} offers {t.offerName} to {t.toName}
-                  {t.counterName ? ` for ${t.counterName}` : ""}
-                </Text>
-                <Badge
-                  variant="light"
-                  color={t.status === "pending" ? "gold.1" : t.status === "accepted" ? "cyan" : "gray"}
-                >
-                  {t.status}
-                </Badge>
-                {incoming && (
-                  <Group gap={8}>
-                    <Select
-                      placeholder="Trade back..."
-                      searchable
-                      data={myOptions}
-                      value={counterFor[t.id] ?? null}
-                      onChange={(v) => setCounterFor((m) => ({ ...m, [t.id]: v }))}
-                      w={190}
-                      size="xs"
-                      styles={{ input: { background: "#2E2D2E" } }}
-                    />
-                    <Button
-                      size="compact-sm"
-                      radius="xl"
-                      color="grape"
-                      disabled={!counterFor[t.id]}
-                      onClick={() =>
-                        act.mutate(() => callRespondTrade(t.id, "accept", counterFor[t.id]!))
+          <Avatar src={getPokemonImageURL(l.pokemon.slug, l.pokemon.shiny)} size={48} radius="xl" />
+          <Text fz={15} fw={700} c="white" ta="center" lineClamp={1}>
+            {l.pokemon.species}{" "}
+            <Text span c={GENDER_COLOR(l.pokemon.gender)} fw={700}>
+              {l.pokemon.gender}
+            </Text>
+          </Text>
+          <SnapshotChips p={l.pokemon} />
+          {l.pokemon.shiny && (
+            <Badge size="xs" color="gold.1" variant="filled" c="#1a1626" radius="xl">
+              Shiny
+            </Badge>
+          )}
+        </Stack>
+        <IconArrowsExchange size={20} color="#8a8399" style={{ marginTop: 34, flexShrink: 0 }} />
+        <Stack gap={2} align="center" style={{ flex: 1, minWidth: 0 }}>
+          <Text fz={12} fw={700} c="violet.3" tt="uppercase" style={{ letterSpacing: 1 }}>
+            Wants
+          </Text>
+          <WantsSummary wants={l.wants} />
+        </Stack>
+      </Group>
+
+      {mine ? (
+        <Stack gap={8}>
+          {openOffers.length ? (
+            openOffers.map(([offerId, o]) => (
+              <Group key={offerId} justify="space-between" wrap="wrap" gap={8}>
+                <Group gap={8} style={{ minWidth: 0 }}>
+                  <Avatar
+                    src={getPokemonImageURL(o.pokemon.slug, o.pokemon.shiny)}
+                    size={34}
+                    radius="xl"
+                  />
+                  <Box style={{ minWidth: 0 }}>
+                    <Text fz={14} c="white" lineClamp={1}>
+                      {o.fromName} offers {o.pokemon.species} ({o.pokemon.gender})
+                    </Text>
+                    <SnapshotChips p={o.pokemon} />
+                  </Box>
+                </Group>
+                <Group gap={6}>
+                  <Button
+                    size="compact-sm"
+                    radius="xl"
+                    color="teal"
+                    loading={act.isPending}
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          `Trade your ${l.pokemon.species} for ${o.fromName}'s ${o.pokemon.species}? This cannot be undone.`
+                        )
+                      ) {
+                        return;
                       }
-                    >
-                      Accept
-                    </Button>
-                    <Button
-                      size="compact-sm"
-                      radius="xl"
-                      variant="subtle"
-                      color="pink"
-                      onClick={() => act.mutate(() => callRespondTrade(t.id, "decline"))}
-                    >
-                      Decline
-                    </Button>
-                  </Group>
-                )}
-                {t.fromUid === user.uid && t.status === "pending" && (
+                      setMessage("");
+                      act.mutate(() => callRespondTradeOffer(l.id, offerId, "accept"));
+                    }}
+                  >
+                    Accept
+                  </Button>
                   <Button
                     size="compact-sm"
                     radius="xl"
                     variant="subtle"
-                    color="gray"
-                    onClick={() => act.mutate(() => callRespondTrade(t.id, "cancel"))}
+                    color="pink"
+                    onClick={() => act.mutate(() => callRespondTradeOffer(l.id, offerId, "decline"))}
                   >
-                    Cancel
+                    Decline
                   </Button>
-                )}
+                </Group>
               </Group>
-            </Card>
-          );
-        })}
-      </Stack>
+            ))
+          ) : (
+            <Text fz={13} c="dimmed">
+              No offers yet. Your listing is visible to everyone.
+            </Text>
+          )}
+          <Button
+            size="compact-sm"
+            radius="xl"
+            variant="subtle"
+            color="gray"
+            onClick={() => act.mutate(() => callCancelTradeListing(l.id))}
+          >
+            Take the listing down
+          </Button>
+        </Stack>
+      ) : picking ? (
+        <Group gap={8} align="flex-end">
+          <Select
+            label="Your offer"
+            placeholder="Pick a pokemon"
+            searchable
+            data={offerOptions}
+            value={offerFor}
+            onChange={setOfferFor}
+            size="xs"
+            w={200}
+            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          />
+          <Button
+            size="compact-md"
+            radius="xl"
+            color="cyan"
+            disabled={!offerFor}
+            loading={act.isPending}
+            onClick={() => {
+              setMessage("");
+              act.mutate(() => callMakeTradeOffer(l.id, offerFor!));
+            }}
+          >
+            Send
+          </Button>
+          <Button
+            size="compact-md"
+            radius="xl"
+            variant="subtle"
+            color="gray"
+            onClick={() => setPicking(false)}
+          >
+            Cancel
+          </Button>
+        </Group>
+      ) : (
+        <Group justify="space-between" align="center">
+          <Button
+            radius="xl"
+            variant="gradient"
+            gradient={{ from: "blue", to: "cyan", deg: 90 }}
+            style={{ flex: 1 }}
+            onClick={() => setPicking(true)}
+          >
+            Make an offer
+          </Button>
+          <Text fz={13} c="dimmed" ml={8}>
+            {openOffers.length
+              ? `${openOffers.length} offer${openOffers.length === 1 ? "" : "s"}`
+              : "0 offers, be first"}
+          </Text>
+        </Group>
+      )}
+      {message && (
+        <Text fz={13} c="gold.1" mt={6} role="status" aria-live="polite">
+          {message}
+        </Text>
+      )}
+    </Card>
+  );
+}
+
+/* --------------------------- Between your characters ------------------------ */
+
+function SelfTradeSection(props: { owned: OwnedPokemon[]; onChanged: () => void }) {
+  const { user } = useAuth();
+  const [pokemonId, setPokemonId] = React.useState<string | null>(null);
+  const [characterId, setCharacterId] = React.useState<string | null>(null);
+  const [message, setMessage] = React.useState("");
+  const { data: characters } = useQuery({
+    queryKey: ["get-characters", user?.uid],
+    queryFn: () => getCharacters(user!.uid),
+    enabled: !!user,
+  });
+  const move = useMutation({
+    mutationFn: () => assignPokemonCharacter(pokemonId!, characterId!),
+    onSuccess: () => {
+      setMessage("Moved! Ownership follows the new character.");
+      setPokemonId(null);
+      props.onChanged();
+    },
+    onError: (e) => setMessage((e as Error).message || "Could not move that pokemon."),
+  });
+  return (
+    <Card
+      withBorder
+      radius={16}
+      p="lg"
+      mt={24}
+      style={{ background: "#141318", borderColor: "#2a2734" }}
+    >
+      <Text fz={14} fw={700} c="cyan.3" tt="uppercase" style={{ letterSpacing: 2 }}>
+        Between your characters
+      </Text>
+      <Text fz={18} fw={700} c="white" mb={4}>
+        Trade freely with yourself
+      </Text>
+      <Text fz={14} c="dimmed" mb={10}>
+        Teams and pokemon belong to characters, not accounts, so you can hand a pokemon to
+        another of your characters any time. No listing needed.
+      </Text>
+      <Group gap={10} align="flex-end" wrap="wrap">
+        <Select
+          label="Pokemon"
+          placeholder="Pick one of yours"
+          searchable
+          data={props.owned.map((p) => ({
+            value: p.id,
+            label: `${p.name || p.species} (${p.gender ?? "?"})`,
+          }))}
+          value={pokemonId}
+          onChange={setPokemonId}
+          w={230}
+          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+        />
+        <Select
+          label="Goes to"
+          placeholder="Pick a character"
+          data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
+          value={characterId}
+          onChange={setCharacterId}
+          w={200}
+          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+        />
+        <Button
+          radius="xl"
+          color="cyan"
+          disabled={!pokemonId || !characterId}
+          loading={move.isPending}
+          onClick={() => {
+            setMessage("");
+            move.mutate();
+          }}
+        >
+          Move it over
+        </Button>
+      </Group>
+      {message && (
+        <Text fz={14} c="gold.1" mt={8} role="status" aria-live="polite">
+          {message}
+        </Text>
+      )}
+    </Card>
+  );
+}
+
+/* ----------------------------------- Page ---------------------------------- */
+
+export default function Trading() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [tab, setTab] = React.useState<"create" | "browse">("browse");
+  const [filter, setFilter] = React.useState("all");
+
+  const { data: owned, isPending } = useQuery({
+    queryKey: ["owned-pokemons", user?.uid],
+    queryFn: () => getOwnedPokemons(user!.uid),
+    enabled: !!user,
+  });
+  const { data: teamsRaw } = useQuery({
+    queryKey: ["teams-raw", user?.uid],
+    queryFn: () => getTeamsRaw(user!.uid),
+    enabled: !!user,
+  });
+  const { data: locks } = useQuery({
+    queryKey: ["thread-locks", user?.uid],
+    queryFn: () => getThreadLocks(user!.uid),
+    enabled: !!user,
+  });
+  const { data: listings } = useQuery({
+    queryKey: ["trade-listings"],
+    queryFn: getTradeListings,
+    enabled: !!user,
+  });
+
+  if (!user) return null;
+  const box = owned?.sortedData ?? [];
+  const open = listings ?? [];
+  const mineCount = open.filter((l) => l.ownerUid === user.uid).length;
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["trade-listings"] });
+    queryClient.invalidateQueries({ queryKey: ["owned-pokemons", user.uid] });
+  };
+
+  // Board filters: the static views plus one chip per type seen in wants.
+  const mySpecies = new Set(box.map((p) => p.species));
+  const wantTypes = [...new Set(open.flatMap((l) => l.wants.types))].slice(0, 4);
+  const filtered = open.filter((l) => {
+    if (filter === "shiny") return !!l.pokemon.shiny;
+    if (filter === "match")
+      return (
+        l.wants.species.some((slug) => {
+          const s = pokemonData.find((p) => p.slug === slug);
+          return s ? mySpecies.has(s.name) : false;
+        }) ||
+        l.wants.types.some((t) =>
+          box.some((p) => (typesForDex(Number(p.pokedex) || 0) as string[]).includes(t))
+        )
+      );
+    if (filter.startsWith("type:")) return l.wants.types.includes(filter.slice(5));
+    return true;
+  });
+
+  return (
+    <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+      <PageHero
+        eyebrow={`${open.length} open listings · ${mineCount} of yours`}
+        title="The Trading Post"
+        subtitle="Put a Pokemon up with what you want in return, or scan the board and make an offer on someone else's listing."
+        mb={20}
+      />
+
+      <Group gap={8} mb={20}>
+        <Button
+          radius="md"
+          variant={tab === "create" ? "white" : "subtle"}
+          color={tab === "create" ? "dark" : "gray"}
+          leftSection={<IconArrowsExchange size={16} />}
+          onClick={() => setTab("create")}
+        >
+          Create a listing
+        </Button>
+        <Button
+          radius="md"
+          variant={tab === "browse" ? "white" : "subtle"}
+          color={tab === "browse" ? "dark" : "gray"}
+          leftSection={<IconChartBar size={16} />}
+          onClick={() => setTab("browse")}
+        >
+          Browse the board
+        </Button>
+      </Group>
+
+      {isPending ? (
+        <SectionLoader />
+      ) : tab === "create" ? (
+        <CreateListing
+          owned={box}
+          teams={teamsRaw}
+          locks={locks}
+          onCreated={() => {
+            refresh();
+            setTab("browse");
+          }}
+        />
+      ) : (
+        <Stack gap={16}>
+          <Group gap={8}>
+            {[
+              { key: "all", label: "All" },
+              { key: "shiny", label: "Shiny offers" },
+              { key: "match", label: "Wants what I have" },
+              ...wantTypes.map((t) => ({ key: `type:${t}`, label: t })),
+            ].map((f) => (
+              <Button
+                key={f.key}
+                size="xs"
+                radius="xl"
+                variant={filter === f.key ? "white" : "default"}
+                color={filter === f.key ? "dark" : "gray"}
+                onClick={() => setFilter(f.key)}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </Group>
+          {!filtered.length ? (
+            <Text fz={14} c="dimmed" py={20}>
+              Nothing on the board {filter === "all" ? "yet" : "for that filter"}. Create a
+              listing and get the first trade going.
+            </Text>
+          ) : (
+            <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 4 }} spacing="md">
+              {filtered.map((l) => (
+                <ListingCard
+                  key={l.id}
+                  listing={l}
+                  myUid={user.uid}
+                  owned={box}
+                  teams={teamsRaw}
+                  locks={locks}
+                  onChanged={refresh}
+                />
+              ))}
+            </SimpleGrid>
+          )}
+        </Stack>
+      )}
+
+      <SelfTradeSection owned={box} onChanged={refresh} />
     </Container>
   );
 }

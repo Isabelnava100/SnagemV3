@@ -157,8 +157,6 @@ export interface BattleMechanics {
   paralysisMult: number;
   /** Weather boost multiplier for favored types (weakened = 1/boost). */
   weatherBoost: number;
-  /** Snag Coin cost of a mid-thread Pokemon Center heal. */
-  centerCost: number;
   /** Extra catch percent for a fully beaten (worn down) encounter. */
   ballWornBonus: number;
   /** Qualifying posts for a bred egg to hatch. */
@@ -201,7 +199,6 @@ export const DEFAULT_BATTLE_MECHANICS: BattleMechanics = {
   statusTick: 10,
   paralysisMult: 0.5,
   weatherBoost: 1.2,
-  centerCost: 10,
   ballWornBonus: 40,
   hatchPosts: 10,
   hatchDays: 15,
@@ -210,8 +207,8 @@ export const DEFAULT_BATTLE_MECHANICS: BattleMechanics = {
   heldHealTick: 5,
   luckyEggBoost: 50,
   heldFleeBonus: 10,
-  berryGrowDays: 3,
-  berryYield: 3,
+  berryGrowDays: 7,
+  berryYield: 2,
   farmPlots: 3,
 };
 
@@ -352,48 +349,96 @@ export const callHatchEgg = async (): Promise<string> => {
   return result.hatched;
 };
 
-/** A Poke Swap trade doc (trades collection; all writes go through callables). */
-export interface Trade {
-  id: string;
+// ---- The Trading Post (tradeListings collection, callable-written) ----------
+
+/** Display snapshot of a pokemon on the board (built server-side). */
+export interface TradeSnapshot {
+  pokemonId: string;
+  name: string;
+  species: string;
+  slug: string;
+  gender?: string;
+  shiny?: boolean;
+  level?: number;
+  types?: string[];
+  star?: number;
+  nature?: string;
+  eggGroups?: string[];
+}
+
+/** "What you'd accept" criteria. Kept in sync with TRADE_WANT_OPTIONS in the
+ * Trading Post page; new game mechanics add fields here + there. */
+export interface TradeWants {
+  species: string[];
+  types: string[];
+  shiny: boolean;
+  minLevel: number;
+  minStar: number;
+  note: string;
+}
+
+export interface TradeOffer {
   fromUid: string;
   fromName: string;
-  toUid: string;
-  toName: string;
-  offerId: string;
-  offerName: string;
-  offerSlug?: string;
-  counterId?: string;
-  counterName?: string;
-  status: "pending" | "accepted" | "declined" | "cancelled";
+  pokemon: TradeSnapshot;
+  status: "open" | "accepted" | "declined";
+  at?: { seconds: number };
+}
+
+export interface TradeListing {
+  id: string;
+  ownerUid: string;
+  ownerName: string;
+  ownerAvatar?: string;
+  pokemon: TradeSnapshot;
+  wants: TradeWants;
+  status: "open" | "completed" | "cancelled";
+  offers?: Record<string, TradeOffer>;
+  offerCount?: number;
   createdAt?: { seconds: number };
 }
 
-export const getMyTrades = async (uid: string): Promise<Trade[]> => {
+export const getTradeListings = async (): Promise<TradeListing[]> => {
   const { collection, getDocs, limit, query, where } = await import("firebase/firestore");
-  const base = collection(db, "trades");
-  // Two simple where() reads (sent + received) merged client-side; ordering by
-  // createdAt in the query would need a composite index for each direction.
-  const [sent, received] = await Promise.all([
-    getDocs(query(base, where("fromUid", "==", uid), limit(50))),
-    getDocs(query(base, where("toUid", "==", uid), limit(50))),
-  ]);
-  const byId = new Map<string, Trade>();
-  [...sent.docs, ...received.docs].forEach((d) =>
-    byId.set(d.id, { id: d.id, ...d.data() } as Trade)
+  const snap = await getDocs(
+    query(collection(db, "tradeListings"), where("status", "==", "open"), limit(80))
   );
-  return [...byId.values()].sort(
-    (a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)
-  );
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }) as TradeListing)
+    .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
 };
 
-export const callProposeTrade = (targetUsername: string, pokemonId: string) =>
-  callGame<{ ok: boolean; tradeId: string }>("proposeTrade", { targetUsername, pokemonId });
+/** Open battle threads currently pinning this member's teams (server-written;
+ * a pokemon on a locked team cannot be traded until its thread closes). */
+export interface ThreadLockEntry {
+  forum: string;
+  threadId: string;
+  teamIds: string[];
+  title?: string;
+}
 
-export const callRespondTrade = (
-  tradeId: string,
-  action: "accept" | "decline" | "cancel",
-  counterId?: string
-) => callGame<{ ok: boolean }>("respondTrade", { tradeId, action, counterId: counterId ?? "" });
+export const getThreadLocks = async (uid: string): Promise<Record<string, ThreadLockEntry>> => {
+  const { doc, getDoc } = await import("firebase/firestore");
+  return ((await getDoc(doc(db, "users", uid, "bag", "threadLocks"))).data() ?? {}) as Record<
+    string,
+    ThreadLockEntry
+  >;
+};
+
+export const callCreateTradeListing = (pokemonId: string, wants: Partial<TradeWants>) =>
+  callGame<{ ok: boolean; listingId: string }>("createTradeListing", { pokemonId, wants });
+
+export const callCancelTradeListing = (listingId: string) =>
+  callGame<{ ok: boolean }>("cancelTradeListing", { listingId });
+
+export const callMakeTradeOffer = (listingId: string, pokemonId: string) =>
+  callGame<{ ok: boolean; offerId: string }>("makeTradeOffer", { listingId, pokemonId });
+
+export const callRespondTradeOffer = (
+  listingId: string,
+  offerId: string,
+  action: "accept" | "decline"
+) => callGame<{ ok: boolean }>("respondTradeOffer", { listingId, offerId, action });
 
 /** Equip a held item on an owned pokemon (itemId "" removes it). */
 export const callSetHeldItem = (pokemonId: string, itemId: string) =>
@@ -418,6 +463,10 @@ export const getFarm = async (uid: string): Promise<FarmState> => {
 
 export const callPlantBerry = (itemId: string, slot: number) =>
   callGame<{ ok: boolean }>("plantBerry", { itemId, slot });
+
+/** Find (or create) the weekly Fishing Pond thread in the Events forum. */
+export const callEnsureFishingThread = () =>
+  callGame<{ threadId: string }>("ensureFishingThread", {});
 
 export const callHarvestBerry = (slot: number) =>
   callGame<{ ok: boolean; harvested: string; qty: number }>("harvestBerry", { slot });

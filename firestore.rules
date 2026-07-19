@@ -96,15 +96,17 @@ service cloud.firestore {
       // owner-writable because the client-side evolution flow decrements a spend
       // item there; closing that fully means moving evolvePokemon to a callable.
       // 'snaglist' (the weekly activities checklist), 'daycare' (the breeding
-      // pair + egg timer) and 'farm' (berry plots) are excluded: only the
-      // Cloud Functions write them, so members cannot check their own boxes,
-      // forge an egg, or fake a harvest.
+      // pair + egg timer), 'farm' (berry plots) and 'threadLocks' (open battle
+      // threads pinning this member's teams, read by the Trading Post) are
+      // excluded: only the Cloud Functions write them, so members cannot
+      // check their own boxes, forge an egg, or unlock a battling pokemon.
       match /bag/{doc} {
         allow read: if request.auth.uid == uid || isAdmin();
         allow write: if isAdmin()
                      || (request.auth.uid == uid
                          && doc != 'badges' && doc != 'snaglist'
-                         && doc != 'daycare' && doc != 'farm');
+                         && doc != 'daycare' && doc != 'farm'
+                         && doc != 'threadLocks');
       }
       match /bookmarks/{doc} {
         allow read, write: if request.auth.uid == uid || isAdmin();
@@ -177,7 +179,11 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // ---- Poke Swap trades (written by callables; parties may read) --------
+    // ---- The Trading Post (written by callables; the board is public to
+    // members). Legacy /trades docs stay readable to their parties.
+    match /tradeListings/{doc} {
+      allow read: if isSignedIn();
+    }
     match /trades/{doc} {
       allow read: if isSignedIn() &&
         (resource.data.fromUid == request.auth.uid ||
@@ -355,12 +361,21 @@ service cloud.firestore {
           || (isSignedIn()
               && request.resource.data.diff(resource.data).affectedKeys()
                    .hasOnly(['notifyviaDiscord', 'watcherUids']))
+          // Hosts edit details + weather; battle mode (encounterConfig) is
+          // NOT host-editable: it needs admin or the ManageBattles capability.
           || (isSignedIn()
               && request.auth.uid == resource.data.get('hostUid', '')
               && request.resource.data.diff(resource.data).affectedKeys()
                    .hasOnly(['title', 'instructions', 'tags', 'restricted',
-                             'allowedPosters', 'encounterConfig', 'closed',
+                             'allowedPosters', 'closed', 'weather',
                              'xpAward', 'xpConfig']))
+          // Battle staff get host-level edit access on ANY thread, plus the
+          // battle-mode toggle (encounterConfig).
+          || (hasCap('ManageBattles')
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['title', 'instructions', 'tags', 'restricted',
+                             'allowedPosters', 'closed', 'weather',
+                             'encounterConfig', 'xpAward', 'xpConfig']))
           // Reward-granting directors may close (archive) any thread: closed only.
           || ((hasCap('GiveItems') || hasCap('ReviewRewards'))
               && request.resource.data.diff(resource.data).affectedKeys()

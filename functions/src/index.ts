@@ -32,6 +32,7 @@ import pokemonJSON from "./pokemon.json";
 import battleStages from "./battleStages.json";
 import starByDex from "./starByDex.json";
 import typesByDex from "./typesByDex.json";
+import eggGroupsByDex from "./eggGroupsByDex.json";
 import evolutionsJSON from "./evolutions.json";
 import levelingCurveJSON from "./levelingCurve.json";
 
@@ -125,7 +126,6 @@ const DEFAULT_MECHANICS = {
   statusTick: 10,
   paralysisMult: 0.5,
   weatherBoost: 1.2,
-  centerCost: 10,
   ballWornBonus: 40,
   hatchPosts: 10,
   hatchDays: 15,
@@ -134,8 +134,8 @@ const DEFAULT_MECHANICS = {
   heldHealTick: 5,
   luckyEggBoost: 50,
   heldFleeBonus: 10,
-  berryGrowDays: 3,
-  berryYield: 3,
+  berryGrowDays: 7,
+  berryYield: 2,
   farmPlots: 3,
 };
 type Mechanics = typeof DEFAULT_MECHANICS;
@@ -251,6 +251,12 @@ const TYPE_CHART: Record<string, Record<string, number>> = {
 const typesForDex = (idx: number): string[] => {
   const t = (typesByDex as Record<string, string[]>)[String(idx)];
   return t && t.length ? t : ["Normal"];
+};
+// Egg groups per species (scripts/gen-egggroups.mjs). "Undiscovered" cannot
+// breed at all, which covers legendaries/mythicals and most babies.
+const eggGroupsForDex = (idx: number): string[] => {
+  const g = (eggGroupsByDex as Record<string, string[]>)[String(idx)];
+  return g && g.length ? g : ["Undiscovered"];
 };
 function typeEffectiveness(attacker: string[], defender: string[]): number {
   let best = 0;
@@ -412,6 +418,15 @@ function healEffectFor(name: string): { heal?: number; revive?: number } | null 
 function isHost(thread: FirebaseFirestore.DocumentData, member: Member): boolean {
   if (thread.hostUid) return thread.hostUid === member.uid;
   return thread.createdBy === member.username; // legacy threads
+}
+
+/** Battle staff (admins + the ManageBattles capability) get host-level access
+ * on every thread and are the only ones who may toggle battle mode. */
+function isBattleStaff(member: Member): boolean {
+  return isAdmin(member) || hasCap(member, "ManageBattles");
+}
+function hostOrBattleStaff(thread: FirebaseFirestore.DocumentData, member: Member): boolean {
+  return isHost(thread, member) || isBattleStaff(member);
 }
 
 function mayPost(thread: FirebaseFirestore.DocumentData, member: Member): boolean {
@@ -739,23 +754,20 @@ export const rollEncounter = onCall(async (request) => {
     .map((c: unknown) => String(c).slice(0, 60));
   await loadMember(uid);
 
-  // Fishing: the best rod in the member's bag sets the star ceiling of the
-  // Water-type pool (Old 2 / Good 4 / Super 6). No rod, no fishing.
-  let rodMaxStar = 0;
+  // Fishing (the Fishing Pond thread only): any rod from the Snag Mall gets
+  // you a weekly cast. Star odds are 60/30/10 for 1/2/3 star Water-types.
   let rodName = "";
   if (fishing) {
     const bag = (await db.doc(`users/${uid}/bag/items`).get()).data() ?? {};
     for (const entry of Object.values(bag as Record<string, any>)) {
       if ((Number(entry?.quantity) || 0) <= 0) continue;
       const key = itemKeyOf(entry?.name);
-      const tier =
-        key === "super-rod" ? 6 : key === "good-rod" ? 4 : key === "old-rod" || key === "fishing-rod" ? 2 : 0;
-      if (tier > rodMaxStar) {
-        rodMaxStar = tier;
+      if (["super-rod", "good-rod", "old-rod", "fishing-rod"].includes(key)) {
         rodName = String(entry?.name ?? "rod");
+        break;
       }
     }
-    if (!rodMaxStar) {
+    if (!rodName) {
       throw new HttpsError("failed-precondition", "You need a fishing rod. The Snag Mall sells them.");
     }
   }
@@ -801,6 +813,17 @@ export const rollEncounter = onCall(async (request) => {
     if ((claims[uid] ?? 0) >= (config.perUserLimit ?? 0)) {
       throw new HttpsError("failed-precondition", "You have no encounters left on this thread.");
     }
+    // Fresh from the Pokemon Center: the visit post and the next stay
+    // battle-free, so no new encounter can be rolled for that next post.
+    const rollerLog = (((thread.battleLog as Record<string, any>) ?? {})[uid] ?? {}) as Record<string, unknown>;
+    const rollerNextPost = (Number(rollerLog.posts) || 0) + 1;
+    const rollerCenterAt = Number(rollerLog.centerAt) || 0;
+    if (rollerCenterAt > 0 && rollerNextPost <= rollerCenterAt + 1) {
+      throw new HttpsError(
+        "failed-precondition",
+        "You are just back from the Pokemon Center. Encounters reopen on the post after next."
+      );
+    }
 
     // Safari Contest: weighted star roll, then a uniform pick within that
     // star's pool. Health goes down over fight posts instead of capture posts.
@@ -838,29 +861,51 @@ export const rollEncounter = onCall(async (request) => {
         forCharacterIds,
       };
     } else if (fishing) {
-      // Cast a line: uniform roll over every Water-type species within the
-      // rod's star ceiling. Uses a normal encounter claim on the thread.
+      // The Fishing Pond: one cast per member per week (resets Monday 00:00
+      // UTC, same as the Snag List). Roll the star first (1/2/3 at 60/30/10),
+      // then a uniform pick among that star's Water-types.
+      if (!thread.fishingPond) {
+        throw new HttpsError("failed-precondition", "Fishing only works at the Fishing Pond thread.");
+      }
+      const weekId = snagWeekId(new Date());
+      const fishClaims = (thread.fishingClaims as Record<string, string>) ?? {};
+      if (fishClaims[uid] === weekId) {
+        throw new HttpsError(
+          "failed-precondition",
+          "You already fished this week. The pond restocks Monday 00:00 UTC."
+        );
+      }
+      const starRollValue = randomInt(100);
+      const fishStar = starRollValue < 60 ? 1 : starRollValue < 90 ? 2 : 3;
       const waterPool = catalog.filter(
-        (c) => typesForDex(Number(c.idx)).includes("Water") && starFor(Number(c.idx)) <= rodMaxStar
+        (c) => typesForDex(Number(c.idx)).includes("Water") && starFor(Number(c.idx)) === fishStar
       );
       if (!waterPool.length) throw new HttpsError("internal", "The waters are empty.");
       const pick = waterPool[randomInt(waterPool.length)];
-      const star = starFor(Number(pick.idx));
       result = {
         slug: pick.slug,
         name: pick.name,
         mode: "roll",
         method: "fishing",
         rod: rodName,
-        catchable: !thread.bossBattle?.active,
-        star,
-        required: postsToBeatStar(star),
+        catchable: true,
+        star: fishStar,
+        required: postsToBeatStar(fishStar),
         progress: 0,
         gender: randomInt(2) === 0 ? "M" : "F",
         shiny: rollShiny(),
         forCharacterIds,
       };
+      tx.set(pendingRef(forum, threadId, uid), { encounter: result }, { merge: true });
+      tx.update(threadRef(forum, threadId), { [`fishingClaims.${uid}`]: weekId });
+      return result;
     } else {
+      if (thread.fishingPond) {
+        throw new HttpsError(
+          "failed-precondition",
+          "This is the Fishing Pond: cast your rod instead of rolling an encounter."
+        );
+      }
       const nonCatchSlugs = new Set(resolveListSlugs(lists, config.nonCatchable?.listId));
       const pool = [...new Set([...resolveListSlugs(lists, config.listId), ...nonCatchSlugs])];
       if (!pool.length) throw new HttpsError("failed-precondition", "The encounter list is empty.");
@@ -944,6 +989,9 @@ export const publishForumPost = onCall(async (request) => {
   // Battle inputs: try to run away from the wild encounter this post, and
   // which owned pokemon (from the poster's locked team) is doing the fighting.
   const fleeAttempt = request.data?.fleeAttempt === true;
+  // Spend this post visiting the Pokemon Center (no coins; the post is the
+  // cost). Only out of battle, and it blocks battling this post + the next.
+  const centerVisit = request.data?.centerVisit === true;
   const fighterIdReq = request.data?.fighterId ? String(request.data.fighterId).slice(0, 80) : "";
   // Optional: evolve one of this post's team pokemon on publish (the composer
   // asks the poster to confirm first). Validated + applied server-side.
@@ -1128,9 +1176,29 @@ export const publishForumPost = onCall(async (request) => {
       ...(((thread.battleStatus as Record<string, Record<string, string>>) ?? {})[uid] ?? {}),
     };
     const battleNotes: string[] = [];
+    // Per-user battle log on this thread: post count, the post number of the
+    // last battle action, and the post number of a Pokemon Center visit.
+    const myLog = (((thread.battleLog as Record<string, any>) ?? {})[uid] ?? {}) as Record<string, unknown>;
+    const myPriorPosts = Number(myLog.posts) || 0;
+    const myPostNum = myPriorPosts + 1;
+    const myLastBattle = Number(myLog.lastBattle) || 0;
+    const myCenterAt = Number(myLog.centerAt) || 0;
+    // Fresh from the Center: no battling on the visit post or the one after.
+    const centerCooldown = myCenterAt > 0 && myPostNum <= myCenterAt + 1;
+    let battledThisPost = false;
 
     const pending = pendingSnap.data() ?? {};
     const encounter = pending.encounter ? { ...pending.encounter } : undefined;
+    // The Fishing Pond takes fishing posts only (staff posts excepted): a
+    // cast must be attached, and nothing else runs there.
+    if (!editPostId && thread.fishingPond && !isAdmin(member) && !isHost(thread, member)) {
+      if (!encounter || encounter.method !== "fishing") {
+        throw new HttpsError(
+          "failed-precondition",
+          "The Fishing Pond is for fishing only. Cast your rod before posting."
+        );
+      }
+    }
     let encounterCaught = false;
     let encounterForCharacter = "";
     // Slug of a mission foe beaten on this post (bar filled or caught).
@@ -1144,6 +1212,7 @@ export const publishForumPost = onCall(async (request) => {
     let safariCleared = false;
     const safariCfg = thread.safariContest;
     if (encounter && safariCfg && encounter.star && !editPostId) {
+      battledThisPost = true;
       // --- Safari Contest turn: fight, feed, or throw a ball ----------------
       const forIds: string[] = Array.isArray(encounter.forCharacterIds)
         ? encounter.forCharacterIds
@@ -1262,6 +1331,9 @@ export const publishForumPost = onCall(async (request) => {
       if (enemyCrit) battleNotes.push(`The wild ${encounter.name} landed a critical hit!`);
       let progress = Number(encounter.progress) || 0;
       const wasBeaten = progress >= required;
+      // Fighting (or fleeing) an unbeaten encounter is a battle action; a
+      // ball throw at an already-beaten wild is not.
+      if (!editPostId && !wasBeaten && qualifies) battledThisPost = true;
       const ball = itemsUsed.find((i) => i.isBall);
 
       if (!editPostId && fleeAttempt && !wasBeaten) {
@@ -1273,16 +1345,28 @@ export const publishForumPost = onCall(async (request) => {
             "You cannot run away from a trainer's Pokemon. Beat it to end the battle."
           );
         }
-        const chance = Math.min(
-          95,
-          fleeChanceForStar(enemyStar) +
-            (natureKind === "speed" ? mech.natureEffect : 0) +
-            (fighterHeld === "quick-claw" ? mech.heldFleeBonus : 0)
-        );
+        // Fishing Pond: letting the catch go always works and pays 1 Snag
+        // Coin as a consolation.
+        const chance = thread.fishingPond
+          ? 100
+          : Math.min(
+              95,
+              fleeChanceForStar(enemyStar) +
+                (natureKind === "speed" ? mech.natureEffect : 0) +
+                (fighterHeld === "quick-claw" ? mech.heldFleeBonus : 0)
+            );
         encounter.fleeChance = chance;
-        if (randomInt(100) < chance) {
+        if (randomInt(100) < chance || chance >= 100) {
           encounter.outcome = "fled";
           encounterFled = true;
+          if (thread.fishingPond) {
+            (encounter as any).abandonCoin = 1;
+            tx.set(
+              db.doc(`users/${uid}/bag/currency`),
+              { pokecoin: FieldValue.increment(1) },
+              { merge: true }
+            );
+          }
         } else {
           // The escape fails: the turn is spent running, no progress is
           // landed, and the enemy still gets its hit in.
@@ -1349,6 +1433,54 @@ export const publishForumPost = onCall(async (request) => {
       }
     }
 
+    // -- Pokemon Center: the post is the price. Only when nothing is being
+    // fought: no unbeaten pending encounter, no boss active for this member,
+    // and the member's latest post was battle-free. It heals ONLY this
+    // member's team on THIS thread, and blocks battling this post + the next.
+    if (centerVisit && !editPostId) {
+      if (battledThisPost || fleeAttempt) {
+        throw new HttpsError(
+          "failed-precondition",
+          "You cannot battle and visit the Pokemon Center in the same post."
+        );
+      }
+      if (bossActiveForUser) {
+        throw new HttpsError(
+          "failed-precondition",
+          "A boss battle is raging: the Pokemon Center is closed to you until it ends."
+        );
+      }
+      const pendingOngoing =
+        encounter &&
+        Number(encounter.required) > 0 &&
+        (Number(encounter.progress) || 0) < Number(encounter.required);
+      if (pendingOngoing) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Finish or flee your current encounter before heading to the Pokemon Center."
+        );
+      }
+      if (myLastBattle > 0 && myLastBattle >= myPriorPosts) {
+        throw new HttpsError(
+          "failed-precondition",
+          "You need one battle-free post before the Pokemon Center will take you in."
+        );
+      }
+      const hasDamage =
+        Object.keys(((thread.battleDamage as Record<string, any>) ?? {})[uid] ?? {}).length > 0 ||
+        Object.keys(((thread.battleStatus as Record<string, any>) ?? {})[uid] ?? {}).length > 0;
+      if (!hasDamage) {
+        throw new HttpsError("failed-precondition", "Your team is already in perfect shape here.");
+      }
+    }
+    // Fresh from the Center: this post and the next stay battle-free.
+    if (centerCooldown && !editPostId && (battledThisPost || fleeAttempt)) {
+      throw new HttpsError(
+        "failed-precondition",
+        "You are just back from the Pokemon Center. No encounters or battles until your next post."
+      );
+    }
+
     // -- healing items: applied before the enemy's hit (potions heal the
     // fighter, revives restore a fainted team pokemon). Auto-targeted.
     const heals: Array<{ itemName: string; pokemonId: string; pokemonName: string; amount: number; revive: boolean }> = [];
@@ -1405,6 +1537,7 @@ export const publishForumPost = onCall(async (request) => {
     // If both a wild battle and a boss attack happen on one post, only the
     // harder hit lands so a single post never doubles up.
     if (!editPostId && request.data?.attackBoss === true && bossActiveForUser) {
+      battledThisPost = true;
       const boss = thread.bossBattle;
       const bossIdx = Number(catalogBySlug.get(String(boss.slug))?.idx ?? 0);
       const bossTypes = typesForDex(bossIdx);
@@ -1505,6 +1638,7 @@ export const publishForumPost = onCall(async (request) => {
     }
 
     const blocks: Record<string, unknown> = {};
+    if (centerVisit && !editPostId) blocks.center = { healed: true };
     if (encounter) blocks.encounters = [encounter];
     if (battleBlock) blocks.battle = battleBlock;
     else if (healsOnlyBlock) blocks.battle = healsOnlyBlock;
@@ -1728,8 +1862,22 @@ export const publishForumPost = onCall(async (request) => {
       });
 
       // Pin the poster to this team for the rest of the thread (anti-farm).
+      // Also mirror the lock into the member's bag so the Trading Post can
+      // grey out (and the server can refuse) trading pokemon mid-battle.
       if (setTeamLock) {
         tx.set(tRef, { lockedTeams: { [uid]: postTeamIds } }, { merge: true });
+        tx.set(
+          db.doc(`users/${uid}/bag/threadLocks`),
+          {
+            [`${forum}__${threadId}`]: {
+              forum,
+              threadId,
+              teamIds: postTeamIds,
+              title: String(thread.title ?? ""),
+            },
+          },
+          { merge: true }
+        );
       }
 
       // Attacking the boss: opt-in per post, only when a boss is active for
@@ -1754,32 +1902,48 @@ export const publishForumPost = onCall(async (request) => {
         activityUpdate(member, now, {
           replyCount: FieldValue.increment(1),
           ...bossExtra,
+          // Per-user battle log: powers the Pokemon Center's "out of battle
+          // for a full post" gate and its two-post cooldown.
+          [`battleLog.${uid}.posts`]: FieldValue.increment(1),
+          ...(battledThisPost ? { [`battleLog.${uid}.lastBattle`]: myPostNum } : {}),
+          ...(centerVisit
+            ? {
+                [`battleLog.${uid}.centerAt`]: myPostNum,
+                [`battleDamage.${uid}`]: FieldValue.delete(),
+                [`battleStatus.${uid}`]: FieldValue.delete(),
+              }
+            : {}),
           // Mission requirement bookkeeping: a beaten (or caught) foe joins the
           // thread's defeated list, checked when the host closes the thread.
           ...(encounterBeatenSlug
             ? { defeatedEncounters: FieldValue.arrayUnion(encounterBeatenSlug) }
             : {}),
           // Per-pokemon damage entries that changed this post (heals + hit).
-          ...Object.fromEntries(
-            Object.entries(damageNow)
-              .filter(
-                ([id, v]) =>
-                  (Number(
-                    (((thread.battleDamage as Record<string, Record<string, number>>) ?? {})[
-                      uid
-                    ] ?? {})[id]
-                  ) || 0) !== v
-              )
-              .map(([id, v]) => [`battleDamage.${uid}.${id}`, v])
-          ),
+          // Skipped entirely on a Center visit (the whole map is deleted).
+          ...(centerVisit
+            ? {}
+            : Object.fromEntries(
+                Object.entries(damageNow)
+                  .filter(
+                    ([id, v]) =>
+                      (Number(
+                        (((thread.battleDamage as Record<string, Record<string, number>>) ?? {})[
+                          uid
+                        ] ?? {})[id]
+                      ) || 0) !== v
+                  )
+                  .map(([id, v]) => [`battleDamage.${uid}.${id}`, v])
+              )),
           // Running tally of every item spent on this thread, shown to the
           // staff reviewer at close.
           // Status conditions that changed this post (inflicted or cured).
-          ...Object.fromEntries(
-            Object.keys({ ...statusNow, ...((((thread.battleStatus as Record<string, Record<string, string>>) ?? {})[uid]) ?? {}) })
-              .filter((id) => (statusNow[id] ?? null) !== (((((thread.battleStatus as Record<string, Record<string, string>>) ?? {})[uid]) ?? {})[id] ?? null))
-              .map((id) => [`battleStatus.${uid}.${id}`, statusNow[id] ?? FieldValue.delete()])
-          ),
+          ...(centerVisit
+            ? {}
+            : Object.fromEntries(
+                Object.keys({ ...statusNow, ...((((thread.battleStatus as Record<string, Record<string, string>>) ?? {})[uid]) ?? {}) })
+                  .filter((id) => (statusNow[id] ?? null) !== (((((thread.battleStatus as Record<string, Record<string, string>>) ?? {})[uid]) ?? {})[id] ?? null))
+                  .map((id) => [`battleStatus.${uid}.${id}`, statusNow[id] ?? FieldValue.delete()])
+              )),
           ...Object.fromEntries(
             itemsUsed.flatMap((i) => [
               [`itemsUsedTally.${i.itemId}.qty`, FieldValue.increment(i.qty)],
@@ -2179,7 +2343,7 @@ export const judgeSafariContest = onCall(async (request) => {
     const snap = await tx.get(tRef);
     if (!snap.exists) throw new HttpsError("not-found", "Thread not found.");
     const thread = snap.data()!;
-    if (!(isAdmin(member) || isHost(thread, member))) {
+    if (!hostOrBattleStaff(thread, member)) {
       throw new HttpsError("permission-denied", "Only the host can judge this contest.");
     }
     const safari = thread.safariContest;
@@ -3088,7 +3252,7 @@ export const setBossBattle = onCall(async (request) => {
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(threadRef(forum, threadId));
     const thread = assertOpenThread(snap);
-    if (!isHost(thread, member) && !isAdmin(member)) {
+    if (!hostOrBattleStaff(thread, member)) {
       throw new HttpsError("permission-denied", "Only the host can manage boss battles.");
     }
     const now = new Date();
@@ -3420,6 +3584,17 @@ export const onThreadClosed = onDocumentUpdated(
     const staff = await staffUidsWithCaps(["GiveItems", "ReviewRewards"]);
     const { forum, threadId } = event.params;
 
+    // Lift the trade locks: this thread no longer pins anyone's team.
+    const lockedUids = Object.keys((after.lockedTeams as Record<string, unknown>) ?? {});
+    await Promise.all(
+      lockedUids.map((lockedUid) =>
+        db
+          .doc(`users/${lockedUid}/bag/threadLocks`)
+          .set({ [`${forum}__${threadId}`]: FieldValue.delete() }, { merge: true })
+          .catch(() => undefined)
+      )
+    );
+
     // Mission threads file their grading submission automatically at close, so
     // members never need a separate "submit for grading" step.
     if (after.missionId) {
@@ -3515,31 +3690,24 @@ export const resolveThreadPause = onCall(async (request) => {
 // Pokemon Center, Daycare (breeding), and Poke Swap (trading)
 // ===========================================================================
 
-/** Mid-thread Pokemon Center visit: pay Snag Coins, clear your battle damage
- * and statuses on that thread. Cost is admin-editable (mechanics.centerCost). */
-export const pokemonCenterHeal = onCall(async (request) => {
+/** Change the battle weather on an open thread. Hosts may retune it at any
+ * time; battle staff (admin / ManageBattles) can too, on any thread. */
+export const setThreadWeather = onCall(async (request) => {
   const uid = requireAuth(request);
+  const member = await loadMember(uid);
   const forum = requireString(request.data?.forum, "forum", 60);
   const threadId = requireString(request.data?.threadId, "threadId", 20);
-  const mech = mechanicsFrom((await db.doc("admin/battle_config").get()).data());
-  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const raw = String(request.data?.weather ?? "");
+  const weather = ["sun", "rain", "sandstorm", "snow"].includes(raw) ? raw : null;
   await db.runTransaction(async (tx) => {
-    const [threadSnap, curSnap] = await Promise.all([
-      tx.get(threadRef(forum, threadId)),
-      tx.get(currencyRef),
-    ]);
-    assertOpenThread(threadSnap);
-    const coins = Number(curSnap.data()?.pokecoin) || 0;
-    if (coins < mech.centerCost) {
-      throw new HttpsError("failed-precondition", `A Center visit costs ${mech.centerCost} Snag Coins.`);
+    const snap = await tx.get(threadRef(forum, threadId));
+    const thread = assertOpenThread(snap);
+    if (!hostOrBattleStaff(thread, member)) {
+      throw new HttpsError("permission-denied", "Only the host can change the weather.");
     }
-    tx.set(currencyRef, { pokecoin: coins - mech.centerCost }, { merge: true });
-    tx.update(threadRef(forum, threadId), {
-      [`battleDamage.${uid}`]: FieldValue.delete(),
-      [`battleStatus.${uid}`]: FieldValue.delete(),
-    });
+    tx.update(threadRef(forum, threadId), { weather });
   });
-  return { ok: true, cost: mech.centerCost };
+  return { ok: true, weather };
 });
 
 // Reverse evolution edges so we can find a line's base form for eggs.
@@ -3584,18 +3752,49 @@ export const breedPokemon = onCall(async (request) => {
     if (!left || !right) throw new HttpsError("not-found", "Both parents must be in your box.");
     const lIdx = Number(left.pokedex) || 0;
     const rIdx = Number(right.pokedex) || 0;
-    const lTypes = typesForDex(lIdx);
-    const rTypes = typesForDex(rIdx);
-    const compatible =
-      lIdx === rIdx ||
-      lIdx === DITTO_IDX ||
-      rIdx === DITTO_IDX ||
-      lTypes.some((t) => rTypes.includes(t));
-    if (!compatible) {
-      throw new HttpsError("failed-precondition", "These two do not get along. Try a shared type, the same species, or a Ditto.");
+    // Breeding rules: no legendaries/mythicals (7 star), no Undiscovered egg
+    // group at all; otherwise parents need a shared egg group and opposite
+    // genders, or one parent is a Ditto (which pairs with anything breedable).
+    if (starForDex(lIdx) >= 7 || starForDex(rIdx) >= 7) {
+      throw new HttpsError("failed-precondition", "Legendary and mythical pokemon cannot breed.");
     }
-    // Offspring line comes from the non-Ditto parent (left wins a Ditto tie).
-    const lineIdx = lIdx === DITTO_IDX ? rIdx : lIdx;
+    const lGroups = eggGroupsForDex(lIdx);
+    const rGroups = eggGroupsForDex(rIdx);
+    if (lGroups.includes("Undiscovered") || rGroups.includes("Undiscovered")) {
+      throw new HttpsError(
+        "failed-precondition",
+        "One of these pokemon is in the Undiscovered egg group: it cannot breed, not even with a Ditto."
+      );
+    }
+    const hasDitto = lIdx === DITTO_IDX || rIdx === DITTO_IDX;
+    if (lIdx === DITTO_IDX && rIdx === DITTO_IDX) {
+      throw new HttpsError("failed-precondition", "Two Ditto cannot breed with each other.");
+    }
+    if (!hasDitto) {
+      const shareGroup = lGroups.some((g) => rGroups.includes(g));
+      if (!shareGroup) {
+        throw new HttpsError(
+          "failed-precondition",
+          `These two are in different egg groups (${lGroups.join("/")} vs ${rGroups.join("/")}). Try a shared egg group or a Ditto.`
+        );
+      }
+      const lGender = String(left.gender ?? "");
+      const rGender = String(right.gender ?? "");
+      if (!((lGender === "M" && rGender === "F") || (lGender === "F" && rGender === "M"))) {
+        throw new HttpsError(
+          "failed-precondition",
+          "The pair needs one male and one female (or a Ditto for either)."
+        );
+      }
+    }
+    // Offspring line: the mother's line, or the non-Ditto parent with a Ditto.
+    const lineIdx = hasDitto
+      ? lIdx === DITTO_IDX
+        ? rIdx
+        : lIdx
+      : String(left.gender ?? "") === "F"
+        ? lIdx
+        : rIdx;
     tx.set(daycareRef, {
       active: true,
       leftId,
@@ -3646,90 +3845,273 @@ export const hatchEgg = onCall(async (request) => {
   return { ok: true, hatched: hatchedName };
 });
 
-/** Poke Swap: propose a pokemon-for-pokemon trade to another member. */
-export const proposeTrade = onCall(async (request) => {
+// ===========================================================================
+// The Trading Post: a public board of listings. A member puts one pokemon up
+// with the criteria they would accept, others make offers, the owner accepts
+// one (transactional box swap) or declines. Pokemon in a locked team on an
+// open battle thread cannot be listed or offered until that thread closes.
+// ===========================================================================
+
+/** Display snapshot of an owned pokemon for listings/offers (public board). */
+function tradeSnapshotOf(pokemonId: string, poke: Record<string, any>, curve: number[]) {
+  const idx = Number(poke.pokedex) || 0;
+  return {
+    pokemonId,
+    name: String(poke.name ?? poke.species ?? ""),
+    species: String(poke.species ?? poke.name ?? ""),
+    slug: String(poke.image_slug ?? ""),
+    gender: String(poke.gender ?? ""),
+    shiny: !!poke.shiny,
+    level: levelForXp(Number(poke.experience) || 0, curve),
+    types: typesForDex(idx),
+    star: starForDex(idx),
+    nature: natureOf(poke, pokemonId),
+    eggGroups: eggGroupsForDex(idx),
+  };
+}
+
+/** Throws if the pokemon sits in a locked team on an open battle thread. */
+async function assertTradable(uid: string, pokemonId: string): Promise<void> {
+  const [teamsSnap, locksSnap] = await Promise.all([
+    db.doc(`users/${uid}/bag/teams`).get(),
+    db.doc(`users/${uid}/bag/threadLocks`).get(),
+  ]);
+  const locks = (locksSnap.data() as Record<string, any>) ?? {};
+  const lockedTeamIds = new Set<string>(
+    Object.values(locks).flatMap((l: any) => (Array.isArray(l?.teamIds) ? l.teamIds : []))
+  );
+  if (!lockedTeamIds.size) return;
+  const teams = (teamsSnap.data() as Record<string, any>) ?? {};
+  for (const [teamId, team] of Object.entries(teams)) {
+    if (!lockedTeamIds.has(teamId)) continue;
+    const ids: string[] = Array.isArray((team as any)?.pokemon_ids) ? (team as any).pokemon_ids : [];
+    if (ids.includes(pokemonId)) {
+      const lock = Object.values(locks).find((l: any) => (l?.teamIds ?? []).includes(teamId)) as any;
+      throw new HttpsError(
+        "failed-precondition",
+        `That pokemon is battling on "${lock?.title || "an open thread"}". The thread must close before it can be traded.`
+      );
+    }
+  }
+}
+
+/** Validate + clamp the "what you'd accept" criteria of a listing. */
+function sanitizeTradeWants(raw: any): Record<string, unknown> {
+  const species = (Array.isArray(raw?.species) ? raw.species : [])
+    .map((s: unknown) => String(s).slice(0, 60))
+    .filter((s: string) => catalogBySlug.has(s))
+    .slice(0, 12);
+  const KNOWN_TYPES = Object.keys(TYPE_CHART);
+  const types = (Array.isArray(raw?.types) ? raw.types : [])
+    .map((t: unknown) => String(t))
+    .filter((t: string) => KNOWN_TYPES.includes(t))
+    .slice(0, 6);
+  const minLevel = Math.max(0, Math.min(100, Math.trunc(Number(raw?.minLevel)) || 0));
+  const minStar = Math.max(0, Math.min(7, Math.trunc(Number(raw?.minStar)) || 0));
+  return {
+    species,
+    types,
+    shiny: raw?.shiny === true,
+    minLevel,
+    minStar,
+    note: String(raw?.note ?? "").slice(0, 300),
+  };
+}
+
+export const createTradeListing = onCall(async (request) => {
   const uid = requireAuth(request);
   const member = await loadMember(uid);
-  const targetName = requireString(request.data?.targetUsername, "member", 100);
   const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
-  if (targetName === member.username) throw new HttpsError("invalid-argument", "You cannot trade with yourself.");
-  const targetSnap = await db.collection("users").where("username", "==", targetName).limit(1).get();
-  if (targetSnap.empty) throw new HttpsError("not-found", "No member by that username.");
+  const wants = sanitizeTradeWants(request.data?.wants);
   const owned = (await db.doc(`users/${uid}/bag/owned_pokemons`).get()).data() ?? {};
-  const offer = (owned as Record<string, any>)[pokemonId];
-  if (!offer) throw new HttpsError("not-found", "That pokemon is not in your box.");
-  const ref = await db.collection("trades").add({
-    fromUid: uid,
-    fromName: member.username,
-    toUid: targetSnap.docs[0].id,
-    toName: targetName,
-    offerId: pokemonId,
-    offerName: String(offer.species ?? offer.name ?? ""),
-    offerSlug: String(offer.image_slug ?? ""),
-    status: "pending",
+  const poke = (owned as Record<string, any>)[pokemonId];
+  if (!poke) throw new HttpsError("not-found", "That pokemon is not in your box.");
+  await assertTradable(uid, pokemonId);
+  const dup = await db
+    .collection("tradeListings")
+    .where("ownerUid", "==", uid)
+    .where("status", "==", "open")
+    .get();
+  if (dup.docs.some((d) => d.data()?.pokemon?.pokemonId === pokemonId)) {
+    throw new HttpsError("failed-precondition", "That pokemon is already up on the board.");
+  }
+  if (dup.size >= 6) {
+    throw new HttpsError("failed-precondition", "You already have 6 open listings. Close one first.");
+  }
+  const curve = await loadLevelingCurve();
+  const ref = await db.collection("tradeListings").add({
+    ownerUid: uid,
+    ownerName: member.username,
+    ownerAvatar: member.avatar ?? "",
+    pokemon: tradeSnapshotOf(pokemonId, poke, curve),
+    wants,
+    status: "open",
+    offers: {},
+    offerCount: 0,
     createdAt: new Date(),
   });
-  await notifyUsers([targetSnap.docs[0].id], {
-    type: "trade",
-    text: `${member.username} proposed a trade: their ${offer.species ?? "pokemon"} for one of yours.`,
-    link: "/Trading",
-  });
-  return { ok: true, tradeId: ref.id };
+  return { ok: true, listingId: ref.id };
 });
 
-/** Accept (with your counter pokemon), decline, or cancel a trade. The swap
- * moves both pokemon between boxes in one transaction; trade-only, no gifting. */
-export const respondTrade = onCall(async (request) => {
+export const cancelTradeListing = onCall(async (request) => {
   const uid = requireAuth(request);
-  const tradeId = requireString(request.data?.tradeId, "trade", 80);
-  const action = request.data?.action;
-  const counterId = request.data?.counterId ? String(request.data.counterId).slice(0, 80) : "";
-  if (!["accept", "decline", "cancel"].includes(action)) {
-    throw new HttpsError("invalid-argument", "Unknown trade action.");
+  const member = await loadMember(uid);
+  const listingId = requireString(request.data?.listingId, "listing", 80);
+  const ref = db.doc(`tradeListings/${listingId}`);
+  const snap = await ref.get();
+  const listing = snap.data();
+  if (!listing) throw new HttpsError("not-found", "Listing not found.");
+  if (listing.ownerUid !== uid && !isAdmin(member)) {
+    throw new HttpsError("permission-denied", "Only the listing owner can take it down.");
   }
-  const tradeRef = db.doc(`trades/${tradeId}`);
-  let notify: { uids: string[]; text: string } | null = null;
+  if (listing.status !== "open") throw new HttpsError("failed-precondition", "This listing is not open.");
+  await ref.update({ status: "cancelled", resolvedAt: new Date() });
+  return { ok: true };
+});
+
+export const makeTradeOffer = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const member = await loadMember(uid);
+  const listingId = requireString(request.data?.listingId, "listing", 80);
+  const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
+  const owned = (await db.doc(`users/${uid}/bag/owned_pokemons`).get()).data() ?? {};
+  const poke = (owned as Record<string, any>)[pokemonId];
+  if (!poke) throw new HttpsError("not-found", "That pokemon is not in your box.");
+  await assertTradable(uid, pokemonId);
+  const curve = await loadLevelingCurve();
+  const offerId = randomUUID();
+  let ownerUid = "";
+  let listingName = "";
   await db.runTransaction(async (tx) => {
-    const snap = await tx.get(tradeRef);
-    const t = snap.data();
-    if (!t || t.status !== "pending") throw new HttpsError("failed-precondition", "This trade is no longer open.");
-    if (action === "cancel") {
-      if (t.fromUid !== uid) throw new HttpsError("permission-denied", "Only the proposer can cancel.");
-      tx.update(tradeRef, { status: "cancelled", resolvedAt: new Date() });
-      return;
+    const ref = db.doc(`tradeListings/${listingId}`);
+    const snap = await tx.get(ref);
+    const listing = snap.data();
+    if (!listing || listing.status !== "open") {
+      throw new HttpsError("failed-precondition", "This listing is no longer open.");
     }
-    if (t.toUid !== uid) throw new HttpsError("permission-denied", "This trade is not for you.");
+    if (listing.ownerUid === uid) {
+      throw new HttpsError(
+        "invalid-argument",
+        "That is your own listing. Use the character transfer below to move pokemon between your characters."
+      );
+    }
+    const offers = (listing.offers as Record<string, any>) ?? {};
+    const already = Object.values(offers).some(
+      (o: any) => o?.fromUid === uid && o?.status === "open" && o?.pokemon?.pokemonId === pokemonId
+    );
+    if (already) throw new HttpsError("failed-precondition", "You already offered that pokemon here.");
+    ownerUid = String(listing.ownerUid);
+    listingName = String(listing.pokemon?.species ?? "their pokemon");
+    tx.update(ref, {
+      [`offers.${offerId}`]: {
+        fromUid: uid,
+        fromName: member.username,
+        pokemon: tradeSnapshotOf(pokemonId, poke, curve),
+        status: "open",
+        at: new Date(),
+      },
+      offerCount: FieldValue.increment(1),
+    });
+  });
+  await notifyUsers([ownerUid], {
+    type: "trade",
+    text: `${member.username} made an offer on your ${listingName} listing: their ${poke.species ?? "pokemon"}.`,
+    link: "/Trading",
+  });
+  return { ok: true, offerId };
+});
+
+export const respondTradeOffer = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const listingId = requireString(request.data?.listingId, "listing", 80);
+  const offerId = requireString(request.data?.offerId, "offer", 80);
+  const action = request.data?.action;
+  if (!["accept", "decline"].includes(action)) {
+    throw new HttpsError("invalid-argument", "Unknown offer action.");
+  }
+  // Battle-lock check for BOTH sides right before an accept: a pokemon that
+  // entered a locked team since the offer was made blocks the swap until its
+  // thread closes.
+  if (action === "accept") {
+    const pre = (await db.doc(`tradeListings/${listingId}`).get()).data();
+    const preOffer = ((pre?.offers as Record<string, any>) ?? {})[offerId];
+    if (pre?.status === "open" && preOffer?.status === "open") {
+      await assertTradable(String(pre.ownerUid), String(pre.pokemon?.pokemonId ?? ""));
+      await assertTradable(String(preOffer.fromUid), String(preOffer.pokemon?.pokemonId ?? ""));
+    }
+  }
+  let notifyAfter: Array<{ uids: string[]; text: string }> = [];
+  await db.runTransaction(async (tx) => {
+    const ref = db.doc(`tradeListings/${listingId}`);
+    const snap = await tx.get(ref);
+    const listing = snap.data();
+    if (!listing || listing.status !== "open") {
+      throw new HttpsError("failed-precondition", "This listing is no longer open.");
+    }
+    if (listing.ownerUid !== uid) {
+      throw new HttpsError("permission-denied", "Only the listing owner can respond to offers.");
+    }
+    const offers = (listing.offers as Record<string, any>) ?? {};
+    const offer = offers[offerId];
+    if (!offer || offer.status !== "open") {
+      throw new HttpsError("failed-precondition", "That offer is no longer open.");
+    }
     if (action === "decline") {
-      tx.update(tradeRef, { status: "declined", resolvedAt: new Date() });
-      notify = { uids: [t.fromUid], text: `${t.toName} declined your trade.` };
+      tx.update(ref, { [`offers.${offerId}.status`]: "declined" });
+      notifyAfter.push({
+        uids: [String(offer.fromUid)],
+        text: `${listing.ownerName} declined your offer on their ${listing.pokemon?.species ?? "pokemon"}.`,
+      });
       return;
     }
-    if (!counterId) throw new HttpsError("invalid-argument", "Pick the pokemon you are trading back.");
-    const fromRef = db.doc(`users/${t.fromUid}/bag/owned_pokemons`);
-    const toRef = db.doc(`users/${t.toUid}/bag/owned_pokemons`);
-    const [fromSnap, toSnap] = await Promise.all([tx.get(fromRef), tx.get(toRef)]);
-    const fromOwned = (fromSnap.data() as Record<string, any>) ?? {};
-    const toOwned = (toSnap.data() as Record<string, any>) ?? {};
-    const offered = fromOwned[t.offerId];
-    const counter = toOwned[counterId];
+    // Accept: swap the two pokemon between boxes. Character/team ties are
+    // stripped so a traded pokemon arrives unassigned.
+    const ownerRef = db.doc(`users/${listing.ownerUid}/bag/owned_pokemons`);
+    const offerRef = db.doc(`users/${offer.fromUid}/bag/owned_pokemons`);
+    const [ownerSnap, offerSnap] = await Promise.all([tx.get(ownerRef), tx.get(offerRef)]);
+    const ownerOwned = (ownerSnap.data() as Record<string, any>) ?? {};
+    const offerOwned = (offerSnap.data() as Record<string, any>) ?? {};
+    const listedPokemonId = String(listing.pokemon?.pokemonId ?? "");
+    const offeredPokemonId = String(offer.pokemon?.pokemonId ?? "");
+    const listed = ownerOwned[listedPokemonId];
+    const offered = offerOwned[offeredPokemonId];
+    if (!listed) throw new HttpsError("failed-precondition", "Your listed pokemon is no longer in your box.");
     if (!offered) throw new HttpsError("failed-precondition", "The offered pokemon is no longer available.");
-    if (!counter) throw new HttpsError("not-found", "That pokemon is not in your box.");
-    // Swap: each pokemon changes boxes; character/team ties do not travel.
     const strip = (p: Record<string, unknown>) => {
       const { characterId, ...rest } = p;
       return rest;
     };
-    tx.update(fromRef, { [t.offerId]: FieldValue.delete(), [randomUUID()]: strip(counter) });
-    tx.update(toRef, { [counterId]: FieldValue.delete(), [randomUUID()]: strip(offered) });
-    tx.update(tradeRef, {
-      status: "accepted",
-      counterId,
-      counterName: String(counter.species ?? counter.name ?? ""),
+    tx.update(ownerRef, { [listedPokemonId]: FieldValue.delete(), [randomUUID()]: strip(offered) });
+    tx.update(offerRef, { [offeredPokemonId]: FieldValue.delete(), [randomUUID()]: strip(listed) });
+    const declineOthers = Object.fromEntries(
+      Object.entries(offers)
+        .filter(([id, o]: [string, any]) => id !== offerId && o?.status === "open")
+        .map(([id]) => [`offers.${id}.status`, "declined"])
+    );
+    tx.update(ref, {
+      status: "completed",
+      [`offers.${offerId}.status`]: "accepted",
+      ...declineOthers,
       resolvedAt: new Date(),
     });
-    notify = { uids: [t.fromUid], text: `${t.toName} accepted the trade: ${counter.species ?? "a pokemon"} for your ${t.offerName}.` };
+    notifyAfter.push({
+      uids: [String(offer.fromUid)],
+      text: `${listing.ownerName} accepted your offer! ${listing.pokemon?.species ?? "The pokemon"} is now yours.`,
+    });
+    const losers = Object.values(offers)
+      .filter((o: any) => o?.status === "open" && o?.fromUid !== offer.fromUid)
+      .map((o: any) => String(o.fromUid));
+    if (losers.length) {
+      notifyAfter.push({
+        uids: [...new Set(losers)],
+        text: `The ${listing.pokemon?.species ?? "pokemon"} listing you offered on was traded to someone else.`,
+      });
+    }
   });
-  if (notify) await notifyUsers((notify as any).uids, { type: "trade", text: (notify as any).text, link: "/Trading" });
+  await Promise.all(
+    notifyAfter.map((n) => notifyUsers(n.uids, { type: "trade", text: n.text, link: "/Trading" }))
+  );
   return { ok: true };
 });
 
@@ -3825,6 +4207,88 @@ export const plantBerry = onCall(async (request) => {
     );
   });
   return { ok: true };
+});
+
+/**
+ * The Fishing Pond: a pinned staff-owned thread in Events where members cast
+ * once a week. Created on first use (mirrors ensureTrainingThread); posts
+ * there are fishing-only, enforced by publishForumPost/rollEncounter.
+ */
+export const ensureFishingThread = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const caller = await loadMember(uid);
+
+  const configRef = db.doc("admin/fishing");
+  const cfg = (await configRef.get()).data() ?? {};
+  const existingId = typeof cfg.pondThreadId === "string" ? cfg.pondThreadId : "";
+  if (existingId) {
+    const snap = await threadRef("Events", existingId).get();
+    if (snap.exists && !snap.data()?.closed) return { threadId: existingId };
+  }
+
+  const adminSnap = await db.collection("users").where("permissions", "==", "Admin").limit(1).get();
+  const adminDoc = adminSnap.docs[0];
+  const author: Member = adminDoc
+    ? {
+        uid: adminDoc.id,
+        username: (adminDoc.data().username as string) ?? "Snagem Staff",
+        avatar: (adminDoc.data().avatar as string) ?? "",
+        badges: (adminDoc.data().badges as string[]) ?? null,
+        permissions: "Admin",
+        capabilities: [],
+        signature: "",
+      }
+    : caller;
+
+  const threadsCol = db.collection("forum/Events/threads");
+  const countSnap = await threadsCol.count().get();
+  const threadId = String(countSnap.data().count + 1);
+  const now = new Date();
+
+  const batch = db.batch();
+  const tRef = threadsCol.doc(threadId);
+  batch.create(tRef, {
+    title: "The Fishing Pond",
+    createdBy: author.username,
+    hostUid: author.uid,
+    createdByAdmin: true,
+    staffCreated: true,
+    closed: false,
+    private: false,
+    pinned: true,
+    // Fishing-only thread: rollEncounter takes casts here (weekly, rod
+    // required) and publishForumPost rejects non-fishing posts.
+    fishingPond: true,
+    fishingClaims: {},
+    noXp: true,
+    tags: ["fishing", "activity"],
+    instructions:
+      "Cast your rod once a week with the character of your choice. Battle what bites and throw a ball, or let it go for 1 Snag Coin. Fishing posts only.",
+    restricted: false,
+    allowedPosters: [],
+    createdAt: now,
+    timePosted: now,
+    replyCount: 0,
+    lastPost: { by: author.username, avatar: author.avatar, at: now },
+    participants: { [author.uid]: { name: author.username, avatar: author.avatar } },
+    poll: null,
+    encounterConfig: { enabled: true, mode: "roll", listId: null, perUserLimit: 9999 },
+    encounterClaims: {},
+    bossBattle: null,
+  });
+  batch.create(tRef.collection("posts").doc(), {
+    ...authorFields(author),
+    character: "",
+    characters: [],
+    text: "<p>Welcome to the Fishing Pond! Bring a rod from the Snag Mall and cast once a week. Whatever bites is yours to battle and catch, or release for a Snag Coin. Tight lines!</p>",
+    signature: "",
+    timePosted: now,
+    type: "user",
+    blocks: {},
+  });
+  batch.set(configRef, { pondThreadId: threadId }, { merge: true });
+  await batch.commit();
+  return { threadId };
 });
 
 export const harvestBerry = onCall(async (request) => {

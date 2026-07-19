@@ -16,6 +16,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import { pokemonData } from "../../../../data/pokemon";
 import { getPokemonLists, getStarOverrides } from "../../../../queries/admin";
 import { getCharacters, getItems } from "../../../../queries/dashboard";
+import { currentWeekId } from "../../../../queries/activities";
 import { DEFAULT_ENCOUNTERS_PER_USER } from "../../config";
 import { callRollEncounter, callableMessage } from "../../functionsClient";
 import { getEncounterLists, resolveListSlugs } from "../../queries";
@@ -296,24 +297,23 @@ export function EncounterPostPanel(props: {
       setEncounterError(callableMessage(err, "The cast failed. Try again.")),
   });
 
-  // Rod ownership decides whether the Go Fishing cast shows (Water-type pool,
-  // star ceiling by rod tier; the server re-checks the bag).
+  // The Fishing Pond thread: casting needs any rod from the Snag Mall; one
+  // cast per week (the server re-checks both).
+  const isPond = !!thread.fishingPond;
   const { data: bagItems } = useQuery({
     queryKey: ["get-items", user?.uid],
     queryFn: () => getItems(user!.uid),
-    enabled: !!user && !!config?.enabled,
+    enabled: !!user && isPond,
   });
-  const bestRod = React.useMemo(() => {
-    let best: { name: string; stars: number } | null = null;
-    (bagItems ?? []).forEach((i) => {
-      if (Number(i.quantity) <= 0) return;
+  const myRod = React.useMemo(() => {
+    const rod = (bagItems ?? []).find((i) => {
+      if (Number(i.quantity) <= 0) return false;
       const key = i.name.toLowerCase().replace(/\s+/g, "-");
-      const stars =
-        key === "super-rod" ? 6 : key === "good-rod" ? 4 : key === "old-rod" || key === "fishing-rod" ? 2 : 0;
-      if (stars > (best?.stars ?? 0)) best = { name: i.name, stars };
+      return ["super-rod", "good-rod", "old-rod", "fishing-rod"].includes(key);
     });
-    return best as { name: string; stars: number } | null;
+    return rod?.name ?? null;
   }, [bagItems]);
+  const fishedThisWeek = !!user && thread.fishingClaims?.[user.uid] === currentWeekId();
 
   // Resolve the host's lists (all signed-in users can read the list library).
   const { data: allLists } = useQuery({
@@ -381,26 +381,6 @@ export function EncounterPostPanel(props: {
             size="xs"
             styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
           />
-          {!isSafari && bestRod && (
-            <Group gap={8} align="center">
-              <Button
-                size="xs"
-                radius="xl"
-                variant="light"
-                color="blue"
-                loading={fishingMutation.isPending}
-                onClick={() => {
-                  setEncounterError("");
-                  fishingMutation.mutateAsync().catch(() => undefined);
-                }}
-              >
-                Go Fishing ({bestRod.name})
-              </Button>
-              <Text fz={13} c="dimmed">
-                Water-type pool, up to {bestRod.stars}★. Uses one encounter.
-              </Text>
-            </Group>
-          )}
           {config.mode === "roll" ? (
             <Button
               size="xs"
@@ -511,7 +491,52 @@ export function EncounterPostPanel(props: {
               </Text>
             </Stack>
           )}
-          {valueBeaten && remaining > 0 && rollSection}
+          {valueBeaten && remaining > 0 && !isPond && rollSection}
+        </Stack>
+      ) : isPond ? (
+        <Stack gap={8}>
+          {fishedThisWeek ? (
+            <Text fz={14} c="dimmed">
+              You already cast your line this week. The pond restocks Monday 00:00 UTC.
+            </Text>
+          ) : !myRod ? (
+            <Text fz={14} c="dimmed">
+              You need a fishing rod. The Snag Mall&apos;s Angler&apos;s Corner sells them.
+            </Text>
+          ) : (
+            <>
+              <MultiSelect
+                label="Fishing as (optional)"
+                description="The catch joins the chosen character's box."
+                placeholder="Any of your characters"
+                data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
+                value={forCharacterIds}
+                onChange={setForCharacterIds}
+                clearable
+                size="xs"
+                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+              />
+              <Group gap={8} align="center">
+                <Button
+                  size="xs"
+                  radius="xl"
+                  variant="light"
+                  color="blue"
+                  loading={fishingMutation.isPending}
+                  onClick={() => {
+                    setEncounterError("");
+                    fishingMutation.mutateAsync().catch(() => undefined);
+                  }}
+                >
+                  Cast your line ({myRod})
+                </Button>
+                <Text fz={13} c="dimmed">
+                  Once a week. Bites are 1★ to 3★ Water-types (3★ is a 10% catch of the day).
+                </Text>
+              </Group>
+            </>
+          )}
+          {encounterError && <GameResultText>{encounterError}</GameResultText>}
         </Stack>
       ) : remaining <= 0 ? (
         <Text fz={14} c="dimmed">

@@ -45,6 +45,8 @@ export interface EncounterBlock {
   method?: string;
   /** The rod used for a fishing encounter. */
   rod?: string;
+  /** Snag Coins paid out for releasing a Fishing Pond catch. */
+  abandonCoin?: number;
 
   // --- Star rating ----------------------------------------------------------
   /**
@@ -108,6 +110,8 @@ export interface PostBlocks {
   evolution?: { fromName: string; fromSlug: string; toName: string; toSlug: string };
   /** Pokemon that became fully shadowed on this post (shadowed system card). */
   shadowed?: { names: string[] };
+  /** This post was spent visiting the Pokemon Center (team healed + cured). */
+  center?: { healed: boolean };
   /** The enemy's counter-attack on this post's chosen fighter (flat HP). */
   battle?: {
     fighterId: string;
@@ -336,6 +340,12 @@ export interface ForumThread {
   weather?: string | null;
   /** uid -> pokemon id -> active status condition (burn/poison/paralysis). */
   battleStatus?: Record<string, Record<string, string>>;
+  /** Per-user battle log: post count, last battle post, Center visit post. */
+  battleLog?: Record<string, { posts?: number; lastBattle?: number; centerAt?: number }>;
+  /** The weekly Fishing Pond thread (fishing-only posts). */
+  fishingPond?: boolean;
+  /** uid -> weekId of their last cast at the Fishing Pond. */
+  fishingClaims?: Record<string, string>;
   /** Running tally of items spent on this thread (shown to staff at close). */
   itemsUsedTally?: Record<string, { name?: string; filePath?: string; qty?: number }>;
 }

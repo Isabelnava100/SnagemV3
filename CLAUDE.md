@@ -145,20 +145,54 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
   keep them in sync. New pages: /Daycare (breeding: one pair per member in
   `users/{uid}/bag/daycare`, server-written only per rules; egg hatches after
   mechanics.hatchDays days OR hatchPosts posts, offspring = base form of the
-  non-Ditto parent's line) and /Trading (Poke Swap: `trades` collection,
-  parties+admin read, writes via `proposeTrade`/`respondTrade` callables,
-  transactional box swap). Guide: Library > The War Room reads the live config.
-- Held items + fishing + Berry Farm + gym rematches (July 2026) need a rules +
-  functions deploy: `setHeldItem` (equip from the dashboard box; battle effects
-  for Muscle Band / Assault Vest / Leftovers / Shell Bell / Focus Sash / Quick
+  non-Ditto parent's line) and /Trading. Guide: Library > The War Room reads
+  the live config.
+- Held items + Berry Farm + gym rematches (July 2026) need a rules + functions
+  deploy: `setHeldItem` (equip from the dashboard box; battle effects for
+  Muscle Band / Assault Vest / Leftovers / Shell Bell / Focus Sash / Quick
   Claw / Lucky Egg in `publishForumPost`, knobs in `mechanics.held*`),
-  `rollEncounter` `fishing: true` (Water pool capped by best rod: Old 2 / Good
-  4 / Super 6 star; seed rods with `node scripts/seed-fishing-rods.mjs` from
-  `functions/`), `plantBerry`/`harvestBerry` (`users/{uid}/bag/farm`,
-  server-written only, UI on /Activities), and challenge kind "rematch" on
-  `requestChallenge`/`grantChallengeStep` (Rematch Ladder on /Challenges, tier
-  = wins + 1, suggested star = 3 + tier). Abilities per species stay deferred
-  (docs/BACKLOG.md wishlist).
+  `plantBerry`/`harvestBerry` (`users/{uid}/bag/farm`, server-written only, UI
+  on /Activities; defaults 7 grow days, yield 2), and challenge kind "rematch"
+  on `requestChallenge`/`grantChallengeStep` (Rematch Ladder on /Challenges,
+  tier = wins + 1, suggested star = 3 + tier). Abilities per species stay
+  deferred (docs/BACKLOG.md wishlist).
+- Trading Post + Fishing Pond + Center/breeding/battle-staff rework (July
+  2026) need a rules + functions deploy:
+  - /Trading is a LISTING BOARD (`tradeListings` collection, members read,
+    writes via `createTradeListing`/`cancelTradeListing`/`makeTradeOffer`/
+    `respondTradeOffer`; offers notify in-app). Old `proposeTrade`/
+    `respondTrade` are gone. A pokemon on a locked team in an OPEN battle
+    thread is untradable: locks mirror to `users/{uid}/bag/threadLocks`
+    (written by publishForumPost team lock, cleaned by onThreadClosed,
+    server-only per rules), greyed with a tooltip link client-side, enforced
+    by `assertTradable` server-side. Self-trades between own characters ride
+    `assignPokemonCharacter`. Wants criteria + snapshot previews are
+    data-driven (MUSTHAVE_OPTIONS in `src/Pages/Trading/index.tsx` +
+    `tradeSnapshotOf` server-side); extend those when new mechanics land.
+    Reach the page from the Snag Mall footer cards.
+  - The Fishing Pond: `ensureFishingThread` creates a pinned fishing-only
+    thread in Events on first use (like the training log). One cast per member
+    per week (snagWeekId, `thread.fishingClaims`), any rod required (seed the
+    Mall's Angler's Corner: `node scripts/seed-fishing-rods.mjs` from
+    `functions/`), bites roll 1/2/3 star at 60/30/10 Water-types, releasing
+    the catch pays 1 Snag Coin (`fleeAttempt` on the pond always succeeds).
+    Entry card on /Activities.
+  - Pokemon Center: no coins; a POST is the price (`centerVisit` on
+    publishForumPost). Needs one battle-free post first, no live encounter or
+    boss, heals only the caller's team on that thread, blocks
+    encounters/battles on the visit post + the next (thread.battleLog per
+    user; rollEncounter honors the cooldown). `pokemonCenterHeal` and
+    `mechanics.centerCost` are gone.
+  - Breeding: parents need opposite genders + a shared egg group, or a Ditto;
+    7 star and Undiscovered-group species never breed (eggGroupsByDex.json via
+    `scripts/gen-egggroups.mjs`, mirrored in functions + src/data/pokemon).
+    Offspring = mother's (or non-Ditto parent's) base form. Info boxes show
+    nature, gender, star and egg group (catch banners intentionally do not).
+  - New capability `ManageBattles` (battle staff): only admins/holders may
+    toggle battle mode (`encounterConfig`, enforced in firestore.rules thread
+    key sets) and they get host access on ANY thread (HostMenu, boss battles,
+    weather, safari judging). Hosts can retune `weather` at any time
+    (`setThreadWeather` callable + Host Menu panel).
 - Type effectiveness + S.N.A.G. + Dev Board (July 2026) need a rules +
   functions deploy (`firebase deploy --only firestore:rules,functions`):
   battle damage/progress now scale by pokemon-type matchup (0.5x..2x clamp,

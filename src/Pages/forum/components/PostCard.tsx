@@ -159,6 +159,16 @@ export function GameBlocks(props: { post: ForumPost }) {
       </Flex>
     );
   });
+  if (blocks.center?.healed) {
+    cards.push(
+      <Flex key="center" gap={8} align="center">
+        <GameResultText>
+          A trip to the Pokemon Center! Nurse Joy fully healed and cured this trainer&apos;s
+          team. No battles for them until their next post.
+        </GameResultText>
+      </Flex>
+    );
+  }
   if (blocks.battle) {
     const b = blocks.battle;
     const healLines = (b.heals ?? []).map((h) =>

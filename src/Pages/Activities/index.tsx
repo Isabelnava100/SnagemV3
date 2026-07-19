@@ -29,6 +29,7 @@ import {
 import { getItems } from "../../queries/dashboard";
 import {
   DEFAULT_BATTLE_MECHANICS,
+  callEnsureFishingThread,
   callHarvestBerry,
   callPlantBerry,
   getBattleConfig,
@@ -243,7 +244,7 @@ function BerryFarm(props: { uid: string }) {
         Drop a bag berry in an open plot; it is ready to pick after {mech.berryGrowDays}{" "}
         {mech.berryGrowDays === 1 ? "day" : "days"}.
       </Text>
-      <SimpleGrid cols={{ base: 1, xs: Math.min(3, plotCount) }} spacing="md">
+      <SimpleGrid cols={{ base: 1, xs: Math.min(3, plotCount) as 1 | 2 | 3 }} spacing="md">
         {Array.from({ length: plotCount }).map((_, slot) => {
           const plot = plots[String(slot)];
           const grown = plot ? daysGrown(plot) : 0;
@@ -323,6 +324,59 @@ function BerryFarm(props: { uid: string }) {
       </SimpleGrid>
       {message && (
         <Text fz={14} mt="sm" c="teal.4" role="status" aria-live="polite">
+          {message}
+        </Text>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * The Fishing Pond: a pinned Events thread where members cast once a week
+ * (rod required, star 1-3 Water-types, release for 1 Snag Coin). The thread
+ * is created server-side on first visit, like the Colosseum training log.
+ */
+function FishingPondCard() {
+  const [message, setMessage] = React.useState("");
+  const go = useMutation({
+    mutationFn: callEnsureFishingThread,
+    onSuccess: (res) => {
+      window.location.assign(`/Forum/Events/thread/${res.threadId}/last`);
+    },
+    onError: (e) => setMessage((e as Error).message || "Could not reach the pond. Try again."),
+  });
+  return (
+    <Card bg="#101720" radius="lg" p="lg" withBorder style={{ borderColor: "#24374a" }}>
+      <Group justify="space-between" align="center" wrap="wrap" gap="md">
+        <Box style={{ minWidth: 0, flex: "1 1 320px" }}>
+          <Text fz={14} fw={700} c="#74c0fc" tt="uppercase" style={{ letterSpacing: 2 }}>
+            The Fishing Pond
+          </Text>
+          <Text fz={24} fw={800} c="white">
+            Cast a line, once a week
+          </Text>
+          <Text fz={14} c="dimmed">
+            Bring a rod from the Snag Mall and fish with the character of your choice. Bites
+            run 1★ to 3★ Water-types (a 3★ bite is a 10% catch of the day). Battle and
+            catch it, or let it go for 1 Snag Coin. The pond restocks Monday 00:00 UTC.
+          </Text>
+        </Box>
+        <Button
+          radius="xl"
+          size="md"
+          variant="gradient"
+          gradient={{ from: "blue", to: "cyan", deg: 90 }}
+          loading={go.isPending}
+          onClick={() => {
+            setMessage("");
+            go.mutate();
+          }}
+        >
+          Head to the Pond
+        </Button>
+      </Group>
+      {message && (
+        <Text fz={14} mt="sm" c="#E54156" role="status" aria-live="polite">
           {message}
         </Text>
       )}
@@ -513,6 +567,8 @@ export default function Activities() {
           </Card>
 
           <BerryFarm uid={uid} />
+
+          <FishingPondCard />
 
           <Group gap={8} wrap="nowrap" align="flex-start">
             <IconInfoCircle size={16} color="#74c0fc" style={{ flexShrink: 0, marginTop: 2 }} />

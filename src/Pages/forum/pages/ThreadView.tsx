@@ -430,7 +430,8 @@ export default function ThreadView() {
     );
   }
 
-  const host = userIsHost(thread, user);
+  const host =
+    userIsHost(thread, user) || isAdmin(user) || hasCapability(user, Capability.ManageBattles);
   const mayPost = userMayPost(thread, user);
   const lastPageNum = Math.max(1, Math.ceil((totalPosts ?? 0) / POSTS_PER_PAGE));
   const anchorIds = (posts ?? []).map((post) => `post-${post.id}`);

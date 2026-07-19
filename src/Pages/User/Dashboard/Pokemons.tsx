@@ -48,6 +48,8 @@ import { Edit2, FileSearch } from "../../../icons";
 import { getCharacters, getItems, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
 import { callSetHeldItem } from "../../../queries/game";
 import { NATURE_GROUPS, NATURE_GROUP_LABEL, natureOf } from "../../../lib/natures";
+import { eggGroupsForDex } from "../../../lib/eggGroups";
+import { starForDex } from "../../../lib/encounterStars";
 import { getItemImageURL } from "../../../helpers";
 import { EvolveButton, LevelBar } from "../../../components/pokemon/EvolveButton";
 import ShadowVaccineButton from "../../../components/pokemon/ShadowVaccineButton";
@@ -923,6 +925,11 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         <Text fz={14}>
           Nature: {natureOf(pokemon)} ({NATURE_GROUP_LABEL[NATURE_GROUPS[natureOf(pokemon)]]})
         </Text>
+        <Text fz={14}>
+          Star level: {"★".repeat(starForDex(Number(pokemon.pokedex) || 0))} (
+          {starForDex(Number(pokemon.pokedex) || 0)})
+        </Text>
+        <Text fz={14}>Egg group: {eggGroupsForDex(pokemon.pokedex ?? 0).join(" / ")}</Text>
         <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={14} c="grape.3">
           What do these stats mean?
         </Anchor>

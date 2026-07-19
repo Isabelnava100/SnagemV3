@@ -61,7 +61,7 @@ const ALL_LINKS: NavItem[] = [
 // Only these stay pinned to the main nav (the desktop rail and the mobile
 // bottom bar). Everything else lives behind "More" so the rail stays clean and
 // the bar stays thumb-friendly.
-const PRIMARY_LABELS = ["Forum", "Console", "Shop", "S.N.A.G."];
+const PRIMARY_LABELS = ["Forum", "Console", "S.N.A.G."];
 
 const primaryLinks = PRIMARY_LABELS.map((label) => ALL_LINKS.find((l) => l.label === label)!);
 

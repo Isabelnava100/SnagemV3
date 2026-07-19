@@ -2,6 +2,7 @@ import { Badge, Box, Group, ScrollArea, Stack, Table, Text, Title } from "@manti
 import { useQuery } from "@tanstack/react-query";
 import { STAR_FLEE_CHANCE, STAR_POSTS_TO_BEAT, maxHpForLevel } from "../../lib/encounterStars";
 import { ALL_TYPES, typeEffectiveness } from "../../lib/typeChart";
+import { NATURE_GROUPS, NATURE_GROUP_LABEL } from "../../lib/natures";
 import { DEFAULT_BATTLE_CONFIG, getBattleConfig } from "../../queries/game";
 import { useAuth } from "../../context/AuthContext";
 
@@ -168,8 +169,36 @@ export default function BattleGuideTab() {
           {cfg.mechanics.natureEffect}% to your strikes, a defense nature shaves{" "}
           {cfg.mechanics.natureEffect}% off incoming hits, and a speed nature adds{" "}
           {cfg.mechanics.natureEffect}% to run-away rolls. Neutral natures do
-          nothing. All of these numbers are staff-tunable.
+          nothing. All of these numbers are staff-tunable. Your pokemon&apos;s
+          nature shows on its info box in the Console.
         </Text>
+        <ScrollArea type="auto" mt={8}>
+          <Table withTableBorder withColumnBorders fz={14} miw={480}>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Group</Table.Th>
+                <Table.Th>Effect</Table.Th>
+                <Table.Th>Natures</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {(["attack", "defense", "speed", "neutral"] as const).map((group) => (
+                <Table.Tr key={group}>
+                  <Table.Td tt="capitalize" fw={700}>
+                    {group}
+                  </Table.Td>
+                  <Table.Td>{NATURE_GROUP_LABEL[group]}</Table.Td>
+                  <Table.Td>
+                    {Object.entries(NATURE_GROUPS)
+                      .filter(([, g]) => g === group)
+                      .map(([n]) => n)
+                      .join(", ")}
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </ScrollArea>
       </Section>
 
       <Section title="Status conditions">
@@ -188,10 +217,11 @@ export default function BattleGuideTab() {
 
       <Section title="Weather">
         <Text>
-          Hosts can set the weather when creating a thread: sun, rain, sandstorm,
-          or snow. Favored types (for example Fire in sun, Water in rain) attack
-          at x{cfg.mechanics.weatherBoost}; disfavored types are weakened by the
-          same amount. Weather lasts the whole thread.
+          Hosts pick the weather when creating a thread and can retune it at any
+          time from the Host Menu: sun, rain, sandstorm, or snow. Favored types
+          (for example Fire in sun, Water in rain) attack at x
+          {cfg.mechanics.weatherBoost}; disfavored types are weakened by the same
+          amount.
         </Text>
       </Section>
 
@@ -207,22 +237,31 @@ export default function BattleGuideTab() {
 
       <Section title="The Pokemon Center">
         <Text>
-          Mid-thread you can visit the Pokemon Center from the composer&apos;s
-          Battle panel: for {cfg.mechanics.centerCost} Snag Coins the nurse fully
-          heals your whole team on that thread and cures every status. Fainted
-          pokemon wake up too.
+          Mid-thread you can spend a POST visiting the Pokemon Center (no coins,
+          the trip is the price). It only opens when nothing is being fought: no
+          live encounter, no boss, and your latest post on the thread was
+          battle-free. The nurse fully heals and cures your own team&apos;s
+          wounds from that thread only, and you cannot roll encounters or battle
+          on the visit post or your next one there.
         </Text>
       </Section>
 
-      <Section title="The Daycare and the Trading Station">
+      <Section title="The Daycare and the Trading Post">
         <Text>
-          The Daycare (main nav) takes one pair at a time: two pokemon that share
-          a type, share a species, or include a Ditto. Their egg is ready after{" "}
-          {cfg.mechanics.hatchDays} days or {cfg.mechanics.hatchPosts} qualifying
-          posts, whichever comes first, and hatches into the base form of the
-          non-Ditto parent&apos;s line. The Trading Station handles the only way
-          a pokemon changes trainers: a pokemon-for-pokemon swap, proposed and
-          accepted by both sides.
+          The Daycare (main nav) takes one pair at a time: one male and one
+          female sharing an egg group, or anything breedable with a Ditto.
+          Legendaries, mythicals and Undiscovered-group pokemon cannot breed.
+          The egg is ready after {cfg.mechanics.hatchDays} days or{" "}
+          {cfg.mechanics.hatchPosts} qualifying posts, whichever comes first,
+          and hatches into the base form of the mother&apos;s (or non-Ditto
+          parent&apos;s) line.
+        </Text>
+        <Text mt={6}>
+          The Trading Post is the only way a pokemon changes trainers: put one
+          on the board with what you would accept in return, or offer on
+          someone else&apos;s listing. A pokemon on a locked team in an open
+          battle thread cannot be traded until that thread closes. You can also
+          move pokemon freely between your OWN characters there.
         </Text>
       </Section>
 
@@ -241,14 +280,15 @@ export default function BattleGuideTab() {
         </Text>
       </Section>
 
-      <Section title="Fishing">
+      <Section title="The Fishing Pond">
         <Text>
-          Buy a rod at the Snag Mall and a Go Fishing cast appears next to the
-          encounter roll on any thread with encounters enabled. Fishing pulls
-          from the full Water-type pokedex instead of the host&apos;s list, up
-          to a star ceiling set by your best rod: Old Rod 2★, Good Rod 4★,
-          Super Rod 6★. A cast uses one of your thread encounters and the
-          battle plays out as usual.
+          Fishing lives on its own pinned thread in Events (reach it from the
+          Activities page). Bring any rod from the Snag Mall and cast once a
+          week with the character of your choice: bites are 1★ to 3★
+          Water-types, rolled at 60/30/10 (a 3★ bite is the 10% catch of the
+          day). Battle it down and throw a ball, or release it for 1 Snag Coin.
+          The pond is fishing-only: no other encounters or battles happen
+          there, and it restocks Monday 00:00 UTC.
         </Text>
       </Section>
 

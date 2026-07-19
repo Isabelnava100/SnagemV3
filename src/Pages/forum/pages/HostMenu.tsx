@@ -42,6 +42,7 @@ import {
   startBossBattle,
   updateThreadDetails,
 } from "../mutations";
+import { callSetThreadWeather } from "../functionsClient";
 import { getThread, resolveListSlugs } from "../queries";
 import { EncounterConfig } from "../types";
 import { EncounterSetupPanel } from "../components/composer/EncounterPanels";
@@ -57,6 +58,62 @@ import "../forum.css";
  * boss battles, and archive the thread. Archive and boss battle actions all
  * require confirmation modals (board 13/14).
  */
+/** Host-editable battle weather, changeable at any time mid-thread. */
+function WeatherPanel(props: { forum: string; threadId: string; current: string | null }) {
+  const queryClient = useQueryClient();
+  const [value, setValue] = React.useState<string | null>(props.current);
+  const [message, setMessage] = React.useState("");
+  const save = useMutation({
+    mutationFn: () => callSetThreadWeather(props.forum, props.threadId, value),
+    onSuccess: () => {
+      setMessage("Weather updated. It applies from the next battle post.");
+      queryClient.invalidateQueries({ queryKey: ["forum-thread", props.forum, props.threadId] });
+    },
+    onError: (e) => setMessage((e as Error).message || "Could not change the weather."),
+  });
+  return (
+    <ForumPanel title="Weather">
+      <PanelHint>
+        Battle weather boosts favored attacker types and weakens the rest. You can retune
+        it at any point in the thread.
+      </PanelHint>
+      <Group gap={10} align="flex-end">
+        <Select
+          label="Current weather"
+          data={[
+            { value: "sun", label: "Harsh sunlight (Fire/Grass up, Water down)" },
+            { value: "rain", label: "Rain (Water/Electric up, Fire down)" },
+            { value: "sandstorm", label: "Sandstorm (Rock/Ground/Steel up, Flying down)" },
+            { value: "snow", label: "Snow (Ice up, Grass down)" },
+          ]}
+          placeholder="Clear skies (no weather)"
+          value={value}
+          onChange={setValue}
+          clearable
+          w={280}
+          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+        />
+        <GradientButtonSecondary
+          radius="xl"
+          size="xs"
+          loading={save.isPending}
+          onClick={() => {
+            setMessage("");
+            save.mutateAsync().catch(() => undefined);
+          }}
+        >
+          Set Weather
+        </GradientButtonSecondary>
+      </Group>
+      {message && (
+        <Text fz={14} c="green.0" role="status" aria-live="polite">
+          {message}
+        </Text>
+      )}
+    </ForumPanel>
+  );
+}
+
 export default function HostMenu() {
   const { forum: forumParam, id: threadId } = useParams();
   const forum = forumParam ?? "Main-Forum";
@@ -147,7 +204,11 @@ export default function HostMenu() {
         ...(isAdmin(user) ? { pinned } : {}),
         restricted,
         allowedPosters: restricted ? allowedPosters : [],
-        encounterConfig,
+        // Battle mode is battle-staff only; a plain host write with
+        // encounterConfig in it would be rejected by the Firestore rules.
+        ...(isAdmin(user) || hasCapability(user, Capability.ManageBattles)
+          ? { encounterConfig }
+          : {}),
         // Staff-created threads control when XP is served; "use defaults"
         // resets the per-post amounts to the current site defaults.
         ...(thread!.staffCreated
@@ -230,7 +291,10 @@ export default function HostMenu() {
     );
   }
 
-  if (!thread || (!userIsHost(thread, user) && !isAdmin(user))) {
+  // Battle staff (admin or the ManageBattles capability) get host access on
+  // every thread; battle mode itself (encounterConfig) is battle-staff only.
+  const battleStaff = isAdmin(user) || hasCapability(user, Capability.ManageBattles);
+  if (!thread || (!userIsHost(thread, user) && !battleStaff)) {
     return (
       <Container size="lg" mt={20}>
         <Text c="white">Only the host of this thread can open the host menu.</Text>
@@ -367,14 +431,24 @@ export default function HostMenu() {
 
         {/* Right column: encounters + boss battle (or Safari judging) */}
         <Stack gap={16} style={{ flex: 7, width: "100%" }}>
+          <WeatherPanel forum={forum} threadId={threadId!} current={thread.weather ?? null} />
+
           {thread.safariContest ? (
             <SafariJudgePanel forum={forum} threadId={threadId!} thread={thread} />
-          ) : (
+          ) : battleStaff ? (
             <EncounterSetupPanel
               value={encounterConfig}
               onChange={setEncounterConfig}
               showDisableSwitch
             />
+          ) : (
+            <ForumPanel title="Encounters">
+              <PanelHint>
+                Battle mode (enabling or disabling encounters) is managed by admins and
+                battle staff. Ask a staff member if this thread&apos;s encounter setup
+                needs a change.
+              </PanelHint>
+            </ForumPanel>
           )}
 
           {!thread.safariContest && (

@@ -122,10 +122,13 @@ Status as of 2026-07:
   at 1), Quick Claw (flee bonus), Lucky Egg (exp boost). All numbers are
   admin-tunable in Battle Costs (`mechanics.held*`/`luckyEggBoost`). Other
   hold-items equip but are cosmetic. Needs the functions deploy.
-- **Fishing** DONE (2026-07). Rods (Old 2-star / Good 4-star / Super 6-star) gate
-  a Water-type pool in `rollEncounter` (`fishing: true`); Go Fishing button in
-  the composer encounter panel when a rod is in the bag. Seed the Mall's
+- **Fishing** REWORKED into the Fishing Pond (2026-07, owner direction): its own
+  pinned Events thread (created on first use via `ensureFishingThread`), one
+  cast per member per week, any rod required, 1/2/3 star Water bites at
+  60/30/10, release pays 1 Snag Coin, fishing-only posts. Seed the Mall's
   "Angler's Corner" with `node scripts/seed-fishing-rods.mjs` from `functions/`.
+  NOTE: rod tiers currently only gate ACCESS (any rod works, same odds); if
+  better rods should improve the 2-3 star odds, that is an owner call.
 - **Berry farming** DONE (2026-07). The Berry Farm on /Activities:
   `plantBerry`/`harvestBerry` callables, state in `users/{uid}/bag/farm`
   (server-written only per rules), grow days / yield / plot count admin-tunable.

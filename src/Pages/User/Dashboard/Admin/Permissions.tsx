@@ -447,7 +447,6 @@ const MECHANICS_FIELDS: Array<{
   { key: "statusTick", label: "Status tick damage", hint: "Flat damage burn and poison deal each battle post.", step: 1 },
   { key: "paralysisMult", label: "Paralysis attack mult", hint: "Attack progress multiplier while paralyzed.", step: 0.05 },
   { key: "weatherBoost", label: "Weather boost", hint: "Multiplier for weather-favored types (weakened types get the inverse).", step: 0.05 },
-  { key: "centerCost", label: "Center cost (coins)", hint: "Snag Coin cost of a mid-thread Pokemon Center heal.", step: 1 },
   { key: "ballWornBonus", label: "Worn catch bonus (%)", hint: "Extra catch chance on a fully beaten encounter.", step: 1 },
   { key: "hatchPosts", label: "Egg hatch (posts)", hint: "Qualifying posts for a Daycare egg to hatch.", step: 1 },
   { key: "hatchDays", label: "Egg hatch (days)", hint: "Days for a Daycare egg to hatch (whichever comes first).", step: 1 },

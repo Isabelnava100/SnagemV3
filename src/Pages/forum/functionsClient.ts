@@ -58,6 +58,8 @@ export const callPublishPost = (input: {
   safariAction?: "fight" | "berry" | "ball";
   /** Try to run away from the wild encounter this post (star-based roll). */
   fleeAttempt?: boolean;
+  /** Spend this post at the Pokemon Center (no battle this post or the next). */
+  centerVisit?: boolean;
   /** Owned pokemon id (from the locked team) taking the enemy's hits. */
   fighterId?: string;
   /** Evolve a team pokemon on publish (validated + applied server-side). */
@@ -175,7 +177,6 @@ export const callFinalizeSafariContest = (input: {
   results: Array<{ uid: string; coins: number }>;
 }) => call<{ ok: boolean; paid: number }>("finalizeSafariContest", input);
 
-/** Mid-thread Pokemon Center visit: pay Snag Coins, clear your team's battle
- * damage + statuses on this thread. Cost is admin-set (mechanics.centerCost). */
-export const callPokemonCenterHeal = (forum: string, threadId: string) =>
-  call<{ ok: boolean; cost: number }>("pokemonCenterHeal", { forum, threadId });
+/** Host (or battle staff) retunes the thread's weather at any time. */
+export const callSetThreadWeather = (forum: string, threadId: string, weather: string | null) =>
+  call<{ ok: boolean; weather: string | null }>("setThreadWeather", { forum, threadId, weather });
