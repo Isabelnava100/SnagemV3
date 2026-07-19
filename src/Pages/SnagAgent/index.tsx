@@ -28,7 +28,7 @@ import {
 import { getChallengeProgress, getGymRegions } from "../../queries/challenges";
 
 /**
- * S.N.A.G. — the guild's help device. A self-contained FAQ/SOP chat: it
+ * S.N.A.G., the guild's help device. A self-contained FAQ/SOP chat: it
  * answers "where do I find X / how does Y work" from a built-in knowledge
  * base, checks the member's own progress for personal questions (weekly Snag
  * List, badge runs), and takes suggestions / bug reports / open questions as
@@ -411,6 +411,34 @@ const KB: KbEntry[] = [
     ),
   },
   {
+    // How members earn experience (level-based progression, awarded per post).
+    // Kept ahead of the broad battle rule so "level up" resolves here.
+    match: /experience|\bexp\b|\bxp\b|level ?up|levell?ing|grind|\btrain(ing)?\b/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Members earn experience automatically: every qualifying forum post grants each
+          locked-team pokemon its per-post experience (alongside friendship and shadow or
+          purification rolls), applied the moment the post publishes. Tune the per-post
+          amounts and the level curve in{" "}
+          <L to="/Admin">Admin &gt; Manage &gt; Game Balance &gt; XP &amp; Leveling</L>.
+          Threads flagged no-experience award none, Shadow pokemon gain purification
+          instead, and reviewers can add bonus team XP at thread close.
+        </>
+      ) : (
+        <>
+          You earn experience just by roleplaying: every qualifying post on a normal
+          thread (missions, events, or open roleplay) automatically gives each pokemon on
+          your locked team experience, so they level up as you play. For focused grinding,
+          the <L to="/Colosseum">Super Training Room</L> in the Colosseum logs training
+          posts against one target pokemon. Two exceptions: a host can flag a thread
+          &quot;no experience,&quot; and a Shadow pokemon gains purification instead until
+          it is cured. Full breakdown:{" "}
+          <L to="/Library?tab=battle">Library &gt; The War Room</L>.
+        </>
+      ),
+  },
+  {
     match: /battle|damage|effectiv|type chart|health|hp|faint|star|flee|run away|potion|revive/i,
     answer: () => (
       <>
@@ -588,13 +616,24 @@ export default function SnagAgent() {
       }
     }
     // No match: offer to send it to the staff (no external AI on this device).
+    // The inline action reaches the question intake everywhere, including mobile
+    // where the chip row collapses to just "Report a bug".
     push({
       from: "snag",
       node: (
         <>
-          That one is outside my manual. I can send it to the staff as a question — use
-          the &quot;Ask the staff&quot; button below, or browse the{" "}
-          <L to="/Library">Library</L> and <L to="/Library?tab=faq">Help Desk</L>.
+          That one is outside my manual, but I can{" "}
+          <Anchor
+            component="button"
+            type="button"
+            fz="inherit"
+            c="blue.3"
+            onClick={() => startIntake("question")}
+          >
+            send it to the staff as a question
+          </Anchor>
+          . You can also browse the <L to="/Library">Library</L> and{" "}
+          <L to="/Library?tab=faq">Help Desk</L>.
         </>
       ),
     });
@@ -630,7 +669,12 @@ export default function SnagAgent() {
     await respond(text);
   };
 
-  const chips: Array<{ label: string; text?: string; action?: () => void }> = [
+  const chips: Array<{
+    label: string;
+    text?: string;
+    action?: () => void;
+    keepOnMobile?: boolean;
+  }> = [
     { label: "My weekly Snag List", text: "What am I missing for my weekly reward?" },
     { label: "Next badge", text: "What's the next badge I can battle for in Kanto?" },
     { label: "How do battles work?", text: "How do battles and damage work?" },
@@ -641,7 +685,7 @@ export default function SnagAgent() {
         ]
       : [{ label: "Getting started", text: "How do I get started as a new member?" }]),
     { label: "Make a suggestion", action: () => startIntake("suggestion") },
-    { label: "Report a bug", action: () => startIntake("bug") },
+    { label: "Report a bug", action: () => startIntake("bug"), keepOnMobile: true },
     { label: "Ask the staff", action: () => startIntake("question") },
   ];
 
@@ -703,8 +747,11 @@ export default function SnagAgent() {
         </ScrollArea>
 
         <Box p="sm" style={{ borderTop: "1px solid #232028" }}>
-          {/* Chips stay visible on mobile too: they are the only discoverable
-              way into the suggestion/bug/question intakes. */}
+          {/* On mobile the chip row collapses to just "Report a bug" to keep it
+              uncluttered; the rest carry visibleFrom="sm" and return on wider
+              screens. The suggestion and question intakes stay reachable by
+              typing, and the "outside my manual" reply offers an inline path to
+              the staff. */}
           <Group gap={6} mb={8} wrap="wrap">
             {chips.map((c) => (
               <Button
@@ -713,6 +760,7 @@ export default function SnagAgent() {
                 radius="xl"
                 variant="light"
                 color="grape"
+                visibleFrom={c.keepOnMobile ? undefined : "sm"}
                 onClick={() => {
                   if (c.action) c.action();
                   else if (c.text) {
