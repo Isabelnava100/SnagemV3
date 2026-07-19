@@ -33,7 +33,9 @@ import { eggGroupsForDex } from "../../lib/eggGroups";
 import { isAdmin } from "../../lib/permissions";
 import { resolveListSlugs } from "../forum/queries";
 import { getPokemonLists, getStarOverrides, setStarOverride } from "../../queries/admin";
-import FaqTab from "./faq";
+import FaqTab, { faqForJsonLd } from "./faq";
+import { Seo } from "../../components/common/Seo";
+import { INDEXABLE_ROUTES, SITE_URL, faqJsonLd, webPageJsonLd } from "../../lib/seo";
 import ShadowGuideTab from "./shadow";
 import LoreTab from "./lore";
 import MovesTab from "./moves";
@@ -757,8 +759,26 @@ export default function Library() {
   const open = (value: string) => setSearchParams({ tab: value }, { replace: true });
   const openWing = WINGS.find((w) => w.value === active);
 
+  // SEO: wing-aware titles, but the canonical always points at the clean
+  // /Library URL (tab views are query-parameter variants, owner QA rule).
+  // The Help Desk wing publishes its Q&A as FAQPage structured data.
+  const libraryEntry = INDEXABLE_ROUTES.find((r) => r.path === "/Library");
+  const seoTitle = openWing
+    ? `${openWing.name.replace(/^The /, "")}: ${openWing.meta}`
+    : (libraryEntry?.title ?? "The Library");
+  const seoJsonLd: object[] = [
+    webPageJsonLd(seoTitle, openWing?.blurb ?? libraryEntry?.description ?? "", `${SITE_URL}/Library`),
+  ];
+  if (active === "faq") seoJsonLd.push(faqJsonLd(faqForJsonLd()));
+
   return (
     <Box style={{ background: BG, minHeight: "100%" }}>
+      <Seo
+        title={seoTitle}
+        description={openWing?.blurb ?? libraryEntry?.description ?? ""}
+        canonical={`${SITE_URL}/Library`}
+        jsonLd={seoJsonLd}
+      />
       <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
         <PageHero
           eyebrow="The Great Snagem Library &middot; Est. 2022"

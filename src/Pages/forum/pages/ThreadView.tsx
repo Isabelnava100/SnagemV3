@@ -31,6 +31,8 @@ import { callResolveThreadPause } from "../functionsClient";
 import { hasCapability } from "../../../lib/permissions";
 import { Capability } from "../../../components/types/typesUsed";
 import CloseThreadModal from "../components/CloseThreadModal";
+import { Seo } from "../../../components/common/Seo";
+import { SITE_URL, htmlToText } from "../../../lib/seo";
 import { getForumBookmarks, getPendingActions, getPostsCount, getPostsPage, getThread } from "../queries";
 import { EncounterBlock, ForumThread } from "../types";
 import { pokemonData } from "../../../data/pokemon";
@@ -430,6 +432,17 @@ export default function ThreadView() {
     );
   }
 
+  // SEO: thread title (+ "Page X" past page 1), description from the first
+  // post's opening 160 chars. Forum pages are noindex (and robots-blocked);
+  // this still powers tab titles and in-community link previews. Paginated
+  // pages self-canonicalize per the QA checklist.
+  const firstPostText =
+    currentPage === 1 && posts?.length ? htmlToText(posts[0]?.text ?? "") : "";
+  const seoTitle = `${thread.title}${currentPage > 1 ? ` Page ${currentPage}` : ""}`;
+  const seoDescription =
+    firstPostText ||
+    `${thread.title}, a Snagem Guild pokemon roleplay thread${currentPage > 1 ? `, page ${currentPage}` : ""}.`;
+
   const host =
     userIsHost(thread, user) || isAdmin(user) || hasCapability(user, Capability.ManageBattles);
   const mayPost = userMayPost(thread, user);
@@ -443,6 +456,12 @@ export default function ThreadView() {
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        canonical={`${SITE_URL}/Forum/${forum}/thread/${threadId}${currentPage > 1 ? `/${currentPage}` : ""}`}
+        noindex
+      />
       <Title order={1} fz={isOverSm ? 30 : 20} c="white" fw={400}>
         {thread.title}
         {thread.closed ? " (Archived)" : ""}

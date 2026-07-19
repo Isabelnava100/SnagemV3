@@ -1,25 +1,25 @@
-import { Stack, Text, TextInput, Textarea, Title } from "@mantine/core";
+import { Anchor, Code, Stack, Table, Text, TextInput, Title } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import GradientButtonPrimary from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
+import { INDEXABLE_ROUTES, SITE_URL } from "../../../../lib/seo";
 import { SEOSettings, getSEOSettings, saveSEOSettings } from "../../../../queries/seo";
 
 /**
- * Admin/ManageSEO editor for the site-wide SEO defaults. This is the starting
- * scaffold: it stores the standard meta and social-share fields at admin/seo.
- * How these get applied for crawlers, plus any per-page overrides, is a later
- * pass once the SEO approach is settled.
+ * Admin/ManageSEO panel. Meta titles, descriptions, canonicals, robots
+ * directives, structured data and the sitemap are all AUTOMATIC now (the SEO
+ * engine in src/lib/seo.ts assigns them per page; threads even get "Page X"
+ * titles and first-post descriptions). The only editable knobs left are the
+ * sitewide social share standardization. The read-only table below shows
+ * what every indexable page currently serves.
  */
 export default function SEO() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { data, isPending } = useQuery({
-    queryKey: ["seo-settings"],
-    queryFn: getSEOSettings,
-  });
+  const { data, isPending } = useQuery({ queryKey: ["seo-settings"], queryFn: getSEOSettings });
 
   const [form, setForm] = React.useState<SEOSettings | null>(null);
   const [saved, setSaved] = React.useState(false);
@@ -37,7 +37,7 @@ export default function SEO() {
         action: "seo.edit",
         ...actorFrom(user),
         targetPath: "admin/seo",
-        details: { siteTitle: form.siteTitle },
+        details: { ogImageUrl: form.ogImageUrl, twitterHandle: form.twitterHandle },
       });
     },
     onSuccess: () => {
@@ -48,83 +48,43 @@ export default function SEO() {
 
   if (isPending || !form) return <SectionLoader />;
 
-  const setField = (field: keyof SEOSettings, value: string) => {
-    setSaved(false);
-    setForm({ ...form, [field]: value });
-  };
-
-  const inputStyles = { input: { background: "#2E2D2E" } };
+  const inputStyles = { input: { background: "#2E2D2E" }, label: { color: "white" } };
 
   return (
-    <Stack gap={14} maw={640}>
+    <Stack gap={14} maw={860}>
       <Title order={2} c="white" size={28} fw={400}>
         SEO &amp; Search
       </Title>
       <Text fz={14} c="dimmed">
-        The site's default search and social-share details. They set the browser
-        tab title, the description that shows up in search results, and the preview
-        card people see when a link is shared. Page-specific overrides come in a
-        later update.
+        Titles, descriptions, canonical tags, robots rules, structured data and the
+        sitemap are handled automatically for every page (threads get their thread
+        name plus &quot;Page X&quot;, and their description comes from the first
+        post). Private areas (forums, dashboards, member profiles) are kept out of
+        search entirely. The two settings below are the sitewide social share
+        standards; everything else needs no upkeep.
       </Text>
 
       <TextInput
-        label="Site title"
-        description="Shown in the browser tab and used as the default page title."
-        value={form.siteTitle}
-        onChange={(e) => setField("siteTitle", e.currentTarget.value)}
-        maxLength={70}
-        styles={inputStyles}
-      />
-
-      <TextInput
-        label="Title suffix"
-        description="Added after page names, for example ' | Snagem Guild'."
-        value={form.titleSuffix}
-        onChange={(e) => setField("titleSuffix", e.currentTarget.value)}
-        maxLength={40}
-        styles={inputStyles}
-      />
-
-      <Textarea
-        label="Meta description"
-        description="The summary search engines show. Aim for 150 to 160 characters."
-        value={form.metaDescription}
-        onChange={(e) => setField("metaDescription", e.currentTarget.value)}
-        autosize
-        minRows={2}
-        maxLength={200}
-        styles={inputStyles}
-      />
-
-      <TextInput
-        label="Keywords"
-        description="Comma-separated. Optional, most engines ignore these now."
-        value={form.keywords}
-        onChange={(e) => setField("keywords", e.currentTarget.value)}
-        styles={inputStyles}
-      />
-
-      <TextInput
-        label="Canonical URL"
-        description="The site's primary address, for example https://snagemguild.com."
-        value={form.canonicalUrl}
-        onChange={(e) => setField("canonicalUrl", e.currentTarget.value)}
-        styles={inputStyles}
-      />
-
-      <TextInput
         label="Social share image URL"
-        description="Absolute URL of the default preview image. 1200x630 works best."
+        description="One image for every link preview (Facebook, Discord, X). Absolute URL; 1200x630 recommended."
         value={form.ogImageUrl}
-        onChange={(e) => setField("ogImageUrl", e.currentTarget.value)}
+        onChange={(e) => {
+          setSaved(false);
+          setForm({ ...form, ogImageUrl: e.currentTarget.value });
+        }}
+        placeholder="https://snagemguild.com/share-card.png"
         styles={inputStyles}
       />
 
       <TextInput
-        label="Twitter/X handle"
-        description="Include the @, for example @snagemguild."
+        label="X (Twitter) handle"
+        description="Include the @. Shown as the site attribution on X share cards."
         value={form.twitterHandle}
-        onChange={(e) => setField("twitterHandle", e.currentTarget.value)}
+        onChange={(e) => {
+          setSaved(false);
+          setForm({ ...form, twitterHandle: e.currentTarget.value });
+        }}
+        placeholder="@snagemguild"
         styles={inputStyles}
       />
 
@@ -141,6 +101,41 @@ export default function SEO() {
       >
         Save SEO Settings
       </GradientButtonPrimary>
+
+      <Title order={3} c="white" size={20} fw={600} mt={10}>
+        What every page serves (automatic)
+      </Title>
+      <Text fz={14} c="dimmed">
+        The indexable pages below are exactly what the sitemap publishes
+        (<Code>{SITE_URL}/sitemap.xml</Code>, regenerated on every deploy).
+        Descriptions are clamped to 160 characters, titles to 70. To change one,
+        edit <Code>src/lib/seoRoutes.json</Code> in the codebase; new pages added
+        there are picked up by the sitemap and the head engine automatically.
+      </Text>
+      <Table.ScrollContainer minWidth={640}>
+        <Table withTableBorder withColumnBorders fz={13}>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Page</Table.Th>
+              <Table.Th>Meta title</Table.Th>
+              <Table.Th>Meta description</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {INDEXABLE_ROUTES.map((r) => (
+              <Table.Tr key={r.path}>
+                <Table.Td>
+                  <Anchor href={r.path} fz={13} c="blue.3">
+                    {r.path}
+                  </Anchor>
+                </Table.Td>
+                <Table.Td>{r.title}</Table.Td>
+                <Table.Td c="dimmed">{r.description}</Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      </Table.ScrollContainer>
     </Stack>
   );
 }

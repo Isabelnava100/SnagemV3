@@ -20,6 +20,7 @@ import { Character, OwnedPokemon } from "../../components/types/typesUsed";
 import { getColor1, getColor2 } from "../../components/user-forum/getColorBadges";
 import { db } from "../../context/firebase";
 import { useAuth } from "../../context/AuthContext";
+import { Seo } from "../../components/common/Seo";
 import OwnedPokemonAvatar from "../../components/pokemon/OwnedPokemonAvatar";
 import {
   getCharacters,
@@ -234,6 +235,11 @@ export default function PublicProfile() {
 
   return (
     <Container size="lg" px={{ base: "sm", sm: "md" }} pb={80}>
+      <Seo
+        title={`${user.username}'s Trainer Profile`}
+        description={`${user.username}'s trainer profile at the Snagem Guild pokemon roleplay community.`}
+        noindex
+      />
       {/* Cover band */}
       <Box
         mt="md"

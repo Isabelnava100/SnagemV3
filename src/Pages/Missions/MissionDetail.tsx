@@ -9,6 +9,8 @@ import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
 import { pokemonData } from "../../data/pokemon";
 import { postsToBeatStar, starForDex } from "../../lib/encounterStars";
+import { Seo } from "../../components/common/Seo";
+import { SITE_URL, htmlToText, webPageJsonLd } from "../../lib/seo";
 import { Mission, getMission, pickUpMission } from "../../queries/missions";
 
 /**
@@ -284,6 +286,16 @@ export default function MissionDetail() {
 
   return (
     <Box>
+      <Seo
+        title={`${mission.title}: Pokemon Roleplay Mission`}
+        description={
+          mission.story
+            ? htmlToText(mission.story)
+            : `${mission.title}, a ${mission.tier ?? ""} pokemon roleplay mission at the Snagem Guild${mission.location ? `, set in ${mission.location}` : ""}.`
+        }
+        canonical={`${SITE_URL}/Missions/${id}`}
+        jsonLd={[webPageJsonLd(mission.title, `Pokemon roleplay mission: ${mission.title}`, `${SITE_URL}/Missions/${id}`)]}
+      />
       {/* Full-bleed striped hero */}
       <Box
         px={{ base: 16, sm: 40 }}

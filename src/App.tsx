@@ -3,6 +3,7 @@ import { useMediaQuery as useMediaQueryCore } from "@mantine/hooks";
 import { memo } from "react";
 import { Outlet } from "react-router-dom";
 import { SideBar } from "./components/navigation/SideBar";
+import { RouteSeo } from "./components/common/Seo";
 import { useAuth } from "./context/AuthContext";
 import useMediaQuery from "./hooks/useMediaQuery";
 
@@ -25,6 +26,7 @@ export const App = memo(() => {
       mx="auto"
       p={0}
     >
+      <RouteSeo />
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>

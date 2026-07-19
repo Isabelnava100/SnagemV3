@@ -1,4 +1,5 @@
 import { Accordion, Box, List, Stack, Text, Title } from "@mantine/core";
+import { nodeToText } from "../../lib/seo";
 
 /**
  * Guild FAQ, ported from the GaiaOnline guild thread. Answers sit in an
@@ -29,6 +30,10 @@ interface FaqItem {
   q: string;
   a: React.ReactNode;
 }
+
+/** Plain-text FAQ pairs for the Library's FAQPage structured data (SEO). */
+export const faqForJsonLd = (): Array<{ question: string; answer: string }> =>
+  FAQ.map((f) => ({ question: f.q, answer: nodeToText(f.a) })).filter((f) => f.answer);
 
 const FAQ: FaqItem[] = [
   {

@@ -1,0 +1,69 @@
+# Snagem Guild robots policy.
+# Public pages (home, About, Library, Missions, Challenges...) are open to
+# every crawler, including AI assistants (see /llms.txt). The roleplay forums,
+# member hub and signed-in areas are private community space: blocked for
+# everyone below, and additionally noindexed in-page.
+
+User-agent: *
+Disallow: /Forum
+Disallow: /Forum/
+Disallow: /Users
+Disallow: /Users/
+Disallow: /Dashboard
+Disallow: /Dashboard/
+Disallow: /Admin
+Disallow: /Admin/
+Disallow: /SNAG
+Disallow: /Trading
+Disallow: /Daycare
+Disallow: /Onboarding
+
+# AI training and assistant crawlers: same boundaries, spelled out. Public
+# pages stay open so assistants can learn what the guild is (see /llms.txt);
+# member-written roleplay and profiles are off limits.
+User-agent: GPTBot
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+
+User-agent: ClaudeBot
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+
+User-agent: Claude-Web
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+
+User-agent: anthropic-ai
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+
+User-agent: Google-Extended
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+
+User-agent: CCBot
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+
+User-agent: PerplexityBot
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+
+User-agent: Bytespider
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+
+User-agent: meta-externalagent
+Disallow: /Forum
+Disallow: /Users
+Disallow: /Dashboard
+
+Sitemap: https://snagemguild.com/sitemap.xml

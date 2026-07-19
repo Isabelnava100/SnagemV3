@@ -150,6 +150,14 @@ service cloud.firestore {
       allow write: if isAdmin() || hasCap('HostEvents') || hasCap('ManageLists');
     }
 
+    // SEO defaults (admin/seo): WORLD-readable so logged-out visitors (and
+    // crawlers) get the same social-share head tags as members. Contains no
+    // PII (an image URL + X handle). ManageSEO/Admin write.
+    match /admin/seo {
+      allow read: if true;
+      allow write: if isAdmin() || hasCap('ManageSEO');
+    }
+
     // ---- Admin-managed shared data ----------------------------------------
     // Includes the badge catalog (admin/badges); ManageBadges may edit it.
     match /admin/{doc} {

@@ -40,6 +40,47 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 - **Zoom**: pinch-zoom is off by default (app feel) but user-toggleable in Settings > Accessibility (`src/lib/viewportZoom.ts` flips the viewport meta). Never assume zoom is disabled.
 - Reading text size lives in Settings > Accessibility (`src/lib/readingSize.ts`); keep nav compact, size body copy.
 
+## SEO rules (owner's QA checklist, docs.google.com "QA Checklist")
+
+The SEO engine is `src/lib/seo.ts` + `src/lib/seoRoutes.json` +
+`src/components/common/Seo.tsx` (RouteSeo mounted in App.tsx). EVERY new page
+must be SEO-ready: add one entry to `seoRoutes.json` (indexable with
+title/description, or noindex) and the head tags, canonical, robots handling
+and the build-time sitemap (`scripts/gen-sitemap.mjs`, runs in `npm run
+build`) all follow automatically. Pages with dynamic heads (threads, mission
+briefs, Library wings, public profiles) render `<Seo>` themselves and are
+listed in SELF_MANAGED in Seo.tsx.
+
+Owner's standing SEO/QA rules (apply to all new work):
+
+- Meta titles 30-70 chars; meta descriptions 50-160 chars; unique per page.
+  Threads: title = thread name + " Page X" past page 1; description = first
+  160 chars of the first post.
+- Canonicals: primary pages self-canonical; QUERY-PARAM views (e.g.
+  /Library?tab=x) canonicalize back to the clean path, never self; paginated
+  pages self-canonicalize to their own page.
+- Headings: exactly one H1 per page (PageHero provides it), at least one H2,
+  no skipped levels.
+- Every image has an alt attribute (empty alt="" only for decorative);
+  work "snagem", "pokemon", "roleplay" into alts where natural.
+- Indexability: private areas (/Forum, /Users, /Dashboard, /Admin, /SNAG,
+  /Trading, /Daycare, /Onboarding, auth pages) are noindexed AND blocked in
+  public/robots.txt AND never in the sitemap. Sitemap contains only and all
+  indexable primary pages, and is linked from robots.txt.
+- Structured data: Organization + WebSite on home, WebPage per indexable
+  page, FAQPage on Library FAQ; validate at validator.schema.org.
+- Social cards standardized sitewide: image + X handle in admin/seo (Admin >
+  Manage > SEO); titles/descriptions/canonicals are NOT editable there, the
+  engine assigns them.
+- Security headers live in netlify.toml (HSTS max-age=31536000
+  includeSubDomains, CSP, X-Frame-Options SAMEORIGIN, nosniff,
+  Referrer-Policy, Permissions-Policy); verify at securityheaders.com after
+  deploys that touch them.
+- Images: WebP preferred, sized to their container, lazy-load below the fold
+  only; never lazy-load anything critical (nav, CTAs, forms).
+- llms.txt (public/llms.txt) pitches the guild to AI assistants; keep it in
+  sync when major member-facing features land.
+
 ## Data & Firestore rules
 
 - All reads go through react-query. Default `staleTime` 2 min / `gcTime` 10 min set in `src/lib/react-query.ts`. Don't refetch the same doc per component; share query keys.

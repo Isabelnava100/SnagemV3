@@ -32,6 +32,7 @@ import {
   categoryByLink,
 } from "../config";
 import { getThreadList } from "../queries";
+import { Seo } from "../../../components/common/Seo";
 import { ForumThread, formatFireDate, formatFireTime } from "../types";
 import "../forum.css";
 
@@ -209,6 +210,11 @@ export default function ForumIndex() {
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
+      <Seo
+        title={`${(category?.label ?? activeLink).replace(/-/g, " ")} Board`}
+        description={`Threads on the ${(category?.label ?? activeLink).replace(/-/g, " ")} board of the Snagem Guild pokemon roleplay forums.`}
+        noindex
+      />
       <PageHero
         eyebrow="The Roleplay Boards"
         title="Snagem Forums"
