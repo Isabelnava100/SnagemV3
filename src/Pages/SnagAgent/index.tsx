@@ -411,6 +411,82 @@ const KB: KbEntry[] = [
     ),
   },
   {
+    // Picking up and running a normal mission (Master Missions handled above).
+    match: /mission|\bquest\b|mission vault|take on a job|job board|pick up.*(job|mission)/i,
+    answer: () => (
+      <>
+        You take on missions at the <L to="/Missions">Mission Vault</L>: pick up a job and
+        it opens your own roleplay thread in the Quests forum. Play it out post by post,
+        beating any required encounters along the way; base pay is Snag Coins and the
+        grader tips extra for good writing. Closing the thread grades it automatically, so
+        there is no separate submission to send. Hybrid and Channeler jobs are their own
+        track: those are Master Missions.
+      </>
+    ),
+  },
+  {
+    // Casino + Shadow Lotto. Kept ahead of the shadow-pokemon rule so
+    // "shadow lotto" resolves here.
+    match: /casino|gambl|\blotto\b|lottery|roulette|\bdice\b|payback|jackpot|wager|ghastly/i,
+    answer: () => (
+      <>
+        The <L to="/Casino">Casino</L> (Darts&apos; Ghastly Gambling) runs on Gengar
+        Tokens: trade Snag Coins for tokens at the counter, then wager them on Hex
+        Roulette, Dream Dice, Payback Pyramid, or buy into the Shadow Lotto draw. Every
+        roll is server-side and final. Snag Coins come from missions, events and reward
+        reviews; Gengar Tokens only spend here.
+      </>
+    ),
+  },
+  {
+    // What Shadow pokemon are and how purification works.
+    match: /shadow|purif|hyper mode|vaccine|cipher/i,
+    answer: () => (
+      <>
+        Shadow pokemon are pokemon whose hearts have been forced shut, turning them into
+        cold fighting tools. On a normal thread each of your team pokemon has a small
+        chance to turn Shadow as you post; once one is Shadow&apos;ed it earns Purification
+        instead of experience, and filling that bar to 100 lifts the shadow for good. Want
+        it gone sooner? A Shadow Vaccine item clears it on the spot. The full stat scale
+        and shadow or purification odds are in{" "}
+        <L to="/Library?tab=shadow">Library &gt; the shadow guide</L>.
+      </>
+    ),
+  },
+  {
+    // Manual evolution: level / friendship / item, plus evolve-on-publish.
+    // Kept ahead of the experience rule so "evolve" beats "level".
+    match: /\bevol|final (form|stage)|\bevo\b|(fire|water|thunder|leaf|moon|sun|ice|dusk|dawn|shiny|oval) ?stone/i,
+    answer: () => (
+      <>
+        You evolve pokemon yourself from your{" "}
+        <L to="/Dashboard/Pokemon">Console pokemon box</L>: open a pokemon and hit Evolve
+        (the button also appears in the post composer and drafts), and each branch lists
+        what it still needs. Three routes: reach the required level (levels come from
+        experience), max friendship to 100, or spend the matching evolution item (a Fire
+        Stone and the like, sold at the <L to="/Shop">Snag Mall</L>). You can also evolve
+        one team pokemon the moment you publish a forum post. Per-species methods show in
+        the <L to="/Library">Library</L> Pokedex.
+      </>
+    ),
+  },
+  {
+    // Snagging/catching a beaten wild. Kept ahead of the broad battle rule.
+    match: /\bcatch(ing)?\b|capture|poke ?ball|great ball|ultra ball|master ball|which ball|throw.*ball|snag.*(pokemon|wild|mon)\b/i,
+    answer: () => (
+      <>
+        Snagging a wild pokemon happens in battle: once an encounter&apos;s health bar is
+        fully drained it counts as beaten, and on that post you can throw a ball to catch
+        it. Your odds are the ball&apos;s tier plus a worn-down bonus for beating it first
+        (capped at 95%, and a Master Ball never fails); a miss spends the ball but the
+        pokemon stays beaten, so you can try again next post. Most catching happens on
+        missions and events that allow capture, and at the weekly Fishing Pond. Ball tiers
+        and the full odds table:{" "}
+        <L to="/Library?tab=battle">Library &gt; The War Room</L>.
+      </>
+    ),
+  },
+  {
     // How members earn experience (level-based progression, awarded per post).
     // Kept ahead of the broad battle rule so "level up" resolves here.
     match: /experience|\bexp\b|\bxp\b|level ?up|levell?ing|grind|\btrain(ing)?\b/i,
