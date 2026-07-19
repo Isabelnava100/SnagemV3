@@ -79,6 +79,7 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 
 ## Known deferred work
 
+- Guild Blog (July 2026, /Blog + admin editor at /Blog/edit/new): needs `firebase deploy --only firestore:rules,firestore:indexes` (public-read published `blogPosts` + composite index), then `node scripts/seed-blog.mjs` from `functions/` for the placeholder post. Blog posts are the site's indexable articles: own child sitemap (`sitemap-blog.xml`, built from Firestore REST on deploy), BlogPosting schema, title/description enforced as meta in the editor.
 - SEO build (July 2026): full system documented in `docs/SEO.md` (registry `src/lib/seo/pages.json`, `Seo` component, sitemap/robots/llms.txt, netlify.toml security headers). Needs `firebase deploy --only firestore:rules` for the public-read `admin/seo` rule AND the Main-Forum public-read forum rules (Main-Forum viewable logged-out, other boards members-only). Forums/threads/profiles are never indexable: robots.txt + X-Robots-Tag headers + noindex meta. After the next Netlify deploy, verify headers at securityheaders.com and submit sitemap.xml in Search Console. Backlog: replace the placeholder og-image.png with branded art.
 
 - Forum post mechanics need a functions deploy (`firebase deploy --only

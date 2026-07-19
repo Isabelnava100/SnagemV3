@@ -150,6 +150,15 @@ service cloud.firestore {
       allow write: if isAdmin() || hasCap('HostEvents') || hasCap('ManageLists');
     }
 
+    // Public marketing blog (blogPosts/{slug}). Published posts are
+    // world-readable (they are indexed content with their own sitemap);
+    // drafts and all writes are admin-only. Anonymous list queries must
+    // filter where('published', '==', true) to satisfy the read rule.
+    match /blogPosts/{slug} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
     // SEO settings (admin/seo): social share image URLs and the X handle,
     // no PII. Public read so meta tags render for logged-out visitors too.
     match /admin/seo {

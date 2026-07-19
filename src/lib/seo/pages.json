@@ -29,6 +29,13 @@
       "priority": 0.4
     },
     {
+      "path": "/Blog",
+      "title": "The Guild Blog | Pokemon Roleplay Stories & Updates",
+      "description": "Stories, dev updates and guides from the Snagem Guild Pokemon roleplay community. Read about our forums, events, Shadow Pokemon lore and more.",
+      "changefreq": "weekly",
+      "priority": 0.8
+    },
+    {
       "path": "/Announcements",
       "title": "Announcements & Updates | Snagem Guild",
       "description": "Development updates and news from the Snagem Guild. See what is new across our Pokemon roleplay forums, trainer dashboard, and community features.",

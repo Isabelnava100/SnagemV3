@@ -11,7 +11,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconBooks, IconFileText, IconHome, IconSpeakerphone, IconX } from "@tabler/icons-react";
+import { IconBooks, IconFileText, IconHome, IconNews, IconSpeakerphone, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Capability } from "../../components/types/typesUsed";
@@ -158,6 +158,7 @@ const BASE_DRAWER_TILES: DrawerTileDef[] = [
   { link: "/Daycare", label: "Daycare", icon: { snag: "egg" } },
   { link: "/Trading", label: "Trading", icon: { snag: "exchange" } },
   { link: "/Announcements", label: "News", tabler: IconSpeakerphone },
+  { link: "/Blog", label: "Blog", tabler: IconNews },
   // About reuses the Admin Access icon per the owner's request.
   { link: "/About", label: "About", icon: { img: AdminAccessIcon } },
   { link: "/Library", label: "Library", tabler: IconBooks },

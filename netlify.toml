@@ -60,6 +60,16 @@
     Cache-Control = "public, max-age=3600"
 
 [[headers]]
+  for = "/sitemap-pages.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/sitemap-blog.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
   for = "/robots.txt"
   [headers.values]
     Cache-Control = "public, max-age=3600"

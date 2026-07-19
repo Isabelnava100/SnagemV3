@@ -10,7 +10,8 @@ Built July 2026 to the owner's agency QA checklist (see CLAUDE.md "SEO rules"). 
 | Head manager | `src/components/common/Seo.tsx` | Mounted once per routed page. Sets title, description, robots, canonical, Open Graph/X cards, and JSON-LD. `page` prop looks up the registry; dynamic pages pass `title`/`description`/`canonicalPath`; private pages pass `noindex` plus a title. |
 | Site constants | `src/lib/seo/site.ts` | Site URL/name, default description, default OG image, `withSuffix()` (60 char title helper), `absoluteUrl()`. |
 | Text helpers | `src/lib/seo/text.ts` | `stripHtml`, `truncate`, `textFromNode` (JSX to plain text, used for FAQ schema). |
-| Sitemap | `scripts/gen-sitemap.mjs` | Regenerates `public/sitemap.xml` from the registry on every build (`npm run build`). Only indexable public pages; threads and profiles are deliberately excluded (add a child sitemap behind a sitemap index if that ever changes). |
+| Sitemaps | `scripts/gen-sitemap.mjs` | Runs on every build (`npm run build`). Writes `sitemap.xml` as a sitemap INDEX pointing at `sitemap-pages.xml` (main public pages from the registry) and `sitemap-blog.xml` (published blog posts, fetched from Firestore's public REST API at build time, so new posts appear on the next deploy). Threads and profiles are deliberately excluded. |
+| Blog | `/Blog` hub + `/Blog/:slug` posts (`src/Pages/Blog/`), data in `blogPosts/{slug}` (`src/queries/blog.ts`) | The site's indexable article content. Admin editor at `/Blog/edit/:slug` (or `/new`); title and description double as meta title/description with enforced lengths; posts emit BlogPosting JSON-LD, the hub emits Blog + CollectionPage. Drafts are noindex and admin-only. |
 | robots.txt | `public/robots.txt` | Blocks all crawlers and a long list of AI/LLM bots from `/Forum`, `/Users`, and every private area; links the sitemap. |
 | llms.txt | `public/llms.txt` | Assistant-facing summary of the guild built from About, Library, and Policies content, targeting pokemon/roleplay/snagem queries. Update it when the pitch or feature set changes. |
 | OG image | `public/og-image.png` via `scripts/gen-og-image.mjs` | 1200x630 default share card. Rerun the script if branding changes. Admins can override the URL in Site Settings. |
@@ -31,6 +32,8 @@ Built July 2026 to the owner's agency QA checklist (see CLAUDE.md "SEO rules"). 
 - Private/auth pages (`Dashboard`, `Admin`, auth flows, Daycare, Trading, SNAG, Onboarding) mount `<Seo noindex title="..."/>` and never appear in the sitemap.
 
 ## Deploy dependencies
+
+- Blog: needs `firebase deploy --only firestore:rules,firestore:indexes` (public-read rule for published `blogPosts` + the published/publishedAt composite index), then seed the placeholder post with `node scripts/seed-blog.mjs` from `functions/` (gcloud ADC). Until the rules deploy, the hub shows an empty state and the blog sitemap builds empty (never broken).
 
 - `firestore.rules` now allows public read of `admin/seo` (share image settings for logged-out visitors). Needs `firebase deploy --only firestore:rules`; until then the baked defaults in `src/lib/seo/site.ts` are used, so nothing breaks.
 - Netlify picks up headers/redirects from `netlify.toml` automatically on the next deploy. Verify at securityheaders.com after deploying.
