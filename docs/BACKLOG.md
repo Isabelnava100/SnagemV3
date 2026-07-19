@@ -208,13 +208,12 @@ Status as of 2026-07:
 
 ## Performance
 
-- **Firebase compat-to-modular migration** (2026-07). The eager firebase
-  bundle is ~764KB minified (~230KB gzip), the single biggest first-paint
-  cost, because `src/context/firebase.ts` initializes via
-  `firebase/compat/*` (app + auth + firestore + storage all load up front).
-  Migrating init and the auth call sites to the modular SDK would cut a
-  large share of it. Touches every auth flow, so it needs its own careful
-  pass with logged-in QA.
+- **Firebase compat-to-modular migration: DONE (2026-07).** Init is now the
+  modular SDK (firebase chunk 782KB -> 606KB minified, 230KB -> 180KB gzip).
+  Nearly all call sites already used the modular API; only init,
+  `refFromURL` (Profile avatars), and a dead compat import changed.
+  Remaining QA: a logged-in pass over login, Google sign-in, register,
+  password reset, logout, and avatar upload/delete on the live site.
 - **Font subsetting** (2026-07). Roboto now loads as the Google Fonts
   variable font (2 files, swap). Self-hosting a subset woff2 would shave a
   bit more, at the cost of manual font upkeep.

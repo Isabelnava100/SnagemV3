@@ -11,7 +11,7 @@ Live: snagemguild.com. Deploy: Netlify (`netlify.toml`, SPA redirect to index.ht
 
 - React 19, TypeScript 6 (`moduleResolution: bundler`), Vite 8 (rolldown bundler)
 - Mantine 9 (+ `@mantine/emotion` for `sx` support), Tailwind 4 (CSS-first, no config file, preflight OFF)
-- Firebase 12 (compat init in `src/context/firebase.ts`, modular API everywhere else)
+- Firebase 12 (fully modular SDK; init in `src/context/firebase.ts`, compat layer removed July 2026, do not reintroduce `firebase/compat`)
 - @tanstack/react-query 5, Tiptap 3, react-router-dom 6
 - Package manager: **bun** (`bun.lock`). Never introduce package-lock.json.
 

@@ -223,9 +223,9 @@ function Avatars() {
       const { ref, deleteObject } = await import("firebase/storage");
       const { arrayRemove, doc, setDoc } = await import("firebase/firestore");
 
-      // Delete via the file's own full path (from its URL) so it works no
+      // Modular ref() accepts the download URL directly, so this works no
       // matter which folder/nesting the file was uploaded under.
-      const fileRef = ref(storage, storage.refFromURL(url).fullPath);
+      const fileRef = ref(storage, url);
 
       await deleteObject(fileRef);
 
@@ -430,9 +430,9 @@ function CoverBackgrounds() {
       const { ref, deleteObject } = await import("firebase/storage");
       const { arrayRemove, doc, setDoc } = await import("firebase/firestore");
 
-      // Delete via the file's own full path (from its URL) so it works no
+      // Modular ref() accepts the download URL directly, so this works no
       // matter which folder/nesting the file was uploaded under.
-      const fileRef = ref(storage, storage.refFromURL(url).fullPath);
+      const fileRef = ref(storage, url);
 
       await deleteObject(fileRef);
 

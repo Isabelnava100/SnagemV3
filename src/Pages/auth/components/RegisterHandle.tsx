@@ -4,7 +4,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { auth, db, firebase } from "../../../context/firebase";
+import { auth, db } from "../../../context/firebase";
 import { generatePassword } from "./Components";
 
 /** A GaiaOnline name reduced to a stable, Firestore-safe claim key. */
