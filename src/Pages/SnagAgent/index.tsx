@@ -14,6 +14,7 @@ import { IconSend } from "@tabler/icons-react";
 import React from "react";
 import { Link } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 import { useAuth } from "../../context/AuthContext";
 import { SnagIcon } from "../../icons/SnagIcon";
 import { isAdmin } from "../../lib/permissions";
@@ -500,6 +501,7 @@ export default function SnagAgent() {
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+      <Seo noindex title="S.N.A.G. | Snagem Guild" />
       <PageHero
         eyebrow="Support Network Assistance Gadget"
         title="S.N.A.G."

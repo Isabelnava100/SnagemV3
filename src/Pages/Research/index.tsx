@@ -1,4 +1,4 @@
-import { Box, Button, Container, Flex, Group, Progress, Select, Stack, Text } from "@mantine/core";
+import { Box, Button, Container, Flex, Group, Progress, Select, Stack, Text, Title } from "@mantine/core";
 import {
   IconAlertTriangle,
   IconArrowRight,
@@ -17,6 +17,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { Character } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
@@ -136,9 +137,9 @@ function AccessBadge({ granted }: { granted: boolean }) {
 function SectionLabel({ children, color = "#F5C842" }: { children: React.ReactNode; color?: string }) {
   return (
     <Group gap={12} align="center" mb="md">
-      <Text fz={14} fw={700} c={color} style={{ letterSpacing: 3 }}>
+      <Title order={2} fz={14} fw={700} c={color} lh="md" style={{ letterSpacing: 3 }}>
         {children}
-      </Text>
+      </Title>
       <Box style={{ flex: 1, height: 1, background: "#232028" }} />
     </Group>
   );
@@ -1144,6 +1145,7 @@ export default function Research() {
 
   return (
     <Box style={{ background: "#0b0a10", minHeight: "100%" }}>
+      <Seo page="/Research" />
       <Container size="lg" py={{ base: 20, sm: 32 }} px={{ base: 16, sm: 24 }}>
         {/* VIEW AS toggle + character picker */}
         <Group justify="space-between" align="flex-end" wrap="wrap" gap="md" mb="xl">

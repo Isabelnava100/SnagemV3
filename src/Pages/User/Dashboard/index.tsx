@@ -24,6 +24,7 @@ import PokemonImage from "../../../assets/images/sylveon.svg";
 import SectionWrapper, { ActionButton } from "../../../components/Dashboard/SectionWrapper";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { HERO_BORDER, HERO_GRADIENT, HERO_STRIPES } from "../../../components/common/PageHero";
+import Seo from "../../../components/common/Seo";
 import { useAuth } from "../../../context/AuthContext";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
@@ -69,6 +70,7 @@ export function Dashboard() {
       py={isOverMd ? 30 : 10}
       px={isOverMd ? 75 : 5}
     >
+      <Seo noindex title="Trainer Dashboard | Snagem Guild" />
       <Stack gap={isOverMd ? 24 : 12} w="100%">
         <DashboardHeader />
         <CurrencyBar />

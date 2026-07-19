@@ -25,6 +25,20 @@ Live: snagemguild.com. Deploy: Netlify (`netlify.toml`, SPA redirect to index.ht
 - Icons: `@tabler/icons-react` (NOT dead `@tabler/icons` v1) or existing `tabler-icons-react`.
 - **Everything must be mobile responsive.** Any new or edited UI must work at 375px width with no horizontal scroll: use Mantine responsive props (`span={{ base: 12, xs: 6 }}`, responsive style props), relative widths (`maw` + `w="100%"`) over fixed px, and verify at the mobile viewport before committing. Theme breakpoints: xs=480, sm=800 (`src/lib/mantine.ts`).
 
+## SEO rules (owner's QA standard, apply to every new or edited page)
+
+Source: the owner's agency QA checklist (Google Doc "QA Checklist"). These are requirements, not suggestions:
+
+- **Meta title** 30-70 chars (aim under 60), **meta description** 50-160 chars, unique per page. New pages must ship with both via the shared `<Seo>` helper (`src/components/common/Seo.tsx`); never leave a page on the generic fallback.
+- **Headings**: exactly one H1 per page, at least one H2, no skipped levels.
+- **Canonicals**: every indexable page gets a self-referential canonical. Paginated pages self-canonicalize to their own page URL (NOT to page 1) and append "Page X" to the title. Query-parameter variants (search, filters, tabs that don't merit indexing) canonicalize back to the parent/base page.
+- **Indexability**: private pages (dashboard, editor, settings, admin, auth) get `noindex` meta AND are excluded from the sitemap. Only unique, indexable, canonical pages belong in `public/sitemap.xml` (generated at build by `scripts/gen-sitemap.mjs` from `src/lib/seo/pages.ts`; new public routes must be added there). robots.txt links the sitemap.
+- **Images**: every image has alt text (descriptive, weave in pokemon/roleplay/Snagem keywords where natural; decorative images get `alt=""`). Prefer WebP/SVG, size to container, lazy-load below the fold only; never lazy-load LCP/above-the-fold images or anything functional.
+- **Schema**: add relevant schema.org JSON-LD (via `<Seo schema=...>`) for new content types; validate with validator.schema.org / Google rich results test.
+- **Security headers** live in `netlify.toml`: HSTS (max-age 31536000, includeSubDomains, preload), CSP, X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy. Keep them passing on securityheaders.com; when adding a third-party origin (script/frame/api), update the CSP.
+- **ANNUAL SECURITY RENEWAL (owner-requested): the HSTS policy is set for 1 year (set July 2026). If you are developing in this repo in or after July 2027, re-verify and renew the security setup as part of that work**: confirm the HSTS header is still served with max-age 31536000, re-test everything at securityheaders.com, and refresh the header set against current best practice. The max-age window refreshes on every visit, but treat July of each year as the audit date. Also tracked in docs/BACKLOG.md.
+- **Performance**: keep Core Web Vitals passing; reserve image dimensions to avoid layout shift.
+
 ## Accessibility rules
 
 Bake these in for every new/edited UI (a11y is a first-class requirement, not a follow-up):
@@ -39,47 +53,6 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 - **Icons in `<Image>`**: numeric `width`/`height` are ignored by Mantine 9 (renders full-size). Use `w`/`h` + `fit="contain"`.
 - **Zoom**: pinch-zoom is off by default (app feel) but user-toggleable in Settings > Accessibility (`src/lib/viewportZoom.ts` flips the viewport meta). Never assume zoom is disabled.
 - Reading text size lives in Settings > Accessibility (`src/lib/readingSize.ts`); keep nav compact, size body copy.
-
-## SEO rules (owner's QA checklist, docs.google.com "QA Checklist")
-
-The SEO engine is `src/lib/seo.ts` + `src/lib/seoRoutes.json` +
-`src/components/common/Seo.tsx` (RouteSeo mounted in App.tsx). EVERY new page
-must be SEO-ready: add one entry to `seoRoutes.json` (indexable with
-title/description, or noindex) and the head tags, canonical, robots handling
-and the build-time sitemap (`scripts/gen-sitemap.mjs`, runs in `npm run
-build`) all follow automatically. Pages with dynamic heads (threads, mission
-briefs, Library wings, public profiles) render `<Seo>` themselves and are
-listed in SELF_MANAGED in Seo.tsx.
-
-Owner's standing SEO/QA rules (apply to all new work):
-
-- Meta titles 30-70 chars; meta descriptions 50-160 chars; unique per page.
-  Threads: title = thread name + " Page X" past page 1; description = first
-  160 chars of the first post.
-- Canonicals: primary pages self-canonical; QUERY-PARAM views (e.g.
-  /Library?tab=x) canonicalize back to the clean path, never self; paginated
-  pages self-canonicalize to their own page.
-- Headings: exactly one H1 per page (PageHero provides it), at least one H2,
-  no skipped levels.
-- Every image has an alt attribute (empty alt="" only for decorative);
-  work "snagem", "pokemon", "roleplay" into alts where natural.
-- Indexability: private areas (/Forum, /Users, /Dashboard, /Admin, /SNAG,
-  /Trading, /Daycare, /Onboarding, auth pages) are noindexed AND blocked in
-  public/robots.txt AND never in the sitemap. Sitemap contains only and all
-  indexable primary pages, and is linked from robots.txt.
-- Structured data: Organization + WebSite on home, WebPage per indexable
-  page, FAQPage on Library FAQ; validate at validator.schema.org.
-- Social cards standardized sitewide: image + X handle in admin/seo (Admin >
-  Manage > SEO); titles/descriptions/canonicals are NOT editable there, the
-  engine assigns them.
-- Security headers live in netlify.toml (HSTS max-age=31536000
-  includeSubDomains, CSP, X-Frame-Options SAMEORIGIN, nosniff,
-  Referrer-Policy, Permissions-Policy); verify at securityheaders.com after
-  deploys that touch them.
-- Images: WebP preferred, sized to their container, lazy-load below the fold
-  only; never lazy-load anything critical (nav, CTAs, forms).
-- llms.txt (public/llms.txt) pitches the guild to AI assistants; keep it in
-  sync when major member-facing features land.
 
 ## Data & Firestore rules
 
@@ -104,6 +77,8 @@ Owner's standing SEO/QA rules (apply to all new work):
 - This repo lives in iCloud-synced Documents: if builds hang on file reads, node_modules was evicted: run `brctl download node_modules` and wait.
 
 ## Known deferred work
+
+- SEO build (July 2026): full system documented in `docs/SEO.md` (registry `src/lib/seo/pages.json`, `Seo` component, sitemap/robots/llms.txt, netlify.toml security headers). Needs `firebase deploy --only firestore:rules` for the public-read `admin/seo` rule AND the Main-Forum public-read forum rules (Main-Forum viewable logged-out, other boards members-only). Forums/threads/profiles are never indexable: robots.txt + X-Robots-Tag headers + noindex meta. After the next Netlify deploy, verify headers at securityheaders.com and submit sitemap.xml in Search Console. Backlog: replace the placeholder og-image.png with branded art.
 
 - Forum post mechanics need a functions deploy (`firebase deploy --only
   functions`) to run live. Progression stats friendship/shadow/purification are

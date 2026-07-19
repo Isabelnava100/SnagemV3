@@ -717,7 +717,7 @@ const PokemonAvatar = React.forwardRef<
       // sprite reveals the info card instead of "Save Image…".
       onContextMenu={(e) => e.preventDefault()}
       draggable={false}
-      alt={alt}
+      alt={alt ?? "Pokemon sprite"}
       w="100%"
       h="100%"
       sx={{

@@ -16,6 +16,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { IconSearch } from "@tabler/icons-react";
 import { PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { clickable } from "../../lib/a11y";
 import { getMembers, MemberCard } from "../../queries/members";
@@ -163,6 +164,7 @@ export default function Users() {
 
   return (
     <Box>
+      <Seo noindex title="Members Hub | Snagem Guild" />
       <Container size="lg" pt={{ base: 24, sm: 40 }} px={{ base: 12, sm: 20 }}>
         <PageHero
           eyebrow="The Guild Roster"

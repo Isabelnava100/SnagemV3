@@ -1,93 +1,176 @@
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import pagesJson from "../../lib/seo/pages.json";
 import {
-  HeadState,
-  INDEXABLE_ROUTES,
-  NOINDEX_ROUTES,
+  DEFAULT_DESCRIPTION,
+  DEFAULT_OG_IMAGE,
   SITE_NAME,
   SITE_URL,
-  applyHead,
-  isPrivatePath,
-  organizationJsonLd,
-  webPageJsonLd,
-  webSiteJsonLd,
-} from "../../lib/seo";
+  absoluteUrl,
+} from "../../lib/seo/site";
 import { getSEOSettings } from "../../queries/seo";
 
-/**
- * Head manager. RouteSeo (mounted once in App) auto-assigns meta title,
- * description, canonical, robots, social cards and WebPage JSON-LD for every
- * route from src/lib/seoRoutes.json; pages with dynamic needs (threads,
- * mission briefs, the Library) render their own <Seo> and are listed in
- * SELF_MANAGED so the route defaults do not overwrite them.
- *
- * Building a NEW page? Add its entry to seoRoutes.json (indexable or
- * noindex) and it is automatically covered: title, description, canonical,
- * sitemap membership and robots handling all follow from that one entry.
- */
-
-const shareDefaults = { queryKey: ["seo-settings"], queryFn: getSEOSettings };
-
-export function Seo(props: Omit<HeadState, "image" | "twitterHandle"> & { image?: string }) {
-  const { data: share } = useQuery(shareDefaults);
-  const { title, description, canonical, noindex, ogType, jsonLd, image } = props;
-  React.useEffect(() => {
-    applyHead({
-      title,
-      description,
-      canonical,
-      noindex,
-      ogType,
-      jsonLd,
-      image: image || share?.ogImageUrl || undefined,
-      twitterHandle: share?.twitterHandle || undefined,
-    });
-  }, [title, description, canonical, noindex, ogType, image, jsonLd, share]);
-  return null;
+interface RegistryPage {
+  path: string;
+  title: string;
+  description: string;
 }
 
-/** Path prefixes whose pages render their own <Seo> with dynamic content. */
-const SELF_MANAGED = ["/Forum", "/Library", "/Missions/", "/Users/"];
+const REGISTRY: RegistryPage[] = pagesJson.pages;
 
-export function RouteSeo() {
-  const { pathname } = useLocation();
-  const { data: share } = useQuery(shareDefaults);
+export interface SeoProps {
+  /**
+   * Registry lookup: path of a main public page in src/lib/seo/pages.json
+   * (also the source of sitemap.xml, via scripts/gen-sitemap.mjs). Title and
+   * description come from the registry unless overridden below.
+   */
+  page?: string;
+  /** Full page title as rendered (use withSuffix() for dynamic names). */
+  title?: string;
+  /** Meta description, 50 to 160 characters. */
+  description?: string;
+  /**
+   * Canonical path or absolute URL. Defaults to the registry path (so tab and
+   * query-param variants canonicalize back to the base page) or, without a
+   * registry page, to the current pathname. Paginated pages must pass their
+   * own page URL here: paginated pages self-canonicalize, never to page 1.
+   */
+  canonicalPath?: string;
+  /** Private or utility page: emits noindex and skips schema. */
+  noindex?: boolean;
+  /** Open Graph type, defaults to website. Threads use article. */
+  ogType?: "website" | "article";
+  /**
+   * schema.org type of the page's default block, defaults to WebPage.
+   * Use a specific subtype where one fits: AboutPage, CollectionPage,
+   * ContactPage, ProfilePage.
+   */
+  pageType?: string;
+  /**
+   * Extra JSON-LD blocks (FAQPage, DiscussionForumPosting, ProfilePage...)
+   * appended after the default WebPage schema.
+   */
+  schema?: Record<string, unknown> | Record<string, unknown>[];
+}
 
-  React.useEffect(() => {
-    // Entries ending in "/" cover only subpaths (e.g. /Missions/:id but not
-    // /Missions); bare entries cover the path and everything under it.
-    const selfManaged = SELF_MANAGED.some((p) =>
-      p.endsWith("/") ? pathname.startsWith(p) : pathname === p || pathname.startsWith(`${p}/`)
-    );
-    if (selfManaged) return;
-    const clean = pathname.replace(/\/+$/, "") || "/";
-    const lower = clean.toLowerCase();
-    const indexable = INDEXABLE_ROUTES.find((r) => r.path.toLowerCase() === lower);
-    const noindexEntry = NOINDEX_ROUTES.find((r) => r.path.toLowerCase() === lower);
-    const priv = isPrivatePath(clean);
-    const entry = indexable ?? noindexEntry;
-    const canonical = `${SITE_URL}${indexable?.path ?? clean}`;
-    const title = entry?.title ?? `${clean.slice(1).replace(/[-/]/g, " ") || SITE_NAME}`;
-    const description =
-      entry?.description ??
-      "Snagem Guild, a free Pokemon roleplay community: forum roleplay, battles, catching, breeding, trading and events.";
-    const jsonLd: object[] = [];
-    if (clean === "/") {
-      jsonLd.push(organizationJsonLd(), webSiteJsonLd());
-    } else if (indexable) {
-      jsonLd.push(webPageJsonLd(title, description, canonical));
+function upsertMeta(attr: "name" | "property", key: string, content: string | null) {
+  let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+  if (!content) {
+    el?.remove();
+    return;
+  }
+  if (!el) {
+    el = document.createElement("meta");
+    el.setAttribute(attr, key);
+    document.head.appendChild(el);
+  }
+  el.setAttribute("content", content);
+}
+
+function upsertLink(rel: string, href: string | null) {
+  let el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+  if (!href) {
+    el?.remove();
+    return;
+  }
+  if (!el) {
+    el = document.createElement("link");
+    el.setAttribute("rel", rel);
+    document.head.appendChild(el);
+  }
+  el.setAttribute("href", href);
+}
+
+/**
+ * Per-page head manager. Every routed page mounts exactly one Seo so titles,
+ * descriptions, canonicals, robots, social tags, and JSON-LD never go stale
+ * across client-side navigation. Crawler-visible fallbacks for the first
+ * paint live in index.html; this component takes over once React runs.
+ */
+export default function Seo({
+  page,
+  title,
+  description,
+  canonicalPath,
+  noindex = false,
+  ogType = "website",
+  pageType = "WebPage",
+  schema,
+}: SeoProps) {
+  const location = useLocation();
+  const { data: settings } = useQuery({
+    queryKey: ["seo-settings"],
+    queryFn: getSEOSettings,
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const registry = page ? REGISTRY.find((p) => p.path === page) : undefined;
+  const finalTitle = title ?? registry?.title ?? `${SITE_NAME} | Pokemon Roleplay Community`;
+  const finalDescription = description ?? registry?.description ?? DEFAULT_DESCRIPTION;
+  const canonical = noindex
+    ? null
+    : absoluteUrl(canonicalPath ?? registry?.path ?? location.pathname);
+  const ogImage = settings?.ogImageUrl || DEFAULT_OG_IMAGE;
+  const twitterImage = settings?.twitterImageUrl || ogImage;
+  const twitterHandle = settings?.twitterHandle || "";
+  const schemaJson = noindex
+    ? ""
+    : JSON.stringify(
+        [
+          {
+            "@context": "https://schema.org",
+            "@type": pageType,
+            name: finalTitle,
+            description: finalDescription,
+            url: canonical,
+            isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
+          },
+          ...(schema ? (Array.isArray(schema) ? schema : [schema]) : []),
+        ].map((block) => ({ "@context": "https://schema.org", ...block })),
+      );
+
+  useEffect(() => {
+    document.title = finalTitle;
+    upsertMeta("name", "description", finalDescription);
+    upsertMeta("name", "robots", noindex ? "noindex" : null);
+    upsertLink("canonical", canonical);
+
+    upsertMeta("property", "og:site_name", SITE_NAME);
+    upsertMeta("property", "og:type", ogType);
+    upsertMeta("property", "og:title", finalTitle);
+    upsertMeta("property", "og:description", finalDescription);
+    upsertMeta("property", "og:url", canonical);
+    upsertMeta("property", "og:image", ogImage);
+    upsertMeta("name", "twitter:card", "summary_large_image");
+    upsertMeta("name", "twitter:title", finalTitle);
+    upsertMeta("name", "twitter:description", finalDescription);
+    upsertMeta("name", "twitter:image", twitterImage);
+    upsertMeta("name", "twitter:site", twitterHandle || null);
+
+    let script = document.head.querySelector<HTMLScriptElement>("script#seo-jsonld");
+    if (!schemaJson) {
+      script?.remove();
+    } else {
+      if (!script) {
+        script = document.createElement("script");
+        script.id = "seo-jsonld";
+        script.type = "application/ld+json";
+        document.head.appendChild(script);
+      }
+      script.textContent = schemaJson;
     }
-    applyHead({
-      title,
-      description,
-      canonical,
-      noindex: priv || !indexable,
-      jsonLd,
-      image: share?.ogImageUrl || undefined,
-      twitterHandle: share?.twitterHandle || undefined,
-    });
-  }, [pathname, share]);
+  }, [
+    finalTitle,
+    finalDescription,
+    canonical,
+    noindex,
+    ogType,
+    ogImage,
+    twitterImage,
+    twitterHandle,
+    schemaJson,
+  ]);
 
   return null;
 }

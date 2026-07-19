@@ -1,66 +1,36 @@
-// Generate dist/sitemap.xml on every build (wired into `npm run build`, so
-// each Netlify deploy refreshes it automatically).
-//
-// Sources:
-//   1. src/lib/seoRoutes.json  -> the indexable static routes (the same file
-//      the runtime SEO engine reads, so the sitemap and the head can't drift)
-//   2. functions/scripts/seed-mission-encounters.mjs -> mission ids, so the
-//      public /Missions/:id briefs are listed too.
-//
-// Rules (owner QA checklist): only indexable primary pages appear; private
-// areas (forums/threads, users hub, dashboards) are noindexed AND
-// robots-blocked, so they are never listed. Thread pages are deliberately
-// not indexed at all, so no thread sub-sitemap is generated.
-//
-// Run from the repo root:  node scripts/gen-sitemap.mjs
-import fs from "fs";
+// Generates public/sitemap.xml from the SEO page registry
+// (src/lib/seo/pages.json). Runs automatically on every build (see the
+// "build" script in package.json), so a deploy always ships a sitemap that
+// matches the registry. Only main public, indexable pages belong in the
+// registry: private areas (Dashboard, Admin) and crawl-blocked areas
+// (Forum threads, user profiles) must stay out. Individual threads are
+// deliberately not indexed; if that ever changes, add them as a separate
+// child sitemap behind a sitemap index rather than bloating this one.
+import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const seo = JSON.parse(
-  fs.readFileSync(new URL("../src/lib/seoRoutes.json", import.meta.url), "utf8")
-);
-
-// Mission ids from the encounter seed (its ENCOUNTERS map is keyed by id).
-let missionIds = [];
-try {
-  const seedSrc = fs.readFileSync(
-    new URL("../functions/scripts/seed-mission-encounters.mjs", import.meta.url),
-    "utf8"
-  );
-  missionIds = [...seedSrc.matchAll(/^\s{2}"([a-z0-9-]+)":\s*\{/gm)].map((m) => m[1]);
-} catch {
-  console.warn("sitemap: mission seed not found; skipping /Missions/:id entries");
-}
+const SITE_URL = "https://snagemguild.com";
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const { pages } = JSON.parse(readFileSync(join(root, "src/lib/seo/pages.json"), "utf8"));
 
 const today = new Date().toISOString().slice(0, 10);
-const urls = [
-  ...seo.routes.map((r) => ({
-    loc: `${seo.siteUrl}${r.path}`,
-    priority: r.priority ?? 0.5,
-    changefreq: r.changefreq ?? "monthly",
-  })),
-  ...missionIds.map((id) => ({
-    loc: `${seo.siteUrl}/Missions/${id}`,
-    priority: 0.6,
-    changefreq: "monthly",
-  })),
-];
+const urls = pages
+  .map(
+    (p) => `  <url>
+    <loc>${SITE_URL}${p.path === "/" ? "/" : p.path}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${p.changefreq}</changefreq>
+    <priority>${p.priority.toFixed(1)}</priority>
+  </url>`,
+  )
+  .join("\n");
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls
-  .map(
-    (u) => `  <url>
-    <loc>${u.loc}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>${u.changefreq}</changefreq>
-    <priority>${u.priority.toFixed(1)}</priority>
-  </url>`
-  )
-  .join("\n")}
+${urls}
 </urlset>
 `;
 
-const out = new URL("../dist/sitemap.xml", import.meta.url);
-fs.mkdirSync(new URL("../dist/", import.meta.url), { recursive: true });
-fs.writeFileSync(out, xml);
-console.log(`sitemap: wrote ${urls.length} urls (${missionIds.length} missions) to dist/sitemap.xml`);
+writeFileSync(join(root, "public/sitemap.xml"), xml);
+console.log(`sitemap.xml written with ${pages.length} URLs`);

@@ -15,12 +15,14 @@ import { IconBrandDiscord, IconLock } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import { useParams } from "react-router-dom";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
+import { withSuffix } from "../../lib/seo/site";
+import { truncate } from "../../lib/seo/text";
 import { Character, OwnedPokemon } from "../../components/types/typesUsed";
 import { getColor1, getColor2 } from "../../components/user-forum/getColorBadges";
 import { db } from "../../context/firebase";
 import { useAuth } from "../../context/AuthContext";
-import { Seo } from "../../components/common/Seo";
 import OwnedPokemonAvatar from "../../components/pokemon/OwnedPokemonAvatar";
 import {
   getCharacters,
@@ -235,10 +237,19 @@ export default function PublicProfile() {
 
   return (
     <Container size="lg" px={{ base: "sm", sm: "md" }} pb={80}>
+      {/* Profiles are crawl-blocked in robots.txt; meta covers tabs/shares. */}
       <Seo
-        title={`${user.username}'s Trainer Profile`}
-        description={`${user.username}'s trainer profile at the Snagem Guild pokemon roleplay community.`}
-        noindex
+        title={withSuffix(`${user.username}'s Trainer Profile`)}
+        description={truncate(
+          `${user.username}'s trainer profile in the Snagem Guild Pokemon roleplay community: characters, Pokemon teams, and roleplay history.`,
+          160,
+        )}
+        canonicalPath={`/Users/${encodeURIComponent(user.username)}`}
+        ogType="article"
+        schema={{
+          "@type": "ProfilePage",
+          mainEntity: { "@type": "Person", name: user.username },
+        }}
       />
       {/* Cover band */}
       <Box

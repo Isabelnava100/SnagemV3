@@ -1,0 +1,88 @@
+{
+  "pages": [
+    {
+      "path": "/",
+      "title": "Snagem Guild | Pokemon Roleplay Community & Forums",
+      "description": "Join the Snagem Guild, a free Pokemon roleplay community with custom story forums, missions, battles, and a living world of Shadow Pokemon. Start your journey.",
+      "changefreq": "weekly",
+      "priority": 1.0
+    },
+    {
+      "path": "/About",
+      "title": "About Us | Snagem Guild Pokemon Roleplay Community",
+      "description": "Learn what the Snagem Guild is about: a long-running Pokemon roleplay community with story forums, a trainer dashboard, missions, challenges, and guild events.",
+      "changefreq": "monthly",
+      "priority": 0.9
+    },
+    {
+      "path": "/Library",
+      "title": "The Great Snagem Library | Pokemon Roleplay Guides",
+      "description": "Browse the Snagem Library: Pokedex, battle guides, Shadow Pokemon lore, forum how-tos, and answers to every question about our Pokemon roleplay community.",
+      "changefreq": "monthly",
+      "priority": 0.8
+    },
+    {
+      "path": "/Policies",
+      "title": "House Rules & Policies | Snagem Guild",
+      "description": "Community rules, privacy policy, cookies, terms of use, and credits for the Snagem Guild, a fan-made, non-commercial Pokemon roleplay community.",
+      "changefreq": "yearly",
+      "priority": 0.4
+    },
+    {
+      "path": "/Announcements",
+      "title": "Announcements & Updates | Snagem Guild",
+      "description": "Development updates and news from the Snagem Guild. See what is new across our Pokemon roleplay forums, trainer dashboard, and community features.",
+      "changefreq": "weekly",
+      "priority": 0.6
+    },
+    {
+      "path": "/Missions",
+      "title": "The Mission Vault | Pokemon Roleplay Missions",
+      "description": "Pick up a mission from the Vault and open a roleplay thread. Track objectives, defeat encounters, and earn rewards in the Snagem Guild's Pokemon roleplay world.",
+      "changefreq": "weekly",
+      "priority": 0.7
+    },
+    {
+      "path": "/Research",
+      "title": "Research: Become a Master | Snagem Guild",
+      "description": "Take on Hybrid, Channeler, Fossil, and Mega research paths. Earn master clearances and unlock rare powers in the Snagem Guild Pokemon roleplay community.",
+      "changefreq": "monthly",
+      "priority": 0.6
+    },
+    {
+      "path": "/Colosseum",
+      "title": "The Colosseum | Pokemon Battles & Training",
+      "description": "Train your team, battle rivals, and climb the ladder in the Colosseum, the battle and training hub of the Snagem Guild Pokemon roleplay community.",
+      "changefreq": "monthly",
+      "priority": 0.7
+    },
+    {
+      "path": "/Challenges",
+      "title": "Gyms & Island Trials | Snagem Guild",
+      "description": "Challenge gym leaders, take on Alola island trials, and climb the rematch ladder in the Snagem Guild's Pokemon roleplay challenge system.",
+      "changefreq": "monthly",
+      "priority": 0.6
+    },
+    {
+      "path": "/Casino",
+      "title": "Ghastly Gambling Casino | Snagem Guild",
+      "description": "Trade Snag Coins for Gengar Tokens and try your luck at the guild casino. Games, prizes, and spooky fun in the Snagem Pokemon roleplay community.",
+      "changefreq": "monthly",
+      "priority": 0.5
+    },
+    {
+      "path": "/Activities",
+      "title": "The Snag List & Weekly Activities | Snagem Guild",
+      "description": "Complete the weekly Snag List, farm berries, and fish at the pond. Weekly activities and rewards in the Snagem Guild Pokemon roleplay community.",
+      "changefreq": "weekly",
+      "priority": 0.6
+    },
+    {
+      "path": "/Shop",
+      "title": "The Snag Mall | Item Shop | Snagem Guild",
+      "description": "Spend your Snag Coins at the Snag Mall. Poke Balls, medicine, held items, fishing rods, and more for your Pokemon roleplay adventures in the Snagem Guild.",
+      "changefreq": "monthly",
+      "priority": 0.6
+    }
+  ]
+}

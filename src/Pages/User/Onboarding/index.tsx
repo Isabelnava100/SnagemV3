@@ -24,6 +24,7 @@ import React from "react";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
+import Seo from "../../../components/common/Seo";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { itemData } from "../../../data/item";
@@ -121,6 +122,7 @@ export default function Onboarding() {
 
   return (
     <Box maw={860} mx="auto" p={{ base: 16, sm: 24 }}>
+      <Seo noindex title="Onboarding | Snagem Guild" />
       <Stack gap={16}>
         <Stack gap={4}>
           <Title order={1} c="white" size={32} fw={600}>

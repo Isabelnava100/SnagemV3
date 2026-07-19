@@ -17,6 +17,7 @@ import DOMPurify from "dompurify";
 import React from "react";
 import { Link } from "react-router-dom";
 import { HeroStat, PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getCurrencies } from "../../queries/dashboard";
@@ -183,9 +184,9 @@ function MissionCard(props: { mission: Mission }) {
 
       <Stack gap={8} p={12}>
         <Box>
-          <Text c="white" fw={600} fz={16} lineClamp={1}>
+          <Title order={2} c="white" fw={600} fz={16} lh="md" lineClamp={1}>
             {mission.title}
-          </Text>
+          </Title>
           {mission.location && (
             <Text c="dimmed" fz={14} lineClamp={1}>
               {mission.location}
@@ -264,6 +265,7 @@ export default function Missions() {
 
   return (
     <Box>
+      <Seo page="/Missions" />
       <Container size="xl" pt={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
         <PageHero
           eyebrow="The Mission Vault"

@@ -19,6 +19,7 @@ import React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { GradientButtonSecondary } from "../../../components/common/GradientButton";
 import { PageHero } from "../../../components/common/PageHero";
+import Seo from "../../../components/common/Seo";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { canAccessForum } from "../../../lib/permissions";
@@ -32,7 +33,6 @@ import {
   categoryByLink,
 } from "../config";
 import { getThreadList } from "../queries";
-import { Seo } from "../../../components/common/Seo";
 import { ForumThread, formatFireDate, formatFireTime } from "../types";
 import "../forum.css";
 
@@ -175,6 +175,10 @@ export default function ForumIndex() {
   const [search, setSearch] = React.useState("");
   const [page, setPage] = React.useState(1);
 
+  // Main-Forum is publicly viewable; every other board is members-only
+  // (mirrored in firestore.rules, which is the real enforcement).
+  const publicOnly = !user && activeLink !== "Main-Forum";
+
   const tabs = React.useMemo(() => {
     const base = [...FORUM_CATEGORIES];
     if (canAccessForum(user, MASTER_CATEGORY.value)) base.push(MASTER_CATEGORY);
@@ -186,6 +190,7 @@ export default function ForumIndex() {
   const { data: threads, isPending } = useQuery({
     queryKey: ["forum-threads", activeLink, archive],
     queryFn: () => getThreadList(activeLink, archive),
+    enabled: !publicOnly,
   });
 
   const visible = React.useMemo(() => {
@@ -210,10 +215,16 @@ export default function ForumIndex() {
 
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
+      {/* Forums are never crawlable: robots.txt disallow, an X-Robots-Tag
+          header (netlify.toml), and this noindex. Meta still names the tab. */}
       <Seo
-        title={`${(category?.label ?? activeLink).replace(/-/g, " ")} Board`}
-        description={`Threads on the ${(category?.label ?? activeLink).replace(/-/g, " ")} board of the Snagem Guild pokemon roleplay forums.`}
         noindex
+        title={`${category?.label ?? "Snagem Forums"} | Snagem Guild Forums`}
+        description={
+          category
+            ? `${category.description} Roleplay board on the Snagem Guild's Pokemon roleplay forums.`
+            : "The Snagem Guild's Pokemon roleplay boards. Pick a board, join a thread, or start your own story."
+        }
       />
       <PageHero
         eyebrow="The Roleplay Boards"
@@ -303,8 +314,27 @@ export default function ForumIndex() {
         </Text>
       </Flex>
 
-      {/* Thread rows */}
-      {isPending ? (
+      {/* Thread rows. Members-only boards ask visitors to log in. */}
+      {publicOnly ? (
+        <Stack gap={10} align="center" py={40}>
+          <Text fz={16} c="white" ta="center">
+            This board is for guild members. Log in to read its stories, or
+            browse the public Main Adventures board.
+          </Text>
+          <Group gap={10}>
+            <GradientButtonSecondary radius="xl" size="xs" onClick={() => navigate("/Login")}>
+              Log In
+            </GradientButtonSecondary>
+            <GradientButtonSecondary
+              radius="xl"
+              size="xs"
+              onClick={() => navigate("/Forum/Main-Forum")}
+            >
+              Go to Main Adventures
+            </GradientButtonSecondary>
+          </Group>
+        </Stack>
+      ) : isPending ? (
         <SectionLoader />
       ) : (
         <Stack gap={8} mt={8}>

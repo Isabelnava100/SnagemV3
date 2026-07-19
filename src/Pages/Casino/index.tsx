@@ -8,6 +8,7 @@ import {
   SimpleGrid,
   Stack,
   Text,
+  Title,
 } from "@mantine/core";
 import {
   IconArrowsExchange,
@@ -27,6 +28,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
@@ -196,9 +198,9 @@ function GameCard(props: {
           >
             {props.icon}
           </Box>
-          <Text fz={26} fw={800} c="white">
+          <Title order={2} fz={26} fw={800} c="white" lh="md">
             {props.title}
-          </Text>
+          </Title>
         </Group>
         {props.badge}
       </Group>
@@ -386,9 +388,9 @@ function ExchangeCard(props: { uid: string }) {
           >
             <IconArrowsExchange size={24} color="#fff" />
           </Box>
-          <Text fz={28} fw={800} c="white">
+          <Title order={2} fz={28} fw={800} c="white" lh="md">
             The Exchange Cage
-          </Text>
+          </Title>
         </Group>
         <Text
           fz={14}
@@ -823,6 +825,7 @@ export default function Casino() {
 
   return (
     <Box style={{ background: BG, minHeight: "100%" }}>
+      <Seo page="/Casino" />
       <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
         <PageHero
           eyebrow={
@@ -859,9 +862,9 @@ export default function Casino() {
 
         {!uid ? (
           <Box p={24} style={{ background: PANEL, border: `1px solid ${PANEL_BORDER}`, borderRadius: 20 }}>
-            <Text fz={16} c="dimmed" ta="center">
+            <Title order={2} fz={16} fw={400} c="dimmed" ta="center" lh="md">
               Sign in to play.
-            </Text>
+            </Title>
           </Box>
         ) : currencies.isPending ? (
           <SectionLoader />

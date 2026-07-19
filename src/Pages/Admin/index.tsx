@@ -1,5 +1,6 @@
 import { Box, Container, Text } from "@mantine/core";
 import { Navigate } from "react-router-dom";
+import Seo from "../../components/common/Seo";
 import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import { canAccessStaffArea, hasCapability, isAdmin } from "../../lib/permissions";
@@ -25,6 +26,7 @@ export default function AdminPage() {
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+      <Seo noindex title="Admin | Snagem Guild" />
       <Text fz={14} fw={700} tt="uppercase" c="grape.3" mb={16} style={{ letterSpacing: 1 }}>
         {isAdmin(user) ? "Admin Access" : "Staff Tools"}
       </Text>

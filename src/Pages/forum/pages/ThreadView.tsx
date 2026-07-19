@@ -19,8 +19,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
+import Seo from "../../../components/common/Seo";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
+import { withSuffix } from "../../../lib/seo/site";
+import { stripHtml, truncate } from "../../../lib/seo/text";
 import { isAdmin } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { FORUM_ACCENT, POSTS_PER_PAGE } from "../config";
@@ -31,8 +34,6 @@ import { callResolveThreadPause } from "../functionsClient";
 import { hasCapability } from "../../../lib/permissions";
 import { Capability } from "../../../components/types/typesUsed";
 import CloseThreadModal from "../components/CloseThreadModal";
-import { Seo } from "../../../components/common/Seo";
-import { SITE_URL, htmlToText } from "../../../lib/seo";
 import { getForumBookmarks, getPendingActions, getPostsCount, getPostsPage, getThread } from "../queries";
 import { EncounterBlock, ForumThread } from "../types";
 import { pokemonData } from "../../../data/pokemon";
@@ -362,16 +363,20 @@ export default function ThreadView() {
     isNumeric(page) ? Number(page) : 1
   );
 
+  // Main-Forum threads are publicly viewable; other boards are members-only
+  // (mirrored in firestore.rules, which is the real enforcement).
+  const publicOnly = !user && forum !== "Main-Forum";
+
   const { data: thread, isPending: threadPending } = useQuery({
     queryKey: ["forum-thread", forum, threadId],
     queryFn: () => getThread(forum, threadId!),
-    enabled: !!threadId,
+    enabled: !!threadId && !publicOnly,
   });
 
   const { data: totalPosts } = useQuery({
     queryKey: ["forum-posts-count", forum, threadId],
     queryFn: () => getPostsCount(forum, threadId!),
-    enabled: !!threadId,
+    enabled: !!threadId && !publicOnly,
   });
 
   // "last" resolves to the numeric last page once the count is known.
@@ -417,6 +422,22 @@ export default function ThreadView() {
     },
   });
 
+  if (publicOnly) {
+    return (
+      <Container size="lg" mt={40}>
+        <Seo noindex title="Members Only | Snagem Guild Forums" />
+        <Stack gap={10} align="center" py={40}>
+          <Text fz={16} c="white" ta="center">
+            This thread is on a members-only board. Log in to read it, or
+            browse the public Main Adventures board.
+          </Text>
+          <GradientButtonSecondary radius="xl" size="xs" onClick={() => navigate("/Login")}>
+            Log In
+          </GradientButtonSecondary>
+        </Stack>
+      </Container>
+    );
+  }
   if (threadPending) {
     return (
       <Container size="lg" mt={20}>
@@ -432,17 +453,6 @@ export default function ThreadView() {
     );
   }
 
-  // SEO: thread title (+ "Page X" past page 1), description from the first
-  // post's opening 160 chars. Forum pages are noindex (and robots-blocked);
-  // this still powers tab titles and in-community link previews. Paginated
-  // pages self-canonicalize per the QA checklist.
-  const firstPostText =
-    currentPage === 1 && posts?.length ? htmlToText(posts[0]?.text ?? "") : "";
-  const seoTitle = `${thread.title}${currentPage > 1 ? ` Page ${currentPage}` : ""}`;
-  const seoDescription =
-    firstPostText ||
-    `${thread.title}, a Snagem Guild pokemon roleplay thread${currentPage > 1 ? `, page ${currentPage}` : ""}.`;
-
   const host =
     userIsHost(thread, user) || isAdmin(user) || hasCapability(user, Capability.ManageBattles);
   const mayPost = userMayPost(thread, user);
@@ -454,14 +464,23 @@ export default function ThreadView() {
     navigate(`/Forum/${forum}/thread/${threadId}/${p}`);
   };
 
+  // Unique per-page meta: the thread name (max 60 chars) plus "Page X" past
+  // page 1, described by the first 160 characters of the page's opening post.
+  // Threads are never crawlable (robots.txt, X-Robots-Tag, and this noindex),
+  // so the meta serves tabs, bookmarks, and member-shared links.
+  const seoTitle = withSuffix(
+    currentPage > 1
+      ? `${truncate(thread.title, 46)} Page ${currentPage}`
+      : truncate(thread.title, 60),
+  );
+  const firstPostText = posts?.length ? stripHtml(posts[0].text ?? "") : "";
+  const seoDescription = firstPostText
+    ? truncate(firstPostText, 160)
+    : `${truncate(thread.title, 80)}, a Pokemon roleplay thread on the Snagem Guild forums.`;
+
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
-      <Seo
-        title={seoTitle}
-        description={seoDescription}
-        canonical={`${SITE_URL}/Forum/${forum}/thread/${threadId}${currentPage > 1 ? `/${currentPage}` : ""}`}
-        noindex
-      />
+      <Seo noindex title={seoTitle} description={seoDescription} ogType="article" />
       <Title order={1} fz={isOverSm ? 30 : 20} c="white" fw={400}>
         {thread.title}
         {thread.closed ? " (Archived)" : ""}

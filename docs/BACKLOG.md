@@ -6,6 +6,13 @@ July 2026 build-out are marked (2026-07).
 
 ## Audits (2026-07, owner-requested)
 
+- **Annual security header renewal, due 2027-07.** The HSTS policy in
+  `netlify.toml` runs on a 1 year max-age (set 2026-07). Any dev work in or
+  after July 2027 must renew it: confirm the header is still served, re-test
+  at securityheaders.com, and update HSTS/CSP/the rest to current best
+  practice. Repeat yearly. Also noted in CLAUDE.md SEO rules so it surfaces
+  in every session.
+
 - **Item sprites, remote 404s.** Every catalog row has a `Filename`, so the
   gaps are remote: sprites load from the CDN and a wrong path renders blank.
   To enumerate real 404s, run a HEAD-request sweep over
@@ -33,6 +40,12 @@ July 2026 build-out are marked (2026-07).
     rules review before opening registration is recommended.
 
 ## Assets & sprites
+
+- **New social share (OG) image** (2026-07, owner-requested). The current
+  `public/og-image.png` is a placeholder generated from an SVG
+  (`scripts/gen-og-image.mjs`): gradient banner, guild name, tagline. Replace
+  it with real branded art (guild logo/mascot art, 1200x630). Once made, either
+  overwrite the file or paste its URL into Dashboard > Site Settings > SEO.
 
 - **Shadow Vaccine sprite** (2026-07). The Shadow Vaccine item was added to the
   catalog (`src/data/item/item.json`, item 994) with `Filename:

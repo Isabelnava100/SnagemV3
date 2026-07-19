@@ -1,5 +1,4 @@
 import { Accordion, Box, List, Stack, Text, Title } from "@mantine/core";
-import { nodeToText } from "../../lib/seo";
 
 /**
  * Guild FAQ, ported from the GaiaOnline guild thread. Answers sit in an
@@ -31,11 +30,8 @@ interface FaqItem {
   a: React.ReactNode;
 }
 
-/** Plain-text FAQ pairs for the Library's FAQPage structured data (SEO). */
-export const faqForJsonLd = (): Array<{ question: string; answer: string }> =>
-  FAQ.map((f) => ({ question: f.q, answer: nodeToText(f.a) })).filter((f) => f.answer);
-
-const FAQ: FaqItem[] = [
+/** Exported so the Library page can build FAQPage JSON-LD from the entries. */
+export const FAQ: FaqItem[] = [
   {
     q: "What is a Snag Machine?",
     a: (

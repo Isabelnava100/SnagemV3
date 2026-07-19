@@ -21,6 +21,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
@@ -805,6 +806,7 @@ export default function Trading() {
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+      <Seo noindex title="The Trading Post | Snagem Guild" />
       <PageHero
         eyebrow={`${open.length} open listings · ${mineCount} of yours`}
         title="The Trading Post"

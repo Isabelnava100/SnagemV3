@@ -8,6 +8,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { PageHero } from "../../components/common/PageHero";
+import Seo from "../../components/common/Seo";
 
 /**
  * Public "what's new / what's here" page. Anyone (signed in or not) can read
@@ -107,6 +108,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
 export default function Announcements() {
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+      <Seo page="/Announcements" />
       <PageHero
         eyebrow="What's New"
         title="Announcements"

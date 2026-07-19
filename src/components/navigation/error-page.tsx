@@ -1,4 +1,5 @@
 import { isRouteErrorResponse, Link, useRouteError } from "react-router-dom";
+import Seo from "../common/Seo";
 // import Navigation from "../components/navigation/NavBase";
 
 export function ErrorPage() {
@@ -16,6 +17,7 @@ export function ErrorPage() {
 
     return (
       <div id="error-page">
+        <Seo noindex title="Page Not Found | Snagem Guild" />
         <h1>Oops! {error.status}</h1>
         <p>{error.statusText}</p>
         {error.data?.message && (
@@ -36,8 +38,8 @@ export function ErrorPage() {
          <Link to='/'>Go back to HQ</Link>
     </div>;
   } else {
-    return <></>;
+    return <Seo noindex title="Page Not Found | Snagem Guild" />;
   }
-  
-  return <></>;
+
+  return <Seo noindex title="Page Not Found | Snagem Guild" />;
 }

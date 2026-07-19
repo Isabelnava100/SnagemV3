@@ -17,6 +17,7 @@ import {
 import { useForm } from "@mantine/form";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import Seo from "../../components/common/Seo";
 import { AuthCard, warmGradient } from "./components/AuthCard";
 import { Gusers, PasswordRequirement, getStrength, requirements } from "./components/Components";
 import { registerUser } from "./components/RegisterHandle";
@@ -183,6 +184,7 @@ export function NewRegister() {
 
   return (
     <Container size={680} my={40}>
+      <Seo noindex title="Join the Guild | Snagem Guild" />
       <AuthCard title="Apply to Join">
         <form
           data-netlify="true"
