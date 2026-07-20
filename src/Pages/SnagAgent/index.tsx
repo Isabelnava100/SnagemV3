@@ -367,7 +367,7 @@ const KB: KbEntry[] = [
     ),
   },
   {
-    match: /nature/i,
+    match: /\bnatures?\b/i,
     answer: () => (
       <>
         Every pokemon has one of 25 natures, shown on its info box in your{" "}
@@ -378,7 +378,7 @@ const KB: KbEntry[] = [
     ),
   },
   {
-    match: /weather|rain|sandstorm|sunlight|snow\b/i,
+    match: /weather|\brain\b|sandstorm|sunlight|\bsnow\b/i,
     answer: () => (
       <>
         Thread weather (sun, rain, sandstorm, snow) boosts favored attacker types and
@@ -515,7 +515,32 @@ const KB: KbEntry[] = [
       ),
   },
   {
-    match: /battle|damage|effectiv|type chart|health|hp|faint|star|flee|run away|potion|revive/i,
+    // Battle staff: hosting, boss battles, enabling battle mode. Kept ahead of
+    // the generic battle rule so host/boss phrasing resolves here.
+    match: /battle staff|manage ?battles|boss battle|host (a |the )?(thread|battle|fight)|host menu|battle mode|run (a )?(gym|boss)/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Battle staff (admins and holders of the ManageBattles capability) can switch a
+          thread into battle mode and get Host Menu access on ANY thread: boss battles,
+          thread weather, and Safari judging. Grant the capability in{" "}
+          <L to="/Admin">
+            Admin &gt; Manage &gt; Members &amp; Access &gt; Roles &amp; Permissions
+          </L>
+          , then open a thread&apos;s Host Menu from its tools. The rules matrix is in{" "}
+          <L to="/Library?tab=forums">Library &gt; The Charter</L>.
+        </>
+      ) : (
+        <>
+          Boss battles and battle mode are run by battle staff (admins or members granted
+          the ManageBattles role): they host the fight, set the weather, and judge Safari.
+          On a thread you host you will see the Host Menu in its tools. How the fights
+          resolve is in <L to="/Library?tab=battle">Library &gt; The War Room</L>.
+        </>
+      ),
+  },
+  {
+    match: /battle|damage|effectiv|type chart|health|hp|faint|\bstars?\b|flee|run away|potion|revive/i,
     answer: () => (
       <>
         The whole battle system (stars, posts to beat, damage, HP, healing items,
@@ -525,6 +550,240 @@ const KB: KbEntry[] = [
         fighter, and type matchups scale both directions between x0.5 and x2.
       </>
     ),
+  },
+  {
+    // Competitive rankings ladder + Hall of Fame (Colosseum).
+    match: /ranking|leaderboard|\bstanding|hall of fame|champion|competitive/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          The competitive ladder is the Rankings tab of the <L to="/Colosseum">Colosseum</L>,
+          fed by battle results (defeat a pokemon +1, your pokemon survives +1, win +3, beat
+          the champion +5, upset +0.4 per rank gap, tournament win +10). You can also award
+          ranking points by hand in{" "}
+          <L to="/Admin">Admin &gt; Manage &gt; Members &amp; Access &gt; Battle &amp; Challenge</L>.
+          Tournament champions are enshrined on the Hall of Fame tab.
+        </>
+      ) : (
+        <>
+          The <L to="/Colosseum">Colosseum</L> Rankings tab is the competitive ladder:
+          battling scores points (defeating a foe, surviving, winning and beating a champion
+          all count, upsets score extra, and a tournament win is worth the most), and the
+          arrows show who is climbing. Tournament winners are enshrined on the Hall of Fame
+          tab.
+        </>
+      ),
+  },
+  {
+    match: /tournament|bracket|sign ?up.*(event|tournament)|register.*(event|tournament)/i,
+    answer: () => (
+      <>
+        Tournaments are staff-run bracket events on the Tournaments tab of the{" "}
+        <L to="/Colosseum">Colosseum</L>. When one is scheduled you get a countdown to the
+        start and a filled-slots count; register before it fills (you set a friend code and
+        pick a team). Winning is the biggest ranking jump and a Hall of Fame spot. Nothing
+        listed means none is scheduled right now.
+      </>
+    ),
+  },
+  {
+    // In-app notifications + Discord linking/mirroring.
+    match: /notification|@?mention|\bping(s|ed|ing)?\b|\bdiscord\b|\balerts?\b/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Members manage alerts in{" "}
+          <L to="/Dashboard/Settings/Notifications">Settings &gt; Notifications</L>: an
+          in-app inbox (replies on bookmarked threads, @mentions, boss and system pings) plus
+          toggles for site notifications and direct pings, and a button to link their Discord.
+          To mirror notifications into your Discord server, save the webhook in{" "}
+          <L to="/Dashboard/Site-Settings">Site Settings</L>; each recipient still needs a
+          linked Discord and the Discord toggle on.
+        </>
+      ) : (
+        <>
+          Your alerts live in{" "}
+          <L to="/Dashboard/Settings/Notifications">Settings &gt; Notifications</L>: an in-app
+          inbox for replies on threads you bookmarked, @mentions, and boss or system pings,
+          with switches to turn site notifications and direct pings on or off. Link your
+          Discord on that page and flip the Discord switch to also get pinged in the guild
+          server.
+        </>
+      ),
+  },
+  {
+    match: /signature|\bsig\b|sign.*(post|off)/i,
+    answer: () => (
+      <>
+        Set a forum signature in{" "}
+        <L to="/Dashboard/Settings/Signature">Settings &gt; Post Signature</L>: a rich-text
+        block saved to your profile and added to a post whenever you tick &quot;Attach
+        Signature&quot; in the composer. It is sanitized on save, so styling is fine but
+        scripts are stripped.
+      </>
+    ),
+  },
+  {
+    match: /accessibilit|text size|font size|(bigger|larger|smaller|resize|increase|shrink).*text|text.*(bigger|larger|smaller|size)|\bzoom\b|reading size|hard to read/i,
+    answer: () => (
+      <>
+        Open <L to="/Dashboard/Settings/Accessibility">Settings &gt; Accessibility</L> to
+        raise the reading text size and to allow pinch-to-zoom (off by default for an app
+        feel). Both are per-device and apply right away.
+      </>
+    ),
+  },
+  {
+    // Creating/managing characters (not the first-time onboarding flow).
+    match: /character|\boc\b|persona|another (character|trainer)|how many (character|trainer)|make.*trainer/i,
+    answer: () => (
+      <>
+        Your characters live in <L to="/Dashboard/Characters">Console &gt; Characters</L>:
+        use Create a new Character to add one (species, type, height, age, birthday and a
+        history blurb), and you can keep several. Every forum post is made as one of your
+        characters, and each character has its own teams.
+      </>
+    ),
+  },
+  {
+    match: /\bteam\b|\bparty\b|build.*team|team.*(build|make|slot|size|change)|how many pokemon/i,
+    answer: () => (
+      <>
+        Build teams in <L to="/Dashboard/Pokemon">Console &gt; Pokemon</L>: name a team and
+        fill it from your box, then bring it into a thread. On a normal thread the team you
+        post with locks for the rest of that thread and is the pool your fighters come from,
+        unless the host allowed team changes when they created it.
+      </>
+    ),
+  },
+  {
+    // Making a post / starting a thread. Sits after the experience rule so
+    // "training post" still routes to training.
+    match: /how.*(make|write|do).*(post|reply)|start (a |your )?(thread|roleplay|rp)|create (a )?thread|new thread|how.*roleplay/i,
+    answer: () => (
+      <>
+        Open a forum board and use New Thread to start a roleplay, or Reply to continue one
+        (missions are picked up from the <L to="/Missions">Mission Vault</L> instead of
+        created directly). Every post is made as one of your characters and brings their
+        team, so you need a character with at least one pokemon first. Who can post where is
+        in <L to="/Library?tab=forums">Library &gt; The Charter</L>.
+      </>
+    ),
+  },
+  {
+    match: /\bblog\b|\bnews\b|dev update|patch note|changelog|what.?s new/i,
+    answer: () => (
+      <>
+        Guild writing lives in two places: the <L to="/Blog">Guild Blog</L> (stories, dev
+        updates and guides) and the <L to="/Announcements">Announcements page</L> (shorter
+        development updates that also surface on your dashboard banner).
+      </>
+    ),
+  },
+  {
+    match: /\bbag\b|inventory|my items|use.*item|recycl|convert.*candy|\bscent\b/i,
+    answer: () => (
+      <>
+        Your bag is <L to="/Dashboard/Items">Console &gt; Items</L>: medicine, held items,
+        evolution stones, balls and more. Items are used where they apply (medicine and balls
+        mid-battle, held items from a pokemon&apos;s details, stones from the Evolve button).
+        Unwanted items recycle for Snag Coins at the <L to="/Shop">Snag Mall</L> (medicine
+        cannot be recycled).
+      </>
+    ),
+  },
+  {
+    match: /\bdraft(s)?\b|bookmark|saved thread|follow.*thread|save.*(post|thread)/i,
+    answer: () => (
+      <>
+        Unfinished posts and threads save to <L to="/Dashboard/Drafts">Console &gt; Drafts</L>
+        (pick one up to keep writing, or clear it). Threads you bookmark collect in{" "}
+        <L to="/Dashboard/Bookmarks">Console &gt; Bookmarks</L>, and new replies on them show
+        up in your notifications.
+      </>
+    ),
+  },
+  {
+    match: /public profile|profile page|view.*profile|see.*(someone|member).*profile|friend code|member list/i,
+    answer: () => (
+      <>
+        Every member has a public profile: browse the roster at <L to="/Users">Members</L> and
+        open anyone to see their identity, featured picks, badges and teams. Edit your own
+        basics in <L to="/Dashboard/Profile">Console &gt; Profile</L>. (Your friend code is
+        used when you register for a tournament.)
+      </>
+    ),
+  },
+  {
+    // Profile/post badges (distinct from gym badges, handled by "next badge").
+    match: /show.*badge|display.*badge|profile badge|post badge|\bcollection|which badge|enable.*badge|manage badge|create.*badge|assign.*badge/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Create, style and assign the gradient badges that appear on forum posts in{" "}
+          <L to="/Admin">Admin &gt; Manage &gt; Game Content &gt; Badges</L> (set defaults and
+          hand them out). Members choose which of their earned badges to display in{" "}
+          <L to="/Dashboard/Settings/Collections">Settings &gt; Collections</L>.
+        </>
+      ) : (
+        <>
+          Pick which of your badges show on your forum posts in{" "}
+          <L to="/Dashboard/Settings/Collections">Settings &gt; Collections</L>. (Gym badges
+          are separate: those come from beating gym leaders on the{" "}
+          <L to="/Challenges">Challenges page</L>.)
+        </>
+      ),
+  },
+  {
+    match: /grant|give.*(item|coin|pokemon|currency|emblem)|award.*(item|coin|pokemon)|hand out|gift.*(member|item)/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Send items, currency or pokemon straight to a member from{" "}
+          <L to="/Admin">Admin &gt; Manage &gt; Members &amp; Access &gt; Grant to Users</L>.
+          Import approvals and reward reviews also grant server-side, and everything you hand
+          out is logged.
+        </>
+      ) : (
+        <>
+          Only staff can grant items, coins or pokemon directly. You earn Snag Coins from
+          missions, events and reward reviews, and you can swap pokemon with other members at
+          the <L to="/Trading">Trading Post</L>.
+        </>
+      ),
+  },
+  {
+    match: /audit|staff log|action log|paper trail|who (granted|changed|edited|did)/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Sensitive staff actions (grants, star and stat edits, launches) are recorded in the
+          audit trail under <L to="/Admin">Admin &gt; Manage &gt; Reference</L>. It is
+          read-only history for accountability.
+        </>
+      ) : (
+        <>
+          The staff keep an internal audit log of moderation actions, which is staff-only.
+          Your own activity is in <L to="/Dashboard/History">Console &gt; History</L>.
+        </>
+      ),
+  },
+  {
+    match: /sendgrid|approval email|rejection email|email notice|applicant email|welcome email/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          Approval and rejection emails go out through SendGrid, configured in{" "}
+          <L to="/Dashboard/Site-Settings">Site Settings &gt; Email notices</L>: paste an API
+          key with Mail Send permission and a verified from address. Until a key is saved no
+          emails send and approvals still work in-app.
+        </>
+      ) : (
+        <>
+          When staff approve or reject your registration you get an email (you cannot see
+          in-app notifications before your first login), so keep an eye on your inbox.
+        </>
+      ),
   },
   {
     match: /activit.*(next|coming|launch)|next.*(event|activit)|coming up|upcoming/i,
