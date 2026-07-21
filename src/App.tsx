@@ -1,10 +1,15 @@
 import { Box, Flex, Paper } from "@mantine/core";
 import { useMediaQuery as useMediaQueryCore } from "@mantine/hooks";
 import { memo } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { SideBar } from "./components/navigation/SideBar";
 import { useAuth } from "./context/AuthContext";
 import useMediaQuery from "./hooks/useMediaQuery";
+
+// Marketing pages (redesign) are full-bleed with their own top bar + footer,
+// so they render outside the app shell (no sidebar / bottom tabs / gradient
+// frame). Matched case-insensitively against the pathname.
+const MARKETING_ROUTES = ["/", "/about"];
 
 export const App = memo(() => {
   const { user } = useAuth();
@@ -12,6 +17,18 @@ export const App = memo(() => {
   const isUnder900 = useMediaQueryCore("(max-width: 900px)");
   const hasLessHeight = useMediaQueryCore("(max-height: 900px)");
   const { isOverMd } = useMediaQuery();
+  const { pathname } = useLocation();
+
+  if (MARKETING_ROUTES.includes(pathname.toLowerCase().replace(/\/$/, "") || "/")) {
+    return (
+      <Box component="main" id="main-content" tabIndex={-1} style={{ minHeight: "100dvh", outline: "none" }}>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+        <Outlet />
+      </Box>
+    );
+  }
 
   return (
     <Box

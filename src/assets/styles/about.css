@@ -1,0 +1,230 @@
+/* About page (redesigned July 2026). Built on the shared redesign system. */
+
+.ab {
+  background: var(--dc-ink);
+  color: var(--dc-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.ab-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Hero */
+.ab-hero {
+  position: relative;
+  padding: 40px 20px 44px;
+  background: var(--dc-gradient-hero);
+  overflow: hidden;
+}
+.ab-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--dc-hero-stripes);
+  pointer-events: none;
+}
+.ab-hero-inner {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  animation: dcRiseIn 0.7s ease;
+}
+.ab-h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(38px, 12vw, 64px);
+  line-height: 0.95;
+  margin: 14px 0 12px;
+  text-shadow: var(--dc-shadow-text-hero, 1px 1px 2px rgba(0, 0, 0, 0.6));
+}
+.ab-lede {
+  font-size: 16px;
+  color: var(--dc-dim);
+  max-width: 52ch;
+  line-height: 1.55;
+}
+.ab-cta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+  max-width: 340px;
+}
+@media (min-width: 600px) {
+  .ab-cta-row {
+    flex-direction: row;
+    max-width: none;
+  }
+}
+
+/* Section headers */
+.ab-section {
+  padding: 40px 0 8px;
+}
+.ab-sec-head {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(24px, 8vw, 30px);
+  line-height: 1.1;
+  margin: 6px 0 8px;
+}
+.ab-sec-sub {
+  font-size: 15px;
+  color: var(--dc-dim);
+  max-width: 60ch;
+  line-height: 1.55;
+}
+.ab-p {
+  font-size: 15px;
+  color: var(--dc-dim);
+  line-height: 1.6;
+  margin: 12px 0;
+  max-width: 62ch;
+}
+.ab-worldimg {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  margin-top: 14px;
+  border: 1px solid var(--dc-border-alt);
+}
+
+/* What you can do: card grid */
+.ab-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+@media (min-width: 720px) {
+  .ab-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.ab-card {
+  background: var(--dc-card);
+  border: 1px solid var(--dc-border-alt);
+  border-left: 3px solid transparent;
+  padding: 16px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.ab-card:hover {
+  border-left-color: var(--dc-red);
+  background: #17151c;
+}
+.ab-card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  margin: 10px 0 6px;
+  color: #fff;
+}
+.ab-card-body {
+  font-size: 13px;
+  color: var(--dc-dim);
+  line-height: 1.5;
+}
+
+/* Currency cards */
+.ab-cur {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+@media (min-width: 720px) {
+  .ab-cur {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.ab-cur-card {
+  background: var(--dc-card);
+  border: 1px solid;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  padding: 18px;
+}
+.ab-cur-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  margin: 10px 0 6px;
+}
+.ab-cur-body {
+  font-size: 13px;
+  color: var(--dc-dim);
+  line-height: 1.55;
+}
+
+/* Detail cards (weekly rhythm, items & gear) */
+.ab-detail {
+  background: var(--dc-panel);
+  border: 1px solid var(--dc-border-alt);
+  border-radius: 5px;
+  padding: 18px;
+  margin-top: 16px;
+}
+.ab-detail-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+.ab-detail-row {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--dc-border);
+  font-size: 14px;
+  color: var(--dc-dim);
+  line-height: 1.5;
+}
+.ab-detail-row:first-of-type {
+  border-top: 0;
+}
+
+/* How to get in: steps */
+.ab-steps {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+.ab-step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: rgba(14, 13, 17, 0.75);
+  border: 1px solid var(--dc-border-alt);
+  border-radius: 5px;
+  padding: 18px;
+}
+.ab-step-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--dc-gold);
+  flex-shrink: 0;
+}
+.ab-step-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.ab-step-body {
+  font-size: 13px;
+  color: var(--dc-dim);
+  line-height: 1.5;
+}
+.ab-closing {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(22px, 7vw, 32px);
+  text-align: center;
+  padding: 40px 20px;
+  color: #fff;
+}
