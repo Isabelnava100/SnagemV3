@@ -75,12 +75,23 @@ export const theme = createTheme({
     lg: "22px",
     xl: "24px",
   },
-  // Standardize button shape site-wide: xl (pill) is already the dominant radius
-  // and matches the homepage CTAs, so every Button defaults to it unless a call
-  // site overrides. Keeps borders/sizes consistent across the app.
+  // Every button adopts the redesign brand shape: Quantico display face,
+  // uppercase, and the signature angled clip-path (the homepage CTA silhouette).
+  // radius is 0 because the clip-path defines the edges. Keyboard focus stays
+  // visible via an inset ring (the clip would cut a normal outline); see
+  // redesign.css .mantine-Button-root:focus-visible.
   components: {
     Button: Button.extend({
-      defaultProps: { radius: "xl" },
+      defaultProps: { radius: 0 },
+      styles: {
+        root: {
+          fontFamily: "'Quantico', 'Roboto', sans-serif",
+          fontWeight: 700,
+          letterSpacing: "0.05em",
+          textTransform: "uppercase",
+          clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)",
+        },
+      },
     }),
   },
 });

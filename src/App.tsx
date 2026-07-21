@@ -6,10 +6,10 @@ import { SideBar } from "./components/navigation/SideBar";
 import { useAuth } from "./context/AuthContext";
 import useMediaQuery from "./hooks/useMediaQuery";
 
-// Marketing pages (redesign) are full-bleed with their own top bar + footer,
-// so they render outside the app shell (no sidebar / bottom tabs / gradient
-// frame). Matched case-insensitively against the pathname.
-const MARKETING_ROUTES = ["/", "/about"];
+// Full-bleed routes rendered outside the app shell (no sidebar / bottom tabs /
+// gradient frame): the marketing pages and the logged-out auth screens, which
+// carry the marketing top bar instead. Matched case-insensitively.
+const MARKETING_ROUTES = ["/", "/about", "/login", "/register", "/forgot", "/reset"];
 
 export const App = memo(() => {
   const { user } = useAuth();
@@ -21,7 +21,12 @@ export const App = memo(() => {
 
   if (MARKETING_ROUTES.includes(pathname.toLowerCase().replace(/\/$/, "") || "/")) {
     return (
-      <Box component="main" id="main-content" tabIndex={-1} style={{ minHeight: "100dvh", outline: "none" }}>
+      <Box
+        component="main"
+        id="main-content"
+        tabIndex={-1}
+        style={{ minHeight: "100dvh", background: "#0e0d11", outline: "none" }}
+      >
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>

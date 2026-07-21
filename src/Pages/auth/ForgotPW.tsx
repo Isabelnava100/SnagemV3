@@ -12,6 +12,7 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { IconArrowLeft } from "@tabler/icons-react";
 import Seo from "../../components/common/Seo";
+import { MarketingTopBar } from "../../components/redesign/Marketing";
 import { auth } from "../../context/firebase";
 import { AuthCard, warmGradient } from "./components/AuthCard";
 
@@ -46,6 +47,8 @@ export function ForgotPassword() {
   }
 
   return (
+    <>
+    <MarketingTopBar context="auth" />
     <Container size={640} my={40}>
       <Seo noindex title="Forgot Password | Snagem Guild" />
       <AuthCard title="Enter your email to get a reset link.">
@@ -79,5 +82,6 @@ export function ForgotPassword() {
         </form>
       </AuthCard>
     </Container>
+    </>
   );
 }

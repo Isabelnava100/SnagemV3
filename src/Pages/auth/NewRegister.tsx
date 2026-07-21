@@ -18,6 +18,7 @@ import { useForm } from "@mantine/form";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Seo from "../../components/common/Seo";
+import { MarketingTopBar } from "../../components/redesign/Marketing";
 import { AuthCard, warmGradient } from "./components/AuthCard";
 import { Gusers, PasswordRequirement, getStrength, requirements } from "./components/Components";
 import { registerUser } from "./components/RegisterHandle";
@@ -167,6 +168,8 @@ export function NewRegister() {
 
   if (submitted) {
     return (
+      <>
+      <MarketingTopBar context="auth" />
       <Container size={560} my={40}>
         <AuthCard title="Check your email">
           <Stack gap={10}>
@@ -185,10 +188,13 @@ export function NewRegister() {
           </Stack>
         </AuthCard>
       </Container>
+      </>
     );
   }
 
   return (
+    <>
+    <MarketingTopBar context="auth" />
     <Container size={680} my={40}>
       <Seo noindex title="Join the Guild | Snagem Guild" />
       <AuthCard title="Apply to Join">
@@ -360,5 +366,6 @@ export function NewRegister() {
         </Anchor>
       </Text>
     </Container>
+    </>
   );
 }

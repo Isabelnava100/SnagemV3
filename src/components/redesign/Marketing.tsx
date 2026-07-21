@@ -8,8 +8,12 @@ import snagemLogo from "../../assets/images/team-snagem-logo.png";
  * across every marketing surface. Uses the existing site logo (no new brand art).
  */
 
-/** Sticky, blurred marketing top bar: logo (home link) + About + Login. */
-export function MarketingTopBar(props: { active?: "about" }) {
+/**
+ * Sticky, blurred marketing top bar: logo (home / back-to-site) + About +
+ * Login. On the auth screens (context="auth") the redundant Login pill is
+ * dropped; the logo remains the way back to the site.
+ */
+export function MarketingTopBar(props: { active?: "about"; context?: "auth" }) {
   return (
     <header className="dc-topbar">
       <Link to="/" className="dc-topbar-brand" aria-label="Snagem Guild home">
@@ -20,9 +24,13 @@ export function MarketingTopBar(props: { active?: "about" }) {
         <Link to="/About" style={props.active === "about" ? { color: "#fff" } : undefined}>
           About
         </Link>
-        <Link to="/Login" className="dc-cta dc-cta-red" style={{ padding: "8px 18px", fontSize: 12 }}>
-          Login
-        </Link>
+        {props.context === "auth" ? (
+          <Link to="/">Back to site</Link>
+        ) : (
+          <Link to="/Login" className="dc-cta dc-cta-red" style={{ padding: "8px 18px", fontSize: 12 }}>
+            Login
+          </Link>
+        )}
       </nav>
     </header>
   );

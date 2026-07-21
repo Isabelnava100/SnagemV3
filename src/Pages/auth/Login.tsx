@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { IconBrandGoogle } from "@tabler/icons-react";
 import Seo from "../../components/common/Seo";
+import { MarketingTopBar } from "../../components/redesign/Marketing";
 import { useAuth } from "../../context/AuthContext";
 import { AuthCard, coolGradient, warmGradient } from "./components/AuthCard";
 import { handleGoogleSignIn } from "./components/GoogleHandle";
@@ -65,7 +66,9 @@ export function Login() {
   };
 
   return (
-    <Container size={680} my={40}>
+    <>
+      <MarketingTopBar context="auth" />
+      <Container size={680} my={40}>
       <Seo noindex title="Log In | Snagem Guild" />
       <AuthCard title="Access the Dashboard">
         {pendingNotice && (
@@ -176,6 +179,7 @@ export function Login() {
           </Grid>
         </form>
       </AuthCard>
-    </Container>
+      </Container>
+    </>
   );
 }

@@ -221,6 +221,13 @@
   color: #fff;
 }
 
+/* Global button focus: the angled clip-path cuts a normal outline, so keep
+   keyboard focus visible with an inset ring instead. */
+.mantine-Button-root:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px #c79bd6;
+}
+
 /* Marketing footer. */
 .dc-footer {
   background: var(--dc-ink);

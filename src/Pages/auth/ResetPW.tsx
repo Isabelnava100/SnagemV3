@@ -12,6 +12,7 @@ import {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { confirmPasswordReset } from "firebase/auth";
 import Seo from "../../components/common/Seo";
+import { MarketingTopBar } from "../../components/redesign/Marketing";
 import { auth } from "../../context/firebase";
 import { AuthCard, warmGradient } from "./components/AuthCard";
 
@@ -88,6 +89,8 @@ export function ResetPW() {
   };
 
   return (
+    <>
+    <MarketingTopBar context="auth" />
     <Container size={640} my={40}>
       <Seo noindex title="Reset Password | Snagem Guild" />
       <AuthCard title="Reset Your Password">
@@ -149,5 +152,6 @@ export function ResetPW() {
         </form>
       </AuthCard>
     </Container>
+    </>
   );
 }
