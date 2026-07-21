@@ -14,7 +14,6 @@ import {
   Text,
   Title,
   UnstyledButton,
-  useMantineTheme,
 } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -102,6 +101,12 @@ function DashboardHeader() {
     background: `${HERO_STRIPES}, ${HERO_GRADIENT}`,
     border: `1px solid ${HERO_BORDER}`,
   };
+  const bannerClipped = {
+    ...banner,
+    borderRadius: 5,
+    clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%)",
+  };
+  const displayFont = "var(--font-display, 'Quantico', sans-serif)";
 
   if (!isOverMd) {
     return (
@@ -127,26 +132,41 @@ function DashboardHeader() {
   }
 
   return (
-    <Stack gap={13} p={{ base: 20, sm: 28 }} style={banner}>
-      <Flex justify="space-between" align="center">
+    <Stack gap={13} p={{ base: 24, sm: 36 }} style={bannerClipped}>
+      <Flex justify="space-between" align="flex-start">
         <Box>
-          <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }} mb={8}>
-            Guild Member Hub
+          <Group gap={10} align="center" mb={10}>
+            <Box w={44} h={3} style={{ background: "#E54156" }} />
+            <Text
+              fz={14}
+              fw={700}
+              c="#FFD074"
+              tt="uppercase"
+              style={{ letterSpacing: "0.3em", fontFamily: displayFont }}
+            >
+              Guild Member Hub
+            </Text>
+          </Group>
+          <Text
+            component="h1"
+            c="white"
+            fw={700}
+            fz={{ base: 34, sm: 44 }}
+            style={{ lineHeight: 1, margin: 0, fontFamily: displayFont, letterSpacing: "0.02em" }}
+          >
+            TRAINER DASHBOARD
           </Text>
-          <Text component="h1" c="white" fw={800} fz={{ base: 32, sm: 44 }} style={{ lineHeight: 1.1, margin: 0 }}>
-            Trainer Dashboard
+          <Text c="gray.4" fz={16} mt={10}>
+            Welcome back, {user?.displayName}!
           </Text>
         </Box>
-        <Button className="self-start" variant="subtle" onClick={handleLogout}>
-          Logout
-        </Button>
+        <Group gap={12} wrap="nowrap">
+          <NotificationBell />
+          <Button variant="subtle" color="gray" onClick={handleLogout}>
+            Log Out
+          </Button>
+        </Group>
       </Flex>
-      <Group>
-        <NotificationBell />
-        <Text c="white" fz={22}>
-          Welcome, {user?.displayName}!
-        </Text>
-      </Group>
     </Stack>
   );
 }
@@ -317,12 +337,12 @@ function CurrencyChip(props: { amount: number | string; name: string; color: str
       <Popover.Target>
         <UnstyledButton style={{ flex: 1, minWidth: 0 }}>
           <Flex
-            bg={props.color}
+            bg="#17151c"
             align="center"
-            gap={8}
-            px={12}
-            py={8}
-            style={{ borderRadius: 12, minWidth: 0 }}
+            gap={10}
+            px={14}
+            py={12}
+            style={{ borderRadius: 10, minWidth: 0, border: "1px solid #232028" }}
           >
             <Box
               style={{
@@ -338,10 +358,16 @@ function CurrencyChip(props: { amount: number | string; name: string; color: str
               <Image src={props.icon} w={34} h={34} style={{ objectFit: "contain" }} alt={props.name} />
             </Box>
             <Stack gap={0} style={{ minWidth: 0 }}>
-              <Text c="white" fz={24} fw={700} lh={1.1}>
+              <Text
+                c={props.color}
+                fz={24}
+                fw={700}
+                lh={1.1}
+                style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)" }}
+              >
                 {amount}
               </Text>
-              <Text c="white" fz={14} lineClamp={1}>
+              <Text c="gray.5" fz={13} tt="uppercase" lineClamp={1} style={{ letterSpacing: "0.06em" }}>
                 {props.name}
               </Text>
             </Stack>
@@ -369,17 +395,17 @@ function CurrencyChip(props: { amount: number | string; name: string; color: str
 
 /** Currency stays on top (mobile + desktop) as a compact, always-visible row. */
 function CurrencyBar() {
-  const theme = useMantineTheme();
   const { user } = useAuth();
   const { isOverLg } = useMediaQuery();
   const { data } = useQuery({
     queryKey: ["get-currencies", user?.uid],
     queryFn: () => getCurrencies(user?.uid as string),
   });
+  // Accent colors per currency (gold / purple / teal), used for the tile number.
   const chips = [
-    { icon: PokePesos, amount: data?.pokecoin || "0", name: "Snag Coin", color: theme.colors.pink[2] },
-    { icon: GengarCoins, amount: data?.gengarcoin || "0", name: "Gengar Coin", color: theme.colors.pink[1] },
-    { icon: SnagCoins, amount: data?.snagemblem || "0", name: "Snag Emblems", color: theme.colors.pink[0] },
+    { icon: PokePesos, amount: data?.pokecoin || "0", name: "Snag Coins", color: "#FFD074" },
+    { icon: GengarCoins, amount: data?.gengarcoin || "0", name: "Gengar Tokens", color: "#C17DC1" },
+    { icon: SnagCoins, amount: data?.snagemblem || "0", name: "Snag Emblems", color: "#3ACCCB" },
   ];
   return (
     <Flex gap={10} wrap="nowrap" maw={isOverLg ? 720 : undefined}>
@@ -484,11 +510,16 @@ function TabsPanel() {
                         </Box>
                         <Text
                           fz={isOverMd ? 12 : 9}
-                          fw={isActive ? 700 : 500}
+                          fw={700}
                           tt="uppercase"
                           ta="center"
                           c={isActive ? "white" : "rgba(255,255,255,0.6)"}
-                          style={{ whiteSpace: "nowrap", lineHeight: 1 }}
+                          style={{
+                            whiteSpace: "nowrap",
+                            lineHeight: 1,
+                            fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+                            letterSpacing: "0.08em",
+                          }}
                         >
                           {link.label}
                         </Text>
