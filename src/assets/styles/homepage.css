@@ -1,297 +1,157 @@
-.homepage {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-}
-.heroIMGcontainer {
-    padding: 40vh 20px 25vh 20px;
-    background-image: url('/images/hero-bg.webp'); /* self-hosted WebP, preloaded in Homepage.tsx */
-    background-size: cover;
-    background-position: bottom;
-    background-repeat: no-repeat;
-  
-}
-.centered-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    flex-direction: column;text-align: center;
-    gap:10px;
-  }
-  
-  /* Heading styles */
-  .centered-container h1 {
-    font-size: 4em;
-    color: white;
-    margin: 0;
-    line-height: 1em;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6), 2px 2px 4px rgba(119, 41, 118, 0.4);
-      
-  }
-  
-  .centered-container h2 {
-    font-size: 1.5em;
-    color: white;
-    font-weight: 400;
-    margin:0 0 16px 0;
-    line-height: 1.4em;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6), 2px 2px 4px rgba(119, 41, 118, 0.4);
-  }
-  
-  /* Button container */
-  .button-container {
-    display: flex;
-    gap:1em;
-  }
-  
-  /* Base button styles */
-        a.button {
-            line-height: 1em;;
-    color: #fff !important;
-    padding: 1.2em 2.5em;
-    text-decoration: none;
-    font-weight: bold;
-    border-radius: 50px;
-    font-size: 20px;
-    position: relative;
-    overflow: hidden;
-    transition: color 0.4s ease;
-    display: inline-block;
-    z-index: 1;
-  }
-  
-  /* Sliding overlay effect */
-  a.button::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%; /* Start hidden from the left */
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.2); /* Dark overlay */
-    transition: left 0.4s ease;
-    z-index: -1;
-  }
-  
-  a.button:hover::before {
-    left: 0; /* Slide in from the left */
-  }
-  
-  /* Button-specific colors. These pull from the Mantine theme tokens
-     (src/lib/mantine.ts) so the homepage CTAs stay in lockstep with the
-     rest of the site's palette. */
-  a.red {
-    background-color: var(--mantine-color-pink-0, #E54156);
-  }
+/* Homepage (redesigned July 2026). Cinematic marketing landing built on the
+   shared redesign system (redesign.css .dc-* classes). Mobile-first, fluid to
+   the device width. Existing hero-bg.webp / team-group.webp are reused. */
 
-  a.purple {
-    background-color: var(--mantine-color-brand-5, #772976);
-  }
-  a.yellow {
-      background-color: var(--mantine-color-gold-0, #FFD074);
-  }
-  a.button.yellow{
-    color:#1A1B1E!important;
-  }
-  a.blue {
-      background-color: var(--mantine-color-indigo-0, #4049C9);
-  }
-
-  /*second module*/
-
-  .secondmodule{margin:auto;
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    flex-direction: column;width:auto; max-width:800px;
-  }
-  .innerHold2 {
-    background-size: min(50vw, 380px) auto;
-    background-repeat: no-repeat;
-    padding:100px 20px;width:100%;
-   }
-  .innerHold2 h2 {font-size: 4em; font-weight: 400;
-color:white;line-height: 1.1em;margin:0;}
-
-  .innerHold2 h2 span {color:var(--mantine-color-gold-0, #FFD074);}
-
-.oneM{
-    background-position: bottom right;
-    background-image: url('https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/site%2Fsleepingeevee.png?alt=media&token=72f49c9d-9479-441f-bae3-4191b18ba42f');
-}
-  .twoM{
-    background-position: bottom left;
-    background-image: url('https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/site%2Fhooh.png?alt=media&token=2e2e65d1-8078-4d2d-8dbb-77f68cf8c99e');
-    flex-direction: column;
- display: flex;
-  justify-content: flex-end; 
-  align-items: flex-end;
-  }
-  .innerHold2 span.paragraph2{display:block;font-size: 1.4em;color:white;
-width:320px;margin:20px 0 26px 0;line-height: 1.4em;}
-
-span.red-text {color: var(--mantine-color-pink-0, #E54156)!important; }
-.innerHold2 span.paragraph2 + a.button {
-margin-top:0;
-
-}
-.right-text {
-text-align: right;
-max-width:600px;
+.hp {
+  background: var(--dc-ink);
+  color: var(--dc-text);
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/*meet the team module*/
-
-.teammodule {
-  margin: auto;
-  max-width: 800px;
-  width: 100%;
-  padding: 100px 20px 20px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+/* --- Hero ---------------------------------------------------------------- */
+.hp-hero {
+  position: relative;
+  padding: 40px 20px 46px;
+  overflow: hidden;
+  isolation: isolate;
 }
-.teammodule h2 {
-  font-size: 4em;
-  font-weight: 400;
-  color: white;
-  line-height: 1.1em;
-  margin: 0;
+.hp-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: url("/images/hero-bg.webp") center 30% / cover no-repeat;
+  opacity: 0.55;
 }
-.teammodule span.paragraph3 {
-  display: block;
-  font-size: 1.4em;
-  color: white;
-  max-width: 480px;
-  margin: 20px 0 40px 0;
-  line-height: 1.4em;
+.hp-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(14, 13, 17, 0.5) 0%, rgba(14, 13, 17, 0.9) 100%);
 }
-.teamGroupIMG {
-  width: 100%;
-  max-width: 700px;
-  height: auto;
+.hp-hero-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  animation: dcRiseIn 0.7s ease;
 }
-
-/*join the team CTA module*/
-
-.ctamodule {
-  margin: auto;
-  max-width: 800px;
-  width: 100%;
-  padding: 80px 20px 120px 20px;
-}
-.ctamodule h2 {
-  display: flex;
-  flex-direction: column;
-  font-size: 5em;
+.hp-h1 {
+  font-family: var(--font-display);
   font-weight: 700;
-  color: white;
-  line-height: 1.15em;
-  margin: 0;
+  font-size: clamp(56px, 18vw, 108px);
+  line-height: 0.92;
+  margin: 16px 0 14px;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5), 0 0 30px rgba(145, 38, 145, 0.5);
 }
-.ctamodule .lineOne {
-  align-self: flex-start;
+.hp-lede {
+  font-size: 16px;
+  color: var(--dc-dim);
+  max-width: 40ch;
+  line-height: 1.5;
 }
-.ctamodule .lineTwo {
-  align-self: center;
-}
-.ctamodule .lineThree {
-  align-self: flex-end;
+.hp-hero-cta {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 26px;
+  max-width: 340px;
+}
+@media (min-width: 600px) {
+  .hp-hero-cta {
+    flex-direction: row;
+    max-width: none;
+  }
+}
+
+/* --- Story modules ------------------------------------------------------- */
+.hp-body {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.hp-story {
+  padding: 26px 0;
+  border-bottom: 1px solid var(--dc-border-alt);
+}
+.hp-story-head {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(24px, 7vw, 30px);
+  line-height: 1.1;
+  margin: 6px 0 10px;
+}
+.hp-story-body {
+  font-size: 15px;
+  color: var(--dc-dim);
+  max-width: 60ch;
+  line-height: 1.55;
+}
+.hp-arrow-link {
+  display: inline-flex;
   align-items: center;
-  gap: 0.6em;
+  gap: 8px;
+  margin-top: 14px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dc-gold);
+  text-decoration: none;
+  transition: gap 0.2s ease;
 }
-.ctamodule .lineThree a.button {
-  flex-shrink: 0;
+.hp-arrow-link:hover {
+  gap: 14px;
+  color: var(--dc-gold);
 }
 
-@media (max-width: 600px) {
-  /* Hero: kill the giant vertical padding that pushed the H1 way down */
-  .heroIMGcontainer {
-    padding: 96px 16px 72px;
-    background-position: center bottom;
-  }
-  .centered-container h1 {
-    font-size: 2.6em;
-  }
-  .centered-container h2 {
-    font-size: 1.15em;
-    margin-bottom: 12px;
-  }
-  .button-container {
-    flex-direction: column;
-    width: 100%;
-    gap: 0.75em;
-  }
-  .button-container a.button {
-    width: 100%;
-    text-align: center;
-    padding: 1em 1.5em;
-  }
+/* --- Meet the team ------------------------------------------------------- */
+.hp-team {
+  position: relative;
+  background: var(--dc-panel);
+  padding: 40px 20px;
+  overflow: hidden;
+}
+.hp-team::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(119, 41, 118, 0.35), rgba(229, 65, 86, 0.15));
+  z-index: 0;
+}
+.hp-team-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.hp-team-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(32px, 10vw, 44px);
+  margin: 10px 0;
+}
+.hp-team-img {
+  width: 100%;
+  height: auto;
+  margin-top: 18px;
+  border-radius: 5px;
+}
 
-  /* Story modules: shrink the decorative art and drop it BELOW the copy so it
-     never sits on top of the text. Tighter padding all round. */
-  .innerHold2 {
-    padding: 40px 16px;
-    background-size: 130px auto;
-    background-position: center bottom;
-    padding-bottom: 150px;
-    text-align: center;
-  }
-  .innerHold2 h2 {
-    font-size: 2.3em;
-  }
-  .twoM {
-    align-items: stretch;
-  }
-  .right-text {
-    text-align: center;
-    max-width: 100%;
-  }
-  .innerHold2 span.paragraph2 {
-    width: 100%;
-    max-width: 100%;
-    font-size: 1.1em;
-    margin: 16px auto 28px;
-  }
-
-  /* Team + CTA: less padding, no overflow */
-  .teammodule {
-    padding: 56px 16px 16px;
-  }
-  .teammodule h2 {
-    font-size: 3em;
-  }
-  .teammodule span.paragraph3 {
-    font-size: 1.1em;
-    margin: 16px 0 28px;
-  }
-  .ctamodule {
-    padding: 48px 16px 72px;
-  }
-  .ctamodule h2 {
-    font-size: 2.4em;
-    align-items: center;
-    text-align: center;
-    line-height: 1.3em;
-  }
-  .ctamodule .lineOne,
-  .ctamodule .lineTwo,
-  .ctamodule .lineThree {
-    align-self: center;
-  }
-  /* Stack the button under the copy (column-reverse keeps "together" above it)
-     so the row can't overflow off-screen. gap:0 + no margin keeps the three
-     text lines on an even rhythm; the button carries its own spacing. */
-  .ctamodule .lineThree {
-    flex-direction: column-reverse;
-    align-items: center;
-    gap: 0;
-    margin-top: 0;
-  }
-  .ctamodule .lineThree a.button {
-    margin-top: 0.7em;
-  }
+/* --- Join CTA ------------------------------------------------------------ */
+.hp-join {
+  background: var(--dc-red);
+  padding: 48px 20px;
+  text-align: center;
+  transition: background 0.3s ease;
+}
+.hp-join:hover {
+  background: var(--dc-gold);
+}
+.hp-join a {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(32px, 11vw, 48px);
+  color: var(--dc-on-gold);
+  text-decoration: none;
 }
