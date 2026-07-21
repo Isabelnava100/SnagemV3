@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import snagemLogo from "../../assets/images/team-snagem-logo.png";
+import snagemLogo from "../../assets/images/snag-hand-logo.png";
 
 /**
  * Shared building blocks for the redesigned marketing pages (Homepage, About).
@@ -13,15 +13,21 @@ import snagemLogo from "../../assets/images/team-snagem-logo.png";
  * Login. On the auth screens (context="auth") the redundant Login pill is
  * dropped; the logo remains the way back to the site.
  */
-export function MarketingTopBar(props: { active?: "about"; context?: "auth" }) {
+export function MarketingTopBar(props: { active?: "home" | "about"; context?: "auth" }) {
+  const activeStyle = { color: "#fff", borderBottom: "2px solid #E54156", paddingBottom: 2 };
   return (
     <header className="dc-topbar">
       <Link to="/" className="dc-topbar-brand" aria-label="Snagem Guild home">
-        <img src={snagemLogo} alt="" width={30} height={30} />
+        <img src={snagemLogo} alt="" height={38} />
         <span>SNAGEM</span>
       </Link>
       <nav className="dc-topbar-links">
-        <Link to="/About" style={props.active === "about" ? { color: "#fff" } : undefined}>
+        {props.context !== "auth" && (
+          <Link to="/" style={props.active === "home" ? activeStyle : undefined}>
+            Home
+          </Link>
+        )}
+        <Link to="/About" style={props.active === "about" ? activeStyle : undefined}>
           About
         </Link>
         {props.context === "auth" ? (
@@ -60,13 +66,7 @@ export function Marquee(props: { text: string }) {
 export function MarketingFooter() {
   return (
     <footer className="dc-footer">
-      <img
-        src={snagemLogo}
-        alt="Snagem Guild"
-        width={34}
-        height={34}
-        style={{ marginBottom: 10 }}
-      />
+      <img src={snagemLogo} alt="Snagem Guild" height={34} style={{ marginBottom: 10 }} />
       <div style={{ fontSize: 13 }}>&copy; 2026 The Snagem Guild</div>
       <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 10 }}>
         <Link to="/Policies">Policies</Link>

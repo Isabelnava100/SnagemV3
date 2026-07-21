@@ -180,45 +180,73 @@
   color: var(--dc-hero-border);
 }
 
-/* Marketing top bar (Homepage / About), sticky + blurred. */
+/* Marketing top bar (Homepage / About / auth), sticky. */
 .dc-topbar {
   position: sticky;
   top: 0;
   z-index: 50;
-  height: 56px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: rgba(14, 13, 17, 0.92);
-  backdrop-filter: blur(8px);
+  background: #0e0d11;
   border-bottom: 1px solid var(--dc-border);
+}
+@media (min-width: 720px) {
+  .dc-topbar {
+    padding: 0 56px;
+  }
 }
 .dc-topbar-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 16px;
+  letter-spacing: 0.2em;
   color: #fff;
   text-decoration: none;
+}
+.dc-topbar-brand img {
+  height: 38px;
+  width: auto;
+  flex-shrink: 0;
 }
 .dc-topbar-links {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 20px;
   font-family: var(--font-display);
-  font-size: 13px;
-  letter-spacing: 0.08em;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
+@media (min-width: 720px) {
+  .dc-topbar-links {
+    gap: 34px;
+  }
+}
 .dc-topbar-links a {
-  color: var(--dc-dim);
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
 }
 .dc-topbar-links a:hover {
   color: #fff;
+}
+/* Narrow screens: drop the wordmark (logo remains the home link) and tighten
+   the links so HOME / ABOUT / LOGIN never collide. */
+@media (max-width: 559px) {
+  .dc-topbar-brand span {
+    display: none;
+  }
+  .dc-topbar-links {
+    gap: 14px;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
 }
 
 /* Global button focus: the angled clip-path cuts a normal outline, so keep
@@ -235,6 +263,10 @@
   padding: 32px 20px;
   text-align: center;
   color: var(--dc-dim);
+}
+.dc-footer img {
+  height: 34px;
+  width: auto;
 }
 .dc-footer a {
   color: var(--dc-dim);
