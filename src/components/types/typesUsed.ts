@@ -446,6 +446,10 @@ export interface Settings {
   siteNotifications: boolean;
   /** Announcement/update emails. Account emails (password resets) always send. */
   emailUpdates: boolean;
-  /** Monday reset ping (Snag List / Fishing Pond), server-scheduled. */
+  /** Monday reset + Sunday deadline pings (Snag List / Fishing Pond). */
   weeklyReminders?: boolean;
+  /** Opt-in activity pings: trade offers received, daycare egg ready. Off by default. */
+  activityNotifications?: boolean;
+  /** Ordered nav labels for the customizable sidebar (first N pinned to the bar). */
+  navOrder?: string[];
 }

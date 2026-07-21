@@ -64,6 +64,8 @@ export const callPublishPost = (input: {
   fighterId?: string;
   /** Evolve a team pokemon on publish (validated + applied server-side). */
   evolve?: { pokemonId: string; toIdx: number } | null;
+  /** Mega Evolve a team pokemon for this post only (stone required, not consumed). */
+  mega?: { pokemonId: string; stone: string } | null;
 }) => call<{ postId: string }>("publishForumPost", input);
 
 export const callPublishThread = (input: {

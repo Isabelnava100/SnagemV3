@@ -8,6 +8,7 @@ import {
   Group,
   Image,
   Modal,
+  MultiSelect,
   Select,
   SimpleGrid,
   Stack,
@@ -28,7 +29,8 @@ import { pokemonData } from "../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "../../helpers";
 import { actorFrom, logAuditEvent } from "../../lib/auditLog";
 import { postsToBeatStar, starForDex } from "../../lib/encounterStars";
-import { typesForDex } from "../../lib/typeChart";
+import { ALL_TYPES, typesForDex } from "../../lib/typeChart";
+import { GEN_NAMES, generationOf } from "../../lib/generations";
 import { eggGroupsForDex } from "../../lib/eggGroups";
 import { isAdmin } from "../../lib/permissions";
 import { resolveListSlugs } from "../forum/queries";
@@ -212,14 +214,20 @@ function PokedexTab() {
   const admin = isAdmin(user);
   const [search, setSearch] = React.useState("");
   const [shiny, setShiny] = React.useState(false);
+  const [gens, setGens] = React.useState<string[]>([]);
+  const [types, setTypes] = React.useState<string[]>([]);
   const [editing, setEditing] = React.useState<PokedexEntry | null>(null);
   const q = search.trim().toLowerCase();
   const matches = React.useMemo(() => {
-    if (!q) return pokemonData;
-    return pokemonData.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.idx.includes(q)
-    );
-  }, [q]);
+    const genSet = new Set(gens);
+    const typeSet = new Set(types);
+    return pokemonData.filter((p) => {
+      if (q && !(p.name.toLowerCase().includes(q) || p.idx.includes(q))) return false;
+      if (genSet.size && !genSet.has(generationOf(p.idx))) return false;
+      if (typeSet.size && !typesForDex(p.idx).some((t) => typeSet.has(t))) return false;
+      return true;
+    });
+  }, [q, gens, types]);
   // Collection tracker: which species the member owns (any form counts its
   // dex number). Signed-in only; visitors just browse the dex.
   const { data: ownedPokemons } = useQuery({
@@ -240,7 +248,12 @@ function PokedexTab() {
     ? matches.filter((p) => ownedDex.has(Number(p.idx)))
     : matches;
 
-  const { shown, hasMore, loadMore } = usePagedList(visibleMatches, [q, caughtOnly]);
+  const { shown, hasMore, loadMore } = usePagedList(visibleMatches, [
+    q,
+    caughtOnly,
+    gens.join(","),
+    types.join(","),
+  ]);
 
   // Star overrides need a signed-in read (rules); visitors see the defaults.
   const { data: overrides } = useQuery({
@@ -261,6 +274,27 @@ function PokedexTab() {
           w="100%"
           radius="xl"
           styles={{ input: { background: "#2E2D2E" }, root: { flex: "1 1 220px" } }}
+        />
+        <MultiSelect
+          placeholder={gens.length ? undefined : "Generation"}
+          data={GEN_NAMES.map((g) => ({ value: g, label: `Gen ${g}` }))}
+          value={gens}
+          onChange={setGens}
+          clearable
+          w={{ base: "100%", xs: 180 }}
+          aria-label="Filter by generation"
+          styles={{ input: { background: "#2E2D2E" } }}
+        />
+        <MultiSelect
+          placeholder={types.length ? undefined : "Type"}
+          data={ALL_TYPES.map((t) => ({ value: t, label: t }))}
+          value={types}
+          onChange={setTypes}
+          searchable
+          clearable
+          w={{ base: "100%", xs: 200 }}
+          aria-label="Filter by type"
+          styles={{ input: { background: "#2E2D2E" } }}
         />
         <Switch
           checked={shiny}

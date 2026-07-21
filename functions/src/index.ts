@@ -138,6 +138,8 @@ const DEFAULT_MECHANICS = {
   berryGrowDays: 7,
   berryYield: 2,
   farmPlots: 3,
+  // Attack multiplier while a fighter is Mega Evolved (this post only).
+  megaBoost: 1.3,
 };
 type Mechanics = typeof DEFAULT_MECHANICS;
 function mechanicsFrom(cfg: FirebaseFirestore.DocumentData | undefined): Mechanics {
@@ -549,6 +551,18 @@ async function notifyUsers(
       notification.type === "bookmark_post" &&
       (settings.postsAndBookmarkedThreadsNotification ?? true) === false
     ) {
+      return false;
+    }
+    // Activity pings (trade offers, daycare egg ready, fishing available) are
+    // opt-IN: default off, honored only when the member turned them on.
+    if (
+      (notification.type === "trade" || notification.type === "daycare") &&
+      (settings.activityNotifications ?? false) !== true
+    ) {
+      return false;
+    }
+    // Weekly reset / deadline nudges are their own opt-out toggle (default on).
+    if (notification.type === "weekly" && (settings.weeklyReminders ?? true) === false) {
       return false;
     }
     return true;
@@ -1173,6 +1187,16 @@ export const publishForumPost = onCall(async (request) => {
           toIdx: Math.trunc(Number((request.data.evolve as any).toIdx)) || 0,
         }
       : null;
+  // Optional: Mega Evolve one team pokemon for THIS post only. Needs the Mega
+  // Stone in the bag but never consumes it (like a fishing rod); the form and
+  // its battle boost last one post, then the pokemon reverts.
+  const megaReq =
+    request.data?.mega && typeof request.data.mega === "object"
+      ? {
+          pokemonId: String((request.data.mega as any).pokemonId ?? "").slice(0, 80),
+          stone: String((request.data.mega as any).stone ?? "").slice(0, 60),
+        }
+      : null;
   const member = await loadMember(uid);
   // The curve feeds both evolve-on-post and level-based battle HP; the battle
   // config carries the admin-tunable HP scaling and per-star damage.
@@ -1215,7 +1239,7 @@ export const publishForumPost = onCall(async (request) => {
     threadForNotify = thread;
 
     let bag: Record<string, any> = {};
-    if (itemRequests.length || evolveReq) {
+    if (itemRequests.length || evolveReq || megaReq) {
       const bagSnap = await tx.get(bagRef);
       bag = (bagSnap.data() as Record<string, any>) ?? {};
     }
@@ -1240,7 +1264,7 @@ export const publishForumPost = onCall(async (request) => {
       teamPokemonIds = [
         ...new Set(teamIds.flatMap((teamId) => teamsData[teamId]?.pokemon_ids ?? [])),
       ];
-      if (teamPokemonIds.length || evolveReq) {
+      if (teamPokemonIds.length || evolveReq || megaReq) {
         ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
       }
     } else if (evolveReq && !editPostId) {
@@ -1342,6 +1366,43 @@ export const publishForumPost = onCall(async (request) => {
     // Held item on the chosen fighter (equipped via setHeldItem); the curated
     // battle set is checked by key below, anything else is cosmetic.
     const fighterHeld = battleFighterId ? heldKeyOf(ownedForXp[battleFighterId]) : "";
+
+    // Mega Evolution: a per-post activation. Needs the matching Mega Stone in
+    // the bag (checked, NEVER consumed), and applies only for this post. If the
+    // mega'd pokemon is also the fighter, its attack gets the megaBoost.
+    let megaInfo: {
+      pokemonId: string;
+      stone: string;
+      fromName: string;
+      fromSlug: string;
+      toName: string;
+      toSlug: string;
+    } | null = null;
+    if (megaReq && megaReq.pokemonId && megaReq.stone && !editPostId) {
+      const poke = ownedForXp[megaReq.pokemonId];
+      if (!poke) throw new HttpsError("failed-precondition", "That pokemon is not on this post's team.");
+      const speciesSlug = String(poke.image_slug ?? "");
+      const form = (MEGA_FORMS[speciesSlug] ?? []).find((f) => f.stone === megaReq.stone);
+      if (!form) {
+        throw new HttpsError("invalid-argument", "That pokemon cannot Mega Evolve with that stone.");
+      }
+      const want = normItemName(form.stone);
+      const ownsStone = Object.keys(bag).some(
+        (id) => normItemName(String(bag[id]?.name ?? id)) === want && (bag[id]?.quantity ?? 0) > 0
+      );
+      if (!ownsStone) {
+        throw new HttpsError("failed-precondition", `You need a ${form.stone} to Mega Evolve this pokemon.`);
+      }
+      // The stone is NOT consumed (like a fishing rod): activation only.
+      megaInfo = {
+        pokemonId: megaReq.pokemonId,
+        stone: form.stone,
+        fromName: String(poke.name ?? poke.species ?? ""),
+        fromSlug: speciesSlug,
+        toName: form.name,
+        toSlug: form.slug,
+      };
+    }
     const threadWeather = String(thread.weather ?? "");
     // Per-thread status conditions (burn/poison/paralysis), per pokemon.
     const statusNow: Record<string, string> = {
@@ -1498,6 +1559,10 @@ export const publishForumPost = onCall(async (request) => {
       if (playerCrit) {
         attackMult *= mech.critMult;
         battleNotes.push("Critical hit!");
+      }
+      if (megaInfo && battleFighterId === megaInfo.pokemonId && mech.megaBoost > 1) {
+        attackMult *= mech.megaBoost;
+        battleNotes.push(`${megaInfo.toName} hit harder in its Mega form!`);
       }
       attackMult = Math.round(attackMult * 100) / 100;
       let defenseMult = typeEffectiveness(enemyTypes, fighterTypes);
@@ -1839,6 +1904,7 @@ export const publishForumPost = onCall(async (request) => {
 
     const blocks: Record<string, unknown> = {};
     if (centerVisit && !editPostId) blocks.center = { healed: true };
+    if (megaInfo) blocks.mega = { ...megaInfo };
     if (encounter) blocks.encounters = [encounter];
     if (battleBlock) blocks.battle = battleBlock;
     else if (healsOnlyBlock) blocks.battle = healsOnlyBlock;
@@ -4114,6 +4180,7 @@ export const breedPokemon = onCall(async (request) => {
         : rIdx;
     tx.set(daycareRef, {
       active: true,
+      eggReadyNotified: false,
       leftId,
       rightId,
       leftName: String(left.species ?? left.name ?? ""),
@@ -5741,6 +5808,42 @@ interface EvoOption {
 }
 const EVOLUTIONS = evolutionsJSON as Record<string, EvoOption[]>;
 
+// Mega Evolution forms. A per-post activation, NOT a permanent evolution: the
+// Mega Stone is required but never consumed (like a fishing rod) and the form
+// lasts only the post it is used on. Sprites use pokesprite's "-mega" /
+// "-mega-x" / "-mega-y" slugs. Keyed by base species slug; built from the
+// stone -> species map so it stays a single source of truth. Mirrored in
+// src/lib/mega.ts (keep the two in sync). Extend as new mega sprites land.
+const MEGA_STONE_SPECIES: Record<string, string> = {
+  Abomasite: "abomasnow", Absolite: "absol", Aerodactylite: "aerodactyl", Aggronite: "aggron",
+  Alakazite: "alakazam", Altarianite: "altaria", Ampharosite: "ampharos", Audinite: "audino",
+  Banettite: "banette", Beedrillite: "beedrill", Blastoisinite: "blastoise", Blazikenite: "blaziken",
+  Cameruptite: "camerupt", "Charizardite X": "charizard", "Charizardite Y": "charizard",
+  Diancite: "diancie", Galladite: "gallade", Garchompite: "garchomp", Gardevoirite: "gardevoir",
+  Gengarite: "gengar", Glalitite: "glalie", Gyaradosite: "gyarados", Heracronite: "heracross",
+  Houndoominite: "houndoom", Kangaskhanite: "kangaskhan", Latiasite: "latias", Latiosite: "latios",
+  Lopunnite: "lopunny", Lucarionite: "lucario", Manectite: "manectric", Mawilite: "mawile",
+  Medichamite: "medicham", "Mewtwonite X": "mewtwo", "Mewtwonite Y": "mewtwo",
+  Metagrossite: "metagross", Pidgeotite: "pidgeot", Pinsirite: "pinsir",
+  Sablenite: "sableye", Salamencite: "salamence", Sceptilite: "sceptile", Scizorite: "scizor",
+  Sharpedonite: "sharpedo", Slowbronite: "slowbro", Steelixite: "steelix", Swampertite: "swampert",
+  Tyranitarite: "tyranitar", Venusaurite: "venusaur",
+};
+interface MegaForm { stone: string; name: string; slug: string }
+const MEGA_FORMS: Record<string, MegaForm[]> = (() => {
+  const out: Record<string, MegaForm[]> = {};
+  const cap = (s: string) =>
+    s.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  for (const [stone, species] of Object.entries(MEGA_STONE_SPECIES)) {
+    const xy = stone.endsWith(" X") ? "x" : stone.endsWith(" Y") ? "y" : "";
+    const slug = xy ? `${species}-mega-${xy}` : `${species}-mega`;
+    const name = `Mega ${cap(species)}${xy ? ` ${xy.toUpperCase()}` : ""}`;
+    if (!out[species]) out[species] = [];
+    out[species].push({ stone, name, slug });
+  }
+  return out;
+})();
+
 // Leveling curve. Level is derived from a Pokemon's total experience. The
 // default table is generated from src/lib/leveling.ts into levelingCurve.json
 // (regenerate that alongside evolutions.json if the curve is retuned); admins
@@ -6440,13 +6543,67 @@ export const weeklyResetReminder = onSchedule(
   { schedule: "5 0 * * 1", timeZone: "UTC" },
   async () => {
     const snap = await db.collection("users").get();
-    const uids = snap.docs
-      .filter((d) => (d.data()?.settings?.weeklyReminders ?? true) !== false)
-      .map((d) => d.id);
+    const uids = snap.docs.map((d) => d.id);
+    // Type "weekly" is gated by settings.weeklyReminders inside notifyUsers.
     await notifyUsers(uids, {
-      type: "reward",
-      text: "New week! The Snag List reset and the Fishing Pond restocked.",
+      type: "weekly",
+      text: "New week! The Snag List reset, the Fishing Pond restocked, and your weekly cast is available again.",
       link: "/Activities",
     });
+  }
+);
+
+// A day before the Monday reset (Sunday 12:00 UTC), nudge members who still
+// have unfinished Snag List tasks so they can wrap up before it resets. Gated
+// by the same weeklyReminders toggle.
+export const weeklyDeadlineReminder = onSchedule(
+  { schedule: "0 12 * * 0", timeZone: "UTC" },
+  async () => {
+    const weekId = snagWeekId(new Date());
+    const usersSnap = await db.collection("users").get();
+    const targets: string[] = [];
+    await Promise.all(
+      usersSnap.docs.map(async (d) => {
+        const listSnap = await db.doc(`users/${d.id}/bag/snaglist`).get().catch(() => null);
+        const list = listSnap?.data() ?? {};
+        const tasks = list.weekId === weekId ? (list.tasks ?? {}) : {};
+        const done = SNAG_TASKS.filter((t) => tasks[t]).length;
+        if (done < SNAG_TASKS.length) targets.push(d.id);
+      })
+    );
+    await notifyUsers(targets, {
+      type: "weekly",
+      text: "One day left! Finish your Snag List before it resets Monday to open your Weekly Mystery Box.",
+      link: "/Activities",
+    });
+  }
+);
+
+// Daily sweep for Daycare eggs that just became ready (time-based hatch). Pings
+// once per egg (stamps eggReadyNotified). Post-based readiness is caught here
+// too on the next daily run. Gated by activityNotifications.
+export const daycareEggReminder = onSchedule(
+  { schedule: "0 15 * * *", timeZone: "UTC" },
+  async () => {
+    const mech = mechanicsFrom((await db.doc("admin/battle_config").get()).data());
+    const usersSnap = await db.collection("users").get();
+    await Promise.all(
+      usersSnap.docs.map(async (d) => {
+        const ref = db.doc(`users/${d.id}/bag/daycare`);
+        const dc = (await ref.get().catch(() => null))?.data();
+        if (!dc?.active || dc.eggReadyNotified) return;
+        const started = dc.startedAt?.toDate ? dc.startedAt.toDate().getTime() : 0;
+        const days = started ? (Date.now() - started) / 86_400_000 : 0;
+        const nowCount = Number((await db.doc(`users/${d.id}`).get()).data()?.postCount) || 0;
+        const posts = Math.max(0, nowCount - (Number(dc.startPostCount) || 0));
+        if (days < mech.hatchDays && posts < mech.hatchPosts) return;
+        await ref.set({ eggReadyNotified: true }, { merge: true });
+        await notifyUsers([d.id], {
+          type: "daycare",
+          text: "Your Daycare egg is ready to hatch!",
+          link: "/Daycare",
+        });
+      })
+    );
   }
 );

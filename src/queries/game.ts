@@ -179,6 +179,8 @@ export interface BattleMechanics {
   berryYield: number;
   /** Berry Farm plots per member. */
   farmPlots: number;
+  /** Attack multiplier while a fighter is Mega Evolved (this post only). */
+  megaBoost: number;
 }
 
 export interface BattleConfig {
@@ -210,6 +212,7 @@ export const DEFAULT_BATTLE_MECHANICS: BattleMechanics = {
   berryGrowDays: 7,
   berryYield: 2,
   farmPlots: 3,
+  megaBoost: 1.3,
 };
 
 export const DEFAULT_BATTLE_CONFIG: BattleConfig = {

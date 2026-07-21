@@ -4,6 +4,7 @@ import SubTabsLayout from "../../../../components/Dashboard/SubTabsLayout";
 export default function SettingsLayout() {
   const settingsTabLinks = [
     { path: "Notifications", label: "Notifications" },
+    { path: "Navigation", label: "Navigation" },
     { path: "Collections", label: "Collections" },
     { path: "Signature", label: "Signature" },
     { path: "Accessibility", label: "Accessibility" },

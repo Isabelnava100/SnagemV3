@@ -283,6 +283,20 @@ export default function BattleGuideTab() {
         </Text>
       </Section>
 
+      <Section title="Mega Evolution">
+        <Text>
+          Mega Evolution is a temporary, per-post activation, not a permanent
+          evolution. In the post composer, if a pokemon on your team has a Mega
+          form and you own its Mega Stone, a Mega Evolution panel lets you
+          activate it for that one post: it takes its Mega form (its sprite
+          shows on the post) and its attack is multiplied by x
+          {cfg.mechanics.megaBoost}, then it reverts. The Mega Stone is never
+          consumed, you keep it and can Mega Evolve again next post, the same
+          way a fishing rod is not used up. Craft Mega Stones at Ambrosial
+          Alchemy in the Snag Mall. More Mega forms are added over time.
+        </Text>
+      </Section>
+
       <Section title="The Fishing Pond">
         <Text>
           Fishing lives on its own pinned thread in Events (reach it from the

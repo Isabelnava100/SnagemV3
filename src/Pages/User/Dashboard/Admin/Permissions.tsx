@@ -458,6 +458,7 @@ const MECHANICS_FIELDS: Array<{
   { key: "berryGrowDays", label: "Berry grow (days)", hint: "Days a planted berry takes to be ready.", step: 1 },
   { key: "berryYield", label: "Berry yield", hint: "Berries harvested per grown plant.", step: 1 },
   { key: "farmPlots", label: "Farm plots", hint: "Berry Farm plots per member.", step: 1 },
+  { key: "megaBoost", label: "Mega attack (x)", hint: "Attack multiplier while a fighter is Mega Evolved (that post only).", step: 0.05 },
 ];
 
 export function BattleCostsSection() {

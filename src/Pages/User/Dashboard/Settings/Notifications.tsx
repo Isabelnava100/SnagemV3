@@ -341,6 +341,7 @@ export default function Notifications() {
       siteNotifications: true,
       emailUpdates: true,
       weeklyReminders: true,
+      activityNotifications: false,
     },
   });
   const [debouncedValue] = useDebouncedValue(values, 100);
@@ -378,6 +379,7 @@ export default function Notifications() {
         siteNotifications: saved.siteNotifications ?? true,
         emailUpdates: saved.emailUpdates ?? true,
         weeklyReminders: saved.weeklyReminders ?? true,
+        activityNotifications: saved.activityNotifications ?? false,
       });
     }
   }, [isLoading]);
@@ -431,10 +433,21 @@ export default function Notifications() {
         <Stack gap={2}>
           <CustomSwitch
             {...getInputProps("weeklyReminders", { type: "checkbox" })}
-            label="Weekly reset reminder"
+            label="Weekly reset reminders"
           />
           <Text fz={14} c="dimmed">
-            A Monday ping when the Snag List resets and the Fishing Pond restocks.
+            A Sunday nudge if your Snag List is unfinished, plus a Monday ping when it
+            resets, the Fishing Pond restocks, and your weekly cast is back.
+          </Text>
+        </Stack>
+        <Stack gap={2}>
+          <CustomSwitch
+            {...getInputProps("activityNotifications", { type: "checkbox" })}
+            label="Activity notifications"
+          />
+          <Text fz={14} c="dimmed">
+            Off by default. Turn on to be pinged when someone makes an offer on your
+            trade listing and when your Daycare egg is ready to hatch.
           </Text>
         </Stack>
       </Stack>

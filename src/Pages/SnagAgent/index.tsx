@@ -218,16 +218,122 @@ const KB: KbEntry[] = [
     ),
   },
   {
-    match: /notif|mute|silence|turn (off|on).*(ping|alert)|disable.*(ping|alert|discord)|enable.*(ping|alert|discord)|settings.*(alert|ping)|stop.*(ping|nagging)/i,
+    match: /notif|mute|silence|turn (off|on).*(ping|alert)|disable.*(ping|alert|discord)|enable.*(ping|alert|discord)|settings.*(alert|ping)|stop.*(ping|nagging)|activity notif|weekly remind/i,
     answer: () => (
       <>
         Every notification switch lives in{" "}
-        <L to="/Dashboard/Settings">Console &gt; Settings &gt; Notifications</L>:
-        on-site notifications (the master switch), Discord pings (channel pings, never a
-        DM; needs your Discord linked on the same page), new posts on bookmarked
-        threads, direct @-pings, and the Monday weekly reset reminder. Everything
-        defaults ON except Discord. Flip any of them off and that kind stops
-        immediately.
+        <L to="/Dashboard/Settings">Console &gt; Settings &gt; Notifications</L>. The
+        toggles:
+        <br />• <b>On-site notifications</b> (master switch, default ON): turning this
+        off silences everything.
+        <br />• <b>Discord notifications</b> (default OFF): mirrors your pings to the
+        guild Discord channel (never a DM). Needs your Discord account linked on the
+        same page.
+        <br />• <b>Bookmarked-thread posts</b> (default ON): a new post on a thread you
+        bookmarked.
+        <br />• <b>Direct pings</b> (default ON): when someone @-mentions you.
+        <br />• <b>Weekly reset reminders</b> (default ON): a Sunday nudge if your Snag
+        List is unfinished, plus a Monday ping when it resets and the Fishing Pond
+        restocks.
+        <br />• <b>Activity notifications</b> (default OFF): turn on to be pinged when
+        someone makes an offer on your trade listing and when your Daycare egg is ready
+        to hatch.
+        <br />Flip any of them and it takes effect immediately.
+      </>
+    ),
+  },
+  {
+    match: /customi[sz]e.*nav|reorder.*nav|nav bar|navigation.*(order|bar|menu)|rearrange.*(menu|nav)|move.*(shortcut|tab)|pin.*(page|tab)/i,
+    answer: () => (
+      <>
+        You can reorder your navigation in{" "}
+        <L to="/Dashboard/Settings">Console &gt; Settings &gt; Navigation</L>. Use the
+        arrows to arrange the destinations: the top 6 pin to the desktop nav bar and the
+        top 4 to the mobile bar, and everything below the line lives in the Menu drawer.
+        One order is shared across desktop and mobile, and it saves as you go. New
+        features you have not pinned yet start in the drawer.
+      </>
+    ),
+  },
+  {
+    match: /mega|mega evolve|mega evolution|mega stone|charizardite|mewtwonite/i,
+    answer: () => (
+      <>
+        Mega Evolution is a per-post activation, not a permanent evolution. In the post
+        composer, if a pokemon on your team has a Mega form and you own the matching
+        Mega Stone, a &quot;Mega Evolution&quot; panel appears: pick the pokemon, and it
+        takes its Mega form for that one post (with a battle attack boost) then reverts.
+        The Mega Stone is <b>never used up</b>, it works like a fishing rod, you keep it.
+        Craft Mega Stones at Ambrosial Alchemy in the <L to="/Shop">Snag Mall</L>. More
+        Mega forms are added over time. Details:{" "}
+        <L to="/Library?tab=battle">Library &gt; The War Room</L>.
+      </>
+    ),
+  },
+  {
+    match: /filter.*(pokedex|dex|pokemon|type|generation|gen\b)|(pokedex|dex).*filter|search.*(pokedex|dex).*(type|gen)/i,
+    answer: () => (
+      <>
+        The <L to="/Library?tab=pokedex">Library Pokedex</L> filters by name or dex
+        number, by generation (Gen I through IX), and by type, all at once, plus a shiny
+        view and a &quot;Caught only&quot; toggle for your collection. The item catalog
+        tab filters by category the same way.
+      </>
+    ),
+  },
+  {
+    // Staff tools directory: where each admin/director task lives. Kept broad
+    // but gated, members get pointed at S.N.A.G. tickets instead.
+    match: /where.*(grade|approve|adjust list|dev board|site setting|battle cost|donate|import|star override|permission|manage|admin tool|staff tool)|how.*(grade|approve an|launch (a )?safari|edit.*(list|config|battle))|staff tools?|admin tools?/i,
+    answer: ({ admin }) =>
+      admin ? (
+        <>
+          The staff toolkit lives under <L to="/Admin">Admin &gt; Manage</L>, grouped
+          by area:
+          <br />• <b>Grading</b> (approve mission runs, award coins/emblem pieces, master
+          missions, battle rankings, challenge steps): Admin &gt; Manage &gt; Grading.
+          <br />• <b>Applications &amp; imports</b> (approve/reject members, approve Gaia
+          imports): Admin &gt; Inbox.
+          <br />• <b>Encounter lists</b> (create/edit/delete, Public flag): Admin &gt;
+          Manage &gt; Game Content &gt; Adjust Lists.
+          <br />• <b>Safari Contest</b> (build a zone, Save &amp; Launch): Admin &gt;
+          Manage &gt; Game Content &gt; Safari Contest.
+          <br />• <b>Star overrides</b> (retune a species&apos; encounter star): the
+          edit control on each species in{" "}
+          <L to="/Library?tab=pokedex">Library &gt; Pokedex</L> (admins only).
+          <br />• <b>Battle Costs / mechanics</b> (STAB, crit, natures, held items,
+          hatch, mega boost, etc.): Admin &gt; Manage &gt; Game Balance &gt; Battle
+          Costs.
+          <br />• <b>XP &amp; leveling</b>: Admin &gt; Manage &gt; Game Balance &gt; XP
+          &amp; Leveling.
+          <br />• <b>Roles &amp; capabilities</b>: Admin &gt; Manage &gt; Members &amp;
+          Access &gt; Roles &amp; Permissions.
+          <br />• <b>Donate</b> (grant currency, items, emblem pieces): Admin &gt;
+          Manage &gt; Members &amp; Access &gt; Donate.
+          <br />• <b>Dev Board</b> (triage S.N.A.G. tickets, planning notes): Admin &gt;
+          Manage &gt; Dev Board.
+          <br />• <b>Site Settings</b> (Discord webhook, SendGrid email, SEO, OG image):
+          the <L to="/Dashboard/Site-Settings">Site Settings</L> nav tile (admins /
+          ManageSEO).
+          <br />Every grant is audited in the Activity Log.
+        </>
+      ) : (
+        <>
+          Those are staff tools. If you need something done (a reward regraded, an item
+          fixed, a mission approved), file it with me and I&apos;ll pass it to the staff
+          Dev Board, or ask a director directly.
+        </>
+      ),
+  },
+  {
+    match: /daycare.*(ready|hatch|notif|ping|egg ready)|egg.*(ready|notif|ping|remind)/i,
+    answer: () => (
+      <>
+        Your <L to="/Daycare">Daycare</L> egg is ready after the set days or posts,
+        whichever comes first. When it is, your dashboard&apos;s &quot;Needs your
+        attention&quot; panel shows it, and if you turn on <b>Activity notifications</b>{" "}
+        in <L to="/Dashboard/Settings">Settings &gt; Notifications</L> you also get a
+        ping. Collect it from the Daycare page; both parents are untradable until you do.
       </>
     ),
   },

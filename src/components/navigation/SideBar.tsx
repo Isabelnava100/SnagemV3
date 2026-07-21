@@ -19,6 +19,12 @@ import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { getUnseenAnnouncement } from "../../queries/announcements";
 import { useAttention } from "../../lib/attention";
+import { getSettings } from "../../queries/settings";
+import {
+  NAV_BAR_LIMIT_DESKTOP,
+  NAV_BAR_LIMIT_MOBILE,
+  resolveNavOrder,
+} from "../../lib/navConfig";
 import { AppNotification, getNotifications, markNotificationsRead } from "../../queries/game";
 import {
   AdminAccessIcon,
@@ -59,19 +65,33 @@ const ALL_LINKS: NavItem[] = [
   { link: "/SNAG", label: "S.N.A.G.", icon: { snag: "walkie" } },
 ];
 
-// Only these stay pinned to the main nav (the desktop rail and the mobile
-// bottom bar). Everything else lives behind "More" so the rail stays clean and
-// the bar stays thumb-friendly.
-const PRIMARY_LABELS = ["Forum", "Console", "S.N.A.G."];
+// Every pinnable destination, keyed by label. ALL_LINKS plus the two that used
+// to be drawer-only (Daycare, Trading); the customizable order draws from here.
+const NAV_BY_LABEL: Record<string, NavItem> = Object.fromEntries(
+  [
+    ...ALL_LINKS,
+    { link: "/Daycare", label: "Daycare", icon: { snag: "egg" } as IconRef },
+    { link: "/Trading", label: "Trading", icon: { snag: "exchange" } as IconRef },
+  ].map((l) => [l.label, l])
+);
 
-const primaryLinks = PRIMARY_LABELS.map((label) => ALL_LINKS.find((l) => l.label === label)!);
-
-/** Primary links for this user: the S.N.A.G. device is members-only. */
-function usePrimaryLinks(): NavItem[] {
+/**
+ * The member's ordered nav destinations (their saved order merged with the
+ * master list). S.N.A.G. is members-only, so it drops out when logged out.
+ * Reactive to the settings query so re-ordering in Settings updates live.
+ */
+function useOrderedNav(): NavItem[] {
   const { user } = useAuth();
-  return primaryLinks.filter((l) => l.label !== "S.N.A.G." || !!user);
+  const { data: settings } = useQuery({
+    queryKey: ["get-settings", user?.uid],
+    queryFn: () => getSettings(user!.uid),
+    enabled: !!user,
+  });
+  const order = resolveNavOrder((settings as { navOrder?: string[] })?.navOrder);
+  return order
+    .map((label) => NAV_BY_LABEL[label])
+    .filter((item): item is NavItem => !!item && (item.label !== "S.N.A.G." || !!user));
 }
-const overflowLinks = ALL_LINKS.filter((l) => !PRIMARY_LABELS.includes(l.label));
 
 /** Red dot pinned to a nav icon when something needs the member's attention. */
 function AlertDot({ show }: { show: boolean }) {
@@ -149,15 +169,11 @@ function DrawerTile(props: { children: React.ReactNode }) {
 // icons, `icon` for the nav links and admin tools.
 type DrawerTileDef = { link: string; label: string; tabler?: typeof IconHome; icon?: IconRef };
 
-// Base tiles, in importance order (top item first). The grid lays these out
-// bottom-right first (Home) and reads right-to-left then upward on mobile, so
-// the most-used links sit closest to the thumb. Admin/staff tools are appended
-// per-user at render time (see useDrawerTiles).
-const BASE_DRAWER_TILES: DrawerTileDef[] = [
+// Fixed secondary tiles: always in the drawer, never on the bar. The nav
+// destinations a member did NOT pin to the bar are prepended before these at
+// render time (see useDrawerTiles).
+const SECONDARY_DRAWER_TILES: DrawerTileDef[] = [
   { link: "/", label: "Home", tabler: IconHome },
-  ...overflowLinks.map((l) => ({ link: l.link, label: l.label, icon: l.icon })),
-  { link: "/Daycare", label: "Daycare", icon: { snag: "egg" } },
-  { link: "/Trading", label: "Trading", icon: { snag: "exchange" } },
   { link: "/Announcements", label: "News", tabler: IconSpeakerphone },
   { link: "/Blog", label: "Blog", tabler: IconNews },
   // About reuses the Admin Access icon per the owner's request.
@@ -167,13 +183,18 @@ const BASE_DRAWER_TILES: DrawerTileDef[] = [
 ];
 
 /**
- * Drawer tiles for the current user. Site Settings and Admin Access live in the
- * nav (not the Snag dashboard) and are only shown to admins / directors with the
- * matching capability. The UI gate mirrors the Firestore rules; it is not the
- * real authorization boundary.
+ * Drawer tiles for the current user: the overflow nav destinations (ordered
+ * items past the bar cutoff) first, then the fixed secondary tiles, then admin
+ * tools. Site Settings and Admin Access are only shown to admins / directors
+ * with the matching capability (UI gate mirrors the Firestore rules).
  */
-function useDrawerTiles(): DrawerTileDef[] {
+function useDrawerTiles(overflow: NavItem[]): DrawerTileDef[] {
   const { user } = useAuth();
+  const overflowTiles: DrawerTileDef[] = overflow.map((l) => ({
+    link: l.link,
+    label: l.label,
+    icon: l.icon,
+  }));
   const adminTiles: DrawerTileDef[] = [];
   if (isAdmin(user) || hasCapability(user, Capability.ManageSEO)) {
     adminTiles.push({
@@ -189,7 +210,7 @@ function useDrawerTiles(): DrawerTileDef[] {
       icon: { img: AdminAccessIcon },
     });
   }
-  return [...BASE_DRAWER_TILES, ...adminTiles];
+  return [...overflowTiles, ...SECONDARY_DRAWER_TILES, ...adminTiles];
 }
 
 function DrawerTileIcon({ tile }: { tile: DrawerTileDef }) {
@@ -207,8 +228,16 @@ function DrawerTileIcon({ tile }: { tile: DrawerTileDef }) {
 
 const DRAWER_COLS = 3;
 
-function DrawerGrid({ onNavigate, bottomUp }: { onNavigate: () => void; bottomUp?: boolean }) {
-  const tiles = useDrawerTiles();
+function DrawerGrid({
+  onNavigate,
+  bottomUp,
+  overflow,
+}: {
+  onNavigate: () => void;
+  bottomUp?: boolean;
+  overflow: NavItem[];
+}) {
+  const tiles = useDrawerTiles(overflow);
   // Mobile (bottomUp): fill bottom-right first, running right-to-left then up,
   // so the most-used tiles sit closest to the thumb. Reverse the DOM order and
   // pad the top row with blanks so Home always lands bottom-right. Desktop: keep
@@ -580,7 +609,9 @@ function MoreButton(props: { active: boolean; onClick: () => void }) {
 
 function MobileTabBar() {
   const [opened, { open, close }] = useDisclosure(false);
-  const visibleLinks = usePrimaryLinks();
+  const ordered = useOrderedNav();
+  const visibleLinks = ordered.slice(0, NAV_BAR_LIMIT_MOBILE);
+  const overflow = ordered.slice(NAV_BAR_LIMIT_MOBILE);
 
   return (
     <>
@@ -628,7 +659,7 @@ function MobileTabBar() {
         }}
       >
         <Stack gap={14}>
-          <DrawerGrid onNavigate={close} bottomUp />
+          <DrawerGrid onNavigate={close} bottomUp overflow={overflow} />
           {/* Controls sit at the bottom (Menu left, close right) to mirror the
               bottom main nav, thumb-friendly, with the list right above. */}
           <Group justify="space-between" align="center">
@@ -650,7 +681,9 @@ function MobileTabBar() {
 export const SideBar = () => {
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
   const [opened, { open, close }] = useDisclosure(false);
-  const visibleLinks = usePrimaryLinks();
+  const ordered = useOrderedNav();
+  const visibleLinks = ordered.slice(0, NAV_BAR_LIMIT_DESKTOP);
+  const overflow = ordered.slice(NAV_BAR_LIMIT_DESKTOP);
 
   if (isUnder900) return <MobileTabBar />;
 
@@ -693,7 +726,7 @@ export const SideBar = () => {
               <IconX size={22} />
             </ActionIcon>
           </Group>
-          <DrawerGrid onNavigate={close} />
+          <DrawerGrid onNavigate={close} overflow={overflow} />
         </Stack>
       </Drawer>
     </>

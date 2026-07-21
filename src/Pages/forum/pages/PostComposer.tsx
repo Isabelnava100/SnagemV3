@@ -44,6 +44,7 @@ import OnboardingChecklist, {
 } from "../../../components/onboarding/OnboardingChecklist";
 import CharactersPanel from "../components/composer/CharactersPanel";
 import EvolutionPanel from "../components/composer/EvolutionPanel";
+import MegaPanel from "../components/composer/MegaPanel";
 import { EncounterPostPanel } from "../components/composer/EncounterPanels";
 import UseItemsPanel, {
   ItemSelection,
@@ -102,6 +103,8 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const [fleeAttempt, setFleeAttempt] = React.useState(false);
   const [fighterId, setFighterId] = React.useState<string | null>(null);
   const [evolve, setEvolve] = React.useState<{ pokemonId: string; toIdx: number } | null>(null);
+  // Mega Evolution for this post only (stone required, never consumed).
+  const [mega, setMega] = React.useState<{ pokemonId: string; stone: string } | null>(null);
   const [loadedEdit, setLoadedEdit] = React.useState(false);
 
   const editor = useRichTextEditor({
@@ -430,6 +433,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
         ...(mode === "new" && centerVisit ? { centerVisit: true } : {}),
         ...(mode === "new" && fighterNeeded && fighterId ? { fighterId } : {}),
         ...(mode === "new" && evolve ? { evolve } : {}),
+        ...(mode === "new" && mega ? { mega } : {}),
         ...(mode === "edit" ? { editPostId: postId } : {}),
       });
     },
@@ -574,6 +578,14 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                 items={inventory ?? []}
                 value={evolve}
                 onChange={setEvolve}
+              />
+            )}
+            {mode === "new" && (
+              <MegaPanel
+                teamPokemon={evoTeamPokemon}
+                items={inventory ?? []}
+                value={mega}
+                onChange={setMega}
               />
             )}
           </Stack>

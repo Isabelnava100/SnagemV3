@@ -119,6 +119,22 @@ export function GameBlocks(props: { post: ForumPost }) {
   if (!blocks) return null;
   const cards: React.ReactNode[] = [];
 
+  if (blocks.mega && props.post.type === "user") {
+    const m = blocks.mega;
+    cards.push(
+      <Flex key="mega" align="center" gap={10} p={10} bg="#241a33" style={{ borderRadius: 8 }} wrap="wrap">
+        <Avatar src={getPokemonImageURL(m.fromSlug)} alt={`${m.fromName} sprite`} size={40} radius="xl" />
+        <Text c="dimmed" fz={20}>
+          →
+        </Text>
+        <Avatar src={getPokemonImageURL(m.toSlug)} alt={`${m.toName} sprite`} size={44} radius="xl" />
+        <GameResultText>
+          {m.fromName} Mega Evolved into {m.toName} for this post!
+        </GameResultText>
+      </Flex>
+    );
+  }
+
   if (blocks.boss && props.post.type === "user") {
     cards.push(
       <Flex key="boss" align="center" gap={8} p={10} bg="#332f33" style={{ borderRadius: 8 }}>

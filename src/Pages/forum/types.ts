@@ -108,6 +108,8 @@ export interface PostBlocks {
   boss?: { slug: string; name: string };
   /** An evolution triggered by this post (on the evolution system card). */
   evolution?: { fromName: string; fromSlug: string; toName: string; toSlug: string };
+  /** A temporary Mega Evolution activated for this post only (stone not used). */
+  mega?: { pokemonId: string; stone: string; fromName: string; fromSlug: string; toName: string; toSlug: string };
   /** Pokemon that became fully shadowed on this post (shadowed system card). */
   shadowed?: { names: string[] };
   /** This post was spent visiting the Pokemon Center (team healed + cured). */

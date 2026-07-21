@@ -117,6 +117,10 @@ const { default: Collections } = lazyImport(
   () => import("./Pages/User/Dashboard/Settings/Collections"),
   "default"
 );
+const { default: NavigationSettings } = lazyImport(
+  () => import("./Pages/User/Dashboard/Settings/Navigation"),
+  "default"
+);
 const { default: Signature } = lazyImport(
   () => import("./Pages/User/Dashboard/Settings/Signature"),
   "default"
@@ -171,6 +175,7 @@ export default function AppRoutes() {
                       <Route path="Settings" element={<Settings />}>
                         <Route index element={<Navigate to="Notifications" />} />
                         <Route path="Notifications" element={<Notifications />} />
+                        <Route path="Navigation" element={<NavigationSettings />} />
                         <Route path="Collections" element={<Collections />} />
                         <Route path="Signature" element={<Signature />} />
                         <Route path="Accessibility" element={<Accessibility />} />
