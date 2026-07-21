@@ -63,8 +63,8 @@ export const registerUser = async (
         displayName: username,
       });
 
-      // Verify the email up front. Firebase sends a confirmation link; the
-      // account's verified state is visible to staff when reviewing the queue.
+      // Verify the email up front. Firebase records emailVerified on the auth
+      // account (nothing reads it yet; approval stays a manual admin review).
       // Non-fatal: a mail hiccup should not block the application itself.
       await sendEmailVerification(user).catch(() => undefined);
     }

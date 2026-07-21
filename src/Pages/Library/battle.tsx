@@ -11,7 +11,9 @@ import { useAuth } from "../../context/AuthContext";
  * whole battle loop members play through the forum: stars, posts-to-beat,
  * damage, HP, healing, run-away, type effectiveness, team lock, and what
  * happens on a team wipe. Tables read the LIVE admin config where one exists
- * (Battle Costs), so this page never drifts from the real numbers.
+ * (Battle Costs). Ball odds caps, rod odds and healing values are fixed
+ * server constants shown as copy; if those constants ever change in
+ * functions/src/index.ts, update this page to match.
  */
 
 function Section(props: { title: string; children: React.ReactNode }) {

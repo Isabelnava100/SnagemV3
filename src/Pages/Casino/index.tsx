@@ -459,8 +459,8 @@ function HexRoulette(props: { uid: string; tokens: number }) {
       icon={<IconTargetArrow size={22} color="#f472b6" />}
       iconBg="#2a1526"
       title="Hex Roulette"
-      blurb="Pick a number 1 to 36 and bet up to 5 tokens. Land it and take twenty times the pot."
-      badge={<PayoutBadge color="#F5C842">Win 20x</PayoutBadge>}
+      blurb="Pick a number 1 to 36 and bet up to 5 tokens. Land it and take five and a half times your bet."
+      badge={<PayoutBadge color="#F5C842">Win 5.5x</PayoutBadge>}
     >
       <Group gap="md" wrap="nowrap" align="center">
         <RouletteWheel number={number} />
@@ -541,9 +541,9 @@ function DreamDice(props: { uid: string; tokens: number }) {
           </Box>
         </Box>
         <Box>
-          <Caption>Bet 1-3</Caption>
+          <Caption>Bet 1-5</Caption>
           <Box mt={4}>
-            <Stepper label="Bet" value={bet} onChange={setBet} min={1} max={3} accent="#5eead4" />
+            <Stepper label="Bet" value={bet} onChange={setBet} min={1} max={5} accent="#5eead4" />
           </Box>
         </Box>
       </Group>

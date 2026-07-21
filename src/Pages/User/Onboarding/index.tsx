@@ -161,10 +161,16 @@ export default function Onboarding() {
           <>
             <GaiaPrefill
               onPrefill={(prefill, noteAppend) => {
-                // Merge, never clobber: anything already added by hand stays.
-                const hasCurrency = CURRENCY_LABELS.some((c) => entries.currency[c.key] > 0);
+                // Merge, never clobber: per currency field, a hand-entered
+                // value wins and the prefill fills only what is still zero.
+                const mergedCurrency = { ...entries.currency };
+                CURRENCY_LABELS.forEach((c) => {
+                  if ((mergedCurrency[c.key] ?? 0) <= 0) {
+                    mergedCurrency[c.key] = prefill.currency[c.key] ?? 0;
+                  }
+                });
                 update({
-                  currency: hasCurrency ? entries.currency : prefill.currency,
+                  currency: mergedCurrency,
                   items: [...entries.items, ...prefill.items],
                   pokemon: [...entries.pokemon, ...prefill.pokemon],
                 });

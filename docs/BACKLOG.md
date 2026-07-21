@@ -13,12 +13,14 @@ July 2026 build-out are marked (2026-07).
   practice. Repeat yearly. Also noted in CLAUDE.md SEO rules so it surfaces
   in every session.
 
-- **Item sprites, remote 404s.** Every catalog row has a `Filename`, so the
-  gaps are remote: sprites load from the CDN and a wrong path renders blank.
-  To enumerate real 404s, run a HEAD-request sweep over
-  `getItemImageURL(filePath)` for all 994 items from a machine with network
-  access and record the failures here. Known suspects: hand-added items
-  (Shadow Vaccine) and custom shop/recipe art (see Assets below).
+- **Item sprites, remote 404s.** SWEPT (2026-07-20): HEAD-checked all 994
+  catalog filenames against the jsDelivr CDN. 25 failed. 16 were a data bug:
+  a stray dagger character on the end of the `Filename` (metal-coat,
+  kings-rock, and 14 key-items), now stripped in `item.json`, all 16 resolve.
+  Elemental Gem was remapped to the real `gem/normal.png` sprite. The 8 real
+  gaps left (custom art needed, see Custom item sprites): link-cable,
+  metal-alloy, syrupy-apple, unremarkable-teacup, auspicious-armor,
+  malicious-armor, shadow-vaccine, mystery-pebble.
 - **Buttons without links.** No `to="/"` placeholders remain (the homepage
   "See Anticipated Updates" was the last and now goes to /Announcements).
   The S.N.A.G. suggestion box is the place to catch any stragglers members
@@ -41,11 +43,8 @@ July 2026 build-out are marked (2026-07).
 
 ## Assets & sprites
 
-- **New social share (OG) image** (2026-07, owner-requested). The current
-  `public/og-image.png` is a placeholder generated from an SVG
-  (`scripts/gen-og-image.mjs`): gradient banner, guild name, tagline. Replace
-  it with real branded art (guild logo/mascot art, 1200x630). Once made, either
-  overwrite the file or paste its URL into Dashboard > Site Settings > SEO.
+- **New social share (OG) image** DONE (2026-07). Replaced with the branded
+  Snagem Guild banner (commit 66571ad).
 
 - **Shadow Vaccine sprite** (2026-07). The Shadow Vaccine item was added to the
   catalog (`src/data/item/item.json`, item 994) with `Filename:
@@ -70,8 +69,9 @@ July 2026 build-out are marked (2026-07).
 - **Gym badge art** (2026-07). Challenges "Badges Earned" uses letter chips, not real
   badge images. Options logged: SteGriff vector badges (jsDelivr) or vendor pixel PNGs
   into `public/badges/`. Plumbing not added yet.
-- **Profile emotes** show placeholder squares; emote images are not resolved on the
-  public profile (`src/Pages/User/PublicProfile.tsx`).
+- **Profile emotes** DONE (2026-07-20). Public profiles now resolve owned emotes
+  through the emote catalog (`src/data/emote`) and render the Firebase Storage
+  image; unknown ids keep the placeholder square.
 
 ## Seed / data completeness (`functions/scripts/seed.mjs`)
 
@@ -170,11 +170,10 @@ Status as of 2026-07:
   -The Disappearance-; and 7 new Compendium rosters ([Unova], [Kalos], [Alola], [Galar],
   [Other], [Ultra Space], [Paldea] Natives; Barbara Perez and Indi kept as faithful stubs).
   Short Stories (Frozen Bond both parts, Amaya's Riddle Part 1 stub) and the 5 gem stubs
-  (aliases present, descriptions blank on Gaia) were already faithful. To publish: run
-  `node functions/scripts/seed-lore.mjs` (owner-confirmed DB write, not done here).
-  GREENLIT by the owner (2026-07): run it from the repo root (or `functions/`) with
-  gcloud application-default credentials, same auth as the other seed scripts. NOTE
-  the script reads `lore-data.json` relative to itself, so both working dirs work.
+  (aliases present, descriptions blank on Gaia) were already faithful.
+  PUBLISHED (2026-07-20): `seed-lore.mjs` run against `snagemguild`, 14 books +
+  118 entries seeded; the recovered sections (Bareeno Village, The Gyaan, new
+  Compendium rosters) verified live in `loreEntries`.
   NOT a gap: the 9 "missing" type books (Fire, Grass, Electric, Ground, Rock, Flying, Fighting,
   Ice, Steel) were NEVER WRITTEN on Gaia and do not exist -- creating them is fresh authoring, an
   OWNER DECISION, not a migration. OWNER DECISION also: Team Shout vs Team Yell (the Gaia

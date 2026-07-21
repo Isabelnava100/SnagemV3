@@ -15,7 +15,7 @@ export interface Shop {
     items: Array<{ itemId: string; price: number; description?: string; stock?: number }>;
   }>;
   rare_section?: { rotates_daily?: boolean; pool: Array<{ itemId: string; price: number; description?: string }> };
-  kind?: "store" | "recycle" | "tour" | "evo";
+  kind?: "store" | "recycle" | "tour" | "evo" | "craft";
   active?: boolean;
   order?: number;
 }
@@ -24,6 +24,7 @@ export interface Shop {
 export interface Recipe {
   id: string;
   output_item_id: string;
+  output_name?: string;
   output_qty?: number;
   max_batch?: number;
   ingredients?: Array<{ itemId: string; qty: number }>;

@@ -34,8 +34,11 @@ import { getCurrencies, getItems, getOwnedPokemons } from "../../queries/dashboa
 import {
   buyShopItem,
   convertCandyToScent,
+  craftItem,
   evoService,
+  getRecipes,
   getShops,
+  Recipe,
   recycleItems,
   rollTour,
   ScentKey,
@@ -102,9 +105,9 @@ const RECYCLE_RATES: Array<[string, string]> = [
   ["3 items", "3 coins"],
   ["5 items", "6 coins"],
   ["10 items", "12 coins"],
-  ["Nugget (alone)", "3 coins"],
-  ["Big Nugget (alone)", "5 coins"],
-  ["10 items + Big Nugget", "24 coins"],
+  ["20 items", "24 coins"],
+  ["Berries, battle items", "half value"],
+  ["Medicine", "not recyclable"],
 ];
 
 const SCENT_RATES: Array<[string, string]> = [
@@ -931,6 +934,8 @@ function EvoBody() {
   const [pending, setPending] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState("");
   const [error, setError] = React.useState("");
+  // New Adaptations is payable either way; the member picks.
+  const [adaptPay, setAdaptPay] = React.useState<"snagemblem" | "pokecoin">("snagemblem");
 
   const run = async (
     action: "unlock_restraints" | "unlock_potential" | "new_adaptations",
@@ -1055,16 +1060,31 @@ function EvoBody() {
               </Box>
             </Group>
             <Group gap="md" wrap="nowrap" style={{ flexShrink: 0 }}>
-              <Text fz={16} fw={800} c="#F5C842" ta="right" style={{ whiteSpace: "nowrap" }}>
-                {svc.price}
-              </Text>
+              {svc.key === "new_adaptations" ? (
+                <Select
+                  aria-label="Pay New Adaptations with"
+                  data={[
+                    { value: "snagemblem", label: "2 Emblems" },
+                    { value: "pokecoin", label: "25 Coins" },
+                  ]}
+                  value={adaptPay}
+                  onChange={(v) => setAdaptPay(v === "pokecoin" ? "pokecoin" : "snagemblem")}
+                  allowDeselect={false}
+                  size="xs"
+                  w={120}
+                />
+              ) : (
+                <Text fz={16} fw={800} c="#F5C842" ta="right" style={{ whiteSpace: "nowrap" }}>
+                  {svc.price}
+                </Text>
+              )}
               <Button
                 radius="xl"
                 variant="gradient"
                 gradient={{ from: "grape", to: "indigo", deg: 90 }}
                 loading={pending === svc.key}
                 disabled={pending === svc.key}
-                onClick={() => run(svc.key, svc.payWith)}
+                onClick={() => run(svc.key, svc.key === "new_adaptations" ? adaptPay : svc.payWith)}
                 aria-label={`${svc.title} for ${svc.price}`}
               >
                 Purchase
@@ -1206,6 +1226,165 @@ function FlavorCard(props: { html: string }) {
   );
 }
 
+/* --------------------------- Ambrosial Alchemy ---------------------------- */
+
+const itemNameOf = (itemId: string, fallback?: string) =>
+  itemData.find((i) => i.id === itemId)?.name ?? fallback ?? itemId;
+
+function CraftRecipeRow(props: { recipe: Recipe; bag: Map<string, number>; onDone: () => void }) {
+  const { recipe, bag } = props;
+  const [batch, setBatch] = React.useState<number>(1);
+  const [message, setMessage] = React.useState("");
+  const [error, setError] = React.useState("");
+  const maxBatch = Math.max(1, recipe.max_batch ?? 1);
+  const ingredients = recipe.ingredients ?? [];
+  const costParts = [
+    recipe.cost?.pokecoin ? `${recipe.cost.pokecoin * batch} Snag Coins` : "",
+    recipe.cost?.snagemblem ? `${recipe.cost.snagemblem * batch} Emblems` : "",
+  ].filter(Boolean);
+  const missing = ingredients.some((ing) => (bag.get(ing.itemId) ?? 0) < ing.qty * batch);
+  const rate = Math.min(100, Math.max(0, recipe.success_rate ?? 100));
+
+  const craft = useMutation({
+    mutationFn: () => craftItem(recipe.id, batch),
+    onSuccess: (res) => {
+      setError("");
+      setMessage(
+        res.failures
+          ? `Crafted ${res.successes}, ${res.failures} failed. Ingredients are spent either way.`
+          : `Crafted ${res.successes} ${itemNameOf(recipe.output_item_id, recipe.output_name)}!`
+      );
+      props.onDone();
+    },
+    onError: (e) => {
+      setMessage("");
+      setError(e instanceof Error ? e.message : "The craft failed. Try again.");
+    },
+  });
+
+  return (
+    <Box p="md" style={{ borderRadius: 14, background: "#141019", border: "1px solid #232028" }}>
+      <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
+        <Box style={{ minWidth: 0, flex: "1 1 260px" }}>
+          <Group gap={8} wrap="nowrap">
+            <Image
+              src={getItemImageURL(itemData.find((i) => i.id === recipe.output_item_id)?.filePath ?? "")}
+              alt={`${itemNameOf(recipe.output_item_id, recipe.output_name)} sprite`}
+              w={34}
+              h={34}
+              fit="contain"
+              loading="lazy"
+            />
+            <Text fz={18} fw={800} c="white">
+              {itemNameOf(recipe.output_item_id, recipe.output_name)}
+              {(recipe.output_qty ?? 1) > 1 ? ` x${recipe.output_qty}` : ""}
+            </Text>
+          </Group>
+          <Text fz={14} c="dimmed" mt={4}>
+            Needs:{" "}
+            {ingredients.length
+              ? ingredients
+                  .map(
+                    (ing) =>
+                      `${ing.qty * batch}x ${itemNameOf(ing.itemId)} (have ${bag.get(ing.itemId) ?? 0})`
+                  )
+                  .join(", ")
+              : "no ingredients"}
+            {costParts.length ? ` + ${costParts.join(" + ")}` : ""}
+          </Text>
+          <Text fz={13} c={rate < 100 ? "#F5C842" : "dimmed"}>
+            Success rate {rate}%{rate < 100 ? "; ingredients are spent even on a failed craft." : "."}
+          </Text>
+        </Box>
+        <Group gap={10} wrap="nowrap" style={{ flexShrink: 0 }}>
+          {maxBatch > 1 && (
+            <NumberInput
+              aria-label="Craft batch size"
+              value={batch}
+              onChange={(v) => setBatch(Math.min(maxBatch, Math.max(1, typeof v === "number" ? v : 1)))}
+              min={1}
+              max={maxBatch}
+              size="xs"
+              w={70}
+            />
+          )}
+          <Button
+            radius="xl"
+            variant="gradient"
+            gradient={{ from: "grape", to: "indigo", deg: 90 }}
+            loading={craft.isPending}
+            disabled={craft.isPending || missing}
+            onClick={() => craft.mutate()}
+            aria-label={`Craft ${itemNameOf(recipe.output_item_id, recipe.output_name)}`}
+          >
+            Craft
+          </Button>
+        </Group>
+      </Group>
+      {missing && (
+        <Text fz={13} c="dimmed" mt={4}>
+          You are missing ingredients for this batch.
+        </Text>
+      )}
+      {message && <StatusMessage>{message}</StatusMessage>}
+      {error && <StatusMessage color="red">{error}</StatusMessage>}
+    </Box>
+  );
+}
+
+function CraftBody() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const recipes = useQuery({ queryKey: ["craft-recipes"], queryFn: getRecipes });
+  const bagItems = useQuery({
+    queryKey: ["get-items", user?.uid],
+    queryFn: () => getItems(user!.uid),
+    enabled: !!user,
+  });
+
+  const bag = React.useMemo(() => {
+    const m = new Map<string, number>();
+    (bagItems.data ?? []).forEach((i) => m.set(i.id, Number(i.quantity) || 0));
+    return m;
+  }, [bagItems.data]);
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["get-items", user?.uid] });
+    queryClient.invalidateQueries({ queryKey: ["currencies", user?.uid] });
+  };
+
+  if (recipes.isPending) return <SectionLoader />;
+  const list = recipes.data ?? [];
+  if (!list.length) {
+    return (
+      <Text fz={16} c="dimmed">
+        The cauldron is cold: no recipes are on the books yet. Check back soon.
+      </Text>
+    );
+  }
+
+  const categories = [...new Set(list.map((r) => r.category ?? "Recipes"))];
+  return (
+    <Stack gap="xl">
+      {categories.map((cat) => (
+        <Box key={cat}>
+          <Text fz={14} fw={800} c="dimmed" tt="uppercase" mb="sm" style={{ letterSpacing: 2 }}>
+            {cat}
+          </Text>
+          <Stack gap={12}>
+            {list
+              .filter((r) => (r.category ?? "Recipes") === cat)
+              .map((r) => (
+                <CraftRecipeRow key={r.id} recipe={r} bag={bag} onDone={refresh} />
+              ))}
+          </Stack>
+        </Box>
+      ))}
+    </Stack>
+  );
+}
+
 function StorefrontView(props: { shop: Shop; balance: number; onBack: () => void }) {
   const { shop } = props;
 
@@ -1219,6 +1398,9 @@ function StorefrontView(props: { shop: Shop; balance: number; onBack: () => void
       break;
     case "evo":
       body = <EvoBody />;
+      break;
+    case "craft":
+      body = <CraftBody />;
       break;
     default:
       body = <StoreBody shop={shop} balance={props.balance} />;

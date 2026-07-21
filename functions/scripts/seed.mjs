@@ -358,6 +358,17 @@ const shops = {
     active: true,
     flavor_intro: "<p>For Hybrids and Channelers who have cleared their first Master Mission. Unlock slots, learn moves, or swap an adaptation.</p>",
   },
+  "ambrosial-alchemy": {
+    name: "Ambrosial Alchemy",
+    type: "Crafting Cauldron",
+    kind: "craft",
+    currency: "pokecoin",
+    npc_name: "Ambrosia",
+    order: 5,
+    active: true,
+    flavor_intro:
+      "<p>Bring ingredients and coin, and Ambrosia's cauldron does the rest. Every recipe lists what it needs; failed brews still eat the ingredients, so read the success rate.</p>",
+  },
 };
 
 // --------------------------------------------------------------------------

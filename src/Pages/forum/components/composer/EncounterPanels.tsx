@@ -1,4 +1,5 @@
 import {
+  Anchor,
   Button,
   Group,
   MultiSelect,
@@ -10,6 +11,7 @@ import {
   Switch,
   Text,
 } from "@mantine/core";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useAuth } from "../../../../context/AuthContext";
@@ -511,7 +513,11 @@ export function EncounterPostPanel(props: {
             </Text>
           ) : !myRod ? (
             <Text fz={14} c="dimmed">
-              You need a fishing rod. The Snag Mall&apos;s Angler&apos;s Corner sells them.
+              You need a fishing rod to cast here. Earn your first Old Rod from the{" "}
+              <Anchor component={Link} to="/Missions/rod-thief" fz={14}>
+                Rod Thief mission
+              </Anchor>
+              , or buy one at the Snag Mall&apos;s Angler&apos;s Corner.
             </Text>
           ) : (
             <>

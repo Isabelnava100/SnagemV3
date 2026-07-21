@@ -90,9 +90,11 @@ export default function NewThreadComposer() {
   const [attachSignature, setAttachSignature] = React.useState(true);
   const [xpOverride, setXpOverride] = React.useState<XPDefaults | null>(null);
   const canAdjustXP = isAdmin(user) || hasCapability(user, Capability.AdjustXP);
-  const canPin = canCurateThreads(user);
-  // Staff-created roleplays choose when XP is served (instant vs at close) and
-  // whether to use the site default XP settings.
+  // Pinning is admin-only server-side (publishForumThread), so only offer it
+  // to admins; hosting directors got a silently-ignored radio before.
+  const canPin = isAdmin(user);
+  // Staff-created roleplays can override the site default XP settings. XP
+  // always applies per post; the old instant-vs-at-close choice is retired.
   const canHostRoleplay = canCurateThreads(user);
   const [useDefaultXp, setUseDefaultXp] = React.useState(true);
   const onboarding = useOnboardingStatus();

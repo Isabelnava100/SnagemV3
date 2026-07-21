@@ -61,10 +61,6 @@ async function call<T>(name: string, data: unknown): Promise<T> {
 export const pickUpMission = (missionId: string) =>
   call<{ threadId: string }>("pickUpMission", { missionId });
 
-/** Submit a completed mission for grading (creates a pending submission). */
-export const submitMission = (missionId: string, threadLink: string) =>
-  call<{ ok: boolean; id: string }>("submitMission", { missionId, threadLink });
-
 /** Grader action: approve/reject a submission and grant its rewards. */
 export const gradeMission = (
   submissionId: string,

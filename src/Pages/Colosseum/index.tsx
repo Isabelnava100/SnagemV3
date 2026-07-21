@@ -226,7 +226,9 @@ function TrainingRoomTab() {
   const today = new Date().toISOString().slice(0, 10);
   const sessionIsToday = session?.date === today;
   const postsLogged = sessionIsToday ? session?.postsLogged ?? 0 : 0;
-  const nextEvoPts = postsLogged < 5 ? "1.0" : "0.75";
+  // Full-point cap is 5 posts solo, 10 with a partner (mirror of the server's
+  // evoCap in logTrainingPost).
+  const nextEvoPts = postsLogged < (partner ? 10 : 5) ? "1.0" : "0.75";
   const atPostCap = postsLogged >= MAX_TRAINING_POSTS;
   const onLastPost = postsLogged === MAX_TRAINING_POSTS - 1;
 

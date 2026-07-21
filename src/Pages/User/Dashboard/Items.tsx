@@ -24,6 +24,7 @@ import { getItemImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getItems } from "../../../queries/dashboard";
 import { getMysteryBoxes } from "../../../queries/game";
+import { describeSources, useItemSources } from "../../../lib/itemSources";
 
 /**
  * Items tab (moved off the dashboard top block). Categories stack vertically
@@ -43,6 +44,8 @@ export default function Items() {
   });
   const [mysteryItem, setMysteryItem] = React.useState<{ id: string; name: string } | null>(null);
   const [evolveItem, setEvolveItem] = React.useState<{ id: string; name: string } | null>(null);
+  // "Get more" line per item, built from the live shops + recipes.
+  const sources = useItemSources();
 
   const isMysteryBox = (itemId: string, name: string, category: string) =>
     !!boxConfigs?.[itemId] || /mystery|box/i.test(name) || /mystery|box/i.test(category);
@@ -110,11 +113,18 @@ export default function Items() {
                         }}
                       >
                         <Flex w="100%" justify="space-between" align="center">
-                          <Group px={14} py={8} gap={8} wrap="nowrap">
+                          <Group px={14} py={8} gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
                             <Avatar src={getItemImageURL(item.filePath)} alt={displayName} size={36} />
-                            <Text c="white" fz={16} lineClamp={1}>
-                              {displayName}
-                            </Text>
+                            <Box style={{ minWidth: 0 }}>
+                              <Text c="white" fz={16} lineClamp={1}>
+                                {displayName}
+                              </Text>
+                              {describeSources(sources.get(item.id)) && (
+                                <Text fz={12} c="dimmed" lineClamp={1}>
+                                  Get more: {describeSources(sources.get(item.id))}
+                                </Text>
+                              )}
+                            </Box>
                           </Group>
                           <Box bg="#525151" py={8} px={18} style={{ borderTopLeftRadius: 40, flexShrink: 0 }}>
                             <Text c="white" fz={isOverLg ? 26 : 20}>

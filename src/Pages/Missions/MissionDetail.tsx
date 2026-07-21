@@ -13,6 +13,7 @@ import { postsToBeatStar, starForDex } from "../../lib/encounterStars";
 import { withSuffix } from "../../lib/seo/site";
 import { stripHtml, truncate } from "../../lib/seo/text";
 import { Mission, getMission, pickUpMission } from "../../queries/missions";
+import { getStarOverrides } from "../../queries/admin";
 
 /**
  * Full-page mission brief (behind a Mission Vault card). A striped hero and a
@@ -150,14 +151,25 @@ function DotIcon({ color }: { color: string }) {
 
 const pokemonNameBySlug = new Map(pokemonData.map((p) => [p.slug, p.name]));
 const pokemonIdxBySlug = new Map(pokemonData.map((p) => [p.slug, Number(p.idx)]));
-const starOfSlug = (slug: string) => starForDex(pokemonIdxBySlug.get(slug) ?? 0);
+// Admin star overrides apply here too, so the brief's threat/post math matches
+// what rollEncounter actually serves (same source as the composer + Pokedex).
+const starOfSlug = (slug: string, overrides?: Record<string, number>) => {
+  const idx = pokemonIdxBySlug.get(slug) ?? 0;
+  return overrides?.[String(idx)] ?? starForDex(idx);
+};
 
 /**
  * The mission's default encounter pool so members know what they can run into
  * before picking the job up. Required foes (from the briefing) are flagged;
  * they are the minimum to beat for the grade, everything else is optional.
  */
-function EncountersPanel({ mission }: { mission: Mission }) {
+function EncountersPanel({
+  mission,
+  starOverrides,
+}: {
+  mission: Mission;
+  starOverrides?: Record<string, number>;
+}) {
   const pool = mission.encounters ?? [];
   if (!pool.length) return null;
   const required = new Set(mission.requiredEncounters ?? []);
@@ -201,7 +213,8 @@ function EncountersPanel({ mission }: { mission: Mission }) {
                 {pokemonNameBySlug.get(slug) ?? slug}
               </Text>
               <Text fz={12} c="gold.1" fw={700}>
-                {starOfSlug(slug)}★ · {postsToBeatStar(starOfSlug(slug))} posts
+                {starOfSlug(slug, starOverrides)}★ ·{" "}
+                {postsToBeatStar(starOfSlug(slug, starOverrides))} posts
               </Text>
               {required.has(slug) && (
                 <Badge size="xs" color="gold.2" variant="light">
@@ -227,6 +240,11 @@ export default function MissionDetail() {
     queryKey: ["mission", id],
     queryFn: () => getMission(id!),
     enabled: !!id,
+  });
+  const { data: starOverrides } = useQuery({
+    queryKey: ["star-overrides"],
+    queryFn: getStarOverrides,
+    enabled: !!user,
   });
 
   const pickUpMutation = useMutation({
@@ -282,8 +300,13 @@ export default function MissionDetail() {
   // the minimum battle posts to clear every required foe.
   const requiredSlugs = mission.requiredEncounters ?? [];
   const poolSlugs = mission.encounters ?? [];
-  const threatStar = poolSlugs.length ? Math.max(...poolSlugs.map(starOfSlug)) : 0;
-  const requiredPosts = requiredSlugs.reduce((sum, s) => sum + postsToBeatStar(starOfSlug(s)), 0);
+  const threatStar = poolSlugs.length
+    ? Math.max(...poolSlugs.map((s) => starOfSlug(s, starOverrides)))
+    : 0;
+  const requiredPosts = requiredSlugs.reduce(
+    (sum, s) => sum + postsToBeatStar(starOfSlug(s, starOverrides)),
+    0
+  );
   const seoDescription = truncate(
     stripHtml(mission.story || "") || [...objectives, ...oppositions].join(" "),
     160
@@ -349,7 +372,7 @@ export default function MissionDetail() {
             )}
             {mission.times_taken != null && (
               <Text fz={16} c="gray.3">
-                Taken {mission.times_taken}&times;
+                Taken {mission.times_taken}&times; guild-wide
               </Text>
             )}
           </Group>
@@ -418,7 +441,7 @@ export default function MissionDetail() {
                 </Panel>
               )}
 
-              <EncountersPanel mission={mission} />
+              <EncountersPanel mission={mission} starOverrides={starOverrides} />
             </Stack>
           </Box>
 
@@ -448,6 +471,11 @@ export default function MissionDetail() {
                       Rewards set by the grader.
                     </Text>
                   )}
+                  <Text fz={12} c="dimmed">
+                    Rewards are granted by an admin when your closed run is graded. Pokemon
+                    rewards are earned in the thread itself (catch what you defeat) or granted
+                    at review.
+                  </Text>
                 </Stack>
               </GradientPanel>
 
@@ -466,6 +494,12 @@ export default function MissionDetail() {
                 </Text>
               </Box>
 
+              {mission.tier === "Master" && (
+                <Text fz={14} c="#F5C842" ta="center">
+                  Master mission: you need a character with master clearance. Request it from
+                  the <Link to="/Research" style={{ color: "#b197fc" }}>Research page</Link>.
+                </Text>
+              )}
               <Button
                 variant="gradient"
                 gradient={{ from: "grape", to: "cyan", deg: 90 }}

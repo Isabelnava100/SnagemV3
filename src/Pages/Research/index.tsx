@@ -981,7 +981,7 @@ function AscensionTab(props: {
                 {cleared ? (
                   <Text
                     component={Link}
-                    to="/Forum/Main-Forum"
+                    to="/Forum/Master-Mission"
                     fz={16}
                     fw={700}
                     c="grape.3"

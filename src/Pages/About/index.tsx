@@ -126,7 +126,7 @@ const CURRENCIES: {
     icon: <IconGhost2 size={26} color="#c4b5fd" />,
     iconBg: "#1a1530",
     border: PANEL_BORDER,
-    title: "Gengar Coins",
+    title: "Gengar Tokens",
     body: "The casino's spooky chips, for games of chance.",
   },
   {

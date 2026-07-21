@@ -6,6 +6,7 @@ import {
   Container,
   Grid,
   Group,
+  Image,
   SimpleGrid,
   Stack,
   Text,
@@ -31,6 +32,8 @@ import {
   getTeamsRaw,
   hydrateTeams,
 } from "../../queries/dashboard";
+import { autoBadgeIdsFor, getBadgeCatalog } from "../../queries/badges";
+import { emojiData, getEmoteImageURL } from "../../data/emote";
 
 interface PublicUser {
   uid: string;
@@ -197,6 +200,20 @@ export default function PublicProfile() {
     queryFn: () => getActivityCounts(uid!),
     enabled: !!uid,
   });
+  // Status badges (admin/master/new member) derived from the public role, so
+  // the Collections "hide from public profile" toggle has something to hide.
+  const { data: badgeCatalog } = useQuery({
+    queryKey: ["badge-catalog"],
+    queryFn: getBadgeCatalog,
+    enabled: !!uid,
+  });
+  const hiddenAuto = new Set(
+    ((profile as { hiddenAutoBadges?: string[] } | undefined)?.hiddenAutoBadges ?? []) as string[]
+  );
+  const autoBadges = (badgeCatalog ?? []).filter(
+    (b) =>
+      autoBadgeIdsFor({ permissions: user?.permissions }).includes(b.id) && !hiddenAuto.has(b.id)
+  );
 
   if (isPending) {
     return (
@@ -385,19 +402,28 @@ export default function PublicProfile() {
             )}
 
             {/* Badges */}
-            {!!user.badges?.length && (
+            {(!!user.badges?.length || !!autoBadges.length) && (
               <Stack gap={8} mt="lg">
                 <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
                   Badges
                 </Text>
                 <Group gap={6}>
-                  {user.badges.map((badge) => (
+                  {(user.badges ?? []).map((badge) => (
                     <Badge
                       key={badge}
                       variant="gradient"
                       gradient={{ from: getColor1(badge), to: getColor2(badge) }}
                     >
                       {badge}
+                    </Badge>
+                  ))}
+                  {autoBadges.map((badge) => (
+                    <Badge
+                      key={badge.id}
+                      variant="gradient"
+                      gradient={{ from: getColor1(badge.name), to: getColor2(badge.name) }}
+                    >
+                      {badge.name}
                     </Badge>
                   ))}
                 </Group>
@@ -411,20 +437,35 @@ export default function PublicProfile() {
                   Emotes
                 </Text>
                 <Group gap={6}>
-                  {emojis.map((emote) => (
-                    <Box
-                      key={emote}
-                      aria-label={`Emote ${emote}`}
-                      title={emote}
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 6,
-                        background: "#2b2a2b",
-                        border: "1px solid #3a393b",
-                      }}
-                    />
-                  ))}
+                  {emojis.map((emote) => {
+                    const data = emojiData.find((e) => e.id === emote || e.Name === emote);
+                    return data ? (
+                      <Image
+                        key={emote}
+                        src={getEmoteImageURL(data.Filename)}
+                        alt={`${data.Name} guild emote`}
+                        title={data.Name}
+                        w={28}
+                        h={28}
+                        fit="contain"
+                        loading="lazy"
+                        style={{ borderRadius: 6 }}
+                      />
+                    ) : (
+                      <Box
+                        key={emote}
+                        aria-label={`Emote ${emote}`}
+                        title={emote}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 6,
+                          background: "#2b2a2b",
+                          border: "1px solid #3a393b",
+                        }}
+                      />
+                    );
+                  })}
                 </Group>
               </Stack>
             )}

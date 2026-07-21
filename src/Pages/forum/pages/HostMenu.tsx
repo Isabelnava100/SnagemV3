@@ -130,7 +130,6 @@ export default function HostMenu() {
   const { data: xpDefaults } = useQuery({ queryKey: ["xp-defaults"], queryFn: getXPDefaults });
 
   const [title, setTitle] = React.useState("");
-  const [xpAward, setXpAward] = React.useState<"instant" | "onClose">("instant");
   const [useDefaultXp, setUseDefaultXp] = React.useState(true);
   const [pinned, setPinned] = React.useState(false);
   const [restricted, setRestricted] = React.useState(false);
@@ -161,7 +160,6 @@ export default function HostMenu() {
     setTags(thread.tags ?? []);
     setInstructions(thread.instructions ?? "");
     setEncounterConfig(thread.encounterConfig ?? null);
-    setXpAward(thread.xpAward === "onClose" ? "onClose" : "instant");
     setLoaded(true);
   }, [thread, loaded]);
 
@@ -209,13 +207,11 @@ export default function HostMenu() {
         ...(isAdmin(user) || hasCapability(user, Capability.ManageBattles)
           ? { encounterConfig }
           : {}),
-        // Staff-created threads control when XP is served; "use defaults"
-        // resets the per-post amounts to the current site defaults.
-        ...(thread!.staffCreated
-          ? {
-              xpAward,
-              ...(useDefaultXp && xpDefaults ? { xpConfig: { ...xpDefaults } } : {}),
-            }
+        // "Use defaults" resets the per-post amounts to the current site
+        // defaults. (XP always applies per post; the old instant-vs-close
+        // choice is retired.)
+        ...(thread!.staffCreated && useDefaultXp && xpDefaults
+          ? { xpConfig: { ...xpDefaults } }
           : {}),
       });
     },

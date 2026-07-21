@@ -757,6 +757,12 @@ function IslandTrialsTab(props: { trials: IslandTrial[]; progress: ChallengeProg
   const completed = new Set([...(progress.trialsCompleted ?? []), ...(progress.grandTrials ?? [])]);
   const stages = buildTrialStages(trials, progress);
   const cleared = stages.filter((s) => s.state === "cleared").length;
+  // A crystal is earned by clearing its trial OR by an explicit grader grant
+  // (grantChallengeStep writes progress.zCrystals); honor both sources.
+  const grantedCrystals = new Set((progress.zCrystals ?? []).map((z) => z.toLowerCase()));
+  const crystalEarned = (t: (typeof sorted)[number], crystal: string) =>
+    completed.has(t.id) || grantedCrystals.has(crystal.toLowerCase()) ||
+    grantedCrystals.has(`${crystal.toLowerCase()} z`);
 
   return (
     <Stack gap={0}>
@@ -780,7 +786,7 @@ function IslandTrialsTab(props: { trials: IslandTrial[]; progress: ChallengeProg
               label="Z"
               sublabel={crystal}
               color={typeColor(t.type)}
-              earned={completed.has(t.id)}
+              earned={crystalEarned(t, crystal)}
             />
           );
         })}

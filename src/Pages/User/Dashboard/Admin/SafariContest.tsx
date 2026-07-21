@@ -432,7 +432,15 @@ export default function SafariContest() {
           disabled={launchBlocked}
           onClick={async () => {
             const id = await writeZone(config).catch(() => null);
-            if (id) navigate(`/Forum/Events/new?safari=1&zone=${id}`);
+            if (id) {
+              await logAuditEvent({
+                action: "event.host",
+                ...actorFrom(user),
+                targetPath: `admin/safari_config`,
+                details: { zone: config.name },
+              });
+              navigate(`/Forum/Events/new?safari=1&zone=${id}`);
+            }
           }}
         >
           Save & Launch

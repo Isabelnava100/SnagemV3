@@ -32,8 +32,9 @@ import {
  * The Daycare (breeding station). Leave one pair; if they get along an egg is
  * ready after mechanics.hatchPosts qualifying posts OR mechanics.hatchDays
  * days, whichever comes first (both admin-editable). Parents are compatible
- * when they share a type, share a species, or one is a Ditto; the hatchling
- * is the base form of the non-Ditto parent's line.
+ * when they are male + female sharing a non-Undiscovered egg group, or when
+ * one is a Ditto (the universal partner); the hatchling is the base form of
+ * the mother's (or non-Ditto parent's) line.
  */
 export default function Daycare() {
   const { user } = useAuth();
@@ -136,7 +137,7 @@ export default function Daycare() {
         eyebrow="Breeding · One pair at a time"
         eyebrowColor="pink.0"
         title="The Daycare"
-        subtitle={`Drop one Pokemon in each slot: a male and a female sharing an egg group, or ANYTHING paired with a Ditto. Only legendaries and mythicals can never breed. The Egg appears after ${mech.hatchDays ?? 15} days or ${mech.hatchPosts} posts, whichever comes first.`}
+        subtitle={`Drop one Pokemon in each slot: a male and a female sharing an egg group, or ANYTHING paired with a Ditto (species with no egg group breed only with Ditto). Only 7-star legendaries and mythicals can never breed. The Egg appears after ${mech.hatchDays ?? 15} days or ${mech.hatchPosts} posts, whichever comes first.`}
         aside={
           <Box px={16} py={12} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #3a3550" }}>
             <Text ff="monospace" fz={12} c="dimmed" tt="uppercase">

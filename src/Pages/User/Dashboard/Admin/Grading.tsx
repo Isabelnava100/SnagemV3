@@ -17,12 +17,13 @@ import React from "react";
 import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import {
+  getGradedCount,
   getPendingMasterMissionRequests,
   getPendingMissionSubmissions,
   PendingMMRequest,
   PendingSubmission,
 } from "../../../../queries/grading";
-import { gradeMission } from "../../../../queries/missions";
+import { getMission, gradeMission } from "../../../../queries/missions";
 import { grantMasterMission } from "../../../../queries/research";
 
 async function call<T>(name: string, data: unknown): Promise<T> {
@@ -78,15 +79,40 @@ function SectionCard(props: { children: React.ReactNode }) {
   );
 }
 
+const REWARD_LABEL: Record<string, string> = {
+  snag: "Snag a Pokemon",
+  catch: "Catch a Pokemon",
+  recruit: "Recruit a Pokemon",
+  egg: "A Pokemon egg",
+  none: "No Pokemon reward",
+};
+
 export function SubmissionCard(props: { submission: PendingSubmission; onDone: () => void }) {
   const { submission } = props;
-  const [coins, setCoins] = React.useState<number>(3);
+  const [coins, setCoins] = React.useState<number | null>(null);
   const [emblemPiece, setEmblemPiece] = React.useState(false);
   const [message, setMessage] = React.useState("");
   const [error, setError] = React.useState(false);
 
+  // The brief's promised rewards, so grading matches what the member was told.
+  const mission = useQuery({
+    queryKey: ["mission", submission.missionId],
+    queryFn: () => getMission(submission.missionId!),
+    enabled: !!submission.missionId,
+  });
+  const priorRuns = useQuery({
+    queryKey: ["graded-count", submission.missionId, submission.submitterUid],
+    queryFn: () => getGradedCount(submission.missionId!, submission.submitterUid!),
+    enabled: !!submission.missionId && !!submission.submitterUid,
+  });
+  const promisedCoins = mission.data?.coins;
+  // Coins prefill from the brief once it loads; the grader can still adjust.
+  const coinsValue = coins ?? promisedCoins ?? 3;
+  const emblemEligible = mission.data?.emblem_eligible !== false;
+  const rewardKind = mission.data?.pokemon_reward?.kind;
+
   const approve = useMutation({
-    mutationFn: () => gradeMission(submission.id, true, { coins, emblemPiece }),
+    mutationFn: () => gradeMission(submission.id, true, { coins: coinsValue, emblemPiece }),
     onSuccess: () => {
       setError(false);
       setMessage("Submission approved and rewards granted.");
@@ -124,8 +150,24 @@ export function SubmissionCard(props: { submission: PendingSubmission; onDone: (
         </Text>
       </Group>
       <Text fz={14} c="rgba(255,255,255,0.8)" mb={4}>
-        Mission: {submission.missionId || "Unknown"}
+        Mission: {mission.data?.title || submission.missionId || "Unknown"}
       </Text>
+      {mission.data && (
+        <Text fz={13} c="dimmed" mb={4}>
+          Brief promises: {promisedCoins ?? 0} Snag Coins
+          {rewardKind && rewardKind !== "none" ? ` + ${REWARD_LABEL[rewardKind] ?? rewardKind}` : ""}
+          {mission.data.special_item ? ` + ${mission.data.special_item}` : ""}
+          {emblemEligible ? " (emblem-eligible)" : " (NOT emblem-eligible)"}.
+          {mission.data.special_item &&
+            " Items outside the auto-grant list are handed out via Donate."}
+        </Text>
+      )}
+      {priorRuns.data !== undefined && priorRuns.data > 0 && (
+        <Text fz={13} c="#F0C674" mb={4}>
+          This member already completed this mission {priorRuns.data}{" "}
+          {priorRuns.data === 1 ? "time" : "times"}. Check the brief for once-per-member rewards.
+        </Text>
+      )}
       {submission.threadLink && (
         <Anchor
           href={submission.threadLink}
@@ -142,19 +184,22 @@ export function SubmissionCard(props: { submission: PendingSubmission; onDone: (
         <NumberInput
           label="Snag Coins"
           aria-label="Snag Coins to award"
-          value={coins}
+          description={promisedCoins != null ? `Brief promises ${promisedCoins}` : undefined}
+          value={coinsValue}
           onChange={(v) => setCoins(typeof v === "number" ? v : 0)}
           min={0}
           size="xs"
-          w={120}
+          w={140}
           styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
         />
-        <Checkbox
-          label="Award a Snag Emblem Piece"
-          checked={emblemPiece}
-          onChange={(e) => setEmblemPiece(e.currentTarget.checked)}
-          styles={{ label: { color: "white" } }}
-        />
+        {emblemEligible && (
+          <Checkbox
+            label="Award a Snag Emblem Piece"
+            checked={emblemPiece}
+            onChange={(e) => setEmblemPiece(e.currentTarget.checked)}
+            styles={{ label: { color: "white" } }}
+          />
+        )}
       </Group>
       <Group gap={10} wrap="wrap" mt={12}>
         <Button

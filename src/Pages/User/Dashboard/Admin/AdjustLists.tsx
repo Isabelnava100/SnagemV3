@@ -31,6 +31,8 @@ import { SectionLoader } from "../../../../components/navigation/loading";
 import { AdminPokemonList } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
+import { hasCapability } from "../../../../lib/permissions";
+import { Capability } from "../../../../components/types/typesUsed";
 import { pokemonData } from "../../../../data/pokemon";
 import { getPokemonImageURL } from "../../../../helpers";
 import useMediaQuery from "../../../../hooks/useMediaQuery";
@@ -322,9 +324,17 @@ function DeleteSingleListItem(props: { itemId: string }) {
   });
 
   const handleDelete = async () => {
-    if (user?.otherinfo?.permissions !== "Admin") return;
+    // Same gate as the rest of this tool (ManageLists capability, admins
+    // implicitly included), matching the admin/pokemon_lists Firestore rule.
+    if (!hasCapability(user, Capability.ManageLists)) return;
     try {
       await mutateAsync({ itemIdInput: itemId });
+      await logAuditEvent({
+        action: "lists.edit",
+        ...actorFrom(user),
+        targetPath: "admin/pokemon_lists",
+        details: { deleted: itemId },
+      });
       close();
       await queryClient.invalidateQueries({ queryKey: ["get-admin-pokemon-lists"] });
       toastSuccess("List deleted.");

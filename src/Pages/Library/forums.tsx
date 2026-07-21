@@ -37,8 +37,10 @@ export default function ForumGuideTab() {
       <Section title="The forum categories">
         <Text mb={8}>
           Every category has its own purpose and its own rules about who can
-          start threads. Anyone can read and (unless the host restricted a
-          thread) reply; creating threads is what differs.
+          start threads. Approved members can read and (unless the host
+          restricted a thread) reply; creating threads is what differs.
+          Applicants wait for approval before the boards open up, and only
+          Main Forum is readable logged out.
         </Text>
         <ScrollArea type="auto">
           <Table withTableBorder withColumnBorders fz={14} miw={560}>

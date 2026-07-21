@@ -223,17 +223,21 @@ const ENCOUNTERS = {
     required: ["tyranitar"],
     extras: ["graveler", "lickitung", "gurdurr", "druddigon", "zweilous", "noibat", "lampent", "floatzel", "poliwhirl", "geodude"],
   },
+  // Brief says "do not engage" the Totem Lurantis, so it stays an optional
+  // encounter, never a required defeat.
   "lush-jungle-excursion": {
-    required: ["lurantis"],
-    extras: ["fomantis", "bounsweet", "steenee", "comfey", "oranguru", "passimian", "paras", "pinsir", "zubat", "ekans", "koffing"],
+    required: [],
+    extras: ["lurantis", "fomantis", "bounsweet", "steenee", "comfey", "oranguru", "passimian", "paras", "pinsir", "zubat", "ekans", "koffing"],
   },
+  // Brief says "avoid defeating" the Totem Electivire; optional only.
   "the-annual-blackout": {
-    required: ["electivire"],
-    extras: ["elekid", "electabuzz", "magnemite", "grubbin", "charjabug", "togedemaru", "emolga"],
+    required: [],
+    extras: ["electivire", "elekid", "electabuzz", "magnemite", "grubbin", "charjabug", "togedemaru", "emolga"],
   },
+  // Chuuster the Pikachu is the protect target, not a foe to beat.
   "pika-guards": {
-    required: ["pikachu"],
-    extras: ["salandit", "garbodor", "drowzee", "wingull", "pyukumuku", "corsola", "staryu", "sandygast"],
+    required: [],
+    extras: ["pikachu", "salandit", "garbodor", "drowzee", "wingull", "pyukumuku", "corsola", "staryu", "sandygast"],
   },
   "trouble-in-the-tree": {
     required: ["braviary"],
@@ -275,9 +279,11 @@ const ENCOUNTERS = {
     required: ["yamask", "durant"],
     extras: ["drilbur", "trapinch", "hippopotas", "silicobra", "skorupi"],
   },
+  // The brief names no species to beat (rival runners, Gym Leader Milo), so
+  // this is a gather quest: no required foes, species stay optional.
   "turffield-harvest-festival": {
-    required: ["gossifleur", "eldegoss"],
-    extras: ["wooloo", "yamper", "skwovet", "rookidee", "nickit"],
+    required: [],
+    extras: ["gossifleur", "eldegoss", "wooloo", "yamper", "skwovet", "rookidee", "nickit"],
   },
   "a-shadow-in-the-steam": {
     required: [],

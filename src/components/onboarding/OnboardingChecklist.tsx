@@ -225,10 +225,21 @@ export default function OnboardingChecklist(props: { intro?: string }) {
           </StepRow>
         </Stack>
       </Paper>
-      <Text fz={14} c="dimmed">
-        Once all three are done you can post and make threads on the forums. Your character brings
-        their team into every post, and the team earns experience as you roleplay.
-      </Text>
+      {status.hasCharacter && status.hasPokemon && status.hasReadyTeam ? (
+        <Group gap={10} wrap="wrap">
+          <Text fz={14} c="#7CD992">
+            All set! Next step: jump into a thread and make your first post.
+          </Text>
+          <Button component={Link} to="/Forum/Main-Forum" size="xs" radius="xl" color="grape">
+            Browse the forums
+          </Button>
+        </Group>
+      ) : (
+        <Text fz={14} c="dimmed">
+          Once all three are done you can post and make threads on the forums. Your character
+          brings their team into every post, and the team earns experience as you roleplay.
+        </Text>
+      )}
     </Stack>
   );
 }

@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Alert,
+  Anchor,
   Box,
   Button,
   Flex,
@@ -19,6 +20,7 @@ import { IconLogout } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { useAttention } from "../../../lib/attention";
 import BackgroundImage from "../../../assets/images/dashboard-background.jpg";
 import PokemonImage from "../../../assets/images/sylveon.svg";
 import SectionWrapper, { ActionButton } from "../../../components/Dashboard/SectionWrapper";
@@ -77,6 +79,7 @@ export function Dashboard() {
       <Stack gap={isOverMd ? 24 : 12} w="100%">
         <DashboardHeader />
         <CurrencyBar />
+        <NeedsAttention />
         <Announcements />
         <ImportBanner />
         <TabsPanel />
@@ -131,7 +134,7 @@ function DashboardHeader() {
             Guild Member Hub
           </Text>
           <Text component="h1" c="white" fw={800} fz={{ base: 32, sm: 44 }} style={{ lineHeight: 1.1, margin: 0 }}>
-            Snag Dashboard
+            Trainer Dashboard
           </Text>
         </Box>
         <Button className="self-start" variant="subtle" onClick={handleLogout}>
@@ -145,6 +148,33 @@ function DashboardHeader() {
         </Text>
       </Group>
     </Stack>
+  );
+}
+
+/**
+ * Everything currently waiting on the member (egg, weekly cast, snag list,
+ * trade offers, open mission threads), one line each with a jump link.
+ * Hidden when nothing needs attention.
+ */
+function NeedsAttention() {
+  const { items } = useAttention();
+  if (!items.length) return null;
+  return (
+    <Box
+      p="md"
+      style={{ borderRadius: 12, background: "rgba(240,198,116,0.08)", border: "1px solid #4a3f28" }}
+    >
+      <Text fz={14} fw={800} c="#F5C842" tt="uppercase" mb={6} style={{ letterSpacing: 2 }}>
+        Needs your attention
+      </Text>
+      <Stack gap={4}>
+        {items.map((item) => (
+          <Anchor key={item.key} component={Link} to={item.link} fz={15} c="gray.2" underline="hover">
+            {item.text}
+          </Anchor>
+        ))}
+      </Stack>
+    </Box>
   );
 }
 

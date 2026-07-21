@@ -28,6 +28,12 @@ function SubTitle(props: { children: React.ReactNode }) {
 interface FaqItem {
   q: string;
   a: React.ReactNode;
+  /**
+   * Guild lore ported from Gaia that current site mechanics do not implement
+   * (or implement differently). Shown with a heads-up banner and excluded
+   * from the FAQPage structured data so search engines only index what works.
+   */
+  unbuilt?: boolean;
 }
 
 /** Exported so the Library page can build FAQPage JSON-LD from the entries. */
@@ -213,6 +219,7 @@ export const FAQ: FaqItem[] = [
   },
   {
     q: "How do evolutions work?",
+    unbuilt: true,
     a: (
       <Stack gap={4}>
         <P>
@@ -279,6 +286,7 @@ export const FAQ: FaqItem[] = [
   },
   {
     q: "How do Abilities work?",
+    unbuilt: true,
     a: (
       <P>
         Each Pokemon and Hybrid has an innate Ability, like in the games. You pick
@@ -292,6 +300,7 @@ export const FAQ: FaqItem[] = [
   },
   {
     q: "How can I use Mega Evolution or Z-Moves?",
+    unbuilt: true,
     a: (
       <Stack gap={4}>
         <P>
@@ -416,6 +425,7 @@ export const FAQ: FaqItem[] = [
   },
   {
     q: "Can I catch shiny Pokemon?",
+    unbuilt: true,
     a: (
       <P>
         Normally no, though shiny legendaries can be caught with a Cherish Ball.
@@ -500,6 +510,7 @@ export const FAQ: FaqItem[] = [
   },
   {
     q: "How do the Shadow Meter and Shadow Moves work?",
+    unbuilt: true,
     a: (
       <Stack gap={4}>
         <P>
@@ -522,6 +533,7 @@ export const FAQ: FaqItem[] = [
   },
   {
     q: "How do I purify a Shadow Pokemon?",
+    unbuilt: true,
     a: (
       <Stack gap={4}>
         <P>
@@ -581,6 +593,12 @@ export default function FaqTab() {
               </Text>
             </Accordion.Control>
             <Accordion.Panel>
+              {item.unbuilt && (
+                <Text fz={13} c="#F5C842" mb={8}>
+                  Guild lore from the Gaia days: parts of this are not (or not yet) how the
+                  site works. For live numbers, see the Shadow guide and The War Room.
+                </Text>
+              )}
               <Box>{item.a}</Box>
             </Accordion.Panel>
           </Accordion.Item>

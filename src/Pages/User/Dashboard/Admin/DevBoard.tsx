@@ -14,6 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { SectionLoader } from "../../../../components/navigation/loading";
+import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 
 /**
  * Dev Board: the staff's development inbox and planning space.
@@ -125,6 +126,12 @@ export default function DevBoard() {
       await updateDoc(doc(db, "tickets", item.id), {
         status: promote ? "accepted" : "discarded",
       });
+      await logAuditEvent({
+        action: "devboard.edit",
+        ...actorFrom(user),
+        targetPath: `tickets/${item.id}`,
+        details: { ticket: promote ? "promoted" : "discarded" },
+      });
     });
 
   const setStatus = (id: string, status: string) =>
@@ -132,6 +139,12 @@ export default function DevBoard() {
       const { doc, updateDoc } = await import("firebase/firestore");
       const { db } = await import("../../../../context/firebase");
       await updateDoc(doc(db, "devBoard", id), { status, updatedAt: new Date() });
+      await logAuditEvent({
+        action: "devboard.edit",
+        ...actorFrom(user),
+        targetPath: `devBoard/${id}`,
+        details: { ticket: status },
+      });
     });
 
   const removeDoc = (id: string) =>
@@ -139,6 +152,12 @@ export default function DevBoard() {
       const { deleteDoc, doc } = await import("firebase/firestore");
       const { db } = await import("../../../../context/firebase");
       await deleteDoc(doc(db, "devBoard", id));
+      await logAuditEvent({
+        action: "devboard.edit",
+        ...actorFrom(user),
+        targetPath: `devBoard/${id}`,
+        details: { deleted: id },
+      });
     });
 
   const addNote = () =>

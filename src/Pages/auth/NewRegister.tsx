@@ -172,9 +172,9 @@ export function NewRegister() {
           <Stack gap={10}>
             <Alert color="teal" title="Application received" role="status" aria-live="polite">
               We sent a verification link to <b>{form.values.email}</b>. Open it to confirm your
-              email address. {gaia === "No" ? "Our team will review your application" : "Our team will review your account"}{" "}
-              once your email is verified. Every registration is checked manually by an admin, so
-              expect a short wait before you can log in.
+              email address is really yours.{" "}
+              {gaia === "No" ? "Our team reviews every application" : "Our team reviews every account"}{" "}
+              by hand, so expect a short wait before you can log in.
             </Alert>
             <Text c="dimmed" size="sm">
               Did not get it? Check your spam folder. You can close this page.

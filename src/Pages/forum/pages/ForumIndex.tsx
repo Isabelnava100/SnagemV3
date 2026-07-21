@@ -173,6 +173,7 @@ export default function ForumIndex() {
 
   const [archive, setArchive] = React.useState(false);
   const [search, setSearch] = React.useState("");
+  const [searchAll, setSearchAll] = React.useState(false);
   const [page, setPage] = React.useState(1);
 
   // Main-Forum is publicly viewable; every other board is members-only
@@ -193,9 +194,30 @@ export default function ForumIndex() {
     enabled: !publicOnly,
   });
 
+  // Cross-category search: fetch every accessible board's list and tag each
+  // thread with its home forum. Cached per board by react-query, so flipping
+  // the toggle mostly reuses lists the tabs already loaded.
+  const crossSearch = !!search && searchAll && !!user;
+  const allThreads = useQuery({
+    queryKey: ["forum-threads-all", archive, tabs.map((t) => t.link).join(",")],
+    queryFn: async () => {
+      const lists = await Promise.all(
+        tabs.map(async (t) => {
+          const rows = await getThreadList(t.link, archive).catch(() => []);
+          return rows.map((thread) => ({ thread, forumLink: t.link, forumLabel: t.label }));
+        })
+      );
+      return lists.flat();
+    },
+    enabled: crossSearch,
+  });
+
   const visible = React.useMemo(() => {
     return (threads ?? []).filter((thread) => threadMatches(thread, search));
   }, [threads, search]);
+  const crossVisible = React.useMemo(() => {
+    return (allThreads.data ?? []).filter((row) => threadMatches(row.thread, search));
+  }, [allThreads.data, search]);
 
   const totalPages = Math.max(1, Math.ceil(visible.length / THREADS_PER_PAGE));
   const safePage = Math.min(page, totalPages);
@@ -231,19 +253,30 @@ export default function ForumIndex() {
         title="Snagem Forums"
         subtitle="Where the guild's stories happen. Pick a board, join a thread, or start your own."
         aside={
-          <TextInput
-            placeholder="Search the Forums..."
-            aria-label="Search the Forums"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.currentTarget.value);
-              setPage(1);
-            }}
-            size="xs"
-            w={{ base: "100%", sm: 220 }}
-            radius="xl"
-            styles={{ input: { background: "rgba(0,0,0,0.25)" } }}
-          />
+          <Stack gap={6} w={{ base: "100%", sm: 220 }}>
+            <TextInput
+              placeholder="Search the Forums..."
+              aria-label="Search the Forums"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.currentTarget.value);
+                setPage(1);
+              }}
+              size="xs"
+              w="100%"
+              radius="xl"
+              styles={{ input: { background: "rgba(0,0,0,0.25)" } }}
+            />
+            {!!search && !!user && (
+              <Switch
+                size="xs"
+                label="Search all categories"
+                checked={searchAll}
+                onChange={(e) => setSearchAll(e.currentTarget.checked)}
+                styles={{ label: { color: "rgba(255,255,255,0.8)" } }}
+              />
+            )}
+          </Stack>
         }
         mb={16}
       />
@@ -336,6 +369,28 @@ export default function ForumIndex() {
         </Stack>
       ) : isPending ? (
         <SectionLoader />
+      ) : crossSearch ? (
+        <Stack gap={8} mt={8}>
+          {allThreads.isPending ? (
+            <SectionLoader />
+          ) : (
+            <>
+              {crossVisible.slice(0, 60).map((row) => (
+                <Box key={`${row.forumLink}-${row.thread.id}`}>
+                  <Text fz={12} c="dimmed" tt="uppercase" fw={700} mb={2}>
+                    {row.forumLabel}
+                  </Text>
+                  <ThreadRow thread={row.thread} forum={row.forumLink} />
+                </Box>
+              ))}
+              {!crossVisible.length && (
+                <Text fz={16} c="dimmed" ta="center" py={30}>
+                  Nothing matches across the boards.
+                </Text>
+              )}
+            </>
+          )}
+        </Stack>
       ) : (
         <Stack gap={8} mt={8}>
           {pageThreads.map((thread) => (

@@ -18,6 +18,7 @@ import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { getUnseenAnnouncement } from "../../queries/announcements";
+import { useAttention } from "../../lib/attention";
 import { AppNotification, getNotifications, markNotificationsRead } from "../../queries/game";
 import {
   AdminAccessIcon,
@@ -428,6 +429,7 @@ function AlertsSideButton() {
 function MoreSideButton(props: { onClick: () => void }) {
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
   const { isOverSm } = useMediaQuery();
+  const { items } = useAttention();
   return (
     <UnstyledButton
       onClick={props.onClick}
@@ -444,7 +446,10 @@ function MoreSideButton(props: { onClick: () => void }) {
         alignItems: "center",
       }}
     >
-      <SnagIcon name="menu" size={isUnder900 ? 40 : 44} title="Menu" />
+      <Box style={{ position: "relative" }}>
+        <SnagIcon name="menu" size={isUnder900 ? 40 : 44} title="Menu" />
+        <AlertDot show={items.length > 0} />
+      </Box>
       {!isUnder900 && (
         <Text c="white" tt="uppercase" fz={14}>
           Menu
@@ -544,11 +549,13 @@ function AlertsTabButton() {
 }
 
 function MoreButton(props: { active: boolean; onClick: () => void }) {
+  const { items } = useAttention();
   return (
     <UnstyledButton onClick={props.onClick} style={{ flex: 1 }}>
       <Stack gap={4} align="center" justify="center" pt={10} pb={6}>
         <Box
           style={{
+            position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -561,6 +568,7 @@ function MoreButton(props: { active: boolean; onClick: () => void }) {
           }}
         >
           <SnagIcon name="menu" size={22} title="Menu" style={{ opacity: props.active ? 1 : 0.65 }} />
+          <AlertDot show={items.length > 0} />
         </Box>
         <Text fz={14} fw={props.active ? 700 : 500} c={props.active ? "white" : "rgba(255,255,255,0.6)"} tt="uppercase">
           Menu

@@ -23,6 +23,7 @@ import {
 } from "firebase-admin/firestore";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import {
   onDocumentCreated,
   onDocumentUpdated,
@@ -544,6 +545,12 @@ async function notifyUsers(
     if (notification.type === "mention" && (settings.directPingNotifications ?? true) === false) {
       return false;
     }
+    if (
+      notification.type === "bookmark_post" &&
+      (settings.postsAndBookmarkedThreadsNotification ?? true) === false
+    ) {
+      return false;
+    }
     return true;
   });
   if (!allowed.length) return;
@@ -898,7 +905,10 @@ export const rollEncounter = onCall(async (request) => {
       }
     }
     if (!rodTier) {
-      throw new HttpsError("failed-precondition", "You need a fishing rod. The Snag Mall sells them.");
+      throw new HttpsError(
+        "failed-precondition",
+        "You need a fishing rod. Complete the Rod Thief mission to earn your first, or buy one from the Snag Mall."
+      );
     }
   }
 
@@ -2382,11 +2392,12 @@ export const publishForumThread = onCall(async (request) => {
     xpConfig = normalizeXpConfig(xpOverride);
   }
 
-  // Only staff (admins or hosting directors) create roleplays that can award XP
-  // instantly; everyone else's threads always defer XP to the close review.
+  // XP is always applied per post (see publishForumPost); pendingXp is only a
+  // display log for the close summary. xpAward is a retired legacy field kept
+  // on the doc for old readers, it changes nothing.
   const staffCreated =
     isAdmin(member) || hasCap(member, "HostMainForum") || hasCap(member, "HostEvents");
-  const xpAward = staffCreated && request.data?.xpAward === "instant" ? "instant" : "onClose";
+  const xpAward = "onClose";
 
   const threadsCol = db.collection(`forum/${forum}/threads`);
   const countSnap = await threadsCol.count().get();
@@ -2399,10 +2410,7 @@ export const publishForumThread = onCall(async (request) => {
     title,
     createdBy: member.username,
     hostUid: uid,
-    // Admin-created threads apply XP immediately; non-admin threads accrue XP
-    // into pendingXp for review + commit at close (see publishForumPost).
     createdByAdmin: isAdmin(member),
-    // staffCreated + xpAward drive the instant-vs-on-close XP choice.
     staffCreated,
     xpAward,
     closed: false,
@@ -2808,11 +2816,18 @@ export const grantCurrency = onCall(async (request) => {
     const refs = userIds.map((targetUid: string) => db.doc(`users/${targetUid}/bag/currency`));
     const snaps = await Promise.all(refs.map((ref: DocumentReference) => tx.get(ref)));
     snaps.forEach((snap: DocumentSnapshot, i: number) => {
-      tx.set(
-        refs[i],
-        { [currency]: addCurrency(snap.data()?.[currency], amount) },
-        { merge: true }
-      );
+      const cur = snap.data() ?? {};
+      const update: Record<string, unknown> = {
+        [currency]: addCurrency(cur[currency], amount),
+      };
+      // "3 pieces = 1 emblem" everywhere pieces are granted, not just mission
+      // grading: every 3rd cumulative piece pays out a full emblem.
+      if (currency === "snagEmblemPieces" && amount > 0) {
+        const before = parseInt(String(cur.snagEmblemPieces ?? "0"), 10) || 0;
+        const emblems = Math.floor((before + amount) / 3) - Math.floor(before / 3);
+        if (emblems > 0) update.snagemblem = addCurrency(cur.snagemblem, emblems);
+      }
+      tx.set(refs[i], update, { merge: true });
     });
   });
 
@@ -3372,6 +3387,15 @@ export const approveImport = onCall(async (request) => {
       const amount = clampInt((currency as Record<string, unknown>)[key], 0, 100_000_000);
       if (amount > 0) currencyUpdate[key] = addCurrency(prev[key], amount);
     });
+    // Imported emblem pieces convert like everywhere else: 3 pieces = 1 emblem.
+    const piecesGained = clampInt((currency as Record<string, unknown>).snagEmblemPieces, 0, 100_000_000);
+    if (piecesGained > 0) {
+      const before = parseInt(String(prev.snagEmblemPieces ?? "0"), 10) || 0;
+      const emblems = Math.floor((before + piecesGained) / 3) - Math.floor(before / 3);
+      if (emblems > 0) {
+        currencyUpdate.snagemblem = addCurrency(currencyUpdate.snagemblem ?? prev.snagemblem, emblems);
+      }
+    }
     if (Object.keys(currencyUpdate).length) tx.set(currencyRef, currencyUpdate, { merge: true });
 
     // Items
@@ -3885,10 +3909,11 @@ export const onThreadClosed = onDocumentUpdated(
     // members never need a separate "submit for grading" step.
     if (after.missionId) {
       const threadLink = `/Forum/${forum}/thread/${threadId}`;
+      // Lifetime dedup, any status: a reopened-then-reclosed thread must not
+      // file a second submission after the first was already graded.
       const dup = await db
         .collection("missionSubmissions")
         .where("threadLink", "==", threadLink)
-        .where("status", "==", "pending")
         .limit(1)
         .get();
       if (dup.empty) {
@@ -4016,7 +4041,9 @@ const DITTO_IDX = 132;
 
 /** The Daycare: leave one pair, get an egg after mechanics.hatchPosts
  * qualifying posts OR mechanics.hatchDays days, whichever comes first.
- * Parents must share a type, share a species, or include a Ditto. */
+ * Parents must be male + female sharing a non-Undiscovered egg group, or
+ * include a Ditto (the universal partner; Undiscovered species pair only with
+ * Ditto, and 7-star legendaries/mythicals never breed). */
 export const breedPokemon = onCall(async (request) => {
   const uid = requireAuth(request);
   const leftId = requireString(request.data?.leftId, "left parent", 80);
@@ -4162,10 +4189,19 @@ function tradeSnapshotOf(pokemonId: string, poke: Record<string, any>, curve: nu
 
 /** Throws if the pokemon sits in a locked team on an open battle thread. */
 async function assertTradable(uid: string, pokemonId: string): Promise<void> {
-  const [teamsSnap, locksSnap] = await Promise.all([
+  const [teamsSnap, locksSnap, daycareSnap] = await Promise.all([
     db.doc(`users/${uid}/bag/teams`).get(),
     db.doc(`users/${uid}/bag/threadLocks`).get(),
+    db.doc(`users/${uid}/bag/daycare`).get(),
   ]);
+  // A daycare parent stays put until the egg hatches or the pair is broken up.
+  const daycare = (daycareSnap.data() as Record<string, any>) ?? {};
+  if (daycare.active && (daycare.leftId === pokemonId || daycare.rightId === pokemonId)) {
+    throw new HttpsError(
+      "failed-precondition",
+      "That pokemon is at the Daycare with an egg on the way. Collect or break up the pair first."
+    );
+  }
   const locks = (locksSnap.data() as Record<string, any>) ?? {};
   const lockedTeamIds = new Set<string>(
     Object.values(locks).flatMap((l: any) => (Array.isArray(l?.teamIds) ? l.teamIds : []))
@@ -4198,12 +4234,16 @@ function sanitizeTradeWants(raw: any): Record<string, unknown> {
     .slice(0, 6);
   const minLevel = Math.max(0, Math.min(100, Math.trunc(Number(raw?.minLevel)) || 0));
   const minStar = Math.max(0, Math.min(7, Math.trunc(Number(raw?.minStar)) || 0));
+  const nature = NATURE_NAMES.includes(String(raw?.nature ?? "")) ? String(raw.nature) : "";
+  const gender = raw?.gender === "M" || raw?.gender === "F" ? raw.gender : "";
   return {
     species,
     types,
     shiny: raw?.shiny === true,
     minLevel,
     minStar,
+    nature,
+    gender,
     note: String(raw?.note ?? "").slice(0, 300),
   };
 }
@@ -4255,7 +4295,26 @@ export const cancelTradeListing = onCall(async (request) => {
     throw new HttpsError("permission-denied", "Only the listing owner can take it down.");
   }
   if (listing.status !== "open") throw new HttpsError("failed-precondition", "This listing is not open.");
-  await ref.update({ status: "cancelled", resolvedAt: new Date() });
+
+  // Decline every open offer so offerers get a proper notice instead of the
+  // listing silently vanishing from the board.
+  const offers = (listing.offers as Record<string, any>) ?? {};
+  const updates: Record<string, unknown> = { status: "cancelled", resolvedAt: new Date() };
+  const declinedUids = new Set<string>();
+  for (const [offerId, offer] of Object.entries(offers)) {
+    if (offer?.status === "open") {
+      updates[`offers.${offerId}.status`] = "declined";
+      if (offer.fromUid) declinedUids.add(String(offer.fromUid));
+    }
+  }
+  await ref.update(updates);
+  if (declinedUids.size) {
+    await notifyUsers([...declinedUids], {
+      type: "trade",
+      text: `The listing for ${listing.pokemon?.name ?? "a pokemon"} was taken down; your offer was declined.`,
+      link: "/Trading",
+    });
+  }
   return { ok: true };
 });
 
@@ -4359,7 +4418,14 @@ export const respondTradeOffer = onCall(async (request) => {
     // stripped so a traded pokemon arrives unassigned.
     const ownerRef = db.doc(`users/${listing.ownerUid}/bag/owned_pokemons`);
     const offerRef = db.doc(`users/${offer.fromUid}/bag/owned_pokemons`);
-    const [ownerSnap, offerSnap] = await Promise.all([tx.get(ownerRef), tx.get(offerRef)]);
+    const ownerTeamsRef = db.doc(`users/${listing.ownerUid}/bag/teams`);
+    const offerTeamsRef = db.doc(`users/${offer.fromUid}/bag/teams`);
+    const [ownerSnap, offerSnap, ownerTeamsSnap, offerTeamsSnap] = await Promise.all([
+      tx.get(ownerRef),
+      tx.get(offerRef),
+      tx.get(ownerTeamsRef),
+      tx.get(offerTeamsRef),
+    ]);
     const ownerOwned = (ownerSnap.data() as Record<string, any>) ?? {};
     const offerOwned = (offerSnap.data() as Record<string, any>) ?? {};
     const listedPokemonId = String(listing.pokemon?.pokemonId ?? "");
@@ -4374,6 +4440,25 @@ export const respondTradeOffer = onCall(async (request) => {
     };
     tx.update(ownerRef, { [listedPokemonId]: FieldValue.delete(), [randomUUID()]: strip(offered) });
     tx.update(offerRef, { [offeredPokemonId]: FieldValue.delete(), [randomUUID()]: strip(listed) });
+    // A traded pokemon may sit on an (unlocked) team: pull its id out so no
+    // team keeps a dangling reference to a pokemon that left the box.
+    const scrubTeams = (
+      teamsRef: FirebaseFirestore.DocumentReference,
+      snap: FirebaseFirestore.DocumentSnapshot,
+      goneId: string
+    ) => {
+      const teams = (snap.data() as Record<string, any>) ?? {};
+      const updates: Record<string, unknown> = {};
+      for (const [teamId, team] of Object.entries(teams)) {
+        const ids: string[] = Array.isArray((team as any)?.pokemon_ids) ? (team as any).pokemon_ids : [];
+        if (ids.includes(goneId)) {
+          updates[`${teamId}.pokemon_ids`] = ids.filter((id) => id !== goneId);
+        }
+      }
+      if (Object.keys(updates).length) tx.update(teamsRef, updates);
+    };
+    scrubTeams(ownerTeamsRef, ownerTeamsSnap, listedPokemonId);
+    scrubTeams(offerTeamsRef, offerTeamsSnap, offeredPokemonId);
     const declineOthers = Object.fromEntries(
       Object.entries(offers)
         .filter(([id, o]: [string, any]) => id !== offerId && o?.status === "open")
@@ -4960,6 +5045,36 @@ export const pickUpMission = onCall(async (request) => {
     throw new HttpsError("not-found", "Mission not found.");
   }
 
+  // Repeats are allowed, but only one OPEN run of a given mission per member;
+  // different missions may run concurrently.
+  const openDup = await db
+    .collection("forum/Quests/threads")
+    .where("hostUid", "==", uid)
+    .where("missionId", "==", missionId)
+    .where("closed", "==", false)
+    .limit(1)
+    .get();
+  if (!openDup.empty) {
+    throw new HttpsError(
+      "failed-precondition",
+      "You already have an open thread for this mission. Finish and close it before picking it up again."
+    );
+  }
+
+  // Master-tier missions need a character with master clearance (a Division:
+  // Hybrid or Channeler, granted via the Research guide).
+  if (String(mission.tier) === "Master") {
+    const charsSnap = await db.doc(`users/${uid}/bag/characters`).get();
+    const chars = Object.values((charsSnap.data() ?? {}) as Record<string, { type?: string }>);
+    const cleared = chars.some((c) => c?.type && c.type !== "None");
+    if (!cleared) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Master missions need a character with master clearance. Request it from the Research page first."
+      );
+    }
+  }
+
   const esc = (v: unknown) =>
     String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const parts: string[] = [];
@@ -5074,6 +5189,16 @@ export const submitMission = onCall(async (request) => {
   const missionId = requireString(request.data?.missionId, "mission", 80);
   const threadLink = requireString(request.data?.threadLink, "threadLink", 500);
 
+  // Same lifetime dedup as the auto-filer: one submission per thread, ever.
+  const dup = await db
+    .collection("missionSubmissions")
+    .where("threadLink", "==", threadLink)
+    .limit(1)
+    .get();
+  if (!dup.empty) {
+    throw new HttpsError("failed-precondition", "That thread was already submitted for grading.");
+  }
+
   const ref = await db.collection("missionSubmissions").add({
     missionId,
     submitterUid: uid,
@@ -5088,6 +5213,39 @@ export const submitMission = onCall(async (request) => {
 });
 
 // --- Missions: grade (grader-gated) ----------------------------------------
+// Mission special_item values that map to a real catalog item get granted
+// automatically on approval (the rest stay narrative flavor for the grader
+// to hand out via Donate). Key = itemKeyOf(special_item).
+const SPECIAL_ITEM_GRANTS: Record<
+  string,
+  { itemId: string; name: string; filePath: string; category: string }
+> = {
+  "old-rod": {
+    itemId: "item_0445",
+    name: "Old Rod",
+    filePath: "key-item/old-rod.png",
+    category: "key-item",
+  },
+  "one-black-glasses": {
+    itemId: "item_0240",
+    name: "black-glasses",
+    filePath: "hold-item/black-glasses.png",
+    category: "hold-item",
+  },
+  "1-lemonade": {
+    itemId: "item_0032",
+    name: "lemonade",
+    filePath: "medicine/lemonade.png",
+    category: "medicine",
+  },
+  "1-tiny-mushroom": {
+    itemId: "item_0086",
+    name: "tiny-mushroom",
+    filePath: "valuable-item/tiny-mushroom.png",
+    category: "valuable-item",
+  },
+};
+
 export const gradeMission = onCall(async (request) => {
   const uid = requireAuth(request);
   const member = await loadMember(uid);
@@ -5109,7 +5267,20 @@ export const gradeMission = onCall(async (request) => {
 
   const targetUid = String(sub.submitterUid);
   const coins = Math.max(0, Math.trunc(Number(awards.coins ?? 0)));
+  // The mission's special_item is granted for real when it maps to a catalog
+  // item (e.g. Rod Thief's Old Rod, a member's first fishing rod).
+  const missionSnap = await db.doc(`missions/${String(sub.missionId)}`).get();
+  const missionData = missionSnap.data();
+  if (awards.emblemPiece && missionData?.emblem_eligible === false) {
+    throw new HttpsError(
+      "failed-precondition",
+      "This mission is not emblem-eligible; uncheck the emblem piece to grade it."
+    );
+  }
+  const specialItem = String(missionData?.special_item ?? "");
+  const grant = specialItem ? SPECIAL_ITEM_GRANTS[itemKeyOf(specialItem)] : undefined;
   const currencyRef = db.doc(`users/${targetUid}/bag/currency`);
+  const bagRef = db.doc(`users/${targetUid}/bag/items`);
   await db.runTransaction(async (tx) => {
     const curSnap = await tx.get(currencyRef);
     const cur = curSnap.data() ?? {};
@@ -5121,9 +5292,10 @@ export const gradeMission = onCall(async (request) => {
       if (pieces % 3 === 0) update.snagemblem = addCurrency(cur.snagemblem, 1);
     }
     if (Object.keys(update).length) tx.set(currencyRef, update, { merge: true });
-    tx.set(subRef, { status: "graded", gradedBy: member.username, gradedAt: new Date(), awarded: { coins, emblemPiece: !!awards.emblemPiece } }, { merge: true });
+    if (grant) bagIncrement(tx, bagRef, grant.itemId, grant, 1);
+    tx.set(subRef, { status: "graded", gradedBy: member.username, gradedAt: new Date(), awarded: { coins, emblemPiece: !!awards.emblemPiece, ...(grant ? { specialItem: grant.name } : {}) } }, { merge: true });
   });
-  await notifyUsers([targetUid], { type: "reward", text: `Your mission was graded: +${coins} Snag Coins${awards.emblemPiece ? " and a Snag Emblem Piece" : ""}.`, link: "/Dashboard" });
+  await notifyUsers([targetUid], { type: "reward", text: `Your mission was graded: +${coins} Snag Coins${awards.emblemPiece ? " and a Snag Emblem Piece" : ""}${grant ? ` and a ${grant.name}` : ""}.`, link: "/Dashboard" });
   return { ok: true };
 });
 
@@ -5268,7 +5440,19 @@ export const grantMasterMission = onCall(async (request) => {
     if (!t) { t = { type: req.type, missionsCompleted: 0, abilities: [] }; types.push(t); }
     t.missionsCompleted = Math.min(10, (t.missionsCompleted ?? 0) + 1);
     t.abilities = [...(t.abilities ?? []), ability];
-    tx.set(researchRef, { [req.characterId]: { ...entry, characterId: req.characterId, types } }, { merge: true });
+    // Completing the 10th mission of a type is grand mastery: it unlocks the
+    // final ascension phase (Mega and Z access) the Research tracker shows.
+    const ascended: Record<string, boolean> = {};
+    if (t.missionsCompleted >= 10) {
+      ascended.grandMasterComplete = true;
+      ascended.megaUnlocked = true;
+      ascended.zmoveUnlocked = true;
+    }
+    tx.set(
+      researchRef,
+      { [req.characterId]: { ...entry, ...ascended, characterId: req.characterId, types } },
+      { merge: true }
+    );
     tx.set(reqRef, { status: "complete", grantedBy: member.username, grantedAt: new Date(), ability }, { merge: true });
   });
   await notifyUsers([String(req.uid)], { type: "reward", text: `Master Mission complete: learned ${ability}.`, link: "/Research" });
@@ -5287,8 +5471,13 @@ export const evoService = onCall(async (request) => {
     unlock_potential: { currency: "snagemblem", amount: 2 },
     new_adaptations: { currency: "pokecoin", amount: 25 },
   };
-  const price = PRICES[action];
+  let price = PRICES[action];
   if (!price) throw new HttpsError("invalid-argument", "Unknown service.");
+  // New Adaptations is advertised as "2 Emblems / 25 Coins": honor the
+  // member's chosen payment method instead of forcing coins.
+  if (action === "new_adaptations" && request.data?.payWith === "snagemblem") {
+    price = { currency: "snagemblem", amount: 2 };
+  }
 
   const currencyRef = db.doc(`users/${uid}/bag/currency`);
   const evoRef = db.doc(`users/${uid}/bag/evo`);
@@ -5720,6 +5909,8 @@ export const assignPokemonCharacter = onCall(async (request) => {
   const characterId = String(request.data?.characterId ?? "").slice(0, 80);
 
   const pokeRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  // Self-trades honor the same battle/daycare locks as board trades.
+  await assertTradable(uid, pokemonId);
   await db.runTransaction(async (tx) => {
     const [pokeSnap, charSnap] = await Promise.all([
       tx.get(pokeRef),
@@ -5794,10 +5985,11 @@ export const requestChallenge = onCall(async (request) => {
   const stageId = requireString(request.data?.stageId, "stage", 120);
   const stageTitle = String(request.data?.stageTitle ?? "").slice(0, 120);
 
-  // Rematches are only open against a leader whose badge is already earned.
+  // Rematches are only open against a leader whose badge is already earned;
+  // first-time gym/trial runs are only open for stages not yet cleared.
+  const progress = (await db.doc(`users/${uid}/bag/challenges`).get()).data() ?? {};
   let rematchTier = 0;
   if (kind === "rematch") {
-    const progress = (await db.doc(`users/${uid}/bag/challenges`).get()).data() ?? {};
     const earned: string[] = (progress.badges as Record<string, string[]>)?.[regionOrIsland] ?? [];
     const leader = stageTitle || stageId;
     if (!earned.includes(leader)) {
@@ -5805,6 +5997,16 @@ export const requestChallenge = onCall(async (request) => {
     }
     rematchTier =
       (Number((progress.rematches as Record<string, Record<string, number>>)?.[regionOrIsland]?.[leader]) || 0) + 1;
+  } else if (kind === "gym") {
+    const earned: string[] = (progress.badges as Record<string, string[]>)?.[regionOrIsland] ?? [];
+    if (earned.includes(stageTitle || stageId)) {
+      throw new HttpsError("failed-precondition", "You already hold this badge. Use the Rematch Ladder instead.");
+    }
+  } else if (kind === "trial") {
+    const done: string[] = Array.isArray(progress.trialsCompleted) ? progress.trialsCompleted : [];
+    if (done.includes(stageId)) {
+      throw new HttpsError("failed-precondition", "You already completed this trial.");
+    }
   }
 
   // One open request per member and stage; a repeat tap returns the first one.
@@ -5992,7 +6194,9 @@ export const buyLottoTicket = onCall(async (request) => {
 
     tx.set(currencyRef, { gengarcoin: geng - 1 }, { merge: true });
     tx.set(lottoRef, {
-      jackpot: FieldValue.increment(1),
+      // First-ever ticket seeds the 100-token base pot so the stored jackpot
+      // matches what the client is told (drawLotto re-seeds it after a draw).
+      jackpot: lottoSnap.exists ? FieldValue.increment(1) : 101,
       ticketCount: FieldValue.increment(1),
       weekId,
       tickets: FieldValue.arrayUnion({ uid, name: member.username, number, weekId }),
@@ -6038,6 +6242,12 @@ export const drawLotto = onCall(async (request) => {
   const drawn = randomInt(1, 51); // 1..50
   const jackpot = Math.max(0, Math.trunc(Number(lotto.jackpot ?? 100)));
   const tickets = (Array.isArray(lotto.tickets) ? lotto.tickets : []) as Array<{ uid: string; number: number }>;
+  if (!tickets.length) {
+    throw new HttpsError(
+      "failed-precondition",
+      "There are no lotto entries this week; drawing now would discard the pot."
+    );
+  }
   const winners = [...new Set(tickets.filter((t) => t.number === drawn).map((t) => t.uid))];
 
   // Split the jackpot evenly among winners. Any floor remainder is handed out
@@ -6219,3 +6429,24 @@ export const claimSnagBox = onCall(async (request) => {
   });
   return { ok: true, reward };
 });
+
+// ===========================================================================
+// Weekly reset reminder: Monday 00:05 UTC, just after the Snag List / Fishing
+// Pond reset. Opt-out per member via settings.weeklyReminders (default on);
+// notifyUsers additionally honors siteNotifications and mirrors to Discord
+// for members who opted into that.
+// ===========================================================================
+export const weeklyResetReminder = onSchedule(
+  { schedule: "5 0 * * 1", timeZone: "UTC" },
+  async () => {
+    const snap = await db.collection("users").get();
+    const uids = snap.docs
+      .filter((d) => (d.data()?.settings?.weeklyReminders ?? true) !== false)
+      .map((d) => d.id);
+    await notifyUsers(uids, {
+      type: "reward",
+      text: "New week! The Snag List reset and the Fishing Pond restocked.",
+      link: "/Activities",
+    });
+  }
+);

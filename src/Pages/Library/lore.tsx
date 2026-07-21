@@ -15,6 +15,7 @@ import {
   Textarea,
   TextInput,
   Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link } from "react-router-dom";
@@ -580,6 +581,18 @@ export default function LoreTab() {
     );
   }, [books, q, booksWithContent, canEdit]);
 
+  // Cross-book entry search: matches on the entry title or body text, so a
+  // name like "Gyaan" is findable without knowing which book holds it.
+  const entryMatches = React.useMemo(() => {
+    if (!q || q.length < 2) return [];
+    const strip = (html: string) => html.replace(/<[^>]*>/g, " ").toLowerCase();
+    return (allEntries ?? [])
+      .filter((e) => !isEmptyEntry(e))
+      .filter((e) => e.title.toLowerCase().includes(q) || strip(e.body ?? "").includes(q))
+      .slice(0, 12);
+  }, [allEntries, q]);
+  const bookTitleOf = (bookId: string) => books?.find((b) => b.id === bookId)?.title ?? bookId;
+
   if (openBook) {
     return <BookView book={openBook} canEdit={canEdit} onBack={() => setOpenBookId(null)} />;
   }
@@ -588,14 +601,14 @@ export default function LoreTab() {
     <Stack gap={14}>
       <Group justify="space-between" wrap="wrap" gap={8}>
         <TextInput
-          placeholder="Search books"
+          placeholder="Search books and entries"
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
           maw={320}
           w="100%"
           radius="xl"
           styles={{ input: { background: "#2E2D2E" } }}
-          aria-label="Search lore books"
+          aria-label="Search lore books and entries"
         />
         {canEdit && (
           <Button
@@ -632,9 +645,34 @@ export default function LoreTab() {
         </Group>
       )}
 
+      {!!entryMatches.length && (
+        <Stack gap={6}>
+          <Text fz={14} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
+            Matching entries
+          </Text>
+          {entryMatches.map((e) => (
+            <UnstyledButton
+              key={e.id}
+              onClick={() => {
+                setOpenBookId(e.bookId);
+                setSearch("");
+              }}
+              aria-label={`Open ${bookTitleOf(e.bookId)} at ${e.title}`}
+            >
+              <Text fz={15} c="#b088e6">
+                {e.title}{" "}
+                <Text span fz={13} c="dimmed">
+                  in {bookTitleOf(e.bookId)}
+                </Text>
+              </Text>
+            </UnstyledButton>
+          ))}
+        </Stack>
+      )}
+
       {isPending ? (
         <SectionLoader />
-      ) : !shelf.length ? (
+      ) : !shelf.length && !entryMatches.length ? (
         <Text c="dimmed">
           {q ? "No books match your search." : "The Lore Library is empty for now."}
         </Text>

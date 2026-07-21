@@ -374,6 +374,10 @@ export interface TradeWants {
   shiny: boolean;
   minLevel: number;
   minStar: number;
+  /** Exact nature ("" = any). One of the 25 nature names. */
+  nature: string;
+  /** Required gender ("" = any). */
+  gender: "" | "M" | "F";
   note: string;
 }
 

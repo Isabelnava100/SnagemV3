@@ -33,6 +33,7 @@ import { eggGroupsForDex } from "../../lib/eggGroups";
 import { isAdmin } from "../../lib/permissions";
 import { resolveListSlugs } from "../forum/queries";
 import { getPokemonLists, getStarOverrides, setStarOverride } from "../../queries/admin";
+import { getOwnedPokemons } from "../../queries/dashboard";
 import Seo from "../../components/common/Seo";
 import { textFromNode, truncate } from "../../lib/seo/text";
 import FaqTab, { FAQ } from "./faq";
@@ -219,7 +220,27 @@ function PokedexTab() {
       (p) => p.name.toLowerCase().includes(q) || p.idx.includes(q)
     );
   }, [q]);
-  const { shown, hasMore, loadMore } = usePagedList(matches, [q]);
+  // Collection tracker: which species the member owns (any form counts its
+  // dex number). Signed-in only; visitors just browse the dex.
+  const { data: ownedPokemons } = useQuery({
+    queryKey: ["get-owned-pokemons", user?.uid],
+    queryFn: () => getOwnedPokemons(user!.uid),
+    enabled: !!user,
+  });
+  const ownedDex = React.useMemo(() => {
+    const set = new Set<number>();
+    (ownedPokemons?.sortedData ?? []).forEach((p) => {
+      const n = Number(p.pokedex);
+      if (n > 0) set.add(n);
+    });
+    return set;
+  }, [ownedPokemons]);
+  const [caughtOnly, setCaughtOnly] = React.useState(false);
+  const visibleMatches = caughtOnly
+    ? matches.filter((p) => ownedDex.has(Number(p.idx)))
+    : matches;
+
+  const { shown, hasMore, loadMore } = usePagedList(visibleMatches, [q, caughtOnly]);
 
   // Star overrides need a signed-in read (rules); visitors see the defaults.
   const { data: overrides } = useQuery({
@@ -248,8 +269,24 @@ function PokedexTab() {
           color="grape"
           aria-label="View shiny sprites"
         />
+        {user && (
+          <Switch
+            checked={caughtOnly}
+            onChange={(e) => setCaughtOnly(e.currentTarget.checked)}
+            label="Caught only"
+            color="teal"
+            aria-label="Show only species you own"
+          />
+        )}
       </Group>
-      <ResultCount shown={shown.length} total={matches.length} noun="Pokemon" />
+      {user && (
+        <Text fz={15} fw={700} c="#7CD992">
+          Collection: {ownedDex.size} of {pokemonData.length} species caught (
+          {Math.floor((ownedDex.size / Math.max(1, pokemonData.length)) * 100)}%). Uncaught
+          species show as silhouettes.
+        </Text>
+      )}
+      <ResultCount shown={shown.length} total={visibleMatches.length} noun="Pokemon" />
       {admin && (
         <Text fz={14} c="dimmed">
           Admin: select any Pokemon to change its star rating (posts to beat in
@@ -260,16 +297,18 @@ function PokedexTab() {
         {shown.map((p) => {
           const star = starOf(p);
           const overridden = !!overrides && String(Number(p.idx)) in overrides;
+          const caught = !user || ownedDex.has(Number(p.idx));
           const body = (
             <Stack gap={2} align="center">
               <Image
                 src={getPokemonImageURL(p.slug, shiny)}
                 fallbackSrc={POKEMON_SPRITE_FALLBACK}
-                alt={shiny ? `Shiny ${p.name}` : p.name}
+                alt={caught ? (shiny ? `Shiny ${p.name}` : p.name) : `${p.name} (not caught yet)`}
                 w={56}
                 h={56}
                 fit="contain"
                 loading="lazy"
+                style={caught ? undefined : { filter: "brightness(0.25) grayscale(1)" }}
               />
               <Text fz={14} c="dimmed">
                 #{p.idx}
@@ -768,7 +807,9 @@ export default function Library() {
     active === "faq"
       ? {
           "@type": "FAQPage",
-          mainEntity: FAQ.map((item) => ({
+          // Lore-only entries (unbuilt mechanics) stay out of structured data
+          // so search engines only index what the site actually does.
+          mainEntity: FAQ.filter((item) => !item.unbuilt).map((item) => ({
             "@type": "Question",
             name: item.q,
             acceptedAnswer: { "@type": "Answer", text: textFromNode(item.a) },

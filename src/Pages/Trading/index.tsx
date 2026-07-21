@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Card,
+  Checkbox,
   Container,
   Group,
   MultiSelect,
@@ -27,6 +28,10 @@ import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
 import { clickable } from "../../lib/a11y";
 import { ALL_TYPES, typesForDex } from "../../lib/typeChart";
+import { levelProgress } from "../../lib/leveling";
+import { starForDex } from "../../lib/encounterStars";
+import { NATURE_GROUPS, natureOf } from "../../lib/natures";
+import { eggGroupsForDex } from "../../lib/eggGroups";
 import { pokemonData } from "../../data/pokemon";
 import { getCharacters, getOwnedPokemons, getTeamsRaw } from "../../queries/dashboard";
 import { assignPokemonCharacter } from "../../queries/evolution";
@@ -60,42 +65,28 @@ import { OwnedPokemon } from "../../components/types/typesUsed";
 
 const GENDER_COLOR = (g?: string) => (g === "F" ? "pink.3" : "blue.3");
 
-/** Must-have criteria chips. Add new entries as mechanics grow; the create
- * form and the listing cards render whatever is in this list. */
-const MUSTHAVE_OPTIONS: Array<{
-  key: keyof TradeWants;
-  label: (w: TradeWants) => string;
-  active: (w: TradeWants) => boolean;
-  toggle: (w: TradeWants) => Partial<TradeWants>;
-}> = [
-  {
-    key: "shiny",
-    label: () => "Shiny",
-    active: (w) => w.shiny,
-    toggle: (w) => ({ shiny: !w.shiny }),
-  },
-  {
-    key: "minLevel",
-    label: (w) => (w.minLevel > 0 ? `Lv ${w.minLevel}+` : "Lv 40+"),
-    active: (w) => w.minLevel > 0,
-    toggle: (w) => ({ minLevel: w.minLevel > 0 ? 0 : 40 }),
-  },
-  {
-    key: "minStar",
-    label: (w) => (w.minStar > 0 ? `${w.minStar}★+` : "3★+"),
-    active: (w) => w.minStar > 0,
-    toggle: (w) => ({ minStar: w.minStar > 0 ? 0 : 3 }),
-  },
-];
-
 const EMPTY_WANTS: TradeWants = {
   species: [],
   types: [],
   shiny: false,
   minLevel: 0,
   minStar: 0,
+  nature: "",
+  gender: "",
   note: "",
 };
+
+/** Human chips for a wants object's must-have criteria (shared by the summary
+ * popover and the create form). */
+function mustHaveChips(w: TradeWants): string[] {
+  const chips: string[] = [];
+  if (w.shiny) chips.push("Shiny");
+  if (w.minLevel > 0) chips.push(`Lv ${w.minLevel}+`);
+  if (w.minStar > 0) chips.push(`${w.minStar}★+`);
+  if (w.nature) chips.push(`${w.nature} nature`);
+  if (w.gender) chips.push(w.gender === "F" ? "Female" : "Male");
+  return chips;
+}
 
 function timeAgo(seconds?: number): string {
   if (!seconds) return "";
@@ -122,6 +113,32 @@ function SnapshotChips(props: { p: TradeSnapshot }) {
   );
 }
 
+/**
+ * Advisory check of a pokemon against a listing's wants; the owner still
+ * decides, so a mismatch only warns (or filters), it never blocks an offer.
+ */
+function wantsMismatch(p: OwnedPokemon | undefined, w: TradeWants): string[] {
+  if (!p) return [];
+  const idx = Number(p.pokedex) || 0;
+  const problems: string[] = [];
+  if (w.species.length && !w.species.includes(String(p.image_slug ?? ""))) {
+    problems.push("not a requested species");
+  }
+  if (w.types.length && !typesForDex(idx).some((t) => w.types.includes(t))) {
+    problems.push("not a requested type");
+  }
+  if (w.shiny && !p.shiny) problems.push("not shiny");
+  if (w.minLevel > 0 && levelProgress(Number(p.experience) || 0).level < w.minLevel) {
+    problems.push(`below level ${w.minLevel}`);
+  }
+  if (w.minStar > 0 && starForDex(idx) < w.minStar) problems.push(`below ${w.minStar}★`);
+  if (w.nature && natureOf(p) !== w.nature) problems.push(`not ${w.nature} nature`);
+  if (w.gender && p.gender !== w.gender) {
+    problems.push(w.gender === "F" ? "not female" : "not male");
+  }
+  return problems;
+}
+
 /** Short wants summary: at most two chips + a popover with the full list, so
  * long wish lists never break the card layout. */
 function WantsSummary(props: { wants: TradeWants }) {
@@ -132,9 +149,7 @@ function WantsSummary(props: { wants: TradeWants }) {
     chips.push(s?.name ?? slug);
   });
   w.types.forEach((t) => chips.push(`Any ${t}-type`));
-  MUSTHAVE_OPTIONS.forEach((o) => {
-    if (o.active(w)) chips.push(o.label(w));
-  });
+  mustHaveChips(w).forEach((c) => chips.push(c));
   if (!chips.length) chips.push("Open to offers");
   const shown = chips.slice(0, 2);
   const extra = chips.length - shown.length;
@@ -204,6 +219,65 @@ function lockFor(
   return null;
 }
 
+/** One-line stat summary for an owned pokemon (level, types, star, nature). */
+function ownedInfoLine(p: OwnedPokemon): string {
+  const idx = Number(p.pokedex) || 0;
+  return [
+    `Lv ${levelProgress(Number(p.experience) || 0).level}`,
+    typesForDex(idx).join("/"),
+    `${starForDex(idx)}★`,
+    natureOf(p),
+    p.shiny ? "Shiny" : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
+ * Full confirmation card for the pokemon about to be traded away or offered,
+ * so members with several of the same species can tell exactly which one they
+ * picked before committing.
+ */
+function OwnedDetailCard(props: { pokemon: OwnedPokemon; heading: string }) {
+  const p = props.pokemon;
+  const idx = Number(p.pokedex) || 0;
+  return (
+    <Card withBorder radius={12} p="md" mt={10} style={{ background: "#1b2420", borderColor: "#63E6BE" }}>
+      <Group gap={12} wrap="nowrap" align="flex-start">
+        <Avatar src={getPokemonImageURL(p.image_slug, p.shiny)} size={64} radius="xl" />
+        <Box style={{ minWidth: 0 }}>
+          <Text fz={13} fw={700} c="teal.4" tt="uppercase" style={{ letterSpacing: 1 }}>
+            {props.heading}
+          </Text>
+          <Text fz={18} fw={800} c="white">
+            {p.name || p.species}{" "}
+            <Text span c={GENDER_COLOR(p.gender)} fw={700}>
+              {p.gender ?? ""}
+            </Text>
+            {p.name && p.name !== p.species && (
+              <Text span fz={14} c="dimmed">
+                {" "}
+                ({p.species})
+              </Text>
+            )}
+            {p.shiny && (
+              <Badge ml={6} size="xs" color="gold.1" variant="filled" c="#1a1626" radius="xl">
+                Shiny
+              </Badge>
+            )}
+          </Text>
+          <Text fz={14} c="gray.3">
+            {ownedInfoLine(p)}
+          </Text>
+          <Text fz={13} c="dimmed">
+            Egg group: {eggGroupsForDex(idx).join("/") || "Unknown"}
+          </Text>
+        </Box>
+      </Group>
+    </Card>
+  );
+}
+
 function OwnPokemonCard(props: {
   pokemon: OwnedPokemon;
   selected: boolean;
@@ -212,7 +286,7 @@ function OwnPokemonCard(props: {
 }) {
   const { pokemon: p, selected, lock } = props;
   const navigate = useNavigate();
-  const card = (
+  const cardInner = (
     <Card
       withBorder
       radius={12}
@@ -244,14 +318,22 @@ function OwnPokemonCard(props: {
       </Stack>
     </Card>
   );
-  if (!lock) return card;
+  if (!lock) {
+    // Hover shows the full stat line so twins of the same species are
+    // tellable apart before picking one.
+    return (
+      <Tooltip label={ownedInfoLine(p)} withArrow openDelay={200}>
+        {cardInner}
+      </Tooltip>
+    );
+  }
   return (
     <Tooltip
       label={`Battling on "${lock.title || "an open thread"}". That thread must close before this pokemon can be traded. Click to open the thread.`}
       multiline
       w={240}
     >
-      {card}
+      {cardInner}
     </Tooltip>
   );
 }
@@ -314,6 +396,12 @@ function CreateListing(props: {
               />
             ))}
           </SimpleGrid>
+          {pokemonId && props.owned.find((p) => p.id === pokemonId) && (
+            <OwnedDetailCard
+              pokemon={props.owned.find((p) => p.id === pokemonId)!}
+              heading="You are trading away"
+            />
+          )}
         </Card>
 
         <Card
@@ -332,31 +420,20 @@ function CreateListing(props: {
           <Text fz={13} fw={700} c="dimmed" tt="uppercase" mb={6}>
             Species / anything in a type
           </Text>
-          <Group gap={8} mb={8}>
-            {ALL_TYPES.map((t) => {
-              const active = wants.types.includes(t);
-              return (
-                <Badge
-                  key={t}
-                  variant={active ? "filled" : "outline"}
-                  color={active ? "violet" : "gray"}
-                  radius="xl"
-                  style={{ cursor: "pointer" }}
-                  {...clickable(() =>
-                    setWants((w) => ({
-                      ...w,
-                      types: active ? w.types.filter((x) => x !== t) : [...w.types, t],
-                    }))
-                  )}
-                  aria-label={`Accept any ${t}-type`}
-                >
-                  {t}
-                </Badge>
-              );
-            })}
-          </Group>
           <MultiSelect
-            placeholder="Or specific species (pick as many as you like)"
+            label="Types you would accept"
+            placeholder={wants.types.length ? undefined : "Any type"}
+            searchable
+            data={ALL_TYPES.map((t) => ({ value: t, label: t }))}
+            value={wants.types}
+            onChange={(types) => setWants((w) => ({ ...w, types }))}
+            mb={8}
+            aria-label="Types you would accept"
+            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          />
+          <MultiSelect
+            label="Or specific species"
+            placeholder={wants.species.length ? undefined : "Pick as many as you like"}
             searchable
             data={speciesOptions}
             value={wants.species}
@@ -364,57 +441,78 @@ function CreateListing(props: {
             limit={20}
             mb={12}
             aria-label="Specific species you would accept"
-            styles={{ input: { background: "#2E2D2E" } }}
+            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
           />
 
           <Text fz={13} fw={700} c="dimmed" tt="uppercase" mb={6}>
-            Must-haves
+            Must-haves (leave empty for no requirement)
           </Text>
-          <Group gap={8} mb={8}>
-            {MUSTHAVE_OPTIONS.map((o) => (
-              <Badge
-                key={String(o.key)}
-                variant={o.active(wants) ? "filled" : "outline"}
-                color={o.active(wants) ? "gold.1" : "gray"}
-                c={o.active(wants) ? "#1a1626" : undefined}
-                radius="xl"
-                style={{ cursor: "pointer" }}
-                {...clickable(() => setWants((w) => ({ ...w, ...o.toggle(w) })))}
-                aria-label={`Toggle must-have: ${o.label(wants)}`}
-              >
-                {o.label(wants)}
-              </Badge>
-            ))}
-          </Group>
-          <Group gap={10} mb={12}>
-            {wants.minLevel > 0 && (
-              <NumberInput
-                label="Min level"
-                value={wants.minLevel}
-                onChange={(v) =>
-                  setWants((w) => ({ ...w, minLevel: Math.max(1, Number(v) || 1) }))
-                }
-                min={1}
-                max={100}
-                size="xs"
-                w={110}
-                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-              />
-            )}
-            {wants.minStar > 0 && (
-              <NumberInput
-                label="Min star"
-                value={wants.minStar}
-                onChange={(v) =>
-                  setWants((w) => ({ ...w, minStar: Math.max(1, Math.min(7, Number(v) || 1)) }))
-                }
-                min={1}
-                max={7}
-                size="xs"
-                w={110}
-                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-              />
-            )}
+          <Group gap={10} mb={8} align="end" wrap="wrap">
+            <NumberInput
+              label="Min level"
+              description="0 = any"
+              value={wants.minLevel}
+              onChange={(v) =>
+                setWants((w) => ({
+                  ...w,
+                  minLevel: Math.max(0, Math.min(100, Math.trunc(Number(v) || 0))),
+                }))
+              }
+              min={0}
+              max={100}
+              size="xs"
+              w={110}
+              styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+            />
+            <Select
+              label="Min star"
+              data={[
+                { value: "0", label: "Any" },
+                ...[1, 2, 3, 4, 5, 6, 7].map((s) => ({ value: String(s), label: `${s}★ or higher` })),
+              ]}
+              value={String(wants.minStar)}
+              onChange={(v) => setWants((w) => ({ ...w, minStar: Number(v) || 0 }))}
+              allowDeselect={false}
+              size="xs"
+              w={130}
+              styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+            />
+            <Select
+              label="Nature"
+              data={[
+                { value: "", label: "Any" },
+                ...Object.keys(NATURE_GROUPS).map((n) => ({ value: n, label: n })),
+              ]}
+              value={wants.nature}
+              onChange={(v) => setWants((w) => ({ ...w, nature: v ?? "" }))}
+              allowDeselect={false}
+              searchable
+              size="xs"
+              w={130}
+              styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+            />
+            <Select
+              label="Gender"
+              data={[
+                { value: "", label: "Any" },
+                { value: "M", label: "Male" },
+                { value: "F", label: "Female" },
+              ]}
+              value={wants.gender}
+              onChange={(v) =>
+                setWants((w) => ({ ...w, gender: v === "M" || v === "F" ? v : "" }))
+              }
+              allowDeselect={false}
+              size="xs"
+              w={110}
+              styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+            />
+            <Checkbox
+              label="Shiny only"
+              checked={wants.shiny}
+              onChange={(e) => setWants((w) => ({ ...w, shiny: e.currentTarget.checked }))}
+              styles={{ label: { color: "white" } }}
+            />
           </Group>
 
           <Textarea
@@ -483,7 +581,14 @@ function ListingCard(props: {
   const openOffers = Object.entries(l.offers ?? {}).filter(([, o]) => o.status === "open");
   const offerOptions = props.owned
     .filter((p) => !lockFor(p.id, props.teams, props.locks))
-    .map((p) => ({ value: p.id, label: `${p.name || p.species} (${p.gender ?? "?"})` }));
+    .map((p) => ({
+      value: p.id,
+      label: `${p.name || p.species} (${p.gender ?? "?"}) · ${ownedInfoLine(p)}`,
+    }));
+
+  const offerProblems = offerFor
+    ? wantsMismatch(props.owned.find((o) => o.id === offerFor), l.wants)
+    : [];
 
   return (
     <Card withBorder radius={16} p="md" style={{ background: "#16141c", borderColor: "#2a2734" }}>
@@ -600,7 +705,14 @@ function ListingCard(props: {
           </Button>
         </Stack>
       ) : picking ? (
-        <Group gap={8} align="flex-end">
+        <Stack gap={4}>
+          {offerFor && props.owned.find((o) => o.id === offerFor) && (
+            <OwnedDetailCard
+              pokemon={props.owned.find((o) => o.id === offerFor)!}
+              heading="You are offering"
+            />
+          )}
+          <Group gap={8} align="flex-end">
           <Select
             label="Your offer"
             placeholder="Pick a pokemon"
@@ -609,7 +721,12 @@ function ListingCard(props: {
             value={offerFor}
             onChange={setOfferFor}
             size="xs"
-            w={200}
+            w={280}
+            error={
+              offerProblems.length
+                ? `Heads up: ${offerProblems.join(", ")}. You can still send it.`
+                : undefined
+            }
             styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
           />
           <Button
@@ -634,7 +751,8 @@ function ListingCard(props: {
           >
             Cancel
           </Button>
-        </Group>
+          </Group>
+        </Stack>
       ) : (
         <Group justify="space-between" align="center">
           <Button
@@ -786,20 +904,15 @@ export default function Trading() {
   };
 
   // Board filters: the static views plus one chip per type seen in wants.
-  const mySpecies = new Set(box.map((p) => p.species));
   const wantTypes = [...new Set(open.flatMap((l) => l.wants.types))].slice(0, 4);
   const filtered = open.filter((l) => {
     if (filter === "shiny") return !!l.pokemon.shiny;
+    // "Fits my box": a listing where at least one pokemon you own passes the
+    // full wants criteria (species/type/shiny/level/star), same check the
+    // offer picker warns with. Falls back to loose matching when the listing
+    // asks for nothing specific.
     if (filter === "match")
-      return (
-        l.wants.species.some((slug) => {
-          const s = pokemonData.find((p) => p.slug === slug);
-          return s ? mySpecies.has(s.name) : false;
-        }) ||
-        l.wants.types.some((t) =>
-          box.some((p) => (typesForDex(Number(p.pokedex) || 0) as string[]).includes(t))
-        )
-      );
+      return box.some((p) => l.ownerUid !== user.uid && wantsMismatch(p, l.wants).length === 0);
     if (filter.startsWith("type:")) return l.wants.types.includes(filter.slice(5));
     return true;
   });

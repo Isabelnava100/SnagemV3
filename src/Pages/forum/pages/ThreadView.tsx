@@ -328,9 +328,9 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
                   ? enc.catchable
                     ? "Beaten! Throw a ball in your next post to catch it, or roll a new encounter to move on."
                     : "Beaten! It cannot be caught; it clears with your next post."
-                  : `Health ${healthLeft}/${required} posts. It hits your fighter for ${attackDamageForStar(
+                  : `Health ${healthLeft}/${required} posts. It hits your fighter for around ${attackDamageForStar(
                       enc.star ?? 3
-                    )} damage each battle post. Keep posting to wear it down${
+                    )} damage each battle post (type matchup, weather and items adjust the real number; the composer shows your fighter's exact hit). Keep posting to wear it down${
                       enc.catchable ? ", then a ball can catch it" : ""
                     }.`}
               </Text>
@@ -359,6 +359,7 @@ export default function ThreadView() {
 
   // Staff "close as a loss" modal, opened from the paused-thread banner.
   const [lossModalOpen, setLossModalOpen] = React.useState(false);
+  const [linkCopied, setLinkCopied] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState<number>(
     isNumeric(page) ? Number(page) : 1
   );
@@ -579,6 +580,19 @@ export default function ThreadView() {
               {bookmarked ? "Delete Bookmark" : "Create Bookmark"}
             </GradientButtonSecondary>
           )}
+          <GradientButtonSecondary
+            radius="xl"
+            size="xs"
+            onClick={() => {
+              navigator.clipboard
+                .writeText(window.location.href)
+                .then(() => setLinkCopied(true))
+                .catch(() => undefined);
+              window.setTimeout(() => setLinkCopied(false), 2000);
+            }}
+          >
+            {linkCopied ? "Link Copied!" : "Copy Link"}
+          </GradientButtonSecondary>
           {mayPost && (
             <GradientButtonPrimary
               radius="xl"

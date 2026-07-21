@@ -73,6 +73,28 @@ export function typeEffectiveness(attacker: string[], defender: string[]): numbe
   return Math.max(0.5, Math.min(2, best));
 }
 
+// Weather favors/hinders attacker types (mirror of WEATHER_TYPES in
+// functions/src/index.ts; keep in sync).
+const WEATHER_TYPES: Record<string, { up: string[]; down: string[] }> = {
+  sun: { up: ["Fire", "Grass"], down: ["Water"] },
+  rain: { up: ["Water", "Electric"], down: ["Fire"] },
+  sandstorm: { up: ["Rock", "Ground", "Steel"], down: ["Flying"] },
+  snow: { up: ["Ice"], down: ["Grass"] },
+};
+
+/** Weather multiplier for an attack by `attackerTypes` under `weather`. */
+export function weatherMultiplier(
+  weather: string | undefined,
+  attackerTypes: string[],
+  boost: number
+): number {
+  const w = WEATHER_TYPES[String(weather ?? "")];
+  if (!w || boost <= 1) return 1;
+  if (attackerTypes.some((t) => w.up.includes(t))) return boost;
+  if (attackerTypes.some((t) => w.down.includes(t))) return 1 / boost;
+  return 1;
+}
+
 /** Human label for a multiplier ("super effective (x2)" etc.). */
 export function effectivenessLabel(mult: number): string {
   if (mult >= 2) return "super effective (x2)";

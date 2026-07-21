@@ -19,6 +19,8 @@ export type AuditAction =
   | "seo.edit"
   | "thread.close"
   | "event.host"
+  | "safari.zone_save"
+  | "devboard.edit"
   | "stars.edit";
 
 export type AuditEntry = {
@@ -48,6 +50,8 @@ const ACTION_TITLES: Record<string, string> = {
   "seo.edit": "Updated SEO settings",
   "thread.close": "Closed a thread",
   "event.host": "Hosted an event",
+  "safari.zone_save": "Saved a Safari zone",
+  "devboard.edit": "Updated the Dev Board",
   "stars.edit": "Changed a species star rating",
 };
 
@@ -74,6 +78,10 @@ const DETAIL_LABELS: Record<string, string> = {
   active: "Showing now",
   editing: "Updated existing",
   siteTitle: "Site title",
+  tiers: "Tiers",
+  zone: "Zone",
+  deleted: "Deleted",
+  ticket: "Ticket",
 };
 
 const CURRENCY_NAMES: Record<string, string> = {

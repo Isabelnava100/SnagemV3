@@ -358,9 +358,11 @@ function FishingPondCard() {
             Cast a line, once a week
           </Text>
           <Text fz={14} c="dimmed">
-            Bring a rod from the Snag Mall and fish with the character of your choice. Bites
-            run 1★ to 3★ Water-types (a 3★ bite is a 10% catch of the day). Battle and
-            catch it, or let it go for 1 Snag Coin. The pond restocks Monday 00:00 UTC.
+            A rod is required: earn your first from the Rod Thief mission, or buy one at the
+            Snag Mall. Fish with the character of your choice. Bites are mostly 1★ to 3★
+            Water-types, better rods land rarer bites, and the Super Rod even has a 5% shot
+            at a 4★ catch. Battle and catch it, or let it go for 1 Snag Coin. The pond
+            restocks Monday 00:00 UTC.
           </Text>
         </Box>
         <Button
@@ -418,7 +420,16 @@ export default function Activities() {
   const doneCount = SNAG_TASKS.filter((t) => tasks[t]).length;
   const allDone = doneCount === SNAG_TASKS.length;
   const boxClaimed = sameWeek && !!list?.boxClaimed;
-  const streak = list?.streak ?? 0;
+  // A streak is only alive if last week (or this week) was fully completed;
+  // the stored number goes stale after a missed week until the next full run.
+  const prevWeekId = (() => {
+    const d = new Date(`${currentWeekId()}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() - 7);
+    return d.toISOString().slice(0, 10);
+  })();
+  const streakAlive =
+    list?.completedWeekId === currentWeekId() || list?.completedWeekId === prevWeekId;
+  const streak = streakAlive ? list?.streak ?? 0 : 0;
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>

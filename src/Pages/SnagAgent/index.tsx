@@ -203,11 +203,107 @@ const KB: KbEntry[] = [
     match: /master\s*mission|hybrid|channeler|clearance/i,
     answer: () => (
       <>
-        Master Missions are the Hybrid and Channeler progression missions. Request
-        clearance from the <L to="/Research">Research page</L>; once you are Master tier
-        the <L to="/Forum/Master-Mission">Master Missions forum</L> appears in your forum
-        tabs. Background reading:{" "}
+        Master Missions are the endgame progression for Hybrids and Channelers. The
+        path: (1) request master clearance for a character from the{" "}
+        <L to="/Research">Research page</L> (an admin approves it and your character
+        joins a Division); (2) run Master Missions from the{" "}
+        <L to="/Forum/Master-Mission">Master Missions forum</L>, each grant teaches an
+        ability, up to 10 per type; (3) completing the 10th makes you a Grand Master and
+        unlocks Mega Evolution and Z-Move access on the Research tracker. Master-tier
+        missions in the <L to="/Missions">Mission Vault</L> also need a cleared
+        character. E.V.O. services at the <L to="/Shop">Snag Mall</L> (slots, moves,
+        adaptations) are for cleared Masters too. Background:{" "}
         <L to="/Library?tab=forums">Library &gt; The Charter</L>.
+      </>
+    ),
+  },
+  {
+    match: /notif|mute|silence|turn (off|on).*(ping|alert)|disable.*(ping|alert|discord)|enable.*(ping|alert|discord)|settings.*(alert|ping)|stop.*(ping|nagging)/i,
+    answer: () => (
+      <>
+        Every notification switch lives in{" "}
+        <L to="/Dashboard/Settings">Console &gt; Settings &gt; Notifications</L>:
+        on-site notifications (the master switch), Discord pings (channel pings, never a
+        DM; needs your Discord linked on the same page), new posts on bookmarked
+        threads, direct @-pings, and the Monday weekly reset reminder. Everything
+        defaults ON except Discord. Flip any of them off and that kind stops
+        immediately.
+      </>
+    ),
+  },
+  {
+    match: /next for me|what should i do|now what|what.*do (today|this week)|bored\b|my goals?|roadmap|progression path|how.*progress/i,
+    answer: () => (
+      <>
+        A good ladder: (1) finish the starter checklist on your{" "}
+        <L to="/Dashboard">Console</L> (character, pokemon, team); (2) pick up an easy
+        mission from the <L to="/Missions">Mission Vault</L> and roleplay it out; (3)
+        keep the weekly loop going on the <L to="/Activities">Activities page</L> (Snag
+        List, Berry Farm, Fishing Pond); (4) chase badges and trials on{" "}
+        <L to="/Challenges">Challenges</L>; (5) trade and breed to fill your{" "}
+        <L to="/Library?tab=pokedex">Pokedex collection</L>; (6) endgame: master
+        clearance and Grand Master on the <L to="/Research">Research page</L>. Your
+        dashboard&apos;s &quot;Needs your attention&quot; panel always shows what is
+        waiting right now.
+      </>
+    ),
+  },
+  {
+    match: /craft|alchemy|recipe|cauldron|brew/i,
+    answer: () => (
+      <>
+        Ambrosial Alchemy in the <L to="/Shop">Snag Mall</L> is the crafting cauldron:
+        every recipe lists its ingredients (with how many you have), any coin cost, and
+        a success rate. Failed brews still spend the ingredients, so read the rate
+        before you commit. Your bag on the <L to="/Dashboard">Console</L> shows where
+        to get more of an ingredient under each item.
+      </>
+    ),
+  },
+  {
+    match: /casino|roulette|dice|lotto|gamb|jackpot/i,
+    answer: () => (
+      <>
+        The <L to="/Casino">Casino</L> runs on Gengar Tokens. Hex Roulette: pick 1-36,
+        win pays 5.5x your bet. Dream Dice: predict the 2d6 total, pays 2x (3x on
+        doubles), bets 1-5. Shadow Lotto: 1 token a ticket, pick 1-50, the pot splits
+        among matching tickets when staff run the weekly draw. Playing any game checks
+        off your Snag List casino task.
+      </>
+    ),
+  },
+  {
+    match: /red dot|badge.*menu|needs.*attention|what.*waiting|attention panel/i,
+    answer: () => (
+      <>
+        The red dot on the Menu button means something is waiting on you: a hatchable
+        Daycare egg, an unused weekly cast, an unclaimed Mystery Box, open offers on
+        your trade listings, or an open mission thread. The full list with links sits at
+        the top of your <L to="/Dashboard">Console</L> as &quot;Needs your
+        attention&quot;.
+      </>
+    ),
+  },
+  {
+    match: /caught|collection|complet.*dex|silhouette|how many pokemon/i,
+    answer: () => (
+      <>
+        The <L to="/Library?tab=pokedex">Library Pokedex</L> doubles as your collection
+        tracker when signed in: a caught counter, silhouettes for species you do not
+        own yet, and a &quot;Caught only&quot; filter. Fill it through encounters,
+        fishing, tours, trades, breeding and mission rewards.
+      </>
+    ),
+  },
+  {
+    match: /search|find.*(thread|post|lore)|where.*thread.*about/i,
+    answer: () => (
+      <>
+        Forum search sits on the <L to="/Forum">Forums page</L> hero: it matches thread
+        titles, creators and tags, and a &quot;Search all categories&quot; toggle sweeps
+        every board you can read at once. The{" "}
+        <L to="/Library?tab=lore">Lore Library</L> has its own search across book and
+        entry text. Threads also have a Copy Link button for sharing.
       </>
     ),
   },
@@ -243,7 +339,8 @@ const KB: KbEntry[] = [
         <>
           You still need to: {missing.map((t) => TASK_LABEL[t]).join(", ")}. The week
           resets in {resetCountdown()}. Track it on the{" "}
-          <L to="/Activities">Activities page</L>.
+          <L to="/Activities">Activities page</L>. Want a Monday reset ping? Turn on the
+          weekly reminder in <L to="/Dashboard/Settings">Settings &gt; Notifications</L>.
         </>
       );
     },
@@ -300,9 +397,14 @@ const KB: KbEntry[] = [
       <>
         The <L to="/Trading">Trading Post</L> is the only way a pokemon changes trainers:
         put one on the board with what you would accept in return, or make an offer on
-        someone else&apos;s listing (you get a notification when offers land). A pokemon
-        battling on a locked team stays untradable until that thread closes. You can also
-        move pokemon freely between your OWN characters there.
+        someone else&apos;s listing (you get a notification when offers land, and when a
+        listing you offered on is taken down). Your &quot;wants&quot; can name species,
+        types, a minimum level and star, a nature, a gender, or shiny-only; they are
+        advisory: the picker warns when an offer misses them, but the owner decides. Use the
+        &quot;Wants what I have&quot; filter to see listings your box can satisfy. A
+        pokemon battling on a locked team, or paired at the Daycare with an egg on the
+        way, stays untradable until that ends. You can also move pokemon freely between
+        your OWN characters there.
       </>
     ),
   },
@@ -311,9 +413,12 @@ const KB: KbEntry[] = [
     answer: () => (
       <>
         The <L to="/Daycare">Daycare</L> takes one pair at a time: one male and one
-        female sharing an egg group, or ANYTHING paired with a Ditto. Only legendaries
-        and mythicals can never breed. The egg hatches into the base form of the
-        mother&apos;s line after the configured days or posts. Egg groups show on each
+        female sharing an egg group, or ANYTHING paired with a Ditto (species with no
+        egg group breed only with Ditto). Only 7-star legendaries and mythicals can
+        never breed. The egg hatches into the base form of the mother&apos;s line after
+        the configured days or posts, whichever comes first, and both parents are
+        untradable until you collect it. When the egg is ready, your dashboard&apos;s
+        &quot;Needs your attention&quot; panel tells you. Egg groups show on each
         pokemon&apos;s info box in your <L to="/Dashboard">Console</L>.
       </>
     ),
@@ -322,8 +427,9 @@ const KB: KbEntry[] = [
     match: /fish|rod|pond|angler/i,
     answer: () => (
       <>
-        The Fishing Pond is a weekly activity: grab a rod from the{" "}
-        <L to="/Shop">Snag Mall</L>, then head to the pond from the{" "}
+        The Fishing Pond is a weekly activity, and a rod is required to cast. Earn your
+        first Old Rod from the <L to="/Missions/rod-thief">Rod Thief mission</L> or buy
+        one at the <L to="/Shop">Snag Mall</L>, then head to the pond from the{" "}
         <L to="/Activities">Activities page</L>. One cast per week with the character of
         your choice; a better rod means better bites (the Super Rod even lands a 5% 4★
         bite), and releasing your catch pays 1 Snag Coin. The pond thread is
@@ -404,7 +510,11 @@ const KB: KbEntry[] = [
       <>
         Every mission thread pins a Mission Targets checklist at the top showing which
         set foes are beaten and which remain; the thread cannot close for grading until
-        all are down. Open your thread and check the banner, or see{" "}
+        all are down. You can repeat a mission after finishing it, but only one open
+        run of the same mission at a time (different missions can run side by side).
+        Closing the thread files it for grading automatically; coins match the brief
+        and any promised special item (like the Rod Thief&apos;s Old Rod) is granted on
+        approval. Open your thread and check the banner, or see{" "}
         <L to="/Library?tab=battle">Library &gt; The War Room</L> for how beating foes
         works.
       </>
@@ -831,8 +941,9 @@ const KB: KbEntry[] = [
     answer: () => (
       <>
         The <L to="/Library">Library</L> is the public reference: Pokedex (with star
-        ratings), item catalog, battle guide, forum guide, shadow guide, encounter
-        lists, lore archives, and the help desk FAQ.
+        ratings and your caught-collection tracker), item catalog, battle guide, forum
+        guide, shadow guide, encounter lists, searchable lore archives, and the help
+        desk FAQ.
       </>
     ),
   },

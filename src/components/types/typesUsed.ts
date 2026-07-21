@@ -446,4 +446,6 @@ export interface Settings {
   siteNotifications: boolean;
   /** Announcement/update emails. Account emails (password resets) always send. */
   emailUpdates: boolean;
+  /** Monday reset ping (Snag List / Fishing Pond), server-scheduled. */
+  weeklyReminders?: boolean;
 }

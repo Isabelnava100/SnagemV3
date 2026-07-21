@@ -331,13 +331,16 @@ export default function Notifications() {
     queryKey: ["get-settings"],
     queryFn: () => getSettings(user?.uid as string),
   });
+  // Defaults mirror the server (notifyUsers treats unset as ON), so a member
+  // who never saved settings sees switches that match what actually happens.
   const { getInputProps, setValues, values } = useForm<Settings>({
     initialValues: {
-      directPingNotifications: false,
+      directPingNotifications: true,
       discordNotifications: false,
-      postsAndBookmarkedThreadsNotification: false,
-      siteNotifications: false,
+      postsAndBookmarkedThreadsNotification: true,
+      siteNotifications: true,
       emailUpdates: true,
+      weeklyReminders: true,
     },
   });
   const [debouncedValue] = useDebouncedValue(values, 100);
@@ -363,10 +366,19 @@ export default function Notifications() {
     }
   };
 
-  // Once the data is loaded, place that data in the form
+  // Once the data is loaded, place that data in the form. Unsaved fields keep
+  // the server-default ON state instead of flipping to off.
   React.useEffect(() => {
     if (!isLoading && isSuccess) {
-      setValues({ ...data });
+      const saved = (data ?? {}) as Partial<Settings>;
+      setValues({
+        directPingNotifications: saved.directPingNotifications ?? true,
+        discordNotifications: saved.discordNotifications ?? false,
+        postsAndBookmarkedThreadsNotification: saved.postsAndBookmarkedThreadsNotification ?? true,
+        siteNotifications: saved.siteNotifications ?? true,
+        emailUpdates: saved.emailUpdates ?? true,
+        weeklyReminders: saved.weeklyReminders ?? true,
+      });
     }
   }, [isLoading]);
 
@@ -418,12 +430,11 @@ export default function Notifications() {
         />
         <Stack gap={2}>
           <CustomSwitch
-            {...getInputProps("emailUpdates", { type: "checkbox" })}
-            label="Receive information via Email"
+            {...getInputProps("weeklyReminders", { type: "checkbox" })}
+            label="Weekly reset reminder"
           />
           <Text fz={14} c="dimmed">
-            Announcements and site updates by email. Account emails such as password
-            resets always come through, even with this off.
+            A Monday ping when the Snag List resets and the Fishing Pond restocks.
           </Text>
         </Stack>
       </Stack>

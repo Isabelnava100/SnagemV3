@@ -62,7 +62,12 @@ import {
 import { levelProgress } from "../../../lib/leveling";
 import { pokemonData } from "../../../data/pokemon";
 import { getBattleConfig } from "../../../queries/game";
-import { effectivenessLabel, typeEffectiveness, typesForDex } from "../../../lib/typeChart";
+import {
+  effectivenessLabel,
+  typeEffectiveness,
+  typesForDex,
+  weatherMultiplier,
+} from "../../../lib/typeChart";
 import { userMayPost } from "./ThreadView";
 import "../forum.css";
 
@@ -336,6 +341,10 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const enemyTypes = typesForDex(enemyIdx);
   const attackMult = battleOngoing ? typeEffectiveness(fighterTypes, enemyTypes) : 1;
   const defenseMult = battleOngoing ? typeEffectiveness(enemyTypes, fighterTypes) : 1;
+  // Weather is deterministic, so bake it into the preview; nature, held items
+  // and crits stay server-side randomness noted in the copy.
+  const weatherBoost = liveBattleCfg?.mechanics?.weatherBoost ?? 1.2;
+  const enemyWeatherMult = weatherMultiplier(thread?.weather ?? undefined, enemyTypes, weatherBoost);
   // Boss hit: the stored per-boss value, else its species' star damage.
   const bossHit = (() => {
     if (!(attackBoss && bossActive && thread?.bossBattle)) return 0;
@@ -345,7 +354,9 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     return Math.max(1, Math.round(base * typeEffectiveness(typesForDex(idx ?? 0), fighterTypes)));
   })();
   const hitDmg = Math.max(
-    battleOngoing ? Math.max(1, Math.round(starDmg(enemyStar) * defenseMult)) : 0,
+    battleOngoing
+      ? Math.max(1, Math.round(starDmg(enemyStar) * defenseMult * enemyWeatherMult))
+      : 0,
     bossHit
   );
   // Default the fighter to the first conscious team member.
@@ -727,8 +738,10 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                     <Text fz={14} c="dimmed">
                       HP {chosenFighter.hpLeft}/{chosenFighter.maxHp} (level{" "}
                       {levelProgress(chosenFighter.pokemon.experience ?? 0).level}). This
-                      post's incoming hit: {hitDmg} damage
-                      {attackBoss && bossActive ? " (boss attack)" : ""}.
+                      post's incoming hit: about {hitDmg} damage
+                      {attackBoss && bossActive ? " (boss attack)" : ""}
+                      {enemyWeatherMult !== 1 ? ", weather included" : ""}. Nature, held
+                      items and critical hits can still shift the final number.
                     </Text>
                     {battleOngoing && (
                       <Text fz={14} c="dimmed">
@@ -756,7 +769,7 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                       label={
                         thread?.fishingPond
                           ? "Let it go (+1 Snag Coin, always works)"
-                          : `Attempt to run away (${fleeChanceForStar(enemyStar)}% chance)`
+                          : `Attempt to run away (${fleeChanceForStar(enemyStar)}% base chance; a speedy nature or Quick Claw improves it)`
                       }
                       color="green.0"
                       checked={fleeAttempt}
