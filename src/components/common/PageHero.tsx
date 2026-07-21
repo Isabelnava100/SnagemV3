@@ -37,9 +37,9 @@ export function PageHero(props: {
       <Text
         fz={14}
         fw={700}
-        c={props.eyebrowColor ?? "grape.3"}
+        c={props.eyebrowColor ?? "#FFD074"}
         tt="uppercase"
-        style={{ letterSpacing: 3 }}
+        style={{ letterSpacing: "0.3em", fontFamily: "var(--font-display, 'Quantico', sans-serif)" }}
       >
         {props.eyebrow}
       </Text>
@@ -69,9 +69,14 @@ export function PageHero(props: {
             <Text
               component="h1"
               c="white"
-              fw={800}
-              fz={{ base: 32, sm: 44 }}
-              style={{ lineHeight: 1.1, margin: 0 }}
+              fw={700}
+              fz={{ base: 34, sm: 52 }}
+              style={{
+                lineHeight: 1.05,
+                margin: 0,
+                fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+                letterSpacing: "0.02em",
+              }}
             >
               {props.title}
             </Text>
