@@ -66,6 +66,12 @@ export interface PublishPostInput {
   fighterId?: string;
   /** Evolve a team pokemon on publish (validated + applied server-side). */
   evolve?: { pokemonId: string; toIdx: number } | null;
+  /** Mega Evolve one team pokemon this post only (stone required, not consumed). */
+  mega?: { pokemonId: string; stone: string } | null;
+  /** Unleash a Z-Move this post only (crystal required, not consumed). */
+  zmove?: { pokemonId: string; itemId: string } | null;
+  /** Consumable battle items (X items / Dire Hit / Gems) spent this post. */
+  battleItems?: Array<{ itemId: string; name: string }>;
 }
 
 /**

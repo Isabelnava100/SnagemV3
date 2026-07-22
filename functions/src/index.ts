@@ -140,6 +140,20 @@ const DEFAULT_MECHANICS = {
   farmPlots: 3,
   // Attack multiplier while a fighter is Mega Evolved (this post only).
   megaBoost: 1.3,
+  // Attack multiplier for a Z-Move activation (this post only; the Z-Crystal is
+  // NEVER consumed, like a Mega Stone).
+  zBoost: 1.5,
+  // X Attack: attack multiplier for the post (item consumed).
+  xAttackBoost: 1.3,
+  // Dire Hit: forced critical-hit CHANCE (percent) for the post (item consumed).
+  direHitCrit: 25,
+  // Type-matched Gem: attack multiplier when the Gem's type matches the
+  // fighter's own type this post (item consumed).
+  gemBoost: 1.5,
+  // X Defense / X Sp. Def: incoming-damage multiplier for the post (item consumed).
+  xDefenseMult: 0.5,
+  // X Speed: flat bonus (percent) to the flee chance for the post (item consumed).
+  xSpeedFlee: 25,
 };
 type Mechanics = typeof DEFAULT_MECHANICS;
 
@@ -1220,6 +1234,29 @@ export const publishForumPost = onCall(async (request) => {
           stone: String((request.data.mega as any).stone ?? "").slice(0, 60),
         }
       : null;
+  // Optional: activate a Z-Move for THIS post only. Like Mega, needs the
+  // Z-Crystal in the bag but never consumes it; applies a one-post attack spike.
+  const zReq =
+    request.data?.zmove && typeof request.data.zmove === "object"
+      ? {
+          pokemonId: String((request.data.zmove as any).pokemonId ?? "").slice(0, 80),
+          itemId: String((request.data.zmove as any).itemId ?? "").slice(0, 100),
+        }
+      : null;
+  // Optional: consumable battle items used this post (X items, Dire Hit, Gems).
+  // Each is validated as owned and consumed; effects apply to this post only.
+  const battleItemsReq: { itemId: string; name: string; category: string }[] = Array.isArray(
+    request.data?.battleItems
+  )
+    ? (request.data.battleItems as any[])
+        .slice(0, 6)
+        .map((x) => ({
+          itemId: String(x?.itemId ?? "").slice(0, 100),
+          name: String(x?.name ?? "").slice(0, 60),
+          category: String(x?.category ?? "").slice(0, 40),
+        }))
+        .filter((x) => x.itemId)
+    : [];
   const member = await loadMember(uid);
   // The curve feeds both evolve-on-post and level-based battle HP; the battle
   // config carries the admin-tunable HP scaling and per-star damage.
@@ -1262,7 +1299,7 @@ export const publishForumPost = onCall(async (request) => {
     threadForNotify = thread;
 
     let bag: Record<string, any> = {};
-    if (itemRequests.length || evolveReq || megaReq) {
+    if (itemRequests.length || evolveReq || megaReq || zReq || battleItemsReq.length) {
       const bagSnap = await tx.get(bagRef);
       bag = (bagSnap.data() as Record<string, any>) ?? {};
     }
@@ -1287,7 +1324,7 @@ export const publishForumPost = onCall(async (request) => {
       teamPokemonIds = [
         ...new Set(teamIds.flatMap((teamId) => teamsData[teamId]?.pokemon_ids ?? [])),
       ];
-      if (teamPokemonIds.length || evolveReq || megaReq) {
+      if (teamPokemonIds.length || evolveReq || megaReq || zReq || battleItemsReq.length) {
         ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
       }
     } else if (evolveReq && !editPostId) {
@@ -1426,6 +1463,89 @@ export const publishForumPost = onCall(async (request) => {
         toSlug: form.slug,
       };
     }
+
+    // Z-Move: per-post activation. The Z-Crystal must be owned (never consumed)
+    // and usable by the fighter (type crystals match its type, species crystals
+    // match its species). Applies the zBoost to the fighter's attack this post.
+    let zInfo: { pokemonId: string; crystal: string; label: string } | null = null;
+    if (zReq && zReq.pokemonId && zReq.itemId && !editPostId) {
+      const poke = ownedForXp[zReq.pokemonId];
+      if (!poke) throw new HttpsError("failed-precondition", "That pokemon is not on this post's team.");
+      const key = Z_CRYSTAL_ID[zReq.itemId];
+      if (!key) throw new HttpsError("invalid-argument", "Unknown Z-Crystal.");
+      const zType = ZTYPE_CRYSTAL[key];
+      const zSpecies = ZSPECIES_CRYSTAL[key];
+      const speciesSlug = String(poke.image_slug ?? "");
+      const pokeTypes = typesForDex(Number(poke.pokedex ?? 0));
+      const usable = zType ? pokeTypes.includes(zType as any) : (zSpecies?.includes(speciesSlug) ?? false);
+      if (!usable) {
+        throw new HttpsError("failed-precondition", "This pokemon cannot use that Z-Crystal.");
+      }
+      const entry = bag[zReq.itemId];
+      if (!entry || (Number(entry.quantity) || 0) <= 0) {
+        throw new HttpsError("failed-precondition", "You do not have that Z-Crystal.");
+      }
+      // The crystal is NOT consumed (like a Mega Stone): activation only.
+      zInfo = {
+        pokemonId: zReq.pokemonId,
+        crystal: key,
+        label: zType ? `${zType} Z-Move` : "Z-Move",
+      };
+    }
+
+    // Consumable battle items (X items, Dire Hit, Gems) used this post. Each is
+    // validated as owned; effects apply to this post only and the item is spent.
+    const battleFx = {
+      xAttack: false,
+      direHit: false,
+      xDefense: false,
+      xSpeed: false,
+      gemTypes: [] as string[],
+      gemUniversal: false,
+      consume: [] as { itemId: string; qty: number }[],
+      usedNames: [] as string[],
+    };
+    if (battleItemsReq.length && !editPostId) {
+      for (const bi of battleItemsReq) {
+        const entry = bag[bi.itemId];
+        if (!entry || (Number(entry.quantity) || 0) <= 0) {
+          throw new HttpsError("failed-precondition", `You do not have ${bi.name || "that battle item"}.`);
+        }
+        const gem = GEM_TYPE[bi.itemId];
+        const xfx = XITEM_FX[bi.itemId];
+        if (gem) {
+          if (gem === "*") battleFx.gemUniversal = true;
+          else battleFx.gemTypes.push(gem);
+        } else if (xfx === "xAttack") {
+          battleFx.xAttack = true;
+        } else if (xfx === "direHit") {
+          battleFx.direHit = true;
+        } else if (xfx === "xDefense") {
+          battleFx.xDefense = true;
+        } else if (xfx === "xSpeed") {
+          battleFx.xSpeed = true;
+        } else if (xfx === "noop") {
+          // X Accuracy / Guard Spec: consumed with a flavor note only.
+        } else {
+          throw new HttpsError("invalid-argument", `${bi.name || "That item"} is not a battle item.`);
+        }
+        battleFx.consume.push({ itemId: bi.itemId, qty: 1 });
+        battleFx.usedNames.push(String(entry.name ?? bi.name));
+      }
+    }
+
+    // One combined attack multiplier from the fighter's Z-Move, X Attack and a
+    // type-matched Gem, applied in both the wild and boss battle branches.
+    let playerAttackItemMult = 1;
+    if (zInfo && battleFighterId === zInfo.pokemonId && mech.zBoost > 1) {
+      playerAttackItemMult *= mech.zBoost;
+    }
+    if (battleFx.xAttack && mech.xAttackBoost > 1) playerAttackItemMult *= mech.xAttackBoost;
+    const gemMatches =
+      battleFx.gemUniversal || battleFx.gemTypes.some((t) => fighterTypes.includes(t as any));
+    if (gemMatches && mech.gemBoost > 1) playerAttackItemMult *= mech.gemBoost;
+    playerAttackItemMult = Math.round(playerAttackItemMult * 100) / 100;
+
     const threadWeather = String(thread.weather ?? "");
     // Per-thread status conditions (burn/poison/paralysis), per pokemon.
     const statusNow: Record<string, string> = {
@@ -1578,14 +1698,25 @@ export const publishForumPost = onCall(async (request) => {
         attackMult *= mech.paralysisMult;
         battleNotes.push("Paralyzed: attack halved this post.");
       }
-      const playerCrit = randomInt(10000) < Math.round(mech.critChance * 100);
+      // Dire Hit raises the fighter's crit chance for this post.
+      const critChanceEff = battleFx.direHit
+        ? Math.max(mech.critChance, mech.direHitCrit)
+        : mech.critChance;
+      const playerCrit = randomInt(10000) < Math.round(critChanceEff * 100);
       if (playerCrit) {
         attackMult *= mech.critMult;
-        battleNotes.push("Critical hit!");
+        battleNotes.push(battleFx.direHit ? "Dire Hit: critical hit!" : "Critical hit!");
       }
       if (megaInfo && battleFighterId === megaInfo.pokemonId && mech.megaBoost > 1) {
         attackMult *= mech.megaBoost;
         battleNotes.push(`${megaInfo.toName} hit harder in its Mega form!`);
+      }
+      // Z-Move / X Attack / type-matched Gem: one combined attack spike.
+      if (playerAttackItemMult > 1) {
+        attackMult *= playerAttackItemMult;
+        if (zInfo && battleFighterId === zInfo.pokemonId) battleNotes.push(`Unleashed a ${zInfo.label}!`);
+        if (battleFx.xAttack) battleNotes.push("The X Attack powered the attack up.");
+        if (gemMatches) battleNotes.push("The Gem supercharged a same-type hit.");
       }
       attackMult = Math.round(attackMult * 100) / 100;
       let defenseMult = typeEffectiveness(enemyTypes, fighterTypes);
@@ -1594,6 +1725,8 @@ export const publishForumPost = onCall(async (request) => {
       if (HELD_DEFENSE.has(fighterHeld) && mech.heldDefenseBonus > 0) {
         defenseMult *= 1 - mech.heldDefenseBonus / 100;
       }
+      // X Defense / X Sp. Def: cut the enemy's incoming damage this post.
+      if (battleFx.xDefense) defenseMult *= mech.xDefenseMult;
       const enemyCrit = randomInt(10000) < Math.round(mech.critChance * 100);
       const enemyHit = Math.max(
         1,
@@ -1626,7 +1759,8 @@ export const publishForumPost = onCall(async (request) => {
               95,
               fleeChanceForStar(enemyStar) +
                 (natureKind === "speed" ? mech.natureEffect : 0) +
-                (HELD_FLEE.has(fighterHeld) ? mech.heldFleeBonus : 0)
+                (HELD_FLEE.has(fighterHeld) ? mech.heldFleeBonus : 0) +
+                (battleFx.xSpeed ? mech.xSpeedFlee : 0)
             );
         encounter.fleeChance = chance;
         if (randomInt(100) < chance || chance >= 100) {
@@ -1831,6 +1965,13 @@ export const publishForumPost = onCall(async (request) => {
       const bossTypes = typesForDex(bossIdx);
       // Attack posts land scaled by the fighter's type matchup vs the boss.
       bossAttackMult = typeEffectiveness(fighterTypes, bossTypes);
+      // Z-Move / X Attack / matching Gem also amplify a boss attack post.
+      if (playerAttackItemMult > 1) {
+        bossAttackMult = Math.round(bossAttackMult * playerAttackItemMult * 100) / 100;
+        if (zInfo && battleFighterId === zInfo.pokemonId) {
+          battleNotes.push(`Unleashed a ${zInfo.label} on the boss!`);
+        }
+      }
       const bossFalls =
         (Number(boss.attackPosts) || 0) + bossAttackMult >=
         (Number(boss.requiredPosts) || Infinity);
@@ -1846,7 +1987,8 @@ export const publishForumPost = onCall(async (request) => {
               typeEffectiveness(bossTypes, fighterTypes) *
               (HELD_DEFENSE.has(fighterHeld) && mech.heldDefenseBonus > 0
                 ? 1 - mech.heldDefenseBonus / 100
-                : 1)
+                : 1) *
+              (battleFx.xDefense ? mech.xDefenseMult : 1)
           )
         );
         enemyAttackDmg = Math.max(enemyAttackDmg, bossDmg);
@@ -1922,6 +2064,8 @@ export const publishForumPost = onCall(async (request) => {
     const blocks: Record<string, unknown> = {};
     if (centerVisit && !editPostId) blocks.center = { healed: true };
     if (megaInfo) blocks.mega = { ...megaInfo };
+    if (zInfo) blocks.z = { ...zInfo };
+    if (battleFx.usedNames.length) blocks.battleItems = battleFx.usedNames.slice();
     if (encounter) blocks.encounters = [encounter];
     if (battleBlock) blocks.battle = battleBlock;
     else if (healsOnlyBlock) blocks.battle = healsOnlyBlock;
@@ -1943,6 +2087,10 @@ export const publishForumPost = onCall(async (request) => {
         { [item.itemId]: { quantity: FieldValue.increment(-item.qty) } },
         { merge: true }
       );
+    });
+    // Consumable battle items (X items, Dire Hit, Gems) are spent this post.
+    battleFx.consume.forEach((c) => {
+      tx.set(bagRef, { [c.itemId]: { quantity: FieldValue.increment(-c.qty) } }, { merge: true });
     });
 
     // The post id must be known before the catch write so the caught pokemon
@@ -4652,6 +4800,138 @@ export const setHeldItem = onCall(async (request) => {
 });
 
 // ===========================================================================
+// Bag item actions: sell valuables for Snag Coins, and use consumable items
+// (Exp Candy, Vitamins, Plates/Memories) directly on a pokemon. Keyed by stable
+// item ids so they never depend on how a bag entry's display name was stored.
+// ===========================================================================
+
+// Valuables (+ bottle caps) sell for a flat Snag Coin price each.
+const SELL_VALUES: Record<string, number> = {
+  item_0086: 200, // tiny-mushroom
+  item_0087: 1000, // big-mushroom
+  item_0580: 3000, // balm-mushroom
+  item_0092: 500, // nugget
+  item_0581: 2000, // big-nugget
+  item_0088: 200, // pearl
+  item_0089: 800, // big-pearl
+  item_0582: 1500, // pearl-string
+  item_0090: 200, // stardust
+  item_0091: 1000, // star-piece
+  item_0583: 1500, // comet-shard
+  item_0106: 1000, // rare-bone
+  item_0571: 100, // pretty-wing
+  item_0070: 100, // shoal-salt
+  item_0071: 100, // shoal-shell
+  item_0473: 1500, // slowpoke-tail
+  item_0584: 300, // relic-copper
+  item_0585: 800, // relic-silver
+  item_0586: 2000, // relic-gold
+  item_0588: 500, // relic-band
+  item_0587: 1000, // relic-vase
+  item_0589: 2500, // relic-statue
+  item_0590: 5000, // relic-crown
+  item_0795: 1000, // bottle-cap
+  item_0796: 3000, // gold-bottle-cap
+};
+
+// Exp Candy XP by item id (rare-candy is handled separately: one level's worth).
+const EXP_CANDY_XP: Record<string, number> = {
+  item_1124: 100, // XS
+  item_1125: 800, // S
+  item_1126: 3000, // M
+  item_1127: 10000, // L
+  item_1128: 30000, // XL
+};
+const RARE_CANDY_ID = "item_0050";
+// Vitamins raise a pokemon's friendship (no EV system on the site).
+const VITAMIN_IDS = new Set([
+  "item_0045", "item_0046", "item_0047", "item_0049",
+  "item_0052", "item_0048", "item_0051", "item_0053",
+]);
+const VITAMIN_FRIENDSHIP = 5;
+const FRIENDSHIP_MAX = 100;
+// Plates + Memories have no type-form system yet: they grant a flat XP chunk so
+// they aren't dead items (see docs/BACKLOG.md: Arceus/Silvally type forms).
+const PLATE_MEMORY_XP = 2000;
+
+export const sellItem = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const itemId = requireString(request.data?.itemId, "item", 100);
+  const qty = Math.max(1, Math.min(9999, Math.trunc(Number(request.data?.qty ?? 1)) || 1));
+  const unit = SELL_VALUES[itemId];
+  if (!unit) throw new HttpsError("invalid-argument", "That item can't be sold here.");
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  return await db.runTransaction(async (tx) => {
+    const [bagSnap, curSnap] = await Promise.all([tx.get(bagRef), tx.get(currencyRef)]);
+    const entry = ((bagSnap.data() as Record<string, any>) ?? {})[itemId];
+    if (!entry || (Number(entry.quantity) || 0) < qty) {
+      throw new HttpsError("failed-precondition", "You do not have that many to sell.");
+    }
+    const payout = unit * qty;
+    const cur = (curSnap.data() as Record<string, any>) ?? {};
+    tx.set(bagRef, { [itemId]: { quantity: FieldValue.increment(-qty) } }, { merge: true });
+    tx.set(currencyRef, { pokecoin: addCurrency(cur.pokecoin, payout) }, { merge: true });
+    return { ok: true, coins: payout, qty };
+  });
+});
+
+export const useItemOnPokemon = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
+  const itemId = requireString(request.data?.itemId, "item", 100);
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const ownedRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  const curve = await loadLevelingCurve();
+  return await db.runTransaction(async (tx) => {
+    const [bagSnap, ownedSnap] = await Promise.all([tx.get(bagRef), tx.get(ownedRef)]);
+    const owned = (ownedSnap.data() as Record<string, any>) ?? {};
+    const poke = owned[pokemonId];
+    if (!poke) throw new HttpsError("not-found", "That pokemon is not in your box.");
+    const entry = ((bagSnap.data() as Record<string, any>) ?? {})[itemId];
+    if (!entry || (Number(entry.quantity) || 0) <= 0) {
+      throw new HttpsError("not-found", "That item is not in your bag.");
+    }
+    const category = String(entry.category ?? "");
+    const update: Record<string, any> = {};
+    const result: { ok: true; xp?: number; friendship?: number } = { ok: true };
+
+    if (itemId === RARE_CANDY_ID || EXP_CANDY_XP[itemId] !== undefined) {
+      const curExp = Number(poke.experience) || 0;
+      let gain: number;
+      if (itemId === RARE_CANDY_ID) {
+        const lvl = levelForXp(curExp, curve);
+        gain = lvl >= MAX_LEVEL ? 0 : Math.max(1, (curve[lvl + 1] ?? curExp) - curExp);
+      } else {
+        gain = EXP_CANDY_XP[itemId];
+      }
+      if (gain <= 0) throw new HttpsError("failed-precondition", "That pokemon is already at the level cap.");
+      update.experience = FieldValue.increment(gain);
+      result.xp = gain;
+    } else if (VITAMIN_IDS.has(itemId)) {
+      const curF = Number(poke.friendship) || 0;
+      if (curF >= FRIENDSHIP_MAX) {
+        throw new HttpsError("failed-precondition", "That pokemon's friendship is already maxed.");
+      }
+      const add = Math.min(VITAMIN_FRIENDSHIP, FRIENDSHIP_MAX - curF);
+      update.friendship = FieldValue.increment(add);
+      result.friendship = add;
+    } else if (category === "plate" || category === "memory") {
+      update.experience = FieldValue.increment(PLATE_MEMORY_XP);
+      result.xp = PLATE_MEMORY_XP;
+    } else {
+      throw new HttpsError("invalid-argument", "That item can't be used on a pokemon this way.");
+    }
+
+    tx.set(bagRef, { [itemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
+    tx.set(ownedRef, { [pokemonId]: update }, { merge: true });
+    return result;
+  });
+});
+
+// ===========================================================================
 // The Berry Farm: plant a bag berry, wait, harvest a multiplied yield.
 // State lives in users/{uid}/bag/farm (server-written only per rules).
 // ===========================================================================
@@ -5887,6 +6167,61 @@ const MEGA_FORMS: Record<string, MegaForm[]> = (() => {
   }
   return out;
 })();
+
+// Z-Crystals (Group `z-crystals`). A Z-Move is a per-post activation like Mega:
+// the crystal must be OWNED (never consumed) and the fighter must be allowed to
+// use it. Type crystals (firium-z etc.) require the fighter to share that type;
+// species crystals require the fighter to be one of the listed species. Mirror
+// of src/lib/zmove.ts; keep the two in sync.
+const ZTYPE_CRYSTAL: Record<string, string> = {
+  "normalium-z": "Normal", "firium-z": "Fire", "waterium-z": "Water",
+  "electrium-z": "Electric", "grassium-z": "Grass", "icium-z": "Ice",
+  "fightinium-z": "Fighting", "poisonium-z": "Poison", "groundium-z": "Ground",
+  "flyinium-z": "Flying", "psychium-z": "Psychic", "buginium-z": "Bug",
+  "rockium-z": "Rock", "ghostium-z": "Ghost", "dragonium-z": "Dragon",
+  "darkinium-z": "Dark", "steelium-z": "Steel", "fairium-z": "Fairy",
+};
+const ZSPECIES_CRYSTAL: Record<string, string[]> = {
+  "decidium-z": ["decidueye"], "incinium-z": ["incineroar"], "primarium-z": ["primarina"],
+  "aloraichium-z": ["raichu-alola", "raichu"], "snorlium-z": ["snorlax"],
+  "eevium-z": ["eevee"], "mewnium-z": ["mew"], "pikanium-z": ["pikachu"],
+  "pikashunium-z": ["pikachu"],
+  "tapunium-z": ["tapu-koko", "tapu-lele", "tapu-bulu", "tapu-fini"],
+  "marshadium-z": ["marshadow"], "kommonium-z": ["kommo-o"],
+  "lycanium-z": ["lycanroc", "lycanroc-midday", "lycanroc-midnight", "lycanroc-dusk"],
+  "mimikium-z": ["mimikyu"], "solganium-z": ["solgaleo"], "lunalium-z": ["lunala"],
+  "ultranecrozium-z": ["necrozma", "necrozma-dusk-mane", "necrozma-dawn-wings"],
+};
+// Z-Crystal item id -> catalog key (Group z-crystals). Keyed by id (not name)
+// so validation never depends on how a bag entry's display name was stored.
+const Z_CRYSTAL_ID: Record<string, string> = {
+  item_0776: "normalium-z", item_0777: "firium-z", item_0800: "waterium-z",
+  item_0779: "electrium-z", item_0798: "grassium-z", item_0781: "icium-z",
+  item_0782: "fightinium-z", item_0783: "poisonium-z", item_0784: "groundium-z",
+  item_0785: "flyinium-z", item_0786: "psychium-z", item_0787: "buginium-z",
+  item_0788: "rockium-z", item_0789: "ghostium-z", item_0790: "dragonium-z",
+  item_0791: "darkinium-z", item_0792: "steelium-z", item_0793: "fairium-z",
+  item_0780: "decidium-z", item_0799: "incinium-z", item_0778: "primarium-z",
+  item_0803: "aloraichium-z", item_0804: "snorlium-z", item_0805: "eevium-z",
+  item_0806: "mewnium-z", item_0794: "pikanium-z", item_0835: "pikashunium-z",
+  item_0801: "tapunium-z", item_0802: "marshadium-z", item_0926: "kommonium-z",
+  item_0925: "lycanium-z", item_0924: "mimikium-z", item_0921: "solganium-z",
+  item_0922: "lunalium-z", item_0923: "ultranecrozium-z",
+};
+// Consumable X battle items -> effect (Group battle-item). item ids are stable.
+const XITEM_FX: Record<string, "xAttack" | "direHit" | "xDefense" | "xSpeed" | "noop"> = {
+  item_0057: "xAttack", item_0061: "xAttack", item_0056: "direHit",
+  item_0058: "xDefense", item_0062: "xDefense", item_0059: "xSpeed",
+  item_0060: "noop", item_0055: "noop",
+};
+// Gem item id -> the type it boosts ("*" = elemental gem, matches any type).
+const GEM_TYPE: Record<string, string> = {
+  item_0548: "Fire", item_0549: "Water", item_0550: "Electric", item_0551: "Grass",
+  item_0552: "Ice", item_0553: "Fighting", item_0554: "Poison", item_0555: "Ground",
+  item_0556: "Flying", item_0557: "Psychic", item_0558: "Bug", item_0559: "Rock",
+  item_0560: "Ghost", item_0561: "Dragon", item_0562: "Dark", item_0563: "Steel",
+  item_0564: "Normal", item_0715: "Fairy", item_15862: "*",
+};
 
 // Leveling curve. Level is derived from a Pokemon's total experience. The
 // default table is generated from src/lib/leveling.ts into levelingCurve.json

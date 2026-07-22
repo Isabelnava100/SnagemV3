@@ -2,7 +2,9 @@ import {
   Avatar,
   Box,
   Flex,
+  Group,
   Modal,
+  NumberInput,
   ScrollArea,
   Select,
   SimpleGrid,
@@ -24,7 +26,13 @@ import { EvolveItemModal } from "../../../components/pokemon/EvolveItemModal";
 import { getItemImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getItems, getOwnedPokemons } from "../../../queries/dashboard";
-import { callApplyMint, getMysteryBoxes } from "../../../queries/game";
+import {
+  callApplyMint,
+  callSellItem,
+  callUseItemOnPokemon,
+  getMysteryBoxes,
+} from "../../../queries/game";
+import { itemPokemonUse, sellPriceFor } from "../../../lib/itemUses";
 import { describeSources, useItemSources } from "../../../lib/itemSources";
 import { rarityForItem, RARITY_COLORS, RARITY_LABELS } from "../../../lib/itemRarity";
 import { NATURE_GROUPS, NATURE_GROUP_LABEL, NatureGroup } from "../../../lib/natures";
@@ -49,6 +57,9 @@ export default function Items() {
   const [mysteryItem, setMysteryItem] = React.useState<{ id: string; name: string } | null>(null);
   const [evolveItem, setEvolveItem] = React.useState<{ id: string; name: string } | null>(null);
   const [mintItem, setMintItem] = React.useState<{ id: string; name: string } | null>(null);
+  const [actionItem, setActionItem] = React.useState<
+    { id: string; name: string; category: string; quantity: number } | null
+  >(null);
   // "Get more" line per item, built from the live shops + recipes.
   const sources = useItemSources();
 
@@ -88,14 +99,24 @@ export default function Items() {
                     const box = isMysteryBox(item.id, item.name, item.category);
                     const isMint = !box && item.category === "mint";
                     const evoStone = !box && !isMint && isEvolutionItem(item.name);
-                    const interactive = box || evoStone || isMint;
+                    const sellable = sellPriceFor(item.id) !== undefined;
+                    const pokeUse = itemPokemonUse(item.id, item.category);
+                    const interactive = box || evoStone || isMint || sellable || !!pokeUse;
                     // Show the admin's custom box name to players when set.
                     const displayName = boxConfigs?.[item.id]?.name || item.name;
                     const onUse = box
                       ? () => setMysteryItem({ id: item.id, name: displayName })
                       : isMint
                       ? () => setMintItem({ id: item.id, name: item.name })
-                      : () => setEvolveItem({ id: item.id, name: item.name });
+                      : evoStone
+                      ? () => setEvolveItem({ id: item.id, name: item.name })
+                      : () =>
+                          setActionItem({
+                            id: item.id,
+                            name: item.name,
+                            category: item.category,
+                            quantity: item.quantity,
+                          });
                     const more = describeSources(sources.get(item.id));
                     return (
                       <Box
@@ -180,7 +201,129 @@ export default function Items() {
       />
       <EvolveItemModal item={evolveItem} onClose={() => setEvolveItem(null)} />
       <MintModal item={mintItem} onClose={() => setMintItem(null)} />
+      <ItemActionModal item={actionItem} onClose={() => setActionItem(null)} />
     </Stack>
+  );
+}
+
+/**
+ * Sell a valuable for Snag Coins, or use a consumable (Exp Candy / Vitamin /
+ * Plate / Memory) on one of the member's pokemon. Only the actions the item
+ * supports are shown.
+ */
+function ItemActionModal(props: {
+  item: { id: string; name: string; category: string; quantity: number } | null;
+  onClose: () => void;
+}) {
+  const { item, onClose } = props;
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [qty, setQty] = React.useState(1);
+  const [target, setTarget] = React.useState<string | null>(null);
+
+  const { data: owned } = useQuery({
+    queryKey: ["get-owned-pokemons", user?.uid],
+    queryFn: () => getOwnedPokemons(user?.uid as string),
+    enabled: !!user?.uid,
+  });
+
+  React.useEffect(() => {
+    setQty(1);
+    setTarget(null);
+  }, [item?.id]);
+
+  const price = item ? sellPriceFor(item.id) : undefined;
+  const use = item ? itemPokemonUse(item.id, item.category) : null;
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["get-items", user?.uid] });
+    queryClient.invalidateQueries({ queryKey: ["get-owned-pokemons", user?.uid] });
+  };
+
+  const sell = useMutation({
+    mutationFn: () => callSellItem(item!.id, qty),
+    onSuccess: (r) => {
+      toastSuccess(`Sold for ${r.coins} Snag Coins.`);
+      invalidate();
+      onClose();
+    },
+    onError: (e) => toastError((e as Error).message || "Could not sell that."),
+  });
+
+  const useOnPokemon = useMutation({
+    mutationFn: () => callUseItemOnPokemon(target!, item!.id),
+    onSuccess: (r) => {
+      toastSuccess(
+        r.friendship ? `Friendship +${r.friendship}.` : r.xp ? `Gained ${r.xp} XP.` : "Done."
+      );
+      invalidate();
+      onClose();
+    },
+    onError: (e) => toastError((e as Error).message || "Could not use that item."),
+  });
+
+  const pokeOptions = (owned?.sortedData ?? []).map((p) => ({
+    value: p.id,
+    label: `${p.species || p.name}${p.gender ? ` (${p.gender})` : ""}`,
+  }));
+
+  return (
+    <Modal opened={!!item} onClose={onClose} title={item?.name ?? "Item"} centered>
+      {item && (
+        <Stack gap={16}>
+          {price !== undefined && (
+            <Stack gap={8}>
+              <Text c="white" fw={700} fz={14}>
+                Sell for Snag Coins
+              </Text>
+              <Text c="dimmed" fz={13}>
+                {price} Snag Coins each. You have {item.quantity}.
+              </Text>
+              <Group gap={8} align="flex-end">
+                <NumberInput
+                  label="How many"
+                  min={1}
+                  max={item.quantity}
+                  value={qty}
+                  onChange={(v) => setQty(Math.max(1, Math.min(item.quantity, Number(v) || 1)))}
+                  w={120}
+                  styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+                />
+                <GradientButtonPrimary
+                  loading={sell.isPending}
+                  onClick={() => sell.mutate()}
+                >
+                  Sell for {price * qty} Snag Coins
+                </GradientButtonPrimary>
+              </Group>
+            </Stack>
+          )}
+          {use && (
+            <Stack gap={8}>
+              <Text c="white" fw={700} fz={14}>
+                {use === "friendship" ? "Use on a pokemon (raises friendship)" : "Use on a pokemon (grants XP)"}
+              </Text>
+              <Select
+                label="Which pokemon"
+                placeholder="Pick a pokemon"
+                data={pokeOptions}
+                value={target}
+                onChange={setTarget}
+                searchable
+                styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+              />
+              <GradientButtonPrimary
+                disabled={!target}
+                loading={useOnPokemon.isPending}
+                onClick={() => useOnPokemon.mutate()}
+              >
+                Use it
+              </GradientButtonPrimary>
+            </Stack>
+          )}
+        </Stack>
+      )}
+    </Modal>
   );
 }
 
