@@ -19,6 +19,8 @@ import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLa
 import { Conditional } from "../../../../components/common/Conditional";
 import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
 import { EmptyMessage } from "../../../../components/common/Message";
+import { ItemHoverCard } from "../../../../components/common/ItemHoverCard";
+import { PokemonHoverCard } from "../../../../components/pokemon/PokemonHoverCard";
 import { Capability } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
 import { itemData } from "../../../../data/item";
@@ -42,7 +44,11 @@ function renderItemOption({ option }: { option: { value: string; label: string }
   const item = itemData.find((i) => i.id === option.value);
   return (
     <Group gap={8} wrap="nowrap">
-      {item && <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={26} />}
+      {item && (
+        <ItemHoverCard item={{ id: item.id, name: item.name, category: item.category }}>
+          <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={26} />
+        </ItemHoverCard>
+      )}
       <Text fz={16} c="white">
         {option.label}
       </Text>
@@ -199,13 +205,17 @@ export default function Donate() {
                       <div key={item.id} className="grid grid-cols-2 border-b-2 border-[#D9D9D9]">
                         <Group gap={5}>
                           <Box w={30} h={30} style={{ flexShrink: 0 }}>
-                            <Image
-                              w="100%"
-                              h="100%"
-                              fit="contain"
-                              src={getItemImageURL(item.filePath)}
-                              alt={item.name}
-                            />
+                            <ItemHoverCard
+                              item={{ id: item.id, name: item.name, category: item.category }}
+                            >
+                              <Image
+                                w="100%"
+                                h="100%"
+                                fit="contain"
+                                src={getItemImageURL(item.filePath)}
+                                alt={item.name}
+                              />
+                            </ItemHoverCard>
                           </Box>
                           <Text fz={20} fw={400} c="white">
                             {item.name}
@@ -294,13 +304,22 @@ export default function Donate() {
                           <Box key={item.id}>
                             <Group gap={8}>
                               <Box w={30} h={30} style={{ flexShrink: 0 }}>
-                                <Image
-                                  w="100%"
-                                  h="100%"
-                                  fit="contain"
-                                  src={getItemImageURL(item.filePath)}
-                                  alt={item.name}
-                                />
+                                <ItemHoverCard
+                                  item={{
+                                    id: item.id,
+                                    name: item.name,
+                                    category: item.category,
+                                    quantity: item.quantity,
+                                  }}
+                                >
+                                  <Image
+                                    w="100%"
+                                    h="100%"
+                                    fit="contain"
+                                    src={getItemImageURL(item.filePath)}
+                                    alt={item.name}
+                                  />
+                                </ItemHoverCard>
                               </Box>
                               <Group>
                                 <Text fz={20} c="white" fw={400}>
@@ -422,7 +441,9 @@ function GivePokemonSection() {
           w={220}
         />
         {slug && (
-          <Avatar src={getPokemonImageURL(slug, shiny)} alt={slug} size={40} radius="xl" />
+          <PokemonHoverCard species={{ slug }}>
+            <Avatar src={getPokemonImageURL(slug, shiny)} alt={slug} size={40} radius="xl" />
+          </PokemonHoverCard>
         )}
         <Checkbox
           label="Shiny"

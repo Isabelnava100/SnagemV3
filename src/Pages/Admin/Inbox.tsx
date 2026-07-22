@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 const displayFont = "var(--font-display, 'Quantico', sans-serif)";
 import { IconChevronDown } from "@tabler/icons-react";
 import React from "react";
+import { ConfirmPopover } from "../../components/common/ConfirmPopover";
 import { EmptyMessage } from "../../components/common/Message";
 import { SectionLoader } from "../../components/navigation/loading";
 import { Capability } from "../../components/types/typesUsed";
@@ -85,16 +86,24 @@ function ClearanceRequestCard(props: { request: MasterClearanceRequest; onDone: 
         >
           Approve clearance
         </Button>
-        <Button
-          variant="light"
-          color="red"
-          radius="xl"
-          size="sm"
+        <ConfirmPopover
+          message="Decline this master clearance request? The member is notified and will need to reapply."
+          confirmLabel="Decline"
           loading={resolveMutation.isPending}
-          onClick={() => resolveMutation.mutate(false)}
-        >
-          Decline
-        </Button>
+          onConfirm={() => resolveMutation.mutate(false)}
+          target={(open) => (
+            <Button
+              variant="light"
+              color="red"
+              radius="xl"
+              size="sm"
+              loading={resolveMutation.isPending}
+              onClick={open}
+            >
+              Decline
+            </Button>
+          )}
+        />
       </Group>
       {error && (
         <Text fz={14} c="red.4" role="status" aria-live="polite">
@@ -159,16 +168,24 @@ function ChallengeRequestCard(props: { request: ChallengeRequest; onDone: () => 
         >
           Accept challenge
         </Button>
-        <Button
-          variant="light"
-          color="red"
-          radius="xl"
-          size="sm"
+        <ConfirmPopover
+          message="Decline this challenge request? The member is notified they'll need to ask again."
+          confirmLabel="Decline"
           loading={resolveMutation.isPending}
-          onClick={() => resolveMutation.mutate(false)}
-        >
-          Decline
-        </Button>
+          onConfirm={() => resolveMutation.mutate(false)}
+          target={(open) => (
+            <Button
+              variant="light"
+              color="red"
+              radius="xl"
+              size="sm"
+              loading={resolveMutation.isPending}
+              onClick={open}
+            >
+              Decline
+            </Button>
+          )}
+        />
       </Group>
       {error && (
         <Text fz={14} c="red.4" role="status" aria-live="polite">

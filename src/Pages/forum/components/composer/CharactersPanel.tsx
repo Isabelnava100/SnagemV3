@@ -13,6 +13,7 @@ import {
 import { PostCharacter } from "../../types";
 import { ForumPanel, ForumTextLink, PanelHint } from "../ui";
 import { EvolveButton } from "../../../../components/pokemon/EvolveButton";
+import { PokemonHoverCard } from "../../../../components/pokemon/PokemonHoverCard";
 import { canEverEvolve } from "../../../../lib/evolution";
 import { levelProgress } from "../../../../lib/leveling";
 
@@ -135,7 +136,9 @@ export default function CharactersPanel(props: {
               </Text>
               <Group gap={6}>
                 {character.pokemon.map((p) => (
-                  <Avatar key={p.slug} src={getPokemonImageURL(p.slug)} alt={`${p.name} sprite`} size={34} radius="xl" bg="#2b2a2b" title={p.name} />
+                  <PokemonHoverCard key={p.slug} species={{ slug: p.slug, name: p.name }}>
+                    <Avatar src={getPokemonImageURL(p.slug)} alt={`${p.name} sprite`} size={34} radius="xl" bg="#2b2a2b" title={p.name} />
+                  </PokemonHoverCard>
                 ))}
               </Group>
             </Stack>
@@ -206,15 +209,16 @@ export default function CharactersPanel(props: {
                     {!!picked.pokemon.length && (
                       <Group gap={4}>
                         {picked.pokemon.map((p) => (
-                          <Avatar
-                            key={p.slug}
-                            src={getPokemonImageURL(p.slug)}
-                            alt={`${p.name} sprite`}
-                            size={34}
-                            radius="xl"
-                            bg="#2b2a2b"
-                            title={p.name}
-                          />
+                          <PokemonHoverCard key={p.slug} species={{ slug: p.slug, name: p.name }}>
+                            <Avatar
+                              src={getPokemonImageURL(p.slug)}
+                              alt={`${p.name} sprite`}
+                              size={34}
+                              radius="xl"
+                              bg="#2b2a2b"
+                              title={p.name}
+                            />
+                          </PokemonHoverCard>
                         ))}
                       </Group>
                     )}

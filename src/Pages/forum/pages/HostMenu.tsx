@@ -30,6 +30,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { actorFrom, logAuditEvent } from "../../../lib/auditLog";
 import { pokemonData } from "../../../data/pokemon";
 import { getPokemonImageURL } from "../../../helpers";
+import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
 import { battleStage } from "../../../lib/battleStage";
 import { hasCapability, isAdmin } from "../../../lib/permissions";
 import { getPokemonLists } from "../../../queries/admin";
@@ -454,7 +455,9 @@ export default function HostMenu() {
                 <Text fz={22} c="white">
                   It&apos;s a Boss Battle!
                 </Text>
-                <Avatar src={getPokemonImageURL(activeBoss.slug)} alt={`${activeBoss.name} sprite`} size={72} radius="xl" />
+                <PokemonHoverCard species={{ slug: activeBoss.slug, name: activeBoss.name }}>
+                  <Avatar src={getPokemonImageURL(activeBoss.slug)} alt={`${activeBoss.name} sprite`} size={72} radius="xl" />
+                </PokemonHoverCard>
                 <GameResultText>
                   {activeBoss.name} is active
                   {activeBoss.excluded.length
@@ -482,7 +485,9 @@ export default function HostMenu() {
                   styles={{ input: { background: "#2E2D2E" } }}
                 />
                 {bossSlug && (
-                  <Avatar src={getPokemonImageURL(bossSlug)} alt={`${bossSlug} sprite`} size={64} radius="xl" />
+                  <PokemonHoverCard species={{ slug: bossSlug }}>
+                    <Avatar src={getPokemonImageURL(bossSlug)} alt={`${bossSlug} sprite`} size={64} radius="xl" />
+                  </PokemonHoverCard>
                 )}
                 <Textarea
                   label="Description"

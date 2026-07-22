@@ -27,6 +27,8 @@ import { useAuth } from "../../../context/AuthContext";
 import { itemData } from "../../../data/item";
 import { pokemonData } from "../../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL } from "../../../helpers";
+import { ItemHoverCard } from "../../../components/common/ItemHoverCard";
+import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
 import { clickable } from "../../../lib/a11y";
 import { hasCapability } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
@@ -408,7 +410,16 @@ export default function ThreadRewards() {
                           variant="light"
                           color="pink.0"
                           leftSection={
-                            <Avatar src={getItemImageURL(item.filePath)} alt={`${item.name ?? "Item"} icon`} size={14} />
+                            <ItemHoverCard
+                              item={{
+                                id: item.itemId,
+                                name: item.name,
+                                category: item.category,
+                                quantity: item.qty,
+                              }}
+                            >
+                              <Avatar src={getItemImageURL(item.filePath)} alt={`${item.name ?? "Item"} icon`} size={14} />
+                            </ItemHoverCard>
                           }
                           rightSection={
                             <span
@@ -434,7 +445,9 @@ export default function ThreadRewards() {
                           variant="light"
                           color="grape"
                           leftSection={
-                            <Avatar src={getPokemonImageURL(p.slug, p.shiny)} alt={p.name} size={14} />
+                            <PokemonHoverCard species={{ slug: p.slug, name: p.name }}>
+                              <Avatar src={getPokemonImageURL(p.slug, p.shiny)} alt={p.name} size={14} />
+                            </PokemonHoverCard>
                           }
                           rightSection={
                             <span
@@ -477,12 +490,14 @@ export default function ThreadRewards() {
                         {Object.entries(entry.pokemonXp).map(([pokeId, xp]) => (
                           <Box key={pokeId} p={8} bg="#2b2a2b" style={{ borderRadius: 8 }}>
                             <Group gap={8} wrap="nowrap" mb={6}>
-                              <Avatar
-                                src={xp.slug ? getPokemonImageURL(xp.slug) : undefined}
-                                alt={`${xp.name ?? "Pokemon"} sprite`}
-                                size={26}
-                                radius="xl"
-                              />
+                              <PokemonHoverCard species={{ slug: xp.slug, name: xp.name }}>
+                                <Avatar
+                                  src={xp.slug ? getPokemonImageURL(xp.slug) : undefined}
+                                  alt={`${xp.name ?? "Pokemon"} sprite`}
+                                  size={26}
+                                  radius="xl"
+                                />
+                              </PokemonHoverCard>
                               <Text fz={14} c="white" fw={500}>
                                 {xp.name ?? pokeId}
                               </Text>
@@ -608,7 +623,11 @@ function PokemonAdd(props: { onAdd: (slug: string, shiny: boolean) => void }) {
         w={200}
         styles={{ input: { background: "#2E2D2E" } }}
       />
-      {slug && <Avatar src={getPokemonImageURL(slug, shiny)} alt={slug} size={26} radius="xl" />}
+      {slug && (
+        <PokemonHoverCard species={{ slug }}>
+          <Avatar src={getPokemonImageURL(slug, shiny)} alt={slug} size={26} radius="xl" />
+        </PokemonHoverCard>
+      )}
       <Checkbox
         label="Shiny"
         size="xs"

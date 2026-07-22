@@ -22,6 +22,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
 import { Link } from "react-router-dom";
+import { ItemHoverCard } from "../../components/common/ItemHoverCard";
 import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
@@ -388,13 +389,15 @@ function StoreBody(props: { shop: Shop; balance: number }) {
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
-            <Image
-              src={resolved.filePath ? getItemImageURL(resolved.filePath) : undefined}
-              alt={resolved.name}
-              w={30}
-              h={30}
-              fit="contain"
-            />
+            <ItemHoverCard item={{ id: item.itemId, name: resolved.name }}>
+              <Image
+                src={resolved.filePath ? getItemImageURL(resolved.filePath) : undefined}
+                alt={resolved.name}
+                w={30}
+                h={30}
+                fit="contain"
+              />
+            </ItemHoverCard>
           </Box>
           <Box style={{ minWidth: 0 }}>
             <Text fz={16} fw={700} c="white" lineClamp={1}>
@@ -653,13 +656,22 @@ function RecycleItemsTab(props: {
                   }}
                 >
                   <Stack gap={6} align="center">
-                    <Image
-                      src={item.filePath ? getItemImageURL(item.filePath) : undefined}
-                      alt={item.name}
-                      w={44}
-                      h={44}
-                      fit="contain"
-                    />
+                    <ItemHoverCard
+                      item={{
+                        id: item.id,
+                        name: item.name,
+                        category: item.category,
+                        quantity: item.quantity,
+                      }}
+                    >
+                      <Image
+                        src={item.filePath ? getItemImageURL(item.filePath) : undefined}
+                        alt={item.name}
+                        w={44}
+                        h={44}
+                        fit="contain"
+                      />
+                    </ItemHoverCard>
                     <Text fz={20} c="white" ta="center" lineClamp={1}>
                       {item.name}
                     </Text>
@@ -917,13 +929,20 @@ function TourBody() {
             aria-live="polite"
           >
             {result ? (
-              <Image
-                src={result.item.filePath ? getItemImageURL(result.item.filePath) : undefined}
-                alt={result.item.name}
-                w={72}
-                h={72}
-                fit="contain"
-              />
+              <ItemHoverCard
+                item={{
+                  id: itemData.find((i) => i.name === result.item.name)?.id ?? result.item.name,
+                  name: result.item.name,
+                }}
+              >
+                <Image
+                  src={result.item.filePath ? getItemImageURL(result.item.filePath) : undefined}
+                  alt={result.item.name}
+                  w={72}
+                  h={72}
+                  fit="contain"
+                />
+              </ItemHoverCard>
             ) : (
               <Text fz={44} c="dimmed">
                 ?
@@ -1306,14 +1325,21 @@ function CraftRecipeRow(props: { recipe: Recipe; bag: Map<string, number>; onDon
       <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
         <Box style={{ minWidth: 0, flex: "1 1 260px" }}>
           <Group gap={8} wrap="nowrap">
-            <Image
-              src={getItemImageURL(itemData.find((i) => i.id === recipe.output_item_id)?.filePath ?? "")}
-              alt={`${itemNameOf(recipe.output_item_id, recipe.output_name)} sprite`}
-              w={34}
-              h={34}
-              fit="contain"
-              loading="lazy"
-            />
+            <ItemHoverCard
+              item={{
+                id: recipe.output_item_id,
+                name: itemNameOf(recipe.output_item_id, recipe.output_name),
+              }}
+            >
+              <Image
+                src={getItemImageURL(itemData.find((i) => i.id === recipe.output_item_id)?.filePath ?? "")}
+                alt={`${itemNameOf(recipe.output_item_id, recipe.output_name)} sprite`}
+                w={34}
+                h={34}
+                fit="contain"
+                loading="lazy"
+              />
+            </ItemHoverCard>
             <Text fz={18} fw={800} c="white">
               {itemNameOf(recipe.output_item_id, recipe.output_name)}
               {(recipe.output_qty ?? 1) > 1 ? ` x${recipe.output_qty}` : ""}

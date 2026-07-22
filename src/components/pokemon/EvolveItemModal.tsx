@@ -9,6 +9,7 @@ import { levelProgress } from "../../lib/leveling";
 import { OwnedPokemon } from "../types/typesUsed";
 import { getOwnedPokemons } from "../../queries/dashboard";
 import { evolvePokemon } from "../../queries/evolution";
+import { PokemonHoverCard } from "./PokemonHoverCard";
 import { GradientButtonSecondary } from "../common/GradientButton";
 
 /**
@@ -94,14 +95,16 @@ export function EvolveItemModal(props: {
               <Box key={i} p={10} style={{ background: "#1E1D2080", borderRadius: 10 }}>
                 <Group justify="space-between" wrap="nowrap" gap={8}>
                   <Group gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
-                    <Avatar
-                      src={getPokemonImageURL(poke.image_slug)}
-                      alt={poke.species}
-                      size={40}
-                      imageProps={{ style: { imageRendering: "pixelated" } }}
-                    >
-                      <img src={POKEMON_SPRITE_FALLBACK} alt="" width={28} height={28} />
-                    </Avatar>
+                    <PokemonHoverCard pokemon={poke}>
+                      <Avatar
+                        src={getPokemonImageURL(poke.image_slug)}
+                        alt={poke.species}
+                        size={40}
+                        imageProps={{ style: { imageRendering: "pixelated" } }}
+                      >
+                        <img src={POKEMON_SPRITE_FALLBACK} alt="" width={28} height={28} />
+                      </Avatar>
+                    </PokemonHoverCard>
                     <Stack gap={0} style={{ minWidth: 0 }}>
                       <Text c="white" fz={16} truncate>
                         {poke.species} (Lv {level})
@@ -124,23 +127,27 @@ export function EvolveItemModal(props: {
                 {open && (
                   <Stack gap={8} mt={8}>
                     <Group gap={16} align="center">
-                      <Avatar
-                        src={getPokemonImageURL(poke.image_slug)}
-                        alt={poke.species}
-                        size={48}
-                        imageProps={{ style: { imageRendering: "pixelated" } }}
-                      />
+                      <PokemonHoverCard pokemon={poke}>
+                        <Avatar
+                          src={getPokemonImageURL(poke.image_slug)}
+                          alt={poke.species}
+                          size={48}
+                          imageProps={{ style: { imageRendering: "pixelated" } }}
+                        />
+                      </PokemonHoverCard>
                       <Text c="dimmed" fz={24}>
                         →
                       </Text>
-                      <Avatar
-                        src={getPokemonImageURL(option.toSlug)}
-                        alt={option.toName}
-                        size={48}
-                        imageProps={{ style: { imageRendering: "pixelated" } }}
-                      >
-                        <img src={POKEMON_SPRITE_FALLBACK} alt="" width={32} height={32} />
-                      </Avatar>
+                      <PokemonHoverCard species={{ slug: option.toSlug }}>
+                        <Avatar
+                          src={getPokemonImageURL(option.toSlug)}
+                          alt={option.toName}
+                          size={48}
+                          imageProps={{ style: { imageRendering: "pixelated" } }}
+                        >
+                          <img src={POKEMON_SPRITE_FALLBACK} alt="" width={32} height={32} />
+                        </Avatar>
+                      </PokemonHoverCard>
                     </Group>
                     <Stack gap={2}>
                       <Text fz={14} c="white">

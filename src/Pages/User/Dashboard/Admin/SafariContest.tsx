@@ -20,6 +20,7 @@ import { SectionLoader } from "../../../../components/navigation/loading";
 import { pokemonData } from "../../../../data/pokemon";
 import { useAuth } from "../../../../context/AuthContext";
 import { getPokemonImageURL } from "../../../../helpers";
+import { PokemonHoverCard } from "../../../../components/pokemon/PokemonHoverCard";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import { hasCapability, isAdmin } from "../../../../lib/permissions";
 import { Capability } from "../../../../components/types/typesUsed";
@@ -129,7 +130,9 @@ function StarTierEditor(props: { tier: SafariTier; onChange: (tier: SafariTier) 
       {tier.pokemons.length > 0 && (
         <Group gap={6} mt={8}>
           {tier.pokemons.map((slug) => (
-            <Avatar key={slug} size="sm" src={getPokemonImageURL(slug)} alt={`${slug} sprite`} />
+            <PokemonHoverCard key={slug} species={{ slug }}>
+              <Avatar size="sm" src={getPokemonImageURL(slug)} alt={`${slug} sprite`} />
+            </PokemonHoverCard>
           ))}
         </Group>
       )}

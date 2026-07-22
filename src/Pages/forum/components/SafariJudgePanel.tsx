@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { getPokemonImageURL } from "../../../helpers";
+import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
 import { hasCapability, isAdmin } from "../../../lib/permissions";
 import { Capability } from "../../../components/types/typesUsed";
 import { queryClient } from "../../../lib/react-query";
@@ -110,7 +111,9 @@ export default function SafariJudgePanel(props: {
                     </Table.Td>
                     <Table.Td>
                       <Group gap={6} wrap="nowrap">
-                        <Avatar size="sm" src={getPokemonImageURL(r.slug)} alt={r.pokemonName} />
+                        <PokemonHoverCard species={{ slug: r.slug, name: r.pokemonName }}>
+                          <Avatar size="sm" src={getPokemonImageURL(r.slug)} alt={r.pokemonName} />
+                        </PokemonHoverCard>
                         <Text c="white" fz={14}>
                           {r.pokemonName}
                         </Text>

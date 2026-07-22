@@ -3,6 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { getPokemonImageURL } from "../../../../helpers";
 import { Item, OwnedPokemon } from "../../../../components/types/typesUsed";
+import { PokemonHoverCard } from "../../../../components/pokemon/PokemonHoverCard";
 import { evaluateEvolutions } from "../../../../lib/evolution";
 import { SHADOW_GUIDE_LINK } from "../../../../lib/shadow";
 import { ForumPanel } from "../ui";
@@ -113,11 +114,15 @@ export default function EvolutionPanel(props: {
             />
             {chosen && (
               <Group gap={10} align="center">
-                <Avatar src={getPokemonImageURL(chosen.pokemonSlug)} alt={chosen.pokemonName} size={40} radius="xl" />
+                <PokemonHoverCard species={{ slug: chosen.pokemonSlug, name: chosen.pokemonName }}>
+                  <Avatar src={getPokemonImageURL(chosen.pokemonSlug)} alt={chosen.pokemonName} size={40} radius="xl" />
+                </PokemonHoverCard>
                 <Text c="dimmed" fz={22}>
                   →
                 </Text>
-                <Avatar src={getPokemonImageURL(chosen.toSlug)} alt={chosen.toName} size={40} radius="xl" />
+                <PokemonHoverCard species={{ slug: chosen.toSlug, name: chosen.toName }}>
+                  <Avatar src={getPokemonImageURL(chosen.toSlug)} alt={chosen.toName} size={40} radius="xl" />
+                </PokemonHoverCard>
               </Group>
             )}
             {chosen && (

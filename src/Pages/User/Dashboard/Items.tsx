@@ -13,6 +13,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Conditional } from "../../../components/common/Conditional";
+import { ItemHoverCard } from "../../../components/common/ItemHoverCard";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
@@ -117,12 +118,22 @@ export default function Items() {
                             h={64}
                             style={{ background: "#0e0d11", border: "1px solid #232028" }}
                           >
-                            <Avatar
-                              src={getItemImageURL(item.filePath)}
-                              alt={displayName}
-                              size={40}
-                              radius={0}
-                            />
+                            <ItemHoverCard
+                              item={{
+                                id: item.id,
+                                name: displayName,
+                                category: item.category,
+                                quantity: item.quantity,
+                              }}
+                              sources={sources.get(item.id)}
+                            >
+                              <Avatar
+                                src={getItemImageURL(item.filePath)}
+                                alt={displayName}
+                                size={40}
+                                radius={0}
+                              />
+                            </ItemHoverCard>
                           </Flex>
                           <Flex align="center" justify="space-between" gap={8}>
                             <Text c="white" fz={14} fw={700} lineClamp={1} style={{ minWidth: 0 }}>

@@ -19,6 +19,7 @@ import { itemData } from "../../../data/item";
 import { getPokemonImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { SnagIcon, type SnagIconName } from "../../../icons/SnagIcon";
+import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
 import { SHADOW_GUIDE_LINK } from "../../../lib/shadow";
 import { ForumPost, PostCharacter, formatFireTime } from "../types";
 import { ForumTextLink, GameResultText } from "./ui";
@@ -44,7 +45,7 @@ function CharacterTeam(props: { character: PostCharacter }) {
       </Text>
       <Flex gap={8} wrap="wrap">
         {mons.map((p) => (
-          <Tooltip key={p.slug} label={p.name} withArrow openDelay={120}>
+          <PokemonHoverCard key={p.slug} species={{ slug: p.slug, name: p.name }}>
             <Box
               w={44}
               h={44}
@@ -64,7 +65,7 @@ function CharacterTeam(props: { character: PostCharacter }) {
                 style={{ width: 32, height: 32, imageRendering: "pixelated" }}
               />
             </Box>
-          </Tooltip>
+          </PokemonHoverCard>
         ))}
       </Flex>
     </Box>
@@ -300,12 +301,14 @@ function BossAnnouncement(props: { post: ForumPost }) {
   return (
     <Box p={16} bg="#2a1a1e" style={{ border: "1px solid #E54156" }}>
       <Flex align="center" gap={12}>
-        <Avatar
-          src={getPokemonImageURL(boss.slug)}
-          alt={`${boss.name} sprite`}
-          size={64}
-          radius="xl"
-        />
+        <PokemonHoverCard species={{ slug: boss.slug, name: boss.name }}>
+          <Avatar
+            src={getPokemonImageURL(boss.slug)}
+            alt={`${boss.name} sprite`}
+            size={64}
+            radius="xl"
+          />
+        </PokemonHoverCard>
         <Stack gap={4}>
           <GameResultText>
             {starting
@@ -332,11 +335,15 @@ function EvolutionAnnouncement(props: { post: ForumPost }) {
   return (
     <Box p={16} bg="#14251a" style={{ border: "1px solid #3f7a2b" }}>
       <Flex align="center" gap={12} wrap="wrap">
-        <Avatar src={getPokemonImageURL(evo.fromSlug)} alt={`${evo.fromName} sprite`} size={56} radius="xl" />
+        <PokemonHoverCard species={{ slug: evo.fromSlug, name: evo.fromName }}>
+          <Avatar src={getPokemonImageURL(evo.fromSlug)} alt={`${evo.fromName} sprite`} size={56} radius="xl" />
+        </PokemonHoverCard>
         <Text c="dimmed" fz={24}>
           &rarr;
         </Text>
-        <Avatar src={getPokemonImageURL(evo.toSlug)} alt={`${evo.toName} sprite`} size={56} radius="xl" />
+        <PokemonHoverCard species={{ slug: evo.toSlug, name: evo.toName }}>
+          <Avatar src={getPokemonImageURL(evo.toSlug)} alt={`${evo.toName} sprite`} size={56} radius="xl" />
+        </PokemonHoverCard>
         <GameResultText>
           Wow! {evo.fromName} evolved into {evo.toName}!
         </GameResultText>

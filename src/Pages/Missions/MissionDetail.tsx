@@ -9,6 +9,7 @@ import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
+import { PokemonHoverCard } from "../../components/pokemon/PokemonHoverCard";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { pokemonData } from "../../data/pokemon";
 import { postsToBeatStar, starForDex } from "../../lib/encounterStars";
@@ -198,14 +199,16 @@ function EncountersWell({
                 justifyContent: "center",
               }}
             >
-              <Image
-                src={getPokemonImageURL(slug)}
-                alt={pokemonNameBySlug.get(slug) ?? slug}
-                w="60%"
-                h="60%"
-                fit="contain"
-                style={{ imageRendering: "pixelated" }}
-              />
+              <PokemonHoverCard species={{ slug }}>
+                <Image
+                  src={getPokemonImageURL(slug)}
+                  alt={pokemonNameBySlug.get(slug) ?? slug}
+                  w="60%"
+                  h="60%"
+                  fit="contain"
+                  style={{ imageRendering: "pixelated" }}
+                />
+              </PokemonHoverCard>
             </Box>
             <Text fz={14} c="#fff" lineClamp={1} w="100%">
               {pokemonNameBySlug.get(slug) ?? slug}

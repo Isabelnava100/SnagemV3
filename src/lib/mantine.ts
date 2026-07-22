@@ -1,4 +1,23 @@
-import { Button, MantineColorsTuple, createTheme } from "@mantine/core";
+import {
+  Button,
+  HoverCard,
+  MantineColorsTuple,
+  Popover,
+  Tooltip,
+  createTheme,
+} from "@mantine/core";
+
+// Every floating overlay (tooltip, hover card, popover) must stay on screen.
+// `floatingStrategy: "fixed"` positions against the viewport so a transformed
+// or `overflow:hidden` ancestor can never clip it; flip + shift keep it inside
+// the viewport edges (shift keeps an 8px gutter), and `inline` handles targets
+// that wrap across lines. Applied theme-wide so every current AND future
+// overlay is viewport-safe without per-usage props.
+const OVERLAY_VIEWPORT_PROPS = {
+  withinPortal: true,
+  floatingStrategy: "fixed" as const,
+  middlewares: { flip: true, shift: true, inline: true },
+};
 
 // v9 requires exactly 10 shades per color; pad shorter palettes by repeating the last shade
 function shades(...colors: string[]): MantineColorsTuple {
@@ -93,5 +112,9 @@ export const theme = createTheme({
         },
       },
     }),
+    // Keep every floating overlay inside the viewport (see OVERLAY_VIEWPORT_PROPS).
+    Tooltip: Tooltip.extend({ defaultProps: OVERLAY_VIEWPORT_PROPS }),
+    HoverCard: HoverCard.extend({ defaultProps: OVERLAY_VIEWPORT_PROPS }),
+    Popover: Popover.extend({ defaultProps: OVERLAY_VIEWPORT_PROPS }),
   },
 });

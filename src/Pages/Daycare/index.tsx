@@ -5,6 +5,7 @@ import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { OwnedPokemon } from "../../components/types/typesUsed";
+import { PokemonHoverCard } from "../../components/pokemon/PokemonHoverCard";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
 import { SnagIcon } from "../../icons/SnagIcon";
@@ -182,13 +183,15 @@ export default function Daycare() {
         {filled ? (
           <>
             {poke && (
-              <img
-                src={getPokemonImageURL(poke.image_slug, poke.shiny)}
-                alt={`${nameOf(poke)} sprite`}
-                width={72}
-                height={72}
-                style={{ imageRendering: "pixelated" }}
-              />
+              <PokemonHoverCard pokemon={poke}>
+                <img
+                  src={getPokemonImageURL(poke.image_slug, poke.shiny)}
+                  alt={`${nameOf(poke)} sprite`}
+                  width={72}
+                  height={72}
+                  style={{ imageRendering: "pixelated" }}
+                />
+              </PokemonHoverCard>
             )}
             <Text fz={20} fw={700} c="white" style={{ fontFamily: DISPLAY, letterSpacing: "0.03em" }}>
               {poke ? nameOf(poke) : name}{" "}
@@ -462,13 +465,15 @@ export default function Daycare() {
                         opacity: cannot ? 0.6 : 1,
                       }}
                     >
-                      <img
-                        src={getPokemonImageURL(p.image_slug, p.shiny)}
-                        alt={`${nameOf(p)} sprite`}
-                        width={56}
-                        height={56}
-                        style={{ imageRendering: "pixelated" }}
-                      />
+                      <PokemonHoverCard pokemon={p}>
+                        <img
+                          src={getPokemonImageURL(p.image_slug, p.shiny)}
+                          alt={`${nameOf(p)} sprite`}
+                          width={56}
+                          height={56}
+                          style={{ imageRendering: "pixelated" }}
+                        />
+                      </PokemonHoverCard>
                       <Text fz={15} fw={700} c="white" lineClamp={1}>
                         {nameOf(p)}{" "}
                         <Text span c={genderColor(p.gender)}>

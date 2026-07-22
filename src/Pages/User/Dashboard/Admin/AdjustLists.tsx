@@ -35,6 +35,7 @@ import { hasCapability } from "../../../../lib/permissions";
 import { Capability } from "../../../../components/types/typesUsed";
 import { pokemonData } from "../../../../data/pokemon";
 import { getPokemonImageURL } from "../../../../helpers";
+import { PokemonHoverCard } from "../../../../components/pokemon/PokemonHoverCard";
 import useMediaQuery from "../../../../hooks/useMediaQuery";
 import { DocumentCopyIcon, Edit2 } from "../../../../icons";
 import { getPokemonLists } from "../../../../queries/admin";
@@ -183,7 +184,9 @@ function PokemonList(props: { pokemons: string[] }) {
   return (
     <Flex wrap="wrap" gap={8}>
       {pokemons.map((pokemonSlug) => (
-        <Avatar key={pokemonSlug} src={getPokemonImageURL(pokemonSlug)} alt={`${pokemonSlug} sprite`} size="lg" />
+        <PokemonHoverCard key={pokemonSlug} species={{ slug: pokemonSlug }}>
+          <Avatar src={getPokemonImageURL(pokemonSlug)} alt={`${pokemonSlug} sprite`} size="lg" />
+        </PokemonHoverCard>
       ))}
     </Flex>
   );

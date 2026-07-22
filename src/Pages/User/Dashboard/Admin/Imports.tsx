@@ -15,6 +15,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconTrash } from "@tabler/icons-react";
 import React from "react";
 import { ActivityLog } from "../../../../components/admin/ActivityLog";
+import { ConfirmPopover } from "../../../../components/common/ConfirmPopover";
 import GradientButtonPrimary from "../../../../components/common/GradientButton";
 import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
@@ -218,15 +219,23 @@ export function ReviewCard(props: { req: ImportRequest & { uid: string }; userna
             style={{ flex: 1, minWidth: 220 }}
             styles={{ input: { background: "#2E2D2E" } }}
           />
-          <Button
-            variant="light"
-            color="red"
+          <ConfirmPopover
+            message="Send this import back to the member? Their staged entries are cleared and they'll need to resubmit."
+            confirmLabel="Send back"
             loading={reject.isPending}
-            disabled={!note.trim()}
-            onClick={() => reject.mutateAsync()}
-          >
-            Send back
-          </Button>
+            onConfirm={() => reject.mutateAsync()}
+            target={(open) => (
+              <Button
+                variant="light"
+                color="red"
+                loading={reject.isPending}
+                disabled={!note.trim()}
+                onClick={open}
+              >
+                Send back
+              </Button>
+            )}
+          />
         </Group>
       </Stack>
     </Paper>

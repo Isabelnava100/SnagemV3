@@ -21,8 +21,10 @@ import { IconArrowsExchange, IconChartBar } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { ConfirmPopover } from "../../components/common/ConfirmPopover";
 import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
+import { PokemonHoverCard } from "../../components/pokemon/PokemonHoverCard";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
@@ -351,12 +353,14 @@ function OwnedDetailCard(props: { pokemon: OwnedPokemon; heading: string }) {
         border: "1px solid #1f7a4d",
       }}
     >
-      <Avatar
-        src={getPokemonImageURL(p.image_slug, p.shiny)}
-        size={56}
-        radius="xl"
-        style={{ flex: "none" }}
-      />
+      <PokemonHoverCard pokemon={p}>
+        <Avatar
+          src={getPokemonImageURL(p.image_slug, p.shiny)}
+          size={56}
+          radius="xl"
+          style={{ flex: "none" }}
+        />
+      </PokemonHoverCard>
       <Box style={{ minWidth: 0 }}>
         <Text fz={11} fw={700} c="#3ecf8e" tt="uppercase" style={{ fontFamily: FONT_D, letterSpacing: "0.2em" }}>
           {props.heading}
@@ -633,27 +637,37 @@ function CreateListing(props: {
         </Box>
       </SimpleGrid>
 
-      <Button
-        fullWidth
-        variant="gradient"
-        gradient={{ from: "#7E2C75", to: "#E54156", deg: 90 }}
-        disabled={!pokemonId}
+      <ConfirmPopover
+        message="List this pokemon for trade? Members can browse it and send offers."
+        confirmLabel="List it"
+        color="grape"
+        position="top"
         loading={create.isPending}
-        h={54}
-        style={{
-          clipPath: CLIP_CTA,
-          fontFamily: FONT_D,
-          fontSize: 15,
-          fontWeight: 700,
-          letterSpacing: "0.14em",
-        }}
-        onClick={() => {
+        onConfirm={() => {
           setMessage("");
           create.mutate();
         }}
-      >
-        {pokemonId ? "PUT IT ON THE BOARD →" : "PICK A POKEMON TO OFFER FIRST"}
-      </Button>
+        target={(open) => (
+          <Button
+            fullWidth
+            variant="gradient"
+            gradient={{ from: "#7E2C75", to: "#E54156", deg: 90 }}
+            disabled={!pokemonId}
+            loading={create.isPending}
+            h={54}
+            style={{
+              clipPath: CLIP_CTA,
+              fontFamily: FONT_D,
+              fontSize: 15,
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+            }}
+            onClick={open}
+          >
+            {pokemonId ? "PUT IT ON THE BOARD →" : "PICK A POKEMON TO OFFER FIRST"}
+          </Button>
+        )}
+      />
       {message && (
         <Text
           fz={13}
@@ -741,12 +755,14 @@ function ListingCard(props: {
 
       {/* What they give */}
       <Group gap={14} align="center" wrap="nowrap">
-        <Avatar
-          src={getPokemonImageURL(l.pokemon.slug, l.pokemon.shiny)}
-          size={48}
-          radius="xl"
-          style={{ flex: "none" }}
-        />
+        <PokemonHoverCard species={{ slug: l.pokemon.slug, name: l.pokemon.species }}>
+          <Avatar
+            src={getPokemonImageURL(l.pokemon.slug, l.pokemon.shiny)}
+            size={48}
+            radius="xl"
+            style={{ flex: "none" }}
+          />
+        </PokemonHoverCard>
         <Box style={{ minWidth: 0 }}>
           <Text fz={15} fw={700} c="white" lineClamp={1}>
             {l.pokemon.species}{" "}
@@ -790,11 +806,13 @@ function ListingCard(props: {
             openOffers.map(([offerId, o]) => (
               <Group key={offerId} justify="space-between" wrap="wrap" gap={8}>
                 <Group gap={8} style={{ minWidth: 0 }}>
-                  <Avatar
-                    src={getPokemonImageURL(o.pokemon.slug, o.pokemon.shiny)}
-                    size={34}
-                    radius="xl"
-                  />
+                  <PokemonHoverCard species={{ slug: o.pokemon.slug, name: o.pokemon.species }}>
+                    <Avatar
+                      src={getPokemonImageURL(o.pokemon.slug, o.pokemon.shiny)}
+                      size={34}
+                      radius="xl"
+                    />
+                  </PokemonHoverCard>
                   <Box style={{ minWidth: 0 }}>
                     <Text fz={14} c="white" lineClamp={1}>
                       {o.fromName} offers {o.pokemon.species} ({o.pokemon.gender})
@@ -803,34 +821,46 @@ function ListingCard(props: {
                   </Box>
                 </Group>
                 <Group gap={6}>
-                  <Button
-                    size="compact-sm"
-                    radius={0}
+                  <ConfirmPopover
+                    message={`Trade your ${l.pokemon.species} for ${o.fromName}'s ${o.pokemon.species}? This cannot be undone.`}
+                    confirmLabel="Trade"
                     color="teal"
                     loading={act.isPending}
-                    onClick={() => {
-                      if (
-                        !window.confirm(
-                          `Trade your ${l.pokemon.species} for ${o.fromName}'s ${o.pokemon.species}? This cannot be undone.`
-                        )
-                      ) {
-                        return;
-                      }
+                    onConfirm={() => {
                       setMessage("");
                       act.mutate(() => callRespondTradeOffer(l.id, offerId, "accept"));
                     }}
-                  >
-                    Accept
-                  </Button>
-                  <Button
-                    size="compact-sm"
-                    radius={0}
-                    variant="subtle"
-                    color="pink"
-                    onClick={() => act.mutate(() => callRespondTradeOffer(l.id, offerId, "decline"))}
-                  >
-                    Decline
-                  </Button>
+                    target={(open) => (
+                      <Button
+                        size="compact-sm"
+                        radius={0}
+                        color="teal"
+                        loading={act.isPending}
+                        onClick={open}
+                      >
+                        Accept
+                      </Button>
+                    )}
+                  />
+                  <ConfirmPopover
+                    message={`Decline ${o.fromName}'s offer?`}
+                    confirmLabel="Decline"
+                    loading={act.isPending}
+                    onConfirm={() =>
+                      act.mutate(() => callRespondTradeOffer(l.id, offerId, "decline"))
+                    }
+                    target={(open) => (
+                      <Button
+                        size="compact-sm"
+                        radius={0}
+                        variant="subtle"
+                        color="pink"
+                        onClick={open}
+                      >
+                        Decline
+                      </Button>
+                    )}
+                  />
                 </Group>
               </Group>
             ))
@@ -839,25 +869,34 @@ function ListingCard(props: {
               No offers yet. Your listing is visible to everyone.
             </Text>
           )}
-          <UnstyledButton
-            onClick={() => act.mutate(() => callCancelTradeListing(l.id))}
-            style={{
-              alignSelf: "flex-start",
-              background: "none",
-              border: "1px solid #3a3550",
-              color: "#b6b1bc",
-              fontFamily: FONT_D,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              padding: "9px 18px",
-              cursor: "pointer",
-              clipPath: CLIP_PULL,
-            }}
-          >
-            Pull listing
-          </UnstyledButton>
+          <ConfirmPopover
+            message="Pull this listing? It stops being visible and any open offers are dropped."
+            confirmLabel="Pull listing"
+            position="top-start"
+            loading={act.isPending}
+            onConfirm={() => act.mutate(() => callCancelTradeListing(l.id))}
+            target={(open) => (
+              <UnstyledButton
+                onClick={open}
+                style={{
+                  alignSelf: "flex-start",
+                  background: "none",
+                  border: "1px solid #3a3550",
+                  color: "#b6b1bc",
+                  fontFamily: FONT_D,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  padding: "9px 18px",
+                  cursor: "pointer",
+                  clipPath: CLIP_PULL,
+                }}
+              >
+                Pull listing
+              </UnstyledButton>
+            )}
+          />
         </Stack>
       ) : picking ? (
         <Stack gap={8}>
@@ -884,20 +923,29 @@ function ListingCard(props: {
               }
               styles={INPUT_STYLES}
             />
-            <Button
-              size="compact-md"
-              radius={0}
-              variant="gradient"
-              gradient={{ from: "#7E2C75", to: "#E54156", deg: 90 }}
-              disabled={!offerFor}
+            <ConfirmPopover
+              message="Send this offer to the listing owner? Your pokemon is held on the offer until they respond or you cancel."
+              confirmLabel="Send offer"
+              color="grape"
               loading={act.isPending}
-              onClick={() => {
+              onConfirm={() => {
                 setMessage("");
                 act.mutate(() => callMakeTradeOffer(l.id, offerFor!));
               }}
-            >
-              Send
-            </Button>
+              target={(open) => (
+                <Button
+                  size="compact-md"
+                  radius={0}
+                  variant="gradient"
+                  gradient={{ from: "#7E2C75", to: "#E54156", deg: 90 }}
+                  disabled={!offerFor}
+                  loading={act.isPending}
+                  onClick={open}
+                >
+                  Send
+                </Button>
+              )}
+            />
             <Button
               size="compact-md"
               radius={0}
@@ -1006,28 +1054,38 @@ function SelfTradeSection(props: { owned: OwnedPokemon[]; onChanged: () => void 
             w={200}
             styles={INPUT_STYLES}
           />
-          <Button
-            variant="gradient"
-            gradient={{ from: "#14e0de", to: "#12B7B6", deg: 90 }}
-            radius={0}
-            h={42}
-            disabled={!pokemonId || !characterId}
+          <ConfirmPopover
+            message="Move this pokemon to the selected character?"
+            confirmLabel="Move it"
+            color="teal"
+            position="top"
             loading={move.isPending}
-            style={{
-              clipPath: CLIP_CTA_S,
-              color: "#0e0d11",
-              fontFamily: FONT_D,
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-            }}
-            onClick={() => {
+            onConfirm={() => {
               setMessage("");
               move.mutate();
             }}
-          >
-            MOVE IT OVER →
-          </Button>
+            target={(open) => (
+              <Button
+                variant="gradient"
+                gradient={{ from: "#14e0de", to: "#12B7B6", deg: 90 }}
+                radius={0}
+                h={42}
+                disabled={!pokemonId || !characterId}
+                loading={move.isPending}
+                style={{
+                  clipPath: CLIP_CTA_S,
+                  color: "#0e0d11",
+                  fontFamily: FONT_D,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                }}
+                onClick={open}
+              >
+                MOVE IT OVER →
+              </Button>
+            )}
+          />
         </Group>
         {message && (
           <Text

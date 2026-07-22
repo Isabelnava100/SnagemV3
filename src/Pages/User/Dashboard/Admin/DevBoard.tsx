@@ -14,6 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { SectionLoader } from "../../../../components/navigation/loading";
+import { ConfirmPopover } from "../../../../components/common/ConfirmPopover";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 
 /**
@@ -287,15 +288,22 @@ export default function DevBoard() {
                     aria-label="Ticket status"
                     styles={{ input: { background: "#2E2D2E" } }}
                   />
-                  <Button
-                    size="compact-xs"
-                    radius="xl"
-                    variant="subtle"
-                    color="pink"
-                    onClick={() => removeDoc(t.id)}
-                  >
-                    Delete
-                  </Button>
+                  <ConfirmPopover
+                    message="Delete this ticket? This can't be undone."
+                    loading={act.isPending}
+                    onConfirm={() => removeDoc(t.id)}
+                    target={(open) => (
+                      <Button
+                        size="compact-xs"
+                        radius="xl"
+                        variant="subtle"
+                        color="pink"
+                        onClick={open}
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  />
                 </Group>
               </Group>
               <Text fz={16} fw={600} c="white">
@@ -355,15 +363,22 @@ export default function DevBoard() {
                   <Text fz={14} c="dimmed">
                     {n.createdByName} · {dateOf(n.updatedAt?.seconds)}
                   </Text>
-                  <Button
-                    size="compact-xs"
-                    radius="xl"
-                    variant="subtle"
-                    color="pink"
-                    onClick={() => removeDoc(n.id)}
-                  >
-                    Delete
-                  </Button>
+                  <ConfirmPopover
+                    message="Delete this note? This can't be undone."
+                    loading={act.isPending}
+                    onConfirm={() => removeDoc(n.id)}
+                    target={(open) => (
+                      <Button
+                        size="compact-xs"
+                        radius="xl"
+                        variant="subtle"
+                        color="pink"
+                        onClick={open}
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  />
                 </Group>
               </Group>
               <Text fz={14} c="rgba(255,255,255,0.75)" style={{ whiteSpace: "pre-wrap" }}>

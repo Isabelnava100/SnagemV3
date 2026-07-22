@@ -53,6 +53,8 @@ import { starForDex } from "../../../lib/encounterStars";
 import { getItemImageURL } from "../../../helpers";
 import { EvolveButton, LevelBar } from "../../../components/pokemon/EvolveButton";
 import ShadowVaccineButton from "../../../components/pokemon/ShadowVaccineButton";
+import { ItemHoverCard } from "../../../components/common/ItemHoverCard";
+import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
 import { SHADOW_GUIDE_LINK, STAT_MAX, isShadowed } from "../../../lib/shadow";
 import { toastError, toastSuccess } from "../../../lib/toast";
 import formatter from "../../../utils/date";
@@ -853,7 +855,15 @@ function HeldItemSection(props: { pokemon: OwnedPokemon }) {
       {pokemon.heldItem ? (
         <Group gap={8} mt={4}>
           {pokemon.heldItem.filePath && (
-            <Avatar src={getItemImageURL(pokemon.heldItem.filePath)} size={26} radius="sm" />
+            <ItemHoverCard
+              item={{
+                id: pokemon.heldItem.itemId,
+                name: pokemon.heldItem.name,
+                category: pokemon.heldItem.category,
+              }}
+            >
+              <Avatar src={getItemImageURL(pokemon.heldItem.filePath)} size={26} radius="sm" />
+            </ItemHoverCard>
           )}
           <Text fz={14} c="white">
             {pokemon.heldItem.name}
@@ -917,15 +927,17 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
   return (
     <Stack>
       <Group>
-        <Avatar
-          src={getPokemonImageURL(pokemon.image_slug, pokemon.shiny)}
-          alt={`${pokemon.name ?? pokemon.species ?? "Pokemon"} sprite`}
-          w={60}
-          h={60}
-          radius={shadowed ? 4 : "xl"}
-          sx={{ border: shadowed ? "1px solid #5a3fb0" : "4px solid white" }}
-          bg={shadowed ? "#000" : "#909090"}
-        />
+        <PokemonHoverCard pokemon={pokemon}>
+          <Avatar
+            src={getPokemonImageURL(pokemon.image_slug, pokemon.shiny)}
+            alt={`${pokemon.name ?? pokemon.species ?? "Pokemon"} sprite`}
+            w={60}
+            h={60}
+            radius={shadowed ? 4 : "xl"}
+            sx={{ border: shadowed ? "1px solid #5a3fb0" : "4px solid white" }}
+            bg={shadowed ? "#000" : "#909090"}
+          />
+        </PokemonHoverCard>
         <Stack gap={3}>
           <Group gap={6}>
             <Title order={3} size={20}>

@@ -21,6 +21,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
+import { PokemonHoverCard } from "../../components/pokemon/PokemonHoverCard";
 import { SnagIcon, SnagIconName } from "../../icons/SnagIcon";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { useAuth } from "../../context/AuthContext";
@@ -208,14 +209,16 @@ function StarEditorModal(props: {
       {entry && (
         <Stack gap={12}>
           <Group gap={12} wrap="nowrap">
-            <Image
-              src={getPokemonImageURL(entry.slug)}
-              fallbackSrc={POKEMON_SPRITE_FALLBACK}
-              alt={entry.name}
-              w={56}
-              h={56}
-              fit="contain"
-            />
+            <PokemonHoverCard species={{ slug: entry.slug, name: entry.name, dex: entry.idx }}>
+              <Image
+                src={getPokemonImageURL(entry.slug)}
+                fallbackSrc={POKEMON_SPRITE_FALLBACK}
+                alt={entry.name}
+                w={56}
+                h={56}
+                fit="contain"
+              />
+            </PokemonHoverCard>
             <Text fz={14} c={DIM}>
               The star sets how many posts it takes to beat this species in an
               encounter. Default: {defaultStar} star ({postsToBeatStar(defaultStar)}{" "}
@@ -393,19 +396,21 @@ function PokedexTab() {
             const caught = !user || ownedDex.has(Number(p.idx));
             const body = (
               <Stack gap={4} align="center">
-                <Image
-                  src={getPokemonImageURL(p.slug, shiny)}
-                  fallbackSrc={POKEMON_SPRITE_FALLBACK}
-                  alt={caught ? (shiny ? `Shiny ${p.name}` : p.name) : `${p.name} (not caught yet)`}
-                  w={56}
-                  h={56}
-                  fit="contain"
-                  loading="lazy"
-                  style={{
-                    imageRendering: "pixelated",
-                    ...(caught ? {} : { filter: "brightness(0.25) grayscale(1)" }),
-                  }}
-                />
+                <PokemonHoverCard species={{ slug: p.slug, name: p.name, dex: p.idx }}>
+                  <Image
+                    src={getPokemonImageURL(p.slug, shiny)}
+                    fallbackSrc={POKEMON_SPRITE_FALLBACK}
+                    alt={caught ? (shiny ? `Shiny ${p.name}` : p.name) : `${p.name} (not caught yet)`}
+                    w={56}
+                    h={56}
+                    fit="contain"
+                    loading="lazy"
+                    style={{
+                      imageRendering: "pixelated",
+                      ...(caught ? {} : { filter: "brightness(0.25) grayscale(1)" }),
+                    }}
+                  />
+                </PokemonHoverCard>
                 <Text fz={13} c={DIM} ff={MONO}>
                   #{p.idx}
                 </Text>
@@ -626,29 +631,31 @@ function MonCell(props: { slug: string; size?: number }) {
   const box = props.size ?? (isOverSm ? 40 : 38);
   const sprite = box - 10;
   return (
-    <Box
-      style={{
-        width: box,
-        height: box,
-        background: INK,
-        border: `1px solid ${WELL_BORDER}`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-      }}
-    >
-      <Image
-        src={getPokemonImageURL(props.slug)}
-        fallbackSrc={POKEMON_SPRITE_FALLBACK}
-        alt={props.slug}
-        w={sprite}
-        h={sprite}
-        fit="contain"
-        loading="lazy"
-        style={{ opacity: 0.85, imageRendering: "pixelated" }}
-      />
-    </Box>
+    <PokemonHoverCard species={{ slug: props.slug }}>
+      <Box
+        style={{
+          width: box,
+          height: box,
+          background: INK,
+          border: `1px solid ${WELL_BORDER}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <Image
+          src={getPokemonImageURL(props.slug)}
+          fallbackSrc={POKEMON_SPRITE_FALLBACK}
+          alt={props.slug}
+          w={sprite}
+          h={sprite}
+          fit="contain"
+          loading="lazy"
+          style={{ opacity: 0.85, imageRendering: "pixelated" }}
+        />
+      </Box>
+    </PokemonHoverCard>
   );
 }
 

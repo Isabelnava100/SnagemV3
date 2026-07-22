@@ -23,8 +23,10 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { SHADOW_GUIDE_LINK } from "../../lib/shadow";
+import { ConfirmPopover } from "../../components/common/ConfirmPopover";
 import { HeroStat as HeroStatChip, PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
+import { PokemonHoverCard } from "../../components/pokemon/PokemonHoverCard";
 import { SectionLoader } from "../../components/navigation/loading";
 import { getPokemonImageURL } from "../../helpers";
 import { pokemonData } from "../../data/pokemon";
@@ -222,14 +224,16 @@ function TrainingTarget({ pokemon, tag }: { pokemon: OwnedPokemon; tag: string }
           justifyContent: "center",
         }}
       >
-        <Image
-          src={getPokemonImageURL(pokemon.image_slug)}
-          alt={`${pokemon.name || pokemon.species} sprite`}
-          w={60}
-          h={60}
-          fit="contain"
-          style={{ imageRendering: "pixelated" }}
-        />
+        <PokemonHoverCard pokemon={pokemon}>
+          <Image
+            src={getPokemonImageURL(pokemon.image_slug)}
+            alt={`${pokemon.name || pokemon.species} sprite`}
+            w={60}
+            h={60}
+            fit="contain"
+            style={{ imageRendering: "pixelated" }}
+          />
+        </PokemonHoverCard>
       </Box>
 
       <Stack gap={4} style={{ minWidth: 180 }}>
@@ -526,24 +530,32 @@ function TrainingRoomTab() {
                   {nextLabel}
                 </Text>
                 <Box style={{ flex: 1 }} />
-                <Button
-                  variant="default"
-                  onClick={() => resetMutation.mutate()}
+                <ConfirmPopover
+                  message="Reset this training session? Your logged posts for this window are cleared."
+                  confirmLabel="Reset"
                   loading={resetMutation.isPending}
-                  tt="uppercase"
-                  c={DIM}
-                  style={{
-                    background: "none",
-                    borderColor: WELL_BORDER,
-                    clipPath: CHIP_CLIP,
-                    fontFamily: FONT_DISPLAY,
-                    fontWeight: 700,
-                    fontSize: 12,
-                    letterSpacing: "0.12em",
-                  }}
-                >
-                  Reset
-                </Button>
+                  onConfirm={() => resetMutation.mutate()}
+                  target={(open) => (
+                    <Button
+                      variant="default"
+                      onClick={open}
+                      loading={resetMutation.isPending}
+                      tt="uppercase"
+                      c={DIM}
+                      style={{
+                        background: "none",
+                        borderColor: WELL_BORDER,
+                        clipPath: CHIP_CLIP,
+                        fontFamily: FONT_DISPLAY,
+                        fontWeight: 700,
+                        fontSize: 12,
+                        letterSpacing: "0.12em",
+                      }}
+                    >
+                      Reset
+                    </Button>
+                  )}
+                />
               </Group>
 
               {atPostCap && (
@@ -931,14 +943,16 @@ function ChampionCard({ entry }: { entry: HallOfFameEntry }) {
                     justifyContent: "center",
                   }}
                 >
-                  <Image
-                    src={getPokemonImageURL(slug)}
-                    alt={slug}
-                    w={38}
-                    h={38}
-                    fit="contain"
-                    style={{ imageRendering: "pixelated" }}
-                  />
+                  <PokemonHoverCard species={{ slug }}>
+                    <Image
+                      src={getPokemonImageURL(slug)}
+                      alt={slug}
+                      w={38}
+                      h={38}
+                      fit="contain"
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                  </PokemonHoverCard>
                 </Box>
               ))
             ) : (
@@ -1231,15 +1245,23 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
               {mine ? "Update Registration" : "Register for the Cup"}
             </Button>
             {mine && (
-              <Button
-                variant="subtle"
-                color="red"
-                size="compact-sm"
-                onClick={() => withdrawMutation.mutate()}
+              <ConfirmPopover
+                message="Withdraw your signup from this tournament?"
+                confirmLabel="Withdraw"
                 loading={withdrawMutation.isPending}
-              >
-                Withdraw
-              </Button>
+                onConfirm={() => withdrawMutation.mutate()}
+                target={(open) => (
+                  <Button
+                    variant="subtle"
+                    color="red"
+                    size="compact-sm"
+                    onClick={open}
+                    loading={withdrawMutation.isPending}
+                  >
+                    Withdraw
+                  </Button>
+                )}
+              />
             )}
             {status && (
               <Text fz={13} fw={700} c={PURPLE} role="status" aria-live="polite">

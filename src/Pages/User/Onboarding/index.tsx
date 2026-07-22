@@ -19,6 +19,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconTrash, IconUpload } from "@tabler/icons-react";
 import React from "react";
 import Seo from "../../../components/common/Seo";
+import { ItemHoverCard } from "../../../components/common/ItemHoverCard";
+import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { itemData } from "../../../data/item";
@@ -497,7 +499,11 @@ function ItemsSection(props: { items: ImportItem[]; onChange: (i: ImportItem[]) 
             gap={12}
             style={{ background: "#0e0d11", border: "1px solid #232028", padding: "10px 14px" }}
           >
-            {it.filePath && <Avatar src={getItemImageURL(it.filePath)} alt={it.name} size={28} radius={0} />}
+            {it.filePath && (
+              <ItemHoverCard item={{ id: it.refId, name: it.name, category: it.category, quantity: it.qty }}>
+                <Avatar src={getItemImageURL(it.filePath)} alt={it.name} size={28} radius={0} />
+              </ItemHoverCard>
+            )}
             <Text fz={14} fw={700} c="white" style={{ flex: 1, minWidth: 0 }}>
               {it.qty}x {it.name}
             </Text>
@@ -576,12 +582,14 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           radius={0}
           leftSection={
             slug ? (
-              <Avatar
-                src={getPokemonImageURL(slug)}
-                alt=""
-                size={22}
-                imageProps={{ style: { imageRendering: "pixelated" } }}
-              />
+              <PokemonHoverCard species={{ slug }}>
+                <Avatar
+                  src={getPokemonImageURL(slug)}
+                  alt=""
+                  size={22}
+                  imageProps={{ style: { imageRendering: "pixelated" } }}
+                />
+              </PokemonHoverCard>
             ) : undefined
           }
           sx={FIELD_SX}
@@ -655,15 +663,17 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
             gap={12}
             style={{ background: "#0e0d11", border: "1px solid #232028", padding: "10px 14px" }}
           >
-            <Avatar
-              src={getPokemonImageURL(p.slug)}
-              alt={p.species}
-              size={32}
-              radius={0}
-              imageProps={{ style: { imageRendering: "pixelated" } }}
-            >
-              <img src={POKEMON_SPRITE_FALLBACK} alt="" width={20} height={20} />
-            </Avatar>
+            <PokemonHoverCard species={{ slug: p.slug }}>
+              <Avatar
+                src={getPokemonImageURL(p.slug)}
+                alt={p.species}
+                size={32}
+                radius={0}
+                imageProps={{ style: { imageRendering: "pixelated" } }}
+              >
+                <img src={POKEMON_SPRITE_FALLBACK} alt="" width={20} height={20} />
+              </Avatar>
+            </PokemonHoverCard>
             <Text fz={14} fw={700} c="white" style={{ flex: 1, minWidth: 0 }}>
               {p.species}
               {p.shiny ? " (Shiny)" : ""}
@@ -794,7 +804,11 @@ function SubmittedPreview(props: { entries: ImportEntries }) {
             gap={12}
             style={{ background: "#0e0d11", border: "1px solid #232028", padding: "10px 14px" }}
           >
-            {it.filePath && <Avatar src={getItemImageURL(it.filePath)} alt={it.name} size={28} radius={0} />}
+            {it.filePath && (
+              <ItemHoverCard item={{ id: it.refId, name: it.name, category: it.category, quantity: it.qty }}>
+                <Avatar src={getItemImageURL(it.filePath)} alt={it.name} size={28} radius={0} />
+              </ItemHoverCard>
+            )}
             <Text fz={14} fw={700} c="white">
               {it.qty}x {it.name}
             </Text>
@@ -808,15 +822,17 @@ function SubmittedPreview(props: { entries: ImportEntries }) {
             gap={12}
             style={{ background: "#0e0d11", border: "1px solid #232028", padding: "10px 14px" }}
           >
-            <Avatar
-              src={getPokemonImageURL(p.slug)}
-              alt={p.species}
-              size={32}
-              radius={0}
-              imageProps={{ style: { imageRendering: "pixelated" } }}
-            >
-              <img src={POKEMON_SPRITE_FALLBACK} alt="" width={20} height={20} />
-            </Avatar>
+            <PokemonHoverCard species={{ slug: p.slug }}>
+              <Avatar
+                src={getPokemonImageURL(p.slug)}
+                alt={p.species}
+                size={32}
+                radius={0}
+                imageProps={{ style: { imageRendering: "pixelated" } }}
+              >
+                <img src={POKEMON_SPRITE_FALLBACK} alt="" width={20} height={20} />
+              </Avatar>
+            </PokemonHoverCard>
             <Text fz={14} fw={700} c="white" style={{ flex: 1, minWidth: 0 }}>
               {p.species}
               {p.shiny ? " (Shiny)" : ""}

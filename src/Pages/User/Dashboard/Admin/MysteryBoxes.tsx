@@ -22,6 +22,7 @@ import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
+import { ItemHoverCard } from "../../../../components/common/ItemHoverCard";
 import { useAuth } from "../../../../context/AuthContext";
 import { clickable } from "../../../../lib/a11y";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
@@ -103,7 +104,11 @@ function ItemPicker({
           rightSectionPointerEvents="none"
           leftSection={
             selected ? (
-              <Avatar src={getItemImageURL(selected.filePath)} alt={`${selected.name} icon`} size={22} />
+              <ItemHoverCard
+                item={{ id: selected.id, name: selected.name, category: selected.category }}
+              >
+                <Avatar src={getItemImageURL(selected.filePath)} alt={`${selected.name} icon`} size={22} />
+              </ItemHoverCard>
             ) : undefined
           }
           onClick={() => setOpened((o) => !o)}
@@ -130,7 +135,9 @@ function ItemPicker({
             filtered.map((o) => (
               <Combobox.Option value={o.value} key={o.value}>
                 <Group gap={8} wrap="nowrap">
-                  <Avatar src={getItemImageURL(o.filePath)} alt={o.label} size={26} />
+                  <ItemHoverCard item={{ id: o.value, name: o.label }}>
+                    <Avatar src={getItemImageURL(o.filePath)} alt={o.label} size={26} />
+                  </ItemHoverCard>
                   <Text fz={16} c="white">
                     {o.label}
                   </Text>
@@ -311,11 +318,19 @@ export default function MysteryBoxes() {
       {boxItemId && (
         <Stack gap={10}>
           <Group gap={8}>
-            <Avatar
-              src={getItemImageURL(itemData.find((i) => i.id === boxItemId)?.filePath ?? "")}
-              alt={`${itemData.find((i) => i.id === boxItemId)?.name ?? "Box"} icon`}
-              size={34}
-            />
+            <ItemHoverCard
+              item={{
+                id: boxItemId,
+                name: itemData.find((i) => i.id === boxItemId)?.name ?? "Box",
+                category: itemData.find((i) => i.id === boxItemId)?.category,
+              }}
+            >
+              <Avatar
+                src={getItemImageURL(itemData.find((i) => i.id === boxItemId)?.filePath ?? "")}
+                alt={`${itemData.find((i) => i.id === boxItemId)?.name ?? "Box"} icon`}
+                size={34}
+              />
+            </ItemHoverCard>
             <Text c="white" fw={600}>
               {itemData.find((i) => i.id === boxItemId)?.name}
             </Text>
@@ -339,7 +354,16 @@ export default function MysteryBoxes() {
             {pool.map((entry, index) => (
               <Group key={index} gap={8}>
                 {entry.kind === "item" && entry.filePath && (
-                  <Avatar src={getItemImageURL(entry.filePath)} alt={entry.name} size={22} />
+                  <ItemHoverCard
+                    item={{
+                      id: entry.refId,
+                      name: entry.name,
+                      category: entry.category,
+                      quantity: entry.qty,
+                    }}
+                  >
+                    <Avatar src={getItemImageURL(entry.filePath)} alt={entry.name} size={22} />
+                  </ItemHoverCard>
                 )}
                 <Text fz={14} c="white">
                   {entry.qty}x {entry.name}

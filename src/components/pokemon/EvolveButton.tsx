@@ -9,6 +9,7 @@ import { getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "../../helpers";
 import { evaluateEvolutions } from "../../lib/evolution";
 import { levelProgress } from "../../lib/leveling";
 import { evolvePokemon } from "../../queries/evolution";
+import { PokemonHoverCard } from "./PokemonHoverCard";
 import { GradientButtonSecondary } from "../common/GradientButton";
 
 /**
@@ -73,14 +74,16 @@ export function EvolveButton(props: { pokemon: OwnedPokemon; compact?: boolean }
           {options.map((o, i) => (
             <Group key={i} justify="space-between" wrap="nowrap" gap={8}>
               <Group gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
-                <Avatar
-                  src={getPokemonImageURL(o.option.toSlug)}
-                  alt={o.option.toName}
-                  size={34}
-                  imageProps={{ style: { imageRendering: "pixelated" } }}
-                >
-                  <img src={POKEMON_SPRITE_FALLBACK} alt="" width={24} height={24} />
-                </Avatar>
+                <PokemonHoverCard species={{ slug: o.option.toSlug }}>
+                  <Avatar
+                    src={getPokemonImageURL(o.option.toSlug)}
+                    alt={o.option.toName}
+                    size={34}
+                    imageProps={{ style: { imageRendering: "pixelated" } }}
+                  >
+                    <img src={POKEMON_SPRITE_FALLBACK} alt="" width={24} height={24} />
+                  </Avatar>
+                </PokemonHoverCard>
                 <Stack gap={0} style={{ minWidth: 0 }}>
                   <Text c="white" fz={14} truncate>
                     {o.option.toName}

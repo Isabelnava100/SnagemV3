@@ -16,6 +16,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
+import { PokemonHoverCard } from "../pokemon/PokemonHoverCard";
 import { starterOptions } from "../../lib/starters";
 import { chooseStarter } from "../../queries/onboarding";
 import { getCharacters, getOwnedPokemons, getTeamsRaw } from "../../queries/dashboard";
@@ -137,14 +138,16 @@ function StarterPicker() {
                   background: isSelected ? "#1f3a31" : o.isClassic ? "#2c2434" : "#2E2D2E",
                 }}
               >
-                <Avatar
-                  src={getPokemonImageURL(o.slug)}
-                  alt=""
-                  w={44}
-                  h={44}
-                  radius="md"
-                  bg="transparent"
-                />
+                <PokemonHoverCard species={{ slug: o.slug }}>
+                  <Avatar
+                    src={getPokemonImageURL(o.slug)}
+                    alt=""
+                    w={44}
+                    h={44}
+                    radius="md"
+                    bg="transparent"
+                  />
+                </PokemonHoverCard>
               </UnstyledButton>
             );
           })}

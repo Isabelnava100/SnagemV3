@@ -13,6 +13,7 @@ import {
   Title,
 } from "@mantine/core";
 import { getPokemonImageURL } from "../../../helpers";
+import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -93,14 +94,16 @@ function BossBanner(props: {
         direction={isOverSm ? "row" : "column"}
       >
         <Group gap={12} wrap="nowrap" align="center" style={{ flex: 1, minWidth: 0 }}>
-          <Avatar
-            src={getPokemonImageURL(boss.slug)}
-            alt={`${boss.name} sprite`}
-            size={isOverSm ? 44 : 36}
-            radius="xl"
-            bg="#2b2a2b"
-            style={{ flex: "none" }}
-          />
+          <PokemonHoverCard species={{ slug: boss.slug, name: boss.name }}>
+            <Avatar
+              src={getPokemonImageURL(boss.slug)}
+              alt={`${boss.name} sprite`}
+              size={isOverSm ? 44 : 36}
+              radius="xl"
+              bg="#2b2a2b"
+              style={{ flex: "none" }}
+            />
+          </PokemonHoverCard>
           <Box style={{ minWidth: 0 }}>
             <Text
               fz={isOverSm ? 16 : 14}
@@ -254,13 +257,15 @@ function MissionTargetsBanner(props: { thread: ForumThread }) {
                 border: `1px solid ${done ? "#12B7B6" : "#4b3f63"}`,
               }}
             >
-              <Avatar
-                src={getPokemonImageURL(slug)}
-                alt=""
-                size={22}
-                radius="xl"
-                style={done ? undefined : { filter: "grayscale(1)" }}
-              />
+              <PokemonHoverCard species={{ slug, name: speciesNameBySlug.get(slug) }}>
+                <Avatar
+                  src={getPokemonImageURL(slug)}
+                  alt=""
+                  size={22}
+                  radius="xl"
+                  style={done ? undefined : { filter: "grayscale(1)" }}
+                />
+              </PokemonHoverCard>
               <Text fz={14} c={done ? "green.0" : "dimmed"} fw={600}>
                 {speciesNameBySlug.get(slug) ?? slug}
                 {done ? " ✓" : ""}
@@ -306,7 +311,18 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
       style={{ background: "#14252a", border: "1px solid #1f6f7a" }}
     >
       <Group gap={12} wrap="nowrap" align="center">
-        <Avatar src={getPokemonImageURL(enc.slug)} alt={`${enc.name} sprite`} size={52} radius="xl" bg="#12201f" />
+        <PokemonHoverCard
+          species={{
+            slug: enc.slug,
+            name: enc.name,
+            gender: enc.gender,
+            shiny: enc.shiny,
+            star: enc.star,
+            natureOnCatch: enc.catchable,
+          }}
+        >
+          <Avatar src={getPokemonImageURL(enc.slug)} alt={`${enc.name} sprite`} size={52} radius="xl" bg="#12201f" />
+        </PokemonHoverCard>
         <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
           <Group gap={8} wrap="wrap">
             <Text fz={16} c="white" fw={700}>

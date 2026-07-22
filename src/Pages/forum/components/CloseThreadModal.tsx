@@ -7,6 +7,7 @@ import GradientButtonPrimary, {
 } from "../../../components/common/GradientButton";
 import { useAuth } from "../../../context/AuthContext";
 import { getPokemonImageURL } from "../../../helpers";
+import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
 import { actorFrom, logAuditEvent } from "../../../lib/auditLog";
 import { canGiveRewards, isAdmin } from "../../../lib/permissions";
 import { getXPDefaults } from "../../../queries/game";
@@ -125,12 +126,14 @@ export default function CloseThreadModal(props: {
               <Stack gap={6}>
                 {xpRows.map((row, i) => (
                   <Group key={i} gap={8} wrap="nowrap" align="center">
-                    <Avatar
-                      src={row.slug ? getPokemonImageURL(row.slug) : undefined}
-                      alt={`${row.name} sprite`}
-                      size={24}
-                      radius="xl"
-                    />
+                    <PokemonHoverCard species={{ slug: row.slug, name: row.name }}>
+                      <Avatar
+                        src={row.slug ? getPokemonImageURL(row.slug) : undefined}
+                        alt={`${row.name} sprite`}
+                        size={24}
+                        radius="xl"
+                      />
+                    </PokemonHoverCard>
                     <Text fz={14} c="white" style={{ minWidth: 0 }} truncate>
                       {row.name}
                     </Text>

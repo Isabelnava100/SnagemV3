@@ -24,6 +24,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { getPokemonImageURL } from "../../../helpers";
 import { getItems, getOwnedPokemons, getTeamsRaw } from "../../../queries/dashboard";
 import { OwnedPokemon } from "../../../components/types/typesUsed";
+import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
 import {
   getTrainingSession,
   logTrainingPost,
@@ -727,12 +728,14 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                   </Text>
                   {trainingTarget && (
                     <Flex align="center" gap={10}>
-                      <Avatar
-                        src={getPokemonImageURL(trainingTarget.image_slug)}
-                        alt={`${trainingTarget.name || trainingTarget.species} sprite`}
-                        size={48}
-                        radius="xl"
-                      />
+                      <PokemonHoverCard pokemon={trainingTarget}>
+                        <Avatar
+                          src={getPokemonImageURL(trainingTarget.image_slug)}
+                          alt={`${trainingTarget.name || trainingTarget.species} sprite`}
+                          size={48}
+                          radius="xl"
+                        />
+                      </PokemonHoverCard>
                       <Stack gap={2}>
                         <Text fz={16} c="white" fw={600}>
                           Training target: {trainingTarget.name || trainingTarget.species}
@@ -771,12 +774,14 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
             {bossActive && thread.bossBattle && (
               <ForumPanel title="Boss Battle">
                 <Flex align="center" gap={10}>
-                  <Avatar
-                    src={getPokemonImageURL(thread.bossBattle.slug)}
-                    alt={`${thread.bossBattle.name} sprite`}
-                    size={48}
-                    radius="xl"
-                  />
+                  <PokemonHoverCard species={{ slug: thread.bossBattle.slug, name: thread.bossBattle.name }}>
+                    <Avatar
+                      src={getPokemonImageURL(thread.bossBattle.slug)}
+                      alt={`${thread.bossBattle.name} sprite`}
+                      size={48}
+                      radius="xl"
+                    />
+                  </PokemonHoverCard>
                   <Stack gap={2}>
                     <GameResultText>
                       It&apos;s a Boss Battle! A boss encounter will be attached to this post...

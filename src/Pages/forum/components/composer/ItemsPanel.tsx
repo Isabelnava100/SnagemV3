@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { useAuth } from "../../../../context/AuthContext";
 import { getItemImageURL } from "../../../../helpers";
+import { ItemHoverCard } from "../../../../components/common/ItemHoverCard";
 import { getItems } from "../../../../queries/dashboard";
 import { ItemUsedBlock } from "../../types";
 import { ForumPanel, GameResultText, PanelHint } from "../ui";
@@ -34,7 +35,9 @@ export function UsedItemsPanel(props: { items: ItemUsedBlock[] }) {
       <Stack gap={6}>
         {props.items.map((item, i) => (
           <Group key={`${item.itemId}${i}`} gap={8}>
-            <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={24} />
+            <ItemHoverCard item={{ id: item.itemId, name: item.name, quantity: item.qty }}>
+              <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={24} />
+            </ItemHoverCard>
             <Text fz={14} c="white">
               {item.name} x{item.qty}
             </Text>
@@ -132,7 +135,16 @@ export default function UseItemsPanel(props: {
                 <Stack key={item.id} gap={2}>
                   <Flex justify="space-between" align="center" gap={8}>
                     <Group gap={6} wrap="nowrap">
-                      <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={22} />
+                      <ItemHoverCard
+                        item={{
+                          id: item.id,
+                          name: item.name,
+                          category: item.category,
+                          quantity: item.quantity,
+                        }}
+                      >
+                        <Avatar src={getItemImageURL(item.filePath)} alt={item.name} size={22} />
+                      </ItemHoverCard>
                       <Text fz={14} c={blocked ? "dimmed" : "white"}>
                         {item.name} x{item.quantity}
                       </Text>
@@ -181,7 +193,16 @@ export default function UseItemsPanel(props: {
           </Group>
           {usedSummary.map(({ selection, item }) => (
             <Group key={selection.itemId} gap={8} wrap="nowrap">
-              <Avatar src={getItemImageURL(item!.filePath)} alt={item!.name} size={22} />
+              <ItemHoverCard
+                item={{
+                  id: item!.id,
+                  name: item!.name,
+                  category: item!.category,
+                  quantity: selection.qty,
+                }}
+              >
+                <Avatar src={getItemImageURL(item!.filePath)} alt={item!.name} size={22} />
+              </ItemHoverCard>
               <Text fz={14} c="white">
                 {item!.name} x{selection.qty}
               </Text>

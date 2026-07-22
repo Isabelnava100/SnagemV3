@@ -14,6 +14,7 @@ import { useDebouncedValue } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { ConfirmPopover } from "../../../../components/common/ConfirmPopover";
 import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { Settings } from "../../../../components/types/typesUsed";
@@ -225,15 +226,23 @@ function ConnectDiscord() {
           <Text fz={14} c="white">
             Discord connected{link?.discordUsername ? ` as ${link.discordUsername}` : ""}.
           </Text>
-          <Button
-            size="xs"
-            variant="light"
-            color="red"
+          <ConfirmPopover
+            message="Disconnect Discord? You'll stop getting Discord pings until you reconnect."
+            confirmLabel="Disconnect"
             loading={unlinkMutation.isPending}
-            onClick={() => unlinkMutation.mutateAsync()}
-          >
-            Disconnect
-          </Button>
+            onConfirm={() => unlinkMutation.mutateAsync()}
+            target={(open) => (
+              <Button
+                size="xs"
+                variant="light"
+                color="red"
+                loading={unlinkMutation.isPending}
+                onClick={open}
+              >
+                Disconnect
+              </Button>
+            )}
+          />
         </Group>
       ) : DISCORD_CLIENT_ID ? (
         <GradientButtonSecondary
