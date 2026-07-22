@@ -459,6 +459,12 @@ const MECHANICS_FIELDS: Array<{
   { key: "berryYield", label: "Berry yield", hint: "Berries harvested per grown plant.", step: 1 },
   { key: "farmPlots", label: "Farm plots", hint: "Berry Farm plots per member.", step: 1 },
   { key: "megaBoost", label: "Mega attack (x)", hint: "Attack multiplier while a fighter is Mega Evolved (that post only).", step: 0.05 },
+  { key: "zBoost", label: "Z-Move attack (x)", hint: "Attack multiplier for a Z-Move activation (that post only; the Z-Crystal is not used up).", step: 0.05 },
+  { key: "xAttackBoost", label: "X Attack (x)", hint: "Attack multiplier when an X Attack is used (item consumed).", step: 0.05 },
+  { key: "direHitCrit", label: "Dire Hit crit (%)", hint: "Forced critical-hit chance when a Dire Hit is used (item consumed).", step: 1 },
+  { key: "gemBoost", label: "Gem attack (x)", hint: "Attack multiplier for a type-matched Gem (item consumed).", step: 0.05 },
+  { key: "xDefenseMult", label: "X Defense mult", hint: "Incoming-damage multiplier when an X Defense / X Sp. Def is used (item consumed).", step: 0.05 },
+  { key: "xSpeedFlee", label: "X Speed flee (%)", hint: "Flat bonus to flee chance when an X Speed is used (item consumed).", step: 1 },
 ];
 
 export function BattleCostsSection() {

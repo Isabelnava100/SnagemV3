@@ -181,6 +181,18 @@ export interface BattleMechanics {
   farmPlots: number;
   /** Attack multiplier while a fighter is Mega Evolved (this post only). */
   megaBoost: number;
+  /** Attack multiplier for a Z-Move activation (this post only; crystal kept). */
+  zBoost: number;
+  /** X Attack: attack multiplier for the post (item consumed). */
+  xAttackBoost: number;
+  /** Dire Hit: forced critical-hit chance (percent) for the post (item consumed). */
+  direHitCrit: number;
+  /** Type-matched Gem: attack multiplier when the Gem's type matches (consumed). */
+  gemBoost: number;
+  /** X Defense / X Sp. Def: incoming-damage multiplier for the post (consumed). */
+  xDefenseMult: number;
+  /** X Speed: flat bonus (percent) to the flee chance for the post (consumed). */
+  xSpeedFlee: number;
 }
 
 export interface BattleConfig {
@@ -213,6 +225,12 @@ export const DEFAULT_BATTLE_MECHANICS: BattleMechanics = {
   berryYield: 2,
   farmPlots: 3,
   megaBoost: 1.3,
+  zBoost: 1.5,
+  xAttackBoost: 1.3,
+  direHitCrit: 25,
+  gemBoost: 1.5,
+  xDefenseMult: 0.5,
+  xSpeedFlee: 25,
 };
 
 export const DEFAULT_BATTLE_CONFIG: BattleConfig = {
@@ -457,6 +475,20 @@ export const callApplyMint = (pokemonId: string, itemId: string, nature: string)
     pokemonId,
     itemId,
     nature,
+  });
+
+/** Sell a valuable (or bottle cap) for Snag Coins (a flat price each). */
+export const callSellItem = (itemId: string, qty: number) =>
+  callGame<{ ok: boolean; coins: number; qty: number }>("sellItem", { itemId, qty });
+
+/**
+ * Use a consumable item on a boxed pokemon: Exp Candy / Rare Candy grant XP,
+ * Vitamins raise friendship, Plates + Memories grant a flat XP chunk.
+ */
+export const callUseItemOnPokemon = (pokemonId: string, itemId: string) =>
+  callGame<{ ok: boolean; xp?: number; friendship?: number }>("useItemOnPokemon", {
+    pokemonId,
+    itemId,
   });
 
 // ---- The Berry Farm ---------------------------------------------------------

@@ -47,6 +47,8 @@ import OnboardingChecklist, {
 import CharactersPanel from "../components/composer/CharactersPanel";
 import EvolutionPanel from "../components/composer/EvolutionPanel";
 import MegaPanel from "../components/composer/MegaPanel";
+import ZPanel from "../components/composer/ZPanel";
+import BattleItemsPanel from "../components/composer/BattleItemsPanel";
 import { EncounterPostPanel } from "../components/composer/EncounterPanels";
 import UseItemsPanel, {
   ItemSelection,
@@ -195,6 +197,10 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   const [evolve, setEvolve] = React.useState<{ pokemonId: string; toIdx: number } | null>(null);
   // Mega Evolution for this post only (stone required, never consumed).
   const [mega, setMega] = React.useState<{ pokemonId: string; stone: string } | null>(null);
+  // Z-Move for this post only (crystal required, never consumed).
+  const [zmove, setZmove] = React.useState<{ pokemonId: string; itemId: string } | null>(null);
+  // Consumable battle items (X items / Dire Hit / Gems) spent this post.
+  const [battleItems, setBattleItems] = React.useState<{ itemId: string; name: string }[]>([]);
   const [loadedEdit, setLoadedEdit] = React.useState(false);
 
   const editor = useRichTextEditor({
@@ -524,6 +530,8 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
         ...(mode === "new" && fighterNeeded && fighterId ? { fighterId } : {}),
         ...(mode === "new" && evolve ? { evolve } : {}),
         ...(mode === "new" && mega ? { mega } : {}),
+        ...(mode === "new" && zmove ? { zmove } : {}),
+        ...(mode === "new" && battleItems.length ? { battleItems } : {}),
         ...(mode === "edit" ? { editPostId: postId } : {}),
       });
     },
@@ -712,6 +720,21 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                 items={inventory ?? []}
                 value={mega}
                 onChange={setMega}
+              />
+            )}
+            {mode === "new" && (
+              <ZPanel
+                teamPokemon={evoTeamPokemon}
+                items={inventory ?? []}
+                value={zmove}
+                onChange={setZmove}
+              />
+            )}
+            {mode === "new" && (
+              <BattleItemsPanel
+                items={inventory ?? []}
+                value={battleItems}
+                onChange={setBattleItems}
               />
             )}
           </Stack>

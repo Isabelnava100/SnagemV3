@@ -380,3 +380,22 @@ Status as of 2026-07:
   added there at the same 25. No design decision needed (matches the existing evo-item economy).
   Remaining: sprite PNGs for the 6 (blank icon until added, see Custom item sprites).
 - **`bun audit`** clean as of 2026-07 (no vulnerabilities). Re-audit after major bumps.
+
+- **Item mechanics wave 2** (2026-07). SHIPPED: Z-Moves (per-post activation, crystal never
+  consumed, `mech.zBoost`), X items + Dire Hit + type-matched Gems (consumed per post:
+  `mech.xAttackBoost` / `direHitCrit` / `xDefenseMult` / `xSpeedFlee` / `gemBoost`), a
+  `sellItem` callable for valuables + bottle caps (flat SELL_VALUES table), and
+  `useItemOnPokemon` (Exp Candy/Rare Candy grant XP, Vitamins raise friendship, Plates +
+  Memories grant a flat XP chunk as a fallback). Composer panels: `ZPanel`, `BattleItemsPanel`.
+  Maps mirrored client (`src/lib/battleItems.ts`, `src/lib/itemUses.ts`) and server
+  (`functions/src/index.ts`); keep in sync. NEEDS a functions deploy (`firebase deploy --only
+  functions`) before the callables + publish handling run live. No rules change (all writes
+  are server-side; item ids drive validation, not display names).
+  STILL DEFERRED (need whole systems, left as XP/backlog for now):
+  - **EVs / vitamins as stat training**: no EV model exists; vitamins currently raise
+    friendship. A real EV system (per-stat caps, EV-reducing berries) is a separate build.
+  - **TMs / TRs**: need a moveset/move system (the site tracks no moves today). Backlog.
+  - **Plates + Memories -> Arceus/Silvally type forms**: needs a type-changing form system
+    (held-item-driven species type + sprite swap). Until then they grant flat XP
+    (`PLATE_MEMORY_XP`). When built, switch them off the XP fallback.
+  - **X Accuracy / Guard Spec**: consumed with no stat effect (no accuracy/stat-drop model).
