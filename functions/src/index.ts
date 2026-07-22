@@ -1633,7 +1633,27 @@ export const publishForumPost = onCall(async (request) => {
     let battledThisPost = false;
 
     const pending = pendingSnap.data() ?? {};
-    const encounter = pending.encounter ? { ...pending.encounter } : undefined;
+    // Per-character encounters: each character can hold its own active encounter
+    // in pending.encounters[characterId]. This post resolves the encounter of the
+    // FIRST posting character that has one (legacy pending.encounter as fallback);
+    // any other characters' encounters stay pending, untouched. `encounterCharId`
+    // scopes the write-back so only the resolved encounter is cleared/updated.
+    const pendingEncounters = (pending.encounters as Record<string, any>) ?? {};
+    let encounterCharId = "";
+    let encounterSrc: any = undefined;
+    for (const c of characters as Array<{ id: string }>) {
+      const e = pendingEncounters[String(c.id)];
+      if (e) {
+        encounterCharId = String(c.id);
+        encounterSrc = e;
+        break;
+      }
+    }
+    if (!encounterSrc && pending.encounter) {
+      encounterSrc = pending.encounter;
+      encounterCharId = String((pending.encounter as any).characterId ?? "");
+    }
+    const encounter = encounterSrc ? { ...encounterSrc } : undefined;
     // The Fishing Pond takes fishing posts only (staff posts excepted): a
     // cast must be attached, and nothing else runs there.
     if (!editPostId && thread.fishingPond && !isAdmin(member) && !isHost(thread, member)) {
@@ -2512,17 +2532,26 @@ export const publishForumPost = onCall(async (request) => {
       !encounter.catchable &&
       Number(encounter.required) > 0 &&
       (Number(encounter.progress) || 0) < Number(encounter.required);
-    if (
+    const encounterSurvives =
       !editPostId &&
-      encounter &&
+      !!encounter &&
       !encounterCaught &&
       !safariCleared &&
       !encounterFled &&
-      (encounter.catchable || trainerBattleOngoing)
-    ) {
-      tx.set(pRef, { encounter });
-    } else if (pendingSnap.exists) {
-      tx.delete(pRef);
+      (encounter.catchable || trainerBattleOngoing);
+    if (!editPostId && pendingSnap.exists) {
+      // Clear only the rolls consumed this post: this character's encounter (or
+      // the legacy single one) plus any dice/random. Other characters' pending
+      // encounters are preserved.
+      const pendingUpdate: Record<string, unknown> = {};
+      if (pending.dice) pendingUpdate.dice = FieldValue.delete();
+      if (pending.random) pendingUpdate.random = FieldValue.delete();
+      if (encounter) {
+        const encVal = encounterSurvives ? encounter : FieldValue.delete();
+        if (encounterCharId) pendingUpdate.encounters = { [encounterCharId]: encVal };
+        else pendingUpdate.encounter = encVal;
+      }
+      if (Object.keys(pendingUpdate).length) tx.set(pRef, pendingUpdate, { merge: true });
     }
     return {
       postId: resultPostId,
