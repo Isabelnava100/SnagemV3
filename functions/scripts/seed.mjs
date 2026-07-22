@@ -17,6 +17,11 @@ const db = admin.firestore();
 
 const here = dirname(fileURLToPath(import.meta.url));
 const itemJSON = JSON.parse(readFileSync(resolve(here, "../../src/data/item/item.json"), "utf8"));
+// Obtainability rarity tiers (src/lib/itemRarity.ts), used to auto-complete the
+// core shop sections without mixing epic items into common shelves.
+const rarityByItem = JSON.parse(
+  readFileSync(resolve(here, "../../src/data/item/rarityByItem.json"), "utf8")
+);
 
 // Build a "group/name" -> {itemId, name, filePath, category} lookup.
 const byKey = new Map();
@@ -64,6 +69,19 @@ const named = (displayName, price, description) => {
     category: "other-item",
   };
   return { ...found, name: displayName, price, description };
+};
+
+// Every catalog item of a group at a given rarity tier (obtainability batch).
+const groupTier = (group, tier) =>
+  [...byKey.values()].filter((e) => e.category === group && (rarityByItem[e.itemId] ?? 2) === tier);
+// Keep a section's hand-listed (flavored) entries and append the remaining
+// same-group, same-tier catalog items so the whole tier is obtainable.
+const fillTier = (items, group, tier, price) => {
+  const have = new Set(items.map((i) => i.itemId));
+  const extra = groupTier(group, tier)
+    .filter((e) => !have.has(e.itemId))
+    .map((e) => ({ ...e, price }));
+  return [...items, ...extra];
 };
 
 // --------------------------------------------------------------------------
@@ -370,6 +388,22 @@ const shops = {
       "<p>Bring ingredients and coin, and Ambrosia's cauldron does the rest. Every recipe lists what it needs; failed brews still eat the ingredients, so read the success rate.</p>",
   },
 };
+
+// Obtainability batch (2026-07): complete the Golden Sarcophagus core sections
+// so the WHOLE tier is buyable, not just the flavored staples. Fills by rarity
+// tier so epic balls (safari/beast) never land in the common shelves.
+//   Pokeballs -> tier 1 balls, Medicine -> tier 1, Berries -> tier 2,
+//   Evolutionary Items -> tier 3.
+const CORE_FILL = {
+  Pokeballs: ["ball", 1, 8],
+  Medicine: ["medicine", 1, 12],
+  Berries: ["berry", 2, 4],
+  "Evolutionary Items": ["evo-item", 3, 25],
+};
+for (const sec of shops["golden-sarcophagus"].sections) {
+  const spec = CORE_FILL[sec.title];
+  if (spec) sec.items = fillTier(sec.items, spec[0], spec[1], spec[2]);
+}
 
 // --------------------------------------------------------------------------
 // Recipes (Ambrosial Alchemy)
