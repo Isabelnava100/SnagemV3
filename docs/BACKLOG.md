@@ -15,6 +15,16 @@ July 2026 build-out are marked (2026-07).
   re-run `bun run build` before shipping. Not a deploy blocker, but the
   critical/high ones should be triaged soon.
 
+- **Require email verification before sign-up completes (2026-07).** Owner
+  request: new users must verify their email before they can finish signing
+  up. Today registration sends a verification link (Register success screen
+  says "we sent a verification link") and accounts are manually approved, but
+  nothing hard-gates on the email actually being confirmed. Add enforcement:
+  block login and/or admin approval until Firebase `emailVerified === true`
+  (or gate the application submit on a verified email), and surface a
+  "resend verification" path. Touches `handleSignIn`, the registration flow,
+  and `approveNewUser`.
+
 - **Annual security header renewal, due 2027-07.** The HSTS policy in
   `netlify.toml` runs on a 1 year max-age (set 2026-07). Any dev work in or
   after July 2027 must renew it: confirm the header is still served, re-test
