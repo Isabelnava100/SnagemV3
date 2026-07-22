@@ -1,5 +1,6 @@
 import { Box, Container, Text } from "@mantine/core";
 import { Navigate } from "react-router-dom";
+import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
@@ -27,9 +28,27 @@ export default function AdminPage() {
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
       <Seo noindex title="Admin | Snagem Guild" />
-      <Text fz={14} fw={700} tt="uppercase" c="grape.3" mb={16} style={{ letterSpacing: 1 }}>
-        {isAdmin(user) ? "Admin Access" : "Staff Tools"}
-      </Text>
+      <PageHero
+        eyebrow="Staff Tools · Restricted"
+        title={isAdmin(user) ? "Admin Console" : "Staff Tools"}
+        subtitle="Run the guild: approvals, hosting, grading, config, and the help desk."
+        aside={
+          <Box style={{ border: "1px solid #E54156", padding: "8px 16px" }}>
+            <Text
+              fz={14}
+              fw={700}
+              c="#E54156"
+              tt="uppercase"
+              style={{
+                fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+                letterSpacing: "0.14em",
+              }}
+            >
+              {isAdmin(user) ? "Director Access" : "Staff Access"}
+            </Text>
+          </Box>
+        }
+      />
       {canInbox && (
         <Box mb={36}>
           <Inbox />

@@ -10,7 +10,7 @@ import {
   Title,
   useMantineTheme,
 } from "@mantine/core";
-import { HERO_GRADIENT, HERO_STRIPES } from "../common/PageHero";
+import { HERO_CLIP, HERO_GRADIENT, HERO_STRIPES } from "../common/PageHero";
 import { SNAG_ICON_NAMES, SnagIcon } from "../../icons/SnagIcon";
 import {
   AdminAccessIcon,
@@ -35,7 +35,7 @@ import {
  * literals rather than theme tokens.
  */
 
-const VERSION = "v1.0 · 2026 · Snagem Guild";
+const VERSION = "v2.0 · 2026 redesign · Snagem Guild";
 
 // Retired/unused glyphs stay in the codebase but out of the reference sheet.
 const HIDDEN_GLYPHS = new Set(["gengar", "snaghand"]);
@@ -187,7 +187,7 @@ export default function DesignSystem() {
       <Box
         p={{ base: 20, sm: 28 }}
         style={{
-          borderRadius: 16,
+          clipPath: HERO_CLIP,
           background: `${HERO_STRIPES}, ${HERO_GRADIENT}`,
           border: "1px solid #3a3550",
         }}
@@ -624,6 +624,7 @@ export default function DesignSystem() {
               <Text fz={16} c="rgba(255,255,255,0.8)">Greens retired: success states now render in Suicune Cyan everywhere.</Text>
               <Text fz={16} c="rgba(255,255,255,0.8)">Pinks now carry Magikarp Red; grape accents share the Gengar Purple ramp.</Text>
               <Text fz={16} c="rgba(255,255,255,0.8)">Homepage blue saturated up into Murkrow Blue and used by the indigo gradients.</Text>
+              <Text fz={16} c="rgba(255,255,255,0.8)">Redesign (2026): Quantico display, angled .dc-cta buttons, kicker rules and flat #17151c / #141318 cards layered over the palette (see section 09).</Text>
             </Stack>
           </Card>
           <Card withBorder radius="md" padding="lg" style={{ background: "rgba(245,200,66,0.06)", borderColor: "#7a5a1e" }}>
@@ -637,6 +638,63 @@ export default function DesignSystem() {
             </Stack>
           </Card>
         </SimpleGrid>
+      </Section>
+
+      {/* 09 Redesign language */}
+      <Section
+        index="09"
+        eyebrow="Redesign"
+        title="Cinematic game language (2026)"
+        hint="The July 2026 redesign layered a game-site vocabulary over the palette above: the Quantico display face, angled clip-path CTAs, kicker rules and flat angular cards. Reuse these classes from src/assets/styles/redesign.css instead of re-styling from scratch."
+      >
+        <Stack gap={20}>
+          <Box className="dc-card" p={20}>
+            <div className="dc-kicker">Pokemon Roleplay // Est 2004</div>
+            <Text
+              mt={12}
+              c="white"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 34, letterSpacing: "0.02em" }}
+            >
+              WRITE. BATTLE. SNAG.
+            </Text>
+            <Text fz={14} c="#b6b1bc" mt={6}>
+              Quantico display face for headings, kickers, buttons and labels. The kicker is a
+              short red rule plus a gold uppercase eyebrow (.dc-kicker).
+            </Text>
+          </Box>
+
+          <Box>
+            <Text fz={14} fw={700} c="white" mb={8}>
+              Angled CTAs (.dc-cta)
+            </Text>
+            <Group gap={12} wrap="wrap">
+              <span className="dc-cta dc-cta-red">Primary Red</span>
+              <span className="dc-cta dc-cta-gold">Gold Fill</span>
+              <span className="dc-cta dc-cta-outline">Outline</span>
+            </Group>
+            <Text fz={14} c="#b6b1bc" mt={10}>
+              Rule: gold fills always take dark text (#1A1B1E), never white. Clip-path gives the
+              angled corners; keep a visible focus ring since the clip cuts the outline.
+            </Text>
+          </Box>
+
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={14}>
+            <Box className="dc-card" p={18}>
+              <div className="dc-subkicker">Panel · .dc-card</div>
+              <Text c="white" fz={15} mt={12}>
+                #17151c surface, #2a2637 hairline, square corners, red hover border.
+              </Text>
+            </Box>
+            <Box className="dc-card-tile" p={18}>
+              <Text fw={700} c="white" fz={15}>
+                Tile · .dc-card-tile
+              </Text>
+              <Text c="#b6b1bc" fz={14} mt={6}>
+                #141318 inner well for grids of items, purple hover border.
+              </Text>
+            </Box>
+          </SimpleGrid>
+        </Stack>
       </Section>
     </Stack>
   );

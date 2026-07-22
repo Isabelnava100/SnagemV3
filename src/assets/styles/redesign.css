@@ -196,6 +196,37 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
+/* Small diamond accent for group headers (color set inline). */
+.dc-diamond {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+/* "OPEN →" style action button: grey angled chip, purple on hover. */
+.dc-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  background: var(--dc-raised, #3c3a3c);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border: 0;
+  cursor: pointer;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  transition: background 0.2s ease;
+}
+.dc-open-btn:hover {
+  background: var(--dc-purple, #7e2c75);
+}
+
 /* Small section kicker inside panels: a short colored rule + Quantico label.
    Defaults to cyan; set --dc-kicker-accent to recolor. */
 .dc-subkicker {

@@ -1,5 +1,7 @@
 import { Box, Button, Divider, Group, SimpleGrid, Stack, Text } from "@mantine/core";
-import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
+import { IconArrowLeft } from "@tabler/icons-react";
+
+const displayFont = "var(--font-display, 'Quantico', sans-serif)";
 import React from "react";
 import { ActivityLog } from "../../components/admin/ActivityLog";
 import DesignSystem from "../../components/admin/DesignSystem";
@@ -197,29 +199,23 @@ const ALL_TOOLS: Tool[] = GROUPS.flatMap((g) => g.tools);
 
 function ToolCard(props: { tool: Tool; onOpen: () => void }) {
   return (
-    <Stack
-      gap={8}
-      p="md"
-      h="100%"
-      style={{ borderRadius: 12, background: "#141318", border: "1px solid #232028" }}
-    >
+    <Stack gap={10} p={20} h="100%" className="dc-card-tile">
       <Box style={{ minWidth: 0, flex: 1 }}>
-        <Text fw={700} c="white" mb={2}>
+        <Text fw={700} fz={16} c="white" mb={4}>
           {props.tool.label}
         </Text>
-        <Text fz={14} c="dimmed">
+        <Text fz={13} c="#b6b1bc" style={{ lineHeight: 1.5 }}>
           {props.tool.desc}
         </Text>
       </Box>
-      <Button
-        variant="default"
-        radius="xl"
-        w="fit-content"
-        rightSection={<IconArrowRight size={16} />}
+      <button
+        type="button"
+        className="dc-open-btn"
         onClick={props.onOpen}
+        aria-label={`Open ${props.tool.label}`}
       >
-        Open
-      </Button>
+        Open →
+      </button>
     </Stack>
   );
 }
@@ -272,31 +268,57 @@ export default function Manage() {
   return (
     <Stack gap="xl">
       <Box>
-        <Text fz={34} fw={800} c="white">
-          Manage
+        <Group gap={10} align="center" mb={4}>
+          <Box w={28} h={3} style={{ background: "#E54156" }} />
+          <Text
+            fz={13}
+            fw={700}
+            c="#FFD074"
+            tt="uppercase"
+            style={{ fontFamily: displayFont, letterSpacing: "0.3em" }}
+          >
+            Manage
+          </Text>
+        </Group>
+        <Text
+          component="h2"
+          fz={{ base: 24, sm: 30 }}
+          fw={700}
+          c="white"
+          style={{ fontFamily: displayFont, letterSpacing: "0.02em", margin: 0 }}
+        >
+          Every Tool, Four Areas
         </Text>
-        <Text fz={16} c="dimmed" mt={4}>
-          All editors and config, grouped into {visibleGroups.length}{" "}
-          {visibleGroups.length === 1 ? "area" : "areas"}.
+        <Text fz={15} c="#b6b1bc" mt={4}>
+          All editors and config, grouped so you always know where a tool lives.
         </Text>
       </Box>
 
       {visibleGroups.map((g) => (
         <Box
           key={g.title}
-          p="lg"
-          style={{ borderRadius: 16, background: "#17151c", border: "1px solid #232028" }}
+          p={{ base: 20, sm: 28 }}
+          style={{
+            background: "#17151c",
+            border: "1px solid #2a2637",
+            clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)",
+          }}
         >
-          <Group gap={10} mb={4}>
-            <Box style={{ width: 10, height: 10, borderRadius: "50%", background: g.dot }} />
-            <Text fz={24} fw={800} c="white">
+          <Group gap={10} mb={4} align="center">
+            <Box className="dc-diamond" style={{ background: g.dot }} />
+            <Text
+              fz={21}
+              fw={700}
+              c="white"
+              style={{ fontFamily: displayFont, letterSpacing: "0.03em" }}
+            >
               {g.title}
             </Text>
           </Group>
-          <Text fz={14} c="dimmed" mb="md">
+          <Text fz={14} c="#b6b1bc" mb="md">
             {g.subtitle}
           </Text>
-          <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={12}>
+          <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={14}>
             {g.tools.map((t) => (
               <ToolCard key={t.key} tool={t} onOpen={() => setSelected(t.key)} />
             ))}
@@ -304,7 +326,7 @@ export default function Manage() {
         </Box>
       ))}
 
-      <Text fz={14} c="dimmed">
+      <Text fz={13} c="#6f6a78">
         Every tool from the old admin tabs lives under one of these groups. Directors only see the
         groups they have a capability for.
       </Text>

@@ -1,5 +1,7 @@
-import { Badge, Box, Button, Group, Select, Stack, Text, TextInput } from "@mantine/core";
+import { Badge, Box, Button, Flex, Group, Select, Stack, Text, TextInput } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+const displayFont = "var(--font-display, 'Quantico', sans-serif)";
 import { IconChevronDown } from "@tabler/icons-react";
 import React from "react";
 import { EmptyMessage } from "../../components/common/Message";
@@ -189,8 +191,7 @@ function InboxRow(props: {
   return (
     <Box
       style={{
-        borderRadius: 14,
-        background: "#1c1a26",
+        background: "#141318",
         border: "1px solid #2a2637",
         borderLeft: `4px solid ${meta.color}`,
         overflow: "hidden",
@@ -239,16 +240,24 @@ function InboxRow(props: {
   );
 }
 
-function CountPill(props: { label: string; count: number }) {
+/** Accent stat tile (redesign): colored left border, big count, uppercase label. */
+function StatTile(props: { label: string; count: number; color: string }) {
   return (
     <Box
-      p={12}
-      style={{ borderRadius: 12, background: "rgba(0,0,0,0.3)", border: "1px solid #2a2637", minWidth: 96 }}
+      px={20}
+      py={16}
+      style={{
+        flex: 1,
+        minWidth: 150,
+        background: "#17151c",
+        border: "1px solid #2a2637",
+        borderLeft: `3px solid ${props.color}`,
+      }}
     >
-      <Text fz={26} fw={800} c={props.count ? "#ff6b6b" : "dimmed"} lh={1}>
+      <Text fz={22} fw={800} c={props.count ? props.color : "#b6b1bc"} lh={1}>
         {props.count}
       </Text>
-      <Text fz={14} c="dimmed" tt="uppercase" mt={4} style={{ letterSpacing: 1 }}>
+      <Text fz={14} fw={700} c="#b6b1bc" tt="uppercase" mt={2} style={{ letterSpacing: "0.16em" }}>
         {props.label}
       </Text>
     </Box>
@@ -343,44 +352,47 @@ export default function Inbox() {
 
   return (
     <Stack gap="lg">
-      <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
-        <Box>
-          <Text fz={34} fw={800} c="white">
-            Inbox
-          </Text>
-          <Text fz={16} c="dimmed" mt={4}>
-            Triage every pending request from one stream.
+      <Flex gap={14} wrap="wrap">
+        {canApps && (
+          <StatTile label="Pending Applications" count={appList.length} color="#E54156" />
+        )}
+        {canGrade && <StatTile label="Missions to Grade" count={missionList.length} color="#FFD074" />}
+        {canImports && <StatTile label="Imports in Review" count={importList.length} color="#12B7B6" />}
+        {canGrade && <StatTile label="Master Requests" count={masterList.length} color="#772976" />}
+        {canChallenges && (
+          <StatTile label="Challenge Requests" count={challengeList.length} color="#f59e0b" />
+        )}
+        {canGrade && <StatTile label="Clearance Reviews" count={clearanceList.length} color="#8b5cf6" />}
+      </Flex>
+
+      <Box style={{ background: "#17151c", border: "1px solid #2a2637" }}>
+        <Box
+          px={26}
+          py={15}
+          style={{ background: "linear-gradient(90deg, #762B77 7%, #17F1F0 66%)" }}
+        >
+          <Text
+            component="h2"
+            c="white"
+            fw={700}
+            fz={16}
+            tt="uppercase"
+            style={{ fontFamily: displayFont, letterSpacing: "0.08em", margin: 0 }}
+          >
+            Approvals Queue
           </Text>
         </Box>
-        <Group gap={10}>
-          {canApps && <CountPill label="Applications" count={appList.length} />}
-          {canImports && <CountPill label="Imports" count={importList.length} />}
-          {canGrade && <CountPill label="Missions" count={missionList.length} />}
-          {canGrade && <CountPill label="Master Req" count={masterList.length} />}
-          {canChallenges && <CountPill label="Challenges" count={challengeList.length} />}
-          {canGrade && <CountPill label="Clearance" count={clearanceList.length} />}
-        </Group>
-      </Group>
-
-      <Badge variant="light" color="gray" radius="sm" size="lg" w="fit-content">
-        Pending
-      </Badge>
-
-      <Text fz={14} c="dimmed">
-        One stream for every pending review: applications, imports, mission submissions and master
-        requests. Act on each without hunting through tabs.
-      </Text>
-
-      {loading ? (
-        <SectionLoader />
-      ) : total === 0 ? (
-        <EmptyMessage
-          title="Inbox zero"
-          description="Nothing is waiting for review. New requests will appear here."
-        />
-      ) : (
-        <Stack gap="md">
-          {appList.map((a) => (
+        <Box p={{ base: 14, sm: 20 }}>
+          {loading ? (
+            <SectionLoader />
+          ) : total === 0 ? (
+            <EmptyMessage
+              title="Inbox zero"
+              description="Nothing is waiting for review. New requests will appear here."
+            />
+          ) : (
+            <Stack gap="md">
+              {appList.map((a) => (
             <InboxRow
               key={`app-${a.id}`}
               type="application"
@@ -442,8 +454,10 @@ export default function Inbox() {
               <ClearanceRequestCard request={r} onDone={refresh("pending-clearance-requests")} />
             </InboxRow>
           ))}
-        </Stack>
-      )}
+            </Stack>
+          )}
+        </Box>
+      </Box>
     </Stack>
   );
 }
