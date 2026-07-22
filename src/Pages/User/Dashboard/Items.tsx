@@ -24,6 +24,7 @@ import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getItems } from "../../../queries/dashboard";
 import { getMysteryBoxes } from "../../../queries/game";
 import { describeSources, useItemSources } from "../../../lib/itemSources";
+import { rarityForItem, RARITY_COLORS, RARITY_LABELS } from "../../../lib/itemRarity";
 
 /**
  * Items tab (moved off the dashboard top block). Categories stack vertically
@@ -124,6 +125,21 @@ export default function Items() {
                               ×{item.quantity}
                             </Text>
                           </Flex>
+                          {(() => {
+                            const r = rarityForItem(item.id);
+                            return (
+                              <Text
+                                fz={10}
+                                fw={700}
+                                tt="uppercase"
+                                c={RARITY_COLORS[r]}
+                                style={{ letterSpacing: "0.1em" }}
+                                title={RARITY_LABELS[r]}
+                              >
+                                {r === 0 ? RARITY_LABELS[0] : `${"★".repeat(r)} ${RARITY_LABELS[r]}`}
+                              </Text>
+                            );
+                          })()}
                           {more && (
                             <Text fz={11} c="dimmed" lineClamp={1}>
                               Get more: {more}
