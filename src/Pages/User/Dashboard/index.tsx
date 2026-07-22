@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Anchor,
   Box,
   Button,
@@ -14,7 +13,6 @@ import {
   Title,
   UnstyledButton,
 } from "@mantine/core";
-import { IconLogout } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -93,92 +91,74 @@ export function Dashboard() {
  */
 function DashboardHeader() {
   const { user } = useAuth();
-  const { isOverMd } = useMediaQuery();
-
-  const banner = {
-    borderRadius: 16,
-    background: `${HERO_STRIPES}, ${HERO_GRADIENT}`,
-    border: `1px solid ${HERO_BORDER}`,
-  };
-  const bannerClipped = {
-    ...banner,
-    borderRadius: 5,
-    clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%)",
-  };
+  const { isOverSm } = useMediaQuery();
   const displayFont = "var(--font-display, 'Quantico', sans-serif)";
 
-  if (!isOverMd) {
-    return (
-      <Flex justify="space-between" align="center" px={14} py={12} gap={8} style={banner}>
-        <Group gap={6} style={{ minWidth: 0 }} wrap="nowrap">
-          <Text c="white" fw={700} fz={22} lineClamp={1}>
-            Welcome, {user?.displayName}!
-          </Text>
-          {/* Logout lives here (not the nav) to avoid an accidental misclick. */}
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            onClick={handleLogout}
-            aria-label="Log out"
-            style={{ flexShrink: 0 }}
-          >
-            <IconLogout size={20} />
-          </ActionIcon>
-        </Group>
-        <NotificationBell />
-      </Flex>
-    );
-  }
+  // One responsive redesigned hero for phone + desktop (the old compact mobile
+  // header is gone): kicker + controls row, big Quantico title, welcome line.
+  const bannerClipped = {
+    background: `${HERO_STRIPES}, ${HERO_GRADIENT}`,
+    border: `1px solid ${HERO_BORDER}`,
+    clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%)",
+    position: "relative" as const,
+    overflow: "hidden" as const,
+  };
 
   return (
-    <Stack gap={13} p={{ base: 24, sm: 36 }} style={bannerClipped}>
-      <Flex justify="space-between" align="flex-start">
-        <Box>
-          <Group gap={10} align="center" mb={10}>
-            <Box w={44} h={3} style={{ background: "#E54156" }} />
+    <Box p={{ base: 20, sm: 36 }} style={bannerClipped}>
+      <Stack gap={isOverSm ? 13 : 12} style={{ position: "relative" }}>
+        <Flex justify="space-between" align="center" gap={12} wrap="nowrap">
+          <Group gap={10} align="center" wrap="nowrap" style={{ minWidth: 0 }}>
+            <Box
+              w={isOverSm ? 44 : 24}
+              h={3}
+              style={{ background: "#E54156", flexShrink: 0 }}
+            />
             <Text
-              fz={14}
+              fz={{ base: 10, sm: 14 }}
               fw={700}
               c="#FFD074"
               tt="uppercase"
-              style={{ letterSpacing: "0.3em", fontFamily: displayFont }}
+              lineClamp={1}
+              style={{ letterSpacing: "0.24em", fontFamily: displayFont }}
             >
               Guild Member Hub
             </Text>
           </Group>
-          <Text
-            component="h1"
-            c="white"
-            fw={700}
-            fz={{ base: 34, sm: 44 }}
-            style={{ lineHeight: 1, margin: 0, fontFamily: displayFont, letterSpacing: "0.02em" }}
-          >
-            TRAINER DASHBOARD
-          </Text>
-          <Text c="gray.4" fz={16} mt={10}>
-            Welcome back, {user?.displayName}!
-          </Text>
-        </Box>
-        <Group gap={14} wrap="nowrap">
-          <NotificationBell />
-          <Button
-            variant="outline"
-            color="gray"
-            onClick={handleLogout}
-            radius={0}
-            style={{
-              clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)",
-              borderColor: "rgba(255,255,255,0.4)",
-              color: "#fff",
-              fontFamily: displayFont,
-              letterSpacing: "0.12em",
-            }}
-          >
-            Log Out
-          </Button>
-        </Group>
-      </Flex>
-    </Stack>
+          <Group gap={10} wrap="nowrap" style={{ flexShrink: 0 }}>
+            <NotificationBell />
+            <Button
+              variant="outline"
+              color="gray"
+              onClick={handleLogout}
+              radius={0}
+              px={isOverSm ? 18 : 12}
+              style={{
+                clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)",
+                borderColor: "rgba(255,255,255,0.4)",
+                color: "#fff",
+                fontFamily: displayFont,
+                letterSpacing: "0.12em",
+              }}
+            >
+              Log Out
+            </Button>
+          </Group>
+        </Flex>
+        <Text
+          component="h1"
+          c="white"
+          fw={700}
+          fz={{ base: 28, sm: 44 }}
+          style={{ lineHeight: 1, margin: 0, fontFamily: displayFont, letterSpacing: "0.02em" }}
+        >
+          TRAINER DASHBOARD
+        </Text>
+        <Text c="#b6b1bc" fz={{ base: 14, sm: 16 }}>
+          Welcome back, {user?.displayName}!
+        </Text>
+      </Stack>
+    </Box>
   );
 }
 
@@ -362,52 +342,74 @@ function NotificationBell() {
  * whole chip is tappable and opens a popover with the full name + amount.
  */
 function CurrencyChip(props: { amount: number | string; name: string; color: string; icon: string }) {
+  const { isOverXs } = useMediaQuery();
+  const displayFont = "var(--font-display, 'Quantico', sans-serif)";
   // Tolerate both number (migrated) and string (legacy) currency values.
   const amount = String(props.amount ?? 0).padStart(3, "0");
   return (
     <Popover position="bottom" withArrow shadow="md" width={180}>
       <Popover.Target>
         <UnstyledButton style={{ flex: 1, minWidth: 0 }}>
-          <Flex
-            bg="#17151c"
-            align="center"
-            gap={12}
-            px={18}
-            py={14}
-            style={{
-              minWidth: 0,
-              border: "1px solid #2a2637",
-              borderLeft: `3px solid ${props.color}`,
-            }}
-          >
-            <Box
+          {isOverXs ? (
+            // Desktop/tablet: wide horizontal tile, colored left border.
+            <Flex
+              bg="#17151c"
+              align="center"
+              gap={12}
+              px={18}
+              py={14}
               style={{
-                width: 34,
-                height: 34,
-                flexShrink: 0,
-                overflow: "hidden",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                minWidth: 0,
+                border: "1px solid #2a2637",
+                borderLeft: `3px solid ${props.color}`,
               }}
             >
-              <Image src={props.icon} w={34} h={34} style={{ objectFit: "contain" }} alt={props.name} />
-            </Box>
-            <Stack gap={0} style={{ minWidth: 0 }}>
-              <Text
-                c={props.color}
-                fz={22}
-                fw={800}
-                lh={1.1}
-                style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)" }}
+              <Box
+                style={{
+                  width: 34,
+                  height: 34,
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
+                <Image src={props.icon} w={34} h={34} style={{ objectFit: "contain" }} alt={props.name} />
+              </Box>
+              <Stack gap={0} style={{ minWidth: 0 }}>
+                <Text c={props.color} fz={22} fw={800} lh={1.1} style={{ fontFamily: displayFont }}>
+                  {amount}
+                </Text>
+                <Text c="#b6b1bc" fz={14} fw={700} tt="uppercase" lineClamp={1} style={{ letterSpacing: "0.16em" }}>
+                  {props.name}
+                </Text>
+              </Stack>
+            </Flex>
+          ) : (
+            // Phone: stacked tile with a colored top border, so the full label
+            // fits at a small size instead of truncating to "S...".
+            <Stack
+              bg="#17151c"
+              gap={3}
+              px={12}
+              py={12}
+              style={{
+                minWidth: 0,
+                border: "1px solid #2a2637",
+                borderTop: `3px solid ${props.color}`,
+              }}
+            >
+              <Box style={{ width: 22, height: 22, display: "flex", alignItems: "center" }}>
+                <Image src={props.icon} w={22} h={22} style={{ objectFit: "contain" }} alt={props.name} />
+              </Box>
+              <Text c={props.color} fz={17} fw={800} lh={1.1} style={{ fontFamily: displayFont }}>
                 {amount}
               </Text>
-              <Text c="#b6b1bc" fz={14} fw={700} tt="uppercase" lineClamp={1} style={{ letterSpacing: "0.16em" }}>
+              <Text c="#b6b1bc" fz={10} fw={700} tt="uppercase" style={{ letterSpacing: "0.06em", lineHeight: 1.15 }}>
                 {props.name}
               </Text>
             </Stack>
-          </Flex>
+          )}
         </UnstyledButton>
       </Popover.Target>
       <Popover.Dropdown bg="#1E1D20" p={10}>
