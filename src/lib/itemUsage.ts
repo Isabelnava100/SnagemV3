@@ -8,7 +8,7 @@ import { EXP_CANDY_XP, RARE_CANDY_ID, SELL_VALUES, VITAMIN_IDS } from "./itemUse
  */
 export function usageForItem(itemId: string, category: string): string | undefined {
   if (Z_CRYSTAL_ID[itemId]) {
-    return "Z-Crystal: tick the Z-Move panel in a battle post for one big attack this post. Never used up; the pokemon must match the crystal's type or species.";
+    return "Z-Crystal: tick the Z-Move panel in a battle post for one big attack this post. Never used up. Needs a Master-cleared character, and the pokemon must match the crystal's type or species.";
   }
   if (GEM_TYPE[itemId]) {
     return "Gem: use in a battle post for a one-post attack boost when the Gem's type matches your pokemon's own type. Used up.";
@@ -45,9 +45,9 @@ export function usageForItem(itemId: string, category: string): string | undefin
     berry: "Berry: feed it to a wild encounter to raise catch odds, or plant it at the Berry Farm.",
     "hold-item": "Held item: equip it on a boxed pokemon for a passive battle effect.",
     "evo-item": "Evolution item: use it from your bag to evolve the pokemon it belongs to.",
-    "mega-stone": "Mega Stone: tick the Mega panel in a battle post to Mega Evolve for one post. Never used up.",
+    "mega-stone": "Mega Stone: tick the Mega panel in a battle post to Mega Evolve for one post. Never used up. Needs a Master-cleared character.",
     mint: "Mint: use it on a boxed pokemon to change its nature. Used up.",
-    "z-crystals": "Z-Crystal: tick the Z-Move panel in a battle post. Never used up.",
+    "z-crystals": "Z-Crystal: tick the Z-Move panel in a battle post. Never used up. Needs a Master-cleared character.",
     "battle-item": "Battle item: tick the Battle Items panel in a battle post. Used up.",
     gem: "Gem: use in a battle post for a type-matched attack boost. Used up.",
     "exp-candy": "Exp Candy: use it on a pokemon to grant XP. Used up.",

@@ -1427,6 +1427,23 @@ export const publishForumPost = onCall(async (request) => {
     // battle set is checked by key below, anything else is cosmetic.
     const fighterHeld = battleFighterId ? heldKeyOf(ownedForXp[battleFighterId]) : "";
 
+    // Mega Evolution and Z-Moves both require the activating pokemon's character
+    // to hold Master clearance (a Division: Hybrid or Channeler), on top of
+    // owning the stone/crystal. Read the character types once when either is
+    // requested, and resolve clearance by the pokemon's owning character.
+    let charTypes: Record<string, { type?: string }> = {};
+    if (megaReq || zReq) {
+      charTypes =
+        ((await tx.get(db.doc(`users/${uid}/bag/characters`))).data() as Record<
+          string,
+          { type?: string }
+        >) ?? {};
+    }
+    const isCharCleared = (charId: string): boolean => {
+      const t = String(charTypes[charId]?.type ?? "");
+      return !!t && t !== "None";
+    };
+
     // Mega Evolution: a per-post activation. Needs the matching Mega Stone in
     // the bag (checked, NEVER consumed), and applies only for this post. If the
     // mega'd pokemon is also the fighter, its attack gets the megaBoost.
@@ -1452,6 +1469,12 @@ export const publishForumPost = onCall(async (request) => {
       );
       if (!ownsStone) {
         throw new HttpsError("failed-precondition", `You need a ${form.stone} to Mega Evolve this pokemon.`);
+      }
+      if (!isCharCleared(String(poke.characterId ?? ""))) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Mega Evolution needs a Master-cleared character (Hybrid or Channeler). Request clearance from the Research page."
+        );
       }
       // The stone is NOT consumed (like a fishing rod): activation only.
       megaInfo = {
@@ -1484,6 +1507,12 @@ export const publishForumPost = onCall(async (request) => {
       const entry = bag[zReq.itemId];
       if (!entry || (Number(entry.quantity) || 0) <= 0) {
         throw new HttpsError("failed-precondition", "You do not have that Z-Crystal.");
+      }
+      if (!isCharCleared(String(poke.characterId ?? ""))) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Z-Moves need a Master-cleared character (Hybrid or Channeler). Request clearance from the Research page."
+        );
       }
       // The crystal is NOT consumed (like a Mega Stone): activation only.
       zInfo = {
