@@ -4,6 +4,7 @@ import {
   Container,
   Flex,
   Group,
+  HoverCard,
   Image,
   Modal,
   MultiSelect,
@@ -26,6 +27,8 @@ import { useAuth } from "../../context/AuthContext";
 import { itemData } from "../../data/item";
 import { pokemonData } from "../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "../../helpers";
+import { useItemSources } from "../../lib/itemSources";
+import { rarityForItem, RARITY_COLORS, RARITY_LABELS, RARITY_OBTAIN } from "../../lib/itemRarity";
 import { actorFrom, logAuditEvent } from "../../lib/auditLog";
 import { postsToBeatStar, starForDex } from "../../lib/encounterStars";
 import { ALL_TYPES, typesForDex } from "../../lib/typeChart";
@@ -503,6 +506,7 @@ function ItemsTab() {
     });
   }, [q, category]);
   const { shown, hasMore, loadMore } = usePagedList(matches, [q, category]);
+  const sources = useItemSources();
 
   return (
     <Box style={{ ...panelStyle, padding: isOverSm ? "34px 36px" : "20px 16px" }}>
@@ -533,38 +537,77 @@ function ItemsTab() {
         </Group>
         <ResultCount shown={shown.length} total={matches.length} noun="items" />
         <SimpleGrid cols={{ base: 3, xs: 4, sm: 6 }} spacing={isOverSm ? 14 : 10}>
-          {shown.map((item) => (
-            <Box
-              key={item.id}
-              className="dc-card-tile"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-                gap: 8,
-                padding: "14px 8px",
-                minHeight: 116,
-              }}
-            >
-              <Image
-                src={getItemImageURL(item.filePath)}
-                alt={item.name}
-                w={36}
-                h={36}
-                fit="contain"
-                loading="lazy"
-                style={{ opacity: 0.92 }}
-              />
-              <Text fz={13} c="#fff" fw={700} lineClamp={2} style={{ lineHeight: 1.25 }}>
-                {item.name}
-              </Text>
-              <Text ff={MONO} fz={11} c={CYAN} tt="uppercase" style={{ letterSpacing: "0.06em" }} lineClamp={1}>
-                {item.category}
-              </Text>
-            </Box>
-          ))}
+          {shown.map((item) => {
+            const r = rarityForItem(item.id);
+            const src = sources.get(item.id) ?? [];
+            return (
+              <HoverCard key={item.id} width={250} shadow="md" openDelay={120} position="top" withArrow>
+                <HoverCard.Target>
+                  <Box
+                    className="dc-card-tile"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      gap: 6,
+                      padding: "14px 8px",
+                      minHeight: 116,
+                    }}
+                  >
+                    <Image
+                      src={getItemImageURL(item.filePath)}
+                      alt={item.name}
+                      w={36}
+                      h={36}
+                      fit="contain"
+                      loading="lazy"
+                      style={{ opacity: 0.92 }}
+                    />
+                    <Text fz={13} c="#fff" fw={700} lineClamp={2} style={{ lineHeight: 1.25 }}>
+                      {item.name}
+                    </Text>
+                    <Text ff={MONO} fz={11} c={CYAN} tt="uppercase" style={{ letterSpacing: "0.06em" }} lineClamp={1}>
+                      {item.category}
+                    </Text>
+                    <Text fz={10} fw={700} c={RARITY_COLORS[r]} tt="uppercase" style={{ letterSpacing: "0.06em" }}>
+                      {r === 0 ? RARITY_LABELS[0] : `${"★".repeat(r)} ${RARITY_LABELS[r]}`}
+                    </Text>
+                  </Box>
+                </HoverCard.Target>
+                <HoverCard.Dropdown style={{ background: "#141318", border: "1px solid #2a2637" }}>
+                  <Text fz={14} fw={700} c="#fff">
+                    {item.name}
+                  </Text>
+                  <Text fz={12} fw={700} c={RARITY_COLORS[r]} mt={2}>
+                    {r === 0 ? RARITY_LABELS[0] : `${"★".repeat(r)} ${RARITY_LABELS[r]}`}
+                  </Text>
+                  <Text fz={12} c={DIM} mt={2}>
+                    {RARITY_OBTAIN[r]}
+                  </Text>
+                  {src.length > 0 ? (
+                    <Box mt={8}>
+                      <Text fz={11} fw={700} c="#FFD074" tt="uppercase" style={{ letterSpacing: "0.1em" }}>
+                        Found at
+                      </Text>
+                      {src.map((s, i) => (
+                        <Text key={i} fz={12} c="#fff" mt={2}>
+                          {s.label}
+                        </Text>
+                      ))}
+                    </Box>
+                  ) : (
+                    r !== 0 && (
+                      <Text fz={12} c="#E54156" mt={8}>
+                        No known source yet.
+                      </Text>
+                    )
+                  )}
+                </HoverCard.Dropdown>
+              </HoverCard>
+            );
+          })}
         </SimpleGrid>
         {!shown.length && (
           <Text fz={14} c={DIM} ta="center" py={20}>

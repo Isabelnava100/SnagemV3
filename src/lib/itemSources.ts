@@ -1,11 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRecipes, getShops } from "../queries/mall";
+import { getMysteryBoxes } from "../queries/game";
+import { getMissions } from "../queries/missions";
+import itemCatalog from "../data/item/item.json";
 
 /** One way to obtain an item, shown in the bag's "where do I get this" line. */
 export interface ItemSource {
-  kind: "shop" | "recipe" | "mission" | "activity";
+  kind: "shop" | "recipe" | "mission" | "box" | "activity";
   label: string;
 }
+
+/** Normalize a display name to the slug form used by item.json Names. */
+function normName(s: string): string {
+  return String(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+// name (slug) -> catalog item id, for resolving a mission's free-text
+// `special_item` back to a real item. First match wins on the rare collision.
+const NAME_TO_ID = new Map<string, string>();
+Object.values(itemCatalog as Record<string, { "Item ID": string; Name: string }>).forEach((it) => {
+  const key = normName(it.Name);
+  if (key && !NAME_TO_ID.has(key)) NAME_TO_ID.set(key, it["Item ID"]);
+});
 
 const CURRENCY_LABEL: Record<string, string> = {
   pokecoin: "Snag Coins",
@@ -28,6 +47,8 @@ const STATIC_SOURCES: Record<string, ItemSource[]> = {
 export function useItemSources(): Map<string, ItemSource[]> {
   const shops = useQuery({ queryKey: ["item-source-shops"], queryFn: getShops });
   const recipes = useQuery({ queryKey: ["craft-recipes"], queryFn: getRecipes });
+  const boxes = useQuery({ queryKey: ["mystery-boxes"], queryFn: getMysteryBoxes });
+  const missions = useQuery({ queryKey: ["missions-all"], queryFn: getMissions });
 
   const map = new Map<string, ItemSource[]>();
   const push = (itemId: string, source: ItemSource) => {
@@ -53,6 +74,22 @@ export function useItemSources(): Map<string, ItemSource[]> {
 
   (recipes.data ?? []).forEach((recipe) => {
     push(recipe.output_item_id, { kind: "recipe", label: "Crafted at Ambrosial Alchemy" });
+  });
+
+  // Mystery boxes: each box's item rewards (currency entries are skipped).
+  Object.values(boxes.data ?? {}).forEach((box) => {
+    if (box.archived) return;
+    (box.pool ?? []).forEach((entry) => {
+      if (entry.kind === "item" && entry.refId)
+        push(entry.refId, { kind: "box", label: `Mystery box: ${box.name}` });
+    });
+  });
+
+  // Missions: resolve the free-text special_item reward back to a catalog id.
+  (missions.data ?? []).forEach((m) => {
+    if (!m.special_item) return;
+    const id = NAME_TO_ID.get(normName(m.special_item));
+    if (id) push(id, { kind: "mission", label: `Mission: ${m.title}` });
   });
 
   Object.entries(STATIC_SOURCES).forEach(([itemId, sources]) =>
