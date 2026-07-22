@@ -52,9 +52,6 @@
   font-size: clamp(20px, 5vw, 24px);
   padding: 22px 40px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  /* Slant the header band's sides like the CTA buttons (parallelogram lean),
-     so the gradient bar reads as an angled banner, not a flat rectangle. */
-  clip-path: polygon(24px 0, 100% 0, calc(100% - 24px) 100%, 0 100%);
 }
 
 .authCardBody {
