@@ -113,8 +113,8 @@ function NotificationsInbox() {
               gap={8}
               align="center"
               style={{
-                borderRadius: 8,
-                background: notification.read ? "#3C3A3C" : "#1E1D20",
+                borderRadius: 0,
+                background: notification.read ? "#141318" : "#1E1D20",
                 borderLeft: notification.read ? undefined : "3px solid #17F1F0",
               }}
             >

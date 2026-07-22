@@ -47,7 +47,7 @@ export default function Accessibility() {
       />
 
       {/* Preview is fixed-px so it always shows the chosen size directly. */}
-      <Stack gap={6} p="md" bg="#1E1D20" style={{ borderRadius: 12 }}>
+      <Stack gap={6} p="md" bg="#1E1D20" style={{ borderRadius: 0 }}>
         <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
           Preview ({size}px)
         </Text>

@@ -57,7 +57,8 @@ export const App = memo(() => {
           alignItems: isUnder900 ? "center" : "start",
           width: "100%",
           height: "100%",
-          background: "linear-gradient(90deg, #104459 0%, #A978B5 51.56%, #F79292 100%)",
+          // Redesign: flat near-black page, no colorful gradient frame.
+          background: "#0e0d11",
           paddingTop: isUnder900 ? 0 : 16,
           paddingBottom: isUnder900 ? 0 : 16,
         }}
@@ -100,7 +101,9 @@ export const App = memo(() => {
             sx={{
               height: "100%",
               width: "100%",
-              borderRadius: isUnder900 ? 8 : 60,
+              // Flat, seamless content surface (no floating rounded frame).
+              background: "#0e0d11",
+              borderRadius: 0,
               overflowX: "hidden",
             }}
           >

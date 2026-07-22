@@ -70,13 +70,13 @@ export default function Signature() {
         Shown under your forum posts when &quot;Attach Signature&quot; is checked in the
         composer. Keep it tasteful; hosts can ask you to change it.
       </Text>
-      <Box sx={{ borderRadius: 12, overflow: "hidden" }}>
+      <Box sx={{ borderRadius: 0, overflow: "hidden" }}>
         <Editor editor={editor} />
       </Box>
 
       {/* Live preview, rendered the same way posts render it */}
       {html.replace(/<[^>]*>/g, "").trim().length > 0 && (
-        <Box p={12} bg="#2b2a2b" sx={{ borderRadius: 10 }}>
+        <Box p={12} bg="#141318" sx={{ borderRadius: 0 }}>
           <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
             Preview
           </Text>

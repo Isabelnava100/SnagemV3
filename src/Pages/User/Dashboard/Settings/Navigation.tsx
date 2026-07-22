@@ -78,8 +78,8 @@ export default function Navigation() {
                   wrap="nowrap"
                   p={10}
                   style={{
-                    borderRadius: 10,
-                    background: onDesktopBar ? "#2b3550" : "#2E2D2E",
+                    borderRadius: 0,
+                    background: onDesktopBar ? "#2b3550" : "#141318",
                     border: "1px solid #3a3742",
                   }}
                 >

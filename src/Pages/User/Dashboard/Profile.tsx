@@ -105,10 +105,10 @@ function StickySaveBar(props: { onSave: () => void; loading?: boolean }) {
         zIndex: 5,
         marginTop: 8,
         padding: 8,
-        borderRadius: 16,
+        borderRadius: 0,
         background: "rgba(30, 29, 32, 0.92)",
         backdropFilter: "blur(4px)",
-        border: "1px solid #3C3A3C",
+        border: "1px solid #2a2637",
       }}
     >
       <GradientButtonPrimary fullWidth radius="xl" loading={props.loading} onClick={props.onSave}>

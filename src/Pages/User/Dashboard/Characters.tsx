@@ -167,7 +167,7 @@ function InputWrapper(props: {
   const { title, isEditing, inputType = "input", options, name, form, locked = false } = props;
   const editable = isEditing && !locked;
   return (
-    <Paper w="100%" bg="#141318" py={3} px={7} radius={8}>
+    <Paper w="100%" bg="#141318" py={3} px={7} radius={0}>
       <Flex align="center">
         <Text w={65} fz={16} lineClamp={1}>
           {title}:
@@ -185,11 +185,11 @@ function InputWrapper(props: {
           </Group>
         ) : // Input for editing. It can also be a select input
         inputType === "input" ? (
-          <TextInput sx={{ flex: 1 }} radius={8} {...form.getInputProps(name)} />
+          <TextInput sx={{ flex: 1 }} radius={0} {...form.getInputProps(name)} />
         ) : (
           <Select
             sx={{ flex: 1 }}
-            radius={8}
+            radius={0}
             data={options?.map((option) => ({ label: option, value: option })) || []}
             {...form.getInputProps(name)}
           />
@@ -215,19 +215,19 @@ function TextareaWrapper(props: {
   if (editable) {
     if (isMoveSet) {
       if (characterType === "Channeler" || characterType === "Hybrid") {
-        return <Textarea minRows={3} radius={8} label={title} {...form.getInputProps(name)} />;
+        return <Textarea minRows={3} radius={0} label={title} {...form.getInputProps(name)} />;
       } else {
         return <></>;
       }
     } else {
-      return <Textarea minRows={3} radius={8} label={title} {...form.getInputProps(name)} />;
+      return <Textarea minRows={3} radius={0} label={title} {...form.getInputProps(name)} />;
     }
   }
 
   const value = form.values[name] ?? "";
 
   return (
-    <Stack h="100%" p={8} sx={{ borderRadius: 8 }} bg="#141318" gap={8}>
+    <Stack h="100%" p={8} sx={{ borderRadius: 0 }} bg="#141318" gap={8}>
       <Group gap={6} justify="space-between" wrap="nowrap">
         <Title order={3} size={16}>
           {title}
@@ -429,7 +429,7 @@ function SingleCharacter(props: Character) {
             {isEditing ? (
               <TextInput {...form.getInputProps("name")} />
             ) : (
-              <Text fz={28} color="white" bg="#0e0d11" px={20} py={5} sx={{ borderRadius: 8 }}>
+              <Text fz={28} color="white" bg="#0e0d11" px={20} py={5} sx={{ borderRadius: 0 }}>
                 {form.values.name}
               </Text>
             )}

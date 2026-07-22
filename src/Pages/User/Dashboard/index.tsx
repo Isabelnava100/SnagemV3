@@ -17,7 +17,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useAttention } from "../../../lib/attention";
-import BackgroundImage from "../../../assets/images/dashboard-background.jpg";
 import PokemonImage from "../../../assets/images/sylveon.svg";
 import SectionWrapper, { ActionButton } from "../../../components/Dashboard/SectionWrapper";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
@@ -58,14 +57,7 @@ export function Dashboard() {
 
   return (
     <Paper
-      sx={{
-        background: isOverMd
-          ? `linear-gradient(rgba(34, 12, 32, 0.65), rgba(34, 12, 32, 0.65)), url(${BackgroundImage})`
-          : undefined,
-        backgroundSize: isOverMd ? "100% 260px" : undefined,
-        backgroundPosition: "top",
-        backgroundRepeat: "no-repeat",
-      }}
+      bg="transparent"
       // Board rule: 900px-1440px viewports keep the main module >= 1200px tall.
       mih={isOverMd && !isOverXl ? 1200 : "100%"}
       py={isOverMd ? 30 : 10}
