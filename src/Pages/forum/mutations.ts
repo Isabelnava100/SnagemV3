@@ -72,6 +72,18 @@ export interface PublishPostInput {
   zmove?: { pokemonId: string; itemId: string } | null;
   /** Consumable battle items (X items / Dire Hit / Gems) spent this post. */
   battleItems?: Array<{ itemId: string; name: string }>;
+  /**
+   * Per-character battle actions: one pokemon from each participating character's
+   * team acts on that character's own encounter this post. When omitted, the
+   * server falls back to the single fighterId / fleeAttempt / safariAction.
+   */
+  battleActions?: Array<{
+    characterId: string;
+    fighterId: string;
+    action: "fight" | "flee" | "ball" | "feed";
+    ballItemId?: string;
+    foodItemIds?: string[];
+  }>;
 }
 
 /**

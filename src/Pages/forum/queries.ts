@@ -168,7 +168,10 @@ export const getPendingActions = async (
 ): Promise<{
   dice?: import("./types").DiceBlock;
   random?: import("./types").RandomBlock;
+  /** Legacy single encounter (older in-flight threads). */
   encounter?: import("./types").EncounterBlock;
+  /** Per-character encounters, keyed by characterId. */
+  encounters?: Record<string, import("./types").EncounterBlock>;
 }> => {
   const { doc, getDoc } = await import("firebase/firestore");
   const snap = await getDoc(doc(db, ...threadsPath(forum), threadId, "pending", uid));
