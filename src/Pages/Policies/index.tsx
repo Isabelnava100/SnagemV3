@@ -1,36 +1,95 @@
-import { Box, Container, Stack, Tabs, Text, Title } from "@mantine/core";
+import { Box, Container, Stack, Text, Title, UnstyledButton } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { useSearchParams } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 
 /**
- * Public policies hub. Anyone (signed in or not) can read these. Tabbed so we
- * can add more "boring but necessary" documents over time without new routes.
- * Snagem Guild is a non-commercial Pokemon fan community; copy is written in
- * that spirit and should be reviewed before launch.
+ * Public policies hub. Anyone (signed in or not) can read these. A sticky tab
+ * rail on the left switches between documents in a single flat content panel,
+ * so we can add more "boring but necessary" documents over time without new
+ * routes. Snagem Guild is a non-commercial Pokemon fan community; copy is
+ * written in that spirit and should be reviewed before launch.
  */
 
 const LAST_UPDATED = "July 2026";
+const DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
+const LINK = "#ddd6fe";
 
-function PolicySection(props: { title: string; children: React.ReactNode }) {
+/** Big section heading at the top of each document (white with a gold accent). */
+function SectionTitle(props: { children: React.ReactNode }) {
   return (
-    <Stack gap={6}>
-      <Title order={3} c="white" size={22} fw={600}>
+    <Title
+      order={2}
+      c="white"
+      fz={{ base: 22, sm: 26 }}
+      fw={700}
+      style={{ fontFamily: DISPLAY, letterSpacing: "0.04em", margin: "0 0 8px" }}
+    >
+      {props.children}
+    </Title>
+  );
+}
+
+/**
+ * A titled block of policy copy. `order` picks the visual tier:
+ * 3 (default) is a red Quantico sub-header (privacy/cookies/terms/credits);
+ * 4 is a gold rule title used for the numbered rules under a group header.
+ */
+function PolicySection(props: {
+  title: string;
+  order?: 3 | 4;
+  children: React.ReactNode;
+}) {
+  const order = props.order ?? 3;
+  const isRule = order === 4;
+  return (
+    <Stack gap={8}>
+      <Title
+        order={order}
+        c={isRule ? "#FFD074" : "#E54156"}
+        fz={isRule ? 15 : 16}
+        fw={700}
+        tt={isRule ? undefined : "uppercase"}
+        style={{
+          fontFamily: DISPLAY,
+          letterSpacing: isRule ? "0.04em" : "0.14em",
+          margin: 0,
+        }}
+      >
         {props.title}
       </Title>
-      <Box c="rgba(255,255,255,0.75)" fz={16} style={{ lineHeight: 1.7 }}>
+      <Box c="#b6b1bc" fz={16} style={{ lineHeight: 1.8 }}>
         {props.children}
       </Box>
     </Stack>
   );
 }
 
+/** Red uppercase group divider inside the Community Rules document. */
+function RuleGroup(props: { title: string }) {
+  return (
+    <Title
+      order={3}
+      c="#E54156"
+      fz={16}
+      fw={700}
+      tt="uppercase"
+      style={{ fontFamily: DISPLAY, letterSpacing: "0.14em", margin: "18px 0 0" }}
+    >
+      {props.title}
+    </Title>
+  );
+}
+
 function Privacy() {
   return (
     <Stack gap={20}>
+      <SectionTitle>
+        PRIVACY <span style={{ color: "#FFD074" }}>POLICY</span>
+      </SectionTitle>
       <PolicySection title="Our promise">
-        <Text>
+        <Text inherit>
           We will never sell your personal information or anything you post, and
           we will never hand it to advertisers or data brokers. Snagem Guild is a
           community project, not a business built on your data. We only collect
@@ -38,10 +97,10 @@ function Privacy() {
         </Text>
       </PolicySection>
       <PolicySection title="What we collect">
-        <Text component="div">
+        <Text inherit component="div">
           The information tied to your account, all of which you provide or
           create:
-          <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 20, lineHeight: 1.9 }}>
             <li>Account basics: your email address and username.</li>
             <li>
               Profile content: your bio, avatar and cover images, characters,
@@ -64,7 +123,7 @@ function Privacy() {
         </Text>
       </PolicySection>
       <PolicySection title="How we use it">
-        <Text>
+        <Text inherit>
           Your information runs the site: signing you in, showing your profile,
           characters, and posts, tracking your in-game progress, delivering
           notifications you have turned on, and letting staff keep the community
@@ -74,7 +133,7 @@ function Privacy() {
         </Text>
       </PolicySection>
       <PolicySection title="Where it is stored">
-        <Text>
+        <Text inherit>
           The site runs on Google Firebase (accounts, database, and image
           storage) and is hosted on Netlify. Your data lives in these services on
           our behalf, each under its own security and privacy terms. Connecting
@@ -84,7 +143,7 @@ function Privacy() {
         </Text>
       </PolicySection>
       <PolicySection title="Who can see your content">
-        <Text>
+        <Text inherit>
           Anything you post publicly (forum posts, your public profile, showcased
           characters or teams) is visible to other visitors by design. Private
           items such as drafts and your settings are visible only to you and to
@@ -92,7 +151,7 @@ function Privacy() {
         </Text>
       </PolicySection>
       <PolicySection title="Keeping and deleting data">
-        <Text>
+        <Text inherit>
           We keep your information for as long as your account is active. You can
           edit or remove most of your profile content at any time from your
           dashboard, and change notification settings under Settings. To delete
@@ -102,7 +161,7 @@ function Privacy() {
         </Text>
       </PolicySection>
       <PolicySection title="Children">
-        <Text>
+        <Text inherit>
           Snagem Guild is meant for teenagers and adults. If you believe a child
           has given us personal information without a guardian's consent, contact
           the staff team and we will remove it.
@@ -115,8 +174,11 @@ function Privacy() {
 function Cookies() {
   return (
     <Stack gap={20}>
+      <SectionTitle>
+        COOKIES <span style={{ color: "#FFD074" }}>&amp; CACHE</span>
+      </SectionTitle>
       <PolicySection title="Cookies and local storage">
-        <Text>
+        <Text inherit>
           We use a small number of cookies and browser local storage to keep you
           signed in and to remember preferences such as your reading text size.
           These are essential to how the site works. We do not use advertising or
@@ -124,7 +186,7 @@ function Cookies() {
         </Text>
       </PolicySection>
       <PolicySection title="Caching">
-        <Text>
+        <Text inherit>
           To keep the site fast we cache data in your browser and through our
           hosting provider. Pages and images may be served from a cached copy for
           a short time, so a recent change can take a moment to appear. You can
@@ -132,7 +194,7 @@ function Cookies() {
         </Text>
       </PolicySection>
       <PolicySection title="Clearing your data">
-        <Text>
+        <Text inherit>
           Clearing your browser's cookies and site data will sign you out and
           reset local preferences. The site will recreate the essential ones the
           next time you sign in.
@@ -145,8 +207,11 @@ function Cookies() {
 function Terms() {
   return (
     <Stack gap={20}>
+      <SectionTitle>
+        TERMS <span style={{ color: "#FFD074" }}>OF USE</span>
+      </SectionTitle>
       <PolicySection title="Using the site">
-        <Text>
+        <Text inherit>
           Snagem Guild is a free community for members who agree to follow these
           terms and our community rules. Keep your login secure, and do not
           attempt to break, overload, or gain unauthorized access to the site or
@@ -154,7 +219,7 @@ function Terms() {
         </Text>
       </PolicySection>
       <PolicySection title="Your content">
-        <Text>
+        <Text inherit>
           You keep ownership of what you write and create here. By posting, you
           give us permission to display and store your content so the site can
           run. You are responsible for what you post and confirm you have the
@@ -162,7 +227,7 @@ function Terms() {
         </Text>
       </PolicySection>
       <PolicySection title="Accounts and access">
-        <Text>
+        <Text inherit>
           Staff may edit, hide, or remove content, and may suspend or close
           accounts that break the rules. We may update these terms as the site
           grows; continued use after a change means you accept the updated terms.
@@ -172,19 +237,14 @@ function Terms() {
   );
 }
 
-function RuleGroup(props: { title: string }) {
-  return (
-    <Title order={2} c="white" size={24} fw={700} mt={10}>
-      {props.title}
-    </Title>
-  );
-}
-
 function Conduct() {
   return (
-    <Stack gap={18}>
-      <Box c="rgba(255,255,255,0.75)" fz={16} style={{ lineHeight: 1.7 }}>
-        <Text>
+    <Stack gap={16}>
+      <SectionTitle>
+        COMMUNITY <span style={{ color: "#FFD074" }}>RULES</span>
+      </SectionTitle>
+      <Box c="#b6b1bc" fz={16} style={{ lineHeight: 1.8 }}>
+        <Text inherit>
           Here you will find our rules on conduct and the limits that keep the
           guild fair and welcoming. Our Terms of Use apply alongside these rules.
           They can change at any time, so please check back now and then. Most of
@@ -194,8 +254,8 @@ function Conduct() {
 
       <RuleGroup title="Standard Rules" />
 
-      <PolicySection title="1. No flaming or spamming">
-        <Text>
+      <PolicySection order={4} title="1. No flaming or spamming">
+        <Text inherit>
           Emotions can run high, but starting a flame war is never the way to
           settle things. At the end of the day we are all people behind the
           screen, so please stay civil. Spamming means posting nonsensical or off
@@ -204,8 +264,8 @@ function Conduct() {
           it is enforced in the main adventures and mission threads.
         </Text>
       </PolicySection>
-      <PolicySection title="2. Play fair">
-        <Text>
+      <PolicySection order={4} title="2. Play fair">
+        <Text inherit>
           Roleplay is a two way street, and often a many way one. God-modding is
           not allowed, and neither is controlling another person's character or
           Pokemon without their consent, or making yourself or your Pokemon overly
@@ -216,24 +276,24 @@ function Conduct() {
           unfairly, contact the staff.
         </Text>
       </PolicySection>
-      <PolicySection title="3. Keep things to a PG-13 level">
-        <Text>
+      <PolicySection order={4} title="3. Keep things to a PG-13 level">
+        <Text inherit>
           Keep everything appropriate for a PG-13 audience. Excessive profanity,
           sexual content and extreme violence are our strictest limit. Because
           this protects the whole community, you get one warning. After that we
           may remove your access without further warning.
         </Text>
       </PolicySection>
-      <PolicySection title="4. Be active, but within your limits">
-        <Text>
+      <PolicySection order={4} title="4. Be active, but within your limits">
+        <Text inherit>
           We are relaxed about activity. Real life comes first, so never force
           yourself to be here at the cost of work, school or rest. Since
           characters can be tied up in a mission or team story, we only ask that
           you let staff know if you will be away for a while.
         </Text>
       </PolicySection>
-      <PolicySection title="5. Obtaining items">
-        <Text>
+      <PolicySection order={4} title="5. Obtaining items">
+        <Text inherit>
           Items must be bought or crafted in the Marketplace, or earned as rewards
           from adventures, missions, events or mystery boxes. Items obtained any
           other way are not allowed and will be removed, and coins or emblems may
@@ -243,8 +303,8 @@ function Conduct() {
 
       <RuleGroup title="Member-Specific Rules" />
 
-      <PolicySection title="6. New members and characters">
-        <Text>
+      <PolicySection order={4} title="6. New members and characters">
+        <Text inherit>
           A new member or character starts with a Pokemon at its earliest stage
           that can then evolve normally. Mega Evolution does not count as a
           starting form. A character may begin as a non-legendary hybrid or as a
@@ -252,23 +312,23 @@ function Conduct() {
           right Master Missions.
         </Text>
       </PolicySection>
-      <PolicySection title="7. Personal character stories">
-        <Text>
+      <PolicySection order={4} title="7. Personal character stories">
+        <Text inherit>
           By default, personal stories cannot involve key characters from the
           games. We are usually happy to work with you on ideas like this, so
           reach out to staff first.
         </Text>
       </PolicySection>
-      <PolicySection title="8. Profiles">
-        <Text>
+      <PolicySection order={4} title="8. Profiles">
+        <Text inherit>
           Your dashboard keeps your characters, teams, Pokemon and currency for
           you, so there is no separate listing to maintain by hand. Just keep your
           character details and each Pokemon's species accurate and up to date so
           everything can be referenced.
         </Text>
       </PolicySection>
-      <PolicySection title="9. Mission creation">
-        <Text>
+      <PolicySection order={4} title="9. Mission creation">
+        <Text inherit>
           Missions and team missions are usually created by staff. If you have an
           idea for one, tell us; it might get used.
         </Text>
@@ -276,8 +336,8 @@ function Conduct() {
 
       <RuleGroup title="Pokemon Limitations and Rules" />
 
-      <PolicySection title="10. Obtaining and trading Pokemon">
-        <Text>
+      <PolicySection order={4} title="10. Obtaining and trading Pokemon">
+        <Text inherit>
           Unless staff say otherwise, a Pokemon is obtained during an adventure,
           mission, event or encounter, and catching one uses the right kind of
           ball. Eggs are provided and hatched by staff. Staff may rule an
@@ -286,16 +346,16 @@ function Conduct() {
           Pokemon, never given or sold between members.
         </Text>
       </PolicySection>
-      <PolicySection title="11. Pokemon nicknames">
-        <Text>
+      <PolicySection order={4} title="11. Pokemon nicknames">
+        <Text inherit>
           If you nickname a Pokemon, we still need to know its exact species.
           Record the species in your profile and mention it in your posts. If we
           cannot tell the species, that Pokemon is not eligible for any evolution
           method and, in extreme cases, may be treated as illegitimately obtained.
         </Text>
       </PolicySection>
-      <PolicySection title="12. Evolving and purifying Pokemon">
-        <Text>
+      <PolicySection order={4} title="12. Evolving and purifying Pokemon">
+        <Text inherit>
           Pokemon evolve by earning experience from your roleplay posts and
           reaching the level their species evolves at, or by using the correct
           evolution item, such as an evolution stone, from your bag. Shadow
@@ -304,8 +364,8 @@ function Conduct() {
           dashboard shows what it needs to evolve.
         </Text>
       </PolicySection>
-      <PolicySection title="13. Abilities and moves">
-        <Text>
+      <PolicySection order={4} title="13. Abilities and moves">
+        <Text inherit>
           A Pokemon is caught with a single ability chosen from the ones it can
           have, and that choice is locked once you set it in your profile. An
           Ability Capsule lets a Pokemon carry a second ability, but only one of
@@ -313,8 +373,8 @@ function Conduct() {
           ability rules but cannot use the Ability Capsule.
         </Text>
       </PolicySection>
-      <PolicySection title="Metronome">
-        <Text>
+      <PolicySection order={4} title="Metronome">
+        <Text inherit>
           Metronome is random and should be played that way. It should not chain
           into a perfect combo like Hurricane into Thunder into Explosion. It
           cannot trigger Sketch, moves that belong only to legendary Pokemon such
@@ -322,16 +382,16 @@ function Conduct() {
           call.
         </Text>
       </PolicySection>
-      <PolicySection title="Sketch">
-        <Text>
+      <PolicySection order={4} title="Sketch">
+        <Text inherit>
           Sketch can copy up to ten moves total, and Smeargle must actually see a
           move before copying it. Sketched moves cannot be removed or replaced,
           cannot copy Transform or moves exclusive to legendary Pokemon, and
           should be listed in your profile.
         </Text>
       </PolicySection>
-      <PolicySection title="Teleport">
-        <Text>
+      <PolicySection order={4} title="Teleport">
+        <Text inherit>
           We allow Teleport, but we are not fond of it because it is easy to
           abuse. Outside of GRAY's Claydol, please avoid it without a good reason.
           Many important places use Ebonite, made from crushed Dark Gems, to block
@@ -341,8 +401,8 @@ function Conduct() {
       </PolicySection>
 
       <RuleGroup title="About these rules" />
-      <PolicySection title="Fan project notice">
-        <Text>
+      <PolicySection order={4} title="Fan project notice">
+        <Text inherit>
           Snagem Guild is a non-commercial, fan-made community. Pokemon and
           related names are trademarks of their respective owners. We are not
           affiliated with or endorsed by them.
@@ -355,8 +415,11 @@ function Conduct() {
 function Credits() {
   return (
     <Stack gap={20}>
-      <Box c="rgba(255,255,255,0.75)" fz={16} style={{ lineHeight: 1.7 }}>
-        <Text>
+      <SectionTitle>
+        CRE<span style={{ color: "#FFD074" }}>DITS</span>
+      </SectionTitle>
+      <Box c="#b6b1bc" fz={16} style={{ lineHeight: 1.8 }}>
+        <Text inherit>
           All artwork used on this site is properly licensed, purchased,
           commissioned, or drawn by our team. Thank you to everyone who helped
           build Snagem Guild.
@@ -364,12 +427,13 @@ function Credits() {
       </Box>
 
       <PolicySection title="Art">
-        <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+        <ul style={{ margin: "8px 0 0", paddingLeft: 20, lineHeight: 1.9 }}>
           <li>
             <a
               href="https://www.instagram.com/seviyummy/"
               target="_blank"
               rel="noopener noreferrer"
+              style={{ color: LINK }}
             >
               Seviyummy
             </a>{" "}
@@ -380,6 +444,7 @@ function Credits() {
               href="https://www.instagram.com/batskystarman/"
               target="_blank"
               rel="noopener noreferrer"
+              style={{ color: LINK }}
             >
               Batsky
             </a>{" "}
@@ -390,12 +455,13 @@ function Credits() {
       </PolicySection>
 
       <PolicySection title="Site build">
-        <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+        <ul style={{ margin: "8px 0 0", paddingLeft: 20, lineHeight: 1.9 }}>
           <li>
             <a
               href="https://www.linkedin.com/in/isabel-virginia-nava/"
               target="_blank"
               rel="noopener noreferrer"
+              style={{ color: LINK }}
             >
               inavaCL
             </a>{" "}
@@ -420,48 +486,91 @@ export default function Policies() {
   const [searchParams, setSearchParams] = useSearchParams();
   // Allow deep links like /Policies?tab=conduct (the forum links here for rules).
   const requested = searchParams.get("tab");
-  const active = TABS.some((t) => t.value === requested) ? requested : TABS[0].value;
-
-  const activeTab = TABS.find((t) => t.value === active);
+  const active = TABS.some((t) => t.value === requested)
+    ? (requested as string)
+    : TABS[0].value;
+  const activeTab = TABS.find((t) => t.value === active) ?? TABS[0];
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
       {/* Tab deep links keep the base /Policies canonical; only the title varies. */}
       <Seo
         page="/Policies"
-        title={requested && activeTab ? `${activeTab.label} | Snagem Guild` : undefined}
+        title={requested ? `${activeTab.label} | Snagem Guild` : undefined}
       />
       <PageHero
         eyebrow="House Rules"
         title="Policies"
-        subtitle={`Last updated ${LAST_UPDATED}. If anything here is unclear, reach out to the staff team.`}
-        mb={20}
+        subtitle={`Community rules, privacy, cookies, terms, and credits. Last updated ${LAST_UPDATED}.`}
+        mb={isMobile ? 20 : 28}
       />
 
-      <Tabs
-        value={active}
-        onChange={(value) => {
-          if (value) setSearchParams({ tab: value }, { replace: true });
+      <Box
+        style={{
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? 20 : 40,
+          alignItems: "flex-start",
         }}
-        orientation={isMobile ? "horizontal" : "vertical"}
-        variant="pills"
-        color="grape"
-        keepMounted={false}
       >
-        <Tabs.List mb={isMobile ? 16 : 0} style={{ flexWrap: "wrap" }}>
-          {TABS.map((t) => (
-            <Tabs.Tab key={t.value} value={t.value}>
-              {t.label}
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
+        <Box
+          component="nav"
+          aria-label="Policy sections"
+          style={{
+            flex: "none",
+            width: isMobile ? "100%" : 260,
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            position: isMobile ? "static" : "sticky",
+            top: 96,
+          }}
+        >
+          {TABS.map((t) => {
+            const on = t.value === active;
+            return (
+              <UnstyledButton
+                key={t.value}
+                onClick={() =>
+                  setSearchParams({ tab: t.value }, { replace: true })
+                }
+                aria-current={on ? "page" : undefined}
+                style={{
+                  textAlign: "left",
+                  border: `1px solid ${on ? "#E54156" : "#2a2637"}`,
+                  borderLeft: on ? "3px solid #E54156" : "1px solid #2a2637",
+                  background: on
+                    ? "linear-gradient(90deg, rgba(229,65,86,.18), #17151c)"
+                    : "#17151c",
+                  color: "#fff",
+                  fontFamily: DISPLAY,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  padding: "16px 18px",
+                }}
+                sx={{ "&:hover": { background: on ? undefined : "#1c1a22" } }}
+              >
+                {t.label}
+              </UnstyledButton>
+            );
+          })}
+        </Box>
 
-        {TABS.map((t) => (
-          <Tabs.Panel key={t.value} value={t.value} pl={isMobile ? 0 : 24}>
-            {t.content}
-          </Tabs.Panel>
-        ))}
-      </Tabs>
+        <Box
+          style={{
+            flex: 1,
+            minWidth: 0,
+            width: "100%",
+            background: "#17151c",
+            border: "1px solid #2a2637",
+            padding: isMobile ? "24px 20px" : "40px 44px",
+          }}
+        >
+          {activeTab.content}
+        </Box>
+      </Box>
     </Container>
   );
 }

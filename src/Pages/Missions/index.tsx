@@ -1,17 +1,5 @@
-import {
-  Badge,
-  Box,
-  Button,
-  Card,
-  Container,
-  Group,
-  SimpleGrid,
-  Stack,
-  Text,
-  TextInput,
-  Title,
-} from "@mantine/core";
-import { IconCoin, IconSearch, IconStar } from "@tabler/icons-react";
+import { Box, Container, Group, Text, TextInput, UnstyledButton } from "@mantine/core";
+import { IconSearch, IconStar } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
@@ -25,7 +13,7 @@ import { getMissions, Mission } from "../../queries/missions";
 
 /**
  * Public Missions page (Mission Vault). Members browse always-available mission
- * briefs, filter by reward type, and open a detail modal. Picking one up and
+ * briefs, filter by reward type, and open a detail page. Picking one up and
  * grading happen in the Quests forum, so nothing here writes to the database.
  */
 
@@ -48,12 +36,16 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "special", label: "Special Item" },
 ];
 
-const TIER_COLOR: Record<string, string> = {
-  Story: "grape",
-  Standard: "teal",
-  Master: "violet",
-  Exceptional: "gold.2",
+const FONT_DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
+
+// Type badge (STORY purple, STANDARD cyan, plus Master/Exceptional variants).
+const TYPE_BADGE: Record<string, { bg: string; text: string }> = {
+  Story: { bg: "#772976", text: "#fff" },
+  Standard: { bg: "#12B7B6", text: "#06302f" },
+  Master: { bg: "#4D14C4", text: "#fff" },
+  Exceptional: { bg: "#FFD074", text: "#1A1B1E" },
 };
+const typeBadge = (tier?: string) => TYPE_BADGE[tier ?? ""] ?? { bg: "#12B7B6", text: "#06302f" };
 
 const REWARD_LABEL: Record<string, string> = {
   snag: "Snag a Pokemon",
@@ -94,31 +86,55 @@ function matchesFilter(mission: Mission, filter: FilterKey): boolean {
   }
 }
 
-function RewardChip(props: { label: string; dot?: string; icon?: React.ReactNode }) {
+/** Angled segmented filter pill (active = purple gradient, idle = dark card). */
+function FilterChip(props: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <Group
-      gap={6}
-      wrap="nowrap"
-      bg="rgba(255,255,255,0.05)"
-      px={8}
-      py={4}
-      style={{ borderRadius: 8 }}
+    <UnstyledButton
+      onClick={props.onClick}
+      aria-pressed={props.active}
+      sx={{
+        fontFamily: FONT_DISPLAY,
+        fontWeight: 700,
+        fontSize: 14,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        color: "#fff",
+        padding: "13px 22px",
+        cursor: "pointer",
+        background: props.active
+          ? "linear-gradient(90deg, #912691, #4D14C4)"
+          : "#17151c",
+        border: props.active ? "1px solid transparent" : "1px solid #2a2637",
+        "&:hover": props.active ? {} : { borderColor: "#E54156" },
+      }}
     >
-      {props.icon}
-      {props.dot && (
-        <Box
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: props.dot,
-          }}
-        />
-      )}
-      <Text fz={14} c="white">
+      {props.label}
+    </UnstyledButton>
+  );
+}
+
+/** Reward pill: colored dot + label, dark angular well. */
+function RewardChip(props: { label: string; dot: string }) {
+  return (
+    <Box
+      component="span"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 7,
+        background: "#0e0d11",
+        border: "1px solid #2a2637",
+        padding: "6px 12px",
+      }}
+    >
+      <Box
+        component="span"
+        style={{ width: 8, height: 8, borderRadius: "50%", background: props.dot }}
+      />
+      <Text component="span" fz={14} c="#d7d2de">
         {props.label}
       </Text>
-    </Group>
+    </Box>
   );
 }
 
@@ -132,103 +148,110 @@ function MissionCard(props: { mission: Mission }) {
   const rewardLabel = mission.pokemon_reward
     ? REWARD_LABEL[mission.pokemon_reward.kind]
     : undefined;
+  const tb = typeBadge(mission.tier);
 
   return (
-    <Card bg="#232122" radius="lg" withBorder p={0} style={{ overflow: "hidden" }}>
-      <Box
-        h={90}
-        style={{
-          position: "relative",
-          background: mission.image
-            ? `center / cover no-repeat url(${mission.image})`
-            : "linear-gradient(135deg,#3A2A4D 0%,#2C3E50 100%)",
-        }}
-      >
-        {!mission.image && (
-          <Text
-            ff="monospace"
-            fz={14}
-            c="dimmed"
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%,-50%)",
-            }}
-          >
-            mission.image
-          </Text>
-        )}
-        {mission.tier && (
-          <Badge
-            color={TIER_COLOR[mission.tier] ?? "gray"}
-            variant="filled"
-            size="sm"
-            style={{ position: "absolute", top: 8, left: 8 }}
-          >
-            {mission.tier}
-          </Badge>
-        )}
-        {mission.emblem_eligible && (
-          <Badge
-            color="gold.0"
-            variant="filled"
-            size="sm"
-            leftSection={<IconStar size={11} />}
-            style={{ position: "absolute", top: 8, right: 8 }}
-          >
-            EMBLEM
-          </Badge>
-        )}
-      </Box>
-
-      <Stack gap={8} p={12}>
-        <Box>
-          <Title order={2} c="white" fw={600} fz={16} lh="md" lineClamp={1}>
-            {mission.title}
-          </Title>
-          {mission.location && (
-            <Text c="dimmed" fz={14} lineClamp={1}>
-              {mission.location}
+    <Box
+      className="dc-card"
+      style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}
+    >
+      <Box p="20px 22px" style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+        <Group justify="space-between" align="center" gap={10} wrap="nowrap">
+          {mission.tier && (
+            <Text
+              component="span"
+              fz={14}
+              fw={700}
+              tt="uppercase"
+              px={10}
+              py={4}
+              style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.1em", color: tb.text, background: tb.bg }}
+            >
+              {mission.tier}
             </Text>
           )}
-        </Box>
+          {mission.emblem_eligible && (
+            <Box
+              component="span"
+              px={10}
+              py={4}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                background: "#FFD074",
+                marginLeft: "auto",
+              }}
+            >
+              <IconStar size={13} color="#1A1B1E" fill="#1A1B1E" />
+              <Text
+                component="span"
+                fz={14}
+                fw={700}
+                c="#1A1B1E"
+                tt="uppercase"
+                style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.08em" }}
+              >
+                Emblem
+              </Text>
+            </Box>
+          )}
+        </Group>
 
+        <Text component="h3" c="white" fw={700} fz={20} mt={6} style={{ lineHeight: 1.2 }} lineClamp={2}>
+          {mission.title}
+        </Text>
+        {mission.location && (
+          <Text fz={15} c="#b6b1bc" lineClamp={1}>
+            {mission.location}
+          </Text>
+        )}
         {preview && (
-          <Text c="dimmed" fz={14} lineClamp={2}>
+          <Text fz={14} c="#8f8a99" lineClamp={2} style={{ lineHeight: 1.55 }}>
             {preview}
           </Text>
         )}
 
-        <Group gap={6} wrap="wrap">
-          {!!mission.coins && (
-            <RewardChip label={`${mission.coins} Coins`} dot="#F5C842" />
-          )}
-          {rewardLabel && <RewardChip label={rewardLabel} dot="#8C2595" />}
-          {mission.special_item && (
-            <RewardChip label={mission.special_item} dot="#3B82F6" />
-          )}
+        <Group gap={8} wrap="wrap" mt={2}>
+          {!!mission.coins && <RewardChip label={`${mission.coins} Coins`} dot="#FFD074" />}
+          {rewardLabel && <RewardChip label={rewardLabel} dot="#b06fce" />}
+          {mission.special_item && <RewardChip label={mission.special_item} dot="#346CFD" />}
         </Group>
 
-        <Group justify="space-between" wrap="nowrap" mt={4}>
-          <Text c="dimmed" fz={14}>
+        <Group
+          justify="space-between"
+          align="center"
+          wrap="nowrap"
+          mt="auto"
+          pt={14}
+          style={{ borderTop: "1px solid #232028" }}
+        >
+          <Text fz={14} c="#6f6a78">
             Taken {mission.times_taken || 0}x
           </Text>
-          <Button
+          <UnstyledButton
             component={Link}
             to={`/Missions/${mission.id}`}
-            size="xs"
-            variant="light"
-            color="grape"
+            sx={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 700,
+              fontSize: 14,
+              letterSpacing: "0.12em",
+              color: "#fff",
+              padding: "11px 20px",
+              background: "transparent",
+              border: "1.5px solid rgba(255,255,255,0.4)",
+              clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)",
+              "&:hover": { borderColor: "#E54156", color: "#E54156" },
+            }}
           >
-            View brief
-          </Button>
+            VIEW BRIEF
+          </UnstyledButton>
         </Group>
-      </Stack>
-    </Card>
+      </Box>
+    </Box>
   );
 }
-
 
 export default function Missions() {
   const { user } = useAuth();
@@ -268,8 +291,9 @@ export default function Missions() {
       <Seo page="/Missions" />
       <Container size="xl" pt={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
         <PageHero
-          eyebrow="The Mission Vault"
-          title="Take on a Mission!!"
+          eyebrow="Take on a Mission!"
+          eyebrowColor="#c79bd6"
+          title="The Mission Vault"
           subtitle="Pick up a job from the Vault to open a roleplay thread in the Quests forum. Base pay is Snag Coins, write it well and the grader tips extra."
           aside={
             <Group gap="sm" wrap="wrap">
@@ -282,40 +306,33 @@ export default function Missions() {
       </Container>
 
       <Container size="xl" py={{ base: 20, sm: 28 }} px={{ base: 16, sm: 24 }}>
-        <Group justify="space-between" align="center" wrap="wrap" gap={12} mb={20}>
-          <Group gap={8} wrap="wrap">
-            {FILTERS.map((f) => {
-              const active = filter === f.key;
-              return (
-                <Button
-                  key={f.key}
-                  size="xs"
-                  radius="xl"
-                  onClick={() => setFilter(f.key)}
-                  aria-pressed={active}
-                  styles={{
-                    root: {
-                      background: active ? "#8C2595" : "#2b2a2b",
-                      color: "white",
-                      border: "none",
-                    },
-                  }}
-                >
-                  {f.label}
-                </Button>
-              );
-            })}
+        <Group justify="space-between" align="center" wrap="wrap" gap={16} mb={24}>
+          <Group gap={10} wrap="wrap">
+            {FILTERS.map((f) => (
+              <FilterChip
+                key={f.key}
+                label={f.label}
+                active={filter === f.key}
+                onClick={() => setFilter(f.key)}
+              />
+            ))}
           </Group>
           <TextInput
             value={search}
             onChange={(e) => setSearch(e.currentTarget.value)}
             placeholder="Search missions or locations..."
             aria-label="Search missions or locations"
-            leftSection={<IconSearch size={15} />}
-            radius="xl"
-            maw={280}
+            leftSection={<IconSearch size={15} color="#6f6a78" />}
+            radius={0}
+            maw={340}
             w="100%"
-            styles={{ input: { background: "#2E2D2E" } }}
+            styles={{
+              input: {
+                background: "#141318",
+                border: "1px solid #2a2637",
+                color: "#fff",
+              },
+            }}
           />
         </Group>
 
@@ -326,11 +343,17 @@ export default function Missions() {
             No missions match your filters.
           </Text>
         ) : (
-          <SimpleGrid cols={{ base: 1, xs: 2, sm: 3, lg: 4 }} spacing="md">
+          <Box
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: 20,
+            }}
+          >
             {shown.map((mission) => (
               <MissionCard key={mission.id} mission={mission} />
             ))}
-          </SimpleGrid>
+          </Box>
         )}
       </Container>
     </Box>

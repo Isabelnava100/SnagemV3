@@ -1,4 +1,5 @@
-import { Anchor, Badge, Box, Container, Group, Image, Stack, Text, Title } from "@mantine/core";
+import { Anchor, Badge, Box, Container, Flex, Image, Stack, Text, Title } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import { Link, useParams } from "react-router-dom";
@@ -7,6 +8,9 @@ import { SectionLoader } from "../../components/navigation/loading";
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, withSuffix } from "../../lib/seo/site";
 import { stripHtml, truncate } from "../../lib/seo/text";
 import { formatPostDate, getPost, isoPostDate } from "../../queries/blog";
+import { BlogFooter, SubscribeBand } from "./index";
+
+const DISPLAY_FONT = "var(--font-display, 'Quantico', sans-serif)";
 
 /**
  * Single blog post. Fully indexable: unique meta title/description, a
@@ -15,6 +19,7 @@ import { formatPostDate, getPost, isoPostDate } from "../../queries/blog";
  */
 export default function BlogPostPage() {
   const { slug } = useParams();
+  const isMobile = useMediaQuery("(max-width: 800px)");
   const { data: post, isPending } = useQuery({
     queryKey: ["blog-post", slug],
     queryFn: () => getPost(slug!),
@@ -49,9 +54,10 @@ export default function BlogPostPage() {
   const canonical = `/Blog/${post.id}`;
   const description =
     post.description?.trim() || truncate(stripHtml(post.content), 160);
+  const authorInitial = (post.author?.trim()?.[0] || "?").toUpperCase();
 
   return (
-    <Container size="md" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
+    <Container size={820} py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 32 }}>
       <Seo
         title={withSuffix(truncate(post.title, 60))}
         description={truncate(description, 160)}
@@ -72,48 +78,118 @@ export default function BlogPostPage() {
         }}
       />
 
-      <Stack gap={10} mb={24}>
-        <Anchor component={Link} to="/Blog" c="grape.3" fz={14}>
-          &larr; The Guild Blog
-        </Anchor>
-        {!post.published && (
-          <Badge color="yellow" variant="light" w="fit-content">
-            Draft, only admins can see this
-          </Badge>
-        )}
-        <Title order={1} c="white" fw={800} fz={{ base: 30, sm: 40 }} lh={1.15}>
-          {post.title}
-        </Title>
-        <Group gap={8}>
-          <Text fz={14} c="dimmed">
-            By {post.author}
-          </Text>
-          <Text fz={14} c="dimmed">
-            &middot; {formatPostDate(post.publishedAt ?? post.createdAt)}
-          </Text>
-        </Group>
-      </Stack>
+      {/* Scoped typography for the sanitized Tiptap body: Quantico subheads,
+          gold links, and framed images, matching the BlogPost mockup. */}
+      <style>{`
+        .blog-content h2 { font-family: ${DISPLAY_FONT}; font-weight: 700; font-size: 24px; color: #fff; letter-spacing: .04em; line-height: 1.3; margin: 12px 0 0; }
+        .blog-content h3 { font-family: ${DISPLAY_FONT}; font-weight: 700; font-size: 20px; color: #fff; letter-spacing: .03em; line-height: 1.3; margin: 8px 0 0; }
+        .blog-content p { margin: 0; }
+        .blog-content a { color: #FFD074; }
+        .blog-content a:hover { color: #fff; }
+        .blog-content ul, .blog-content ol { margin: 0; padding-left: 1.4em; }
+        .blog-content li { margin: 4px 0; }
+        .blog-content img { max-width: 100%; height: auto; border: 1px solid #2a2637; }
+        .blog-content blockquote { border-left: 3px solid #772976; margin: 0; padding-left: 16px; color: #b6b1bc; }
+      `}</style>
+
+      <Anchor
+        component={Link}
+        to="/Blog"
+        underline="never"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          fontFamily: DISPLAY_FONT,
+          fontSize: 14,
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: "#FFD074",
+          textDecoration: "none",
+          marginBottom: 28,
+        }}
+      >
+        &larr; The Guild Blog
+      </Anchor>
+
+      {!post.published && (
+        <Badge color="yellow" variant="light" w="fit-content" mb={16}>
+          Draft, only admins can see this
+        </Badge>
+      )}
+
+      <Title
+        order={1}
+        c="white"
+        fw={700}
+        fz={{ base: 30, sm: 44 }}
+        mb={16}
+        style={{ fontFamily: DISPLAY_FONT, lineHeight: 1.12, letterSpacing: "0.01em" }}
+      >
+        {post.title}
+      </Title>
+
+      <Flex align="center" gap={14} mb={34} wrap="wrap">
+        <Box
+          aria-hidden
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            border: "2px solid #772976",
+            background: "#141318",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            fontFamily: DISPLAY_FONT,
+            fontWeight: 700,
+            fontSize: 15,
+            color: "#fff",
+          }}
+        >
+          {authorInitial}
+        </Box>
+        <Text fz={14} c="white" fw={700}>
+          {post.author}
+        </Text>
+        <Text fz={14} c="#b6b1bc">
+          &middot; {formatPostDate(post.publishedAt ?? post.createdAt)}
+        </Text>
+      </Flex>
 
       {post.coverImageUrl && (
         <Image
           src={post.coverImageUrl}
           alt={`Cover art for ${post.title}, from the Snagem Guild Pokemon roleplay blog`}
-          radius="lg"
-          mb={24}
+          h={isMobile ? 220 : 340}
           w="100%"
           fit="cover"
+          radius={0}
+          mb={38}
+          style={{ border: "1px solid #2a2637" }}
         />
       )}
 
-      {/* Tiptap output (h2/h3, lists, images, links) styled by forum.css-like
-          defaults; sanitized because it round-trips through Firestore. */}
+      {/* Tiptap output (h2/h3, lists, images, links); sanitized because it
+          round-trips through Firestore. */}
       <Box
         className="blog-content"
-        c="gray.2"
-        fz={17}
-        style={{ lineHeight: 1.75, wordBreak: "break-word" }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 22,
+          fontSize: 17,
+          color: "#d7d3dc",
+          lineHeight: 1.85,
+          wordBreak: "break-word",
+        }}
         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
       />
+
+      <SubscribeBand />
+      <BlogFooter />
     </Container>
   );
 }

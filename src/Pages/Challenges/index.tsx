@@ -1,11 +1,23 @@
-import { Box, Button, Card, Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
-import { IconArrowRight, IconCheck, IconExternalLink, IconStar } from "@tabler/icons-react";
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Group,
+  SimpleGrid,
+  Stack,
+  Text,
+  Title,
+  UnstyledButton,
+} from "@mantine/core";
+import { IconArrowRight, IconExternalLink } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
+import { SnagIcon, SnagIconName } from "../../icons/SnagIcon";
 import { useAuth } from "../../context/AuthContext";
 import {
   ChallengeProgress,
@@ -24,10 +36,10 @@ import {
  * The two progress-tracked challenge systems: Gym Leader Runs and Island
  * Trials. Admins/directors host every challenge thread, so "starting" a stage
  * files a challengeRequest (Cloud Function) that pings the hosting staff; the
- * page otherwise only reads. Each system draws a progress hero (badge case /
- * Z-crystals + final prize) and an ordered vertical timeline; the next
- * uncleared stop glows. Renders safely with no user, empty content and no
- * progress.
+ * page otherwise only reads. Each system draws a progress panel (hex badge
+ * case / Z-crystals + final prize) and an ordered vertical stage path on a
+ * rail; the next uncleared stop glows. Renders safely with no user, empty
+ * content and no progress.
  */
 
 type NodeState = "cleared" | "available" | "locked";
@@ -47,7 +59,24 @@ interface Stage {
   requestStageId: string;
 }
 
-const BAR_GRADIENT = "linear-gradient(90deg, #c026d3, #6366f1, #22d3ee)";
+/* ------------------------------ Design tokens ------------------------------ */
+
+const FONT_D = "var(--font-display, 'Quantico', sans-serif)";
+const GRAD_ON = "linear-gradient(90deg, #7E2C75, #E54156)";
+const GRAD_135 = "linear-gradient(135deg, #7E2C75, #E54156)";
+const PROGRESS_GRAD = "linear-gradient(90deg, #912691, #14e0de)";
+
+// Angled clip-paths from the mockup (bottom-right cut panels, chevron pills).
+const HEX = "polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)";
+const CLIP_PANEL_16 = "polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)";
+const CLIP_PANEL_14 = "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)";
+const CLIP_CARD_12 = "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)";
+const CLIP_PILL = "polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%)";
+const CLIP_CHIP = "polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%)";
+const CLIP_CTA = "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)";
+const CLIP_TOGGLE = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
+const CLIP_NUM = "polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)";
+const CLIP_GLYPH = "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)";
 
 const TAB_SUBTITLES: Record<string, string> = {
   gyms:
@@ -56,7 +85,7 @@ const TAB_SUBTITLES: Record<string, string> = {
     "Journey island to island: clear each trial, topple every Totem, then face the Kahunas in their Grand Trials. Your next stop glows, tap it to begin.",
 };
 
-// Standard Pokemon type colors, used for badges, nodes and crystals.
+// Standard Pokemon type colors, used for the type-colored stage chips.
 const TYPE_COLORS: Record<string, string> = {
   Normal: "#A8A878", Fire: "#F08030", Water: "#6890F0", Electric: "#E0B000",
   Grass: "#78C850", Ice: "#98D8D8", Fighting: "#C03028", Poison: "#A040A0",
@@ -65,50 +94,161 @@ const TYPE_COLORS: Record<string, string> = {
   Steel: "#8888A8", Fairy: "#EE99AC",
 };
 const typeColor = (t?: string) => (t && TYPE_COLORS[t]) || "#8a8399";
+const TYPE_TEXT_DARK = new Set(["#E0B000", "#98D8D8", "#EE99AC", "#E0C068"]);
 
-const TYPE_TEXT_DARK = new Set(["#E0B000", "#F8D030", "#98D8D8", "#EE99AC", "#E0C068"]);
+/** Kind chip accent per stage type (mockup palette). */
+function tagColor(kind: StageKind): string {
+  if (kind === "GRAND TRIAL") return "#FFD074";
+  if (kind === "ELITE FOUR" || kind === "CHAMPION") return "#E54156";
+  return "#c79bd6"; // GYM / TRIAL
+}
 
-/* --------------------------------- Hero bits -------------------------------- */
+/* ---------------------------------- Hero ----------------------------------- */
 
-function GradientBar({ pct }: { pct: number }) {
+/** The striped-hero mode toggle: GYM LEADER RUNS vs ISLAND TRIALS. */
+function HeroTabToggle(props: {
+  tab: "gyms" | "trials";
+  setTab: (v: "gyms" | "trials") => void;
+}) {
+  const items: { value: "gyms" | "trials"; label: string; icon: SnagIconName }[] = [
+    { value: "gyms", label: "Gym Leader Runs", icon: "swords" },
+    { value: "trials", label: "Island Trials", icon: "map" },
+  ];
   return (
-    <Box style={{ height: 8, borderRadius: 999, background: "#2a2637", overflow: "hidden" }}>
-      <Box style={{ height: "100%", width: `${pct}%`, borderRadius: 999, background: BAR_GRADIENT }} />
+    <Group gap={0} wrap="wrap" role="tablist" aria-label="Choose a challenge type">
+      {items.map((it, i) => {
+        const active = props.tab === it.value;
+        return (
+          <UnstyledButton
+            key={it.value}
+            role="tab"
+            aria-selected={active}
+            onClick={() => props.setTab(it.value)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontFamily: FONT_D,
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              padding: "11px 18px",
+              marginLeft: i ? -2 : 0,
+              border: "1px solid #3a3550",
+              background: active ? GRAD_ON : "#1b1a1e",
+              color: active ? "#fff" : "#b6b1bc",
+              clipPath: CLIP_TOGGLE,
+            }}
+          >
+            <SnagIcon
+              name={it.icon}
+              size={16}
+              color={active ? "#fff" : "#b6b1bc"}
+              cut={active ? "#7E2C75" : "#1b1a1e"}
+            />
+            {it.label}
+          </UnstyledButton>
+        );
+      })}
+    </Group>
+  );
+}
+
+/** Explains the admin-hosted flow: a 3-step numbered panel. */
+function HowChallengesWork() {
+  const steps = [
+    { n: "1", text: "Start the challenge on your next glowing stage. That sends a request to the admins and directors." },
+    { n: "2", text: "An admin accepts and creates your thread in the forums. They lead the thread and guide what happens next." },
+    { n: "3", text: "Roleplay the battle in that thread. When it wraps up, a grader marks the stage cleared and your progress updates." },
+  ];
+  return (
+    <Box
+      mb={24}
+      p={{ base: 20, sm: 28 }}
+      style={{ background: "#141318", border: "1px solid #2a2637", clipPath: CLIP_PANEL_14 }}
+    >
+      <Title
+        order={2}
+        fz={13}
+        fw={700}
+        c="#c79bd6"
+        tt="uppercase"
+        mb={16}
+        style={{ fontFamily: FONT_D, letterSpacing: "0.28em" }}
+      >
+        How challenges work
+      </Title>
+      <SimpleGrid cols={{ base: 1, sm: 3 }} spacing={20}>
+        {steps.map((s) => (
+          <Group key={s.n} gap={12} align="flex-start" wrap="nowrap">
+            <Box
+              style={{
+                flex: "none",
+                width: 28,
+                height: 28,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: FONT_D,
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#fff",
+                background: GRAD_135,
+                clipPath: CLIP_NUM,
+              }}
+            >
+              {s.n}
+            </Box>
+            <Text fz={13} c="#b6b1bc" style={{ lineHeight: 1.55 }}>
+              {s.text}
+            </Text>
+          </Group>
+        ))}
+      </SimpleGrid>
+      <Text fz={13} c="#6f6a78" mt={16}>
+        The opposing team changes from person to person, so it stays hidden until your host reveals
+        it in the thread.
+      </Text>
     </Box>
   );
 }
 
-/** One circle in the badge case / Z-crystal row. */
-function Collectible(props: { label: string; sublabel: string; color: string; earned: boolean }) {
-  const darkText = TYPE_TEXT_DARK.has(props.color);
+/* ------------------------------ Progress panel ----------------------------- */
+
+/** One hex badge in the badge case / Z-crystal row. */
+function Collectible(props: { glyph: SnagIconName; label: string; earned: boolean }) {
   return (
-    <Stack gap={6} align="center" w={60} style={{ flexShrink: 0 }}>
+    <Stack gap={6} align="center" w={64} style={{ flexShrink: 0 }}>
       <Box
         style={{
-          width: 44,
-          height: 44,
-          borderRadius: "50%",
+          width: 46,
+          height: 46,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontWeight: 800,
-          fontSize: 16,
-          color: props.earned ? (darkText ? "#1a1626" : "#fff") : "#6a6580",
-          background: props.earned ? props.color : "transparent",
-          border: props.earned ? `2px solid ${props.color}` : "2px dashed #3a3550",
+          clipPath: HEX,
+          border: props.earned ? "2px solid #C9940F" : "2px dashed #3a3550",
+          background: props.earned ? "linear-gradient(135deg, #3a2a10, #241f2e)" : "#141318",
         }}
       >
-        {props.earned ? props.label : "?"}
+        {props.earned ? (
+          <SnagIcon name={props.glyph} size={22} color="#FFD074" cut="#241f2e" />
+        ) : (
+          <Text fz={16} fw={700} c="#6f6a78" style={{ fontFamily: FONT_D }}>
+            ?
+          </Text>
+        )}
       </Box>
-      <Text fz={14} ta="center" lineClamp={1} c={props.earned ? "rgba(255,255,255,0.8)" : "dimmed"}>
-        {props.earned ? props.sublabel : "locked"}
+      <Text fz={12} ta="center" lineClamp={1} c={props.earned ? "#FFD074" : "#6f6a78"}>
+        {props.earned ? props.label : "locked"}
       </Text>
     </Stack>
   );
 }
 
-function ProgressHero(props: {
-  icon: string;
+function ProgressPanel(props: {
+  icon: SnagIconName;
   eyebrow: string;
   title: string;
   cleared: number;
@@ -119,51 +259,82 @@ function ProgressHero(props: {
 }) {
   const pct = props.total ? Math.round((props.cleared / props.total) * 100) : 0;
   return (
-    <Card bg="#141019" radius="lg" p="lg" withBorder style={{ borderColor: "#2a2637" }} mb="xl">
-      <Group justify="space-between" wrap="wrap" gap="md" mb="md">
-        <Group gap="md" wrap="nowrap" style={{ minWidth: 0 }}>
+    <Box
+      mb={24}
+      p={{ base: 20, sm: 28 }}
+      style={{ background: "#141318", border: "1px solid #2a2637", clipPath: CLIP_PANEL_16 }}
+    >
+      <Group justify="space-between" wrap="wrap" gap={16} mb={16}>
+        <Group gap={16} wrap="nowrap" style={{ minWidth: 0 }}>
           <Box
             style={{
-              width: 60,
-              height: 60,
-              borderRadius: 14,
-              background: "linear-gradient(135deg, #a855f7, #22d3ee)",
+              flex: "none",
+              width: 48,
+              height: 48,
+              background: "#3a1d63",
+              border: "1px solid #3a3550",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 32,
-              flexShrink: 0,
+              clipPath: CLIP_GLYPH,
             }}
           >
-            {props.icon}
+            <SnagIcon name={props.icon} size={24} color="#fff" cut="#3a1d63" />
           </Box>
           <Box style={{ minWidth: 0 }}>
-            <Text fz={14} fw={800} c="grape.3" tt="uppercase" style={{ letterSpacing: 1 }}>
+            <Text
+              fz={12}
+              fw={700}
+              c="#c79bd6"
+              tt="uppercase"
+              style={{ fontFamily: FONT_D, letterSpacing: "0.24em" }}
+            >
               {props.eyebrow}
             </Text>
-            <Text fz={28} fw={800} c="white" lineClamp={1}>
+            <Text
+              fz={{ base: 22, sm: 26 }}
+              fw={700}
+              c="white"
+              lineClamp={1}
+              style={{ fontFamily: FONT_D, letterSpacing: "0.02em" }}
+            >
               {props.title}
             </Text>
           </Box>
         </Group>
-        <Box ta="right">
-          <Text fz={14} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
+        <Box style={{ textAlign: "right" }}>
+          <Text
+            fz={12}
+            fw={700}
+            c="#6f6a78"
+            tt="uppercase"
+            style={{ fontFamily: FONT_D, letterSpacing: "0.24em" }}
+          >
             Progress
           </Text>
-          <Text fz={26} fw={800} c="white">
+          <Text fz={24} fw={700} c="white" style={{ fontFamily: FONT_D }}>
             {props.cleared}{" "}
-            <Text span c="dimmed" fz={16} fw={600}>
+            <Text span fz={14} c="#6f6a78">
               / {props.total} cleared
             </Text>
           </Text>
         </Box>
       </Group>
 
-      <GradientBar pct={pct} />
+      <Box style={{ height: 8, background: "#232028", clipPath: "polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%)" }}>
+        <Box style={{ height: "100%", width: `${pct}%`, background: PROGRESS_GRAD }} />
+      </Box>
 
-      <Flex mt="lg" gap="lg" direction={{ base: "column", md: "row" }} align="flex-start">
-        <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
-          <Text fz={14} fw={700} c="dimmed" tt="uppercase" mb={12} style={{ letterSpacing: 1 }}>
+      <Flex mt={18} gap={24} direction={{ base: "column", sm: "row" }} align="flex-start">
+        <Box style={{ flex: "1 1 0%", minWidth: 0, width: "100%" }}>
+          <Text
+            fz={12}
+            fw={700}
+            c="#6f6a78"
+            tt="uppercase"
+            mb={12}
+            style={{ fontFamily: FONT_D, letterSpacing: "0.24em" }}
+          >
             {props.collectibleLabel}
           </Text>
           <Group gap={12} style={{ rowGap: 14 }}>
@@ -171,109 +342,37 @@ function ProgressHero(props: {
           </Group>
         </Box>
         <Box
-          p="md"
+          p={18}
           style={{
-            borderRadius: 12,
-            border: "1px solid #5a4a2a",
-            background: "linear-gradient(135deg, #2a1f14, #231a2e)",
-            maxWidth: 380,
+            flex: "1 1 0%",
+            minWidth: 0,
             width: "100%",
+            maxWidth: 400,
+            background: "#241f2e",
+            border: "1px solid #C9940F",
+            clipPath: CLIP_CARD_12,
           }}
         >
-          <Group gap={6} mb={6}>
-            <IconStar size={16} color="#F5C842" />
-            <Text fz={14} fw={800} c="#F5C842" tt="uppercase" style={{ letterSpacing: 0.5 }}>
-              Final Prize
-            </Text>
-          </Group>
-          <Text fz={14} c="rgba(255,255,255,0.85)">
+          <Text
+            fz={13}
+            fw={700}
+            c="#FFD074"
+            tt="uppercase"
+            mb={8}
+            style={{ fontFamily: FONT_D, letterSpacing: "0.22em" }}
+          >
+            {"★"} Final Prize
+          </Text>
+          <Text fz={14} c="#b6b1bc" style={{ lineHeight: 1.6 }}>
             {props.finalPrize}
           </Text>
         </Box>
       </Flex>
-    </Card>
-  );
-}
-
-/* -------------------------------- Timeline --------------------------------- */
-
-const KIND_STYLES: Record<StageKind, { bg: string; fg: string }> = {
-  GYM: { bg: "#2a2637", fg: "#c9c4d6" },
-  "ELITE FOUR": { bg: "#3a2a55", fg: "#d8c4ff" },
-  CHAMPION: { bg: "#4a3a1a", fg: "#f5d98a" },
-  TRIAL: { bg: "#2a2637", fg: "#c9c4d6" },
-  "GRAND TRIAL": { bg: "#4a3a1a", fg: "#f5d98a" },
-};
-
-function TimelineNode(props: { order: number; state: NodeState; color: string }) {
-  const { state, color } = props;
-  const cleared = state === "cleared";
-  const available = state === "available";
-  return (
-    <Box style={{ position: "relative", width: 68, flexShrink: 0, display: "flex", justifyContent: "center" }}>
-      <Box
-        style={{
-          width: 60,
-          height: 60,
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: cleared ? color : "#1a1622",
-          border: available ? `3px solid ${color}` : cleared ? "none" : "2px solid #322d40",
-          boxShadow: available ? `0 0 0 5px ${color}33` : "none",
-          opacity: state === "locked" ? 0.55 : 1,
-        }}
-      >
-        {cleared ? (
-          <IconCheck size={28} color="#fff" />
-        ) : available ? (
-          <IconStar size={26} color={color} fill={color} />
-        ) : (
-          <Text fz={24} fw={800} c="#6a6580">
-            {props.order}
-          </Text>
-        )}
-      </Box>
-      {/* order chip */}
-      <Box
-        style={{
-          position: "absolute",
-          top: -4,
-          right: 4,
-          minWidth: 22,
-          height: 22,
-          padding: "0 6px",
-          borderRadius: 999,
-          background: "#0e0c14",
-          border: "1px solid #322d40",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Text fz={14} fw={700} c="white">
-          {props.order}
-        </Text>
-      </Box>
-      {available && (
-        <Box
-          style={{
-            position: "absolute",
-            bottom: -12,
-            padding: "1px 8px",
-            borderRadius: 999,
-            background: "#F5C842",
-          }}
-        >
-          <Text fz={14} fw={800} c="#1a1626" tt="uppercase">
-            Here
-          </Text>
-        </Box>
-      )}
     </Box>
   );
 }
+
+/* -------------------------------- Stage path ------------------------------- */
 
 interface StageRequestProps {
   /** The member's request for this stage, when one exists. */
@@ -283,136 +382,215 @@ interface StageRequestProps {
   signedIn: boolean;
 }
 
-function TimelineItem(props: { stage: Stage } & StageRequestProps) {
+function StageRow(props: { stage: Stage } & StageRequestProps) {
   const { stage, request, onRequest, requesting, signedIn } = props;
-  const color = typeColor(stage.type);
   const cleared = stage.state === "cleared";
   const available = stage.state === "available";
   const locked = stage.state === "locked";
-  const kindStyle = KIND_STYLES[stage.kind];
+  const tc = typeColor(stage.type);
+  const inProgress =
+    available && (request?.status === "requested" || request?.status === "accepted");
+
+  const nodeMark = cleared ? "✓" : String(stage.order);
+  const nodeColor = cleared ? "#12B7B6" : available ? "#FFD074" : "#6f6a78";
+  const nodeBorder = cleared ? "#1f6f7a" : available ? "#C9940F" : "#3a3550";
+  const nodeBg = available ? "#241f2e" : "#141318";
+  const railColor = cleared ? "#1f6f7a" : "#232028";
+  const cardBg = available ? "#1c1526" : "#141318";
+  const cardBorder = available ? "#7E2C75" : cleared ? "#1f6f7a" : "#232028";
+
+  const statusText = cleared
+    ? "✓ Cleared"
+    : available
+      ? inProgress
+        ? "▶ In progress"
+        : "▶ Your next battle"
+      : "Locked";
+  const statusColor = cleared ? "#12B7B6" : available ? "#c79bd6" : "#6f6a78";
+  const chipColor = cleared || available ? tc : "#6f6a78";
 
   return (
-    <Group align="flex-start" gap="lg" wrap="nowrap">
-      <TimelineNode order={stage.order} state={stage.state} color={color} />
-      <Card
-        bg={available ? "#1c1836" : "#141019"}
-        radius="lg"
-        p="md"
-        withBorder
+    <Flex gap={14} align="stretch">
+      {/* Node + rail */}
+      <Box style={{ flex: "none", width: 56, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <Box
+          style={{
+            flex: "none",
+            width: 52,
+            height: 52,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: `2px solid ${nodeBorder}`,
+            background: nodeBg,
+            clipPath: HEX,
+          }}
+        >
+          <Text fz={16} fw={700} c={nodeColor} style={{ fontFamily: FONT_D }}>
+            {nodeMark}
+          </Text>
+        </Box>
+        {available && (
+          <Box
+            mt={4}
+            style={{
+              padding: "3px 10px",
+              background: "linear-gradient(90deg, #FFD074, #C9940F)",
+              clipPath: "polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%)",
+            }}
+          >
+            <Text fz={10} fw={700} c="#1A1B1E" tt="uppercase" style={{ fontFamily: FONT_D, letterSpacing: "0.14em" }}>
+              Here
+            </Text>
+          </Box>
+        )}
+        <Box style={{ flex: 1, width: 2, background: railColor, marginTop: 6, minHeight: 14 }} />
+      </Box>
+
+      {/* Stage card */}
+      <Box
+        mb={14}
+        p={{ base: 16, sm: 22 }}
         style={{
-          borderColor: available ? "#5a3fb0" : "#232028",
           flex: "1 1 0%",
           minWidth: 0,
+          background: cardBg,
+          border: `1px solid ${cardBorder}`,
           opacity: locked ? 0.6 : 1,
+          clipPath: CLIP_CARD_12,
         }}
       >
-        <Group gap={8} mb={8}>
+        <Group gap={12} mb={8} wrap="wrap">
           <Text
-            fz={14}
-            fw={800}
+            fz={11}
+            fw={700}
             tt="uppercase"
-            px={8}
-            py={2}
-            style={{ borderRadius: 6, background: kindStyle.bg, color: kindStyle.fg, letterSpacing: 0.5 }}
+            px={12}
+            py={4}
+            style={{
+              fontFamily: FONT_D,
+              letterSpacing: "0.18em",
+              color: tagColor(stage.kind),
+              border: `1px solid ${tagColor(stage.kind)}`,
+              clipPath: CLIP_CHIP,
+            }}
           >
             {stage.kind}
           </Text>
-          {cleared && (
-            <Text fz={14} fw={700} c="#7CD992" tt="uppercase">
-              &#10003; Cleared
-            </Text>
-          )}
-          {available && (
-            <Text fz={14} fw={800} c="grape.3" tt="uppercase">
-              &#9654; Your next battle
-            </Text>
-          )}
-          {locked && (
-            <Text fz={14} fw={700} c="dimmed" tt="uppercase">
-              Locked
-            </Text>
-          )}
+          <Text fz={12} fw={700} c={statusColor} tt="uppercase" style={{ fontFamily: FONT_D, letterSpacing: "0.18em" }}>
+            {statusText}
+          </Text>
         </Group>
 
-        <Group gap={8} mb={6} wrap="nowrap">
-          <Text fz={24} fw={800} c="white" lineClamp={1}>
+        <Group gap={12} mb={6} wrap="wrap" align="center">
+          <Text fz={22} fw={700} c={cleared || available ? "#fff" : "#6f6a78"} style={{ fontFamily: FONT_D, letterSpacing: "0.02em" }}>
             {stage.title}
           </Text>
           {stage.type && (
             <Text
-              fz={14}
+              fz={11}
               fw={700}
-              px={8}
-              py={2}
-              style={{ borderRadius: 999, background: color, color: TYPE_TEXT_DARK.has(color) ? "#1a1626" : "#fff" }}
+              tt="uppercase"
+              px={12}
+              py={4}
+              style={{
+                fontFamily: FONT_D,
+                letterSpacing: "0.12em",
+                color: chipColor,
+                border: `1px solid ${chipColor}`,
+                clipPath: CLIP_CHIP,
+              }}
             >
               {stage.type}
             </Text>
           )}
         </Group>
 
-        <Text fz={14} c="dimmed" mb={!locked ? 12 : 0}>
+        <Text fz={14} c="#b6b1bc" style={{ lineHeight: 1.55 }}>
           {stage.desc}
         </Text>
 
         {available &&
           (request?.status === "requested" ? (
-            <Stack gap={6}>
-              <Button variant="default" radius="xl" disabled w="fit-content">
-                Challenge requested
-              </Button>
-              <Text fz={14} c="gold.1" role="status" aria-live="polite">
-                Your challenge has been requested. Please wait until an admin accepts it and
-                sets up your thread.
-              </Text>
-            </Stack>
+            <Text
+              mt={12}
+              fz={12}
+              fw={700}
+              c="#12B7B6"
+              tt="uppercase"
+              role="status"
+              aria-live="polite"
+              style={{ fontFamily: FONT_D, letterSpacing: "0.12em" }}
+            >
+              Request sent {"·"} an admin will open your thread
+            </Text>
           ) : request?.status === "accepted" ? (
-            <Stack gap={6}>
-              {request.threadLink ? (
-                <Button
-                  component={Link}
-                  to={request.threadLink}
-                  variant="gradient"
-                  gradient={{ from: "grape", to: "cyan", deg: 90 }}
-                  radius="xl"
-                  w="fit-content"
-                  rightSection={<IconExternalLink size={14} />}
-                >
-                  Go to your challenge thread
-                </Button>
-              ) : (
-                <Text fz={14} c="teal.3" role="status" aria-live="polite">
-                  Accepted! An admin is setting up your thread; watch your notifications.
-                </Text>
-              )}
-            </Stack>
-          ) : (
-            <Stack gap={6}>
+            request.threadLink ? (
               <Button
-                variant="gradient"
-                gradient={{ from: "grape", to: "cyan", deg: 90 }}
-                radius="xl"
-                w="fit-content"
+                component={Link}
+                to={request.threadLink}
+                mt={12}
+                radius={0}
+                rightSection={<IconExternalLink size={14} />}
+                styles={{
+                  root: {
+                    background: "linear-gradient(90deg, #12B7B6, #4dabf7)",
+                    border: 0,
+                    clipPath: CLIP_CTA,
+                    fontFamily: FONT_D,
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    height: 44,
+                    color: "#fff",
+                  },
+                }}
+              >
+                Go to your challenge thread
+              </Button>
+            ) : (
+              <Text mt={12} fz={13} c="#12B7B6" role="status" aria-live="polite">
+                Accepted! An admin is setting up your thread; watch your notifications.
+              </Text>
+            )
+          ) : (
+            <Stack gap={6} mt={12} align="flex-start">
+              <Button
+                radius={0}
                 rightSection={<IconArrowRight size={16} />}
                 loading={requesting}
                 disabled={!signedIn}
                 onClick={() => onRequest(stage)}
+                styles={{
+                  root: {
+                    background: GRAD_ON,
+                    border: 0,
+                    clipPath: CLIP_CTA,
+                    fontFamily: FONT_D,
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    height: 46,
+                    paddingLeft: 26,
+                    paddingRight: 26,
+                  },
+                }}
               >
-                Start this Challenge
+                Start this challenge
               </Button>
               {!signedIn && (
-                <Text fz={14} c="dimmed">
+                <Text fz={13} c="#6f6a78">
                   Sign in to request this challenge.
                 </Text>
               )}
             </Stack>
           ))}
-      </Card>
-    </Group>
+      </Box>
+    </Flex>
   );
 }
 
-function Timeline(props: {
+function StagePath(props: {
   stages: Stage[];
   requestsByStage: Map<string, ChallengeRequest>;
   onRequest: (stage: Stage) => void;
@@ -420,29 +598,17 @@ function Timeline(props: {
   signedIn: boolean;
 }) {
   return (
-    <Box style={{ position: "relative" }}>
-      {/* dotted rail behind the nodes (node centers sit at x=34) */}
-      <Box
-        style={{
-          position: "absolute",
-          left: 33,
-          top: 30,
-          bottom: 30,
-          borderLeft: "2px dotted #322d40",
-        }}
-      />
-      <Stack gap="lg">
-        {props.stages.map((s) => (
-          <TimelineItem
-            key={s.key}
-            stage={s}
-            request={props.requestsByStage.get(s.requestStageId)}
-            onRequest={props.onRequest}
-            requesting={props.requestingStageId === s.requestStageId}
-            signedIn={props.signedIn}
-          />
-        ))}
-      </Stack>
+    <Box>
+      {props.stages.map((s) => (
+        <StageRow
+          key={s.key}
+          stage={s}
+          request={props.requestsByStage.get(s.requestStageId)}
+          onRequest={props.onRequest}
+          requesting={props.requestingStageId === s.requestStageId}
+          signedIn={props.signedIn}
+        />
+      ))}
     </Box>
   );
 }
@@ -557,6 +723,14 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /* ---------------------------------- Tabs ----------------------------------- */
 
+/** Request plumbing shared by both tabs (owned by the page component). */
+interface TabRequestProps {
+  requestsByStage: Map<string, ChallengeRequest>;
+  onRequest: (stage: Stage) => void;
+  requestingStageId: string | null;
+  signedIn: boolean;
+}
+
 function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress } & TabRequestProps) {
   const { regions, progress } = props;
   const [regionId, setRegionId] = React.useState<string | null>(regions[0]?.id ?? null);
@@ -580,28 +754,40 @@ function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress }
   const cleared = stages.filter((s) => s.state === "cleared").length;
 
   return (
-    <Stack gap={0}>
-      <Group gap={8} wrap="wrap" mb="lg" role="tablist" aria-label="Select a region">
-        <Text fz={14} fw={700} c="dimmed" tt="uppercase" mr={4} style={{ letterSpacing: 1 }}>
+    <Box>
+      <Group gap={8} wrap="wrap" mb={20} role="tablist" aria-label="Select a region">
+        <Text fz={12} fw={700} c="#6f6a78" tt="uppercase" style={{ fontFamily: FONT_D, letterSpacing: "0.28em" }}>
           Region
         </Text>
-        {regions.map((r) => (
-          <Button
-            key={r.id}
-            size="xs"
-            radius="xl"
-            variant={r.id === region.id ? "gradient" : "default"}
-            gradient={{ from: "grape", to: "violet", deg: 90 }}
-            onClick={() => setRegionId(r.id)}
-            aria-pressed={r.id === region.id}
-          >
-            {r.name}
-          </Button>
-        ))}
+        {regions.map((r) => {
+          const active = r.id === region.id;
+          return (
+            <UnstyledButton
+              key={r.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setRegionId(r.id)}
+              style={{
+                fontFamily: FONT_D,
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                padding: "9px 20px",
+                border: `1px solid ${active ? "#7E2C75" : "#3a3550"}`,
+                background: active ? GRAD_ON : "#1b1a1e",
+                color: active ? "#fff" : "#b6b1bc",
+                clipPath: CLIP_PILL,
+              }}
+            >
+              {r.name}
+            </UnstyledButton>
+          );
+        })}
       </Group>
 
-      <ProgressHero
-        icon="⚔️"
+      <ProgressPanel
+        icon="swords"
         eyebrow="Gym Champion Run"
         title={`${region.name} League`}
         cleared={cleared}
@@ -611,15 +797,14 @@ function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress }
         collectibles={gyms.map((g) => (
           <Collectible
             key={g.leaderName}
-            label={g.leaderName.charAt(0).toUpperCase()}
-            sublabel={g.leaderName}
-            color={typeColor(g.type)}
+            glyph="medal"
+            label={g.leaderName}
             earned={earned.includes(g.leaderName)}
           />
         ))}
       />
 
-      <Timeline
+      <StagePath
         stages={stages}
         requestsByStage={props.requestsByStage}
         onRequest={props.onRequest}
@@ -628,7 +813,7 @@ function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress }
       />
 
       <RematchLadder region={region} progress={progress} signedIn={props.signedIn} />
-    </Stack>
+    </Box>
   );
 }
 
@@ -671,18 +856,23 @@ function RematchLadder(props: { region: GymRegion; progress: ChallengeProgress; 
   if (!props.signedIn || !beatenGyms.length) return null;
 
   return (
-    <Card bg="#141019" radius="lg" p="lg" withBorder style={{ borderColor: "#2a2637" }} mt="xl">
-      <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 2 }}>
+    <Box
+      mt={32}
+      p={{ base: 20, sm: 24 }}
+      className="dc-card"
+      style={{ clipPath: CLIP_PANEL_14 }}
+    >
+      <Text fz={13} fw={700} c="#c79bd6" tt="uppercase" style={{ fontFamily: FONT_D, letterSpacing: "0.24em" }}>
         Rematch Ladder
       </Text>
-      <Text fz={22} fw={800} c="white">
+      <Text fz={22} fw={700} c="white" mb={4} style={{ fontFamily: FONT_D }}>
         Beaten leaders want revenge
       </Text>
-      <Text fz={14} c="dimmed" mb={12}>
-        Challenge any leader you hold a badge from to a rematch. Every tier is a tougher fight
-        with a stronger roster; your host sets the exact team.
+      <Text fz={14} c="#b6b1bc" mb={14}>
+        Challenge any leader you hold a badge from to a rematch. Every tier is a tougher fight with a
+        stronger roster; your host sets the exact team.
       </Text>
-      <Stack gap={8}>
+      <Stack gap={10}>
         {beatenGyms.map((g) => {
           const wins = Number(tiers[g.leaderName]) || 0;
           const nextTier = wins + 1;
@@ -692,27 +882,27 @@ function RematchLadder(props: { region: GymRegion; progress: ChallengeProgress; 
               <Group gap={10} wrap="nowrap" style={{ minWidth: 0 }}>
                 <Box
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: "50%",
+                    flex: "none",
+                    width: 38,
+                    height: 38,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontWeight: 800,
-                    background: typeColor(g.type),
-                    color: TYPE_TEXT_DARK.has(typeColor(g.type)) ? "#1a1626" : "#fff",
-                    flexShrink: 0,
+                    clipPath: HEX,
+                    background: "linear-gradient(135deg, #3a2a10, #241f2e)",
+                    border: "2px solid #C9940F",
                   }}
                 >
-                  {g.leaderName.charAt(0).toUpperCase()}
+                  <SnagIcon name="medal" size={18} color="#FFD074" cut="#241f2e" />
                 </Box>
                 <Box style={{ minWidth: 0 }}>
                   <Text fz={15} fw={700} c="white">
                     {g.leaderName}
                   </Text>
                   <Text fz={13} c="dimmed">
-                    {wins ? `${wins} rematch win${wins === 1 ? "" : "s"}` : "No rematches yet"} ·
-                    next: Tier {nextTier} (about {suggestedStar}★ opposition)
+                    {wins ? `${wins} rematch win${wins === 1 ? "" : "s"}` : "No rematches yet"} {"·"}{" "}
+                    next: Tier {nextTier} (about {suggestedStar}
+                    {"★"} opposition)
                   </Text>
                 </Box>
               </Group>
@@ -734,11 +924,11 @@ function RematchLadder(props: { region: GymRegion; progress: ChallengeProgress; 
         })}
       </Stack>
       {message && (
-        <Text fz={14} mt="sm" c="grape.2" role="status" aria-live="polite">
+        <Text fz={14} mt="sm" c="#c79bd6" role="status" aria-live="polite">
           {message}
         </Text>
       )}
-    </Card>
+    </Box>
   );
 }
 
@@ -761,13 +951,14 @@ function IslandTrialsTab(props: { trials: IslandTrial[]; progress: ChallengeProg
   // (grantChallengeStep writes progress.zCrystals); honor both sources.
   const grantedCrystals = new Set((progress.zCrystals ?? []).map((z) => z.toLowerCase()));
   const crystalEarned = (t: (typeof sorted)[number], crystal: string) =>
-    completed.has(t.id) || grantedCrystals.has(crystal.toLowerCase()) ||
+    completed.has(t.id) ||
+    grantedCrystals.has(crystal.toLowerCase()) ||
     grantedCrystals.has(`${crystal.toLowerCase()} z`);
 
   return (
-    <Stack gap={0}>
-      <ProgressHero
-        icon="🏝️"
+    <Box>
+      <ProgressPanel
+        icon="map"
         eyebrow="Island Challenge"
         title="Alola Trials"
         cleared={cleared}
@@ -783,60 +974,22 @@ function IslandTrialsTab(props: { trials: IslandTrial[]; progress: ChallengeProg
           return (
             <Collectible
               key={t.id}
-              label="Z"
-              sublabel={crystal}
-              color={typeColor(t.type)}
+              glyph="zcrystal"
+              label={crystal}
               earned={crystalEarned(t, crystal)}
             />
           );
         })}
       />
 
-      <Timeline
+      <StagePath
         stages={stages}
         requestsByStage={props.requestsByStage}
         onRequest={props.onRequest}
         requestingStageId={props.requestingStageId}
         signedIn={props.signedIn}
       />
-    </Stack>
-  );
-}
-
-/** Request plumbing shared by both tabs (owned by the page component). */
-interface TabRequestProps {
-  requestsByStage: Map<string, ChallengeRequest>;
-  onRequest: (stage: Stage) => void;
-  requestingStageId: string | null;
-  signedIn: boolean;
-}
-
-/** Explains the admin-hosted flow so members know what happens after they ask. */
-function HowChallengesWork() {
-  return (
-    <Card bg="#141019" radius="lg" p="lg" withBorder style={{ borderColor: "#2a2637" }} mb="xl">
-      <Title order={2} fz={14} fw={800} c="white" tt="uppercase" lh="md" mb={8} style={{ letterSpacing: 1 }}>
-        How challenges work
-      </Title>
-      <Stack gap={6}>
-        <Text fz={14} c="dimmed">
-          1. Press Start this Challenge on your next glowing stage. That sends a request to the
-          admins and directors.
-        </Text>
-        <Text fz={14} c="dimmed">
-          2. An admin accepts your challenge and creates your thread in the forums. They lead the
-          thread and guide you through what happens next.
-        </Text>
-        <Text fz={14} c="dimmed">
-          3. Roleplay the battle in that thread. When it wraps up, a grader marks the stage
-          cleared here and your progress updates.
-        </Text>
-        <Text fz={14} c="dimmed">
-          The opposing team changes from person to person, so it stays hidden until your host
-          reveals it in the thread.
-        </Text>
-      </Stack>
-    </Card>
+    </Box>
   );
 }
 
@@ -913,11 +1066,6 @@ export default function Challenges() {
     signedIn: Boolean(uid),
   };
 
-  const TABS: { value: "gyms" | "trials"; label: string; icon: string }[] = [
-    { value: "gyms", label: "Gym Leader Runs", icon: "⚔️" },
-    { value: "trials", label: "Island Trials", icon: "🏝️" },
-  ];
-
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
       <Seo page="/Challenges" />
@@ -926,24 +1074,7 @@ export default function Challenges() {
         title="Take on a Challenge!"
         subtitle={TAB_SUBTITLES[tab]}
       >
-        <Group gap={10}>
-          {TABS.map((t) => {
-            const active = tab === t.value;
-            return (
-              <Button
-                key={t.value}
-                onClick={() => setTab(t.value)}
-                radius="xl"
-                variant={active ? "gradient" : "default"}
-                gradient={{ from: "grape", to: "violet", deg: 90 }}
-                leftSection={<span style={{ fontSize: 16 }}>{t.icon}</span>}
-                styles={active ? undefined : { root: { background: "rgba(0,0,0,0.25)", borderColor: "#4a4368", color: "#fff" } }}
-              >
-                {t.label}
-              </Button>
-            );
-          })}
-        </Group>
+        <HeroTabToggle tab={tab} setTab={setTab} />
       </PageHero>
 
       {loading ? (
@@ -961,4 +1092,3 @@ export default function Challenges() {
     </Container>
   );
 }
-

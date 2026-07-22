@@ -1,15 +1,12 @@
 import {
   Avatar,
   Box,
-  Card,
   Center,
   Container,
   Group,
-  SimpleGrid,
-  Stack,
   Text,
   TextInput,
-  Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
@@ -19,6 +16,7 @@ import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { clickable } from "../../lib/a11y";
+import useMediaQuery from "../../hooks/useMediaQuery";
 import { getMembers, MemberCard } from "../../queries/members";
 
 /**
@@ -26,25 +24,28 @@ import { getMembers, MemberCard } from "../../queries/members";
  * card links to that member's public profile (/Users/:username). Read-only.
  */
 
+const DISPLAY_FONT = "var(--font-display, 'Quantico', sans-serif)";
+
 const ROLES = ["All", "Admin", "Director", "Master", "Verified", "New", "Applicant", "Disabled"];
 
 const ROLE_COLOR: Record<string, string> = {
-  Admin: "#F79292",
+  Admin: "#E54156",
   Director: "#E599F7",
   Master: "#B197FC",
-  Verified: "#63E6BE",
+  Verified: "#12B7B6",
   New: "#8CE99A",
   Applicant: "#ADB5BD",
   Disabled: "#FF8787",
 };
 
+/** Redesign-palette banner gradients, hashed per member for a stable look. */
 const CARD_GRADIENTS = [
-  "linear-gradient(90deg, #104459 0%, #3B7A57 100%)",
-  "linear-gradient(90deg, #2C5364 0%, #203A43 100%)",
-  "linear-gradient(90deg, #614385 0%, #516395 100%)",
-  "linear-gradient(90deg, #8E2DE2 0%, #4A00E0 100%)",
-  "linear-gradient(90deg, #7B4397 0%, #DC2430 100%)",
-  "linear-gradient(90deg, #355C7D 0%, #6C5B7B 100%)",
+  "linear-gradient(90deg, #912691 0%, #4D14C4 100%)",
+  "linear-gradient(90deg, #772976 0%, #E54156 100%)",
+  "linear-gradient(90deg, #14252A 0%, #1F6F7A 55%, #12B7B6 100%)",
+  "linear-gradient(90deg, #1C2A4A 0%, #2C5234 100%)",
+  "linear-gradient(90deg, #912691 0%, #474D9B 100%)",
+  "linear-gradient(90deg, #3A1D63 0%, #1C2A4A 100%)",
 ];
 
 const gradientFor = (name: string) => {
@@ -65,16 +66,27 @@ const SORTS: { key: SortKey; label: string }[] = [
   { key: "az", label: "A-Z" },
 ];
 
-function Stat(props: { value: number | null; label: string }) {
+function StatCell(props: { value: React.ReactNode; label: string; divider?: boolean }) {
   return (
-    <Stack gap={0} align="center">
-      <Text c="white" fw={700} fz={20} lh={1.1}>
-        {props.value ?? "-"}
+    <Box
+      style={{
+        flex: 1,
+        borderLeft: props.divider ? "1px solid #2a2637" : undefined,
+      }}
+    >
+      <Text c="#fff" fw={800} fz={18} lh={1.2}>
+        {props.value}
       </Text>
-      <Text c="dimmed" fz={14} tt="uppercase" fw={600}>
+      <Text
+        c="#b6b1bc"
+        fz={14}
+        fw={700}
+        tt="uppercase"
+        style={{ letterSpacing: "0.12em" }}
+      >
         {props.label}
       </Text>
-    </Stack>
+    </Box>
   );
 }
 
@@ -83,67 +95,136 @@ function MemberGridCard({ member }: { member: MemberCard }) {
   const go = () => navigate(`/Users/${encodeURIComponent(member.username)}`);
   const role = member.permissions && ROLE_COLOR[member.permissions] ? member.permissions : undefined;
   const joined = monthYear(member.joinedAt?.seconds);
+  const initials = member.username.slice(0, 2).toUpperCase() || "??";
 
   return (
-    <Card
+    <Box
       {...clickable(go)}
       aria-label={`View ${member.username}'s profile`}
-      bg="#232122"
-      radius="lg"
-      p={0}
-      withBorder
-      style={{ overflow: "hidden", cursor: "pointer" }}
+      className="dc-card"
+      style={{ display: "block", overflow: "hidden", cursor: "pointer", textDecoration: "none" }}
     >
-      <Box h={54} style={{ background: gradientFor(member.username) }} />
-      <Stack gap={6} align="center" px={14} pb={14} mt={-28}>
-        <Avatar src={member.avatar} size={72} radius="50%" style={{ border: "3px solid #232122" }}>
-          {member.username.slice(0, 2).toUpperCase()}
+      <Box
+        h={64}
+        style={{
+          background: gradientFor(member.username),
+          clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 14px), 0 100%)",
+        }}
+      />
+      <Box
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "0 18px 22px",
+          marginTop: -34,
+          textAlign: "center",
+        }}
+      >
+        <Avatar
+          src={member.avatar}
+          size={68}
+          radius="50%"
+          styles={{
+            root: { border: "3px solid #17151c", background: "#141318" },
+            placeholder: {
+              background: "#141318",
+              color: "#fff",
+              fontFamily: DISPLAY_FONT,
+              fontSize: 22,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+            },
+          }}
+        >
+          {initials}
         </Avatar>
-        <Stack gap={0} align="center">
-          <Text c="white" fw={600} fz={20} lineClamp={1}>
-            {member.username || "Unnamed"}
+
+        <Text
+          fz={18}
+          fw={700}
+          c="#fff"
+          mt={10}
+          lineClamp={1}
+          w="100%"
+          style={{ fontFamily: DISPLAY_FONT }}
+        >
+          {member.username || "Unnamed"}
+        </Text>
+
+        {role && (
+          <Text
+            fz={14}
+            fw={700}
+            tt="uppercase"
+            mt={4}
+            style={{ color: ROLE_COLOR[role], fontFamily: DISPLAY_FONT, letterSpacing: "0.16em" }}
+          >
+            {role}
           </Text>
-          {role && (
-            <Text fz={14} fw={700} tt="uppercase" style={{ color: ROLE_COLOR[role], letterSpacing: 0.5 }}>
-              {role}
-            </Text>
-          )}
-        </Stack>
+        )}
 
         {member.featured && (
-          <Group gap={8} wrap="nowrap" w="100%" mt={4} bg="#1c1a1b" py={6} px={10} style={{ borderRadius: 8 }}>
-            <Avatar src={member.featured.imageURL} size={26} radius="sm">
-              {member.featured.name.slice(0, 1)}
+          <Group
+            gap={10}
+            wrap="nowrap"
+            w="100%"
+            mt={12}
+            p={0}
+            style={{
+              background: "#141318",
+              border: "1px solid #2a2637",
+              padding: "8px 12px",
+            }}
+          >
+            <Avatar src={member.featured.imageURL} size={28} radius={0}>
+              {member.featured.name.slice(0, 1).toUpperCase()}
             </Avatar>
-            <Box style={{ minWidth: 0 }}>
-              <Text c="dimmed" fz={14} tt="uppercase" fw={700}>
+            <Box style={{ minWidth: 0, textAlign: "left" }}>
+              <Text
+                c="#FFD074"
+                fz={14}
+                fw={700}
+                tt="uppercase"
+                style={{ fontFamily: DISPLAY_FONT, letterSpacing: "0.14em" }}
+              >
                 Featured
               </Text>
-              <Text c="white" fz={14} lineClamp={1}>
+              <Text c="#fff" fz={14} lineClamp={1}>
                 {member.featured.name}
               </Text>
             </Box>
           </Group>
         )}
 
-        <Group justify="space-between" w="100%" mt={6} px={4}>
-          <Stat value={member.postCount} label="Posts" />
-          <Stat value={member.charCount} label="Chars" />
-          <Stat value={member.pokemonCount} label="Pokemon" />
-        </Group>
+        <Box
+          style={{
+            display: "flex",
+            gap: 0,
+            width: "100%",
+            borderTop: "1px solid #2a2637",
+            marginTop: 14,
+            paddingTop: 14,
+          }}
+        >
+          <StatCell value={member.postCount || "-"} label="Posts" />
+          <StatCell value={member.charCount} label="Chars" divider />
+          <StatCell value={member.pokemonCount} label="Pokemon" divider />
+        </Box>
 
         {joined && (
-          <Text c="dimmed" fz={14} mt={2}>
+          <Text c="#b6b1bc" fz={14} mt={14}>
             Joined {joined}
           </Text>
         )}
-      </Stack>
-    </Card>
+      </Box>
+    </Box>
   );
 }
 
 export default function Users() {
   const { data, isPending } = useQuery({ queryKey: ["members"], queryFn: getMembers });
+  const { isOverSm } = useMediaQuery();
   const [search, setSearch] = React.useState("");
   const [role, setRole] = React.useState("All");
   const [sort, setSort] = React.useState<SortKey>("active");
@@ -177,9 +258,17 @@ export default function Users() {
               placeholder="Search by username..."
               aria-label="Search members by username"
               leftSection={<IconSearch size={16} />}
-              radius="xl"
-              w={{ base: "100%", sm: 320 }}
-              styles={{ input: { background: "rgba(0,0,0,0.25)", border: "none", color: "white" } }}
+              radius={0}
+              w={isOverSm ? 300 : "100%"}
+              styles={{
+                input: {
+                  background: "rgba(10,9,13,0.5)",
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  color: "#fff",
+                  height: 50,
+                  fontSize: 15,
+                },
+              }}
             />
           }
           mb={0}
@@ -187,38 +276,68 @@ export default function Users() {
       </Container>
 
       <Container size="lg" py={20} px={{ base: 12, sm: 20 }}>
-        <Group justify="space-between" align="center" mb={18} wrap="wrap" gap={12}>
-          <Group gap={8}>
-            {ROLES.map((r) => (
-              <Box
-                key={r}
-                {...clickable(() => setRole(r))}
-                aria-label={`Filter by ${r}`}
-                px={14}
-                py={6}
-                style={{
-                  borderRadius: 999,
-                  cursor: "pointer",
-                  background: role === r ? "#8C2595" : "#2b2a2b",
-                }}
-              >
-                <Text fz={14} fw={600} c={role === r ? "white" : "dimmed"}>
-                  {r}
-                </Text>
-              </Box>
-            ))}
+        <Group justify="space-between" align="center" mb={20} wrap="wrap" gap={16}>
+          <Group gap={8} wrap="wrap">
+            {ROLES.map((r) => {
+              const on = role === r;
+              return (
+                <UnstyledButton
+                  key={r}
+                  onClick={() => setRole(r)}
+                  aria-label={`Filter by ${r}`}
+                  aria-pressed={on}
+                  className="dc-card"
+                  style={{
+                    flex: "none",
+                    background: on ? "linear-gradient(90deg, #912691, #4D14C4)" : undefined,
+                    border: on ? "1px solid transparent" : undefined,
+                    color: "#fff",
+                    fontFamily: DISPLAY_FONT,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    padding: "11px 20px",
+                  }}
+                >
+                  {r.toUpperCase()}
+                </UnstyledButton>
+              );
+            })}
           </Group>
-          <Group gap={12}>
-            <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
+
+          <Group gap={14} align="center" wrap="wrap">
+            <Text
+              fz={14}
+              fw={700}
+              c="#b6b1bc"
+              tt="uppercase"
+              style={{ fontFamily: DISPLAY_FONT, letterSpacing: "0.16em" }}
+            >
               Sort
             </Text>
-            {SORTS.map((s) => (
-              <Box key={s.key} {...clickable(() => setSort(s.key))} aria-label={`Sort by ${s.label}`} style={{ cursor: "pointer" }}>
-                <Text fz={14} fw={600} c={sort === s.key ? "grape.2" : "dimmed"}>
-                  {s.label}
-                </Text>
-              </Box>
-            ))}
+            {SORTS.map((s) => {
+              const on = sort === s.key;
+              return (
+                <UnstyledButton
+                  key={s.key}
+                  onClick={() => setSort(s.key)}
+                  aria-label={`Sort by ${s.label}`}
+                  aria-pressed={on}
+                  style={{
+                    background: "transparent",
+                    color: on ? "#FFD074" : "#b6b1bc",
+                    fontFamily: DISPLAY_FONT,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    padding: "4px 2px",
+                    borderBottom: `2px solid ${on ? "#FFD074" : "transparent"}`,
+                  }}
+                >
+                  {s.label.toUpperCase()}
+                </UnstyledButton>
+              );
+            })}
           </Group>
         </Group>
 
@@ -226,14 +345,22 @@ export default function Users() {
           <SectionLoader />
         ) : !members.length ? (
           <Center py={60}>
-            <Text c="dimmed">No members match your filters.</Text>
+            <Text fz={15} c="#b6b1bc" ta="center">
+              No trainers match that search.
+            </Text>
           </Center>
         ) : (
-          <SimpleGrid cols={{ base: 1, xs: 2, sm: 3, md: 4, lg: 5 }} spacing="md">
+          <Box
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+              gap: 16,
+            }}
+          >
             {members.map((m) => (
               <MemberGridCard key={m.id} member={m} />
             ))}
-          </SimpleGrid>
+          </Box>
         )}
       </Container>
     </Box>

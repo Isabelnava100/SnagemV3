@@ -1,9 +1,11 @@
 import {
+  Anchor,
   Badge,
   Box,
   Button,
   Card,
   Container,
+  Flex,
   Group,
   Image,
   SimpleGrid,
@@ -11,9 +13,18 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
+import { type CSSProperties, type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { PageHero } from "../../components/common/PageHero";
+import snagLogo from "../../assets/images/snag-hand-logo.png";
+import {
+  HERO_BORDER,
+  HERO_CLIP,
+  HERO_GRADIENT,
+  HERO_STRIPES,
+  PageHero,
+} from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
@@ -26,48 +37,280 @@ import {
   getPublishedPosts,
 } from "../../queries/blog";
 
+const DISPLAY_FONT = "var(--font-display, 'Quantico', sans-serif)";
+
 function PostCard({ post }: { post: BlogPost }) {
+  const date = formatPostDate(post.publishedAt ?? post.createdAt);
   return (
     <Card
       component={Link}
       to={`/Blog/${post.id}`}
-      withBorder
-      radius="lg"
+      className="dc-card"
+      radius={0}
       p={0}
-      bg="#1c1a1e"
-      style={{ borderColor: "#332e38", overflow: "hidden" }}
+      bg="#17151c"
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        textDecoration: "none",
+        transition: "transform .15s ease, border-color .25s ease",
+        "&:hover": { transform: "translateY(-3px)" },
+      }}
     >
-      {post.coverImageUrl && (
+      {post.coverImageUrl ? (
         <Image
           src={post.coverImageUrl}
           alt={`Cover art for ${post.title}`}
           h={170}
           fit="cover"
           loading="lazy"
+          style={{ borderBottom: "1px solid #2a2637" }}
+        />
+      ) : (
+        <Box
+          h={170}
+          aria-hidden
+          style={{ background: "#141318", borderBottom: "1px solid #2a2637" }}
         />
       )}
-      <Stack gap={8} p="lg">
-        <Group gap={8}>
+      <Stack gap={9} p={22}>
+        <Group gap={8} align="center">
           {!post.published && (
             <Badge color="yellow" variant="light" size="sm">
               Draft
             </Badge>
           )}
-          <Text fz={13} c="dimmed">
-            {formatPostDate(post.publishedAt ?? post.createdAt)}
-          </Text>
+          {date && (
+            <Text
+              fz={14}
+              fw={700}
+              tt="uppercase"
+              style={{ letterSpacing: "0.18em", color: "#12B7B6" }}
+            >
+              {date}
+            </Text>
+          )}
         </Group>
-        <Title order={2} fz={20} fw={700} c="white" lh="md">
+        <Title
+          order={2}
+          fz={19}
+          fw={700}
+          c="white"
+          style={{ fontFamily: DISPLAY_FONT, lineHeight: 1.3 }}
+        >
           {post.title}
         </Title>
-        <Text fz={14} c="dimmed" lineClamp={3}>
+        <Text fz={14} c="#b6b1bc" lineClamp={3} style={{ lineHeight: 1.6 }}>
           {post.description}
         </Text>
-        <Text fz={13} c="gray.5">
-          By {post.author}
+        <Text fz={14} c="#b6b1bc" mt={4}>
+          by {post.author}
         </Text>
       </Stack>
     </Card>
+  );
+}
+
+/**
+ * "Never miss a post" subscribe band: the striped-gradient hero surface reused
+ * as a full-width call to action. The form is a local, no-backend capture that
+ * acknowledges with a polite status message (wire to a list provider later).
+ */
+export function SubscribeBand() {
+  const isMobile = useMediaQuery("(max-width: 800px)");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+
+  const submit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSubscribed(true);
+  };
+
+  const labelStyle: CSSProperties = {
+    fontFamily: DISPLAY_FONT,
+    fontSize: 14,
+    fontWeight: 700,
+    letterSpacing: "0.18em",
+    color: "#FFD074",
+    marginBottom: 6,
+    display: "block",
+    textTransform: "uppercase",
+  };
+  const inputStyle: CSSProperties = {
+    background: "#141318",
+    border: "1px solid #3a3550",
+    color: "#fff",
+    fontSize: 15,
+    padding: "16px 18px",
+    width: "100%",
+    outline: "none",
+    borderRadius: 0,
+    fontFamily: "inherit",
+  };
+
+  return (
+    <Box
+      component="section"
+      mt={isMobile ? 40 : 56}
+      p={{ base: 24, sm: 44 }}
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        background: `${HERO_STRIPES}, ${HERO_GRADIENT}`,
+        border: `1px solid ${HERO_BORDER}`,
+        clipPath: HERO_CLIP,
+      }}
+    >
+      <Flex
+        direction={isMobile ? "column" : "row"}
+        gap={isMobile ? 24 : 44}
+        align={isMobile ? "stretch" : "flex-end"}
+        justify="space-between"
+        style={{ position: "relative" }}
+      >
+        <Box maw={480} miw={0}>
+          <Group gap={12} align="center" mb={14} wrap="nowrap">
+            <Box
+              aria-hidden
+              style={{ width: 36, height: 3, background: "#E54156", flexShrink: 0 }}
+            />
+            <Text
+              fz={14}
+              fw={700}
+              c="#FFD074"
+              tt="uppercase"
+              style={{ letterSpacing: "0.3em", fontFamily: DISPLAY_FONT }}
+            >
+              Never Miss a Post
+            </Text>
+          </Group>
+          <Text
+            component="h2"
+            c="white"
+            fw={700}
+            fz={{ base: 26, sm: 36 }}
+            style={{
+              fontFamily: DISPLAY_FONT,
+              lineHeight: 1.05,
+              letterSpacing: "0.02em",
+              margin: 0,
+            }}
+          >
+            Subscribe to{" "}
+            <Text span inherit c="#FFD074">
+              the Blog
+            </Text>
+          </Text>
+          <Text fz={16} c="#b6b1bc" mt={12} style={{ lineHeight: 1.55 }}>
+            Announcements, upcoming events and story retrospectives, straight to
+            your inbox. No spam, unsubscribe anytime.
+          </Text>
+        </Box>
+
+        <form
+          onSubmit={submit}
+          style={{
+            position: "relative",
+            flex: isMobile ? "1 1 100%" : "1 1 auto",
+            minWidth: 0,
+            maxWidth: "100%",
+          }}
+        >
+          <Flex gap={12} align="flex-end" wrap="wrap">
+            <div style={{ display: "flex", flexDirection: "column", flex: "1 1 170px", minWidth: 0 }}>
+              <label htmlFor="sub-name" style={labelStyle}>
+                Name
+              </label>
+              <input
+                id="sub-name"
+                type="text"
+                name="name"
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", flex: "1 1 200px", minWidth: 0 }}>
+              <label htmlFor="sub-email" style={labelStyle}>
+                Email
+              </label>
+              <input
+                id="sub-email"
+                type="email"
+                name="email"
+                placeholder="you@email.com"
+                aria-label="Your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+            <button
+              type="submit"
+              className="dc-cta dc-cta-red"
+              style={{ flex: isMobile ? "1 1 100%" : "0 0 auto" }}
+            >
+              Subscribe
+            </button>
+          </Flex>
+          {subscribed && (
+            <Text
+              role="status"
+              aria-live="polite"
+              mt={12}
+              fz={14}
+              c="#FFD074"
+              style={{ fontFamily: DISPLAY_FONT, letterSpacing: "0.08em" }}
+            >
+              Thanks for subscribing!
+            </Text>
+          )}
+        </form>
+      </Flex>
+    </Box>
+  );
+}
+
+/** Compact page footer echoing the marketing footer, scoped to the blog. */
+export function BlogFooter() {
+  const isMobile = useMediaQuery("(max-width: 800px)");
+  return (
+    <Box
+      component="footer"
+      mt={isMobile ? 32 : 44}
+      px={isMobile ? 20 : 40}
+      py={20}
+      style={{ background: "#0a090d", border: "1px solid #17151c" }}
+    >
+      <Flex
+        direction={isMobile ? "column" : "row"}
+        align="center"
+        justify="space-between"
+        gap={16}
+      >
+        <Group gap={10} align="center">
+          <img src={snagLogo} alt="Snagem Guild" width={26} height={26} />
+          <Text fz={14} c="#b6b1bc">
+            &copy; 2026 The Snagem Guild
+          </Text>
+        </Group>
+        <Group gap={26}>
+          <Anchor component={Link} to="/Policies" fz={14} c="#b6b1bc" underline="never">
+            Policies
+          </Anchor>
+          <Anchor component={Link} to="/Library" fz={14} c="#b6b1bc" underline="never">
+            Library
+          </Anchor>
+          <Anchor component={Link} to="/Announcements" fz={14} c="#b6b1bc" underline="never">
+            News
+          </Anchor>
+        </Group>
+      </Flex>
+    </Box>
   );
 }
 
@@ -104,9 +347,16 @@ export default function Blog() {
       />
       <PageHero
         eyebrow="From the Guild Desk"
-        title="The Guild Blog"
+        title={
+          <>
+            The Guild{" "}
+            <Text span inherit c="#FFD074">
+              Blog
+            </Text>
+          </>
+        }
         subtitle="Stories, dev updates and guides from the Snagem Guild, a Pokemon roleplay community."
-        mb={24}
+        mb={32}
       />
 
       {admin && (
@@ -145,6 +395,9 @@ export default function Blog() {
           ))}
         </SimpleGrid>
       )}
+
+      <SubscribeBand />
+      <BlogFooter />
     </Container>
   );
 }

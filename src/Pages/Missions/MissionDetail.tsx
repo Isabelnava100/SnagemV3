@@ -1,13 +1,15 @@
-import { Badge, Box, Button, Container, Flex, Group, Image, Stack, Text } from "@mantine/core";
-import { IconArrowLeft, IconArrowRight, IconMapPin, IconSparkles } from "@tabler/icons-react";
+import { Box, Button, Container, Group, Image, Stack, Text, UnstyledButton } from "@mantine/core";
+import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { HERO_CLIP, HERO_GRADIENT, HERO_STRIPES } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
+import useMediaQuery from "../../hooks/useMediaQuery";
 import { pokemonData } from "../../data/pokemon";
 import { postsToBeatStar, starForDex } from "../../lib/encounterStars";
 import { withSuffix } from "../../lib/seo/site";
@@ -24,12 +26,17 @@ import { getStarOverrides } from "../../queries/admin";
  * for grading automatically, so there is no separate submit form here.
  */
 
-const TIER_COLOR: Record<string, string> = {
-  Story: "#7C3AED",
-  Standard: "#12B886",
-  Master: "#7048E8",
-  Exceptional: "#E8590C",
+const FONT_DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
+const HEADER_GRADIENT = "linear-gradient(90deg, #762B77 7%, #17F1F0 66%)";
+
+// Type badge (STORY purple, STANDARD cyan, plus Master/Exceptional variants).
+const TYPE_BADGE: Record<string, { bg: string; text: string }> = {
+  Story: { bg: "#772976", text: "#fff" },
+  Standard: { bg: "#12B7B6", text: "#06302f" },
+  Master: { bg: "#4D14C4", text: "#fff" },
+  Exceptional: { bg: "#FFD074", text: "#1A1B1E" },
 };
+const typeBadge = (tier?: string) => TYPE_BADGE[tier ?? ""] ?? { bg: "#12B7B6", text: "#06302f" };
 
 const REWARD_LABEL: Record<string, string> = {
   snag: "Snag a Pokemon",
@@ -38,80 +45,71 @@ const REWARD_LABEL: Record<string, string> = {
   egg: "Pokemon Egg",
 };
 
-const BRIEF_GRADIENT = "linear-gradient(90deg, #c026d3, #6366f1, #22d3ee)";
-const REWARD_GRADIENT = "linear-gradient(90deg, #f76b1c, #e0446b)";
-const HERO_STRIPES =
-  "repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 12px, transparent 12px, transparent 24px)";
-const HERO_GRADIENT = "linear-gradient(120deg, #3a1d63 0%, #2c2352 55%, #1c2a4a 100%)";
-
 function toLines(value?: string | string[]): string[] {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
 }
 
-/* --------------------------------- Panels ---------------------------------- */
+/* --------------------------------- Pieces ---------------------------------- */
 
-function Panel(props: { children: React.ReactNode; accent?: boolean }) {
+/** Angular panel with a full-width purple-to-cyan gradient header bar. */
+function GradientPanel(props: { title: string; bodyPad: string; bodyGap: number; children: React.ReactNode }) {
   return (
-    <Box
-      style={{
-        borderRadius: 14,
-        background: props.accent ? "#17151c" : "#161319",
-        border: "1px solid #232028",
-        overflow: "hidden",
-      }}
-    >
-      {props.children}
+    <Box style={{ overflow: "hidden", border: "1px solid #2a2637" }}>
+      <Box px={26} py={15} style={{ background: HEADER_GRADIENT }}>
+        <Text
+          component="h2"
+          fw={700}
+          c="white"
+          fz={16}
+          tt="uppercase"
+          m={0}
+          style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.14em" }}
+        >
+          {props.title}
+        </Text>
+      </Box>
+      <Box
+        p={props.bodyPad}
+        style={{ background: "#17151c", display: "flex", flexDirection: "column", gap: props.bodyGap }}
+      >
+        {props.children}
+      </Box>
     </Box>
   );
 }
 
-/** A card with a full-width gradient header bar. */
-function GradientPanel(props: { title: string; gradient: string; children: React.ReactNode }) {
-  return (
-    <Panel>
-      <Box px="md" py={10} style={{ background: props.gradient }}>
-        <Text fw={800} c="white" fz={16}>
-          {props.title}
-        </Text>
-      </Box>
-      <Box p="md">{props.children}</Box>
-    </Panel>
-  );
-}
-
-function LineList(props: { label: string; color: string; lines: string[] }) {
+/** Dark inner well with an uppercase kicker + arrowed lines. */
+function LineWell(props: { label: string; color: string; lines: string[] }) {
   if (!props.lines.length) return null;
   return (
-    <Panel>
-      <Box p="md">
-        <Text fz={14} fw={800} tt="uppercase" c={props.color} mb={10} style={{ letterSpacing: 1 }}>
-          {props.label}
-        </Text>
-        <Stack gap={8}>
-          {props.lines.map((line, i) => (
-            <Group key={i} gap={8} wrap="nowrap" align="flex-start">
-              <IconArrowRight size={14} color={props.color} style={{ marginTop: 3, flexShrink: 0 }} />
-              <Text fz={16} c="gray.4">
-                {line}
-              </Text>
-            </Group>
-          ))}
-        </Stack>
-      </Box>
-    </Panel>
+    <Box style={{ background: "#0e0d11", border: "1px solid #232028" }} p="22px 24px">
+      <Text fz={14} fw={700} tt="uppercase" c={props.color} mb={12} style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.12em" }}>
+        {props.label}
+      </Text>
+      <Stack gap={8}>
+        {props.lines.map((line, i) => (
+          <Group key={i} gap={12} wrap="nowrap" align="flex-start">
+            <IconArrowRight size={16} color={props.color} style={{ marginTop: 3, flexShrink: 0 }} />
+            <Text fz={16} c="#d7d2de" style={{ lineHeight: 1.55 }}>
+              {line}
+            </Text>
+          </Group>
+        ))}
+      </Stack>
+    </Box>
   );
 }
 
 function RewardRow(props: { icon: React.ReactNode; title: string; sub: string }) {
   return (
-    <Group gap={12} wrap="nowrap" p={12} style={{ borderRadius: 10, background: "#0e0c14" }}>
+    <Group gap={16} wrap="nowrap" p="16px 18px" style={{ background: "#0e0d11", border: "1px solid #232028" }}>
       {props.icon}
       <Box style={{ minWidth: 0 }}>
         <Text fz={16} fw={700} c="white" lineClamp={1}>
           {props.title}
         </Text>
-        <Text fz={14} c="dimmed" lineClamp={1}>
+        <Text fz={14} c="#8f8a99" lineClamp={1}>
           {props.sub}
         </Text>
       </Box>
@@ -119,30 +117,25 @@ function RewardRow(props: { icon: React.ReactNode; title: string; sub: string })
   );
 }
 
-function CoinIcon() {
+function RewardGlyph(props: { bg: string; text?: string; glyph?: string }) {
   return (
     <Box
       style={{
-        width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
-        background: "#F5C842", display: "flex", alignItems: "center", justifyContent: "center",
+        flex: "none",
+        width: 38,
+        height: 38,
+        borderRadius: "50%",
+        background: props.bg,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      <Text fz={16} fw={800} c="#3a2a05">
-        C
-      </Text>
-    </Box>
-  );
-}
-
-function DotIcon({ color }: { color: string }) {
-  return (
-    <Box
-      style={{
-        width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
-        background: "#1c1a26", display: "flex", alignItems: "center", justifyContent: "center",
-      }}
-    >
-      <Box style={{ width: 12, height: 12, borderRadius: "50%", background: color }} />
+      {props.glyph && (
+        <Text fz={15} fw={800} c={props.text ?? "#1A1B1E"}>
+          {props.glyph}
+        </Text>
+      )}
     </Box>
   );
 }
@@ -163,7 +156,7 @@ const starOfSlug = (slug: string, overrides?: Record<string, number>) => {
  * before picking the job up. Required foes (from the briefing) are flagged;
  * they are the minimum to beat for the grade, everything else is optional.
  */
-function EncountersPanel({
+function EncountersWell({
   mission,
   starOverrides,
 }: {
@@ -176,56 +169,67 @@ function EncountersPanel({
   const sorted = [...pool].sort((a, b) => Number(required.has(b)) - Number(required.has(a)));
 
   return (
-    <Panel>
-      <Box p="md">
-        <Text fz={14} fw={800} tt="uppercase" c="cyan.4" mb={8} style={{ letterSpacing: 1 }}>
-          Possible Encounters
-        </Text>
-        <Text fz={14} c="dimmed" mb={12}>
-          You choose when to take on each opponent inside your thread.
-          {required.size > 0 &&
-            " The ones marked Required come from the briefing; beating them is the minimum to clear the mission."}
-        </Text>
-        <Group gap={8}>
-          {sorted.map((slug) => (
-            <Stack key={slug} gap={2} align="center" w={72}>
-              <Box
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 10,
-                  background: "#0e0c14",
-                  border: `1px solid ${required.has(slug) ? "#f76b1c" : "#232028"}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+    <Box style={{ background: "#0e0d11", border: "1px solid #232028" }} p="24px 26px">
+      <Text fz={14} fw={700} tt="uppercase" c="#12B7B6" mb={10} style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.12em" }}>
+        Possible Encounters
+      </Text>
+      <Text fz={14} c="#8f8a99" mb={20} maw={640} style={{ lineHeight: 1.55 }}>
+        You choose when to take on each opponent inside your thread.
+        {required.size > 0 &&
+          " The ones marked Required come from the briefing; beating them is the minimum to clear the mission."}
+      </Text>
+      <Box
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))",
+          gap: 16,
+        }}
+      >
+        {sorted.map((slug) => (
+          <Stack key={slug} gap={6} align="center" style={{ textAlign: "center" }}>
+            <Box
+              style={{
+                width: "100%",
+                aspectRatio: "1",
+                background: "#0a090d",
+                border: `1px solid ${required.has(slug) ? "#E8843F" : "#232028"}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Image
+                src={getPokemonImageURL(slug)}
+                alt={pokemonNameBySlug.get(slug) ?? slug}
+                w="60%"
+                h="60%"
+                fit="contain"
+                style={{ imageRendering: "pixelated" }}
+              />
+            </Box>
+            <Text fz={14} c="#fff" lineClamp={1} w="100%">
+              {pokemonNameBySlug.get(slug) ?? slug}
+            </Text>
+            <Text fz={14} c="#FFD074" fw={700}>
+              {starOfSlug(slug, starOverrides)}★ ·{" "}
+              {postsToBeatStar(starOfSlug(slug, starOverrides))} posts
+            </Text>
+            {required.has(slug) && (
+              <Text
+                component="span"
+                fz={14}
+                fw={700}
+                c="#1A1B1E"
+                px={8}
+                style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.06em", background: "#FFD074" }}
               >
-                <Image
-                  src={getPokemonImageURL(slug)}
-                  alt={pokemonNameBySlug.get(slug) ?? slug}
-                  w={44}
-                  h={44}
-                  fit="contain"
-                />
-              </Box>
-              <Text fz={14} c="gray.4" ta="center" lineClamp={1} w="100%">
-                {pokemonNameBySlug.get(slug) ?? slug}
+                REQUIRED
               </Text>
-              <Text fz={12} c="gold.1" fw={700}>
-                {starOfSlug(slug, starOverrides)}★ ·{" "}
-                {postsToBeatStar(starOfSlug(slug, starOverrides))} posts
-              </Text>
-              {required.has(slug) && (
-                <Badge size="xs" color="gold.2" variant="light">
-                  Required
-                </Badge>
-              )}
-            </Stack>
-          ))}
-        </Group>
+            )}
+          </Stack>
+        ))}
       </Box>
-    </Panel>
+    </Box>
   );
 }
 
@@ -235,6 +239,7 @@ export default function MissionDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isOverMd } = useMediaQuery();
   const [pickUpError, setPickUpError] = React.useState("");
   const { data: mission, isPending } = useQuery({
     queryKey: ["mission", id],
@@ -276,17 +281,15 @@ export default function MissionDetail() {
           >
             All missions
           </Button>
-          <Panel>
-            <Box p="lg">
-              <Text c="white" fw={800} fz={28} mb={8}>
-                Mission not found
-              </Text>
-              <Text c="dimmed" fz={16}>
-                This mission may have been retired or the link is out of date. Head back to the Vault
-                to pick another job.
-              </Text>
-            </Box>
-          </Panel>
+          <Box style={{ background: "#17151c", border: "1px solid #2a2637" }} p="lg">
+            <Text c="white" fw={800} fz={28} mb={8}>
+              Mission not found
+            </Text>
+            <Text c="dimmed" fz={16}>
+              This mission may have been retired or the link is out of date. Head back to the Vault
+              to pick another job.
+            </Text>
+          </Box>
         </Stack>
       </Container>
     );
@@ -295,7 +298,7 @@ export default function MissionDetail() {
   const objectives = toLines(mission.objective);
   const oppositions = toLines(mission.opposition);
   const rewardLabel = mission.pokemon_reward ? REWARD_LABEL[mission.pokemon_reward.kind] : undefined;
-  const tierColor = mission.tier ? TIER_COLOR[mission.tier] ?? "#8a8399" : "#8a8399";
+  const tb = typeBadge(mission.tier);
   // Threat reading from the encounter pool: the toughest star on the job and
   // the minimum battle posts to clear every required foe.
   const requiredSlugs = mission.requiredEncounters ?? [];
@@ -319,191 +322,248 @@ export default function MissionDetail() {
         description={seoDescription || undefined}
         canonicalPath={`/Missions/${id}`}
       />
-      {/* Full-bleed striped hero */}
-      <Box
-        px={{ base: 16, sm: 40 }}
-        pt={{ base: 20, sm: 28 }}
-        pb={{ base: 24, sm: 36 }}
-        style={{ background: `${HERO_STRIPES}, ${HERO_GRADIENT}` }}
-      >
-        <Container size="lg" px={0}>
-          <Button
-            component={Link}
-            to="/Missions"
-            radius="xl"
-            size="sm"
-            leftSection={<IconArrowLeft size={16} />}
-            styles={{ root: { background: "rgba(0,0,0,0.3)", color: "#fff", border: "1px solid #4a4368" } }}
-            mb="lg"
-          >
-            All missions
-          </Button>
-
-          {mission.tier && (
-            <Text
-              display="inline-block"
-              fz={14}
-              fw={700}
-              c="#fff"
-              px={12}
-              py={4}
-              mb={12}
-              style={{ borderRadius: 999, background: tierColor }}
+      <Container size="lg" pt={{ base: 20, sm: 28 }} pb={{ base: 24, sm: 48 }} px={{ base: 16, sm: 24 }}>
+        {/* Striped hero */}
+        <Box
+          p={{ base: 24, sm: 40 }}
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            clipPath: HERO_CLIP,
+            background: `${HERO_STRIPES}, ${HERO_GRADIENT}`,
+            border: "1px solid #3a3550",
+          }}
+        >
+          <Group gap={14} align="center" wrap="wrap" mb={22}>
+            <UnstyledButton
+              component={Link}
+              to="/Missions"
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                fontFamily: FONT_DISPLAY,
+                fontWeight: 700,
+                fontSize: 14,
+                letterSpacing: "0.12em",
+                color: "#fff",
+                padding: "12px 20px",
+                background: "rgba(0,0,0,0.28)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)",
+                "&:hover": { borderColor: "#E54156", color: "#E54156" },
+              }}
             >
-              {mission.tier}
-            </Text>
-          )}
-          <Text component="h1" c="white" fw={800} fz={{ base: 34, sm: 48 }} style={{ lineHeight: 1.05, margin: 0 }}>
+              <IconArrowLeft size={16} />
+              ALL MISSIONS
+            </UnstyledButton>
+            {mission.tier && (
+              <Text
+                component="span"
+                fz={14}
+                fw={700}
+                tt="uppercase"
+                px={14}
+                py={6}
+                style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.12em", color: tb.text, background: tb.bg }}
+              >
+                {mission.tier}
+              </Text>
+            )}
+          </Group>
+
+          <Text
+            component="h1"
+            c="white"
+            fw={700}
+            fz={{ base: 34, sm: 54 }}
+            m={0}
+            style={{ fontFamily: FONT_DISPLAY, lineHeight: 1, letterSpacing: "0.01em" }}
+          >
             {mission.title}
           </Text>
-          <Group gap={10} mt={12} wrap="wrap">
+
+          <Group gap={8} align="center" mt={16} mb={24} wrap="wrap">
             {mission.location && (
-              <Group gap={4} wrap="nowrap">
-                <IconMapPin size={15} color="#f76b1c" />
-                <Text fz={16} c="gray.3">
+              <>
+                <Text component="span" c="#E54156" fz={17}>
+                  ●
+                </Text>
+                <Text fz={17} c="#cfc9d6">
                   {mission.location}
                 </Text>
-              </Group>
+              </>
             )}
             {mission.location && mission.times_taken != null && (
-              <Text c="dimmed" fz={16}>
-                &middot;
+              <Text c="#6f6a78" fz={17}>
+                ·
               </Text>
             )}
             {mission.times_taken != null && (
-              <Text fz={16} c="gray.3">
+              <Text fz={17} c="#cfc9d6">
                 Taken {mission.times_taken}&times; guild-wide
               </Text>
             )}
           </Group>
+
           {(threatStar > 0 || requiredSlugs.length > 0) && (
-            <Group gap={10} mt={16} wrap="wrap">
+            <Group gap={16} wrap="wrap">
               {threatStar > 0 && (
-                <Box px={14} py={8} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #4a4368" }}>
-                  <Text fz={12} c="dimmed" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
+                <Box
+                  p="16px 22px"
+                  style={{
+                    background: "rgba(10,8,14,0.5)",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    borderLeft: "3px solid #FFD074",
+                    minWidth: 200,
+                  }}
+                >
+                  <Text fz={14} fw={700} c="#b6b1bc" tt="uppercase" mb={8} style={{ letterSpacing: "0.16em" }}>
                     Threat level
                   </Text>
-                  <Text fz={18} fw={800} c="#F5C842">
-                    {"★".repeat(threatStar)} up to {threatStar}★
+                  <Text fz={22} fw={800} c="#FFD074">
+                    {"★".repeat(threatStar)}{" "}
+                    <Text component="span" c="white" fz={20}>
+                      up to {threatStar}★
+                    </Text>
                   </Text>
                 </Box>
               )}
               {requiredSlugs.length > 0 && (
-                <Box px={14} py={8} style={{ borderRadius: 12, background: "rgba(0,0,0,0.35)", border: "1px solid #4a4368" }}>
-                  <Text fz={12} c="dimmed" tt="uppercase" fw={700} style={{ letterSpacing: 1 }}>
+                <Box
+                  p="16px 22px"
+                  style={{
+                    background: "rgba(10,8,14,0.5)",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    borderLeft: "3px solid #E54156",
+                    minWidth: 200,
+                  }}
+                >
+                  <Text fz={14} fw={700} c="#b6b1bc" tt="uppercase" mb={8} style={{ letterSpacing: "0.16em" }}>
                     Set foes
                   </Text>
-                  <Text fz={18} fw={800} c="white">
+                  <Text fz={20} fw={800} c="white">
                     {requiredSlugs.length} to beat · about {requiredPosts} battle posts
                   </Text>
                 </Box>
               )}
             </Group>
           )}
-        </Container>
-      </Box>
+        </Box>
 
-      <Container size="lg" py={{ base: 20, sm: 32 }} px={{ base: 16, sm: 24 }}>
-        <Flex direction={{ base: "column", md: "row" }} gap="lg" align="stretch">
+        {/* Two-column body: briefing (left) + rewards/bonus/pick-up (right) */}
+        <Box
+          mt={24}
+          style={{
+            display: "grid",
+            gridTemplateColumns: isOverMd ? "1.6fr 1fr" : "1fr",
+            gap: 24,
+            alignItems: "start",
+          }}
+        >
           {/* Left column */}
-          <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
-            <Stack gap="md">
-              {mission.story && (
-                <GradientPanel title="Briefing" gradient={BRIEF_GRADIENT}>
-                  <Box
-                    fz={16}
-                    c="gray.3"
-                    style={{ lineHeight: 1.7 }}
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(mission.story) }}
-                  />
-                </GradientPanel>
-              )}
+          <GradientPanel title="Briefing" bodyPad="28px 30px" bodyGap={22}>
+            {mission.story && (
+              <Box
+                fz={17}
+                c="#d7d2de"
+                p="22px 24px"
+                style={{ background: "#0e0d11", border: "1px solid #232028", lineHeight: 1.6 }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(mission.story) }}
+              />
+            )}
 
-              <Flex direction={{ base: "column", sm: "row" }} gap="md" align="stretch">
-                <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
-                  <LineList label="Objective" color="#51CF66" lines={objectives} />
-                </Box>
-                <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
-                  <LineList label="Opposition" color="#FF8787" lines={oppositions} />
-                </Box>
-              </Flex>
+            {(objectives.length > 0 || oppositions.length > 0) && (
+              <Box
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: isOverMd ? "1fr 1fr" : "1fr",
+                  gap: 18,
+                }}
+              >
+                <LineWell label="Objective" color="#12B7B6" lines={objectives} />
+                <LineWell label="Opposition" color="#E54156" lines={oppositions} />
+              </Box>
+            )}
 
-              {mission.pokemon_note && (
-                <Panel>
-                  <Box p="md">
-                    <Text fz={14} fw={800} tt="uppercase" c="grape.3" mb={8} style={{ letterSpacing: 1 }}>
-                      Pokemon Rules
-                    </Text>
-                    <Text fz={16} c="gray.4">
-                      {mission.pokemon_note}
-                    </Text>
-                  </Box>
-                </Panel>
-              )}
+            {mission.pokemon_note && (
+              <Box style={{ background: "#0e0d11", border: "1px solid #232028" }} p="22px 24px">
+                <Text fz={14} fw={700} tt="uppercase" c="#b06fce" mb={12} style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.12em" }}>
+                  Pokemon Rules
+                </Text>
+                <Text fz={16} c="#d7d2de" style={{ lineHeight: 1.55 }}>
+                  {mission.pokemon_note}
+                </Text>
+              </Box>
+            )}
 
-              <EncountersPanel mission={mission} starOverrides={starOverrides} />
-            </Stack>
-          </Box>
+            <EncountersWell mission={mission} starOverrides={starOverrides} />
+          </GradientPanel>
 
           {/* Right column */}
-          <Box style={{ flex: "1 1 0%", minWidth: 0, maxWidth: 400 }}>
-            <Stack gap="md">
-              <GradientPanel title="Rewards" gradient={REWARD_GRADIENT}>
-                <Stack gap={10}>
-                  {!!mission.coins && (
-                    <RewardRow icon={<CoinIcon />} title={`${mission.coins} Snag Coins`} sub="base payout" />
-                  )}
-                  {rewardLabel && (
-                    <RewardRow
-                      icon={<DotIcon color="#e9ecef" />}
-                      title={rewardLabel}
-                      sub={mission.pokemon_reward?.note || "mission reward"}
-                    />
-                  )}
-                  {mission.special_item && (
-                    <RewardRow icon={<DotIcon color="#3B82F6" />} title={mission.special_item} sub="special item" />
-                  )}
-                  {mission.emblem_eligible && (
-                    <RewardRow icon={<DotIcon color="#F5C842" />} title="Snag Emblem Piece" sub="if eligible" />
-                  )}
-                  {!mission.coins && !rewardLabel && !mission.special_item && !mission.emblem_eligible && (
-                    <Text fz={14} c="dimmed">
-                      Rewards set by the grader.
-                    </Text>
-                  )}
-                  <Text fz={12} c="dimmed">
-                    Rewards are granted by an admin when your closed run is graded. Pokemon
-                    rewards are earned in the thread itself (catch what you defeat) or granted
-                    at review.
+          <Box style={{ position: isOverMd ? "sticky" : "static", top: 24 }}>
+            <Stack gap={18}>
+              <GradientPanel title="Rewards" bodyPad="20px" bodyGap={14}>
+                {!!mission.coins && (
+                  <RewardRow
+                    icon={<RewardGlyph bg="#FFD074" glyph="C" />}
+                    title={`${mission.coins} Snag Coins`}
+                    sub="base payout"
+                  />
+                )}
+                {rewardLabel && (
+                  <RewardRow
+                    icon={<RewardGlyph bg="#e6e2ec" />}
+                    title={rewardLabel}
+                    sub={mission.pokemon_reward?.note || "mission reward"}
+                  />
+                )}
+                {mission.special_item && (
+                  <RewardRow icon={<RewardGlyph bg="#346CFD" />} title={mission.special_item} sub="special item" />
+                )}
+                {mission.emblem_eligible && (
+                  <RewardRow icon={<RewardGlyph bg="#FFD074" />} title="Snag Emblem Piece" sub="if eligible" />
+                )}
+                {!mission.coins && !rewardLabel && !mission.special_item && !mission.emblem_eligible && (
+                  <Text fz={14} c="#8f8a99">
+                    Rewards set by the grader.
                   </Text>
-                </Stack>
+                )}
+                <Text fz={12} c="#8f8a99" style={{ lineHeight: 1.55 }}>
+                  Rewards are granted by an admin when your closed run is graded. Pokemon rewards are
+                  earned in the thread itself (catch what you defeat) or granted at review.
+                </Text>
               </GradientPanel>
 
               <Box
-                p="md"
-                style={{ borderRadius: 14, border: "1px solid #4a3fa0", background: "#1a1636" }}
+                p="22px 24px"
+                style={{ background: "#17151c", border: "1px solid #2a2637", borderLeft: "3px solid #FFD074" }}
               >
-                <Group gap={6} mb={6}>
-                  <IconSparkles size={15} color="#b197fc" />
-                  <Text fz={14} fw={800} c="grape.3" tt="uppercase" style={{ letterSpacing: 0.5 }}>
+                <Group gap={10} align="center" mb={12}>
+                  <Text component="span" c="#FFD074" fz={16}>
+                    ✦
+                  </Text>
+                  <Text fz={14} fw={700} c="#FFD074" tt="uppercase" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.16em" }}>
                     Bonus
                   </Text>
                 </Group>
-                <Text fz={14} c="rgba(255,255,255,0.85)">
+                <Text fz={16} c="#d7d2de" style={{ lineHeight: 1.6 }}>
                   {mission.bonus || "Write it well, make it fun to read, and the grader tips extra."}
                 </Text>
               </Box>
 
               {mission.tier === "Master" && (
-                <Text fz={14} c="#F5C842" ta="center">
-                  Master mission: you need a character with master clearance. Request it from
-                  the <Link to="/Research" style={{ color: "#b197fc" }}>Research page</Link>.
+                <Text fz={14} c="#FFD074" ta="center">
+                  Master mission: you need a character with master clearance. Request it from the{" "}
+                  <Link to="/Research" style={{ color: "#c79bd6" }}>
+                    Research page
+                  </Link>
+                  .
                 </Text>
               )}
+
               <Button
-                variant="gradient"
-                gradient={{ from: "grape", to: "cyan", deg: 90 }}
-                radius="xl"
+                radius={0}
                 size="lg"
                 fullWidth
                 loading={pickUpMutation.isPending}
@@ -512,22 +572,36 @@ export default function MissionDetail() {
                   setPickUpError("");
                   pickUpMutation.mutate();
                 }}
+                styles={{
+                  root: {
+                    background: "#E54156",
+                    color: "#fff",
+                    border: "none",
+                    fontFamily: FONT_DISPLAY,
+                    fontWeight: 700,
+                    fontSize: 16,
+                    letterSpacing: "0.14em",
+                    height: "auto",
+                    padding: "19px 0",
+                    clipPath: "polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%)",
+                  },
+                }}
               >
-                Pick Up Mission
+                PICK UP MISSION
               </Button>
               {pickUpError && (
                 <Text fz={14} c="#E54156" ta="center" role="status" aria-live="polite">
                   {pickUpError}
                 </Text>
               )}
-              <Text fz={14} c="dimmed" ta="center">
+              <Text fz={14} c="#6f6a78" ta="center" px={8} style={{ lineHeight: 1.55 }}>
                 {user
                   ? "Creates your roleplay thread in the Quests forum with this briefing preloaded. Play it out, then close the thread and it goes straight to the admins for grading."
                   : "Sign in to pick up this mission."}
               </Text>
             </Stack>
           </Box>
-        </Flex>
+        </Box>
       </Container>
     </Box>
   );
