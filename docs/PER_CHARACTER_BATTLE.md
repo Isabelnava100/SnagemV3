@@ -89,3 +89,17 @@ built from `fighterId` + `fleeAttempt` + `safariAction` + the ball/food in `item
 Needs `firebase deploy --only functions` (no rules change: pending + thread
 encounter fields are all server-written; the per-character map lives inside the
 existing per-uid pending doc). Update docs/FORUM.md after it lands.
+
+## Status (shipped milestone)
+
+SHIPPED and safe to deploy: encounters bind per-character, each character holds
+its own active encounter, all display, and a post resolves the posting
+character's encounter with correct per-key write-back (other characters' pending
+encounters preserved). Backward-compatible with legacy single-encounter threads.
+
+REMAINING (tracked, do as a tested pass before prod): resolve EVERY posting
+character's encounter in the SAME post (the multi-fighter loop + per-character
+battle-action rows in the composer). Today a multi-character post resolves the
+first posting character's encounter; the others resolve on that character's next
+post. This is an enhancement, not a broken state. Payload/types (battleActions)
+are already in place for it.
