@@ -451,6 +451,14 @@ export const callRespondTradeOffer = (
 export const callSetHeldItem = (pokemonId: string, itemId: string) =>
   callGame<{ ok: boolean }>("setHeldItem", { pokemonId, itemId });
 
+/** Apply a Mint to change a boxed pokemon's nature (consumes the mint). */
+export const callApplyMint = (pokemonId: string, itemId: string, nature: string) =>
+  callGame<{ ok: boolean; pokemonId: string; nature: string }>("applyMint", {
+    pokemonId,
+    itemId,
+    nature,
+  });
+
 // ---- The Berry Farm ---------------------------------------------------------
 
 export interface FarmPlot {

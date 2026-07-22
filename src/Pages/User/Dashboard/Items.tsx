@@ -4,6 +4,7 @@ import {
   Flex,
   Modal,
   ScrollArea,
+  Select,
   SimpleGrid,
   Stack,
   Text,
@@ -21,10 +22,12 @@ import { isEvolutionItem } from "../../../lib/evolution";
 import { EvolveItemModal } from "../../../components/pokemon/EvolveItemModal";
 import { getItemImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
-import { getItems } from "../../../queries/dashboard";
-import { getMysteryBoxes } from "../../../queries/game";
+import { getItems, getOwnedPokemons } from "../../../queries/dashboard";
+import { callApplyMint, getMysteryBoxes } from "../../../queries/game";
 import { describeSources, useItemSources } from "../../../lib/itemSources";
 import { rarityForItem, RARITY_COLORS, RARITY_LABELS } from "../../../lib/itemRarity";
+import { NATURE_GROUPS, NATURE_GROUP_LABEL, NatureGroup } from "../../../lib/natures";
+import { toastError, toastSuccess } from "../../../lib/toast";
 
 /**
  * Items tab (moved off the dashboard top block). Categories stack vertically
@@ -44,6 +47,7 @@ export default function Items() {
   });
   const [mysteryItem, setMysteryItem] = React.useState<{ id: string; name: string } | null>(null);
   const [evolveItem, setEvolveItem] = React.useState<{ id: string; name: string } | null>(null);
+  const [mintItem, setMintItem] = React.useState<{ id: string; name: string } | null>(null);
   // "Get more" line per item, built from the live shops + recipes.
   const sources = useItemSources();
 
@@ -81,12 +85,15 @@ export default function Items() {
                   .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
                   .map((item) => {
                     const box = isMysteryBox(item.id, item.name, item.category);
-                    const evoStone = !box && isEvolutionItem(item.name);
-                    const interactive = box || evoStone;
+                    const isMint = !box && item.category === "mint";
+                    const evoStone = !box && !isMint && isEvolutionItem(item.name);
+                    const interactive = box || evoStone || isMint;
                     // Show the admin's custom box name to players when set.
                     const displayName = boxConfigs?.[item.id]?.name || item.name;
                     const onUse = box
                       ? () => setMysteryItem({ id: item.id, name: displayName })
+                      : isMint
+                      ? () => setMintItem({ id: item.id, name: item.name })
                       : () => setEvolveItem({ id: item.id, name: item.name });
                     const more = describeSources(sources.get(item.id));
                     return (
@@ -161,6 +168,7 @@ export default function Items() {
         onClose={() => setMysteryItem(null)}
       />
       <EvolveItemModal item={evolveItem} onClose={() => setEvolveItem(null)} />
+      <MintModal item={mintItem} onClose={() => setMintItem(null)} />
     </Stack>
   );
 }
@@ -232,6 +240,96 @@ function MysteryBoxModal(props: {
           )}
         </Stack>
       )}
+    </Modal>
+  );
+}
+
+/** Derive the nature kind a mint targets from its name. */
+function mintKind(name: string): NatureGroup {
+  const n = name.toLowerCase();
+  if (n.includes("defense")) return "defense";
+  if (n.includes("attack") || n.includes("special")) return "attack";
+  if (n.includes("speed")) return "speed";
+  return "neutral";
+}
+
+/** Use a Mint: pick a boxed pokemon and a nature of the mint's kind. */
+function MintModal(props: { item: { id: string; name: string } | null; onClose: () => void }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [pokemonId, setPokemonId] = React.useState<string | null>(null);
+  const [nature, setNature] = React.useState<string | null>(null);
+
+  const { data: owned } = useQuery({
+    queryKey: ["get-owned-pokemons", user?.uid],
+    queryFn: () => getOwnedPokemons(user!.uid),
+    enabled: !!user && !!props.item,
+  });
+
+  const kind = props.item ? mintKind(props.item.name) : "neutral";
+  const natures = React.useMemo(
+    () => Object.entries(NATURE_GROUPS).filter(([, k]) => k === kind).map(([nm]) => nm),
+    [kind]
+  );
+  React.useEffect(() => {
+    if (props.item) setNature(natures[0] ?? null);
+    else {
+      setPokemonId(null);
+      setNature(null);
+    }
+  }, [props.item, natures]);
+
+  const mutation = useMutation({
+    mutationFn: () => callApplyMint(pokemonId!, props.item!.id, nature!),
+    onSuccess: () => {
+      toastSuccess("Nature changed.");
+      queryClient.invalidateQueries({ queryKey: ["get-owned-pokemons", user?.uid] });
+      queryClient.invalidateQueries({ queryKey: ["get-items", user?.uid] });
+      props.onClose();
+    },
+    onError: (e) => toastError(e, "Could not apply the mint."),
+  });
+
+  const pokeOptions = (owned?.sortedData ?? []).map((p) => ({
+    value: p.id,
+    label: `${p.name} (${p.gender})`,
+  }));
+
+  return (
+    <Modal
+      opened={!!props.item}
+      onClose={props.onClose}
+      title={<Text fw={700}>{props.item?.name}</Text>}
+      centered
+      radius={0}
+    >
+      <Stack gap={12}>
+        <Text fz={14} c="dimmed">
+          Pick a pokemon to change its nature. This mint makes it {NATURE_GROUP_LABEL[kind]}.
+        </Text>
+        <Select
+          label="Pokemon"
+          placeholder="Pick one"
+          searchable
+          data={pokeOptions}
+          value={pokemonId}
+          onChange={setPokemonId}
+        />
+        <Select
+          label="New nature"
+          data={natures}
+          value={nature}
+          onChange={setNature}
+        />
+        <GradientButtonPrimary
+          radius="xl"
+          disabled={!pokemonId || !nature}
+          loading={mutation.isPending}
+          onClick={() => mutation.mutateAsync()}
+        >
+          Apply Mint
+        </GradientButtonPrimary>
+      </Stack>
     </Modal>
   );
 }

@@ -142,6 +142,19 @@ const DEFAULT_MECHANICS = {
   megaBoost: 1.3,
 };
 type Mechanics = typeof DEFAULT_MECHANICS;
+
+// Held items grouped by the flat battle effect they grant (magnitudes live in
+// DEFAULT_MECHANICS: heldAttackBonus / heldDefenseBonus / heldHealTick /
+// heldFleeBonus). Extend a set to make more held items matter in a post.
+const HELD_ATTACK = new Set([
+  "muscle-band", "choice-band", "choice-specs", "expert-belt", "life-orb", "wise-glasses",
+]);
+const HELD_DEFENSE = new Set(["assault-vest", "eviolite"]);
+const HELD_HEAL = new Set(["leftovers", "shell-bell", "black-sludge", "big-root"]);
+const HELD_FLEE = new Set(["quick-claw", "smoke-ball"]);
+const HELD_SURVIVE = new Set(["focus-sash", "focus-band"]);
+const prettyHeld = (slug: string) =>
+  slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 function mechanicsFrom(cfg: FirebaseFirestore.DocumentData | undefined): Mechanics {
   const raw = (cfg?.mechanics ?? {}) as Record<string, unknown>;
   const out = { ...DEFAULT_MECHANICS };
@@ -420,12 +433,22 @@ function assertOpenThread(snap: DocumentSnapshot): FirebaseFirestore.DocumentDat
 // Matched on the item's display name; unmatched medicine has no battle effect.
 function healEffectFor(name: string): { heal?: number; revive?: number } | null {
   const n = name.toLowerCase();
+  if (n.includes("sacred ash")) return { revive: 100 };
   if (n.includes("max revive")) return { revive: 100 };
   if (n.includes("revive")) return { revive: 50 };
   if (n.includes("full restore") || n.includes("max potion")) return { heal: 100 };
   if (n.includes("hyper potion")) return { heal: 60 };
   if (n.includes("super potion")) return { heal: 40 };
   if (n.includes("potion")) return { heal: 20 };
+  // Restorative drinks + treats: modest flat heals so vending-machine and
+  // regional items are usable in a battle post, not just potions.
+  if (n.includes("lemonade")) return { heal: 60 };
+  if (n.includes("moomoo milk")) return { heal: 60 };
+  if (n.includes("soda pop")) return { heal: 40 };
+  if (n.includes("fresh water")) return { heal: 30 };
+  if (n.includes("berry juice") || n.includes("sweet heart")) return { heal: 20 };
+  if (/casteliacone|lava cookie|old gateau|shalour sable|lumiose galette|big malasada|rage candy bar|pewter crunchies/.test(n))
+    return { heal: 20 };
   return null;
 }
 
@@ -1546,9 +1569,9 @@ export const publishForumPost = onCall(async (request) => {
       let attackMult = typeEffectiveness(fighterTypes, enemyTypes) * (mech.stab || 1);
       attackMult *= weatherMult(threadWeather, fighterTypes, mech.weatherBoost);
       if (natureKind === "attack") attackMult *= 1 + mech.natureEffect / 100;
-      if (fighterHeld === "muscle-band" && mech.heldAttackBonus > 0) {
+      if (HELD_ATTACK.has(fighterHeld) && mech.heldAttackBonus > 0) {
         attackMult *= 1 + mech.heldAttackBonus / 100;
-        battleNotes.push("The Muscle Band powered the attack up.");
+        battleNotes.push(`The ${prettyHeld(fighterHeld)} powered the attack up.`);
       }
       const fighterStatus = battleFighterId ? statusNow[battleFighterId] : undefined;
       if (fighterStatus === "paralysis") {
@@ -1568,7 +1591,7 @@ export const publishForumPost = onCall(async (request) => {
       let defenseMult = typeEffectiveness(enemyTypes, fighterTypes);
       defenseMult *= weatherMult(threadWeather, enemyTypes, mech.weatherBoost);
       if (natureKind === "defense") defenseMult *= 1 - mech.natureEffect / 100;
-      if (fighterHeld === "assault-vest" && mech.heldDefenseBonus > 0) {
+      if (HELD_DEFENSE.has(fighterHeld) && mech.heldDefenseBonus > 0) {
         defenseMult *= 1 - mech.heldDefenseBonus / 100;
       }
       const enemyCrit = randomInt(10000) < Math.round(mech.critChance * 100);
@@ -1603,7 +1626,7 @@ export const publishForumPost = onCall(async (request) => {
               95,
               fleeChanceForStar(enemyStar) +
                 (natureKind === "speed" ? mech.natureEffect : 0) +
-                (fighterHeld === "quick-claw" ? mech.heldFleeBonus : 0)
+                (HELD_FLEE.has(fighterHeld) ? mech.heldFleeBonus : 0)
             );
         encounter.fleeChance = chance;
         if (randomInt(100) < chance || chance >= 100) {
@@ -1821,7 +1844,7 @@ export const publishForumPost = onCall(async (request) => {
           Math.round(
             bossBase *
               typeEffectiveness(bossTypes, fighterTypes) *
-              (fighterHeld === "assault-vest" && mech.heldDefenseBonus > 0
+              (HELD_DEFENSE.has(fighterHeld) && mech.heldDefenseBonus > 0
                 ? 1 - mech.heldDefenseBonus / 100
                 : 1)
           )
@@ -1842,27 +1865,21 @@ export const publishForumPost = onCall(async (request) => {
       const damageBefore = Number(damageNow[fighterId]) || 0;
       // Leftovers / Shell Bell shave the incoming hit by the heal tick.
       let healTick = 0;
-      if (
-        (fighterHeld === "leftovers" || fighterHeld === "shell-bell") &&
-        mech.heldHealTick > 0 &&
-        fighterId === battleFighterId
-      ) {
+      if (HELD_HEAL.has(fighterHeld) && mech.heldHealTick > 0 && fighterId === battleFighterId) {
         healTick = mech.heldHealTick;
-        battleNotes.push(
-          `${fighterHeld === "leftovers" ? "Leftovers" : "The Shell Bell"} restored ${healTick} HP.`
-        );
+        battleNotes.push(`${prettyHeld(fighterHeld)} restored ${healTick} HP.`);
       }
       let total = Math.min(maxHp, Math.max(0, damageBefore + enemyAttackDmg - healTick));
       // Focus Sash: a hit that would take the fighter from full HP to fainted
       // leaves it standing at 1 HP instead.
       if (
-        fighterHeld === "focus-sash" &&
+        HELD_SURVIVE.has(fighterHeld) &&
         fighterId === battleFighterId &&
         damageBefore === 0 &&
         total >= maxHp
       ) {
         total = maxHp - 1;
-        battleNotes.push("The Focus Sash kept it standing at 1 HP!");
+        battleNotes.push(`The ${prettyHeld(fighterHeld)} kept it standing at 1 HP!`);
       }
       damageNow[fighterId] = total;
       const fighterInfo = ownedForXp[fighterId] ?? {};
@@ -4559,6 +4576,33 @@ export const respondTradeOffer = onCall(async (request) => {
 
 /** Equip (or remove, itemId "") a held item on an owned pokemon. Equipping
  * spends one from the bag; the previous held item goes back to the bag. */
+// Apply a Mint: change a boxed pokemon's nature, consuming one mint. Mints are
+// named by nature KIND; the client passes the specific target nature, validated
+// against NATURE_NAMES. Nature drives the battle attack/defense/speed math.
+export const applyMint = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const pokemonId = requireString(request.data?.pokemonId, "pokemon", 80);
+  const itemId = requireString(request.data?.itemId, "item", 100);
+  const nature = String(request.data?.nature ?? "");
+  if (!NATURE_NAMES.includes(nature)) throw new HttpsError("invalid-argument", "Unknown nature.");
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const ownedRef = db.doc(`users/${uid}/bag/owned_pokemons`);
+  return await db.runTransaction(async (tx) => {
+    const [bagSnap, ownedSnap] = await Promise.all([tx.get(bagRef), tx.get(ownedRef)]);
+    const owned = (ownedSnap.data() as Record<string, any>) ?? {};
+    if (!owned[pokemonId]) throw new HttpsError("not-found", "That pokemon is not in your box.");
+    const entry = ((bagSnap.data() as Record<string, any>) ?? {})[itemId];
+    if (!entry || (Number(entry.quantity) || 0) <= 0)
+      throw new HttpsError("not-found", "That mint is not in your bag.");
+    if (String(entry.category ?? "") !== "mint")
+      throw new HttpsError("invalid-argument", "Only mints can change a nature.");
+    tx.set(bagRef, { [itemId]: { quantity: FieldValue.increment(-1) } }, { merge: true });
+    tx.set(ownedRef, { [pokemonId]: { nature } }, { merge: true });
+    return { ok: true, pokemonId, nature };
+  });
+});
+
 export const setHeldItem = onCall(async (request) => {
   const uid = requireAuth(request);
   await loadMember(uid);
