@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Anchor,
   Avatar,
   Badge,
   Box,
@@ -200,16 +201,25 @@ export default function Onboarding() {
   const [message, setMessage] = React.useState("");
   const [uploadInfo, setUploadInfo] = React.useState("");
   const [completeOpen, { open: openComplete, close: closeComplete }] = useDisclosure(false);
+  // Which import path the member picked on the first screen. Null shows the
+  // three-way chooser; a returning draft with entries skips straight to the form.
+  const [mode, setMode] = React.useState<"prefill" | "csv" | null>(null);
 
   React.useEffect(() => {
     if (isPending || seeded) return;
     if (request) {
-      setEntries({
+      const seededEntries = {
         currency: request.currency ?? emptyEntries().currency,
         items: request.items ?? [],
         pokemon: request.pokemon ?? [],
-      });
+      };
+      setEntries(seededEntries);
       setNote(request.note ?? "");
+      const hasEntries =
+        seededEntries.items.length > 0 ||
+        seededEntries.pokemon.length > 0 ||
+        CURRENCY_LABELS.some((c) => (seededEntries.currency[c.key] ?? 0) > 0);
+      if (hasEntries) setMode("prefill");
     }
     setSeeded(true);
   }, [request, isPending, seeded]);
@@ -298,8 +308,15 @@ export default function Onboarding() {
 
         {locked ? (
           <SubmittedPreview entries={entries} />
+        ) : mode === null ? (
+          <ImportChoice
+            onPrefill={() => setMode("prefill")}
+            onCsv={() => setMode("csv")}
+            onScratch={openComplete}
+          />
         ) : (
           <>
+            {mode === "prefill" && (
             <GaiaPrefill
               onPrefill={(prefill, noteAppend) => {
                 // Merge, never clobber: per currency field, a hand-entered
@@ -318,6 +335,7 @@ export default function Onboarding() {
                 setNote((prev) => (prev ? `${prev}\n\n${noteAppend}` : noteAppend));
               }}
             />
+            )}
             <CurrencySection
               currency={entries.currency}
               onChange={(currency) => update({ ...entries, currency })}
@@ -330,16 +348,18 @@ export default function Onboarding() {
               pokemon={entries.pokemon}
               onChange={(pokemon) => update({ ...entries, pokemon })}
             />
-            <BulkUpload
-              onImported={(added, info) => {
-                update({
-                  ...entries,
-                  items: [...entries.items, ...added.items],
-                  pokemon: [...entries.pokemon, ...added.pokemon],
-                });
-                setUploadInfo(info);
-              }}
-            />
+            {mode === "csv" && (
+              <BulkUpload
+                onImported={(added, info) => {
+                  update({
+                    ...entries,
+                    items: [...entries.items, ...added.items],
+                    pokemon: [...entries.pokemon, ...added.pokemon],
+                  });
+                  setUploadInfo(info);
+                }}
+              />
+            )}
             {uploadInfo && (
               <Text fz={14} c="#b6b1bc">
                 {uploadInfo}
@@ -390,6 +410,16 @@ export default function Onboarding() {
                 </AngularButton>
               </Group>
             </Group>
+            <Anchor
+              component="button"
+              type="button"
+              onClick={() => setMode(null)}
+              fz={14}
+              c="grape.3"
+              ta="center"
+            >
+              Choose a different import method
+            </Anchor>
           </>
         )}
 
@@ -409,6 +439,76 @@ export default function Onboarding() {
         />
       )}
     </Box>
+  );
+}
+
+/**
+ * First screen: the member picks how they want to onboard before any form is
+ * shown. Prefill (Gaia), spreadsheet (CSV), or skip and create from scratch.
+ */
+function ImportChoice(props: {
+  onPrefill: () => void;
+  onCsv: () => void;
+  onScratch: () => void;
+}) {
+  const options = [
+    {
+      key: "prefill",
+      title: "Prefill from your Gaia account",
+      body: "Pick your old Gaia profile and we fill in the currency, items and Pokemon we have on record. Fastest if you were a Gaia member.",
+      cta: "Use Gaia prefill",
+      onClick: props.onPrefill,
+      accent: "#772976",
+    },
+    {
+      key: "csv",
+      title: "Import from a spreadsheet",
+      body: "Download the CSV templates, fill them in, and upload. Best if you have a lot to add or kept your own records.",
+      cta: "Use a spreadsheet",
+      onClick: props.onCsv,
+      accent: "#12B7B6",
+    },
+    {
+      key: "scratch",
+      title: "Skip import, start fresh",
+      body: "Add nothing and go straight to creating your first character. You cannot return to this import page once you do this.",
+      cta: "Start from scratch",
+      onClick: props.onScratch,
+      accent: "#E54156",
+    },
+  ];
+  return (
+    <SimpleGrid cols={{ base: 1, sm: 3 }} spacing={16}>
+      {options.map((o) => (
+        <UnstyledButton
+          key={o.key}
+          onClick={o.onClick}
+          aria-label={o.cta}
+          style={{
+            display: "block",
+            textAlign: "left",
+            padding: 20,
+            background: "#17151c",
+            border: `1px solid ${o.accent}`,
+            height: "100%",
+          }}
+        >
+          <Stack gap={10} h="100%" justify="space-between">
+            <Box>
+              <Text c="white" fw={700} fz={17} style={{ fontFamily: FONT_DISPLAY }}>
+                {o.title}
+              </Text>
+              <Text fz={14} c="#b6b1bc" mt={8} lh={1.55}>
+                {o.body}
+              </Text>
+            </Box>
+            <Text fz={13} fw={700} c={o.accent} tt="uppercase" style={{ letterSpacing: "0.08em" }}>
+              {o.cta} →
+            </Text>
+          </Stack>
+        </UnstyledButton>
+      ))}
+    </SimpleGrid>
   );
 }
 
