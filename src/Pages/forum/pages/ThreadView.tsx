@@ -809,7 +809,16 @@ export default function ThreadView() {
       )}
       {!!thread.missionId && !thread.closed && <MissionTargetsBanner thread={thread} />}
 
-      {pending?.encounter?.slug && <EncounterBanner encounter={pending.encounter} />}
+      {/* Per-character: show a banner for every active encounter (the map),
+          plus a legacy single encounter on older threads. */}
+      {[
+        ...Object.values(pending?.encounters ?? {}),
+        ...(pending?.encounter ? [pending.encounter] : []),
+      ]
+        .filter((enc) => enc?.slug)
+        .map((enc, i) => (
+          <EncounterBanner key={enc.characterId || enc.slug || i} encounter={enc} />
+        ))}
 
       {lastPageNum > 1 && (
         <Flex justify={isOverSm ? "flex-start" : "center"} mt={16}>

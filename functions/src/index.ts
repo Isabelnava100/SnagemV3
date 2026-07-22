@@ -930,6 +930,11 @@ export const rollEncounter = onCall(async (request) => {
   const forCharacterIds = (Array.isArray(request.data?.forCharacterIds) ? request.data.forCharacterIds : [])
     .slice(0, 6)
     .map((c: unknown) => String(c).slice(0, 60));
+  // The single character this encounter is bound to (picked at roll time).
+  // New clients send characterId; older callers fall back to the first for-id.
+  // When set, the encounter is stored per-character (pending.encounters[charId])
+  // so each of a member's characters can have its own active encounter.
+  const characterId = String(request.data?.characterId ?? "").slice(0, 80) || forCharacterIds[0] || "";
   await loadMember(uid);
 
   // Fishing (the Fishing Pond thread only): any rod from the Snag Mall gets
@@ -988,16 +993,22 @@ export const rollEncounter = onCall(async (request) => {
     // worn down (beaten). Its defeat was recorded when the bar filled, so the
     // player may skip the catch and move on to their next target (mission
     // threads often require several set foes).
-    const pendingEnc = pendingSnap.data()?.encounter;
-    const pendingBeaten =
-      pendingEnc &&
-      pendingEnc.postsToDefeat == null &&
-      Number(pendingEnc.required) > 0 &&
-      Number(pendingEnc.progress ?? 0) >= Number(pendingEnc.required);
-    if (pendingEnc && !pendingBeaten) {
+    // Per-character: a character blocks a NEW roll only while THEY still have an
+    // unbeaten encounter waiting. Other characters can each hold their own.
+    const pendingData = pendingSnap.data() ?? {};
+    const encountersMap = (pendingData.encounters as Record<string, any>) ?? {};
+    const existingEnc = characterId ? encountersMap[characterId] : pendingData.encounter;
+    const encBeaten = (e: any) =>
+      e &&
+      e.postsToDefeat == null &&
+      Number(e.required) > 0 &&
+      Number(e.progress ?? 0) >= Number(e.required);
+    if (existingEnc && !encBeaten(existingEnc)) {
       throw new HttpsError(
         "failed-precondition",
-        "You already have an encounter waiting for your next post."
+        characterId
+          ? "That character already has an encounter waiting for their next post."
+          : "You already have an encounter waiting for your next post."
       );
     }
     const claims = (thread.encounterClaims as Record<string, number>) ?? {};
@@ -1016,12 +1027,28 @@ export const rollEncounter = onCall(async (request) => {
       const centerAt = Number(l.centerAt) || 0;
       return centerAt > 0 && posts + 1 <= centerAt + 1;
     };
-    if (forCharacterIds.some((c: string) => charCoolingDown(c))) {
+    if ((characterId ? [characterId] : forCharacterIds).some((c: string) => charCoolingDown(c))) {
       throw new HttpsError(
         "failed-precondition",
         "That character is just back from the Pokemon Center. Encounters reopen on their post after next."
       );
     }
+
+    // Persist a rolled encounter. Per-character rolls land in
+    // pending.encounters[characterId]; a legacy unscoped roll uses pending.encounter.
+    const writePending = (res: Record<string, unknown>) => {
+      if (characterId) {
+        (res as any).characterId = characterId;
+        (res as any).forCharacterIds = [characterId];
+        tx.set(
+          pendingRef(forum, threadId, uid),
+          { encounters: { [characterId]: res } },
+          { merge: true }
+        );
+      } else {
+        tx.set(pendingRef(forum, threadId, uid), { encounter: res }, { merge: true });
+      }
+    };
 
     // Safari Contest: weighted star roll, then a uniform pick within that
     // star's pool. Health goes down over fight posts instead of capture posts.
@@ -1102,7 +1129,7 @@ export const rollEncounter = onCall(async (request) => {
         shiny: rollShiny(),
         forCharacterIds,
       };
-      tx.set(pendingRef(forum, threadId, uid), { encounter: result }, { merge: true });
+      writePending(result);
       tx.update(threadRef(forum, threadId), { [`fishingClaims.${uid}`]: weekId });
       return result;
     } else {
@@ -1164,7 +1191,7 @@ export const rollEncounter = onCall(async (request) => {
         forCharacterIds,
       };
     }
-    tx.set(pendingRef(forum, threadId, uid), { encounter: result }, { merge: true });
+    writePending(result);
     tx.update(threadRef(forum, threadId), {
       [`encounterClaims.${uid}`]: FieldValue.increment(1),
     });
@@ -1606,7 +1633,27 @@ export const publishForumPost = onCall(async (request) => {
     let battledThisPost = false;
 
     const pending = pendingSnap.data() ?? {};
-    const encounter = pending.encounter ? { ...pending.encounter } : undefined;
+    // Per-character encounters: each character can hold its own active encounter
+    // in pending.encounters[characterId]. This post resolves the encounter of the
+    // FIRST posting character that has one (legacy pending.encounter as fallback);
+    // any other characters' encounters stay pending, untouched. `encounterCharId`
+    // scopes the write-back so only the resolved encounter is cleared/updated.
+    const pendingEncounters = (pending.encounters as Record<string, any>) ?? {};
+    let encounterCharId = "";
+    let encounterSrc: any = undefined;
+    for (const c of characters as Array<{ id: string }>) {
+      const e = pendingEncounters[String(c.id)];
+      if (e) {
+        encounterCharId = String(c.id);
+        encounterSrc = e;
+        break;
+      }
+    }
+    if (!encounterSrc && pending.encounter) {
+      encounterSrc = pending.encounter;
+      encounterCharId = String((pending.encounter as any).characterId ?? "");
+    }
+    const encounter = encounterSrc ? { ...encounterSrc } : undefined;
     // The Fishing Pond takes fishing posts only (staff posts excepted): a
     // cast must be attached, and nothing else runs there.
     if (!editPostId && thread.fishingPond && !isAdmin(member) && !isHost(thread, member)) {
@@ -2485,17 +2532,26 @@ export const publishForumPost = onCall(async (request) => {
       !encounter.catchable &&
       Number(encounter.required) > 0 &&
       (Number(encounter.progress) || 0) < Number(encounter.required);
-    if (
+    const encounterSurvives =
       !editPostId &&
-      encounter &&
+      !!encounter &&
       !encounterCaught &&
       !safariCleared &&
       !encounterFled &&
-      (encounter.catchable || trainerBattleOngoing)
-    ) {
-      tx.set(pRef, { encounter });
-    } else if (pendingSnap.exists) {
-      tx.delete(pRef);
+      (encounter.catchable || trainerBattleOngoing);
+    if (!editPostId && pendingSnap.exists) {
+      // Clear only the rolls consumed this post: this character's encounter (or
+      // the legacy single one) plus any dice/random. Other characters' pending
+      // encounters are preserved.
+      const pendingUpdate: Record<string, unknown> = {};
+      if (pending.dice) pendingUpdate.dice = FieldValue.delete();
+      if (pending.random) pendingUpdate.random = FieldValue.delete();
+      if (encounter) {
+        const encVal = encounterSurvives ? encounter : FieldValue.delete();
+        if (encounterCharId) pendingUpdate.encounters = { [encounterCharId]: encVal };
+        else pendingUpdate.encounter = encVal;
+      }
+      if (Object.keys(pendingUpdate).length) tx.set(pRef, pendingUpdate, { merge: true });
     }
     return {
       postId: resultPostId,

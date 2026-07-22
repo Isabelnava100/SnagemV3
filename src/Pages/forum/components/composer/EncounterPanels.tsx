@@ -2,7 +2,6 @@ import {
   Anchor,
   Button,
   Group,
-  MultiSelect,
   NumberInput,
   Progress,
   Radio,
@@ -278,27 +277,50 @@ export function EncounterPostPanel(props: {
   const isSafari = !!thread.safariContest;
   const [wantsEncounter, setWantsEncounter] = React.useState(false);
   const [encounterError, setEncounterError] = React.useState("");
-  const [forCharacterIds, setForCharacterIds] = React.useState<string[]>([]);
+  // The single character this encounter is bound to (picked at roll time). Each
+  // character can hold its own active encounter.
+  const [forCharacterId, setForCharacterId] = React.useState<string | null>(null);
   const config = thread.encounterConfig;
 
-  // The roller's characters, so the encounter can be captured for specific ones.
+  // The roller's characters, so the encounter is bound to a specific one.
   const { data: characters } = useQuery({
     queryKey: ["get-characters", user?.uid],
     queryFn: () => getCharacters(user!.uid),
     enabled: !!user && !!config?.enabled,
   });
 
-  // The server validates the list, allowance and mode, then binds the result
-  // to this player's next post in the thread, no client-side rolling.
+  // Default to the only character when there is just one (no picking needed).
+  React.useEffect(() => {
+    const list = characters?.sortedData ?? [];
+    if (list.length === 1 && !forCharacterId) setForCharacterId(list[0].id);
+  }, [characters, forCharacterId]);
+
+  // The server validates the list, allowance and mode, then binds the result to
+  // this character's next post in the thread, no client-side rolling.
   const encounterMutation = useMutation({
     mutationFn: (chosenSlug?: string) =>
-      callRollEncounter(forum, thread.id, chosenSlug, forCharacterIds),
+      callRollEncounter(
+        forum,
+        thread.id,
+        chosenSlug,
+        forCharacterId ? [forCharacterId] : [],
+        false,
+        forCharacterId ?? undefined
+      ),
     onSuccess: (result) => onChange(result),
     onError: (err) =>
       setEncounterError(callableMessage(err, "The encounter roll failed. Try again.")),
   });
   const fishingMutation = useMutation({
-    mutationFn: () => callRollEncounter(forum, thread.id, undefined, forCharacterIds, true),
+    mutationFn: () =>
+      callRollEncounter(
+        forum,
+        thread.id,
+        undefined,
+        forCharacterId ? [forCharacterId] : [],
+        true,
+        forCharacterId ?? undefined
+      ),
     onSuccess: (result) => onChange(result),
     onError: (err) =>
       setEncounterError(callableMessage(err, "The cast failed. Try again.")),
@@ -382,14 +404,13 @@ export function EncounterPostPanel(props: {
           <Text fz={14} c="dimmed">
             You have {remaining} pokemon left to encounter on this thread.
           </Text>
-          <MultiSelect
-            label="Catch it for (optional)"
-            description="Leave empty to catch it yourself; the caught Pokemon joins the chosen character's box."
-            placeholder="Any of your characters"
+          <Select
+            label="Which character is this encounter for?"
+            description="Each character can hold their own encounter. The catch joins this character's box."
+            placeholder="Pick a character"
             data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
-            value={forCharacterIds}
-            onChange={setForCharacterIds}
-            clearable
+            value={forCharacterId}
+            onChange={setForCharacterId}
             size="xs"
             styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
           />
@@ -399,7 +420,7 @@ export function EncounterPostPanel(props: {
               radius="xl"
               color="cyan.0"
               w={160}
-              disabled={!pool.length}
+              disabled={!pool.length || !forCharacterId}
               loading={encounterMutation.isPending || fishingMutation.isPending}
               onClick={() => {
                 setEncounterError("");
@@ -426,7 +447,7 @@ export function EncounterPostPanel(props: {
                 };
               })}
               value={null}
-              disabled={encounterMutation.isPending}
+              disabled={encounterMutation.isPending || !forCharacterId}
               onChange={(slug) => {
                 if (!slug) return;
                 setEncounterError("");
@@ -521,14 +542,13 @@ export function EncounterPostPanel(props: {
             </Text>
           ) : (
             <>
-              <MultiSelect
-                label="Fishing as (optional)"
-                description="The catch joins the chosen character's box."
-                placeholder="Any of your characters"
+              <Select
+                label="Fishing as which character?"
+                description="Each character can hold their own catch. It joins this character's box."
+                placeholder="Pick a character"
                 data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
-                value={forCharacterIds}
-                onChange={setForCharacterIds}
-                clearable
+                value={forCharacterId}
+                onChange={setForCharacterId}
                 size="xs"
                 styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
               />
@@ -538,6 +558,7 @@ export function EncounterPostPanel(props: {
                   radius="xl"
                   variant="light"
                   color="blue"
+                  disabled={!forCharacterId}
                   loading={fishingMutation.isPending}
                   onClick={() => {
                     setEncounterError("");

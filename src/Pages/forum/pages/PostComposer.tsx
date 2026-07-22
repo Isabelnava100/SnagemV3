@@ -294,7 +294,11 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     if (!pending) return;
     if (pending.dice) setDice(pending.dice);
     if (pending.random) setRandom(pending.random);
-    if (pending.encounter) setEncounter(pending.encounter);
+    // Per-character: hydrate from the first active encounter in the map, else
+    // the legacy single encounter. (The full multi-character composer follows.)
+    const firstActive = pending.encounters ? Object.values(pending.encounters)[0] : undefined;
+    if (firstActive) setEncounter(firstActive);
+    else if (pending.encounter) setEncounter(pending.encounter);
   }, [pending]);
 
   // Preload content when editing; prepend the quote when quoting.

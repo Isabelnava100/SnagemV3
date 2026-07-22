@@ -38,6 +38,8 @@ export interface EncounterBlock {
   progress?: number;
   /** Characters the encounter is being caught for (empty = any of the roller's). */
   forCharacterIds?: string[];
+  /** The single character this encounter is bound to (picked at roll time). */
+  characterId?: string;
   /** Traits rolled when the encounter appeared (shown in the banner, kept on catch). */
   gender?: "M" | "F";
   shiny?: boolean;
