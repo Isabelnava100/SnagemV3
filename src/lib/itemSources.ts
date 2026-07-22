@@ -99,6 +99,55 @@ export function useItemSources(): Map<string, ItemSource[]> {
   return map;
 }
 
+/**
+ * Non-hook version of the source map: fetches shops + recipes + boxes +
+ * missions once and assembles the same itemId -> sources map. For places that
+ * cannot call the hook (e.g. the S.N.A.G. chat answer builders).
+ */
+export async function buildItemSources(): Promise<Map<string, ItemSource[]>> {
+  const [shopsData, recipesData, boxesData, missionsData] = await Promise.all([
+    getShops(),
+    getRecipes(),
+    getMysteryBoxes(),
+    getMissions(),
+  ]);
+  const map = new Map<string, ItemSource[]>();
+  const push = (itemId: string, source: ItemSource) => {
+    const list = map.get(itemId) ?? [];
+    list.push(source);
+    map.set(itemId, list);
+  };
+  (shopsData ?? []).forEach((shop) => {
+    const currency = CURRENCY_LABEL[shop.currency] ?? shop.currency;
+    (shop.sections ?? []).forEach((section) =>
+      (section.items ?? []).forEach((item) =>
+        push(item.itemId, { kind: "shop", label: `${shop.name}: ${item.price} ${currency}` })
+      )
+    );
+    (shop.rare_section?.pool ?? []).forEach((item) =>
+      push(item.itemId, { kind: "shop", label: `${shop.name} (daily rare): ${item.price} ${currency}` })
+    );
+  });
+  (recipesData ?? []).forEach((r) =>
+    push(r.output_item_id, { kind: "recipe", label: "Crafted at Ambrosial Alchemy" })
+  );
+  Object.values(boxesData ?? {}).forEach((box) => {
+    if (box.archived) return;
+    (box.pool ?? []).forEach((e) => {
+      if (e.kind === "item" && e.refId) push(e.refId, { kind: "box", label: `Mystery box: ${box.name}` });
+    });
+  });
+  (missionsData ?? []).forEach((m) => {
+    if (!m.special_item) return;
+    const id = NAME_TO_ID.get(normName(m.special_item));
+    if (id) push(id, { kind: "mission", label: `Mission: ${m.title}` });
+  });
+  Object.entries(STATIC_SOURCES).forEach(([itemId, sources]) =>
+    sources.forEach((s) => push(itemId, s))
+  );
+  return map;
+}
+
 /** Short one-line summary for an item's sources ("" when none known). */
 export function describeSources(sources: ItemSource[] | undefined): string {
   if (!sources?.length) return "";

@@ -73,7 +73,32 @@ const KEY_FUNCTIONAL = [
 // other-item: a few standouts are epic, coupons uncommon, rest rare.
 const OTHER_EPIC = new Set(["bottle-cap", "gold-bottle-cap", "ability-patch", "dynamax-crystal", "armorite-ore", "dynite-ore"]);
 
+// Pokemon-specific items (signature held items + forme changers) are never
+// common or flavor: floor them to tier 2 minimum. Whole mega-stone / z-crystal
+// groups are already tier 4, so they need no listing here.
+const POKEMON_SPECIFIC = new Set([
+  // Signature / species-only held items
+  "light-ball", "thick-club", "leek", "stick", "lucky-punch", "metal-powder",
+  "quick-powder", "deep-sea-tooth", "deep-sea-scale", "soul-dew", "adamant-orb",
+  "lustrous-orb", "griseous-orb", "red-orb", "blue-orb", "rusted-sword",
+  "rusted-shield", "black-augurite",
+  // Forme changers / signature key items
+  "reveal-glass", "prison-bottle", "dna-splicers", "gracidea", "zygarde-cube",
+  "n-solarizer", "n-lunarizer", "reins-of-unity", "meteorite", "cornerstone-mask",
+  "wellspring-mask", "hearthflame-mask", "rotom-catalog", "flame-plate-mask",
+  "shock-drive", "burn-drive", "chill-drive", "douse-drive",
+  // Oricorio nectars
+  "red-nectar", "yellow-nectar", "pink-nectar", "purple-nectar",
+]);
+
 function tierFor(item) {
+  const t = baseTierFor(item);
+  const n = String(item.Name || "").toLowerCase();
+  // Pokemon-specific items are at least Uncommon.
+  return POKEMON_SPECIFIC.has(n) ? Math.max(t, 2) : t;
+}
+
+function baseTierFor(item) {
   const g = item.Group;
   const n = String(item.Name || "").toLowerCase();
 

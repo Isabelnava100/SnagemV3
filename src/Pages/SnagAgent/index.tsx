@@ -23,6 +23,11 @@ import {
   resetCountdown,
 } from "../../queries/activities";
 import { getChallengeProgress, getGymRegions } from "../../queries/challenges";
+import { getPokemonLists } from "../../queries/admin";
+import { itemData } from "../../data/item";
+import { pokemonData } from "../../data/pokemon";
+import { buildItemSources } from "../../lib/itemSources";
+import { rarityForItem, RARITY_LABELS, RARITY_OBTAIN } from "../../lib/itemRarity";
 
 /**
  * S.N.A.G., the guild's help device. A self-contained FAQ/SOP chat: it
@@ -50,6 +55,84 @@ function L(props: { to: string; children: React.ReactNode }) {
     <Anchor component={Link} to={props.to} c="#ddd6fe" fz="inherit">
       {props.children}
     </Anchor>
+  );
+}
+
+/* ------------------ "Where do I find X" item / pokemon lookup ------------- */
+const normLookup = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+const ITEM_INDEX = itemData
+  .map((i) => ({ key: normLookup(i.name), id: i.id, name: i.name }))
+  .filter((x) => x.key.length >= 3)
+  .sort((a, b) => b.key.length - a.key.length);
+const POKE_INDEX = pokemonData
+  .map((p) => ({ key: normLookup(p.name), slug: p.slug, name: p.name }))
+  .filter((x) => x.key.length >= 3)
+  .sort((a, b) => b.key.length - a.key.length);
+
+type LocateTarget =
+  | { kind: "item"; id: string; name: string }
+  | { kind: "pokemon"; slug: string; name: string };
+
+/** The longest item or pokemon name named in a "where do I get X" question. */
+function findLocateTarget(text: string): LocateTarget | null {
+  if (!/\b(where|find|found|located?|get|obtain|catch|buy|drop|available|come from)\b/i.test(text)) {
+    return null;
+  }
+  const m = ` ${normLookup(text)} `;
+  const item = ITEM_INDEX.find((x) => m.includes(` ${x.key} `));
+  const poke = POKE_INDEX.find((x) => m.includes(` ${x.key} `));
+  if (item && (!poke || item.key.length >= poke.key.length)) {
+    return { kind: "item", id: item.id, name: item.name };
+  }
+  if (poke) return { kind: "pokemon", slug: poke.slug, name: poke.name };
+  return null;
+}
+
+async function answerForTarget(target: LocateTarget): Promise<React.ReactNode> {
+  if (target.kind === "item") {
+    const map = await buildItemSources();
+    const src = map.get(target.id) ?? [];
+    const r = rarityForItem(target.id);
+    return (
+      <>
+        <b>{target.name}</b> is a {RARITY_LABELS[r]} item. {RARITY_OBTAIN[r]}.
+        {src.length ? (
+          <>
+            <br />
+            Found at: {src.map((s) => s.label).join(" · ")}
+          </>
+        ) : r !== 0 ? (
+          <>
+            <br />
+            No obtain path is set up for it yet, sorry. Ask a staff member to grant it.
+          </>
+        ) : null}
+        <br />
+        You can also look it up in the <L to="/Library">Library</L> Artifact Vault.
+      </>
+    );
+  }
+  const lists = await getPokemonLists();
+  const inLists = (lists.formattedData ?? []).filter(
+    (l) =>
+      l.public !== false &&
+      !l.missionDefault &&
+      l.rule === "only" &&
+      Array.isArray(l.pokemons) &&
+      l.pokemons.includes(target.slug)
+  );
+  return (
+    <>
+      To find <b>{target.name}</b>, roll an encounter in the <L to="/Forum/Events">Events forum</L>
+      {inLists.length ? (
+        <> from one of these lists: {inLists.map((l) => l.name || l.id).join(", ")}.</>
+      ) : (
+        <>. It is not on a public encounter list yet, so a host would set one for it.</>
+      )}
+      <br />
+      The <L to="/Library">Library</L> Field Registers show the full region breakdown, and the Pokedex has its entry.
+    </>
   );
 }
 
@@ -1164,6 +1247,19 @@ export default function SnagAgent() {
         }
         return;
       }
+    }
+    // "Where do I find X" for a named item or pokemon, before giving up.
+    const target = findLocateTarget(text);
+    if (target) {
+      setBusy(true);
+      try {
+        push({ from: "snag", node: await answerForTarget(target) });
+      } catch {
+        push({ from: "snag", node: "I hit static looking that up. Try again in a moment." });
+      } finally {
+        setBusy(false);
+      }
+      return;
     }
     // No match: offer to send it to the staff (no external AI on this device).
     // The inline action reaches the question intake everywhere, including mobile
