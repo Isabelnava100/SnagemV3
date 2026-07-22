@@ -1,6 +1,5 @@
 import {
   ActionIcon,
-  Alert,
   Anchor,
   Box,
   Button,
@@ -160,9 +159,21 @@ function DashboardHeader() {
             Welcome back, {user?.displayName}!
           </Text>
         </Box>
-        <Group gap={12} wrap="nowrap">
+        <Group gap={14} wrap="nowrap">
           <NotificationBell />
-          <Button variant="subtle" color="gray" onClick={handleLogout}>
+          <Button
+            variant="outline"
+            color="gray"
+            onClick={handleLogout}
+            radius={0}
+            style={{
+              clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)",
+              borderColor: "rgba(255,255,255,0.4)",
+              color: "#fff",
+              fontFamily: displayFont,
+              letterSpacing: "0.12em",
+            }}
+          >
             Log Out
           </Button>
         </Group>
@@ -225,16 +236,24 @@ function ImportBanner() {
       : "Welcome back! Import your currency, items, and Pokemon from the Gaia guild.";
 
   return (
-    <Alert color="grape" variant="light" title="Restore your collection">
-      <Group justify="space-between" align="center" wrap="wrap" gap={10}>
-        <Text fz={16} c="white">
-          {message}
-        </Text>
-        <Button component={Link} to="/Onboarding" size="xs" radius="xl" variant="white">
-          Open import
-        </Button>
-      </Group>
-    </Alert>
+    <Group
+      align="center"
+      wrap="nowrap"
+      gap={16}
+      px={22}
+      py={16}
+      style={{ background: "rgba(255,208,116,0.07)", border: "1px solid rgba(255,208,116,0.4)" }}
+    >
+      <Box style={{ width: 24, height: 24, flexShrink: 0 }}>
+        <SnagIcon name="gift" size={24} title="Import" />
+      </Box>
+      <Text fz={15} c="white" style={{ flex: 1, minWidth: 0 }}>
+        {message}
+      </Text>
+      <Link to="/Onboarding" className="dc-cta dc-cta-gold" style={{ flexShrink: 0 }}>
+        Open Import
+      </Link>
+    </Group>
   );
 }
 
@@ -261,11 +280,24 @@ function NotificationBell() {
   return (
     <Popover width={300} position="bottom-end" withArrow shadow="md" onOpen={openRead}>
       <Popover.Target>
-        <UnstyledButton style={{ position: "relative", lineHeight: 0 }}>
+        <UnstyledButton
+          aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}
+          style={{
+            position: "relative",
+            lineHeight: 0,
+            width: 48,
+            height: 48,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(10,9,13,0.5)",
+            border: "1px solid rgba(255,255,255,0.18)",
+          }}
+        >
           {/* Crisp vector alert icon (burst) from the Snag icon set; replaced
               the old bell.svg which scaled blurry. */}
-          <Box style={{ width: 30, height: 30 }}>
-            <SnagIcon name="burst" size={30} title="Notifications" />
+          <Box style={{ width: 24, height: 24 }}>
+            <SnagIcon name="burst" size={24} title="Notifications" />
           </Box>
           {unread > 0 && (
             <Box
@@ -339,10 +371,14 @@ function CurrencyChip(props: { amount: number | string; name: string; color: str
           <Flex
             bg="#17151c"
             align="center"
-            gap={10}
-            px={14}
-            py={12}
-            style={{ borderRadius: 10, minWidth: 0, border: "1px solid #232028" }}
+            gap={12}
+            px={18}
+            py={14}
+            style={{
+              minWidth: 0,
+              border: "1px solid #2a2637",
+              borderLeft: `3px solid ${props.color}`,
+            }}
           >
             <Box
               style={{
@@ -360,14 +396,14 @@ function CurrencyChip(props: { amount: number | string; name: string; color: str
             <Stack gap={0} style={{ minWidth: 0 }}>
               <Text
                 c={props.color}
-                fz={24}
-                fw={700}
+                fz={22}
+                fw={800}
                 lh={1.1}
                 style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)" }}
               >
                 {amount}
               </Text>
-              <Text c="gray.5" fz={13} tt="uppercase" lineClamp={1} style={{ letterSpacing: "0.06em" }}>
+              <Text c="#b6b1bc" fz={14} fw={700} tt="uppercase" lineClamp={1} style={{ letterSpacing: "0.16em" }}>
                 {props.name}
               </Text>
             </Stack>

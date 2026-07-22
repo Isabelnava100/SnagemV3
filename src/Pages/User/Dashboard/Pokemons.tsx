@@ -324,7 +324,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
   };
 
   return (
-    <Box bg="#403C43" w="100%" p={20} sx={{ borderRadius: 20, overflow: "hidden" }}>
+    <Box bg="#17151c" w="100%" p={20} sx={{ border: "1px solid #2a2637", overflow: "hidden" }}>
       <Stack align={isOverLg ? undefined : "center"}>
         <Flex justify="space-between" align="center" w="100%">
           <Conditional
@@ -392,7 +392,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
             size="xs"
             w="100%"
             {...form.getInputProps("characterId")}
-            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+            styles={{ input: { background: "#0e0d11" }, label: { color: "white" } }}
           />
         ) : (
           teamCharacterName && (
@@ -570,10 +570,10 @@ function OwnedPokemons(props: EditingProps) {
 
   const resetFilters = () => setFilterState(EMPTY_FILTERS);
 
-  const darkInput = { input: { background: "#2E2D2E" }, label: { color: "white" } };
+  const darkInput = { input: { background: "#0e0d11" }, label: { color: "white" } };
 
   return (
-    <Box bg="#403C43" w="100%" p={20} sx={{ borderRadius: 20, overflow: "hidden" }}>
+    <Box bg="#17151c" w="100%" p={20} sx={{ border: "1px solid #2a2637", overflow: "hidden" }}>
       <Stack>
         <Flex justify="space-between" align="center" gap={8} wrap="wrap">
           <Group align="end">
@@ -834,7 +834,7 @@ function HeldItemSection(props: { pokemon: OwnedPokemon }) {
             size="xs"
             w={220}
             aria-label="Pick a held item"
-            styles={{ input: { background: "#2E2D2E" } }}
+            styles={{ input: { background: "#0e0d11" } }}
           />
           <Button
             size="compact-sm"
@@ -976,7 +976,7 @@ function SinglePokemon(props: {
   return (
     <Flex
       p={10}
-      bg={shadowed ? "#000" : "#3C3A3C"}
+      bg={shadowed ? "#000" : "#141318"}
       justify="center"
       align="center"
       pos="relative"

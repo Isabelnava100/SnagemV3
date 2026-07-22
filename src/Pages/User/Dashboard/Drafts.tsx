@@ -1,16 +1,15 @@
 import {
   ActionIcon,
   Badge,
+  Box,
   Button,
   Flex,
   Group,
-  Image,
   Paper,
   Popover,
   SimpleGrid,
   Stack,
   Text,
-  Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconTrash } from "@tabler/icons-react";
@@ -23,7 +22,6 @@ import { Draft } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import { clickable } from "../../../lib/a11y";
 import useMediaQuery from "../../../hooks/useMediaQuery";
-import { Edit } from "../../../icons";
 import { getDrafts } from "../../../queries/dashboard";
 import formatter from "../../../utils/date";
 
@@ -138,14 +136,16 @@ function DeleteDraft(props: { draftId: string }) {
     <Popover opened={opened} onChange={close} position="bottom-end" withArrow shadow="md">
       <Popover.Target>
         <ActionIcon
-          color="red"
-          variant="filled"
-          radius="xl"
-          size="lg"
+          color="gray"
+          variant="default"
+          radius={0}
+          size={34}
           title="Delete draft"
+          aria-label="Delete draft"
           onClick={open}
+          style={{ flexShrink: 0 }}
         >
-          <IconTrash size={18} />
+          <IconTrash size={16} />
         </ActionIcon>
       </Popover.Target>
       <Popover.Dropdown bg="#1E1D20">
@@ -173,79 +173,37 @@ function DeleteDraft(props: { draftId: string }) {
 }
 
 function SingleDraft(props: Draft) {
-  const { isOverSm } = useMediaQuery();
+  const isPost = props.thread_id && props.thread_id !== "new-thread";
+  const continueUrl = isPost
+    ? `/Forum/${props.location_db}/thread/${props.thread_id}/post?draft=${props.id}`
+    : `/Forum/${props.location_db || "Main-Forum"}/new?draft=${props.id}`;
   return (
-    <Paper bg="#3E3D3D" radius={15} py={0} pos="relative" sx={{ overflow: "hidden" }}>
-      <Flex
-        justify="space-between"
-        sx={{ flexDirection: isOverSm ? "row" : "column" }}
-        align="stretch"
-      >
-        {/* Delete lives in the dark text area, outside the colored panel, so it
-            never stacks on top of the edit pencil. */}
-        <Flex
-          justify="space-between"
-          align="flex-start"
-          py={10}
-          pl={18}
-          pr={12}
-          gap={10}
-          style={{ flex: 1, minWidth: 0 }}
+    <Paper className="dc-card" radius={0} pos="relative">
+      <Flex align="center" gap={16} px={22} py={20} wrap="nowrap">
+        {/* The title block continues the draft (replaces the old edit pencil). */}
+        <Box
+          component={Link}
+          to={continueUrl}
+          style={{ flex: 1, minWidth: 0, textDecoration: "none" }}
+          title="Continue this draft"
         >
-          <Stack gap={6} style={{ minWidth: 0 }}>
-            <Title order={3} size={24} c="white">
+          <Stack gap={8}>
+            <Text c="white" fw={700} fz={16} lineClamp={1}>
               {props.title_thread}
-            </Title>
+            </Text>
             <Badge
               w="fit-content"
               variant="light"
-              color={props.thread_id && props.thread_id !== "new-thread" ? "cyan.0" : "pink.0"}
+              color={isPost ? "cyan.0" : "pink.0"}
             >
-              {props.thread_id && props.thread_id !== "new-thread" ? "Post draft" : "Thread draft"}
+              {isPost ? "Post draft" : "Thread draft"}
             </Badge>
           </Stack>
-          <DeleteDraft draftId={props.id} />
-        </Flex>
-        <Stack
-          bg={props.color}
-          sx={{
-            borderTopLeftRadius: isOverSm ? 100 : undefined,
-            borderRadius: isOverSm ? undefined : 15,
-          }}
-          align={isOverSm ? "end" : undefined}
-          px={isOverSm ? 20 : undefined}
-          py={isOverSm ? 10 : undefined}
-          miw={200}
-          w={isOverSm ? undefined : "100%"}
-        >
-          <Flex
-            justify="center"
-            sx={{ flexDirection: isOverSm ? "column" : "row-reverse" }}
-            align={isOverSm ? "end" : "center"}
-            px={7}
-            py={8}
-            gap={isOverSm ? 10 : 15}
-          >
-            <ActionIcon
-              variant="transparent"
-              size="xl"
-              component={Link}
-              to={
-                props.thread_id && props.thread_id !== "new-thread"
-                  ? `/Forum/${props.location_db}/thread/${props.thread_id}/post?draft=${props.id}`
-                  : `/Forum/${props.location_db || "Main-Forum"}/new?draft=${props.id}`
-              }
-              title="Continue this draft"
-            >
-              <Image src={Edit} alt="Draft icon" width={45} />
-            </ActionIcon>
-            <Text ta="end" c="#151515" fw={500}>
-              Draft saved at:
-              <br />
-              {formatter.format(new Date((props.date_saved?.seconds ?? 0) * 1000))}
-            </Text>
-          </Flex>
-        </Stack>
+        </Box>
+        <Text fz={14} c="#b6b1bc" ta="right" style={{ flexShrink: 0 }}>
+          Saved {formatter.format(new Date((props.date_saved?.seconds ?? 0) * 1000))}
+        </Text>
+        <DeleteDraft draftId={props.id} />
       </Flex>
     </Paper>
   );

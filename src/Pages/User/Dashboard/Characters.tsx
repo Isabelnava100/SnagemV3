@@ -167,7 +167,7 @@ function InputWrapper(props: {
   const { title, isEditing, inputType = "input", options, name, form, locked = false } = props;
   const editable = isEditing && !locked;
   return (
-    <Paper w="100%" bg="#525151" py={3} px={7} radius={8}>
+    <Paper w="100%" bg="#141318" py={3} px={7} radius={8}>
       <Flex align="center">
         <Text w={65} fz={16} lineClamp={1}>
           {title}:
@@ -227,7 +227,7 @@ function TextareaWrapper(props: {
   const value = form.values[name] ?? "";
 
   return (
-    <Stack h="100%" p={8} sx={{ borderRadius: 8 }} bg="#525151" gap={8}>
+    <Stack h="100%" p={8} sx={{ borderRadius: 8 }} bg="#141318" gap={8}>
       <Group gap={6} justify="space-between" wrap="nowrap">
         <Title order={3} size={16}>
           {title}
@@ -396,12 +396,12 @@ function SingleCharacter(props: Character) {
 
   return (
     <Stack
-      bg="#3E3D3D"
+      bg="#17151c"
       p={20}
       align="end"
       w="100%"
       sx={{
-        borderRadius: 15,
+        border: "1px solid #2a2637",
         overflow: "hidden",
       }}
     >
@@ -429,7 +429,7 @@ function SingleCharacter(props: Character) {
             {isEditing ? (
               <TextInput {...form.getInputProps("name")} />
             ) : (
-              <Text fz={28} color="white" bg="#2E2D2E" px={20} py={5} sx={{ borderRadius: 8 }}>
+              <Text fz={28} color="white" bg="#0e0d11" px={20} py={5} sx={{ borderRadius: 8 }}>
                 {form.values.name}
               </Text>
             )}

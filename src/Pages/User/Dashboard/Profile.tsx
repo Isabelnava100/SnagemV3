@@ -120,9 +120,18 @@ function StickySaveBar(props: { onSave: () => void; loading?: boolean }) {
 
 function Wrapper(props: { children: React.ReactNode } & StackProps) {
   const { isOverLg } = useMediaQuery();
-  const { children, p = isOverLg ? 25 : 15, sx = { borderRadius: 22 }, ...restProps } = props;
+  const { children, p = isOverLg ? 25 : 15, sx, style, ...restProps } = props;
+  // Redesigned surface: the dark angular panel from the mockup replaces the old
+  // grey rounded card. Inline style wins over any caller `sx` radius so every
+  // profile card reads angular. (Kept `sx` passthrough for layout overrides.)
   return (
-    <Stack bg="#403C43" p={p} {...restProps} sx={sx} gap={5}>
+    <Stack
+      p={p}
+      {...restProps}
+      sx={sx}
+      style={{ background: "#17151c", border: "1px solid #2a2637", borderRadius: 0, ...style }}
+      gap={5}
+    >
       {children}
     </Stack>
   );
@@ -275,7 +284,13 @@ function Avatars() {
       />
       <Stack w="100%" maw="100%" sx={{ flex: 1, overflow: "hidden" }}>
         <Flex w="100%" justify="space-between" align="center">
-          <Text fz={20} color="white">
+          <Text
+            fz={16}
+            fw={700}
+            c="white"
+            tt="uppercase"
+            style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.1em" }}
+          >
             Avatars
           </Text>
           <UploadAndCropImage
@@ -466,7 +481,13 @@ function CoverBackgrounds() {
     <Wrapper p={16}>
       <Stack>
         <Flex w="100%" justify="space-between" align="center">
-          <Text fz={20} color="white">
+          <Text
+            fz={16}
+            fw={700}
+            c="white"
+            tt="uppercase"
+            style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.1em" }}
+          >
             Cover Background
           </Text>
           <UploadAndCropImage
@@ -614,7 +635,13 @@ function Tags() {
     <Wrapper p={16}>
       <Stack>
         <Flex align="start" justify="center">
-          <Text fz={20} color="white">
+          <Text
+            fz={16}
+            fw={700}
+            c="white"
+            tt="uppercase"
+            style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.1em" }}
+          >
             Tags
           </Text>
           <Alert icon={<IconInfoCircle />} py={0} color="gray" bg="transparent" sx={{ flex: 1 }}>
@@ -674,7 +701,13 @@ function RightSideContent() {
     <Stack sx={{ flex: 1 }}>
       <Wrapper id="profile-save-anchor" sx={{ flex: 1, borderRadius: 22 }}>
         <Flex justify="space-between" align="center">
-          <Title c="white" order={2} size={28}>
+          <Title
+            c="white"
+            order={2}
+            size={16}
+            tt="uppercase"
+            style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.1em" }}
+          >
             Description
           </Title>
           {isLoading && <Text>Saving changes...</Text>}

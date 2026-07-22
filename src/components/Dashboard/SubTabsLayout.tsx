@@ -29,24 +29,28 @@ export default function SubTabsLayout(props: {
         component={Link}
         to={linkPath}
         sx={{
-          borderRadius: isOverLg ? 22 : 16,
           flexShrink: 0,
+          border: "1px solid #2a2637",
           background: isActive
             ? "linear-gradient(90deg, #762B77 13.54%, #14B1B6 70.83%)"
-            : "rgba(119, 41, 118, 0.25)",
+            : "#17151c",
           textDecoration: "none",
+          "&:hover": isActive ? undefined : { borderColor: "#E54156" },
         }}
-        h={isOverLg ? 59 : 44}
+        h={isOverLg ? 52 : 44}
         className="flex justify-start items-center px-4 duration-100"
         w={isOverLg ? "100%" : undefined}
       >
         <Text
           sx={{
-            fontSize: isOverLg ? 24 : 15,
+            fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+            fontSize: isOverLg ? 16 : 14,
             fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
             lineHeight: "normal",
             whiteSpace: "nowrap",
-            color: isActive ? "#FFFFFF" : "rgba(189, 110, 189, 0.55)",
+            color: isActive ? "#FFFFFF" : "#8f8a99",
           }}
         >
           {link.label}
@@ -64,7 +68,7 @@ export default function SubTabsLayout(props: {
       align="start"
     >
       {isOverLg ? (
-        <Stack w="100%" maw={320} gap={12} style={RESET_READING_SCALE} sx={{ flexShrink: 0 }}>
+        <Stack w="100%" maw={260} gap={10} style={RESET_READING_SCALE} sx={{ flexShrink: 0 }}>
           {tabs}
         </Stack>
       ) : (
@@ -86,9 +90,9 @@ export function SimpleSectionWrapper(props: {
   bg?: string;
   borderRadius?: number;
 }) {
-  const { children, bg = "#403C43", borderRadius = 22 } = props;
+  const { children, bg = "#17151c", borderRadius = 0 } = props;
   return (
-    <Box bg={bg} sx={{ borderRadius }} className="w-full overflow-auto p-4">
+    <Box bg={bg} sx={{ borderRadius, border: "1px solid #2a2637" }} className="w-full overflow-auto p-4">
       {children}
     </Box>
   );

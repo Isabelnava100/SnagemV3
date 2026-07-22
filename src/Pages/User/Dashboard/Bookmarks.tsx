@@ -9,7 +9,6 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  Title,
 } from "@mantine/core";
 import { IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,27 +63,6 @@ export default function Bookmarks() {
   );
 }
 
-function BookmarkIcon(props: { color: string }) {
-  const { color } = props;
-  return (
-    // Small bookmark-flag icon (was a large 63x126 block); vertically centered.
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="36"
-      viewBox="0 0 63 126"
-      fill="none"
-      style={{ alignSelf: "center", flexShrink: 0 }}
-    >
-      <path
-        id="Rectangle 179"
-        d="M0 8C0 3.58172 3.58172 0 8 0H55C59.4183 0 63 3.58172 63 8V121.606C63 124.033 61.0327 126 58.606 126V126C57.1721 126 55.834 125.308 55.0034 124.14C50.3497 117.591 34.7754 96 31.7386 96C28.723 96 13.3435 117.292 8.57249 124.001C7.68216 125.253 6.24415 126 4.7079 126V126C2.1078 126 0 123.892 0 121.292V8Z"
-        fill={color}
-      />
-    </svg>
-  );
-}
-
 function SingleBookmark(props: Bookmark) {
   const { title, date, color, threadLocation, threadID, latestPostBy, latestPostAt } = props;
   const { isOverXs } = useMediaQuery();
@@ -107,11 +85,11 @@ function SingleBookmark(props: Bookmark) {
 
   return (
     <Paper
-      radius={15}
-      bg="rgba(62, 61, 61, 0.65)"
+      radius={0}
+      className="dc-card"
       component={Link}
       to={`/Forum/${threadLocation}/thread/${threadID}/last`}
-      style={{ textDecoration: "none", position: "relative" }}
+      style={{ textDecoration: "none", position: "relative", overflow: "hidden" }}
     >
       {/* Delete with a confirmation step, in a popover anchored to the trash. */}
       <Popover
@@ -163,33 +141,29 @@ function SingleBookmark(props: Bookmark) {
           </Stack>
         </Popover.Dropdown>
       </Popover>
-      <Flex gap={15} pl="md" align="stretch">
-        <BookmarkIcon color={color} />
+      <Flex align="stretch">
         {/* pr clears the absolute trash icon so the title never runs under it. */}
-        <Stack py="md" pr={44} sx={{ flex: 1 }}>
-          <Title c="white" order={4} lineClamp={2}>
+        <Stack gap={8} py={20} px={22} pr={44} sx={{ flex: 1, minWidth: 0 }}>
+          <Text c="white" fw={700} fz={16} lineClamp={2} style={{ lineHeight: 1.35 }}>
             {title}
-          </Title>
-          <Stack gap={3}>
-            <Text>Latest post by: {latestPostBy ?? "N/A"}</Text>
-            <Text size="xs" color="dimmed">
-              {formatter.format(new Date((latestPostAt?.seconds ?? date?.seconds ?? 0) * 1000))}
-            </Text>
-          </Stack>
+          </Text>
+          <Text fz={14} c="#b6b1bc">
+            Latest post by {latestPostBy ?? "N/A"} ·{" "}
+            {formatter.format(new Date((latestPostAt?.seconds ?? date?.seconds ?? 0) * 1000))}
+          </Text>
         </Stack>
         {isOverXs && (
           <Flex
             justify="center"
             align="center"
-            pl={50}
-            pr={30}
-            sx={{ borderTopLeftRadius: 100, borderTopRightRadius: 15, borderBottomRightRadius: 15 }}
+            w={78}
+            sx={{ flexShrink: 0 }}
             bg={color}
           >
             <Avatar
-              size="xl"
+              size={44}
               alt={`${title} thread avatar`}
-              sx={{ objectFit: "cover", borderRadius: "100%" }}
+              sx={{ objectFit: "cover", borderRadius: "100%", border: "2px solid rgba(255,255,255,0.5)" }}
               src={DefaultCharacterAvatarSrc}
             />
           </Flex>

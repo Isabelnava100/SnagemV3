@@ -80,7 +80,7 @@ export default function FeaturedPicks() {
   if (!profile || !characters || !teams || !owned) return <SectionLoader />;
 
   return (
-    <Stack gap={12} p={16} sx={{ background: "#403C43", borderRadius: 22 }}>
+    <Stack gap={12} p={16} sx={{ background: "#17151c", border: "1px solid #2a2637" }}>
       <Title order={2} c="white" size={26} fw={400}>
         Featured on Your Profile
       </Title>
@@ -99,7 +99,7 @@ export default function FeaturedPicks() {
           setSaved(false);
           setCharacter(v);
         }}
-        styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+        styles={{ input: { background: "#0e0d11" }, label: { color: "white" } }}
       />
 
       <Select
@@ -112,7 +112,7 @@ export default function FeaturedPicks() {
           setSaved(false);
           setTeam(v);
         }}
-        styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+        styles={{ input: { background: "#0e0d11" }, label: { color: "white" } }}
       />
 
       <Select
@@ -127,7 +127,7 @@ export default function FeaturedPicks() {
           setSaved(false);
           setPokemon(v);
         }}
-        styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+        styles={{ input: { background: "#0e0d11" }, label: { color: "white" } }}
       />
 
       {saved && (

@@ -2,7 +2,6 @@ import {
   Avatar,
   Box,
   Flex,
-  Group,
   Modal,
   ScrollArea,
   SimpleGrid,
@@ -68,22 +67,14 @@ export default function Items() {
       <Title order={2} c="white" size={isOverLg ? 24 : 20} fw={400}>
         Your Items
       </Title>
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 2 }} spacing={14}>
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 2 }} spacing={16}>
         {categories.map((categoryName) => (
-          <Stack key={categoryName} gap={8}>
-            <Title
-              order={3}
-              size={isOverLg ? 20 : 16}
-              c="white"
-              bg="#7e2c75a1"
-              px={16}
-              py={8}
-              style={{ borderRadius: 12 }}
-            >
+          <Box key={categoryName} className="dc-card" p={{ base: 16, sm: 22 }}>
+            <Box className="dc-subkicker" mb={16}>
               {categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}
-            </Title>
-            <ScrollArea.Autosize mah={280}>
-              <Stack gap={8}>
+            </Box>
+            <ScrollArea.Autosize mah={320}>
+              <SimpleGrid cols={2} spacing={12}>
                 {(data ?? [])
                   .filter((item) => item.category === categoryName)
                   .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
@@ -96,48 +87,55 @@ export default function Items() {
                     const onUse = box
                       ? () => setMysteryItem({ id: item.id, name: displayName })
                       : () => setEvolveItem({ id: item.id, name: item.name });
+                    const more = describeSources(sources.get(item.id));
                     return (
                       <Box
                         key={item.id}
-                        bg="#3e3d3dba"
+                        className="dc-card-tile"
+                        p={14}
                         {...(interactive
                           ? {
                               ...clickable(onUse),
                               "aria-label": box ? `Open ${displayName}` : `Use ${item.name}`,
                             }
                           : {})}
-                        style={{
-                          borderRadius: 12,
-                          overflow: "hidden",
-                          cursor: interactive ? "pointer" : undefined,
-                        }}
+                        style={{ cursor: interactive ? "pointer" : undefined }}
                       >
-                        <Flex w="100%" justify="space-between" align="center">
-                          <Group px={14} py={8} gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
-                            <Avatar src={getItemImageURL(item.filePath)} alt={displayName} size={36} />
-                            <Box style={{ minWidth: 0 }}>
-                              <Text c="white" fz={16} lineClamp={1}>
-                                {displayName}
-                              </Text>
-                              {describeSources(sources.get(item.id)) && (
-                                <Text fz={12} c="dimmed" lineClamp={1}>
-                                  Get more: {describeSources(sources.get(item.id))}
-                                </Text>
-                              )}
-                            </Box>
-                          </Group>
-                          <Box bg="#525151" py={8} px={18} style={{ borderTopLeftRadius: 40, flexShrink: 0 }}>
-                            <Text c="white" fz={isOverLg ? 26 : 20}>
-                              x{item.quantity}
+                        <Stack gap={10}>
+                          {/* Icon well, per the mockup. */}
+                          <Flex
+                            align="center"
+                            justify="center"
+                            h={64}
+                            style={{ background: "#0e0d11", border: "1px solid #232028" }}
+                          >
+                            <Avatar
+                              src={getItemImageURL(item.filePath)}
+                              alt={displayName}
+                              size={40}
+                              radius={0}
+                            />
+                          </Flex>
+                          <Flex align="center" justify="space-between" gap={8}>
+                            <Text c="white" fz={14} fw={700} lineClamp={1} style={{ minWidth: 0 }}>
+                              {displayName}
                             </Text>
-                          </Box>
-                        </Flex>
+                            <Text c="#FFD074" fz={14} fw={700} style={{ flexShrink: 0 }}>
+                              ×{item.quantity}
+                            </Text>
+                          </Flex>
+                          {more && (
+                            <Text fz={11} c="dimmed" lineClamp={1}>
+                              Get more: {more}
+                            </Text>
+                          )}
+                        </Stack>
                       </Box>
                     );
                   })}
-              </Stack>
+              </SimpleGrid>
             </ScrollArea.Autosize>
-          </Stack>
+          </Box>
         ))}
       </SimpleGrid>
 

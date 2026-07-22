@@ -54,7 +54,7 @@ export default function Navigation() {
   if (isPending || !order) return <SectionLoader />;
 
   return (
-    <Box className="bg-[#403C43] max-w-full flex-1 overflow-auto p-4 rounded-[22px]">
+    <Box className="bg-[#17151c] border border-[#2a2637] max-w-full flex-1 overflow-auto p-4">
       <Stack gap={12} maw={520}>
         <Text c="white" fw={700} fz={18}>
           Customize your navigation

@@ -401,7 +401,7 @@ export default function Notifications() {
   if (isError) return <></>;
 
   return (
-    <Box className="bg-[#403C43] max-w-full flex-1 overflow-auto p-4 rounded-[22px]">
+    <Box className="bg-[#17151c] border border-[#2a2637] max-w-full flex-1 overflow-auto p-4">
       <Stack>
         <NotificationsInbox />
         <CustomSwitch

@@ -36,11 +36,12 @@ function RowShell(props: { to: string; children: React.ReactNode }) {
     <Box
       component={Link}
       to={props.to}
-      p={12}
+      className="dc-row-hover"
+      px={4}
+      py={16}
       style={{
         display: "block",
-        borderRadius: 12,
-        background: "#2E2D2E",
+        borderTop: "1px solid #2a2637",
         textDecoration: "none",
       }}
     >
@@ -121,7 +122,7 @@ export default function History() {
   const posts = postsQuery.data ?? [];
 
   return (
-    <Box className="bg-[#403C43] max-w-full flex-1 overflow-auto p-4 rounded-[22px]">
+    <Box className="dc-card" p={{ base: 16, sm: 30 }}>
       <Stack gap={12}>
         <Box>
           <Text fz={22} fw={700} c="white">
@@ -132,7 +133,7 @@ export default function History() {
           </Text>
         </Box>
 
-        <Tabs defaultValue="posts" variant="pills" color="grape" keepMounted={false}>
+        <Tabs defaultValue="posts" variant="default" color="grape" keepMounted={false}>
           <Tabs.List mb={12}>
             <Tabs.Tab value="posts">Recent Posts</Tabs.Tab>
             <Tabs.Tab value="threads">Threads You Started</Tabs.Tab>
