@@ -3,11 +3,9 @@ import {
   Avatar,
   Badge,
   Box,
-  Card,
   Flex,
   Group,
   Popover,
-  ScrollArea,
   Stack,
   Text,
   Tooltip,
@@ -18,47 +16,58 @@ import { Link } from "react-router-dom";
 import { getColor1, getColor2 } from "../../../components/user-forum/getColorBadges";
 import { useAuth } from "../../../context/AuthContext";
 import { itemData } from "../../../data/item";
-import { getItemImageURL, getPokemonImageURL } from "../../../helpers";
+import { getPokemonImageURL } from "../../../helpers";
+import useMediaQuery from "../../../hooks/useMediaQuery";
+import { SnagIcon, type SnagIconName } from "../../../icons/SnagIcon";
 import { SHADOW_GUIDE_LINK } from "../../../lib/shadow";
 import { ForumPost, PostCharacter, formatFireTime } from "../types";
 import { ForumTextLink, GameResultText } from "./ui";
 
-/** Character avatar + name + party sprite row; the strip row scrolls on overflow. */
-function CharacterStrip(props: { character: PostCharacter }) {
+const DISPLAY = "var(--font-display)";
+const LOG_BG = "#141318";
+
+/** One team's sprite tiles under a post, matching the mockup's TEAM footer row. */
+function CharacterTeam(props: { character: PostCharacter }) {
   const { character } = props;
+  const mons = character.pokemon.slice(0, 6);
+  if (!mons.length) return null;
   return (
-    <Flex
-      align="center"
-      gap={10}
-      p={8}
-      bg="#3C3A3C"
-      style={{ borderRadius: 10, flexShrink: 0 }}
-    >
-      <Avatar
-        src={character.imageURL || undefined}
-        alt={`${character.name ?? "Character"} avatar`}
-        size={54}
-        radius="xl"
-      />
-      <Stack gap={4}>
-        <Text fz={16} c="white" fw={500}>
-          {character.name}
-        </Text>
-        <Group gap={4} wrap="nowrap">
-          {character.pokemon.slice(0, 6).map((p) => (
-            <Avatar
-              key={p.slug}
-              src={getPokemonImageURL(p.slug)}
-              alt={p.name}
-              title={p.name}
-              size={28}
-              radius="xl"
-              bg="#2b2a2b"
-            />
-          ))}
-        </Group>
-      </Stack>
-    </Flex>
+    <Box>
+      <Text
+        fz={12}
+        fw={700}
+        c="#8f8a99"
+        mb={8}
+        style={{ fontFamily: DISPLAY, letterSpacing: ".16em", textTransform: "uppercase" }}
+      >
+        {character.name || "Team"}
+      </Text>
+      <Flex gap={8} wrap="wrap">
+        {mons.map((p) => (
+          <Tooltip key={p.slug} label={p.name} withArrow openDelay={120}>
+            <Box
+              w={44}
+              h={44}
+              bg={LOG_BG}
+              style={{
+                border: "1px solid #2a2637",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              sx={{ "&:hover": { borderColor: "#FFD074" } }}
+            >
+              <img
+                src={getPokemonImageURL(p.slug)}
+                alt={p.name}
+                loading="lazy"
+                style={{ width: 32, height: 32, imageRendering: "pixelated" }}
+              />
+            </Box>
+          </Tooltip>
+        ))}
+      </Flex>
+    </Box>
   );
 }
 
@@ -67,17 +76,18 @@ function AuthorPopover(props: {
   post: ForumPost;
   forum: string;
   threadId: string;
+  fz?: number;
 }) {
   const { post } = props;
   return (
     <Popover width={190} position="bottom-start" withArrow shadow="md">
       <Popover.Target>
         <Text
-          fz={16}
-          fw={600}
+          fz={props.fz ?? 14}
+          fw={700}
           c="white"
           component="span"
-          style={{ cursor: "pointer" }}
+          style={{ cursor: "pointer", fontFamily: DISPLAY }}
         >
           {post.owner}
         </Text>
@@ -113,42 +123,45 @@ function AuthorPopover(props: {
   );
 }
 
-/** Pink in-post result blocks: encounters, items used, dice, randoms, boss. */
+interface LogRow {
+  key: string;
+  icon: SnagIconName;
+  tag: string;
+  color: string;
+  text: string;
+}
+
+/**
+ * The dashed "BATTLE LOG" box: every in-post game result (encounters, items,
+ * dice, randoms, the enemy's counter-attack, Center visits, mega, boss) folded
+ * into tagged rows. The underlying text is preserved verbatim; only the
+ * presentation changed from pink cards to tagged log rows.
+ */
 export function GameBlocks(props: { post: ForumPost }) {
   const { blocks } = props.post;
+  const { isOverSm } = useMediaQuery();
   if (!blocks) return null;
-  const cards: React.ReactNode[] = [];
+
+  const rows: LogRow[] = [];
 
   if (blocks.mega && props.post.type === "user") {
     const m = blocks.mega;
-    cards.push(
-      <Flex key="mega" align="center" gap={10} p={10} bg="#241a33" style={{ borderRadius: 8 }} wrap="wrap">
-        <Avatar src={getPokemonImageURL(m.fromSlug)} alt={`${m.fromName} sprite`} size={40} radius="xl" />
-        <Text c="dimmed" fz={20}>
-          →
-        </Text>
-        <Avatar src={getPokemonImageURL(m.toSlug)} alt={`${m.toName} sprite`} size={44} radius="xl" />
-        <GameResultText>
-          {m.fromName} Mega Evolved into {m.toName} for this post!
-        </GameResultText>
-      </Flex>
-    );
+    rows.push({
+      key: "mega",
+      icon: "sparkle",
+      tag: "MEGA",
+      color: "#c79bd6",
+      text: `${m.fromName} Mega Evolved into ${m.toName} for this post!`,
+    });
   }
-
   if (blocks.boss && props.post.type === "user") {
-    cards.push(
-      <Flex key="boss" align="center" gap={8} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
-        <GameResultText>
-          A boss encounter is present in this post... it&apos;s a {blocks.boss.name}!
-        </GameResultText>
-        <Avatar
-          src={getPokemonImageURL(blocks.boss.slug)}
-          alt={`${blocks.boss.name} sprite`}
-          size={40}
-          radius="xl"
-        />
-      </Flex>
-    );
+    rows.push({
+      key: "boss",
+      icon: "ghost",
+      tag: "BOSS",
+      color: "#E54156",
+      text: `A boss encounter is present in this post... it's a ${blocks.boss.name}!`,
+    });
   }
   blocks.encounters?.forEach((enc, i) => {
     const fleeLine =
@@ -157,33 +170,27 @@ export function GameBlocks(props: { post: ForumPost }) {
         : enc.outcome === "flee_failed"
         ? ` They tried to run away (${enc.fleeChance ?? "?"}% chance) but the ${enc.name} blocked the escape!`
         : "";
-    cards.push(
-      <Flex key={`enc${i}`} align="center" gap={8} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
-        <GameResultText>
-          {enc.mode === "roll"
-            ? `A pokemon has been encountered... it's a ${enc.name}!`
-            : `An encounter has been chosen... it's a ${enc.name}!`}
-          {!enc.catchable && " (It is owned by a trainer and cannot be caught.)"}
-          {fleeLine}
-        </GameResultText>
-        <Avatar
-          src={getPokemonImageURL(enc.slug)}
-          alt={`${enc.name} sprite`}
-          size={36}
-          radius="xl"
-        />
-      </Flex>
-    );
+    rows.push({
+      key: `enc${i}`,
+      icon: "ghost",
+      tag: "ENCOUNTER",
+      color: "#c79bd6",
+      text: `${
+        enc.mode === "roll"
+          ? `A pokemon has been encountered... it's a ${enc.name}!`
+          : `An encounter has been chosen... it's a ${enc.name}!`
+      }${!enc.catchable ? " (It is owned by a trainer and cannot be caught.)" : ""}${fleeLine}`,
+    });
   });
   if (blocks.center?.healed) {
-    cards.push(
-      <Flex key="center" gap={8} align="center">
-        <GameResultText>
-          A trip to the Pokemon Center! Nurse Joy fully healed and cured this trainer&apos;s
-          team. No battles for them until their next post.
-        </GameResultText>
-      </Flex>
-    );
+    rows.push({
+      key: "center",
+      icon: "shieldcheck",
+      tag: "CENTER",
+      color: "#12B7B6",
+      text:
+        "A trip to the Pokemon Center! Nurse Joy fully healed and cured this trainer's team. No battles for them until their next post.",
+    });
   }
   if (blocks.battle) {
     const b = blocks.battle;
@@ -200,70 +207,87 @@ export function GameBlocks(props: { post: ForumPost }) {
               b.maxHp ? `/${b.maxHp}` : ""
             } left).`
         : "";
-    cards.push(
-      <Flex key="battle" align="center" gap={8} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
-        {b.fighterSlug && (
-          <Avatar
-            src={getPokemonImageURL(b.fighterSlug)}
-            alt={`${b.fighterName} sprite`}
-            size={36}
-            radius="xl"
-          />
-        )}
-        <GameResultText>{[...(b.notes ?? []), ...healLines, hitLine].filter(Boolean).join(" ")}</GameResultText>
-      </Flex>
-    );
+    const text = [...(b.notes ?? []), ...healLines, hitLine].filter(Boolean).join(" ");
+    if (text) rows.push({ key: "battle", icon: "bolt", tag: "ENEMY", color: "#E54156", text });
   }
   blocks.itemsUsed?.forEach((item, i) => {
-    // Resolve the display name + sprite from the canonical catalog by id so
-    // older posts (stored with raw slug names) show the full name too.
+    // Resolve the display name from the canonical catalog by id so older posts
+    // (stored with raw slug names) show the full name too.
     const catalog = itemData.find((c) => c.id === item.itemId);
     const itemName = catalog?.name ?? item.name;
-    const itemFilePath = catalog?.filePath ?? item.filePath;
-    cards.push(
-      <Flex key={`item${i}`} align="center" gap={8} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
-        <Avatar src={getItemImageURL(itemFilePath)} alt={itemName} size={28} />
-        <Stack gap={2}>
-          <GameResultText>
-            {item.qty > 1 ? `${item.qty}x ` : "A "}
-            {itemName} has been used...
-            {item.caughtPokemon && ` it successfully caught the ${item.caughtPokemon}!`}
-          </GameResultText>
-          {item.note && (
-            <Text fz={14} c="gray.4">
-              {item.note}
-            </Text>
-          )}
-        </Stack>
-      </Flex>
-    );
+    rows.push({
+      key: `item${i}`,
+      icon: "gift",
+      tag: "ITEM",
+      color: "#FFD074",
+      text: `${item.qty > 1 ? `${item.qty}x ` : "A "}${itemName} has been used...${
+        item.caughtPokemon ? ` it successfully caught the ${item.caughtPokemon}!` : ""
+      }${item.note ? ` ${item.note}` : ""}`,
+    });
   });
   blocks.dice?.forEach((d, i) => {
-    cards.push(
-      <Box key={`dice${i}`} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
-        <GameResultText>
-          {d.count === 1
-            ? `A D${d.sides} has been rolled... the result is ${d.results[0]}!`
-            : `${d.count} D${d.sides} have been rolled... the results are ${d.results.join(", ")}!`}
-        </GameResultText>
-      </Box>
-    );
+    rows.push({
+      key: `dice${i}`,
+      icon: "dice",
+      tag: "DICE",
+      color: "#FFD074",
+      text:
+        d.count === 1
+          ? `A D${d.sides} has been rolled... the result is ${d.results[0]}!`
+          : `${d.count} D${d.sides} have been rolled... the results are ${d.results.join(", ")}!`,
+    });
   });
   blocks.randoms?.forEach((r, i) => {
-    cards.push(
-      <Box key={`rand${i}`} p={10} bg="#332f33" style={{ borderRadius: 8 }}>
-        <GameResultText>
-          A random number between {r.min} and {r.max} was generated... the result is {r.result}!
-        </GameResultText>
-      </Box>
-    );
+    rows.push({
+      key: `rand${i}`,
+      icon: "dice",
+      tag: "RANDOM",
+      color: "#FFD074",
+      text: `A random number between ${r.min} and ${r.max} was generated... the result is ${r.result}!`,
+    });
   });
 
-  if (!cards.length) return null;
+  if (!rows.length) return null;
+
   return (
-    <Flex gap={8} wrap="wrap" mt={10}>
-      {cards}
-    </Flex>
+    <Box mt={16} bg={LOG_BG} style={{ border: "1px dashed #4b3f63" }}>
+      <Flex align="center" gap={10} px={16} py={10} style={{ borderBottom: "1px solid #232028" }}>
+        <SnagIcon name="dice" size={16} color="#FFD074" cut={LOG_BG} />
+        <Text
+          fz={isOverSm ? 14 : 12}
+          fw={700}
+          c="#FFD074"
+          style={{ fontFamily: DISPLAY, letterSpacing: ".16em" }}
+        >
+          BATTLE LOG
+        </Text>
+      </Flex>
+      <Stack gap={0} py={4}>
+        {rows.map((r) => (
+          <Flex key={r.key} align="flex-start" gap={isOverSm ? 12 : 10} px={16} py={7}>
+            <Box style={{ flex: "none", marginTop: 2 }}>
+              <SnagIcon name={r.icon} size={16} color={r.color} cut={LOG_BG} />
+            </Box>
+            <Text
+              fz={isOverSm ? 14 : 11}
+              fw={700}
+              c={r.color}
+              style={{
+                flex: "none",
+                width: isOverSm ? 104 : 76,
+                fontFamily: DISPLAY,
+                letterSpacing: ".1em",
+              }}
+            >
+              {r.tag}
+            </Text>
+            <Text fz={isOverSm ? 14 : 12} c="#d7d2de" style={{ lineHeight: 1.5 }}>
+              {r.text}
+            </Text>
+          </Flex>
+        ))}
+      </Stack>
+    </Box>
   );
 }
 
@@ -274,7 +298,7 @@ function BossAnnouncement(props: { post: ForumPost }) {
   if (!boss) return null;
   const starting = post.type === "boss_start";
   return (
-    <Box p={16} mt={10} bg="#332f33" style={{ borderRadius: 10 }}>
+    <Box p={16} bg="#2a1a1e" style={{ border: "1px solid #E54156" }}>
       <Flex align="center" gap={12}>
         <Avatar
           src={getPokemonImageURL(boss.slug)}
@@ -306,11 +330,11 @@ function EvolutionAnnouncement(props: { post: ForumPost }) {
   const evo = props.post.blocks?.evolution;
   if (!evo) return null;
   return (
-    <Box p={16} mt={10} bg="#22331f" style={{ borderRadius: 10, border: "1px solid #3f7a2b" }}>
+    <Box p={16} bg="#14251a" style={{ border: "1px solid #3f7a2b" }}>
       <Flex align="center" gap={12} wrap="wrap">
         <Avatar src={getPokemonImageURL(evo.fromSlug)} alt={`${evo.fromName} sprite`} size={56} radius="xl" />
         <Text c="dimmed" fz={24}>
-          →
+          &rarr;
         </Text>
         <Avatar src={getPokemonImageURL(evo.toSlug)} alt={`${evo.toName} sprite`} size={56} radius="xl" />
         <GameResultText>
@@ -326,17 +350,34 @@ function ShadowedAnnouncement(props: { post: ForumPost }) {
   const names = props.post.blocks?.shadowed?.names ?? [];
   if (!names.length) return null;
   return (
-    <Box p={16} mt={10} bg="#241a33" style={{ borderRadius: 10, border: "1px solid #5a3fb0" }}>
+    <Box p={16} bg="#241f2e" style={{ border: "1px solid #772976" }}>
       <GameResultText>
         Your pokemon have become shadowed! {names.join(", ")} {names.length === 1 ? "is" : "are"} now
         shadowed.
       </GameResultText>
       <Anchor component={Link} to={SHADOW_GUIDE_LINK} c="grape.3" fz={14} mt={4} display="inline-block">
-        What does that mean, and how do I cure it? →
+        What does that mean, and how do I cure it? &rarr;
       </Anchor>
     </Box>
   );
 }
+
+const EDIT_BTN_SX = {
+  display: "flex",
+  alignItems: "center",
+  gap: 7,
+  background: "transparent",
+  border: "1px solid #3a3550",
+  color: "#b6b1bc",
+  fontFamily: DISPLAY,
+  fontSize: 14,
+  fontWeight: 700,
+  letterSpacing: ".1em",
+  padding: "7px 14px",
+  cursor: "pointer",
+  textDecoration: "none",
+  "&:hover": { borderColor: "#FFD074", color: "#FFD074" },
+} as const;
 
 export default function PostCard(props: {
   post: ForumPost;
@@ -348,6 +389,7 @@ export default function PostCard(props: {
 }) {
   const { post, forum, threadId } = props;
   const { user } = useAuth();
+  const { isOverSm } = useMediaQuery();
   const isSystem =
     post.type === "boss_start" ||
     post.type === "boss_end" ||
@@ -359,113 +401,206 @@ export default function PostCard(props: {
     !!user &&
     (post.ownerUid ? post.ownerUid === user.uid : false);
 
-  return (
-    <Card id={props.anchorId} withBorder radius="md" bg="#2b2a2b" mt={12} p={0}>
-      {/* header bar */}
-      <Flex
-        justify="space-between"
-        align="center"
-        px={14}
-        py={8}
-        bg="#3C3A3C"
-        gap={8}
-        wrap="wrap"
+  // System posts (evolution / shadowed / boss start-end) render their own
+  // announcement card inside the article surface.
+  if (isSystem) {
+    return (
+      <Box id={props.anchorId} bg="#282727" p={isOverSm ? 20 : 16} style={{ border: "1px solid #2a2637" }}>
+        <Flex justify="space-between" align="center" gap={8} wrap="wrap" mb={12}>
+          <Group gap={8}>
+            <Avatar src={post.avatar || undefined} alt={`${post.owner ?? "User"} avatar`} size={26} radius="xl" />
+            <Text fz={14} fw={700} c="white" style={{ fontFamily: DISPLAY }}>
+              {post.owner}
+            </Text>
+          </Group>
+          <Text fz={14} c="dimmed">
+            {formatFireTime(post.timePosted)}
+          </Text>
+        </Flex>
+        {post.type === "evolution" ? (
+          <EvolutionAnnouncement post={post} />
+        ) : post.type === "shadowed" ? (
+          <ShadowedAnnouncement post={post} />
+        ) : (
+          <BossAnnouncement post={post} />
+        )}
+      </Box>
+    );
+  }
+
+  const badges = (post.badges ?? []).filter(Boolean).map((badge) => (
+    <Badge
+      key={badge}
+      variant="gradient"
+      gradient={{ from: getColor1(badge), to: getColor2(badge) }}
+      size="sm"
+    >
+      {badge}
+    </Badge>
+  ));
+
+  const timeText = (
+    <Text fz={14} c="#b6b1bc">
+      {formatFireTime(post.timePosted)}
+      {post.editedAt ? " (edited)" : ""}
+    </Text>
+  );
+
+  const editBtn = canEdit ? (
+    <Box
+      component={Link}
+      to={`/Forum/${forum}/thread/${threadId}/edit/${post.id}`}
+      sx={EDIT_BTN_SX}
+    >
+      &#9998; EDIT
+    </Box>
+  ) : null;
+
+  const body = (
+    <Text
+      fz={isOverSm ? 16 : 15}
+      c="#e8e4ec"
+      style={{ width: "100%", overflowWrap: "break-word", lineHeight: 1.75 }}
+      className="forum-post-body"
+      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.text) }}
+    />
+  );
+
+  const legacyChar =
+    !post.characters?.length && post.character ? (
+      <Text fz={14} c="dimmed">
+        [ {post.character} ]
+      </Text>
+    ) : null;
+
+  const teamChars = (post.characters ?? []).filter((c) => c.pokemon?.length);
+  const hasSig =
+    !!post.signature && post.signature.replace(/<[^>]*>/g, "").trim().length > 0;
+  const hasFooter = hasSig || teamChars.length > 0;
+
+  const signature = hasSig ? (
+    <Box style={{ flex: 1, minWidth: 220 }}>
+      <Text
+        fz={14}
+        c="#b6b1bc"
+        style={{ width: "100%", overflowWrap: "break-word", lineHeight: 1.6 }}
+        className="forum-post-body"
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.signature!) }}
+      />
+    </Box>
+  ) : null;
+
+  const teams =
+    teamChars.length > 0 ? (
+      <Flex gap={20} wrap="wrap" justify={isOverSm ? "flex-end" : "flex-start"}>
+        {teamChars.map((c) => (
+          <CharacterTeam key={c.id} character={c} />
+        ))}
+      </Flex>
+    ) : null;
+
+  const footer = hasFooter ? (
+    <Box mt={isOverSm ? 22 : 0} pt={isOverSm ? 16 : 12} style={{ borderTop: "1px solid #3a3550" }}>
+      {isOverSm ? (
+        <Flex align="flex-end" justify="space-between" gap={20} wrap="wrap">
+          {signature}
+          {teams}
+        </Flex>
+      ) : (
+        <Stack gap={14}>
+          {signature}
+          {teams}
+        </Stack>
+      )}
+    </Box>
+  ) : null;
+
+  const bodyColumn = (
+    <>
+      {legacyChar}
+      {body}
+      <GameBlocks post={post} />
+      <PostFooterNote post={post} />
+      {footer}
+    </>
+  );
+
+  // Desktop: left author rail + right body column.
+  if (isOverSm) {
+    return (
+      <Box
+        id={props.anchorId}
+        bg="#282727"
+        style={{ border: "1px solid #2a2637", display: "flex", overflow: "hidden" }}
       >
-        <Group gap={8}>
+        <Box
+          style={{
+            flex: "none",
+            width: 170,
+            background: "#1f1e1e",
+            borderRight: "1px solid #2a2637",
+            padding: "22px 18px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 10,
+            textAlign: "center",
+          }}
+        >
           <Avatar
             src={post.avatar || undefined}
             alt={`${post.owner ?? "User"} avatar`}
-            size={26}
+            size={72}
             radius="xl"
+            style={{ border: "2px solid #772976" }}
           />
           <AuthorPopover post={post} forum={forum} threadId={threadId} />
-          {(post.badges ?? []).filter(Boolean).map((badge) => (
-            <Badge
-              key={badge}
-              variant="gradient"
-              gradient={{ from: getColor1(badge), to: getColor2(badge) }}
-              size="sm"
-            >
-              {badge}
-            </Badge>
-          ))}
-        </Group>
-        <Group gap={10}>
-          {canEdit && (
-            <Badge
-              component={Link}
-              to={`/Forum/${forum}/thread/${threadId}/edit/${post.id}`}
-              variant="gradient"
-              gradient={{ from: "#E54156", to: "#912691" }}
-              style={{ cursor: "pointer", textTransform: "none" }}
-            >
-              Edit ✎
-            </Badge>
+          {badges.length > 0 && (
+            <Group gap={5} justify="center">
+              {badges}
+            </Group>
           )}
-          <Text fz={14} fw={600} c="white">
-            {formatFireTime(post.timePosted)}
-            {post.editedAt ? " (edited)" : ""}
-          </Text>
-        </Group>
-      </Flex>
-
-      <Box px={14} pb={16}>
-        {isSystem ? (
-          post.type === "evolution" ? (
-            <EvolutionAnnouncement post={post} />
-          ) : post.type === "shadowed" ? (
-            <ShadowedAnnouncement post={post} />
-          ) : (
-            <BossAnnouncement post={post} />
-          )
-        ) : (
-          <>
-            {/* character strips: capped height, horizontal scroll on overflow */}
-            {!!post.characters?.length && (
-              <ScrollArea type="auto" offsetScrollbars mt={10} style={{ maxHeight: 96 }}>
-                <Flex gap={10} wrap="nowrap">
-                  {post.characters.map((character) => (
-                    <CharacterStrip key={character.id} character={character} />
-                  ))}
-                </Flex>
-              </ScrollArea>
-            )}
-            {!post.characters?.length && post.character && (
-              <Text fz={14} c="dimmed" mt={10}>
-                [ {post.character} ]
-              </Text>
-            )}
-
-            <GameBlocks post={post} />
-
-            <Text
-              fz={14}
-              c="gray.2"
-              mt={12}
-              style={{ width: "100%", overflowWrap: "break-word" }}
-              className="forum-post-body"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.text) }}
-            />
-
-            {/* Gaia-style signature: snapshotted at publish, below a divider. */}
-            {post.signature && post.signature.replace(/<[^>]*>/g, "").trim().length > 0 && (
-              <Box mt={16} pt={10} style={{ borderTop: "1px solid #3C3A3C" }}>
-                <Text
-                  fz={14}
-                  c="gray.5"
-                  style={{ width: "100%", overflowWrap: "break-word" }}
-                  className="forum-post-body"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.signature) }}
-                />
-              </Box>
-            )}
-
-            {/* Tiny footer: XP earned on this post + active boss/encounter. */}
-            <PostFooterNote post={post} />
-          </>
-        )}
+        </Box>
+        <Box style={{ flex: 1, minWidth: 0, padding: "24px 28px" }}>
+          <Flex justify="space-between" align="center" gap={14} mb={14}>
+            {timeText}
+            {editBtn}
+          </Flex>
+          {bodyColumn}
+        </Box>
       </Box>
-    </Card>
+    );
+  }
+
+  // Mobile: stacked header + body.
+  return (
+    <Box
+      id={props.anchorId}
+      bg="#282727"
+      p={16}
+      style={{ border: "1px solid #2a2637", display: "flex", flexDirection: "column", gap: 14 }}
+    >
+      <Flex align="center" gap={12} pb={12} style={{ borderBottom: "1px solid #3a3550" }}>
+        <Avatar
+          src={post.avatar || undefined}
+          alt={`${post.owner ?? "User"} avatar`}
+          size={44}
+          radius="xl"
+          style={{ border: "2px solid #772976", flex: "none" }}
+        />
+        <Box style={{ flex: 1, minWidth: 0 }}>
+          <AuthorPopover post={post} forum={forum} threadId={threadId} />
+          {badges.length > 0 && (
+            <Group gap={5} mt={4}>
+              {badges}
+            </Group>
+          )}
+        </Box>
+        <Box style={{ flex: "none" }}>{timeText}</Box>
+      </Flex>
+      {editBtn && <Box style={{ alignSelf: "flex-start" }}>{editBtn}</Box>}
+      {bodyColumn}
+    </Box>
   );
 }
 
@@ -490,7 +625,7 @@ function PostFooterNote(props: { post: ForumPost }) {
   if (!stats.length && !flags.length) return null;
 
   return (
-    <Group gap={5} mt={8} wrap="wrap" align="center">
+    <Group gap={5} mt={10} wrap="wrap" align="center">
       {stats.map((s, i) => (
         <React.Fragment key={s.abbr}>
           {i > 0 && (

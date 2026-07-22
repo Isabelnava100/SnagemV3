@@ -1,36 +1,31 @@
 import {
   ActionIcon,
-  Alert,
   Avatar,
   Badge,
   Box,
-  Button,
   Checkbox,
-  Divider,
   Group,
+  Loader,
   NumberInput,
-  Paper,
   Select,
+  SimpleGrid,
   Stack,
   Text,
   Textarea,
-  TextInput,
-  Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { IconCheck, IconTrash, IconUpload } from "@tabler/icons-react";
+import { IconTrash, IconUpload } from "@tabler/icons-react";
 import React from "react";
-import GradientButtonPrimary, {
-  GradientButtonSecondary,
-} from "../../../components/common/GradientButton";
 import Seo from "../../../components/common/Seo";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { itemData } from "../../../data/item";
 import { pokemonData } from "../../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "../../../helpers";
-import { MAX_LEVEL, xpForLevel } from "../../../lib/leveling";
+import { SnagIcon, SnagIconName } from "../../../icons/SnagIcon";
+import { MAX_LEVEL } from "../../../lib/leveling";
 import {
   ImportEntries,
   ImportItem,
@@ -53,6 +48,138 @@ const CURRENCY_LABELS: { key: keyof ImportEntries["currency"]; label: string }[]
 
 const pokemonByName = new Map(pokemonData.map((p) => [p.name.toLowerCase(), p]));
 const itemByName = new Map(itemData.map((i) => [i.name.toLowerCase(), i]));
+
+const FONT_DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
+const CLIP_CTA = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
+
+/** Dark, square-cornered field look shared by every input on the page. */
+const FIELD_SX = {
+  "& label": { color: "#fff", fontWeight: 700, fontSize: 14, marginBottom: 6 },
+  "& input, & textarea": {
+    background: "#0e0d11",
+    border: "1px solid #2a2637",
+    borderRadius: 0,
+    color: "#fff",
+  },
+  "& input:focus, & input:focus-within, & textarea:focus": { borderColor: "#c79bd6" },
+  "& input::placeholder, & textarea::placeholder": { color: "#8f8a99" },
+} as const;
+
+/* -------------------------------------------------------------------------- */
+
+/** Angular clip-path CTA in the redesign language, with loading + disabled. */
+function AngularButton(props: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  kind: "red" | "outline" | "cyan";
+  size?: "sm" | "md";
+}) {
+  const palettes = {
+    red: {
+      background: "#E54156",
+      color: "#fff",
+      border: "none",
+      "&:hover": { background: "#fff", color: "#1A1B1E" },
+    },
+    outline: {
+      background: "transparent",
+      color: "#fff",
+      border: "1.5px solid rgba(255,255,255,0.4)",
+      "&:hover": { borderColor: "#fff" },
+    },
+    cyan: {
+      background: "transparent",
+      color: "#12B7B6",
+      border: "1px solid #12B7B6",
+      "&:hover": { background: "#12B7B6", color: "#fff" },
+    },
+  } as const;
+  const disabled = props.disabled || props.loading;
+  return (
+    <UnstyledButton
+      onClick={props.onClick}
+      disabled={disabled}
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        fontFamily: FONT_DISPLAY,
+        fontWeight: 700,
+        fontSize: 14,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        padding: props.size === "sm" ? "9px 16px" : "14px 24px",
+        clipPath: CLIP_CTA,
+        transition: "background .2s ease, color .2s ease, border-color .2s ease",
+        opacity: disabled ? 0.5 : 1,
+        pointerEvents: disabled ? "none" : "auto",
+        ...palettes[props.kind],
+      }}
+    >
+      {props.loading ? <Loader size={16} color={props.kind === "red" ? "#fff" : "#12B7B6"} /> : props.children}
+    </UnstyledButton>
+  );
+}
+
+/** Tinted status banner (gold draft note, review states) with a glyph. */
+function StatusNote(props: { icon: SnagIconName; accent: string; children: React.ReactNode }) {
+  return (
+    <Group
+      role="status"
+      aria-live="polite"
+      wrap="nowrap"
+      align="flex-start"
+      gap={12}
+      style={{
+        background: `${props.accent}17`,
+        border: `1px solid ${props.accent}80`,
+        padding: "14px 18px",
+      }}
+    >
+      <Box style={{ flexShrink: 0, marginTop: 1 }}>
+        <SnagIcon name={props.icon} size={20} color={props.accent} cut="#0e0d11" />
+      </Box>
+      <Text fz={14.5} style={{ color: props.accent, lineHeight: 1.5 }}>
+        {props.children}
+      </Text>
+    </Group>
+  );
+}
+
+/** Flat angular panel with a Quantico section header and optional right action. */
+function SectionCard(props: {
+  title: string;
+  icon?: SnagIconName;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Box p={{ base: 18, sm: 28 }} style={{ background: "#17151c", border: "1px solid #2a2637" }}>
+      <Group justify="space-between" align="center" wrap="nowrap" mb={18} gap={12}>
+        <Group gap={12} align="center" wrap="nowrap">
+          {props.icon && <SnagIcon name={props.icon} size={22} color="#fff" cut="#17151c" />}
+          <Text
+            component="h2"
+            c="white"
+            fw={700}
+            fz={16}
+            tt="uppercase"
+            style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.06em", margin: 0 }}
+          >
+            {props.title}
+          </Text>
+        </Group>
+        {props.action}
+      </Group>
+      <Stack gap={14}>{props.children}</Stack>
+    </Box>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 
 export default function Onboarding() {
   const { user } = useAuth();
@@ -123,36 +250,48 @@ export default function Onboarding() {
     CURRENCY_LABELS.reduce((n, c) => n + (entries.currency[c.key] > 0 ? 1 : 0), 0);
 
   return (
-    <Box maw={860} mx="auto" p={{ base: 16, sm: 24 }}>
+    <Box maw={900} mx="auto" p={{ base: 16, sm: 36 }} pb={{ base: 56, sm: 90 }}>
       <Seo noindex title="Onboarding | Snagem Guild" />
-      <Stack gap={16}>
-        <Stack gap={4}>
-          <Title order={1} c="white" size={32} fw={600}>
-            Welcome back! Import your collection
-          </Title>
-          <Text fz={16} c="dimmed">
+      <Stack gap={22}>
+        <Box>
+          <Text
+            component="h1"
+            c="white"
+            fz={{ base: 30, sm: 40 }}
+            fw={700}
+            tt="uppercase"
+            style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.02em", lineHeight: 1.05, margin: 0 }}
+          >
+            Welcome back. Import your collection
+          </Text>
+          <Text fz={{ base: 15, sm: 16 }} c="#b6b1bc" mt={12} lh={1.6}>
             Returning from the Gaia guild? Add the currency, items, and Pokemon you had so a staff
             member can restore them. Add things by hand below, or use the spreadsheet if you have a
             lot. You can come back to this page any time until you mark it complete.
           </Text>
-        </Stack>
+        </Box>
 
+        {status === "draft" && (
+          <StatusNote icon="clock" accent="#FFD074">
+            Your draft is saved as you go. It has not been submitted for review yet.
+          </StatusNote>
+        )}
         {status === "pending" && (
-          <Alert color="gold.1" title="Waiting for approval">
+          <StatusNote icon="clock" accent="#FFD074">
             You submitted your import for review. You can see it below. Once a staff member approves
             it, the items land in your account and you can add more or finish.
-          </Alert>
+          </StatusNote>
         )}
         {status === "rejected" && request?.reviewerNote && (
-          <Alert color="red" title="A change is needed">
-            {request.reviewerNote}
-          </Alert>
+          <StatusNote icon="refresh" accent="#E54156">
+            A change is needed: {request.reviewerNote}
+          </StatusNote>
         )}
         {status === "granted" && (
-          <Alert color="green" title="Import approved" icon={<IconCheck size={18} />}>
+          <StatusNote icon="shieldcheck" accent="#12B7B6">
             Your last batch was added to your account. Add more below, or mark your import complete
             when you are done.
-          </Alert>
+          </StatusNote>
         )}
 
         {locked ? (
@@ -200,49 +339,63 @@ export default function Onboarding() {
               }}
             />
             {uploadInfo && (
-              <Text fz={14} c="dimmed">
+              <Text fz={14} c="#b6b1bc">
                 {uploadInfo}
               </Text>
             )}
 
-            <Divider />
-            <Textarea
-              label="Note for the reviewer (optional)"
-              placeholder="Anything the staff should know about your import"
-              value={note}
-              onChange={(e) => setNote(e.currentTarget.value)}
-              autosize
-              minRows={2}
-              styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-            />
+            <SectionCard title="Note for the reviewer" icon="chat">
+              <Textarea
+                aria-label="Note for the reviewer (optional)"
+                placeholder="Anything the staff should know about your import"
+                value={note}
+                onChange={(e) => setNote(e.currentTarget.value)}
+                autosize
+                minRows={2}
+                radius={0}
+                sx={FIELD_SX}
+              />
+            </SectionCard>
 
             {message && (
-              <Text fz={14} c="green.0" role="status" aria-live="polite">
+              <StatusNote icon="shieldcheck" accent="#12B7B6">
                 {message}
-              </Text>
+              </StatusNote>
             )}
 
-            <Group justify="space-between" wrap="wrap" gap={10}>
-              <GradientButtonPrimary
-                radius="xl"
-                disabled={totalCount === 0}
-                loading={submit.isPending}
-                onClick={() => submit.mutateAsync()}
-              >
-                Submit for review
-              </GradientButtonPrimary>
-              <Button variant="subtle" color="gray" onClick={openComplete}>
-                My import is complete
-              </Button>
+            <Group
+              justify="space-between"
+              align="center"
+              wrap="wrap"
+              gap={12}
+              pt={20}
+              style={{ borderTop: "1px solid #2a2637" }}
+            >
+              <Text fz={14} c="#b6b1bc">
+                Every edit auto-saves as a draft.
+              </Text>
+              <Group gap={10} wrap="wrap">
+                <AngularButton kind="outline" onClick={openComplete}>
+                  My import is complete
+                </AngularButton>
+                <AngularButton
+                  kind="red"
+                  disabled={totalCount === 0}
+                  loading={submit.isPending}
+                  onClick={() => submit.mutateAsync()}
+                >
+                  Submit for review
+                </AngularButton>
+              </Group>
             </Group>
           </>
         )}
 
         {status === "completed" && (
-          <Alert color="gray" title="Import complete">
+          <StatusNote icon="lock" accent="#b6b1bc">
             You have marked your import as complete, so this page is closed. If you still need
             something restored, contact a staff member.
-          </Alert>
+          </StatusNote>
         )}
       </Stack>
 
@@ -259,26 +412,13 @@ export default function Onboarding() {
 
 /* -------------------------------------------------------------------------- */
 
-function SectionCard(props: { title: string; children: React.ReactNode }) {
-  return (
-    <Paper p={16} radius={12} style={{ background: "#1E1D2080" }}>
-      <Stack gap={12}>
-        <Text c="white" fw={600}>
-          {props.title}
-        </Text>
-        {props.children}
-      </Stack>
-    </Paper>
-  );
-}
-
 function CurrencySection(props: {
   currency: ImportEntries["currency"];
   onChange: (c: ImportEntries["currency"]) => void;
 }) {
   return (
-    <SectionCard title="Currency">
-      <Group gap={12} wrap="wrap">
+    <SectionCard title="Currency" icon="coin">
+      <SimpleGrid cols={{ base: 1, xs: 2, sm: 4 }} spacing={12}>
         {CURRENCY_LABELS.map(({ key, label }) => (
           <NumberInput
             key={key}
@@ -287,11 +427,11 @@ function CurrencySection(props: {
             max={100000000}
             value={props.currency[key]}
             onChange={(v) => props.onChange({ ...props.currency, [key]: Math.max(0, Number(v) || 0) })}
-            w={150}
-            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+            radius={0}
+            sx={FIELD_SX}
           />
         ))}
-      </Group>
+      </SimpleGrid>
     </SectionCard>
   );
 }
@@ -320,7 +460,7 @@ function ItemsSection(props: { items: ImportItem[]; onChange: (i: ImportItem[]) 
   };
 
   return (
-    <SectionCard title="Items">
+    <SectionCard title="Items" icon="bag">
       <Group align="flex-end" gap={10} wrap="wrap">
         <Select
           label="Item"
@@ -331,7 +471,8 @@ function ItemsSection(props: { items: ImportItem[]; onChange: (i: ImportItem[]) 
           value={itemId}
           onChange={setItemId}
           w={240}
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          radius={0}
+          sx={FIELD_SX}
         />
         <NumberInput
           label="Qty"
@@ -340,23 +481,31 @@ function ItemsSection(props: { items: ImportItem[]; onChange: (i: ImportItem[]) 
           value={qty}
           onChange={(v) => setQty(Math.max(1, Number(v) || 1))}
           w={90}
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          radius={0}
+          sx={FIELD_SX}
         />
-        <GradientButtonSecondary radius="xl" disabled={!itemId} onClick={add}>
-          Add item
-        </GradientButtonSecondary>
+        <AngularButton kind="cyan" size="sm" disabled={!itemId} onClick={add}>
+          + Add item
+        </AngularButton>
       </Group>
-      <Stack gap={6}>
+      <Stack gap={8}>
         {props.items.map((it, i) => (
-          <Group key={i} gap={8} wrap="nowrap">
-            {it.filePath && <Avatar src={getItemImageURL(it.filePath)} alt={it.name} size={24} />}
-            <Text fz={14} c="white">
+          <Group
+            key={i}
+            wrap="nowrap"
+            align="center"
+            gap={12}
+            style={{ background: "#0e0d11", border: "1px solid #232028", padding: "10px 14px" }}
+          >
+            {it.filePath && <Avatar src={getItemImageURL(it.filePath)} alt={it.name} size={28} radius={0} />}
+            <Text fz={14} fw={700} c="white" style={{ flex: 1, minWidth: 0 }}>
               {it.qty}x {it.name}
             </Text>
             <ActionIcon
               size="sm"
               color="red"
               variant="subtle"
+              aria-label={`Remove ${it.name}`}
               onClick={() => props.onChange(props.items.filter((_, j) => j !== i))}
             >
               <IconTrash size={14} />
@@ -364,7 +513,7 @@ function ItemsSection(props: { items: ImportItem[]; onChange: (i: ImportItem[]) 
           </Group>
         ))}
         {!props.items.length && (
-          <Text fz={14} c="dimmed">
+          <Text fz={14} c="#8f8a99">
             No items added yet.
           </Text>
         )}
@@ -413,7 +562,7 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
   };
 
   return (
-    <SectionCard title="Pokemon">
+    <SectionCard title="Pokemon" icon="pokeball">
       <Group align="flex-end" gap={10} wrap="wrap">
         <Select
           label="Species"
@@ -424,6 +573,7 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           value={slug}
           onChange={setSlug}
           w={200}
+          radius={0}
           leftSection={
             slug ? (
               <Avatar
@@ -434,7 +584,7 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
               />
             ) : undefined
           }
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          sx={FIELD_SX}
         />
         <Select
           label="Gender"
@@ -445,7 +595,8 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           value={gender}
           onChange={(v) => setGender((v as "M" | "F") ?? "M")}
           w={100}
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          radius={0}
+          sx={FIELD_SX}
         />
         <NumberInput
           label="Level"
@@ -454,7 +605,8 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           value={level}
           onChange={(v) => setLevel(Math.max(1, Math.min(MAX_LEVEL, Number(v) || 1)))}
           w={90}
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          radius={0}
+          sx={FIELD_SX}
         />
         <NumberInput
           label="Friendship"
@@ -463,7 +615,8 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           value={friendship}
           onChange={(v) => setFriendship(Math.max(0, Math.min(255, Number(v) || 0)))}
           w={110}
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          radius={0}
+          sx={FIELD_SX}
         />
         <NumberInput
           label="Shadow"
@@ -471,7 +624,8 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           value={shadow}
           onChange={(v) => setShadow(Math.max(0, Number(v) || 0))}
           w={100}
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          radius={0}
+          sx={FIELD_SX}
         />
         <NumberInput
           label="Purification"
@@ -479,37 +633,49 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           value={purification}
           onChange={(v) => setPurification(Math.max(0, Number(v) || 0))}
           w={110}
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          radius={0}
+          sx={FIELD_SX}
         />
         <Checkbox
           label="Shiny"
           checked={shiny}
           onChange={(e) => setShiny(e.currentTarget.checked)}
-          styles={{ label: { color: "white" } }}
+          sx={{ "& label": { color: "#fff" } }}
         />
-        <GradientButtonSecondary radius="xl" disabled={!slug} onClick={add}>
-          Add Pokemon
-        </GradientButtonSecondary>
+        <AngularButton kind="cyan" size="sm" disabled={!slug} onClick={add}>
+          + Add Pokemon
+        </AngularButton>
       </Group>
-      <Stack gap={6}>
+      <Stack gap={8}>
         {props.pokemon.map((p, i) => (
-          <Group key={i} gap={8} wrap="nowrap">
+          <Group
+            key={i}
+            wrap="nowrap"
+            align="center"
+            gap={12}
+            style={{ background: "#0e0d11", border: "1px solid #232028", padding: "10px 14px" }}
+          >
             <Avatar
               src={getPokemonImageURL(p.slug)}
               alt={p.species}
-              size={28}
+              size={32}
+              radius={0}
               imageProps={{ style: { imageRendering: "pixelated" } }}
             >
               <img src={POKEMON_SPRITE_FALLBACK} alt="" width={20} height={20} />
             </Avatar>
-            <Text fz={14} c="white">
-              {p.species} · Lv {p.level} · {p.gender}
-              {p.shiny ? " · Shiny" : ""}
+            <Text fz={14} fw={700} c="white" style={{ flex: 1, minWidth: 0 }}>
+              {p.species}
+              {p.shiny ? " (Shiny)" : ""}
+            </Text>
+            <Text fz={14} c="#b6b1bc" style={{ flexShrink: 0 }}>
+              Lv {p.level} · {p.gender}
             </Text>
             <ActionIcon
               size="sm"
               color="red"
               variant="subtle"
+              aria-label={`Remove ${p.species}`}
               onClick={() => props.onChange(props.pokemon.filter((_, j) => j !== i))}
             >
               <IconTrash size={14} />
@@ -517,7 +683,7 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           </Group>
         ))}
         {!props.pokemon.length && (
-          <Text fz={14} c="dimmed">
+          <Text fz={14} c="#8f8a99">
             No Pokemon added yet.
           </Text>
         )}
@@ -546,24 +712,24 @@ function BulkUpload(props: {
   };
 
   return (
-    <SectionCard title="Bulk import from a spreadsheet">
-      <Text fz={14} c="dimmed">
+    <SectionCard title="Bulk import from a spreadsheet" icon="chart">
+      <Text fz={14} c="#b6b1bc" lh={1.6}>
         Have a lot to add? Download a template, fill it in (in Google Sheets or Excel), export it as
         CSV, and upload it here. You can review and edit everything before submitting.
       </Text>
       <Group gap={10} wrap="wrap">
-        <Button
-          size="xs"
-          variant="light"
+        <AngularButton
+          kind="cyan"
+          size="sm"
           onClick={() =>
             downloadCsv("snagem-items-template.csv", "Item Name,Quantity\nRare Candy,5\n")
           }
         >
           Download items template
-        </Button>
-        <Button
-          size="xs"
-          variant="light"
+        </AngularButton>
+        <AngularButton
+          kind="cyan"
+          size="sm"
           onClick={() =>
             downloadCsv(
               "snagem-pokemon-template.csv",
@@ -572,7 +738,7 @@ function BulkUpload(props: {
           }
         >
           Download Pokemon template
-        </Button>
+        </AngularButton>
       </Group>
       <Group gap={10} wrap="wrap">
         <input
@@ -597,20 +763,12 @@ function BulkUpload(props: {
             e.currentTarget.value = "";
           }}
         />
-        <Button
-          size="xs"
-          leftSection={<IconUpload size={14} />}
-          onClick={() => itemsInput.current?.click()}
-        >
-          Upload items CSV
-        </Button>
-        <Button
-          size="xs"
-          leftSection={<IconUpload size={14} />}
-          onClick={() => pokeInput.current?.click()}
-        >
-          Upload Pokemon CSV
-        </Button>
+        <AngularButton kind="cyan" size="sm" onClick={() => itemsInput.current?.click()}>
+          <IconUpload size={14} /> Upload items CSV
+        </AngularButton>
+        <AngularButton kind="cyan" size="sm" onClick={() => pokeInput.current?.click()}>
+          <IconUpload size={14} /> Upload Pokemon CSV
+        </AngularButton>
       </Group>
     </SectionCard>
   );
@@ -619,28 +777,57 @@ function BulkUpload(props: {
 function SubmittedPreview(props: { entries: ImportEntries }) {
   const { currency, items, pokemon } = props.entries;
   return (
-    <SectionCard title="Your submitted import">
+    <SectionCard title="Your submitted import" icon="gift">
       <Group gap={8} wrap="wrap">
         {CURRENCY_LABELS.filter((c) => currency[c.key] > 0).map((c) => (
-          <Badge key={c.key} variant="filled" color="cyan.0">
+          <Badge key={c.key} variant="filled" color="cyan.0" radius={0}>
             {currency[c.key]} {c.label}
           </Badge>
         ))}
       </Group>
-      <Stack gap={4}>
+      <Stack gap={8}>
         {items.map((it, i) => (
-          <Text key={i} fz={14} c="white">
-            {it.qty}x {it.name}
-          </Text>
+          <Group
+            key={`i-${i}`}
+            wrap="nowrap"
+            align="center"
+            gap={12}
+            style={{ background: "#0e0d11", border: "1px solid #232028", padding: "10px 14px" }}
+          >
+            {it.filePath && <Avatar src={getItemImageURL(it.filePath)} alt={it.name} size={28} radius={0} />}
+            <Text fz={14} fw={700} c="white">
+              {it.qty}x {it.name}
+            </Text>
+          </Group>
         ))}
         {pokemon.map((p, i) => (
-          <Text key={i} fz={14} c="white">
-            {p.species} · Lv {p.level} · {p.gender}
-            {p.shiny ? " · Shiny" : ""}
-          </Text>
+          <Group
+            key={`p-${i}`}
+            wrap="nowrap"
+            align="center"
+            gap={12}
+            style={{ background: "#0e0d11", border: "1px solid #232028", padding: "10px 14px" }}
+          >
+            <Avatar
+              src={getPokemonImageURL(p.slug)}
+              alt={p.species}
+              size={32}
+              radius={0}
+              imageProps={{ style: { imageRendering: "pixelated" } }}
+            >
+              <img src={POKEMON_SPRITE_FALLBACK} alt="" width={20} height={20} />
+            </Avatar>
+            <Text fz={14} fw={700} c="white" style={{ flex: 1, minWidth: 0 }}>
+              {p.species}
+              {p.shiny ? " (Shiny)" : ""}
+            </Text>
+            <Text fz={14} c="#b6b1bc" style={{ flexShrink: 0 }}>
+              Lv {p.level} · {p.gender}
+            </Text>
+          </Group>
         ))}
         {!items.length && !pokemon.length && (
-          <Text fz={14} c="dimmed">
+          <Text fz={14} c="#8f8a99">
             No items or Pokemon in this submission.
           </Text>
         )}
@@ -656,7 +843,7 @@ function CompleteConfirm(props: { loading: boolean; onConfirm: () => void; onClo
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.6)",
+        background: "rgba(0,0,0,0.7)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -664,32 +851,39 @@ function CompleteConfirm(props: { loading: boolean; onConfirm: () => void; onClo
         padding: 16,
       }}
     >
-      <Paper
-        p={20}
-        radius={12}
-        maw={420}
-        style={{ background: "#1E1D20" }}
+      <Box
+        maw={440}
+        w="100%"
+        p={{ base: 20, sm: 28 }}
+        style={{ background: "#17151c", border: "1px solid #2a2637" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <Stack gap={12}>
-          <Text c="white" fw={600} fz={22}>
+        <Stack gap={14}>
+          <Text
+            component="h2"
+            c="white"
+            fw={700}
+            fz={22}
+            tt="uppercase"
+            style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.04em", margin: 0 }}
+          >
             Finish importing?
           </Text>
-          <Text fz={16} c="dimmed">
+          <Text fz={15} c="#b6b1bc" lh={1.6}>
             "My import is complete" ends the import process. This onboarding page will close and you
             will not be able to submit more imports. Anything already approved stays in your account.
             You are not just closing a window: you are done importing.
           </Text>
-          <Group justify="flex-end" gap={8}>
-            <Button variant="subtle" color="gray" onClick={props.onClose}>
+          <Group justify="flex-end" gap={10} wrap="wrap">
+            <AngularButton kind="outline" size="sm" onClick={props.onClose}>
               Keep importing
-            </Button>
-            <Button color="red" loading={props.loading} onClick={props.onConfirm}>
+            </AngularButton>
+            <AngularButton kind="red" size="sm" loading={props.loading} onClick={props.onConfirm}>
               My import is complete
-            </Button>
+            </AngularButton>
           </Group>
         </Stack>
-      </Paper>
+      </Box>
     </Box>
   );
 }

@@ -3,33 +3,22 @@ import {
   Badge,
   Box,
   Button,
-  Card,
   Container,
   Flex,
   Group,
   Image,
   MultiSelect,
-  RingProgress,
-  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
-  Table,
-  Tabs,
   Text,
   TextInput,
   Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
-import {
-  IconBolt,
-  IconCaretDownFilled,
-  IconCaretUpFilled,
-  IconCheck,
-  IconFlame,
-  IconTrophy,
-} from "@tabler/icons-react";
+import { IconBolt, IconCheck, IconFlame, IconTrophy } from "@tabler/icons-react";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -67,10 +56,86 @@ import { OwnedPokemon } from "../../components/types/typesUsed";
  * the Super Training Room grind, the competitive rankings ladder, the Hall of
  * Fame record, and organized tournaments. Everything renders with no signed-in
  * user and empty collections, so it never crashes on a fresh install.
+ *
+ * Restyled July 2026 to the cinematic redesign: angular clip-path panels, the
+ * Quantico display face, segmented gradient tabs and gold accents. Behavior is
+ * unchanged (every query, mutation and counter is preserved).
  */
+
+// --- Redesign tokens (mirror the hi-fi mockup) -----------------------------
+const FONT_DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
+
+const CARD_BG = "#141318";
+const CARD_BORDER = "#2a2637";
+const ASIDE_BG = "#17151c";
+const WELL_BG = "#1b1a1e";
+const WELL_BORDER = "#3a3550";
+const GOLD = "#FFD074";
+const GOLD_DEEP = "#C9940F";
+const CYAN = "#12B7B6";
+const RED = "#E54156";
+const DIM = "#b6b1bc";
+const FAINT = "#6f6a78";
+const PURPLE = "#c79bd6";
+const GRAD = "linear-gradient(90deg, #7E2C75, #E54156)";
+const BAR_GRAD = "linear-gradient(90deg, #912691, #14e0de)";
+
+const PANEL_CLIP = "polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)";
+const ASIDE_CLIP = "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)";
+const CTA_CLIP = "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)";
+const TAB_CLIP = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
+const CHIP_CLIP = "polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%)";
+const TILE_CLIP = "polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)";
+const AVATAR_CLIP = "polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)";
+const BANNER_CLIP = "polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%)";
+const RULES_CLIP = "polygon(0 0, 100% 0, 100% 100%, 22px 100%, 0 calc(100% - 22px))";
 
 const SOLO_WINDOW_MS = 2 * 60 * 60 * 1000;
 const PARTNER_WINDOW_MS = 4 * 60 * 60 * 1000;
+
+/** Uppercase Quantico label used as the eyebrow inside every panel. */
+function PanelLabel(props: {
+  children: React.ReactNode;
+  color?: string;
+  fz?: number;
+  spacing?: string;
+}) {
+  return (
+    <Text
+      fz={props.fz ?? 13}
+      fw={700}
+      c={props.color ?? PURPLE}
+      tt="uppercase"
+      style={{ fontFamily: FONT_DISPLAY, letterSpacing: props.spacing ?? "0.24em" }}
+    >
+      {props.children}
+    </Text>
+  );
+}
+
+/** Angular dark panel surface shared by the main-column sections. */
+function Panel(props: {
+  children: React.ReactNode;
+  bg?: string;
+  border?: string;
+  clip?: string;
+  padding?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <Box
+      style={{
+        background: props.bg ?? CARD_BG,
+        border: `1px solid ${props.border ?? CARD_BORDER}`,
+        clipPath: props.clip ?? PANEL_CLIP,
+        padding: props.padding ?? "24px 28px",
+        ...props.style,
+      }}
+    >
+      {props.children}
+    </Box>
+  );
+}
 
 /** Format a millisecond remainder as H:MM:SS, clamped at zero. */
 function formatCountdown(ms: number): string {
@@ -99,90 +164,149 @@ function useSessionCountdown(session: TrainingSession | undefined, partner: bool
   return formatCountdown(endMs - now);
 }
 
+/** Centered numeric well used for the three session counters. */
 function StatTile(props: { label: string; value: React.ReactNode }) {
   return (
-    <Card bg="#201e2b" radius="md" p={12} withBorder style={{ borderColor: "#3a3550" }}>
-      <Stack gap={2} align="center">
-        <Text fz={26} fw={700} c="white">
-          {props.value}
-        </Text>
-        <Text fz={14} c="dimmed" tt="uppercase" ta="center">
-          {props.label}
-        </Text>
-      </Stack>
-    </Card>
+    <Box
+      style={{
+        background: WELL_BG,
+        border: `1px solid ${CARD_BORDER}`,
+        padding: 18,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 4,
+      }}
+    >
+      <Text fz={28} fw={700} c="white" style={{ fontFamily: FONT_DISPLAY }}>
+        {props.value}
+      </Text>
+      <Text
+        fz={11}
+        fw={700}
+        c={FAINT}
+        ta="center"
+        tt="uppercase"
+        style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.22em" }}
+      >
+        {props.label}
+      </Text>
+    </Box>
   );
 }
 
 /**
- * Confirmation card next to the training-target dropdown: sprite plus the
- * details we hold on that specific pokemon so the member can double-check
- * before opening a training post.
+ * The training-target header: sprite well, the pokemon's details and a
+ * level-progress bar so the member can confirm what they are training.
  */
-function TrainingTargetCard({ pokemon }: { pokemon: OwnedPokemon }) {
-  const genderLabel = pokemon.gender === "F" ? "Female" : pokemon.gender === "M" ? "Male" : "Unknown";
+function TrainingTarget({ pokemon, tag }: { pokemon: OwnedPokemon; tag: string }) {
+  const experience = pokemon.experience ?? 0;
+  const levelInfo = levelProgress(experience);
+  const pct = Math.round(levelInfo.ratio * 100);
+  const genderColor = pokemon.gender === "F" ? RED : pokemon.gender === "M" ? "#4dabf7" : FAINT;
+  const genderLabel = pokemon.gender === "M" || pokemon.gender === "F" ? pokemon.gender : "";
   const types = [pokemon.type1, pokemon.type2].filter((t) => t && t !== "Unknown").join(" / ");
-  const details: Array<[string, string]> = [
-    ["Species", pokemon.species || "-"],
-    ["Gender", genderLabel],
-    ...(types ? ([["Type", types]] as Array<[string, string]>) : []),
-    ...(pokemon.pokedex ? ([["Dex No.", `#${pokemon.pokedex}`]] as Array<[string, string]>) : []),
-    ["Exp", String(pokemon.experience ?? 0)],
-    ["Friendship", String(pokemon.friendship ?? 0)],
-    ...((pokemon.shadow ?? 0) > 0
-      ? ([["Purification", String(pokemon.purification ?? 0)]] as Array<[string, string]>)
-      : []),
-  ];
+
   return (
-    <Card bg="#201e2b" radius="md" p={12} withBorder style={{ borderColor: "#3a3550", flex: "1 1 220px", minWidth: 0 }}>
-      <Group gap={12} wrap="nowrap" align="flex-start">
+    <Flex gap={24} align="center" wrap="wrap">
+      <Box
+        style={{
+          flex: "none",
+          width: 84,
+          height: 84,
+          background: WELL_BG,
+          border: `1px solid ${WELL_BORDER}`,
+          clipPath: TILE_CLIP,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Image
+          src={getPokemonImageURL(pokemon.image_slug)}
+          alt={`${pokemon.name || pokemon.species} sprite`}
+          w={60}
+          h={60}
+          fit="contain"
+          style={{ imageRendering: "pixelated" }}
+        />
+      </Box>
+
+      <Stack gap={4} style={{ minWidth: 180 }}>
+        <Text fz={22} fw={700} c="white" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.02em" }}>
+          {pokemon.name || pokemon.species}{" "}
+          {genderLabel && (
+            <Text component="span" c={genderColor}>
+              {genderLabel}
+            </Text>
+          )}
+        </Text>
+        <Text fz={14} c={DIM}>
+          {types || "Unknown type"}
+        </Text>
+        <Text
+          fz={12}
+          fw={700}
+          c={PURPLE}
+          tt="uppercase"
+          style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.18em" }}
+        >
+          {levelInfo.isMax ? "Max Lv 100" : `Lv ${levelInfo.level} . ${pct}% to next`}
+        </Text>
+      </Stack>
+
+      <Stack gap={8} style={{ flex: 1, minWidth: 200 }}>
         <Box
           style={{
-            width: 64,
-            height: 64,
-            borderRadius: 10,
-            background: "#15131d",
-            border: "1px solid #2a2637",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
+            height: 10,
+            background: "#232028",
+            clipPath: "polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%)",
           }}
         >
-          <Image
-            src={getPokemonImageURL(pokemon.image_slug)}
-            alt={`${pokemon.name || pokemon.species} sprite`}
-            w={56}
-            h={56}
-            fit="contain"
-          />
+          <Box style={{ height: "100%", width: `${pct}%`, background: BAR_GRAD }} />
         </Box>
-        <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
-          <Group gap={6} wrap="nowrap">
-            <Text fz={16} fw={700} c="white" lineClamp={1}>
-              {pokemon.name || pokemon.species}
-            </Text>
-            {pokemon.shiny && (
-              <Badge color="gold.0" variant="filled" size="xs">
-                Shiny
-              </Badge>
-            )}
-            {(pokemon.shadow ?? 0) > 0 && (
-              <Badge color="violet" variant="filled" size="xs">
-                Shadow
-              </Badge>
-            )}
-          </Group>
-          <SimpleGrid cols={2} spacing={2} verticalSpacing={2}>
-            {details.map(([label, value]) => (
-              <Text key={label} fz={14} c="dimmed" lineClamp={1}>
-                {label}: <Text component="span" fz={14} c="gray.3">{value}</Text>
-              </Text>
-            ))}
-          </SimpleGrid>
-        </Stack>
-      </Group>
-    </Card>
+        <Group justify="space-between" wrap="nowrap">
+          <Text fz={12} c={FAINT}>
+            progress to next level
+          </Text>
+          <Text
+            fz={12}
+            fw={700}
+            c={CYAN}
+            style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.1em" }}
+          >
+            {tag}
+          </Text>
+        </Group>
+      </Stack>
+    </Flex>
+  );
+}
+
+/** One angled mode toggle (Solo / Partner). */
+function ModeButton(props: { active: boolean; label: string; onClick: () => void; overlap?: boolean }) {
+  return (
+    <UnstyledButton
+      onClick={props.onClick}
+      aria-pressed={props.active}
+      style={{
+        flex: 1,
+        minWidth: 200,
+        marginLeft: props.overlap ? -2 : 0,
+        fontFamily: FONT_DISPLAY,
+        fontSize: 13,
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+        textAlign: "center",
+        padding: "14px 20px",
+        border: `1px solid ${WELL_BORDER}`,
+        background: props.active ? GRAD : WELL_BG,
+        color: props.active ? "#fff" : DIM,
+        clipPath: TAB_CLIP,
+      }}
+    >
+      {props.label}
+    </UnstyledButton>
   );
 }
 
@@ -217,11 +341,6 @@ function TrainingRoomTab() {
   const selected = pokemons.find((p) => p.id === selectedId);
   const countdown = useSessionCountdown(session, partner);
 
-  // Level progress under the current leveling curve (the old flat /25 scale
-  // predates the level-based experience system).
-  const experience = selected?.experience ?? 0;
-  const levelInfo = levelProgress(experience);
-  const pct = Math.round(levelInfo.ratio * 100);
   // Session counters only apply to today's window (the server resets by date).
   const today = new Date().toISOString().slice(0, 10);
   const sessionIsToday = session?.date === today;
@@ -256,205 +375,268 @@ function TrainingRoomTab() {
 
   if (!uid) {
     return (
-      <Title order={2} fz={14} fw={400} c="dimmed" py={24} lh="md">
-        Sign in to use the Super Training Room and log training posts.
-      </Title>
+      <Panel>
+        <Text fz={15} c={DIM}>
+          Sign in to use the Super Training Room and log training posts.
+        </Text>
+      </Panel>
     );
   }
 
   if (ownedPending) return <SectionLoader />;
 
+  const nextLabel = atPostCap
+    ? `Window full, ${MAX_TRAINING_POSTS} posts logged. Come back tomorrow.`
+    : `Next post earns ${nextEvoPts} evolution pts.`;
+  const sessionTag = atPostCap ? "WINDOW FULL" : "SESSION LIVE";
+  const modeHint = partner
+    ? "Partner: train in a pair for a 4-hour window. Every post through post 10 earns a full 1.0 pt."
+    : "Solo: once per day, 2-hour limit. Posts 1-5 earn 1.0 pt, posts 6 and up earn 0.75.";
+
   return (
-    <Stack gap="md">
-      <Flex direction={{ base: "column", sm: "row" }} gap="md" align={{ base: "stretch", sm: "flex-start" }}>
-        <Select
-          aria-label="Training target Pokemon"
-          label="Training target"
-          placeholder={pokemons.length ? "Choose a Pokemon" : "You have no Pokemon yet"}
-          data={pokemons.map((p) => ({
-            value: p.id,
-            label:
-              p.name && p.name !== p.species ? `${p.name} (${p.species})` : p.species || p.name,
-          }))}
-          value={selectedId}
-          onChange={setSelectedId}
-          disabled={!pokemons.length}
-          maw={320}
-          w="100%"
-          searchable
-        />
-        {selected && <TrainingTargetCard pokemon={selected} />}
-      </Flex>
-
-      <Flex direction={{ base: "column", sm: "row" }} gap="md" align="stretch">
-        <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
-          <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-            <Group justify="space-between" align="flex-start" wrap="nowrap" mb="md">
-              <Title order={2} fz={14} fw={700} c="grape.3" tt="uppercase" lh="md">
-                Session Live . Super Training Room
-              </Title>
-              <Badge color="grape" variant="filled" leftSection={<IconBolt size={12} />}>
-                {countdown}
-              </Badge>
-            </Group>
-
-            <Group justify="center" mb="md">
-              <RingProgress
-                size={140}
-                thickness={12}
-                roundCaps
-                sections={[{ value: pct, color: "grape" }]}
-                label={
-                  <Stack gap={0} align="center">
-                    <Text fz={14} fw={700} c="white" ta="center" lineClamp={1}>
-                      {selected?.name || "No target"}
-                    </Text>
-                    <Text fz={14} c="dimmed" ta="center">
-                      {levelInfo.isMax ? "Level 100 (max)" : `Lv ${levelInfo.level} · ${pct}% to next`}
-                    </Text>
-                  </Stack>
-                }
-              />
-            </Group>
-
-            <SimpleGrid cols={{ base: 3 }} spacing="xs" mb="md">
-              <StatTile label="Exp Pts" value={sessionIsToday ? session?.evoPts ?? 0 : 0} />
-              <StatTile label="Friendship Pts" value={sessionIsToday ? session?.happinessPts ?? 0 : 0} />
-              <StatTile label="Posts Logged" value={`${postsLogged} / ${MAX_TRAINING_POSTS}`} />
-            </SimpleGrid>
-
-            <Stack gap="sm">
-              <SegmentedControl
-                value={partner ? "partner" : "solo"}
-                onChange={(v) => setPartner(v === "partner")}
-                data={[
-                  { label: "Solo", value: "solo" },
-                  { label: "Partner", value: "partner" },
-                ]}
-                fullWidth
-              />
-
-              <Button
-                variant="gradient"
-                gradient={{ from: "grape", to: "indigo", deg: 90 }}
-                onClick={() => logMutation.mutate()}
-                loading={logMutation.isPending}
-                disabled={!selectedId || atPostCap}
-                fullWidth
-              >
-                Log a Training Post
-              </Button>
-
-              {atPostCap && (
-                <Text fz={14} c="gold.1" role="status" aria-live="polite">
-                  You reached the {MAX_TRAINING_POSTS}-post limit for this training window.
+    <Flex direction={{ base: "column", md: "row" }} gap="lg" align="stretch">
+      {/* Main column */}
+      <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
+        <Stack gap="lg">
+          <Panel>
+            <Stack gap={16}>
+              <Group gap={16} wrap="wrap" align="center">
+                <PanelLabel color={FAINT}>Training Target</PanelLabel>
+                <Select
+                  aria-label="Training target Pokemon"
+                  placeholder={pokemons.length ? "Choose a Pokemon" : "You have no Pokemon yet"}
+                  data={pokemons.map((p) => ({
+                    value: p.id,
+                    label:
+                      p.name && p.name !== p.species ? `${p.name} (${p.species})` : p.species || p.name,
+                  }))}
+                  value={selectedId}
+                  onChange={setSelectedId}
+                  disabled={!pokemons.length}
+                  maw={280}
+                  w="100%"
+                  searchable
+                  styles={{ input: { background: WELL_BG, borderColor: WELL_BORDER, fontWeight: 700 } }}
+                />
+              </Group>
+              {selected ? (
+                <TrainingTarget pokemon={selected} tag={sessionTag} />
+              ) : (
+                <Text fz={14} c={DIM}>
+                  You have no Pokemon yet. Choose a starter to begin training.
                 </Text>
               )}
-              {onLastPost && (
-                <Text fz={14} c="gold.1" role="status" aria-live="polite">
-                  Heads up: your next post is the last one of this training window.
-                </Text>
-              )}
+            </Stack>
+          </Panel>
 
-              <Group justify="space-between" wrap="nowrap">
-                <Text fz={14} c="dimmed">
-                  Opens the pinned training thread. Next post earns {nextEvoPts} evolution pts.
+          <Panel>
+            <Stack gap={18}>
+              <Group justify="space-between" gap={16} wrap="wrap" align="center">
+                <Title
+                  order={2}
+                  fz={20}
+                  fw={700}
+                  c="white"
+                  style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.04em" }}
+                >
+                  Session Live . Super Training Room
+                </Title>
+                <Group
+                  gap={6}
+                  wrap="nowrap"
+                  style={{
+                    border: `1px solid ${GOLD_DEEP}`,
+                    padding: "7px 16px",
+                    clipPath: CHIP_CLIP,
+                  }}
+                >
+                  <IconBolt size={14} color={GOLD} />
+                  <Text
+                    fz={13}
+                    fw={700}
+                    c={GOLD}
+                    style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.1em" }}
+                  >
+                    {countdown} LEFT
+                  </Text>
+                </Group>
+              </Group>
+
+              <SimpleGrid cols={3} spacing={14}>
+                <StatTile label="Exp Pts" value={sessionIsToday ? session?.evoPts ?? 0 : 0} />
+                <StatTile
+                  label="Friendship Pts"
+                  value={sessionIsToday ? session?.happinessPts ?? 0 : 0}
+                />
+                <StatTile
+                  label="Posts Logged"
+                  value={
+                    <>
+                      {postsLogged}{" "}
+                      <Text component="span" fz={16} c={FAINT}>
+                        / {MAX_TRAINING_POSTS}
+                      </Text>
+                    </>
+                  }
+                />
+              </SimpleGrid>
+
+              <Stack gap={10}>
+                <PanelLabel color={FAINT} fz={12}>
+                  Training Mode
+                </PanelLabel>
+                <Flex wrap="wrap">
+                  <ModeButton
+                    active={!partner}
+                    label="SOLO . 2-HOUR WINDOW"
+                    onClick={() => setPartner(false)}
+                  />
+                  <ModeButton
+                    active={partner}
+                    label="PARTNER . 4-HOUR WINDOW"
+                    onClick={() => setPartner(true)}
+                    overlap
+                  />
+                </Flex>
+                <Text fz={13} c={DIM} lh={1.5}>
+                  {modeHint}
                 </Text>
+              </Stack>
+
+              <Group gap={18} wrap="wrap" align="center">
                 <Button
-                  variant="subtle"
-                  color="gray"
-                  size="compact-sm"
+                  onClick={() => logMutation.mutate()}
+                  loading={logMutation.isPending}
+                  disabled={!selectedId || atPostCap}
+                  tt="uppercase"
+                  style={{
+                    background: GRAD,
+                    border: "none",
+                    clipPath: CTA_CLIP,
+                    padding: "17px 34px",
+                    height: "auto",
+                    fontFamily: FONT_DISPLAY,
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                  }}
+                >
+                  Log a Training Post →
+                </Button>
+                <Text fz={14} fw={700} c={atPostCap ? GOLD : CYAN}>
+                  {nextLabel}
+                </Text>
+                <Box style={{ flex: 1 }} />
+                <Button
+                  variant="default"
                   onClick={() => resetMutation.mutate()}
                   loading={resetMutation.isPending}
+                  tt="uppercase"
+                  c={DIM}
+                  style={{
+                    background: "none",
+                    borderColor: WELL_BORDER,
+                    clipPath: CHIP_CLIP,
+                    fontFamily: FONT_DISPLAY,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    letterSpacing: "0.12em",
+                  }}
                 >
                   Reset
                 </Button>
               </Group>
 
+              {atPostCap && (
+                <Text fz={14} c={GOLD} role="status" aria-live="polite">
+                  You reached the {MAX_TRAINING_POSTS}-post limit for this training window.
+                </Text>
+              )}
+              {onLastPost && (
+                <Text fz={14} c={GOLD} role="status" aria-live="polite">
+                  Heads up: your next post is the last one of this training window.
+                </Text>
+              )}
               {status && (
-                <Text fz={14} c="grape.3" role="status" aria-live="polite">
+                <Text fz={14} c={PURPLE} role="status" aria-live="polite">
                   {status}
                 </Text>
               )}
             </Stack>
-          </Card>
-        </Box>
+          </Panel>
+        </Stack>
+      </Box>
 
-        <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
-          <Stack gap="md">
-            <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-              <Text fz={14} fw={700} c="grape.3" tt="uppercase" mb="xs">
-                Session Rules
+      {/* Aside */}
+      <Box style={{ flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: 340 }}>
+        <Stack gap={16}>
+          <Panel clip={ASIDE_CLIP} padding="22px 24px">
+            <Stack gap={12}>
+              <PanelLabel>How Training Scores</PanelLabel>
+              {[
+                { pts: "1.0 pt", rule: "Posts 1-5, solo mode." },
+                { pts: "0.75 pt", rule: "Posts 6 and up, pace yourself." },
+                { pts: "1.0 pt", rule: "Every post through 10 in partner mode." },
+                { pts: "+1", rule: "Friendship point on every logged post." },
+              ].map((r) => (
+                <Group key={r.rule} gap={12} wrap="nowrap" align="flex-start">
+                  <Text
+                    fz={14}
+                    fw={700}
+                    c={GOLD}
+                    style={{ flex: "none", minWidth: 52, fontFamily: FONT_DISPLAY }}
+                  >
+                    {r.pts}
+                  </Text>
+                  <Text fz={13} c={DIM} lh={1.55}>
+                    {r.rule}
+                  </Text>
+                </Group>
+              ))}
+              <Text fz={12} c={FAINT} lh={1.5}>
+                Shadow Pokemon earn Purification Points at the same rates instead of evolution
+                points. A full purification bar (100) clears the shadow.
               </Text>
-              <Stack gap={6}>
-                <Text fz={14} c="dimmed">
-                  Once per day, 2-hour limit.
-                </Text>
-                <Text fz={14} c="dimmed">
-                  Train in a pair for a 4-hour window.
-                </Text>
-                <Text fz={14} c="dimmed">
-                  Maximum {MAX_TRAINING_POSTS} posts per training window.
-                </Text>
-                <Text fz={14} c="dimmed">
-                  Shadow Pokemon earn Purification instead.
-                </Text>
-                <Text fz={14} c="dimmed">
-                  Regional forms (Alolan, Galarian, Hisuian) allowed.
-                </Text>
-              </Stack>
-            </Card>
+              <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={13} c={PURPLE}>
+                How exp, friendship, shadow and purification work →
+              </Anchor>
+            </Stack>
+          </Panel>
 
-            <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-              <Group gap={6} mb="xs">
-                <IconFlame size={16} color="var(--mantine-color-orange-4)" />
-                <Text fz={14} fw={700} c="gold.1" tt="uppercase">
-                  Coach's Tip
-                </Text>
+          <Panel bg={ASIDE_BG} clip={ASIDE_CLIP} padding="22px 24px">
+            <Stack gap={12}>
+              <PanelLabel>Session Rules</PanelLabel>
+              {[
+                "Once per day, 2-hour limit.",
+                "Train in a pair for a 4-hour window.",
+                `Maximum ${MAX_TRAINING_POSTS} posts per training window.`,
+                "Shadow Pokemon earn Purification instead.",
+                "Regional forms (Alolan, Galarian, Hisuian) allowed.",
+              ].map((text) => (
+                <Group key={text} gap={10} wrap="nowrap" align="flex-start">
+                  <Box style={{ flex: "none", width: 14, height: 3, background: RED, marginTop: 8 }} />
+                  <Text fz={13} c={DIM} lh={1.55}>
+                    {text}
+                  </Text>
+                </Group>
+              ))}
+            </Stack>
+          </Panel>
+
+          <Panel bg="#241f2e" border="#4b3f63" clip={ASIDE_CLIP} padding="22px 24px">
+            <Stack gap={10}>
+              <Group gap={8} align="center">
+                <IconFlame size={16} color={GOLD} />
+                <PanelLabel color={GOLD}>Coach's Tip</PanelLabel>
               </Group>
-              <Text fz={14} c="dimmed">
-                High-effort posts catch a grader's eye. Detailed training scenes can earn a
-                random bonus on top of your base points.
+              <Text fz={13} c={DIM} lh={1.6}>
+                High-effort posts catch a grader's eye. Detailed training scenes can earn a random
+                bonus on top of your base points.
               </Text>
-            </Card>
-          </Stack>
-        </Box>
-      </Flex>
-
-      <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-        <Text fz={14} fw={700} c="grape.3" tt="uppercase" mb="sm">
-          How Training Scores
-        </Text>
-        <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-          <Text fz={14} c="dimmed">
-            Posts 1-5: 1.0 evolution pt each (solo).
-          </Text>
-          <Text fz={14} c="dimmed">
-            Posts 6+: 0.75 pt each, pace yourself.
-          </Text>
-          <Text fz={14} c="dimmed">
-            Partner mode: 1.0 pt through post 10 plus a 4-hour window.
-          </Text>
-          <Text fz={14} c="dimmed">
-            Shadow Pokemon: training earns Purification Points at the same rates
-            instead of evolution points. A full purification bar (100) clears the
-            shadow; forum posts can also roll purification as you play.
-          </Text>
-          <Anchor component={Link} to={SHADOW_GUIDE_LINK} fz={14} c="grape.3">
-            How exp, friendship, shadow and purification work →
-          </Anchor>
-        </SimpleGrid>
-      </Card>
-    </Stack>
-  );
-}
-
-/** Section heading shared across the redesigned tabs. */
-function SectionLabel({ children, mb = "sm" }: { children: React.ReactNode; mb?: string | number }) {
-  return (
-    <Title order={2} fz={14} fw={800} c="white" tt="uppercase" lh="md" mb={mb} style={{ letterSpacing: 1 }}>
-      {children}
-    </Title>
+            </Stack>
+          </Panel>
+        </Stack>
+      </Box>
+    </Flex>
   );
 }
 
@@ -464,139 +646,188 @@ function SectionLabel({ children, mb = "sm" }: { children: React.ReactNode; mb?:
 
 const AVATAR_COLORS = ["red", "blue", "green", "grape", "teal", "orange", "cyan", "pink", "indigo", "lime"];
 
-/** Deterministic avatar color so a player keeps the same circle every render. */
+/** Deterministic avatar color so a player keeps the same square every render. */
 function avatarColor(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
-const RANK_COLORS = ["#F5C842", "#c9d1d9", "#cd7f32"]; // gold, silver, bronze for 1-3
-
-/** How-points-work panel content, mirrors docs/COLOSSEUM_DATA.md scoring. */
-const SCORING = [
-  { label: "Defeat a Pokemon", value: "+1", color: "cyan" },
-  { label: "Your Pokemon survives", value: "+1", color: "cyan" },
-  { label: "Win the battle", value: "+3", color: "green" },
-  { label: "Beat the champion", value: "+5", color: "gold.1" },
-  { label: "Upset (per rank gap)", value: "+0.4", color: "violet" },
-  { label: "Tournament win", value: "+10", color: "gold.1" },
+const POINT_RULES: Array<{ what: string; pts: string; color: string }> = [
+  { what: "Defeat a Pokemon", pts: "+1", color: CYAN },
+  { what: "Your Pokemon survives", pts: "+1", color: CYAN },
+  { what: "Win the battle", pts: "+3", color: GOLD },
+  { what: "Beat the champion", pts: "+5", color: GOLD },
+  { what: "Upset, per rank gap", pts: "+0.4", color: PURPLE },
+  { what: "Tournament win", pts: "+10", color: RED },
 ];
 
-function Movement({ value }: { value?: number }) {
-  if (!value) {
-    return (
-      <Text fz={14} c="dimmed" w={14} ta="center" aria-label="No change">
-        &ndash;
-      </Text>
-    );
-  }
-  const up = value > 0;
-  const Icon = up ? IconCaretUpFilled : IconCaretDownFilled;
+/** Textual movement arrow, colored by direction. */
+function MoveArrow({ value }: { value?: number }) {
+  const up = (value ?? 0) > 0;
+  const down = (value ?? 0) < 0;
+  const ch = up ? "▲" : down ? "▼" : "–";
+  const color = up ? CYAN : down ? RED : FAINT;
+  const label = up ? "Moved up" : down ? "Moved down" : "No change";
   return (
-    <Icon
-      size={13}
-      color={up ? "var(--mantine-color-teal-5)" : "var(--mantine-color-red-5)"}
-      aria-label={up ? "Moved up" : "Moved down"}
-    />
+    <Text component="span" fz={12} c={color} aria-label={label}>
+      {ch}
+    </Text>
   );
 }
 
-function StreakBadge({ streak }: { streak?: string }) {
-  if (!streak) return null;
-  const win = streak[0]?.toUpperCase() === "W";
-  return (
-    <Badge color={win ? "teal" : "red"} variant="filled" radius="sm" size="sm">
-      {streak}
-    </Badge>
-  );
-}
-
-function StandingRow({
-  row,
-  rank,
+function StandingsTable({
+  rows,
   showWL,
   showStreak,
 }: {
-  row: RankingRow;
-  rank: number;
+  rows: RankingRow[];
   showWL: boolean;
   showStreak: boolean;
 }) {
-  const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : "#8a8399";
+  const cols = ["70px", "minmax(160px, 1fr)"];
+  if (showWL) cols.push("90px");
+  if (showStreak) cols.push("80px");
+  cols.push("80px");
+  const template = cols.join(" ");
+  const minW = 70 + 160 + (showWL ? 90 : 0) + (showStreak ? 80 : 0) + 80 + 60;
+
+  const headers: Array<{ key: string; label: string; right?: boolean }> = [
+    { key: "rank", label: "#" },
+    { key: "player", label: "PLAYER" },
+    ...(showWL ? [{ key: "wl", label: "W-L" }] : []),
+    ...(showStreak ? [{ key: "streak", label: "STREAK" }] : []),
+    { key: "pts", label: "PTS", right: true },
+  ];
+
   return (
-    <Table.Tr>
-      <Table.Td>
-        <Group gap={8} wrap="nowrap">
-          <Text fz={24} fw={800} c={rankColor} style={{ fontVariantNumeric: "tabular-nums", minWidth: 22 }}>
-            {rank}
-          </Text>
-          <Movement value={row.movement} />
-        </Group>
-      </Table.Td>
-      <Table.Td>
-        <Group gap={10} wrap="nowrap">
-          <Box
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: "50%",
-              background: `var(--mantine-color-${avatarColor(row.id)}-6)`,
-              flexShrink: 0,
-            }}
-          />
-          <Text fz={16} fw={700} c="white" lineClamp={1}>
-            {row.username || row.id}
-          </Text>
-        </Group>
-      </Table.Td>
-      {showWL && (
-        <Table.Td ta="center">
-          <Text fz={14} c="dimmed" style={{ fontVariantNumeric: "tabular-nums" }}>
-            {row.wins ?? 0}&ndash;{row.losses ?? 0}
-          </Text>
-        </Table.Td>
-      )}
-      {showStreak && (
-        <Table.Td ta="center">
-          <StreakBadge streak={row.streak} />
-        </Table.Td>
-      )}
-      <Table.Td ta="right">
-        <Text fz={22} fw={800} c="gold.1" style={{ fontVariantNumeric: "tabular-nums" }}>
-          {row.points ?? 0}
-        </Text>
-      </Table.Td>
-    </Table.Tr>
+    <Box style={{ overflowX: "auto" }}>
+      <Box role="table" aria-label="Competitive standings" style={{ minWidth: minW }}>
+        <Box
+          role="row"
+          style={{
+            display: "grid",
+            gridTemplateColumns: template,
+            gap: 10,
+            padding: "16px 24px",
+            borderBottom: "1px solid #232028",
+          }}
+        >
+          {headers.map((h) => (
+            <Text
+              key={h.key}
+              role="columnheader"
+              fz={12}
+              fw={700}
+              c={FAINT}
+              tt="uppercase"
+              ta={h.right ? "right" : "left"}
+              style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.18em" }}
+            >
+              {h.label}
+            </Text>
+          ))}
+        </Box>
+
+        {rows.map((row, i) => {
+          const rankColor = i === 0 ? GOLD : i < 3 ? GOLD_DEEP : FAINT;
+          const win = row.streak?.[0]?.toUpperCase() === "W";
+          return (
+            <Box
+              role="row"
+              key={row.id}
+              className="dc-row-hover"
+              style={{
+                display: "grid",
+                gridTemplateColumns: template,
+                gap: 10,
+                alignItems: "center",
+                padding: "15px 24px",
+                borderBottom: "1px solid #1c1a22",
+                background: i === 0 ? "#1c1526" : "transparent",
+              }}
+            >
+              <Group role="cell" gap={8} wrap="nowrap">
+                <Text fz={18} fw={700} c={rankColor} style={{ fontFamily: FONT_DISPLAY }}>
+                  {i + 1}
+                </Text>
+                <MoveArrow value={row.movement} />
+              </Group>
+              <Group role="cell" gap={12} wrap="nowrap" style={{ minWidth: 0 }}>
+                <Box
+                  style={{
+                    flex: "none",
+                    width: 30,
+                    height: 30,
+                    background: `var(--mantine-color-${avatarColor(row.id)}-6)`,
+                    clipPath: AVATAR_CLIP,
+                  }}
+                />
+                <Text fz={15} fw={700} c="white" lineClamp={1}>
+                  {row.username || row.id}
+                </Text>
+              </Group>
+              {showWL && (
+                <Text role="cell" fz={14} c={DIM}>
+                  {row.wins ?? 0}-{row.losses ?? 0}
+                </Text>
+              )}
+              {showStreak && (
+                <Text
+                  role="cell"
+                  fz={12}
+                  fw={700}
+                  c={win ? CYAN : RED}
+                  style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.06em" }}
+                >
+                  {row.streak ?? "–"}
+                </Text>
+              )}
+              <Text
+                role="cell"
+                fz={18}
+                fw={700}
+                c={GOLD}
+                ta="right"
+                style={{ fontFamily: FONT_DISPLAY }}
+              >
+                {row.points ?? 0}
+              </Text>
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
   );
 }
 
 function PointsPanel() {
   return (
-    <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-      <SectionLabel>How Points Work</SectionLabel>
-      <Stack gap={0}>
-        {SCORING.map((s, i) => (
+    <Panel bg={ASIDE_BG} clip={ASIDE_CLIP} padding="22px 24px">
+      <Stack gap={14}>
+        <PanelLabel>How Points Work</PanelLabel>
+        {POINT_RULES.map((p) => (
           <Group
-            key={s.label}
+            key={p.what}
             justify="space-between"
             wrap="nowrap"
-            py={10}
-            style={{ borderTop: i ? "1px solid #2a2637" : undefined }}
+            gap={12}
+            pb={12}
+            style={{ borderBottom: "1px solid #232028" }}
           >
-            <Text fz={14} c="gray.3">
-              {s.label}
+            <Text fz={14} c={DIM}>
+              {p.what}
             </Text>
-            <Text fz={16} fw={800} c={`${s.color}.4`}>
-              {s.value}
+            <Text fz={14} fw={700} c={p.color} style={{ fontFamily: FONT_DISPLAY }}>
+              {p.pts}
             </Text>
           </Group>
         ))}
+        <Text fz={13} c={FAINT} lh={1.5}>
+          Points are entered by admins from reported battles, no self-scoring.
+        </Text>
       </Stack>
-      <Text fz={14} c="dimmed" mt="sm" pt="sm" style={{ borderTop: "1px solid #2a2637" }}>
-        Points are entered by admins from reported battles, no self-scoring.
-      </Text>
-    </Card>
+    </Panel>
   );
 }
 
@@ -611,54 +842,24 @@ function RankingsTab() {
   const showStreak = rows.some((r) => r.streak);
 
   return (
-    <Flex direction={{ base: "column", md: "row" }} gap="lg" align="flex-start">
-      <Box style={{ flex: "2 1 0%", minWidth: 0, width: "100%" }}>
-        <SectionLabel>Competitive Standings</SectionLabel>
-        <Card
-          bg="#1c1a26"
-          radius="md"
-          p={0}
-          withBorder
-          style={{ borderColor: "#3a3550", overflow: "hidden" }}
-        >
+    <Flex direction={{ base: "column", md: "row" }} gap="lg" align="stretch">
+      <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
+        <Panel padding="0">
           {isPending ? (
             <Box p="md">
               <SectionLoader />
             </Box>
           ) : !rows.length ? (
-            <Text fz={14} c="dimmed" p="md">
+            <Text fz={14} c={DIM} p="md">
               No ranked players yet. Battle results will populate the ladder.
             </Text>
           ) : (
-            <Box style={{ overflowX: "auto" }}>
-              <Table verticalSpacing="sm" horizontalSpacing="md" miw={420} highlightOnHover>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>#</Table.Th>
-                    <Table.Th>Player</Table.Th>
-                    {showWL && <Table.Th ta="center">W&ndash;L</Table.Th>}
-                    {showStreak && <Table.Th ta="center">Streak</Table.Th>}
-                    <Table.Th ta="right">Pts</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {rows.map((row, i) => (
-                    <StandingRow
-                      key={row.id}
-                      row={row}
-                      rank={i + 1}
-                      showWL={showWL}
-                      showStreak={showStreak}
-                    />
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </Box>
+            <StandingsTable rows={rows} showWL={showWL} showStreak={showStreak} />
           )}
-        </Card>
+        </Panel>
       </Box>
 
-      <Box style={{ flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: 360 }}>
+      <Box style={{ flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: 340 }}>
         <PointsPanel />
       </Box>
     </Flex>
@@ -672,73 +873,83 @@ function RankingsTab() {
 function ChampionCard({ entry }: { entry: HallOfFameEntry }) {
   const team = entry.team ?? [];
   return (
-    <Card
-      bg="#1c1a26"
-      radius="md"
-      p="lg"
-      withBorder
-      style={{ borderColor: "#3a3550", position: "relative", overflow: "hidden" }}
-    >
+    <Panel style={{ position: "relative", overflow: "hidden" }}>
       <IconTrophy
-        size={120}
+        size={110}
         color="#ffffff"
-        style={{ position: "absolute", top: -12, right: -12, opacity: 0.05, pointerEvents: "none" }}
+        style={{ position: "absolute", top: 10, right: -10, opacity: 0.06, pointerEvents: "none" }}
       />
-      <Group gap={14} wrap="nowrap" align="center" mb="md">
-        <Box
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: 12,
-            background: "linear-gradient(135deg, #f9d423, #e6a817)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <IconTrophy size={28} color="#3a2a05" />
-        </Box>
-        <Box style={{ minWidth: 0 }}>
-          <Text fz={21} fw={800} c="white" tt="uppercase" lineClamp={1}>
-            {entry.tournament_name}
-          </Text>
-          <Text fz={14} fw={700} c="gold.1" lineClamp={1}>
-            {entry.year != null ? `${entry.year} Champion` : "Champion"} . {entry.winner || "Unknown"}
-          </Text>
-        </Box>
-      </Group>
-
-      <Text fz={14} fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: 1 }}>
-        Champion's Team
-      </Text>
-      <Group gap={8}>
-        {team.length ? (
-          team.map((slug, i) => (
-            <Box
-              key={`${slug}-${i}`}
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: 8,
-                background: "#15131d",
-                border: "1px solid #2a2637",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
+      <Stack gap={16} style={{ position: "relative" }}>
+        <Group gap={14} wrap="nowrap" align="center">
+          <Box
+            style={{
+              flex: "none",
+              width: 44,
+              height: 44,
+              background: `linear-gradient(135deg, ${GOLD}, ${GOLD_DEEP})`,
+              clipPath: "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <IconTrophy size={22} color="#1a1b1e" />
+          </Box>
+          <Box style={{ minWidth: 0 }}>
+            <Text
+              fz={20}
+              fw={700}
+              c="white"
+              tt="uppercase"
+              lineClamp={1}
+              style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.02em" }}
             >
-              <Image src={getPokemonImageURL(slug)} alt={slug} w={38} h={38} fit="contain" />
-            </Box>
-          ))
-        ) : (
-          <Text fz={14} c="dimmed">
-            Team roster not recorded.
-          </Text>
-        )}
-      </Group>
-    </Card>
+              {entry.tournament_name}
+            </Text>
+            <Text fz={13} fw={700} c={GOLD} lineClamp={1}>
+              {entry.year != null ? `${entry.year} Champion` : "Champion"} . {entry.winner || "Unknown"}
+            </Text>
+          </Box>
+        </Group>
+
+        <Stack gap={8}>
+          <PanelLabel color={FAINT} fz={11}>
+            Champion's Team
+          </PanelLabel>
+          <Group gap={8}>
+            {team.length ? (
+              team.map((slug, i) => (
+                <Box
+                  key={`${slug}-${i}`}
+                  style={{
+                    width: 52,
+                    height: 52,
+                    background: WELL_BG,
+                    border: `1px solid ${CARD_BORDER}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Image
+                    src={getPokemonImageURL(slug)}
+                    alt={slug}
+                    w={38}
+                    h={38}
+                    fit="contain"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                </Box>
+              ))
+            ) : (
+              <Text fz={14} c={DIM}>
+                Team roster not recorded.
+              </Text>
+            )}
+          </Group>
+        </Stack>
+      </Stack>
+    </Panel>
   );
 }
 
@@ -753,21 +964,18 @@ function HallOfFameTab() {
   const entries = data ?? [];
   if (!entries.length) {
     return (
-      <Text fz={14} c="dimmed" py={24}>
+      <Text fz={14} c={DIM} py={24}>
         No champions recorded yet. Tournament winners will be enshrined here.
       </Text>
     );
   }
 
   return (
-    <>
-      <SectionLabel>Hall of Fame</SectionLabel>
-      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-        {entries.map((entry) => (
-          <ChampionCard key={entry.id} entry={entry} />
-        ))}
-      </SimpleGrid>
-    </>
+    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={16}>
+      {entries.map((entry) => (
+        <ChampionCard key={entry.id} entry={entry} />
+      ))}
+    </SimpleGrid>
   );
 }
 
@@ -775,24 +983,24 @@ function HallOfFameTab() {
 // Tournaments
 // ---------------------------------------------------------------------------
 
-const STATUS_COLORS: Record<string, string> = {
-  upcoming: "gray",
-  open_signup: "green",
-  running: "grape",
-  complete: "blue",
+const STATUS_LABEL: Record<string, string> = {
+  upcoming: "UPCOMING",
+  open_signup: "OPEN SIGNUP",
+  running: "RUNNING",
+  complete: "COMPLETE",
 };
 
-const PRIZE_ICON: Record<string, string> = {
-  "1st": "\u{1F947}",
-  "2nd": "\u{1F948}",
-  "3rd": "\u{1F949}",
-  participation: "\u{1F39F}\u{FE0F}",
-};
 const PRIZE_LABEL: Record<string, string> = {
-  "1st": "1st Place",
-  "2nd": "2nd Place",
-  "3rd": "3rd Place",
-  participation: "Participation",
+  "1st": "1ST PLACE",
+  "2nd": "2ND PLACE",
+  "3rd": "3RD PLACE",
+  participation: "ENTRY",
+};
+const PRIZE_COLOR: Record<string, string> = {
+  "1st": GOLD,
+  "2nd": DIM,
+  "3rd": "#E58E26",
+  participation: PURPLE,
 };
 
 /** Whole days until a start timestamp, 0 if already started, null if unset. */
@@ -803,40 +1011,59 @@ function daysUntil(ts?: { seconds: number }): number | null {
   return Math.ceil(ms / (24 * 60 * 60 * 1000));
 }
 
-function HeroStat({ value, label }: { value: string; label: string }) {
+/** A stat pair inside the signup banner. */
+function BannerStat({ value, label, color }: { value: string; label: string; color?: string }) {
   return (
-    <Box>
-      <Text fz={34} fw={800} c="white" lh={1}>
+    <Stack gap={0}>
+      <Text fz={28} fw={700} c={color ?? "white"} style={{ fontFamily: FONT_DISPLAY }}>
         {value}
       </Text>
-      <Text fz={14} c="dimmed" tt="uppercase" mt={4} style={{ letterSpacing: 1 }}>
+      <Text
+        fz={11}
+        fw={700}
+        c={FAINT}
+        tt="uppercase"
+        style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.22em" }}
+      >
         {label}
       </Text>
-    </Box>
+    </Stack>
   );
 }
 
 function RulesCard({ html }: { html: string }) {
   return (
-    <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-      <SectionLabel>Rules</SectionLabel>
-      <Box
-        fz={14}
-        c="dimmed"
-        sx={{
-          "& ul": { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 },
-          "& li": { position: "relative", paddingLeft: 22, lineHeight: 1.5 },
-          "& li::before": {
-            content: '"\\A7"',
-            position: "absolute",
-            left: 0,
-            color: "var(--mantine-color-grape-4)",
-            fontWeight: 700,
-          },
-        }}
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
-      />
-    </Card>
+    <Panel clip={RULES_CLIP}>
+      <Stack gap={12}>
+        <PanelLabel spacing="0.28em" fz={14}>
+          Rules
+        </PanelLabel>
+        <Box
+          fz={14}
+          sx={{
+            "& ul": {
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            },
+            "& li": { position: "relative", paddingLeft: 26, lineHeight: 1.6, color: DIM },
+            "& li::before": {
+              content: '""',
+              position: "absolute",
+              left: 0,
+              top: 9,
+              width: 14,
+              height: 3,
+              background: RED,
+            },
+          }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+        />
+      </Stack>
+    </Panel>
   );
 }
 
@@ -848,33 +1075,33 @@ function PrizesCard({ prizes }: { prizes: Record<string, string[]> }) {
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
   });
   return (
-    <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-      <SectionLabel>Prizes</SectionLabel>
-      <Stack gap={0}>
-        {keys.map((k, i) => (
+    <Panel bg={ASIDE_BG} clip={ASIDE_CLIP} padding="22px 24px">
+      <Stack gap={12}>
+        <PanelLabel color={GOLD}>Prizes</PanelLabel>
+        {keys.map((k) => (
           <Group
             key={k}
             gap={12}
             wrap="nowrap"
             align="flex-start"
-            py={12}
-            style={{ borderTop: i ? "1px solid #2a2637" : undefined }}
+            pb={12}
+            style={{ borderBottom: "1px solid #232028" }}
           >
-            <Text fz={26} style={{ lineHeight: 1 }}>
-              {PRIZE_ICON[k] ?? "\u{1F3C5}"}
+            <Text
+              fz={13}
+              fw={700}
+              c={PRIZE_COLOR[k] ?? DIM}
+              style={{ flex: "none", minWidth: 80, fontFamily: FONT_DISPLAY, letterSpacing: "0.06em" }}
+            >
+              {PRIZE_LABEL[k] ?? k.toUpperCase()}
             </Text>
-            <Box style={{ minWidth: 0 }}>
-              <Text fz={14} fw={700} c="white">
-                {PRIZE_LABEL[k] ?? k}
-              </Text>
-              <Text fz={14} c="dimmed">
-                {(prizes[k] ?? []).join(" . ")}
-              </Text>
-            </Box>
+            <Text fz={13} c={DIM} lh={1.5}>
+              {(prizes[k] ?? []).join(" . ")}
+            </Text>
           </Group>
         ))}
       </Stack>
-    </Card>
+    </Panel>
   );
 }
 
@@ -944,78 +1171,85 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
 
   const closed = t.status === "complete" || t.status === "running";
   const canRegister = !!friendCode.trim() && teamPokemon.length > 0;
+  const inputStyles = { input: { background: CARD_BG, borderColor: WELL_BORDER } };
 
   return (
-    <Card
-      radius="md"
-      p="md"
-      withBorder
-      style={{ borderColor: "#5a3fb0", background: "linear-gradient(160deg, #241a3d, #1a1626)" }}
-    >
-      <SectionLabel>Register</SectionLabel>
-      {!uid ? (
-        <Text fz={14} c="dimmed">
-          Sign in to register for this tournament.
-        </Text>
-      ) : closed ? (
-        <Text fz={14} c="dimmed">
-          Sign-ups for this event are closed.
-        </Text>
-      ) : (
-        <Stack gap="sm">
-          {mine && (
-            <Badge color="teal" variant="filled" leftSection={<IconCheck size={12} />}>
-              Registered
-            </Badge>
-          )}
-          <TextInput
-            label="Friend code"
-            placeholder="Friend code (SW-0000-0000-0000)"
-            description="Saved to your Settings so it prefills next time."
-            value={friendCode}
-            onChange={(e) => setFriendCode(e.currentTarget.value)}
-          />
-          <MultiSelect
-            label="Battle team"
-            placeholder={teamPokemon.length >= 6 ? "" : "Pick up to 6 Pokemon"}
-            description="This team is for the Switch battle, so pick any Pokemon (owned or not)."
-            data={BATTLE_TEAM_OPTIONS}
-            value={teamPokemon}
-            onChange={setTeamPokemon}
-            maxValues={6}
-            limit={50}
-            searchable
-            nothingFoundMessage="No Pokemon matches that search"
-          />
-          <Button
-            variant="gradient"
-            gradient={{ from: "grape", to: "cyan", deg: 90 }}
-            onClick={() => registerMutation.mutate()}
-            loading={registerMutation.isPending}
-            disabled={!canRegister}
-            fullWidth
-          >
-            {mine ? "Update Registration" : `Register for ${t.name}`}
-          </Button>
-          {mine && (
+    <Panel bg="#1c1526" border="#7E2C75" clip={ASIDE_CLIP} padding="22px 24px">
+      <Stack gap={14}>
+        <PanelLabel>Register</PanelLabel>
+        {!uid ? (
+          <Text fz={14} c={DIM}>
+            Sign in to register for this tournament.
+          </Text>
+        ) : closed ? (
+          <Text fz={14} c={DIM}>
+            Sign-ups for this event are closed.
+          </Text>
+        ) : (
+          <>
+            {mine && (
+              <Badge color="teal" variant="filled" leftSection={<IconCheck size={12} />}>
+                Registered
+              </Badge>
+            )}
+            <TextInput
+              label="Friend code"
+              placeholder="SW-0000-0000-0000"
+              description="Saved to your Settings so it prefills next time."
+              value={friendCode}
+              onChange={(e) => setFriendCode(e.currentTarget.value)}
+              styles={inputStyles}
+            />
+            <MultiSelect
+              label="Battle team"
+              placeholder={teamPokemon.length >= 6 ? "" : "Pick up to 6 Pokemon"}
+              description="This team is for the Switch battle, so pick any Pokemon (owned or not)."
+              data={BATTLE_TEAM_OPTIONS}
+              value={teamPokemon}
+              onChange={setTeamPokemon}
+              maxValues={6}
+              limit={50}
+              searchable
+              nothingFoundMessage="No Pokemon matches that search"
+              styles={inputStyles}
+            />
             <Button
-              variant="subtle"
-              color="red"
-              size="compact-sm"
-              onClick={() => withdrawMutation.mutate()}
-              loading={withdrawMutation.isPending}
+              onClick={() => registerMutation.mutate()}
+              loading={registerMutation.isPending}
+              disabled={!canRegister}
+              fullWidth
+              tt="uppercase"
+              style={{
+                background: GRAD,
+                border: "none",
+                clipPath: CTA_CLIP,
+                fontFamily: FONT_DISPLAY,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+              }}
             >
-              Withdraw
+              {mine ? "Update Registration" : "Register for the Cup"}
             </Button>
-          )}
-          {status && (
-            <Text fz={14} c="grape.3" role="status" aria-live="polite">
-              {status}
-            </Text>
-          )}
-        </Stack>
-      )}
-    </Card>
+            {mine && (
+              <Button
+                variant="subtle"
+                color="red"
+                size="compact-sm"
+                onClick={() => withdrawMutation.mutate()}
+                loading={withdrawMutation.isPending}
+              >
+                Withdraw
+              </Button>
+            )}
+            {status && (
+              <Text fz={13} fw={700} c={PURPLE} role="status" aria-live="polite">
+                {status}
+              </Text>
+            )}
+          </>
+        )}
+      </Stack>
+    </Panel>
   );
 }
 
@@ -1039,20 +1273,15 @@ function BracketSlot({
       py={7}
       gap={8}
       style={{
-        background: won ? "rgba(90, 63, 176, 0.28)" : "#15131d",
-        borderLeft: `3px solid ${won ? "var(--mantine-color-grape-4)" : "transparent"}`,
+        background: won ? "rgba(126, 44, 117, 0.28)" : WELL_BG,
+        borderLeft: `3px solid ${won ? "#c79bd6" : "transparent"}`,
       }}
     >
-      <Text
-        fz={14}
-        fw={won ? 700 : 500}
-        c={name ? (won || !decided ? "white" : "dimmed") : "dimmed"}
-        lineClamp={1}
-      >
+      <Text fz={14} fw={won ? 700 : 500} c={name ? (won || !decided ? "white" : "dimmed") : "dimmed"} lineClamp={1}>
         {name || "TBD"}
       </Text>
       {score != null && (
-        <Text fz={14} fw={700} c={won ? "grape.3" : "dimmed"} style={{ fontVariantNumeric: "tabular-nums" }}>
+        <Text fz={14} fw={700} c={won ? PURPLE : "dimmed"} style={{ fontVariantNumeric: "tabular-nums" }}>
           {score}
         </Text>
       )}
@@ -1068,39 +1297,36 @@ function BracketSlot({
 function BracketCard({ bracket }: { bracket: BracketRound[] }) {
   if (!bracket.length) return null;
   return (
-    <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
-      <SectionLabel>Bracket</SectionLabel>
-      <Box style={{ overflowX: "auto" }}>
-        <Flex gap="md" align="flex-start" style={{ minWidth: "min-content" }}>
-          {bracket.map((round) => (
-            <Stack key={round.name} gap="sm" style={{ minWidth: 190, flexShrink: 0 }}>
-              <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 1 }}>
-                {round.name}
-              </Text>
-              <Stack gap="sm" justify="center" style={{ flex: 1 }}>
-                {round.matches.map((m, i) => {
-                  const decided = m.winner != null;
-                  return (
-                    <Box
-                      key={i}
-                      style={{
-                        borderRadius: 8,
-                        overflow: "hidden",
-                        border: "1px solid #2a2637",
-                      }}
-                    >
-                      <BracketSlot name={m.a} score={m.scoreA} won={m.winner === "a"} decided={decided} />
-                      <Box style={{ height: 1, background: "#2a2637" }} />
-                      <BracketSlot name={m.b} score={m.scoreB} won={m.winner === "b"} decided={decided} />
-                    </Box>
-                  );
-                })}
+    <Panel>
+      <Stack gap={12}>
+        <PanelLabel color="white" spacing="0.1em">
+          Bracket
+        </PanelLabel>
+        <Box style={{ overflowX: "auto" }}>
+          <Flex gap="md" align="flex-start" style={{ minWidth: "min-content" }}>
+            {bracket.map((round) => (
+              <Stack key={round.name} gap="sm" style={{ minWidth: 190, flexShrink: 0 }}>
+                <Text fz={14} fw={700} c={PURPLE} tt="uppercase" style={{ letterSpacing: 1 }}>
+                  {round.name}
+                </Text>
+                <Stack gap="sm" justify="center" style={{ flex: 1 }}>
+                  {round.matches.map((m, i) => {
+                    const decided = m.winner != null;
+                    return (
+                      <Box key={i} style={{ overflow: "hidden", border: `1px solid ${CARD_BORDER}` }}>
+                        <BracketSlot name={m.a} score={m.scoreA} won={m.winner === "a"} decided={decided} />
+                        <Box style={{ height: 1, background: CARD_BORDER }} />
+                        <BracketSlot name={m.b} score={m.scoreB} won={m.winner === "b"} decided={decided} />
+                      </Box>
+                    );
+                  })}
+                </Stack>
               </Stack>
-            </Stack>
-          ))}
-        </Flex>
-      </Box>
-    </Card>
+            ))}
+          </Flex>
+        </Box>
+      </Stack>
+    </Panel>
   );
 }
 
@@ -1111,46 +1337,88 @@ function FeaturedTournament({ t }: { t: Tournament }) {
   });
   const registered = signups?.length ?? 0;
   const days = daysUntil(t.start_date);
-  const statusColor = STATUS_COLORS[t.status ?? "upcoming"] ?? "gray";
+  const isOpen = t.status === "open_signup";
 
   return (
-    <Flex direction={{ base: "column", md: "row" }} gap="md" align="stretch">
-      <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
-        <Stack gap="md">
+    <Flex direction={{ base: "column", md: "row" }} gap="lg" align="stretch">
+      <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
+        <Stack gap="lg">
           <Box
-            p={{ base: 20, sm: 28 }}
             style={{
-              borderRadius: 14,
-              background: "linear-gradient(135deg, #2a1b4a 0%, #16213e 100%)",
-              border: "1px solid #3a3550",
+              position: "relative",
+              overflow: "hidden",
+              background: "linear-gradient(120deg, #2c2352, #1c2a4a)",
+              border: `1px solid ${WELL_BORDER}`,
+              clipPath: BANNER_CLIP,
+              padding: "28px 32px",
             }}
           >
-            <Group gap={10} mb={12} wrap="wrap">
-              {t.status && (
-                <Badge color={statusColor} variant="filled" radius="sm" tt="uppercase">
-                  {t.status.replace(/_/g, " ")}
-                </Badge>
-              )}
-              {t.game_generation && (
-                <Text fz={14} c="dimmed">
-                  {t.game_generation}
+            <Box
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "repeating-linear-gradient(120deg, rgba(255,255,255,.03) 0 2px, transparent 2px 14px)",
+              }}
+            />
+            <Stack gap={12} style={{ position: "relative" }}>
+              <Group gap={12} wrap="wrap" align="center">
+                {t.status && (
+                  <Text
+                    fz={11}
+                    fw={700}
+                    c={isOpen ? "#0e0d11" : "white"}
+                    tt="uppercase"
+                    style={{
+                      background: isOpen ? CYAN : "#3a3550",
+                      padding: "5px 14px",
+                      clipPath: CHIP_CLIP,
+                      fontFamily: FONT_DISPLAY,
+                      letterSpacing: "0.16em",
+                    }}
+                  >
+                    {STATUS_LABEL[t.status] ?? t.status.replace(/_/g, " ").toUpperCase()}
+                  </Text>
+                )}
+                {t.game_generation && (
+                  <Text
+                    fz={12}
+                    fw={700}
+                    c={DIM}
+                    tt="uppercase"
+                    style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.2em" }}
+                  >
+                    {t.game_generation}
+                  </Text>
+                )}
+              </Group>
+              <Title
+                order={2}
+                fz={{ base: 26, sm: 32 }}
+                fw={700}
+                c="white"
+                tt="uppercase"
+                style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.02em" }}
+              >
+                {t.name}
+              </Title>
+              {t.format && (
+                <Text fz={14} c={DIM}>
+                  {t.format}
                 </Text>
               )}
-            </Group>
-            <Title order={2} c="white" fw={800} tt="uppercase" size={34} mb={8}>
-              {t.name}
-            </Title>
-            {t.format && (
-              <Text fz={14} c="dimmed" mb="lg">
-                {t.format}
-              </Text>
-            )}
-            <Group gap={40}>
-              {days != null && (
-                <HeroStat value={`${days} ${days === 1 ? "day" : "days"}`} label="Until Start" />
-              )}
-              <HeroStat value={`${registered} / ${t.capacity ?? "-"}`} label="Registered" />
-            </Group>
+              <Group gap={28} wrap="wrap" mt={4}>
+                {days != null && (
+                  <BannerStat
+                    value={days === 0 ? "Starts soon" : `${days} ${days === 1 ? "day" : "days"}`}
+                    label="Until Start"
+                    color={GOLD}
+                  />
+                )}
+                <BannerStat value={`${registered} / ${t.capacity ?? "-"}`} label="Registered" />
+              </Group>
+            </Stack>
           </Box>
 
           {t.rules && <RulesCard html={t.rules} />}
@@ -1158,8 +1426,8 @@ function FeaturedTournament({ t }: { t: Tournament }) {
         </Stack>
       </Box>
 
-      <Box style={{ flex: "1 1 0%", minWidth: 0, maxWidth: 380 }}>
-        <Stack gap="md">
+      <Box style={{ flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: 380 }}>
+        <Stack gap="lg">
           {t.prizes && <PrizesCard prizes={t.prizes} />}
           <RegisterCard t={t} signups={signups ?? []} />
         </Stack>
@@ -1170,36 +1438,50 @@ function FeaturedTournament({ t }: { t: Tournament }) {
 
 function CompactTournament({ t }: { t: Tournament }) {
   const days = daysUntil(t.start_date);
+  const isOpen = t.status === "open_signup";
   return (
-    <Card bg="#1c1a26" radius="md" p="md" withBorder style={{ borderColor: "#3a3550" }}>
+    <Panel padding="18px 24px">
       <Group justify="space-between" wrap="nowrap" mb={6}>
-        <Text fz={20} fw={700} c="white" lineClamp={1}>
+        <Text fz={20} fw={700} c="white" lineClamp={1} style={{ fontFamily: FONT_DISPLAY }}>
           {t.name}
         </Text>
         {t.status && (
-          <Badge color={STATUS_COLORS[t.status] ?? "gray"} variant="filled">
-            {t.status.replace(/_/g, " ")}
-          </Badge>
+          <Text
+            fz={11}
+            fw={700}
+            c={isOpen ? "#0e0d11" : "white"}
+            tt="uppercase"
+            style={{
+              background: isOpen ? CYAN : "#3a3550",
+              padding: "5px 12px",
+              clipPath: CHIP_CLIP,
+              fontFamily: FONT_DISPLAY,
+              letterSpacing: "0.12em",
+              flexShrink: 0,
+            }}
+          >
+            {STATUS_LABEL[t.status] ?? t.status.replace(/_/g, " ").toUpperCase()}
+          </Text>
         )}
       </Group>
-      <Group gap="md">
+      <Group gap="md" wrap="wrap">
         {t.game_generation && (
-          <Text fz={14} c="dimmed">
+          <Text fz={14} c={DIM}>
             {t.game_generation}
           </Text>
         )}
         {t.format && (
-          <Text fz={14} c="dimmed">
+          <Text fz={14} c={DIM}>
             {t.format}
           </Text>
         )}
         {days != null && (
-          <Text fz={14} c="dimmed">
+          <Text fz={14} c={DIM}>
             {days === 0 ? "Started" : `Starts in ${days}d`}
           </Text>
         )}
       </Group>
-    </Card>
+    </Panel>
   );
 }
 
@@ -1214,7 +1496,7 @@ function TournamentsTab() {
   const tournaments = data ?? [];
   if (!tournaments.length) {
     return (
-      <Text fz={14} c="dimmed" py={24}>
+      <Text fz={14} c={DIM} py={24}>
         No tournaments scheduled right now. Check back for the next bracket event.
       </Text>
     );
@@ -1226,27 +1508,35 @@ function TournamentsTab() {
     <Stack gap="xl">
       <FeaturedTournament t={featured} />
       {rest.length > 0 && (
-        <Box>
-          <SectionLabel>More Events</SectionLabel>
-          <Stack gap="md">
-            {rest.map((t) => (
-              <CompactTournament key={t.id} t={t} />
-            ))}
-          </Stack>
-        </Box>
+        <Stack gap="md">
+          <PanelLabel color="white" spacing="0.1em" fz={14}>
+            More Events
+          </PanelLabel>
+          {rest.map((t) => (
+            <CompactTournament key={t.id} t={t} />
+          ))}
+        </Stack>
       )}
     </Stack>
   );
 }
 
-const TABS = [
-  { value: "training", label: "Training Room", content: <TrainingRoomTab /> },
-  { value: "rankings", label: "Rankings", content: <RankingsTab /> },
-  { value: "hall", label: "Hall of Fame", content: <HallOfFameTab /> },
-  { value: "tournaments", label: "Tournaments", content: <TournamentsTab /> },
+// ---------------------------------------------------------------------------
+// Page shell + segmented tabs
+// ---------------------------------------------------------------------------
+
+type TabKey = "training" | "rankings" | "hall" | "tournaments";
+
+const TAB_DEFS: Array<{ value: TabKey; label: string }> = [
+  { value: "training", label: "Training Room" },
+  { value: "rankings", label: "Rankings" },
+  { value: "hall", label: "Hall of Fame" },
+  { value: "tournaments", label: "Tournaments" },
 ];
 
 export default function Colosseum() {
+  const [tab, setTab] = React.useState<TabKey>("training");
+
   const { data: rankings } = useQuery({
     queryKey: ["colosseum-rankings"],
     queryFn: getRankings,
@@ -1257,6 +1547,7 @@ export default function Colosseum() {
   });
 
   const rankedCount = rankings?.length ?? 0;
+  const openCup = (tournaments ?? []).some((t) => t.status === "open_signup");
 
   // Days until the soonest upcoming tournament start, else a dash.
   const daysToCup = React.useMemo(() => {
@@ -1279,7 +1570,13 @@ export default function Colosseum() {
             <Badge color="red" variant="filled" radius="sm">
               LIVE
             </Badge>
-            <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
+            <Text
+              fz={14}
+              fw={700}
+              c={GOLD}
+              tt="uppercase"
+              style={{ letterSpacing: "0.3em", fontFamily: FONT_DISPLAY }}
+            >
               Season 4 . Week 9
             </Text>
           </Group>
@@ -1289,26 +1586,47 @@ export default function Colosseum() {
         aside={
           <Group gap="sm" wrap="wrap">
             <HeroStatChip value={String(rankedCount)} label="Ranked Players" />
-            <HeroStatChip value={daysToCup} label="To Paldea Cup" />
+            {openCup ? (
+              <HeroStatChip value="OPEN" label="Paldea Cup Signup" color={CYAN} />
+            ) : (
+              <HeroStatChip value={daysToCup} label="To Paldea Cup" />
+            )}
           </Group>
         }
       />
 
-      <Tabs defaultValue="training" variant="pills" color="grape" keepMounted={false}>
-        <Tabs.List mb={16} style={{ flexWrap: "wrap" }}>
-          {TABS.map((t) => (
-            <Tabs.Tab key={t.value} value={t.value}>
+      <Group gap={10} wrap="wrap" mb={22} role="tablist" aria-label="Colosseum sections">
+        {TAB_DEFS.map((t) => {
+          const on = tab === t.value;
+          return (
+            <UnstyledButton
+              key={t.value}
+              role="tab"
+              aria-selected={on}
+              onClick={() => setTab(t.value)}
+              style={{
+                fontFamily: FONT_DISPLAY,
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                padding: "11px 24px",
+                border: `1px solid ${on ? "#7E2C75" : CARD_BORDER}`,
+                background: on ? GRAD : ASIDE_BG,
+                color: on ? "#fff" : DIM,
+                clipPath: TAB_CLIP,
+              }}
+            >
               {t.label}
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
+            </UnstyledButton>
+          );
+        })}
+      </Group>
 
-        {TABS.map((t) => (
-          <Tabs.Panel key={t.value} value={t.value}>
-            {t.content}
-          </Tabs.Panel>
-        ))}
-      </Tabs>
+      {tab === "training" && <TrainingRoomTab />}
+      {tab === "rankings" && <RankingsTab />}
+      {tab === "hall" && <HallOfFameTab />}
+      {tab === "tournaments" && <TournamentsTab />}
     </Container>
   );
 }

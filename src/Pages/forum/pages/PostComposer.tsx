@@ -1,5 +1,8 @@
 import {
+  Anchor,
   Avatar,
+  Box,
+  Button,
   Checkbox,
   Container,
   Flex,
@@ -10,13 +13,11 @@ import {
   Stack,
   Text,
   Title,
+  type ButtonProps,
 } from "@mantine/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
-import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import GradientButtonPrimary, {
-  GradientButtonSecondary,
-} from "../../../components/common/GradientButton";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Editor, { useRichTextEditor } from "../../../components/editor/Editor";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
@@ -71,6 +72,94 @@ import {
 } from "../../../lib/typeChart";
 import { userMayPost } from "./ThreadView";
 import "../forum.css";
+
+// Redesign tokens (cinematic game-site language, shared with NewThreadComposer).
+const DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
+const HEADER_GRADIENT = "linear-gradient(90deg,#762B77 7%,#17F1F0 66%)";
+const CTA_CLIP = "polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)";
+
+/** Gradient-headed panel from the composer mockup (optional leading numeral). */
+function StepPanel(props: { title: string; n?: string; children: React.ReactNode }) {
+  return (
+    <Box style={{ border: "1px solid #2a2637", overflow: "hidden" }}>
+      <Flex align="center" gap={14} style={{ background: HEADER_GRADIENT, padding: "14px 26px" }}>
+        {props.n && (
+          <Text fz={15} fw={700} style={{ fontFamily: DISPLAY, color: "rgba(255,255,255,0.75)" }}>
+            {props.n}
+          </Text>
+        )}
+        <Text
+          component="h2"
+          fz={16}
+          fw={700}
+          c="#fff"
+          tt="uppercase"
+          style={{ fontFamily: DISPLAY, letterSpacing: "0.14em", margin: 0 }}
+        >
+          {props.title}
+        </Text>
+      </Flex>
+      <Box style={{ background: "#17151c", padding: "20px" }}>{props.children}</Box>
+    </Box>
+  );
+}
+
+/** Angled clip-path CTA (red fill or ghost outline) with Mantine loading state. */
+function ClipButton(
+  props: { tone: "red" | "outline"; children: React.ReactNode } & ButtonProps &
+    React.HTMLAttributes<HTMLButtonElement>
+) {
+  const { tone, children, ...rest } = props;
+  const base = {
+    fontFamily: DISPLAY,
+    fontWeight: 700,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase" as const,
+    borderRadius: 0,
+    height: 46,
+    clipPath: CTA_CLIP,
+  };
+  if (tone === "red") {
+    return (
+      <Button
+        {...rest}
+        styles={{
+          root: {
+            ...base,
+            "--button-bg": "#E54156",
+            "--button-hover": "#FFD074",
+            "--button-color": "#fff",
+            paddingLeft: 30,
+            paddingRight: 30,
+          },
+        }}
+        sx={{ "&:hover": { color: "#1A1B1E !important" } }}
+      >
+        {children}
+      </Button>
+    );
+  }
+  return (
+    <Button
+      {...rest}
+      variant="outline"
+      color="gray"
+      styles={{
+        root: {
+          ...base,
+          "--button-bd": "1.5px solid rgba(255,255,255,0.4)",
+          "--button-color": "#fff",
+          color: "#fff",
+          paddingLeft: 26,
+          paddingRight: 26,
+        },
+      }}
+      sx={{ "&:hover": { background: "rgba(255,255,255,0.06)", borderColor: "#fff" } }}
+    >
+      {children}
+    </Button>
+  );
+}
 
 /**
  * Post composer, used both for a new reply (Publish Reply) and for editing an
@@ -533,10 +622,46 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
   };
 
   return (
-    <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
-      <Title order={1} fz={{ base: 24, sm: 34 }} c="white" fw={400} mb={16}>
-        Make a Post on {thread.title}
-      </Title>
+    <Container size="lg" style={{ marginTop: 20, paddingBottom: 120 }}>
+      <Box mb={20}>
+        <Anchor
+          component={Link}
+          to={`/Forum/${forum}/thread/${threadId}`}
+          underline="never"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            fontFamily: DISPLAY,
+            fontSize: 14,
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            color: "#FFD074",
+          }}
+        >
+          ← BACK TO THREAD
+        </Anchor>
+        <Text
+          component="h1"
+          c="#fff"
+          fz={{ base: 24, sm: 34 }}
+          fw={700}
+          style={{ fontFamily: DISPLAY, letterSpacing: "0.02em", lineHeight: 1.1, margin: "14px 0 0" }}
+        >
+          {mode === "edit" ? (
+            <>
+              EDIT YOUR <span style={{ color: "#FFD074" }}>POST</span>
+            </>
+          ) : (
+            <>
+              MAKE A <span style={{ color: "#FFD074" }}>POST</span>
+            </>
+          )}
+        </Text>
+        <Text c="#b6b1bc" fz={15} mt={10} maw={620}>
+          {mode === "edit" ? "Update your post below." : `Replying in ${thread.title}.`}
+        </Text>
+      </Box>
 
       <Grid>
         <Grid.Col span={{ base: 12, sm: 5 }}>
@@ -865,47 +990,60 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
                 );
               })()}
 
-            <ForumPanel title="Write Your Post">
+            <StepPanel title="Write Your Post">
               <Editor editor={editor} />
-            </ForumPanel>
+            </StepPanel>
 
             {mode === "new" && (
               <Checkbox
-                label="Attach Signature"
-                color="green.0"
+                label="Attach my signature"
+                color="#12B7B6"
                 checked={attachSignature}
                 onChange={(e) => setAttachSignature(e.currentTarget.checked)}
-                styles={{ label: { color: "white", fontSize: 14 } }}
+                styles={{ label: { color: "#fff", fontSize: 15 } }}
               />
             )}
 
             {error && <GameResultText>{error}</GameResultText>}
             {draftMessage && (
-              <Text fz={14} c="green.0">
+              <Text fz={14} c="#3ACCCB" role="status" aria-live="polite">
                 {draftMessage}
               </Text>
             )}
 
-            <Group justify="space-between">
-              {mode === "new" ? (
-                <GradientButtonSecondary
-                  radius="xl"
-                  loading={draftMutation.isPending}
-                  onClick={() => draftMutation.mutateAsync()}
-                >
-                  Save Post Draft
-                </GradientButtonSecondary>
-              ) : (
-                <span />
+            <Flex
+              align="center"
+              justify={mode === "new" ? "space-between" : "flex-end"}
+              gap={20}
+              wrap="wrap"
+              style={{
+                background: "#141318",
+                border: "1px solid #2a2637",
+                borderLeft: "3px solid #FFD074",
+                padding: "20px 26px",
+              }}
+            >
+              {mode === "new" && (
+                <Text fz={14} c="#b6b1bc" style={{ lineHeight: 1.5, maxWidth: 440 }}>
+                  Your roleplay rewards will be sent over after the thread is closed and approved by
+                  an admin.
+                </Text>
               )}
-              <GradientButtonPrimary
-                radius="xl"
-                loading={publishMutation.isPending}
-                onClick={handlePublish}
-              >
-                {mode === "edit" ? "Publish Edits" : "Publish Reply"}
-              </GradientButtonPrimary>
-            </Group>
+              <Group gap={12} wrap="wrap">
+                {mode === "new" && (
+                  <ClipButton
+                    tone="outline"
+                    loading={draftMutation.isPending}
+                    onClick={() => draftMutation.mutateAsync()}
+                  >
+                    Save Post Draft
+                  </ClipButton>
+                )}
+                <ClipButton tone="red" loading={publishMutation.isPending} onClick={handlePublish}>
+                  {mode === "edit" ? "Publish Edits" : "Publish Reply"}
+                </ClipButton>
+              </Group>
+            </Flex>
           </Stack>
         </Grid.Col>
       </Grid>

@@ -1,7 +1,6 @@
 import {
   Anchor,
   Avatar,
-  Badge,
   Box,
   Container,
   Flex,
@@ -9,10 +8,9 @@ import {
   Pagination,
   Stack,
   Switch,
-  Tabs,
   Text,
   TextInput,
-  Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
@@ -27,31 +25,16 @@ import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
   FORUM_ACCENT,
   FORUM_CATEGORIES,
-  FORUM_LINK_COLOR,
   MASTER_CATEGORY,
   THREADS_PER_PAGE,
   categoryByLink,
 } from "../config";
 import { getThreadList } from "../queries";
-import { ForumThread, formatFireDate, formatFireTime } from "../types";
+import { ForumThread, formatFireDate } from "../types";
 import "../forum.css";
 
-function ParticipantAvatars(props: { thread: ForumThread }) {
-  const participants = Object.values(props.thread.participants ?? {});
-  if (!participants.length) return null;
-  return (
-    <Avatar.Group spacing="xs">
-      {participants.slice(0, 4).map((participant, i) => (
-        <Avatar key={i} src={participant.avatar || undefined} alt={`${participant.name ?? "User"} avatar`} size={26} radius="xl" />
-      ))}
-      {participants.length > 4 && (
-        <Avatar size={26} radius="xl" alt={`${participants.length - 4} more participants`}>
-          +{participants.length - 4}
-        </Avatar>
-      )}
-    </Avatar.Group>
-  );
-}
+/** Angled corner cut shared by the category pills. */
+const PILL_CLIP = "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)";
 
 function threadMatches(thread: ForumThread, search: string): boolean {
   if (!search) return true;
@@ -63,103 +46,178 @@ function threadMatches(thread: ForumThread, search: string): boolean {
   );
 }
 
+/**
+ * Status badge for a thread row: BOSS (active boss battle) > CLOSED (archived) >
+ * MISSION (mission-linked) > OPEN (default). Colors follow the redesign palette.
+ */
+function statusBadge(thread: ForumThread): { label: string; bg: string; fg: string } {
+  if (thread.bossBattle?.active) return { label: "BOSS", bg: "#E54156", fg: "#fff" };
+  if (thread.closed) return { label: "CLOSED", bg: "#3C3A3C", fg: "#fff" };
+  if (thread.missionId) return { label: "MISSION", bg: "#FFD074", fg: "#1A1B1E" };
+  return { label: "OPEN", bg: "#12B7B6", fg: "#fff" };
+}
+
 function ThreadRow(props: { thread: ForumThread; forum: string }) {
   const { thread, forum } = props;
   const { isOverSm } = useMediaQuery();
-  const posts = (thread.replyCount ?? 0) + 1;
+  const badge = statusBadge(thread);
+  const replies = thread.replyCount ?? 0;
+  const avatarSrc =
+    Object.values(thread.participants ?? {})[0]?.avatar ||
+    thread.lastPost?.avatar ||
+    undefined;
+  const lastBy = thread.lastPost?.by ?? thread.createdBy;
+  const lastAt = formatFireDate(thread.lastPost?.at ?? thread.timePosted);
+  const threadUrl = `/Forum/${forum}/thread/${thread.id}`;
+  const lastUrl = `/Forum/${forum}/thread/${thread.id}/last`;
 
-  const title = (
-    <Link to={`/Forum/${forum}/thread/${thread.id}`} style={{ textDecoration: "none" }}>
-      <Group gap={8}>
+  const badgeEl = (
+    <Box
+      component="span"
+      style={{
+        flex: "none",
+        fontFamily: "var(--font-display)",
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: "0.12em",
+        color: badge.fg,
+        background: badge.bg,
+        padding: "3px 9px",
+      }}
+    >
+      {badge.label}
+    </Box>
+  );
+
+  const avatar = (
+    <Avatar
+      src={avatarSrc}
+      alt={`Avatar for ${thread.createdBy}'s roleplay thread`}
+      size={40}
+      radius="xl"
+      style={{ border: "2px solid #772976", flex: "none" }}
+    />
+  );
+
+  const titleBlock = (
+    <Box style={{ minWidth: 0 }}>
+      <Group gap={8} wrap={isOverSm ? "nowrap" : "wrap"} align="center" style={{ minWidth: 0 }}>
         {thread.pinned && (
-          <Badge size="xs" variant="filled" color="pink.0">
-            Pinned
-          </Badge>
+          <Box
+            component="span"
+            style={{
+              flex: "none",
+              fontFamily: "var(--font-display)",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: "#fff",
+              background: "#772976",
+              padding: "2px 7px",
+            }}
+          >
+            PINNED
+          </Box>
         )}
-        <Text fz={20} c="white" fw={500}>
+        <Text
+          fz={15.5}
+          fw={700}
+          c="white"
+          style={
+            isOverSm
+              ? { flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
+              : {}
+          }
+        >
           {thread.title}
         </Text>
+        {badgeEl}
       </Group>
-      <Text fz={14} c="dimmed">
-        By <span style={{ color: FORUM_LINK_COLOR }}>{thread.createdBy}</span>{" "}
-        {formatFireDate(thread.createdAt ?? thread.timePosted)}
+      <Text fz={14} c="#b6b1bc" mt={4}>
+        by {thread.createdBy} · started {formatFireDate(thread.createdAt ?? thread.timePosted)}
       </Text>
       {!!thread.tags?.length && (
-        <Group gap={4} mt={2}>
+        <Group gap={5} mt={5}>
           {thread.tags.slice(0, 5).map((tag) => (
-            <Badge key={tag} size="xs" variant="outline" color="gray">
+            <Text
+              key={tag}
+              component="span"
+              fz={11}
+              c="#b6b1bc"
+              tt="uppercase"
+              style={{ border: "1px solid #2a2637", padding: "1px 7px", letterSpacing: "0.06em" }}
+            >
               {tag}
-            </Badge>
+            </Text>
           ))}
         </Group>
       )}
+    </Box>
+  );
+
+  const repliesInline = (
+    <Box style={{ flex: "none", textAlign: "right", width: 78 }}>
+      <Text fz={17} fw={800} c="#FFD074" style={{ lineHeight: 1.1 }}>
+        {replies}
+      </Text>
+      <Text fz={12} fw={700} c="#b6b1bc" style={{ letterSpacing: "0.14em" }}>
+        REPLIES
+      </Text>
+    </Box>
+  );
+
+  const lastPostCol = (
+    <Link to={lastUrl} style={{ textDecoration: "none" }}>
+      <Text fz={14} fw={700} c="white" style={{ lineHeight: 1.2 }}>
+        {lastBy}
+      </Text>
+      <Text fz={13} c="#b6b1bc">
+        {lastAt}
+      </Text>
     </Link>
   );
 
-  const lastPost = thread.lastPost ? (
-    <Link
-      to={`/Forum/${forum}/thread/${thread.id}/last`}
-      style={{ textDecoration: "none" }}
-    >
-      <Group gap={8} wrap="nowrap">
-        <Avatar
-          src={thread.lastPost.avatar || undefined}
-          alt={`${thread.lastPost.by ?? "User"} avatar`}
-          size={34}
-          radius="xl"
-        />
-        <Stack gap={0}>
-          <Text fz={14} c="dimmed">
-            by <span style={{ color: FORUM_LINK_COLOR }}>{thread.lastPost.by}</span>
-          </Text>
-          <Text fz={14} c="white">
-            {formatFireTime(thread.lastPost.at)}
-          </Text>
-        </Stack>
-      </Group>
-    </Link>
-  ) : (
-    <Link
-      to={`/Forum/${forum}/thread/${thread.id}/last`}
-      style={{ textDecoration: "none", color: FORUM_LINK_COLOR, fontSize: 14 }}
-    >
-      {formatFireTime(thread.timePosted)}
-    </Link>
-  );
-
-  if (!isOverSm) {
+  if (isOverSm) {
     return (
-      <Box p={12} bg="#2b2a2b" style={{ borderRadius: 10 }}>
-        {title}
-        <Flex justify="space-between" align="center" mt={8} gap={8} wrap="wrap">
-          <Stack gap={2}>
-            <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
-              Latest post
-            </Text>
-            {lastPost}
-          </Stack>
-          <Stack gap={2} align="flex-end">
-            <Text fz={14} c="dimmed">
-              {posts} post{posts === 1 ? "" : "s"}
-            </Text>
-            <ParticipantAvatars thread={thread} />
-          </Stack>
+      <Box className="dc-row-hover" style={{ borderTop: "1px solid #2a2637" }}>
+        <Flex align="center" gap={20} style={{ padding: "16px 26px" }}>
+          <Link
+            to={threadUrl}
+            style={{ textDecoration: "none", flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 16 }}
+          >
+            {avatar}
+            <Box style={{ flex: 1, minWidth: 0 }}>{titleBlock}</Box>
+            {repliesInline}
+          </Link>
+          <Box style={{ flex: "none", width: 140, textAlign: "right" }}>{lastPostCol}</Box>
         </Flex>
       </Box>
     );
   }
 
   return (
-    <Flex px={14} py={10} bg="#2b2a2b" style={{ borderRadius: 8 }} align="center" gap={12}>
-      <Box style={{ flex: 3, minWidth: 0 }}>{title}</Box>
-      <Box style={{ flex: 2, minWidth: 0 }}>{lastPost}</Box>
-      <Stack gap={2} align="flex-end" style={{ flex: 1 }}>
-        <ParticipantAvatars thread={thread} />
-        <Text fz={14} c="dimmed">
-          {posts} post{posts === 1 ? "" : "s"}
-        </Text>
-      </Stack>
-    </Flex>
+    <Box className="dc-row-hover" style={{ borderTop: "1px solid #2a2637" }}>
+      <Box style={{ padding: "14px 16px" }}>
+        <Link
+          to={threadUrl}
+          style={{ textDecoration: "none", display: "flex", gap: 12, alignItems: "flex-start" }}
+        >
+          {avatar}
+          <Box style={{ flex: 1, minWidth: 0 }}>{titleBlock}</Box>
+        </Link>
+        <Flex justify="space-between" align="center" mt={10} gap={10}>
+          <Box>
+            <Text fz={16} fw={800} c="#FFD074" component="span">
+              {replies}
+            </Text>{" "}
+            <Text fz={12} fw={700} c="#b6b1bc" component="span" style={{ letterSpacing: "0.14em" }}>
+              REPLIES
+            </Text>
+          </Box>
+          <Box style={{ textAlign: "right" }}>{lastPostCol}</Box>
+        </Flex>
+      </Box>
+    </Box>
   );
 }
 
@@ -175,6 +233,7 @@ export default function ForumIndex() {
   const [search, setSearch] = React.useState("");
   const [searchAll, setSearchAll] = React.useState(false);
   const [page, setPage] = React.useState(1);
+  const [hoverTab, setHoverTab] = React.useState<string | null>(null);
 
   // Main-Forum is publicly viewable; every other board is members-only
   // (mirrored in firestore.rules, which is the real enforcement).
@@ -235,6 +294,8 @@ export default function ForumIndex() {
     );
   }
 
+  const heroButtonStyle: React.CSSProperties = isOverSm ? {} : { width: "100%" };
+
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
       {/* Forums are never crawlable: robots.txt disallow, an X-Robots-Tag
@@ -249,184 +310,247 @@ export default function ForumIndex() {
         }
       />
       <PageHero
-        eyebrow="The Roleplay Boards"
-        title="Snagem Forums"
-        subtitle="Where the guild's stories happen. Pick a board, join a thread, or start your own."
+        eyebrow="The Roleplay Engine"
+        title="The Forums"
+        subtitle="Where the stories happen. Every post rolls encounters, resolves battles, and grows your team."
         aside={
-          <Stack gap={6} w={{ base: "100%", sm: 220 }}>
-            <TextInput
-              placeholder="Search the Forums..."
-              aria-label="Search the Forums"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.currentTarget.value);
-                setPage(1);
-              }}
-              size="xs"
-              w="100%"
-              radius="xl"
-              styles={{ input: { background: "rgba(0,0,0,0.25)" } }}
-            />
-            {!!search && !!user && (
-              <Switch
-                size="xs"
-                label="Search all categories"
-                checked={searchAll}
-                onChange={(e) => setSearchAll(e.currentTarget.checked)}
-                styles={{ label: { color: "rgba(255,255,255,0.8)" } }}
-              />
-            )}
-          </Stack>
+          <Flex
+            direction="column"
+            align={isOverSm ? "flex-end" : "stretch"}
+            gap={12}
+            w={isOverSm ? "auto" : "100%"}
+          >
+            <button
+              type="button"
+              className="dc-cta dc-cta-outline"
+              style={heroButtonStyle}
+              onClick={() => navigate("/Dashboard/Bookmarks")}
+            >
+              ☆ View Your Bookmarks
+            </button>
+            <button
+              type="button"
+              className="dc-cta dc-cta-red"
+              style={heroButtonStyle}
+              onClick={() => navigate(`/Forum/${activeLink}/new`)}
+            >
+              + New Roleplay
+            </button>
+          </Flex>
         }
-        mb={16}
+        mb={24}
       />
 
-      <Group gap={10} mt={14} mb={16}>
-        <GradientButtonSecondary radius="xl" size="xs" onClick={() => navigate("/Dashboard/Bookmarks")}>
-          View Your Bookmarks
-        </GradientButtonSecondary>
-        {/* Forum rules point at the Community Rules tab of the public policies page. */}
-        <GradientButtonSecondary
-          radius="xl"
-          size="xs"
-          onClick={() => navigate("/Policies?tab=conduct")}
+      <Stack gap={20}>
+        {/* Category tabs: angled segmented pills, scroll horizontally on mobile. */}
+        <Box
+          component="nav"
+          aria-label="Forum categories"
+          style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2 }}
         >
-          View Forum Rules
-        </GradientButtonSecondary>
-        <GradientButtonSecondary
-          radius="xl"
-          size="xs"
-          onClick={() => navigate(`/Forum/${activeLink}/new`)}
-        >
-          Start a New Roleplay
-        </GradientButtonSecondary>
-      </Group>
+          {tabs.map((tab) => {
+            const active = tab.link === activeLink;
+            return (
+              <UnstyledButton
+                key={tab.link}
+                onClick={() => navigate(`/Forum/${tab.link}`)}
+                onMouseEnter={() => setHoverTab(tab.link)}
+                onMouseLeave={() => setHoverTab(null)}
+                aria-current={active ? "page" : undefined}
+                fz={{ base: 12, sm: 14 }}
+                style={{
+                  flex: "none",
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  padding: "13px 22px",
+                  cursor: "pointer",
+                  color: "#fff",
+                  whiteSpace: "nowrap",
+                  clipPath: PILL_CLIP,
+                  background: active ? "linear-gradient(90deg,#912691,#4D14C4)" : "#17151c",
+                  border: active
+                    ? "1px solid transparent"
+                    : `1px solid ${hoverTab === tab.link ? "#E54156" : "#2a2637"}`,
+                }}
+              >
+                {tab.label}
+              </UnstyledButton>
+            );
+          })}
+        </Box>
 
-      {/* Category tabs */}
-      <Tabs
-        value={activeLink}
-        onChange={(link) => link && navigate(`/Forum/${link}`)}
-        variant="pills"
-        color={FORUM_ACCENT}
-        keepMounted={false}
-      >
-        <Tabs.List style={{ background: "#2b2a2b", borderRadius: 8, padding: 4, rowGap: 4 }}>
-          {tabs.map((tab) => (
-            <Tabs.Tab key={tab.link} value={tab.link} fz={isOverSm ? 14 : 12} c="white">
-              {tab.label}
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-      </Tabs>
-
-      {/* Header bar */}
-      <Flex
-        px={14}
-        py={6}
-        mt={10}
-        style={{ background: FORUM_ACCENT, borderRadius: 6 }}
-        justify="space-between"
-      >
-        <Text fz={14} fw={700} c="white" tt="uppercase" style={{ flex: 3 }}>
-          Topics
-        </Text>
-        {isOverSm && (
-          <Text fz={14} fw={700} c="white" tt="uppercase" style={{ flex: 2 }}>
-            Latest post
-          </Text>
-        )}
-        <Text
-          fz={14}
-          fw={700}
-          c="white"
-          tt="uppercase"
-          ta="right"
-          style={{ flex: 1 }}
-        >
-          Replies
-        </Text>
-      </Flex>
-
-      {/* Thread rows. Members-only boards ask visitors to log in. */}
-      {publicOnly ? (
-        <Stack gap={10} align="center" py={40}>
-          <Text fz={16} c="white" ta="center">
-            This board is for guild members. Log in to read its stories, or
-            browse the public Main Adventures board.
-          </Text>
-          <Group gap={10}>
-            <GradientButtonSecondary radius="xl" size="xs" onClick={() => navigate("/Login")}>
-              Log In
-            </GradientButtonSecondary>
-            <GradientButtonSecondary
-              radius="xl"
+        {/* Search stays available (moved out of the hero aside per the mockup). */}
+        <Flex justify="flex-end" align="center" gap={10} wrap="wrap">
+          <TextInput
+            placeholder="Search the Forums..."
+            aria-label="Search the Forums"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.currentTarget.value);
+              setPage(1);
+            }}
+            size="xs"
+            w={isOverSm ? 260 : "100%"}
+            styles={{ input: { background: "#17151c", borderColor: "#2a2637" } }}
+          />
+          {!!search && !!user && (
+            <Switch
               size="xs"
-              onClick={() => navigate("/Forum/Main-Forum")}
+              label="Search all categories"
+              checked={searchAll}
+              onChange={(e) => setSearchAll(e.currentTarget.checked)}
+              styles={{ label: { color: "#b6b1bc" } }}
+            />
+          )}
+        </Flex>
+
+        {/* Thread panel: gradient category header + flat angular row list. */}
+        <Box style={{ background: "#17151c", border: "1px solid #2a2637" }}>
+          <Flex
+            align="center"
+            justify="space-between"
+            gap={12}
+            wrap="wrap"
+            style={{
+              background: "linear-gradient(90deg,#762B77 7%,#17F1F0 66%)",
+              padding: "16px 26px",
+            }}
+          >
+            <Text
+              component="h2"
+              c="white"
+              fw={700}
+              tt="uppercase"
+              fz={17}
+              style={{ margin: 0, fontFamily: "var(--font-display)", letterSpacing: "0.08em" }}
             >
-              Go to Main Adventures
-            </GradientButtonSecondary>
-          </Group>
-        </Stack>
-      ) : isPending ? (
-        <SectionLoader />
-      ) : crossSearch ? (
-        <Stack gap={8} mt={8}>
-          {allThreads.isPending ? (
-            <SectionLoader />
-          ) : (
-            <>
-              {crossVisible.slice(0, 60).map((row) => (
-                <Box key={`${row.forumLink}-${row.thread.id}`}>
-                  <Text fz={12} c="dimmed" tt="uppercase" fw={700} mb={2}>
+              {category?.label ?? activeLink}
+            </Text>
+            {category?.description && (
+              <Text fz={14} c="rgba(255,255,255,0.92)" style={{ maxWidth: 420 }}>
+                {category.description}
+              </Text>
+            )}
+          </Flex>
+
+          {/* Members-only boards ask visitors to log in. */}
+          {publicOnly ? (
+            <Stack gap={12} align="center" py={44} px={20}>
+              <Text fz={16} c="white" ta="center" maw={460}>
+                This board is for guild members. Log in to read its stories, or browse the public
+                Main Adventures board.
+              </Text>
+              <Group gap={10}>
+                <GradientButtonSecondary radius="xl" size="xs" onClick={() => navigate("/Login")}>
+                  Log In
+                </GradientButtonSecondary>
+                <GradientButtonSecondary
+                  radius="xl"
+                  size="xs"
+                  onClick={() => navigate("/Forum/Main-Forum")}
+                >
+                  Go to Main Adventures
+                </GradientButtonSecondary>
+              </Group>
+            </Stack>
+          ) : isPending ? (
+            <Box py={30}>
+              <SectionLoader />
+            </Box>
+          ) : crossSearch ? (
+            allThreads.isPending ? (
+              <Box py={30}>
+                <SectionLoader />
+              </Box>
+            ) : crossVisible.length ? (
+              crossVisible.slice(0, 60).map((row) => (
+                <Box key={`${row.forumLink}-${row.thread.id}`} style={{ borderTop: "1px solid #2a2637" }}>
+                  <Text
+                    fz={12}
+                    c="#b6b1bc"
+                    tt="uppercase"
+                    fw={700}
+                    px={26}
+                    pt={10}
+                    style={{ letterSpacing: "0.1em" }}
+                  >
                     {row.forumLabel}
                   </Text>
                   <ThreadRow thread={row.thread} forum={row.forumLink} />
                 </Box>
-              ))}
-              {!crossVisible.length && (
-                <Text fz={16} c="dimmed" ta="center" py={30}>
-                  Nothing matches across the boards.
-                </Text>
-              )}
-            </>
-          )}
-        </Stack>
-      ) : (
-        <Stack gap={8} mt={8}>
-          {pageThreads.map((thread) => (
-            <ThreadRow key={thread.id} thread={thread} forum={activeLink} />
-          ))}
-          {!pageThreads.length && (
-            <Text fz={16} c="dimmed" ta="center" py={30}>
+              ))
+            ) : (
+              <Text fz={16} c="#b6b1bc" ta="center" py={40}>
+                Nothing matches across the boards.
+              </Text>
+            )
+          ) : pageThreads.length ? (
+            pageThreads.map((thread) => (
+              <ThreadRow key={thread.id} thread={thread} forum={activeLink} />
+            ))
+          ) : (
+            <Text fz={16} c="#b6b1bc" ta="center" py={40}>
               {archive ? "No archived threads here." : "No threads here yet."}
             </Text>
           )}
-        </Stack>
-      )}
+        </Box>
 
-      <Flex justify="space-between" align="center" mt={16} gap={10} wrap="wrap">
-        <Switch
-          label={archive ? "Viewing Archived Threads" : "View Archived Threads"}
-          color="green.0"
-          checked={archive}
-          onChange={(e) => {
-            setArchive(e.currentTarget.checked);
-            setPage(1);
-          }}
-          styles={{ label: { color: "white", fontSize: 14 } }}
-        />
-        {totalPages > 1 && (
-          <Pagination
-            total={totalPages}
-            value={safePage}
-            onChange={setPage}
-            color={FORUM_ACCENT}
-            size="sm"
-            withEdges
+        {/* Archive toggle + pagination. */}
+        <Flex justify="space-between" align="center" gap={10} wrap="wrap">
+          <Switch
+            label={archive ? "Viewing Archived Threads" : "View Archived Threads"}
+            color="green.0"
+            checked={archive}
+            onChange={(e) => {
+              setArchive(e.currentTarget.checked);
+              setPage(1);
+            }}
+            styles={{ label: { color: "white", fontSize: 14 } }}
           />
-        )}
-      </Flex>
-      <CategoryDisclaimer link={activeLink} />
+          {totalPages > 1 && (
+            <Pagination
+              total={totalPages}
+              value={safePage}
+              onChange={setPage}
+              color={FORUM_ACCENT}
+              size="sm"
+              radius={0}
+              withEdges
+              styles={{ control: { fontFamily: "var(--font-display)", fontWeight: 700 } }}
+            />
+          )}
+        </Flex>
+
+        {/* Rules callout: a purple-flagged strip that points at the policies page. */}
+        <Flex
+          align="center"
+          justify="space-between"
+          gap={20}
+          wrap="wrap"
+          style={{
+            background: "#141318",
+            border: "1px solid #2a2637",
+            borderLeft: "3px solid #772976",
+            padding: "18px 24px",
+          }}
+        >
+          <Text fz={14} c="#b6b1bc" style={{ flex: "1 1 260px" }}>
+            New to the forums? The rules cover who can post where, thread etiquette, and grading.
+          </Text>
+          <button
+            type="button"
+            className="dc-cta dc-cta-outline"
+            style={heroButtonStyle}
+            onClick={() => navigate("/Policies?tab=conduct")}
+          >
+            View Forum Rules
+          </button>
+        </Flex>
+
+        <CategoryDisclaimer link={activeLink} />
+      </Stack>
     </Container>
   );
 }
@@ -478,7 +602,7 @@ function CategoryDisclaimer(props: { link: string }) {
   const note = notes[props.link];
   if (!note) return null;
   return (
-    <Group justify="flex-end" mt={16}>
+    <Group justify="flex-end">
       <Text fz={14} c="dimmed" ta="right" maw={420}>
         {note}{" "}
         <Anchor component={Link} to="/Library?tab=forums" c="blue.3" fz={14}>

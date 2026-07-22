@@ -1,12 +1,110 @@
-import { Alert, Badge, Button, Group, Paper, Select, Stack, Text } from "@mantine/core";
-import { IconDownload, IconSparkles, IconUserPlus } from "@tabler/icons-react";
+import { Box, Group, Loader, Select, SimpleGrid, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { v4 as uuid } from "uuid";
 import { db } from "../../../context/firebase";
 import { useAuth } from "../../../context/AuthContext";
+import { SnagIcon } from "../../../icons/SnagIcon";
 import { ImportEntries, ImportItem, ImportPokemon } from "../../../queries/imports";
 import { downloadCsv } from "./csv";
+
+const FONT_DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
+const CLIP_CTA = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
+
+/** Dark, square-cornered field look shared with the Onboarding page. */
+const FIELD_SX = {
+  "& label": { color: "#fff", fontWeight: 700, fontSize: 14, marginBottom: 6 },
+  "& input": { background: "#0e0d11", border: "1px solid #2a2637", borderRadius: 0, color: "#fff" },
+  "& input:focus, & input:focus-within": { borderColor: "#c79bd6" },
+  "& input::placeholder": { color: "#8f8a99" },
+} as const;
+
+/** Small accented CTA used inside the Gaia option tiles. */
+function TileButton(props: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  loading?: boolean;
+  kind: "gold" | "cyan" | "purple";
+}) {
+  const palettes = {
+    gold: { background: "#FFD074", color: "#1A1B1E", border: "none", "&:hover": { background: "#fff" } },
+    cyan: {
+      background: "transparent",
+      color: "#12B7B6",
+      border: "1px solid #12B7B6",
+      "&:hover": { background: "#12B7B6", color: "#fff" },
+    },
+    purple: {
+      background: "transparent",
+      color: "#c79bd6",
+      border: "1px solid #c79bd6",
+      "&:hover": { background: "#c79bd6", color: "#1A1B1E" },
+    },
+  } as const;
+  return (
+    <UnstyledButton
+      onClick={props.onClick}
+      disabled={props.loading}
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        fontFamily: FONT_DISPLAY,
+        fontWeight: 700,
+        fontSize: 13,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        padding: "11px 16px",
+        clipPath: CLIP_CTA,
+        transition: "background .2s ease, color .2s ease, border-color .2s ease",
+        opacity: props.loading ? 0.6 : 1,
+        pointerEvents: props.loading ? "none" : "auto",
+        ...palettes[props.kind],
+      }}
+    >
+      {props.loading ? <Loader size={15} color="#c79bd6" /> : props.children}
+    </UnstyledButton>
+  );
+}
+
+/** One "how do you want to continue" card in the Gaia panel. */
+function OptionTile(props: {
+  step: string;
+  accent: string;
+  borderAccent?: string;
+  title: string;
+  desc: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Box
+      className="dc-card-tile"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        padding: "16px 18px",
+        ...(props.borderAccent ? { borderColor: props.borderAccent } : {}),
+      }}
+    >
+      <Text
+        component="span"
+        fz={14}
+        fw={700}
+        style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.12em", color: props.accent }}
+      >
+        {props.step} · {props.title}
+      </Text>
+      <Text component="span" fz={14} c="#b6b1bc" style={{ lineHeight: 1.55, flex: 1 }}>
+        {props.desc}
+      </Text>
+      <Group gap={8} wrap="wrap">
+        {props.children}
+      </Group>
+    </Box>
+  );
+}
 
 /**
  * One member's packet from the Gaia Member Profiles export
@@ -254,17 +352,24 @@ export default function GaiaPrefill(props: {
   };
 
   return (
-    <Paper p={16} radius={12} bg="#2a2430" style={{ border: "1px solid #5a3fb0" }}>
-      <Stack gap={10}>
-        <Group gap={8}>
-          <IconSparkles size={18} color="#c9b6ff" aria-hidden />
-          <Text fw={700} c="white" fz={17}>
-            We saved your Gaia profile
+    <Box p={{ base: 18, sm: 28 }} style={{ background: "#17151c", border: "1px solid #2a2637" }}>
+      <Stack gap={16}>
+        <Group gap={12} align="center" wrap="nowrap">
+          <SnagIcon name="gift" size={24} color="#fff" cut="#17151c" />
+          <Text
+            component="h2"
+            c="white"
+            fw={700}
+            fz={16}
+            tt="uppercase"
+            style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.06em", margin: 0 }}
+          >
+            Prefill from Gaia archive
           </Text>
         </Group>
-        <Text fz={14} c="dimmed">
+        <Text fz={14.5} c="#b6b1bc" lh={1.6}>
           We exported every profile from the Gaia guild board. Pick your old account and we can fill
-          in this import for you: characters, pokemon and items. You can still edit everything
+          in this import for you: characters, Pokemon, and items. You can still edit everything
           before submitting.
         </Text>
         <Select
@@ -275,67 +380,71 @@ export default function GaiaPrefill(props: {
           value={slug}
           onChange={setSlug}
           maw={320}
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+          radius={0}
+          sx={FIELD_SX}
         />
         {packet && (
           <>
-            <Group gap={6}>
-              <Badge color="grape" variant="light">
-                {packet.characters.length} characters
-              </Badge>
-              <Badge color="teal" variant="light">
-                {packet.pokemon.length} pokemon
-              </Badge>
-              <Badge color="yellow" variant="light">
-                {packet.itemsMatched.length} items matched
-              </Badge>
-              <Badge color="pink" variant="light">
-                {packet.snagCoins} coins, {packet.snagEmblems} emblems
-              </Badge>
-            </Group>
-            <Group gap={8} wrap="wrap">
-              <Button
-                size="xs"
-                color="grape"
-                leftSection={<IconSparkles size={14} />}
-                onClick={() => {
-                  const { entries, noteAppend } = entriesFromExport(packet);
-                  props.onPrefill(entries, noteAppend);
-                  setMessage(
-                    "Draft prefilled. Review each section below, adjust anything, then submit."
-                  );
-                }}
+            <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+              Good news, the export matching{" "}
+              <Text component="strong" c="white" fw={700}>
+                {packet.gaiaName}
+              </Text>{" "}
+              is ready: {packet.characters.length} characters, {packet.pokemon.length} Pokemon,{" "}
+              {packet.itemsMatched.length} items matched, {packet.snagCoins} coins and{" "}
+              {packet.snagEmblems} emblems. Pick how you want to continue:
+            </Text>
+            <SimpleGrid cols={{ base: 1, sm: 3 }} spacing={12}>
+              <OptionTile
+                step="1"
+                accent="#FFD074"
+                borderAccent="rgba(255,208,116,.5)"
+                title="Prefill the draft"
+                desc="Fill your currency, Pokemon, and items from the export, then review and finalize below."
               >
-                Prefill my import draft
-              </Button>
-              <Button
-                size="xs"
-                variant="light"
-                leftSection={<IconUserPlus size={14} />}
-                loading={createCharacters.isPending}
-                onClick={() => createCharacters.mutateAsync()}
+                <TileButton
+                  kind="gold"
+                  onClick={() => {
+                    const { entries, noteAppend } = entriesFromExport(packet);
+                    props.onPrefill(entries, noteAppend);
+                    setMessage(
+                      "Draft prefilled. Review each section below, adjust anything, then submit."
+                    );
+                  }}
+                >
+                  Prefill my draft
+                </TileButton>
+              </OptionTile>
+              <OptionTile
+                step="2"
+                accent="#12B7B6"
+                title="Use the CSV template"
+                desc="Prefer a spreadsheet? Download your data filled in, edit it, and upload it below."
               >
-                Create my characters
-              </Button>
-              <Button
-                size="xs"
-                variant="light"
-                leftSection={<IconDownload size={14} />}
-                onClick={downloadPokemonCsv}
+                <TileButton kind="cyan" onClick={downloadPokemonCsv}>
+                  Pokemon CSV
+                </TileButton>
+                <TileButton kind="cyan" onClick={downloadItemsCsv}>
+                  Items CSV
+                </TileButton>
+              </OptionTile>
+              <OptionTile
+                step="3"
+                accent="#c79bd6"
+                title="Create your characters"
+                desc="Add your Gaia characters, with their history, straight to your account."
               >
-                Pokemon CSV (filled)
-              </Button>
-              <Button
-                size="xs"
-                variant="light"
-                leftSection={<IconDownload size={14} />}
-                onClick={downloadItemsCsv}
-              >
-                Items CSV (filled)
-              </Button>
-            </Group>
+                <TileButton
+                  kind="purple"
+                  loading={createCharacters.isPending}
+                  onClick={() => createCharacters.mutateAsync()}
+                >
+                  Create my characters
+                </TileButton>
+              </OptionTile>
+            </SimpleGrid>
             {packet.itemsUnmatched.length > 0 && (
-              <Text fz={13} c="dimmed">
+              <Text fz={13} c="#8f8a99" lh={1.55}>
                 {packet.itemsUnmatched.length} Gaia item entries have no catalog match; prefilling
                 adds them to the reviewer note so staff can decide.
               </Text>
@@ -343,11 +452,27 @@ export default function GaiaPrefill(props: {
           </>
         )}
         {message && (
-          <Alert color="grape" variant="light" role="status" aria-live="polite">
-            {message}
-          </Alert>
+          <Group
+            role="status"
+            aria-live="polite"
+            wrap="nowrap"
+            align="flex-start"
+            gap={12}
+            style={{
+              background: "rgba(199,155,214,.1)",
+              border: "1px solid rgba(199,155,214,.5)",
+              padding: "12px 16px",
+            }}
+          >
+            <Box style={{ flexShrink: 0, marginTop: 1 }}>
+              <SnagIcon name="sparkle" size={18} color="#c79bd6" cut="#17151c" />
+            </Box>
+            <Text fz={14} style={{ color: "#c79bd6", lineHeight: 1.5 }}>
+              {message}
+            </Text>
+          </Group>
         )}
       </Stack>
-    </Paper>
+    </Box>
   );
 }

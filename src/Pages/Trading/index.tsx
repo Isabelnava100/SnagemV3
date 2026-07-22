@@ -3,7 +3,6 @@ import {
   Badge,
   Box,
   Button,
-  Card,
   Checkbox,
   Container,
   Group,
@@ -16,6 +15,7 @@ import {
   Text,
   Textarea,
   Tooltip,
+  UnstyledButton,
 } from "@mantine/core";
 import { IconArrowsExchange, IconChartBar } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,6 +26,7 @@ import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
+import useMediaQuery from "../../hooks/useMediaQuery";
 import { clickable } from "../../lib/a11y";
 import { ALL_TYPES, typesForDex } from "../../lib/typeChart";
 import { levelProgress } from "../../lib/leveling";
@@ -63,6 +64,30 @@ import { OwnedPokemon } from "../../components/types/typesUsed";
  * those lists and this UI follows automatically.
  */
 
+/* ------------------------------ Design tokens ------------------------------ */
+
+const FONT_D = "var(--font-display, 'Quantico', sans-serif)";
+const GRAD_PR = "linear-gradient(90deg, #7E2C75, #E54156)";
+const GRAD_CYAN = "linear-gradient(90deg, #14e0de, #12B7B6)";
+
+// Angled clip-paths from the mockup (bottom-right cut panels, chevron pills).
+const CLIP_PANEL_16 = "polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)";
+const CLIP_PANEL_12 = "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)";
+const CLIP_SELF = "polygon(0 0, 100% 0, 100% 100%, 22px 100%, 0 calc(100% - 22px))";
+const CLIP_TOGGLE = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
+const CLIP_CHIP = "polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%)";
+const CLIP_CTA = "polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%)";
+const CLIP_CTA_S = "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)";
+const CLIP_CTA_XS = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
+const CLIP_PULL = "polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%)";
+
+// Shared dark input skin for the Mantine form controls (matches #141318 wells).
+const INPUT_STYLES = {
+  input: { background: "#141318", borderColor: "#3a3550", color: "#fff" },
+  label: { color: "#fff", fontWeight: 700, fontSize: 13, marginBottom: 4 },
+  description: { color: "#6f6a78" },
+} as const;
+
 const GENDER_COLOR = (g?: string) => (g === "F" ? "pink.3" : "blue.3");
 
 const EMPTY_WANTS: TradeWants = {
@@ -75,6 +100,78 @@ const EMPTY_WANTS: TradeWants = {
   gender: "",
   note: "",
 };
+
+/** A short colored rule + Quantico uppercase label used atop each panel. */
+function PanelKicker(props: { color: string; children: React.ReactNode }) {
+  return (
+    <Text
+      fz={12}
+      fw={700}
+      c={props.color}
+      tt="uppercase"
+      style={{ fontFamily: FONT_D, letterSpacing: "0.26em" }}
+    >
+      {props.children}
+    </Text>
+  );
+}
+
+/** Panel heading (Quantico, uppercase-ish, white). */
+function PanelTitle(props: { children: React.ReactNode }) {
+  return (
+    <Text
+      component="h2"
+      fz={20}
+      fw={700}
+      c="white"
+      m={0}
+      style={{ fontFamily: FONT_D, letterSpacing: "0.02em" }}
+    >
+      {props.children}
+    </Text>
+  );
+}
+
+/** Angled segmented button used for the two page tabs and the board filters. */
+function SegButton(props: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  leftSection?: React.ReactNode;
+  small?: boolean;
+  first?: boolean;
+  fullWidth?: boolean;
+  clip?: string;
+}) {
+  return (
+    <UnstyledButton
+      onClick={props.onClick}
+      aria-pressed={props.active}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: props.fullWidth ? "flex-start" : "center",
+        gap: 8,
+        width: props.fullWidth ? "100%" : undefined,
+        fontFamily: FONT_D,
+        fontSize: props.small ? 12 : 13,
+        fontWeight: 700,
+        letterSpacing: props.small ? "0.1em" : "0.08em",
+        textTransform: "uppercase",
+        padding: props.small ? "9px 20px" : "12px 24px",
+        marginLeft: props.first || props.fullWidth ? 0 : -2,
+        cursor: "pointer",
+        border: `1px solid ${props.active ? "#7E2C75" : "#3a3550"}`,
+        background: props.active ? GRAD_PR : "#17151c",
+        color: props.active ? "#fff" : "#b6b1bc",
+        clipPath: props.clip ?? CLIP_TOGGLE,
+      }}
+    >
+      {props.leftSection}
+      {props.children}
+    </UnstyledButton>
+  );
+}
 
 /** Human chips for a wants object's must-have criteria (shared by the summary
  * popover and the create form). */
@@ -98,7 +195,7 @@ function timeAgo(seconds?: number): string {
 
 /** Compact info line for a snapshot; renders whatever fields are present so
  * future snapshot additions (from the server) show up without UI changes. */
-function SnapshotChips(props: { p: TradeSnapshot }) {
+function SnapshotChips(props: { p: TradeSnapshot; ta?: "left" | "center" }) {
   const { p } = props;
   const chips: string[] = [];
   if (p.level) chips.push(`Lv ${p.level}`);
@@ -107,7 +204,7 @@ function SnapshotChips(props: { p: TradeSnapshot }) {
   if (p.nature) chips.push(p.nature);
   if (p.eggGroups?.length) chips.push(`Egg: ${p.eggGroups.join("/")}`);
   return (
-    <Text fz={13} c="dimmed" ta="center">
+    <Text fz={12} c="#b6b1bc" ta={props.ta ?? "center"}>
       {chips.join(" · ")}
     </Text>
   );
@@ -141,8 +238,9 @@ function wantsMismatch(p: OwnedPokemon | undefined, w: TradeWants): string[] {
 
 /** Short wants summary: at most two chips + a popover with the full list, so
  * long wish lists never break the card layout. */
-function WantsSummary(props: { wants: TradeWants }) {
+function WantsSummary(props: { wants: TradeWants; align?: "center" | "left" }) {
   const w = props.wants;
+  const align = props.align ?? "center";
   const chips: string[] = [];
   w.species.forEach((slug) => {
     const s = pokemonData.find((p) => p.slug === slug);
@@ -154,9 +252,9 @@ function WantsSummary(props: { wants: TradeWants }) {
   const shown = chips.slice(0, 2);
   const extra = chips.length - shown.length;
   return (
-    <Stack gap={4} align="center">
+    <Group gap={6} justify={align === "left" ? "flex-start" : "center"} wrap="wrap">
       {shown.map((c) => (
-        <Badge key={c} variant="light" color="violet" size="sm" radius="xl">
+        <Badge key={c} variant="light" color="grape" size="sm" radius={0}>
           {c}
         </Badge>
       ))}
@@ -167,7 +265,7 @@ function WantsSummary(props: { wants: TradeWants }) {
               variant="outline"
               color="gray"
               size="sm"
-              radius="xl"
+              radius={0}
               style={{ cursor: "pointer" }}
               tabIndex={0}
               aria-label="View the full wish list"
@@ -175,7 +273,7 @@ function WantsSummary(props: { wants: TradeWants }) {
               +{extra} more
             </Badge>
           </Popover.Target>
-          <Popover.Dropdown bg="#1c1a24">
+          <Popover.Dropdown bg="#17151c" style={{ borderColor: "#2a2637" }}>
             <Text fz={13} fw={700} c="white" mb={6}>
               Full wish list
             </Text>
@@ -195,11 +293,11 @@ function WantsSummary(props: { wants: TradeWants }) {
         </Popover>
       )}
       {w.note && extra <= 0 && (
-        <Text fz={12} c="dimmed" ta="center" lineClamp={1}>
+        <Text fz={12} c="dimmed" ta={align} lineClamp={1} w="100%">
           {w.note}
         </Text>
       )}
-    </Stack>
+    </Group>
   );
 }
 
@@ -234,7 +332,7 @@ function ownedInfoLine(p: OwnedPokemon): string {
 }
 
 /**
- * Full confirmation card for the pokemon about to be traded away or offered,
+ * Full confirmation well for the pokemon about to be traded away or offered,
  * so members with several of the same species can tell exactly which one they
  * picked before committing.
  */
@@ -242,42 +340,56 @@ function OwnedDetailCard(props: { pokemon: OwnedPokemon; heading: string }) {
   const p = props.pokemon;
   const idx = Number(p.pokedex) || 0;
   return (
-    <Card withBorder radius={12} p="md" mt={10} style={{ background: "#1b2420", borderColor: "#63E6BE" }}>
-      <Group gap={12} wrap="nowrap" align="flex-start">
-        <Avatar src={getPokemonImageURL(p.image_slug, p.shiny)} size={64} radius="xl" />
-        <Box style={{ minWidth: 0 }}>
-          <Text fz={13} fw={700} c="teal.4" tt="uppercase" style={{ letterSpacing: 1 }}>
-            {props.heading}
+    <Box
+      mt={12}
+      p={16}
+      style={{
+        display: "flex",
+        gap: 16,
+        alignItems: "center",
+        background: "rgba(62,207,142,.05)",
+        border: "1px solid #1f7a4d",
+      }}
+    >
+      <Avatar
+        src={getPokemonImageURL(p.image_slug, p.shiny)}
+        size={56}
+        radius="xl"
+        style={{ flex: "none" }}
+      />
+      <Box style={{ minWidth: 0 }}>
+        <Text fz={11} fw={700} c="#3ecf8e" tt="uppercase" style={{ fontFamily: FONT_D, letterSpacing: "0.2em" }}>
+          {props.heading}
+        </Text>
+        <Text fz={16} fw={700} c="white">
+          {p.name || p.species}{" "}
+          <Text span c={GENDER_COLOR(p.gender)} fw={700}>
+            {p.gender ?? ""}
           </Text>
-          <Text fz={18} fw={800} c="white">
-            {p.name || p.species}{" "}
-            <Text span c={GENDER_COLOR(p.gender)} fw={700}>
-              {p.gender ?? ""}
+          {p.name && p.name !== p.species && (
+            <Text span fz={14} c="dimmed">
+              {" "}
+              ({p.species})
             </Text>
-            {p.name && p.name !== p.species && (
-              <Text span fz={14} c="dimmed">
-                {" "}
-                ({p.species})
-              </Text>
-            )}
-            {p.shiny && (
-              <Badge ml={6} size="xs" color="gold.1" variant="filled" c="#1a1626" radius="xl">
-                Shiny
-              </Badge>
-            )}
-          </Text>
-          <Text fz={14} c="gray.3">
-            {ownedInfoLine(p)}
-          </Text>
-          <Text fz={13} c="dimmed">
-            Egg group: {eggGroupsForDex(idx).join("/") || "Unknown"}
-          </Text>
-        </Box>
-      </Group>
-    </Card>
+          )}
+          {p.shiny && (
+            <Badge ml={6} size="xs" color="gold.1" variant="filled" c="#1a1626" radius={0}>
+              Shiny
+            </Badge>
+          )}
+        </Text>
+        <Text fz={13} c="#b6b1bc">
+          {ownedInfoLine(p)}
+        </Text>
+        <Text fz={13} c="dimmed">
+          Egg group: {eggGroupsForDex(idx).join("/") || "Unknown"}
+        </Text>
+      </Box>
+    </Box>
   );
 }
 
+/** One selectable pokemon tile in the green "You give" picker. */
 function OwnPokemonCard(props: {
   pokemon: OwnedPokemon;
   selected: boolean;
@@ -287,13 +399,16 @@ function OwnPokemonCard(props: {
   const { pokemon: p, selected, lock } = props;
   const navigate = useNavigate();
   const cardInner = (
-    <Card
-      withBorder
-      radius={12}
-      p={12}
+    <Box
+      className={lock ? undefined : "dc-card-tile"}
       style={{
-        background: selected ? "#20302a" : "#211f26",
-        borderColor: selected ? "#63E6BE" : lock ? "#2a2830" : "#3a3742",
+        background: selected ? "rgba(62,207,142,.08)" : "#141318",
+        border: `1px solid ${selected ? "#3ecf8e" : "#2a2637"}`,
+        padding: "14px 8px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
         cursor: "pointer",
         opacity: lock ? 0.4 : 1,
         filter: lock ? "grayscale(1)" : undefined,
@@ -307,16 +422,14 @@ function OwnPokemonCard(props: {
           : `Pick ${p.name || p.species}`
       }
     >
-      <Stack gap={4} align="center">
-        <Avatar src={getPokemonImageURL(p.image_slug, p.shiny)} size={52} radius="xl" />
-        <Text fz={14} fw={600} c="white" lineClamp={1}>
-          {p.name || p.species}{" "}
-          <Text span c={GENDER_COLOR(p.gender)} fw={700}>
-            {p.gender ?? ""}
-          </Text>
+      <Avatar src={getPokemonImageURL(p.image_slug, p.shiny)} size={44} radius="xl" />
+      <Text fz={12} fw={700} c="white" lineClamp={1} ta="center">
+        {p.name || p.species}{" "}
+        <Text span c={GENDER_COLOR(p.gender)} fw={700}>
+          {p.gender ?? ""}
         </Text>
-      </Stack>
-    </Card>
+      </Text>
+    </Box>
   );
   if (!lock) {
     // Hover shows the full stat line so twins of the same species are
@@ -365,185 +478,191 @@ function CreateListing(props: {
     () => pokemonData.map((p) => ({ value: p.slug, label: p.name })),
     []
   );
+  const picked = pokemonId ? props.owned.find((p) => p.id === pokemonId) : undefined;
 
   return (
-    <Stack gap={16}>
-      <Group align="stretch" gap={16} wrap="wrap">
-        <Card
-          withBorder
-          radius={16}
-          p="lg"
+    <Stack gap={18}>
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing={18}>
+        {/* YOU GIVE (green) */}
+        <Box
+          p={24}
           style={{
-            flex: "1 1 420px",
-            background: "#151a17",
-            borderColor: pokemonId ? "#63E6BE" : "#2a3530",
+            background: "#14251c",
+            border: "1px solid #1f7a4d",
+            clipPath: CLIP_PANEL_16,
+            minWidth: 0,
           }}
         >
-          <Text ff="monospace" fz={13} c="teal.4" tt="uppercase" style={{ letterSpacing: 2 }}>
-            You give
-          </Text>
-          <Text fz={20} fw={800} c="white" mb={12}>
-            Pick the Pokemon to trade away
-          </Text>
-          <SimpleGrid cols={{ base: 3, xs: 4, sm: 6 }} spacing={10}>
-            {props.owned.map((p) => (
-              <OwnPokemonCard
-                key={p.id}
-                pokemon={p}
-                selected={pokemonId === p.id}
-                lock={lockFor(p.id, props.teams, props.locks)}
-                onPick={() => setPokemonId(pokemonId === p.id ? null : p.id)}
-              />
-            ))}
-          </SimpleGrid>
-          {pokemonId && props.owned.find((p) => p.id === pokemonId) && (
-            <OwnedDetailCard
-              pokemon={props.owned.find((p) => p.id === pokemonId)!}
-              heading="You are trading away"
-            />
-          )}
-        </Card>
+          <Stack gap={12}>
+            <PanelKicker color="#3ecf8e">You give</PanelKicker>
+            <PanelTitle>Pick the Pokemon to trade away</PanelTitle>
+            <SimpleGrid cols={{ base: 3, xs: 4, sm: 6 }} spacing={10}>
+              {props.owned.map((p) => (
+                <OwnPokemonCard
+                  key={p.id}
+                  pokemon={p}
+                  selected={pokemonId === p.id}
+                  lock={lockFor(p.id, props.teams, props.locks)}
+                  onPick={() => setPokemonId(pokemonId === p.id ? null : p.id)}
+                />
+              ))}
+            </SimpleGrid>
+            {picked && <OwnedDetailCard pokemon={picked} heading="You are trading away" />}
+          </Stack>
+        </Box>
 
-        <Card
-          withBorder
-          radius={16}
-          p="lg"
-          style={{ flex: "1 1 380px", background: "#17151f", borderColor: "#332f45" }}
+        {/* YOU'RE LOOKING FOR (purple) */}
+        <Box
+          p={24}
+          style={{
+            background: "#1c1526",
+            border: "1px solid #7E2C75",
+            clipPath: CLIP_PANEL_16,
+            minWidth: 0,
+          }}
         >
-          <Text ff="monospace" fz={13} c="violet.3" tt="uppercase" style={{ letterSpacing: 2 }}>
-            You&apos;re looking for
-          </Text>
-          <Text fz={20} fw={800} c="white" mb={12}>
-            Describe what you&apos;d accept
-          </Text>
+          <Stack gap={12}>
+            <PanelKicker color="#c79bd6">You&apos;re looking for</PanelKicker>
+            <PanelTitle>Describe what you&apos;d accept</PanelTitle>
 
-          <Text fz={13} fw={700} c="dimmed" tt="uppercase" mb={6}>
-            Species / anything in a type
-          </Text>
-          <MultiSelect
-            label="Types you would accept"
-            placeholder={wants.types.length ? undefined : "Any type"}
-            searchable
-            data={ALL_TYPES.map((t) => ({ value: t, label: t }))}
-            value={wants.types}
-            onChange={(types) => setWants((w) => ({ ...w, types }))}
-            mb={8}
-            aria-label="Types you would accept"
-            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-          />
-          <MultiSelect
-            label="Or specific species"
-            placeholder={wants.species.length ? undefined : "Pick as many as you like"}
-            searchable
-            data={speciesOptions}
-            value={wants.species}
-            onChange={(species) => setWants((w) => ({ ...w, species }))}
-            limit={20}
-            mb={12}
-            aria-label="Specific species you would accept"
-            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-          />
-
-          <Text fz={13} fw={700} c="dimmed" tt="uppercase" mb={6}>
-            Must-haves (leave empty for no requirement)
-          </Text>
-          <Group gap={10} mb={8} align="end" wrap="wrap">
-            <NumberInput
-              label="Min level"
-              description="0 = any"
-              value={wants.minLevel}
-              onChange={(v) =>
-                setWants((w) => ({
-                  ...w,
-                  minLevel: Math.max(0, Math.min(100, Math.trunc(Number(v) || 0))),
-                }))
-              }
-              min={0}
-              max={100}
-              size="xs"
-              w={110}
-              styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-            />
-            <Select
-              label="Min star"
-              data={[
-                { value: "0", label: "Any" },
-                ...[1, 2, 3, 4, 5, 6, 7].map((s) => ({ value: String(s), label: `${s}★ or higher` })),
-              ]}
-              value={String(wants.minStar)}
-              onChange={(v) => setWants((w) => ({ ...w, minStar: Number(v) || 0 }))}
-              allowDeselect={false}
-              size="xs"
-              w={130}
-              styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-            />
-            <Select
-              label="Nature"
-              data={[
-                { value: "", label: "Any" },
-                ...Object.keys(NATURE_GROUPS).map((n) => ({ value: n, label: n })),
-              ]}
-              value={wants.nature}
-              onChange={(v) => setWants((w) => ({ ...w, nature: v ?? "" }))}
-              allowDeselect={false}
+            <MultiSelect
+              label="Types you would accept"
+              placeholder={wants.types.length ? undefined : "Any type"}
               searchable
-              size="xs"
-              w={130}
-              styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+              data={ALL_TYPES.map((t) => ({ value: t, label: t }))}
+              value={wants.types}
+              onChange={(types) => setWants((w) => ({ ...w, types }))}
+              aria-label="Types you would accept"
+              styles={INPUT_STYLES}
             />
-            <Select
-              label="Gender"
-              data={[
-                { value: "", label: "Any" },
-                { value: "M", label: "Male" },
-                { value: "F", label: "Female" },
-              ]}
-              value={wants.gender}
-              onChange={(v) =>
-                setWants((w) => ({ ...w, gender: v === "M" || v === "F" ? v : "" }))
-              }
-              allowDeselect={false}
-              size="xs"
-              w={110}
-              styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+            <MultiSelect
+              label="Or specific species"
+              placeholder={wants.species.length ? undefined : "Pick as many as you like"}
+              searchable
+              data={speciesOptions}
+              value={wants.species}
+              onChange={(species) => setWants((w) => ({ ...w, species }))}
+              limit={20}
+              aria-label="Specific species you would accept"
+              styles={INPUT_STYLES}
             />
-            <Checkbox
-              label="Shiny only"
-              checked={wants.shiny}
-              onChange={(e) => setWants((w) => ({ ...w, shiny: e.currentTarget.checked }))}
-              styles={{ label: { color: "white" } }}
-            />
-          </Group>
 
-          <Textarea
-            label="Trade note"
-            placeholder="Anything else offers should know."
-            value={wants.note}
-            onChange={(e) => setWants((w) => ({ ...w, note: e.currentTarget.value }))}
-            autosize
-            minRows={2}
-            maxLength={300}
-            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-          />
-        </Card>
-      </Group>
+            <Text fz={13} fw={700} c="#c79bd6" tt="uppercase" style={{ letterSpacing: "0.14em" }}>
+              Must-haves (leave empty for no requirement)
+            </Text>
+            <Group gap={10} align="end" wrap="wrap">
+              <NumberInput
+                label="Min level"
+                description="0 = any"
+                value={wants.minLevel}
+                onChange={(v) =>
+                  setWants((w) => ({
+                    ...w,
+                    minLevel: Math.max(0, Math.min(100, Math.trunc(Number(v) || 0))),
+                  }))
+                }
+                min={0}
+                max={100}
+                size="xs"
+                w={110}
+                styles={INPUT_STYLES}
+              />
+              <Select
+                label="Min star"
+                data={[
+                  { value: "0", label: "Any" },
+                  ...[1, 2, 3, 4, 5, 6, 7].map((s) => ({ value: String(s), label: `${s}★ or higher` })),
+                ]}
+                value={String(wants.minStar)}
+                onChange={(v) => setWants((w) => ({ ...w, minStar: Number(v) || 0 }))}
+                allowDeselect={false}
+                size="xs"
+                w={130}
+                styles={INPUT_STYLES}
+              />
+              <Select
+                label="Nature"
+                data={[
+                  { value: "", label: "Any" },
+                  ...Object.keys(NATURE_GROUPS).map((n) => ({ value: n, label: n })),
+                ]}
+                value={wants.nature}
+                onChange={(v) => setWants((w) => ({ ...w, nature: v ?? "" }))}
+                allowDeselect={false}
+                searchable
+                size="xs"
+                w={130}
+                styles={INPUT_STYLES}
+              />
+              <Select
+                label="Gender"
+                data={[
+                  { value: "", label: "Any" },
+                  { value: "M", label: "Male" },
+                  { value: "F", label: "Female" },
+                ]}
+                value={wants.gender}
+                onChange={(v) =>
+                  setWants((w) => ({ ...w, gender: v === "M" || v === "F" ? v : "" }))
+                }
+                allowDeselect={false}
+                size="xs"
+                w={110}
+                styles={INPUT_STYLES}
+              />
+              <Checkbox
+                label="Shiny only"
+                color="grape"
+                checked={wants.shiny}
+                onChange={(e) => setWants((w) => ({ ...w, shiny: e.currentTarget.checked }))}
+                styles={{ label: { color: "white" } }}
+              />
+            </Group>
+
+            <Textarea
+              label="Trade note"
+              placeholder="Anything else offers should know."
+              value={wants.note}
+              onChange={(e) => setWants((w) => ({ ...w, note: e.currentTarget.value }))}
+              autosize
+              minRows={2}
+              maxLength={300}
+              styles={INPUT_STYLES}
+            />
+          </Stack>
+        </Box>
+      </SimpleGrid>
 
       <Button
-        radius="xl"
-        size="md"
+        fullWidth
         variant="gradient"
-        gradient={{ from: "blue", to: "cyan", deg: 90 }}
+        gradient={{ from: "#7E2C75", to: "#E54156", deg: 90 }}
         disabled={!pokemonId}
         loading={create.isPending}
+        h={54}
+        style={{
+          clipPath: CLIP_CTA,
+          fontFamily: FONT_D,
+          fontSize: 15,
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+        }}
         onClick={() => {
           setMessage("");
           create.mutate();
         }}
       >
-        {pokemonId ? "Put it on the board" : "Pick a Pokemon to offer first"}
+        {pokemonId ? "PUT IT ON THE BOARD →" : "PICK A POKEMON TO OFFER FIRST"}
       </Button>
       {message && (
-        <Text fz={14} c="gold.1" role="status" aria-live="polite">
+        <Text
+          fz={13}
+          fw={700}
+          c="#12B7B6"
+          role="status"
+          aria-live="polite"
+          style={{ fontFamily: FONT_D, letterSpacing: "0.1em" }}
+        >
           {message}
         </Text>
       )}
@@ -591,52 +710,78 @@ function ListingCard(props: {
     : [];
 
   return (
-    <Card withBorder radius={16} p="md" style={{ background: "#16141c", borderColor: "#2a2734" }}>
-      <Group justify="space-between" mb={10}>
-        <Group gap={8}>
-          <Avatar src={l.ownerAvatar} size={30} radius="xl" color="grape">
-            {l.ownerName?.charAt(0).toUpperCase()}
-          </Avatar>
-          <Box>
-            <Text fz={14} fw={700} c="white">
-              {l.ownerName}
-            </Text>
-            <Text fz={12} c="dimmed">
-              {timeAgo(l.createdAt?.seconds)}
-            </Text>
-          </Box>
-        </Group>
-        <Badge variant="outline" color="teal" radius="xl" size="sm">
-          Open
-        </Badge>
+    <Box
+      className="dc-card-tile"
+      p={20}
+      style={{
+        background: "#141318",
+        border: `1px solid ${mine ? "#1f7a4d" : "#2a2637"}`,
+        clipPath: CLIP_PANEL_12,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
+      {/* Tag + age */}
+      <Group justify="space-between" gap={10} wrap="nowrap">
+        <Text
+          fz={11}
+          fw={700}
+          c={mine ? "#3ecf8e" : "#c79bd6"}
+          tt="uppercase"
+          style={{ fontFamily: FONT_D, letterSpacing: "0.18em" }}
+          lineClamp={1}
+        >
+          {mine ? "Your listing" : `From ${l.ownerName || "someone"}`}
+        </Text>
+        <Text fz={12} c="#6f6a78" style={{ flex: "none" }}>
+          {timeAgo(l.createdAt?.seconds)}
+        </Text>
       </Group>
 
-      <Group justify="space-around" align="flex-start" wrap="nowrap" mb={8}>
-        <Stack gap={2} align="center" style={{ flex: 1, minWidth: 0 }}>
-          <Text fz={12} fw={700} c="teal.4" tt="uppercase" style={{ letterSpacing: 1 }}>
-            Offers
-          </Text>
-          <Avatar src={getPokemonImageURL(l.pokemon.slug, l.pokemon.shiny)} size={48} radius="xl" />
-          <Text fz={15} fw={700} c="white" ta="center" lineClamp={1}>
+      {/* What they give */}
+      <Group gap={14} align="center" wrap="nowrap">
+        <Avatar
+          src={getPokemonImageURL(l.pokemon.slug, l.pokemon.shiny)}
+          size={48}
+          radius="xl"
+          style={{ flex: "none" }}
+        />
+        <Box style={{ minWidth: 0 }}>
+          <Text fz={15} fw={700} c="white" lineClamp={1}>
             {l.pokemon.species}{" "}
             <Text span c={GENDER_COLOR(l.pokemon.gender)} fw={700}>
               {l.pokemon.gender}
             </Text>
+            {l.pokemon.shiny && (
+              <Badge ml={6} size="xs" color="gold.1" variant="filled" c="#1a1626" radius={0}>
+                Shiny
+              </Badge>
+            )}
           </Text>
-          <SnapshotChips p={l.pokemon} />
-          {l.pokemon.shiny && (
-            <Badge size="xs" color="gold.1" variant="filled" c="#1a1626" radius="xl">
-              Shiny
-            </Badge>
-          )}
-        </Stack>
-        <IconArrowsExchange size={20} color="#8a8399" style={{ marginTop: 34, flexShrink: 0 }} />
-        <Stack gap={2} align="center" style={{ flex: 1, minWidth: 0 }}>
-          <Text fz={12} fw={700} c="violet.3" tt="uppercase" style={{ letterSpacing: 1 }}>
-            Wants
-          </Text>
-          <WantsSummary wants={l.wants} />
-        </Stack>
+          <SnapshotChips p={l.pokemon} ta="left" />
+        </Box>
+      </Group>
+
+      {/* Wants */}
+      <Group
+        align="flex-start"
+        gap={10}
+        wrap="nowrap"
+        style={{ borderTop: "1px solid #232028", paddingTop: 10 }}
+      >
+        <Text
+          fz={11}
+          fw={700}
+          c="#c79bd6"
+          tt="uppercase"
+          style={{ fontFamily: FONT_D, letterSpacing: "0.14em", flex: "none", marginTop: 2 }}
+        >
+          Wants
+        </Text>
+        <Box style={{ minWidth: 0 }}>
+          <WantsSummary wants={l.wants} align="left" />
+        </Box>
       </Group>
 
       {mine ? (
@@ -654,13 +799,13 @@ function ListingCard(props: {
                     <Text fz={14} c="white" lineClamp={1}>
                       {o.fromName} offers {o.pokemon.species} ({o.pokemon.gender})
                     </Text>
-                    <SnapshotChips p={o.pokemon} />
+                    <SnapshotChips p={o.pokemon} ta="left" />
                   </Box>
                 </Group>
                 <Group gap={6}>
                   <Button
                     size="compact-sm"
-                    radius="xl"
+                    radius={0}
                     color="teal"
                     loading={act.isPending}
                     onClick={() => {
@@ -679,7 +824,7 @@ function ListingCard(props: {
                   </Button>
                   <Button
                     size="compact-sm"
-                    radius="xl"
+                    radius={0}
                     variant="subtle"
                     color="pink"
                     onClick={() => act.mutate(() => callRespondTradeOffer(l.id, offerId, "decline"))}
@@ -694,89 +839,109 @@ function ListingCard(props: {
               No offers yet. Your listing is visible to everyone.
             </Text>
           )}
-          <Button
-            size="compact-sm"
-            radius="xl"
-            variant="subtle"
-            color="gray"
+          <UnstyledButton
             onClick={() => act.mutate(() => callCancelTradeListing(l.id))}
+            style={{
+              alignSelf: "flex-start",
+              background: "none",
+              border: "1px solid #3a3550",
+              color: "#b6b1bc",
+              fontFamily: FONT_D,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              padding: "9px 18px",
+              cursor: "pointer",
+              clipPath: CLIP_PULL,
+            }}
           >
-            Take the listing down
-          </Button>
+            Pull listing
+          </UnstyledButton>
         </Stack>
       ) : picking ? (
-        <Stack gap={4}>
+        <Stack gap={8}>
           {offerFor && props.owned.find((o) => o.id === offerFor) && (
             <OwnedDetailCard
               pokemon={props.owned.find((o) => o.id === offerFor)!}
               heading="You are offering"
             />
           )}
-          <Group gap={8} align="flex-end">
-          <Select
-            label="Your offer"
-            placeholder="Pick a pokemon"
-            searchable
-            data={offerOptions}
-            value={offerFor}
-            onChange={setOfferFor}
-            size="xs"
-            w={280}
-            error={
-              offerProblems.length
-                ? `Heads up: ${offerProblems.join(", ")}. You can still send it.`
-                : undefined
-            }
-            styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-          />
-          <Button
-            size="compact-md"
-            radius="xl"
-            color="cyan"
-            disabled={!offerFor}
-            loading={act.isPending}
-            onClick={() => {
-              setMessage("");
-              act.mutate(() => callMakeTradeOffer(l.id, offerFor!));
-            }}
-          >
-            Send
-          </Button>
-          <Button
-            size="compact-md"
-            radius="xl"
-            variant="subtle"
-            color="gray"
-            onClick={() => setPicking(false)}
-          >
-            Cancel
-          </Button>
+          <Group gap={8} align="flex-end" wrap="wrap">
+            <Select
+              label="Your offer"
+              placeholder="Pick a pokemon"
+              searchable
+              data={offerOptions}
+              value={offerFor}
+              onChange={setOfferFor}
+              size="xs"
+              w={260}
+              error={
+                offerProblems.length
+                  ? `Heads up: ${offerProblems.join(", ")}. You can still send it.`
+                  : undefined
+              }
+              styles={INPUT_STYLES}
+            />
+            <Button
+              size="compact-md"
+              radius={0}
+              variant="gradient"
+              gradient={{ from: "#7E2C75", to: "#E54156", deg: 90 }}
+              disabled={!offerFor}
+              loading={act.isPending}
+              onClick={() => {
+                setMessage("");
+                act.mutate(() => callMakeTradeOffer(l.id, offerFor!));
+              }}
+            >
+              Send
+            </Button>
+            <Button
+              size="compact-md"
+              radius={0}
+              variant="subtle"
+              color="gray"
+              onClick={() => setPicking(false)}
+            >
+              Cancel
+            </Button>
           </Group>
         </Stack>
       ) : (
-        <Group justify="space-between" align="center">
-          <Button
-            radius="xl"
-            variant="gradient"
-            gradient={{ from: "blue", to: "cyan", deg: 90 }}
-            style={{ flex: 1 }}
+        <Group justify="space-between" align="center" gap={10} wrap="nowrap">
+          <UnstyledButton
             onClick={() => setPicking(true)}
+            style={{
+              alignSelf: "flex-start",
+              background: GRAD_PR,
+              color: "#fff",
+              fontFamily: FONT_D,
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              padding: "11px 22px",
+              cursor: "pointer",
+              clipPath: CLIP_CTA_XS,
+            }}
           >
-            Make an offer
-          </Button>
-          <Text fz={13} c="dimmed" ml={8}>
+            Make an offer →
+          </UnstyledButton>
+          <Text fz={13} c="dimmed" style={{ flex: "none" }}>
             {openOffers.length
               ? `${openOffers.length} offer${openOffers.length === 1 ? "" : "s"}`
-              : "0 offers, be first"}
+              : "0 offers"}
           </Text>
         </Group>
       )}
       {message && (
-        <Text fz={13} c="gold.1" mt={6} role="status" aria-live="polite">
+        <Text fz={13} c="gold.1" role="status" aria-live="polite">
           {message}
         </Text>
       )}
-    </Card>
+    </Box>
   );
 }
 
@@ -802,65 +967,82 @@ function SelfTradeSection(props: { owned: OwnedPokemon[]; onChanged: () => void 
     onError: (e) => setMessage((e as Error).message || "Could not move that pokemon."),
   });
   return (
-    <Card
-      withBorder
-      radius={16}
-      p="lg"
+    <Box
       mt={24}
-      style={{ background: "#141318", borderColor: "#2a2734" }}
+      p={24}
+      style={{
+        background: "#14252a",
+        border: "1px solid #1f6f7a",
+        clipPath: CLIP_SELF,
+      }}
     >
-      <Text fz={14} fw={700} c="cyan.3" tt="uppercase" style={{ letterSpacing: 2 }}>
-        Between your characters
-      </Text>
-      <Text fz={18} fw={700} c="white" mb={4}>
-        Trade freely with yourself
-      </Text>
-      <Text fz={14} c="dimmed" mb={10}>
-        Teams and pokemon belong to characters, not accounts, so you can hand a pokemon to
-        another of your characters any time. No listing needed.
-      </Text>
-      <Group gap={10} align="flex-end" wrap="wrap">
-        <Select
-          label="Pokemon"
-          placeholder="Pick one of yours"
-          searchable
-          data={props.owned.map((p) => ({
-            value: p.id,
-            label: `${p.name || p.species} (${p.gender ?? "?"})`,
-          }))}
-          value={pokemonId}
-          onChange={setPokemonId}
-          w={230}
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-        />
-        <Select
-          label="Goes to"
-          placeholder="Pick a character"
-          data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
-          value={characterId}
-          onChange={setCharacterId}
-          w={200}
-          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
-        />
-        <Button
-          radius="xl"
-          color="cyan"
-          disabled={!pokemonId || !characterId}
-          loading={move.isPending}
-          onClick={() => {
-            setMessage("");
-            move.mutate();
-          }}
-        >
-          Move it over
-        </Button>
-      </Group>
-      {message && (
-        <Text fz={14} c="gold.1" mt={8} role="status" aria-live="polite">
-          {message}
+      <Stack gap={12}>
+        <PanelKicker color="#12B7B6">Between your characters</PanelKicker>
+        <PanelTitle>Trade freely with yourself</PanelTitle>
+        <Text fz={14} c="#b6b1bc" lh={1.6}>
+          Teams and pokemon belong to characters, not accounts, so you can hand a pokemon to
+          another of your characters any time. No listing needed.
         </Text>
-      )}
-    </Card>
+        <Group gap={14} align="flex-end" wrap="wrap">
+          <Select
+            label="Pokemon"
+            placeholder="Pick one of yours"
+            searchable
+            data={props.owned.map((p) => ({
+              value: p.id,
+              label: `${p.name || p.species} (${p.gender ?? "?"})`,
+            }))}
+            value={pokemonId}
+            onChange={setPokemonId}
+            w={230}
+            styles={INPUT_STYLES}
+          />
+          <Select
+            label="Goes to"
+            placeholder="Pick a character"
+            data={(characters?.sortedData ?? []).map((c) => ({ value: c.id, label: c.name }))}
+            value={characterId}
+            onChange={setCharacterId}
+            w={200}
+            styles={INPUT_STYLES}
+          />
+          <Button
+            variant="gradient"
+            gradient={{ from: "#14e0de", to: "#12B7B6", deg: 90 }}
+            radius={0}
+            h={42}
+            disabled={!pokemonId || !characterId}
+            loading={move.isPending}
+            style={{
+              clipPath: CLIP_CTA_S,
+              color: "#0e0d11",
+              fontFamily: FONT_D,
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+            }}
+            onClick={() => {
+              setMessage("");
+              move.mutate();
+            }}
+          >
+            MOVE IT OVER →
+          </Button>
+        </Group>
+        {message && (
+          <Text
+            fz={13}
+            fw={700}
+            c="#12B7B6"
+            role="status"
+            aria-live="polite"
+            style={{ fontFamily: FONT_D, letterSpacing: "0.1em" }}
+          >
+            {message}
+          </Text>
+        )}
+      </Stack>
+    </Box>
   );
 }
 
@@ -869,6 +1051,7 @@ function SelfTradeSection(props: { owned: OwnedPokemon[]; onChanged: () => void 
 export default function Trading() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { isOverXs } = useMediaQuery();
   const [tab, setTab] = React.useState<"create" | "browse">("browse");
   const [filter, setFilter] = React.useState("all");
 
@@ -907,8 +1090,8 @@ export default function Trading() {
   const wantTypes = [...new Set(open.flatMap((l) => l.wants.types))].slice(0, 4);
   const filtered = open.filter((l) => {
     if (filter === "shiny") return !!l.pokemon.shiny;
-    // "Fits my box": a listing where at least one pokemon you own passes the
-    // full wants criteria (species/type/shiny/level/star), same check the
+    // "Wants what I have": a listing where at least one pokemon you own passes
+    // the full wants criteria (species/type/shiny/level/star), same check the
     // offer picker warns with. Falls back to loose matching when the listing
     // asks for nothing specific.
     if (filter === "match")
@@ -917,6 +1100,13 @@ export default function Trading() {
     return true;
   });
 
+  const boardFilters = [
+    { key: "all", label: "All" },
+    { key: "shiny", label: "Shiny offers" },
+    { key: "match", label: "Wants what I have" },
+    ...wantTypes.map((t) => ({ key: `type:${t}`, label: t })),
+  ];
+
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
       <Seo noindex title="The Trading Post | Snagem Guild" />
@@ -924,28 +1114,30 @@ export default function Trading() {
         eyebrow={`${open.length} open listings · ${mineCount} of yours`}
         title="The Trading Post"
         subtitle="Put a Pokemon up with what you want in return, or scan the board and make an offer on someone else's listing."
-        mb={20}
+        mb={22}
       />
 
-      <Group gap={8} mb={20}>
-        <Button
-          radius="md"
-          variant={tab === "create" ? "white" : "subtle"}
-          color={tab === "create" ? "dark" : "gray"}
-          leftSection={<IconArrowsExchange size={16} />}
+      {/* Page tabs */}
+      <Group gap={isOverXs ? 0 : 6} mb={22} wrap="wrap">
+        <SegButton
+          active={tab === "create"}
           onClick={() => setTab("create")}
+          first
+          fullWidth={!isOverXs}
+          leftSection={
+            <IconArrowsExchange size={16} color={tab === "create" ? "#fff" : "#b6b1bc"} />
+          }
         >
           Create a listing
-        </Button>
-        <Button
-          radius="md"
-          variant={tab === "browse" ? "white" : "subtle"}
-          color={tab === "browse" ? "dark" : "gray"}
-          leftSection={<IconChartBar size={16} />}
+        </SegButton>
+        <SegButton
+          active={tab === "browse"}
           onClick={() => setTab("browse")}
+          fullWidth={!isOverXs}
+          leftSection={<IconChartBar size={16} color={tab === "browse" ? "#fff" : "#b6b1bc"} />}
         >
           Browse the board
-        </Button>
+        </SegButton>
       </Group>
 
       {isPending ? (
@@ -962,32 +1154,52 @@ export default function Trading() {
         />
       ) : (
         <Stack gap={16}>
-          <Group gap={8}>
-            {[
-              { key: "all", label: "All" },
-              { key: "shiny", label: "Shiny offers" },
-              { key: "match", label: "Wants what I have" },
-              ...wantTypes.map((t) => ({ key: `type:${t}`, label: t })),
-            ].map((f) => (
-              <Button
+          <Group gap={8} wrap="wrap">
+            {boardFilters.map((f) => (
+              <SegButton
                 key={f.key}
-                size="xs"
-                radius="xl"
-                variant={filter === f.key ? "white" : "default"}
-                color={filter === f.key ? "dark" : "gray"}
+                active={filter === f.key}
                 onClick={() => setFilter(f.key)}
+                small
+                first
+                clip={CLIP_CHIP}
               >
                 {f.label}
-              </Button>
+              </SegButton>
             ))}
           </Group>
           {!filtered.length ? (
-            <Text fz={14} c="dimmed" py={20}>
-              Nothing on the board {filter === "all" ? "yet" : "for that filter"}. Create a
-              listing and get the first trade going.
-            </Text>
+            <Box
+              p={44}
+              style={{
+                background: "#141318",
+                border: "1px solid #2a2637",
+                clipPath: CLIP_PANEL_16,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 12,
+                textAlign: "center",
+              }}
+            >
+              <IconArrowsExchange size={36} color="#8a8399" style={{ opacity: 0.5 }} />
+              <Text fz={18} fw={700} c="white" style={{ fontFamily: FONT_D, letterSpacing: "0.03em" }}>
+                NOTHING HERE YET
+              </Text>
+              <Text fz={14} c="#b6b1bc">
+                {filter === "all"
+                  ? "Create a listing and get the first trade going."
+                  : "Nothing on the board for that filter yet."}
+              </Text>
+            </Box>
           ) : (
-            <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 4 }} spacing="md">
+            <Box
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))",
+                gap: 14,
+              }}
+            >
               {filtered.map((l) => (
                 <ListingCard
                   key={l.id}
@@ -999,7 +1211,7 @@ export default function Trading() {
                   onChanged={refresh}
                 />
               ))}
-            </SimpleGrid>
+            </Box>
           )}
         </Stack>
       )}

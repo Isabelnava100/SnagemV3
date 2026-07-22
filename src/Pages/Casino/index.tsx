@@ -1,26 +1,7 @@
-import {
-  ActionIcon,
-  Box,
-  Button,
-  Container,
-  Group,
-  SegmentedControl,
-  SimpleGrid,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Box, Button, Container, Flex, Group, SimpleGrid, Stack, Text, UnstyledButton } from "@mantine/core";
 import {
   IconArrowsExchange,
-  IconCoin,
   IconDice5,
-  IconDroplet,
-  IconGhost2,
-  IconMinus,
-  IconPlayerPlayFilled,
-  IconPlus,
-  IconRotateClockwise2,
-  IconSkull,
   IconTargetArrow,
   IconTicket,
   IconTriangleInverted,
@@ -51,13 +32,47 @@ import { getCurrencies } from "../../queries/dashboard";
  * (gengarcoin) at a server-set rate, then wager tokens on instant games. Every
  * outcome, balance check, and payout is decided server-side by Cloud Functions:
  * the client only shows results. See docs/CASINO_DATA.md.
+ *
+ * The cinematic "casino floor" restyle (July 2026): a striped hero with three
+ * wallet chips, the Exchange Cage bar, a table-picker grid ("The Floor"), and a
+ * seated single-game view driven by a shared 1 / 2 / 5 chip stake. Only the
+ * presentation changed; the four server-backed games (Hex Roulette, Dream Dice,
+ * Payback Pyramid, Shadow Lotto) keep their exact queries, mutations, and RNG.
  */
 
 const DEFAULT_RATE = 2;
 
-const BG = "#0d0716";
-const PANEL = "#171029";
-const PANEL_BORDER = "#2b2142";
+/* Redesign palette (mirrors src/assets/styles/redesign.css). */
+const INK = "#0e0d11";
+const CARD = "#17151c";
+const CARD_BORDER = "#2a2637";
+const WELL = "#141318";
+const RED = "#E54156";
+const GOLD = "#FFD074";
+const GOLD_DEEP = "#C9940F";
+const CYAN = "#12B7B6";
+const PURPLE = "#7E2C75";
+const PURPLE_LT = "#c79bd6";
+const DIM = "#b6b1bc";
+const MUTED = "#6f6a78";
+const ON_GOLD = "#1A1B1E";
+const HERO_BORDER = "#3a3550";
+
+const PRIMARY_CTA = "linear-gradient(90deg,#7E2C75,#E54156)";
+const GOLD_GRAD = "linear-gradient(135deg,#FFD074,#C9940F)";
+const GOLD_GRAD_H = "linear-gradient(90deg,#FFD074,#C9940F)";
+
+const CLIP_CTA = "polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)";
+const CLIP_CTA_SM = "polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)";
+const CLIP_CARD = "polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)";
+const CLIP_CHIP = "polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)";
+const CLIP_PANEL = "polygon(0 0,100% 0,100% 100%,22px 100%,0 calc(100% - 22px))";
+const CLIP_BAR = "polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)";
+const CLIP_BADGE = "polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)";
+const CLIP_CELL = "polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)";
+const CLIP_ICON = "polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)";
+
+const displayFont = "var(--font-display, 'Quantico', sans-serif)";
 
 /** Pull a numeric balance out of a currency value (number or legacy string). */
 function num(value?: number | string): number {
@@ -65,92 +80,47 @@ function num(value?: number | string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** A single line that announces an action result to screen readers. */
-function StatusLine(props: { color?: string; children: React.ReactNode }) {
-  if (!props.children) return null;
-  return (
-    <Text role="status" aria-live="polite" fz={14} c={props.color} mt={4}>
-      {props.children}
-    </Text>
-  );
-}
+type Session = { won: number; lost: number; streak: number; best: number };
 
-/** Little uppercase caption used above every stepper and section. */
-function Caption(props: { children: React.ReactNode; c?: string }) {
-  return (
-    <Text fz={14} fw={700} tt="uppercase" c={props.c ?? "dimmed"} style={{ letterSpacing: 1.5 }}>
-      {props.children}
-    </Text>
-  );
-}
+/* ------------------------------ small pieces ------------------------------ */
 
-/** A -/+ number stepper. Keyboard-operable (real buttons) with a labeled value. */
-function Stepper(props: {
-  label: string;
-  value: number;
-  onChange: (n: number) => void;
-  min: number;
-  max: number;
-  accent: string;
-}) {
-  const clamp = (n: number) => Math.max(props.min, Math.min(props.max, n));
-  const set = (n: number) => props.onChange(clamp(n));
+/** Square glyph tile (purple well, angled corners) used beside labels. */
+function IconTile(props: { children: React.ReactNode; size?: number }) {
+  const size = props.size ?? 42;
   return (
     <Box
       style={{
+        flex: "none",
+        width: size,
+        height: size,
+        background: "#3a1d63",
+        border: `1px solid ${HERO_BORDER}`,
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        gap: 8,
-        background: "#0e0a18",
-        border: `1px solid ${PANEL_BORDER}`,
-        borderRadius: 12,
-        padding: 6,
+        justifyContent: "center",
+        clipPath: CLIP_ICON,
       }}
     >
-      <ActionIcon
-        variant="subtle"
-        radius="md"
-        size="lg"
-        onClick={() => set(props.value - 1)}
-        disabled={props.value <= props.min}
-        aria-label={`Decrease ${props.label}`}
-        style={{ color: props.accent }}
-      >
-        <IconMinus size={18} />
-      </ActionIcon>
-      <Text fz={26} fw={800} c="white" aria-label={`${props.label}: ${props.value}`}>
-        {props.value}
-      </Text>
-      <ActionIcon
-        variant="subtle"
-        radius="md"
-        size="lg"
-        onClick={() => set(props.value + 1)}
-        disabled={props.value >= props.max}
-        aria-label={`Increase ${props.label}`}
-        style={{ color: props.accent }}
-      >
-        <IconPlus size={18} />
-      </ActionIcon>
+      {props.children}
     </Box>
   );
 }
 
-/** Rounded pill badge shown top-right of each game card. */
-function PayoutBadge(props: { children: React.ReactNode; color: string }) {
+/** Gold payout badge (dark text, angled). */
+function GoldBadge(props: { children: React.ReactNode; fz?: number }) {
   return (
     <Text
-      fz={14}
-      fw={800}
+      component="span"
       tt="uppercase"
-      px={12}
-      py={5}
       style={{
-        borderRadius: 999,
-        color: props.color,
-        background: `${props.color}1f`,
-        letterSpacing: 0.5,
+        fontFamily: displayFont,
+        fontSize: props.fz ?? 11,
+        fontWeight: 700,
+        letterSpacing: "0.14em",
+        color: ON_GOLD,
+        background: GOLD_GRAD_H,
+        padding: "6px 12px",
+        clipPath: CLIP_BADGE,
         whiteSpace: "nowrap",
       }}
     >
@@ -159,199 +129,219 @@ function PayoutBadge(props: { children: React.ReactNode; color: string }) {
   );
 }
 
-/** Shared game-card shell: icon tile, title, payout badge, blurb, body. */
-function GameCard(props: {
-  icon: React.ReactNode;
-  iconBg: string;
-  title: string;
-  blurb: string;
-  badge: React.ReactNode;
+/** Angled gradient call-to-action. Gold fills always carry dark text. */
+function Cta(props: {
+  onClick: () => void;
   children: React.ReactNode;
+  disabled?: boolean;
+  loading?: boolean;
+  tone?: "primary" | "gold" | "cyan" | "red";
 }) {
+  const tone = props.tone ?? "primary";
+  const bg = tone === "gold" ? GOLD_GRAD_H : tone === "cyan" ? CYAN : tone === "red" ? "#8f1d2c" : PRIMARY_CTA;
+  const color = tone === "gold" ? ON_GOLD : "#fff";
   return (
-    <Box
-      p={{ base: "md", sm: "lg" }}
+    <Button
+      radius={0}
+      onClick={props.onClick}
+      disabled={props.disabled}
+      loading={props.loading}
+      tt="uppercase"
       style={{
-        background: PANEL,
-        border: `1px solid ${PANEL_BORDER}`,
-        borderRadius: 20,
-        // Fill the grid row and let each game's Play button push to the
-        // bottom so the buttons align across cards.
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
+        background: bg,
+        color,
+        border: tone === "red" ? `1px solid ${RED}` : "none",
+        clipPath: CLIP_CTA,
+        fontFamily: displayFont,
+        fontWeight: 700,
+        fontSize: 14,
+        letterSpacing: "0.1em",
+        padding: "14px 26px",
+        height: "auto",
       }}
     >
-      <Group justify="space-between" wrap="nowrap" align="flex-start" mb={6}>
-        <Group gap={12} wrap="nowrap">
-          <Box
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 11,
-              flexShrink: 0,
-              background: props.iconBg,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {props.icon}
-          </Box>
-          <Title order={2} fz={26} fw={800} c="white" lh="md">
-            {props.title}
-          </Title>
-        </Group>
-        {props.badge}
-      </Group>
-      <Text fz={16} c="gray.5" mb="md">
-        {props.blurb}
-      </Text>
-      <Box style={{ flex: 1, display: "flex", flexDirection: "column" }}>{props.children}</Box>
-    </Box>
+      {props.children}
+    </Button>
   );
 }
 
-/** Hook that wires a playGame call into a mutation plus a status line. */
-function useGamePlay(
-  uid: string,
-  format: (res: { win: boolean; roll: number | number[]; payout: number }) => string
-) {
-  const queryClient = useQueryClient();
-  const [status, setStatus] = React.useState<{ color: string; text: string } | null>(null);
-
-  const mutation = useMutation({
-    mutationFn: (vars: { game: CasinoGame; bet: number; pick: number | "even" | "odd" }) =>
-      playGame(vars.game, vars.bet, vars.pick),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["currencies", uid] });
-      setStatus({ color: res.win ? "teal" : "red", text: format(res) });
-    },
-    onError: (err: unknown) => {
-      setStatus({ color: "red", text: err instanceof Error ? err.message : "The play failed." });
-    },
-  });
-
-  return { mutation, status, setStatus };
+/** A joined toggle button (BUY / SELL, EVEN / ODD). */
+function Toggle(props: { active: boolean; onClick: () => void; label: string; children: React.ReactNode; first?: boolean }) {
+  return (
+    <UnstyledButton
+      onClick={props.onClick}
+      aria-pressed={props.active}
+      aria-label={props.label}
+      style={{
+        fontFamily: displayFont,
+        fontWeight: 700,
+        fontSize: 13,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        padding: "12px 24px",
+        cursor: "pointer",
+        border: `1px solid ${HERO_BORDER}`,
+        marginLeft: props.first ? 0 : -2,
+        background: props.active ? PRIMARY_CTA : "#1b1a1e",
+        color: props.active ? "#fff" : DIM,
+        clipPath: CLIP_CTA_SM,
+      }}
+    >
+      {props.children}
+    </UnstyledButton>
+  );
 }
 
-/* --------------------------------- Wheel ---------------------------------- */
-
-function RouletteWheel(props: { number: number }) {
+/** Colored status line under each game. ok: null idle, true win, false loss. */
+function GameMsg(props: { ok: boolean | null; children: React.ReactNode }) {
+  const color = props.ok == null ? MUTED : props.ok ? CYAN : RED;
   return (
-    <Box style={{ position: "relative", width: 128, height: 128, flexShrink: 0 }}>
+    <Text
+      role="status"
+      aria-live="polite"
+      tt="uppercase"
+      style={{ fontFamily: displayFont, fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", color }}
+    >
+      {props.children}
+    </Text>
+  );
+}
+
+/** Dim "you need N tokens" note. */
+function NeedNote(props: { children: React.ReactNode }) {
+  return (
+    <Text fz={14} c="dimmed" mt={4}>
+      {props.children}
+    </Text>
+  );
+}
+
+/** A selectable board cell (roulette hex, dice total, lotto number). */
+function Cell(props: { n: React.ReactNode; selected: boolean; onClick: () => void; accent?: string; w?: number; h: number; fz: number; label: string }) {
+  const accent = props.accent ?? RED;
+  return (
+    <UnstyledButton
+      onClick={props.onClick}
+      aria-pressed={props.selected}
+      aria-label={props.label}
+      style={{
+        width: props.w,
+        height: props.h,
+        cursor: "pointer",
+        fontFamily: displayFont,
+        fontWeight: 700,
+        fontSize: props.fz,
+        border: `1px solid ${props.selected ? accent : CARD_BORDER}`,
+        background: props.selected ? PRIMARY_CTA : "#1b1a1e",
+        color: props.selected ? "#fff" : DIM,
+        clipPath: CLIP_CELL,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {props.n}
+    </UnstyledButton>
+  );
+}
+
+/** Roulette wheel: purple/red conic with a dark center number. */
+function Wheel(props: { value: React.ReactNode }) {
+  return (
+    <Box
+      style={{
+        width: 110,
+        height: 110,
+        borderRadius: "50%",
+        flexShrink: 0,
+        background:
+          "conic-gradient(#7E2C75 0 30deg,#E54156 30deg 60deg,#7E2C75 60deg 90deg,#E54156 90deg 120deg,#7E2C75 120deg 150deg,#E54156 150deg 180deg,#7E2C75 180deg 210deg,#E54156 210deg 240deg,#7E2C75 240deg 270deg,#E54156 270deg 300deg,#7E2C75 300deg 330deg,#E54156 330deg 360deg)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <Box
         style={{
-          position: "absolute",
-          top: -6,
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: 0,
-          height: 0,
-          borderLeft: "8px solid transparent",
-          borderRight: "8px solid transparent",
-          borderTop: "12px solid #F5C842",
-          zIndex: 2,
-        }}
-      />
-      <Box
-        style={{
-          width: 128,
-          height: 128,
+          width: 60,
+          height: 60,
           borderRadius: "50%",
-          background:
-            "repeating-conic-gradient(#d6249f 0deg 15deg, #6b1f6b 15deg 30deg)",
+          background: INK,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Box
-          style={{
-            width: 62,
-            height: 62,
-            borderRadius: "50%",
-            background: "#0e0a18",
-            border: "2px solid #2b2142",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text fz={30} fw={800} c="white">
-            {props.number}
-          </Text>
-        </Box>
+        <Text fz={24} fw={700} c="white" style={{ fontFamily: displayFont }}>
+          {props.value}
+        </Text>
       </Box>
     </Box>
   );
 }
 
-/** A die face with pips for 1-6. */
-function PipDie(props: { value: number; size?: number; bg?: string; pip?: string }) {
-  const size = props.size ?? 72;
-  const pip = props.pip ?? "#1a1622";
-  const layouts: Record<number, [number, number][]> = {
-    1: [[1, 1]],
-    2: [[0, 0], [2, 2]],
-    3: [[0, 0], [1, 1], [2, 2]],
-    4: [[0, 0], [0, 2], [2, 0], [2, 2]],
-    5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
-    6: [[0, 0], [0, 2], [1, 0], [1, 2], [2, 0], [2, 2]],
-  };
-  const dots = layouts[Math.max(1, Math.min(6, props.value))] ?? layouts[1];
-  const cell = (r: number, c: number) => dots.some(([dr, dc]) => dr === r && dc === c);
+/* ------------------------------ wallet + hero ----------------------------- */
+
+function WalletChip(props: { label: string; value: React.ReactNode; border: string; labelColor: string; valueColor?: string; sub?: React.ReactNode }) {
   return (
     <Box
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size * 0.22,
-        background: props.bg ?? "#f4f2ee",
-        padding: size * 0.14,
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gridTemplateRows: "repeat(3, 1fr)",
-        gap: size * 0.06,
-        boxShadow: "0 6px 16px rgba(0,0,0,0.35)",
-        flexShrink: 0,
-      }}
+      px={20}
+      py={12}
+      style={{ background: "rgba(20,19,24,.6)", border: `1px solid ${props.border}`, clipPath: CLIP_CHIP, minWidth: 132 }}
     >
-      {Array.from({ length: 9 }).map((_, i) => {
-        const r = Math.floor(i / 3);
-        const c = i % 3;
-        return (
-          <Box
-            key={i}
-            style={{
-              borderRadius: "50%",
-              background: cell(r, c) ? pip : "transparent",
-            }}
-          />
-        );
-      })}
+      <Text
+        tt="uppercase"
+        style={{ fontFamily: displayFont, fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", color: props.labelColor }}
+      >
+        {props.label}
+      </Text>
+      <Text style={{ fontFamily: displayFont, fontSize: 24, fontWeight: 700, color: props.valueColor ?? "#fff", lineHeight: 1.1 }}>
+        {props.value}
+      </Text>
+      {props.sub && (
+        <Text fz={11} c={MUTED} mt={1}>
+          {props.sub}
+        </Text>
+      )}
     </Box>
   );
 }
 
-/* --------------------------------- Games ---------------------------------- */
+function WalletChips(props: { snagCoins: number; gengarTokens: number; session: Session }) {
+  const net = props.session.won - props.session.lost;
+  return (
+    <Group gap={12} wrap="wrap">
+      <WalletChip label="Snag Coins" value={props.snagCoins.toLocaleString()} border={GOLD_DEEP} labelColor={GOLD} />
+      <WalletChip label="Gengar Tokens" value={props.gengarTokens.toLocaleString()} border={PURPLE} labelColor={PURPLE_LT} />
+      <WalletChip
+        label="Tonight"
+        value={(net >= 0 ? "+" : "") + net}
+        valueColor={net >= 0 ? CYAN : RED}
+        border="#1f6f7a"
+        labelColor={CYAN}
+        sub={`streak ${props.session.streak} · best ${props.session.best}`}
+      />
+    </Group>
+  );
+}
 
-function ExchangeCard(props: { uid: string }) {
+/* ------------------------------ exchange cage ----------------------------- */
+
+function ExchangeCage(props: { uid: string }) {
   const queryClient = useQueryClient();
   const [direction, setDirection] = React.useState<"buy" | "sell">("buy");
   const [amount, setAmount] = React.useState<number>(1);
+  const [note, setNote] = React.useState<{ ok: boolean; text: string } | null>(null);
 
   const config = useQuery({ queryKey: ["casino-config"], queryFn: getCasinoConfig });
   const rate = config.data?.exchangeRate ?? DEFAULT_RATE;
-
-  const [status, setStatus] = React.useState<{ color: string; text: string } | null>(null);
 
   const mutation = useMutation({
     mutationFn: () => exchangeTokens(direction, amount),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["currencies", props.uid] });
-      setStatus({
-        color: "teal",
+      setNote({
+        ok: true,
         text:
           direction === "buy"
             ? `Bought ${amount} Gengar Tokens. Balance: ${res.gengarcoin} Tokens.`
@@ -359,460 +349,612 @@ function ExchangeCard(props: { uid: string }) {
       });
     },
     onError: (err: unknown) => {
-      setStatus({ color: "red", text: err instanceof Error ? err.message : "Exchange failed." });
+      setNote({ ok: false, text: err instanceof Error ? err.message : "Exchange failed." });
     },
   });
 
   const safeAmount = amount >= 1 ? amount : 1;
-  const line =
+  const idleLine =
     direction === "buy"
       ? `Buy: costs ${safeAmount * rate} Snag Coins`
-      : `Sell: returns ${safeAmount} Snag Coins`;
-  const disabled = mutation.isPending || safeAmount < 1;
+      : `Sell: returns ${safeAmount * rate} Snag Coins`;
+
+  const stepBtn = (dir: -1 | 1) => (
+    <UnstyledButton
+      onClick={() => setAmount((a) => Math.max(1, Math.min(99, a + dir)))}
+      aria-label={dir < 0 ? "Decrease tokens" : "Increase tokens"}
+      style={{ width: 38, height: 38, color: PURPLE_LT, fontSize: 18, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}
+    >
+      {dir < 0 ? "−" : "+"}
+    </UnstyledButton>
+  );
 
   return (
-    <Box p={{ base: "md", sm: "lg" }} style={{ background: PANEL, border: `1px solid ${PANEL_BORDER}`, borderRadius: 20 }}>
-      <Group justify="space-between" wrap="wrap" gap={12} mb="lg">
-        <Group gap={14} wrap="nowrap">
-          <Box
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              background: "linear-gradient(135deg, #a855f7, #6d28d9)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <IconArrowsExchange size={24} color="#fff" />
-          </Box>
-          <Title order={2} fz={28} fw={800} c="white" lh="md">
-            The Exchange Cage
-          </Title>
-        </Group>
+    <Box p={{ base: 16, sm: 20 }} style={{ background: WELL, border: `1px solid ${CARD_BORDER}`, clipPath: CLIP_BAR }}>
+      <Group gap={14} align="center" wrap="wrap">
+        <IconTile size={38}>
+          <IconArrowsExchange size={20} color="#fff" />
+        </IconTile>
+        <Text component="h2" tt="uppercase" style={{ fontFamily: displayFont, fontSize: 16, fontWeight: 700, letterSpacing: "0.04em", color: "#fff", margin: 0 }}>
+          Exchange Cage
+        </Text>
         <Text
-          fz={14}
-          fw={700}
-          c="grape.3"
-          px={14}
-          py={7}
-          style={{ borderRadius: 999, background: "#0e0a18", letterSpacing: 0.5 }}
-        >
-          Rate &middot; {rate} Snag = 1 Gengar
-        </Text>
-      </Group>
-
-      <Group gap={12} align="flex-end" wrap="wrap">
-        <SegmentedControl
-          value={direction}
-          onChange={(v) => setDirection(v as "buy" | "sell")}
-          data={[
-            { label: "Buy", value: "buy" },
-            { label: "Sell", value: "sell" },
-          ]}
-          color="grape"
-          aria-label="Exchange direction"
-        />
-        <Box style={{ flex: "1 1 140px", minWidth: 120 }}>
-          <Caption>Tokens</Caption>
-          <Box mt={4}>
-            <Stepper label="Tokens" value={amount} onChange={setAmount} min={1} max={999} accent="#c084fc" />
-          </Box>
-        </Box>
-        <Button
-          variant="gradient"
-          gradient={{ from: "grape", to: "violet", deg: 90 }}
-          radius="md"
-          size="md"
-          onClick={() => {
-            setStatus(null);
-            mutation.mutate();
+          tt="uppercase"
+          style={{
+            fontFamily: displayFont,
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            color: PURPLE_LT,
+            border: `1px solid ${HERO_BORDER}`,
+            padding: "6px 12px",
+            clipPath: "polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)",
           }}
-          loading={mutation.isPending}
-          disabled={disabled}
         >
-          Exchange
-        </Button>
-        <Text fz={14} c="dimmed">
-          {line}
+          {rate} Snag = 1 Gengar
         </Text>
+        <Box style={{ flex: "1 1 20px", minWidth: 0 }} />
+        <Group gap={0} wrap="nowrap">
+          <Toggle first active={direction === "buy"} onClick={() => { setDirection("buy"); setNote(null); }} label="Buy Gengar Tokens">
+            Buy
+          </Toggle>
+          <Toggle active={direction === "sell"} onClick={() => { setDirection("sell"); setNote(null); }} label="Sell Gengar Tokens">
+            Sell
+          </Toggle>
+        </Group>
+        <Group gap={0} align="center" wrap="nowrap" style={{ background: "#1b1a1e", border: `1px solid ${CARD_BORDER}` }}>
+          {stepBtn(-1)}
+          <Text ta="center" style={{ fontFamily: displayFont, fontSize: 17, fontWeight: 700, color: "#fff", minWidth: 48 }} aria-label={`Amount: ${amount}`}>
+            {amount}
+          </Text>
+          {stepBtn(1)}
+        </Group>
+        <Cta onClick={() => { setNote(null); mutation.mutate(); }} loading={mutation.isPending} disabled={mutation.isPending || safeAmount < 1}>
+          Exchange
+        </Cta>
       </Group>
-      {status && <StatusLine color={status.color}>{status.text}</StatusLine>}
+      <Text role="status" aria-live="polite" fz={13} mt={12} style={{ color: note ? (note.ok ? CYAN : RED) : MUTED }}>
+        {note ? note.text : idleLine}
+      </Text>
     </Box>
   );
 }
 
-function HexRoulette(props: { uid: string; tokens: number }) {
-  const [number, setNumber] = React.useState<number>(1);
-  const [bet, setBet] = React.useState<number>(1);
-  const { mutation, status, setStatus } = useGamePlay(props.uid, (res) =>
-    res.win
-      ? `The ball landed on ${res.roll}. You win ${res.payout} Gengar Tokens.`
-      : `The ball landed on ${res.roll}. No luck this spin.`
-  );
-  const disabled = mutation.isPending || props.tokens < bet;
+/* ------------------------------- the floor -------------------------------- */
 
+interface TableDef {
+  id: CasinoGame | "shadowLotto";
+  name: string;
+  icon: React.ReactNode;
+  payout: string;
+  blurb: string;
+  rules: string;
+}
+
+const TABLES: TableDef[] = [
+  {
+    id: "hexRoulette",
+    name: "Hex Roulette",
+    icon: <IconTargetArrow size={22} color={GOLD} />,
+    payout: "Win 5.5x",
+    blurb: "Cover a hex on the board, then one spin decides your fate.",
+    rules: "Pick a number 1 to 36 and set your chip. Land it and take 5.5x your stake.",
+  },
+  {
+    id: "dreamDice",
+    name: "Dream Dice",
+    icon: <IconDice5 size={22} color={CYAN} />,
+    payout: "2x · 3x Doubles",
+    blurb: "Call the total before the bones land. Doubles pay extra.",
+    rules: "Call the 2d6 total and set your chip. A hit pays 2x, or 3x on doubles.",
+  },
+  {
+    id: "paybackPyramid",
+    name: "Payback Pyramid",
+    icon: <IconTriangleInverted size={20} color={GOLD} />,
+    payout: "Win 2x",
+    blurb: "Even or odd on a d4. Simple, spooky, 50/50.",
+    rules: "Call even or odd. The d4 pays 2x your chip.",
+  },
+  {
+    id: "shadowLotto",
+    name: "Shadow Lotto",
+    icon: <IconTicket size={22} color={CYAN} />,
+    payout: "Jackpot",
+    blurb: "One token, one number, one weekly draw. Winner takes the pot.",
+    rules: "Tickets cost 1 Gengar Token. Match the weekly draw (1 to 50) and the jackpot is yours.",
+  },
+];
+
+function FloorKicker(props: { children: React.ReactNode }) {
   return (
-    <GameCard
-      icon={<IconTargetArrow size={22} color="#f472b6" />}
-      iconBg="#2a1526"
-      title="Hex Roulette"
-      blurb="Pick a number 1 to 36 and bet up to 5 tokens. Land it and take five and a half times your bet."
-      badge={<PayoutBadge color="#F5C842">Win 5.5x</PayoutBadge>}
-    >
-      <Group gap="md" wrap="nowrap" align="center">
-        <RouletteWheel number={number} />
-        <Stack gap={10} style={{ flex: 1, minWidth: 0 }}>
-          <Box>
-            <Caption>Number 1-36</Caption>
-            <Box mt={4}>
-              <Stepper label="Number" value={number} onChange={setNumber} min={1} max={36} accent="#f472b6" />
-            </Box>
-          </Box>
-          <Box>
-            <Caption>Bet 1-5</Caption>
-            <Box mt={4}>
-              <Stepper label="Bet" value={bet} onChange={setBet} min={1} max={5} accent="#f472b6" />
-            </Box>
-          </Box>
-        </Stack>
-      </Group>
-      <Button
-        fullWidth
-        mt="auto" pt="md"
-        size="md"
-        radius="md"
-        variant="gradient"
-        gradient={{ from: "pink", to: "grape", deg: 90 }}
-        leftSection={<IconRotateClockwise2 size={18} />}
-        onClick={() => {
-          setStatus(null);
-          mutation.mutate({ game: "hexRoulette", bet, pick: number });
-        }}
-        loading={mutation.isPending}
-        disabled={disabled}
-      >
-        Spin the Wheel
-      </Button>
-      {props.tokens < bet && (
-        <Text fz={14} c="dimmed" mt={6}>
-          You need {bet} Gengar Tokens to play this bet.
-        </Text>
-      )}
-      {status && <StatusLine color={status.color}>{status.text}</StatusLine>}
-    </GameCard>
+    <Group gap={12} align="center" wrap="nowrap">
+      <Box style={{ width: 28, height: 3, background: RED, flexShrink: 0 }} aria-hidden />
+      <Text tt="uppercase" style={{ fontFamily: displayFont, fontSize: 13, fontWeight: 700, letterSpacing: "0.28em", color: PURPLE_LT }}>
+        {props.children}
+      </Text>
+    </Group>
   );
 }
 
-function DreamDice(props: { uid: string; tokens: number }) {
-  const [total, setTotal] = React.useState<number>(7);
-  const [bet, setBet] = React.useState<number>(1);
-  const [dice, setDice] = React.useState<[number, number]>([5, 2]);
-  const { mutation, status, setStatus } = useGamePlay(props.uid, (res) => {
-    if (Array.isArray(res.roll) && res.roll.length >= 2) {
-      setDice([res.roll[0], res.roll[1]]);
+function TableCard(props: { table: TableDef; onSit: () => void }) {
+  const t = props.table;
+  return (
+    <UnstyledButton
+      onClick={props.onSit}
+      className="dc-card-tile"
+      aria-label={`Sit down at ${t.name}`}
+      style={{
+        textAlign: "left",
+        background: "radial-gradient(ellipse at 50% 0%,#1c1526,#141318)",
+        padding: "22px 22px 20px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        height: "100%",
+        clipPath: CLIP_CARD,
+      }}
+    >
+      <Group justify="space-between" align="center" wrap="nowrap" w="100%">
+        <IconTile>{t.icon}</IconTile>
+        <GoldBadge>{t.payout}</GoldBadge>
+      </Group>
+      <Text style={{ fontFamily: displayFont, fontSize: 19, fontWeight: 700, color: "#fff", letterSpacing: "0.03em" }}>
+        {t.name}
+      </Text>
+      <Text fz={13} c={DIM} lh={1.5} style={{ flex: 1 }}>
+        {t.blurb}
+      </Text>
+      <Text tt="uppercase" mt={4} style={{ fontFamily: displayFont, fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", color: GOLD }}>
+        Sit down &rarr;
+      </Text>
+    </UnstyledButton>
+  );
+}
+
+function Floor(props: { onSit: (id: TableDef["id"]) => void }) {
+  return (
+    <Stack gap={16}>
+      <FloorKicker>The Floor · Pick a Table</FloorKicker>
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing={16}>
+        {TABLES.map((t) => (
+          <TableCard key={t.id} table={t} onSit={() => props.onSit(t.id)} />
+        ))}
+      </SimpleGrid>
+    </Stack>
+  );
+}
+
+/* ---------------------------- seated: chip rail --------------------------- */
+
+function ChipSelector(props: { stake: number; setStake: (n: number) => void }) {
+  return (
+    <Group gap={10} align="center" wrap="nowrap">
+      <Text tt="uppercase" style={{ fontFamily: displayFont, fontSize: 12, fontWeight: 700, letterSpacing: "0.2em", color: MUTED }}>
+        Your Chips
+      </Text>
+      <Group gap={8} wrap="nowrap">
+        {[1, 2, 5].map((v) => {
+          const active = props.stake === v;
+          return (
+            <UnstyledButton
+              key={v}
+              onClick={() => props.setStake(v)}
+              aria-pressed={active}
+              aria-label={`Stake ${v} tokens`}
+              style={{
+                width: 46,
+                height: 46,
+                borderRadius: "50%",
+                cursor: "pointer",
+                fontFamily: displayFont,
+                fontSize: 16,
+                fontWeight: 700,
+                border: `3px dashed ${active ? GOLD : HERO_BORDER}`,
+                background: active ? GOLD_GRAD : "#1b1a1e",
+                color: active ? ON_GOLD : DIM,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {v}
+            </UnstyledButton>
+          );
+        })}
+      </Group>
+    </Group>
+  );
+}
+
+/* ------------------------------- game hook -------------------------------- */
+
+/** Wires a playGame call into a mutation plus a tri-state message. */
+function useGamePlay(
+  uid: string,
+  format: (res: { win: boolean; roll: number | number[]; payout: number }) => string,
+  onResult?: (res: { win: boolean; roll: number | number[]; payout: number }, bet: number) => void
+) {
+  const queryClient = useQueryClient();
+  const [state, setState] = React.useState<{ ok: boolean | null; msg: string | null }>({ ok: null, msg: null });
+
+  const mutation = useMutation({
+    mutationFn: (vars: { game: CasinoGame; bet: number; pick: number | "even" | "odd" }) =>
+      playGame(vars.game, vars.bet, vars.pick),
+    onSuccess: (res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["currencies", uid] });
+      setState({ ok: res.win, msg: format(res) });
+      onResult?.(res, vars.bet);
+    },
+    onError: (err: unknown) => {
+      setState({ ok: false, msg: err instanceof Error ? err.message : "The play failed." });
+    },
+  });
+
+  const reset = () => setState({ ok: null, msg: null });
+  return { mutation, ok: state.ok, msg: state.msg, reset };
+}
+
+type GameProps = {
+  uid: string;
+  tokens: number;
+  stake: number;
+  record: (win: boolean, payout: number, wager: number) => void;
+};
+
+/* --------------------------------- games ---------------------------------- */
+
+function HexRouletteBody(props: GameProps) {
+  const [pick, setPick] = React.useState<number>(1);
+  const [wheel, setWheel] = React.useState<string>("?");
+  const { mutation, ok, msg, reset } = useGamePlay(
+    props.uid,
+    (res) =>
+      res.win
+        ? `The wheel lands on ${res.roll}. Take ${res.payout} Gengar Tokens.`
+        : `The wheel lands on ${res.roll}. The house sweeps ${props.stake}.`,
+    (res, bet) => {
+      setWheel(String(res.roll));
+      props.record(res.win, res.payout, bet);
     }
-    const shown = Array.isArray(res.roll) ? res.roll.join(" and ") : String(res.roll);
-    return res.win
-      ? `You rolled ${shown}. You win ${res.payout} Gengar Tokens.`
-      : `You rolled ${shown}. That total missed.`;
-  });
-  const disabled = mutation.isPending || props.tokens < bet;
+  );
+  const disabled = mutation.isPending || props.tokens < props.stake;
 
   return (
-    <GameCard
-      icon={<IconDice5 size={22} color="#5eead4" />}
-      iconBg="#132a27"
-      title="Dream Dice"
-      blurb="Predict the 2d6 total. Pays 2x, or 3x if it lands on doubles."
-      badge={<PayoutBadge color="#5eead4">2x / 3x DBL</PayoutBadge>}
-    >
-      <Group justify="center" gap="md" my={4}>
-        <PipDie value={dice[0]} />
-        <PipDie value={dice[1]} />
-      </Group>
-      <Group gap="md" grow mt="sm">
-        <Box>
-          <Caption>Predict 2-12</Caption>
-          <Box mt={4}>
-            <Stepper label="Predicted total" value={total} onChange={setTotal} min={2} max={12} accent="#5eead4" />
-          </Box>
+    <Flex gap={28} wrap="wrap" align="flex-start">
+      <Box style={{ flex: "1 1 300px", minWidth: 0, maxWidth: 372 }}>
+        <Box style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 6 }}>
+          {Array.from({ length: 36 }, (_, i) => i + 1).map((n) => (
+            <Cell key={n} n={n} label={`Number ${n}`} selected={pick === n} onClick={() => setPick(n)} h={44} fz={15} />
+          ))}
         </Box>
-        <Box>
-          <Caption>Bet 1-5</Caption>
-          <Box mt={4}>
-            <Stepper label="Bet" value={bet} onChange={setBet} min={1} max={5} accent="#5eead4" />
-          </Box>
-        </Box>
-      </Group>
-      <Button
-        fullWidth
-        mt="auto" pt="md"
-        size="md"
-        radius="md"
-        variant="gradient"
-        gradient={{ from: "teal", to: "cyan", deg: 90 }}
-        leftSection={<IconDice5 size={18} />}
-        onClick={() => {
-          setStatus(null);
-          mutation.mutate({ game: "dreamDice", bet, pick: total });
-        }}
-        loading={mutation.isPending}
-        disabled={disabled}
-      >
-        Roll the Dice
-      </Button>
-      {props.tokens < bet && (
-        <Text fz={14} c="dimmed" mt={6}>
-          You need {bet} Gengar Tokens to play this bet.
-        </Text>
-      )}
-      {status && <StatusLine color={status.color}>{status.text}</StatusLine>}
-    </GameCard>
+      </Box>
+      <Stack gap={16} style={{ flex: "1 1 240px", minWidth: 240 }}>
+        <Group gap={20} align="center" wrap="wrap">
+          <Wheel value={wheel} />
+          <Stack gap={8}>
+            <Text fz={14} c={DIM}>
+              {props.stake} token{props.stake > 1 ? "s" : ""} on hex {pick}.
+            </Text>
+            <Cta onClick={() => { reset(); mutation.mutate({ game: "hexRoulette", bet: props.stake, pick }); }} loading={mutation.isPending} disabled={disabled}>
+              Spin the Wheel &rarr;
+            </Cta>
+          </Stack>
+        </Group>
+        <GameMsg ok={ok}>{msg ?? "Cover a hex and spin."}</GameMsg>
+        {props.tokens < props.stake && <NeedNote>You need {props.stake} Gengar Tokens for this chip.</NeedNote>}
+      </Stack>
+    </Flex>
   );
 }
 
-function PaybackPyramid(props: { uid: string; tokens: number }) {
-  const [pick, setPick] = React.useState<"even" | "odd">("even");
-  const [bet, setBet] = React.useState<number>(1);
-  const [face, setFace] = React.useState<number>(3);
-  const { mutation, status, setStatus } = useGamePlay(props.uid, (res) => {
-    if (typeof res.roll === "number") setFace(Math.max(1, Math.min(6, res.roll)));
-    return res.win
-      ? `The d4 rolled ${res.roll}. You win ${res.payout} Gengar Tokens.`
-      : `The d4 rolled ${res.roll}. Better luck next round.`;
-  });
-  const disabled = mutation.isPending || props.tokens < bet;
+function DreamDiceBody(props: GameProps) {
+  const [total, setTotal] = React.useState<number>(7);
+  const [dice, setDice] = React.useState<[number, number]>([5, 2]);
+  const { mutation, ok, msg, reset } = useGamePlay(
+    props.uid,
+    (res) => {
+      const shown = Array.isArray(res.roll) ? res.roll.join(" and ") : String(res.roll);
+      return res.win
+        ? `You rolled ${shown}. Take ${res.payout} Gengar Tokens.`
+        : `You rolled ${shown}. That total missed.`;
+    },
+    (res, bet) => {
+      if (Array.isArray(res.roll) && res.roll.length >= 2) setDice([res.roll[0], res.roll[1]]);
+      props.record(res.win, res.payout, bet);
+    }
+  );
+  const disabled = mutation.isPending || props.tokens < props.stake;
+
+  const dieTile = (v: number, key: number) => (
+    <Box
+      key={key}
+      style={{
+        width: 58,
+        height: 58,
+        background: "#1b1a1e",
+        border: `1px solid #1f6f7a`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: displayFont,
+        fontSize: 26,
+        fontWeight: 700,
+        color: CYAN,
+        clipPath: CLIP_CHIP,
+      }}
+    >
+      {v}
+    </Box>
+  );
 
   return (
-    <GameCard
-      icon={<IconTriangleInverted size={20} color="#F5C842" />}
-      iconBg="#2a2410"
-      title="Payback Pyramid"
-      blurb="Call even or odd on a d4 roll. Simple, spooky, 50/50."
-      badge={<PayoutBadge color="#F5C842">Win 2x</PayoutBadge>}
-    >
-      <Group justify="center" my={6}>
-        <PipDie value={face} bg="#FFD074" pip="#2a2410" size={78} />
+    <Stack gap={18}>
+      <Group gap={8} wrap="wrap">
+        {Array.from({ length: 11 }, (_, i) => i + 2).map((n) => (
+          <Cell key={n} n={n} label={`Total ${n}`} selected={total === n} onClick={() => setTotal(n)} accent={CYAN} w={54} h={48} fz={17} />
+        ))}
       </Group>
-      <Group gap="md" align="flex-end" mt="sm" wrap="nowrap">
-        <SegmentedControl
-          value={pick}
-          onChange={(v) => setPick(v as "even" | "odd")}
-          color="gold.2"
-          data={[
-            { label: "Even", value: "even" },
-            { label: "Odd", value: "odd" },
-          ]}
-          aria-label="Even or odd"
-        />
-        <Box style={{ flex: 1, minWidth: 0 }}>
-          <Caption>Bet 1-5</Caption>
-          <Box mt={4}>
-            <Stepper label="Bet" value={bet} onChange={setBet} min={1} max={5} accent="#F5C842" />
-          </Box>
-        </Box>
-      </Group>
-      <Button
-        fullWidth
-        mt="auto" pt="md"
-        size="md"
-        radius="md"
-        variant="gradient"
-        gradient={{ from: "gold.0", to: "gold.3", deg: 90 }}
-        c="#2a2410"
-        leftSection={<IconPlayerPlayFilled size={16} />}
-        onClick={() => {
-          setStatus(null);
-          mutation.mutate({ game: "paybackPyramid", bet, pick });
-        }}
-        loading={mutation.isPending}
-        disabled={disabled}
-      >
-        Play
-      </Button>
-      {props.tokens < bet && (
-        <Text fz={14} c="dimmed" mt={6}>
-          You need {bet} Gengar Tokens to play this bet.
+      <Group gap={24} align="center" wrap="wrap">
+        <Group gap={10}>
+          {dieTile(dice[0], 0)}
+          {dieTile(dice[1], 1)}
+        </Group>
+        <Text fz={14} c={DIM}>
+          {props.stake} token{props.stake > 1 ? "s" : ""} on a total of {total}.
         </Text>
-      )}
-      {status && <StatusLine color={status.color}>{status.text}</StatusLine>}
-    </GameCard>
+        <Cta onClick={() => { reset(); mutation.mutate({ game: "dreamDice", bet: props.stake, pick: total }); }} loading={mutation.isPending} disabled={disabled}>
+          Roll the Dice &rarr;
+        </Cta>
+      </Group>
+      <GameMsg ok={ok}>{msg ?? "Call the total, then roll."}</GameMsg>
+      {props.tokens < props.stake && <NeedNote>You need {props.stake} Gengar Tokens for this chip.</NeedNote>}
+    </Stack>
   );
 }
 
-function ShadowLotto(props: { uid: string; tokens: number }) {
+function PaybackPyramidBody(props: GameProps) {
+  const [call, setCall] = React.useState<"even" | "odd">("even");
+  const [face, setFace] = React.useState<string>("?");
+  const { mutation, ok, msg, reset } = useGamePlay(
+    props.uid,
+    (res) =>
+      res.win
+        ? `The d4 shows ${res.roll}. ${call.toUpperCase()} pays ${res.payout} Gengar Tokens.`
+        : `The d4 shows ${res.roll}. The pyramid takes its cut.`,
+    (res, bet) => {
+      setFace(String(res.roll));
+      props.record(res.win, res.payout, bet);
+    }
+  );
+  const disabled = mutation.isPending || props.tokens < props.stake;
+
+  return (
+    <Stack gap={18}>
+      <Group gap={28} align="center" wrap="wrap">
+        <Box
+          style={{
+            width: 64,
+            height: 64,
+            background: GOLD_GRAD,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: displayFont,
+            fontSize: 28,
+            fontWeight: 700,
+            color: ON_GOLD,
+            clipPath: "polygon(50% 0,100% 100%,0 100%)",
+          }}
+        >
+          {face}
+        </Box>
+        <Group gap={0} wrap="nowrap">
+          <Toggle first active={call === "even"} onClick={() => setCall("even")} label="Call even">
+            Even
+          </Toggle>
+          <Toggle active={call === "odd"} onClick={() => setCall("odd")} label="Call odd">
+            Odd
+          </Toggle>
+        </Group>
+        <Cta onClick={() => { reset(); mutation.mutate({ game: "paybackPyramid", bet: props.stake, pick: call }); }} loading={mutation.isPending} disabled={disabled}>
+          Play &rarr;
+        </Cta>
+      </Group>
+      <GameMsg ok={ok}>{msg ?? "Call it and play."}</GameMsg>
+      {props.tokens < props.stake && <NeedNote>You need {props.stake} Gengar Tokens for this chip.</NeedNote>}
+    </Stack>
+  );
+}
+
+function ShadowLottoBody(props: { uid: string; tokens: number; record: (win: boolean, payout: number, wager: number) => void }) {
   const queryClient = useQueryClient();
   const [pick, setPick] = React.useState<number>(1);
-  const [status, setStatus] = React.useState<{ color: string; text: string } | null>(null);
+  const [state, setState] = React.useState<{ ok: boolean | null; msg: string | null }>({ ok: null, msg: null });
 
   const lotto = useQuery({ queryKey: ["lotto-state"], queryFn: getLottoState });
   const mine = useQuery({ queryKey: ["my-casino", props.uid], queryFn: () => getMyCasino(props.uid) });
   const config = useQuery({ queryKey: ["casino-config"], queryFn: getCasinoConfig });
   const minTickets = Math.max(1, config.data?.lottoMinTickets ?? DEFAULT_LOTTO_MIN_TICKETS);
 
-  const mutation = useMutation({
+  const buy = useMutation({
     mutationFn: () => buyLottoTicket(pick),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["lotto-state"] });
       queryClient.invalidateQueries({ queryKey: ["my-casino", props.uid] });
       queryClient.invalidateQueries({ queryKey: ["currencies", props.uid] });
-      setStatus({
-        color: "teal",
-        text: `Ticket bought for number ${res.number}. Jackpot is now ${res.jackpot} Gengar Tokens.`,
-      });
+      props.record(false, 0, 1);
+      setState({ ok: true, msg: `Ticket Nº ${res.number} is in the draw. Jackpot is now ${res.jackpot} Gengar Tokens.` });
     },
-    onError: (err: unknown) => {
-      setStatus({ color: "red", text: err instanceof Error ? err.message : "Ticket purchase failed." });
-    },
+    onError: (err: unknown) => setState({ ok: false, msg: err instanceof Error ? err.message : "Ticket purchase failed." }),
   });
 
-  // Graders/admins draw the winner by hand (no scheduled job runs it).
   const { user } = useAuth();
   const canDraw = hasCapability(user, Capability.ReviewRewards);
 
-  const drawMutation = useMutation({
+  const draw = useMutation({
     mutationFn: () => drawLotto(),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["lotto-state"] });
       queryClient.invalidateQueries({ queryKey: ["my-casino", props.uid] });
       queryClient.invalidateQueries({ queryKey: ["currencies", props.uid] });
-      setStatus({
-        color: "teal",
-        text: res.winners
-          ? `Drew #${res.drawn}. ${res.winners} winner(s) split the pot for ${res.share} Gengar Tokens each.`
-          : `Drew #${res.drawn}. No winning tickets this round.`,
+      if (res.winners) props.record(true, res.share, 0);
+      setState({
+        ok: !!res.winners,
+        msg: res.winners
+          ? `Drawn: ${res.drawn}. ${res.winners} winner(s) split the pot for ${res.share} Gengar Tokens each.`
+          : `Drawn: ${res.drawn}. No winning tickets this round.`,
       });
     },
-    onError: (err: unknown) => {
-      setStatus({ color: "red", text: err instanceof Error ? err.message : "The draw failed." });
-    },
+    onError: (err: unknown) => setState({ ok: false, msg: err instanceof Error ? err.message : "The draw failed." }),
   });
 
   const jackpot = lotto.data?.jackpot;
   const ticket = mine.data?.lottoNumber;
-  const disabled = mutation.isPending || props.tokens < 1;
+  const entries = lotto.data?.ticketCount ?? 0;
+  const disabled = buy.isPending || props.tokens < 1;
 
   return (
-    <GameCard
-      icon={<IconTicket size={22} color="#f472b6" />}
-      iconBg="#2a1526"
-      title="Shadow Lotto"
-      blurb="One ticket costs 1 Gengar Token. Match the weekly draw, 1 to 50."
-      badge={
-        typeof ticket === "number" ? <PayoutBadge color="#c084fc">Ticket #{ticket}</PayoutBadge> : null
-      }
-    >
-      <Stack gap={2} align="center" my={4}>
-        <Caption c="teal.4">Jackpot</Caption>
-        <Text fz={44} fw={800} c="#5eead4" lh={1.05}>
-          {typeof jackpot === "number" ? jackpot : "-"}
-        </Text>
-        <Text fz={14} c="dimmed">
-          Gengar Tokens
-        </Text>
-        <Text fz={14} c="dimmed" role="status" aria-live="polite">
-          {(lotto.data?.ticketCount ?? 0) >= minTickets
-            ? `${lotto.data?.ticketCount ?? 0} entries in, ready for the draw. Staff have been notified.`
-            : `${lotto.data?.ticketCount ?? 0} of ${minTickets} entries needed before the draw runs.`}
-        </Text>
-      </Stack>
-      <Group gap="md" align="flex-end" mt="sm" wrap="nowrap">
-        <Box style={{ flex: 1, minWidth: 0 }}>
-          <Caption>Pick 1-50</Caption>
-          <Box mt={4}>
-            <Stepper label="Pick" value={pick} onChange={setPick} min={1} max={50} accent="#5eead4" />
-          </Box>
+    <Flex gap={28} wrap="wrap" align="flex-start">
+      <Box style={{ flex: "1 1 300px", minWidth: 0, maxWidth: 470 }}>
+        <Box style={{ display: "grid", gridTemplateColumns: "repeat(10, minmax(0, 1fr))", gap: 5 }}>
+          {Array.from({ length: 50 }, (_, i) => i + 1).map((n) => (
+            <Cell key={n} n={n} label={`Number ${n}`} selected={pick === n} onClick={() => setPick(n)} h={36} fz={13} />
+          ))}
         </Box>
-        <Button
-          size="md"
-          radius="md"
-          variant="gradient"
-          gradient={{ from: "teal", to: "green", deg: 90 }}
-          leftSection={<IconTicket size={18} />}
-          onClick={() => {
-            setStatus(null);
-            mutation.mutate();
-          }}
-          loading={mutation.isPending}
-          disabled={disabled}
-        >
-          Buy ticket
-        </Button>
-      </Group>
-      {props.tokens < 1 && (
-        <Text fz={14} c="dimmed" mt={6}>
-          You need at least 1 Gengar Token to buy a ticket.
-        </Text>
-      )}
-      {canDraw && (
-        <Stack gap={4} mt="md">
-          <Button
-            fullWidth
-            variant="light"
-            color="red"
-            radius="md"
-            leftSection={<IconDroplet size={16} />}
-            onClick={() => {
-              setStatus(null);
-              drawMutation.mutate();
-            }}
-            loading={drawMutation.isPending}
-            disabled={drawMutation.isPending}
-          >
-            Draw winner (admin)
-          </Button>
-          <Text fz={14} c="dimmed">
-            Draws the number, splits the jackpot among matching tickets, and resets the pot.
-            You get a notification when entries reach {minTickets}.
+      </Box>
+      <Stack gap={14} style={{ flex: "1 1 240px", minWidth: 240 }}>
+        <Box>
+          <Text tt="uppercase" style={{ fontFamily: displayFont, fontSize: 12, fontWeight: 700, letterSpacing: "0.22em", color: CYAN }}>
+            Jackpot
           </Text>
-        </Stack>
-      )}
-      {status && <StatusLine color={status.color}>{status.text}</StatusLine>}
-    </GameCard>
+          <Text style={{ fontFamily: displayFont, fontSize: 34, fontWeight: 700, color: CYAN, lineHeight: 1 }}>
+            {typeof jackpot === "number" ? jackpot : "-"}
+          </Text>
+          <Text fz={12} c={MUTED}>
+            Gengar Tokens · {entries} of {minTickets} entries in
+          </Text>
+        </Box>
+        <Group gap={10} wrap="wrap">
+          <Cta onClick={() => { setState({ ok: null, msg: null }); buy.mutate(); }} loading={buy.isPending} disabled={disabled}>
+            Buy Ticket · 1 &#10022;
+          </Cta>
+          {canDraw && (
+            <Cta tone="red" onClick={() => { setState({ ok: null, msg: null }); draw.mutate(); }} loading={draw.isPending} disabled={draw.isPending}>
+              Draw · Admin
+            </Cta>
+          )}
+        </Group>
+        {typeof ticket === "number" && (
+          <Text
+            style={{
+              fontFamily: displayFont,
+              fontSize: 12,
+              fontWeight: 700,
+              color: PURPLE_LT,
+              border: `1px solid ${HERO_BORDER}`,
+              padding: "5px 12px",
+              clipPath: "polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)",
+              alignSelf: "flex-start",
+            }}
+          >
+            Nº {ticket}
+          </Text>
+        )}
+        <GameMsg ok={state.ok}>{state.msg ?? "Pick a number, buy in."}</GameMsg>
+        {props.tokens < 1 && <NeedNote>You need at least 1 Gengar Token for a ticket.</NeedNote>}
+      </Stack>
+    </Flex>
   );
 }
 
-/* --------------------------------- Page ----------------------------------- */
+/* ------------------------------ seated view ------------------------------- */
 
-function CurrencyCard(props: { icon: React.ReactNode; label: string; value: number; border: string; iconBg: string }) {
+function Seated(props: {
+  table: TableDef;
+  uid: string;
+  tokens: number;
+  stake: number;
+  setStake: (n: number) => void;
+  record: (win: boolean, payout: number, wager: number) => void;
+  onStand: () => void;
+}) {
+  const t = props.table;
+  const showStake = t.id !== "shadowLotto";
+  const gameProps: GameProps = { uid: props.uid, tokens: props.tokens, stake: props.stake, record: props.record };
+
   return (
-    <Group
-      gap={12}
-      wrap="nowrap"
-      px={16}
-      py={10}
-      style={{ borderRadius: 14, background: PANEL, border: `1px solid ${props.border}` }}
-    >
+    <Stack gap={16}>
+      <Flex align="center" gap={16} wrap="wrap">
+        <UnstyledButton
+          onClick={props.onStand}
+          aria-label="Back to the floor"
+          style={{
+            fontFamily: displayFont,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: PURPLE_LT,
+            border: `1px solid ${HERO_BORDER}`,
+            padding: "10px 18px",
+            cursor: "pointer",
+            clipPath: CLIP_CTA_SM,
+          }}
+        >
+          &larr; Back to the Floor
+        </UnstyledButton>
+        <Text component="h2" style={{ fontFamily: displayFont, fontSize: 22, fontWeight: 700, color: "#fff", letterSpacing: "0.04em", margin: 0 }}>
+          {t.name}
+        </Text>
+        <Box style={{ flex: "1 1 10px", minWidth: 0 }} />
+        {showStake && <ChipSelector stake={props.stake} setStake={props.setStake} />}
+      </Flex>
+
       <Box
+        p={{ base: 20, sm: 30 }}
         style={{
-          width: 38,
-          height: 38,
-          borderRadius: "50%",
-          background: props.iconBg,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
+          background: "radial-gradient(ellipse at 50% -20%,#241f2e,#141318)",
+          border: `1px solid ${HERO_BORDER}`,
+          clipPath: CLIP_PANEL,
         }}
       >
-        {props.icon}
+        <Group gap={14} align="center" wrap="wrap" mb={20}>
+          <GoldBadge fz={12}>{t.payout}</GoldBadge>
+          <Text fz={14} c={DIM} lh={1.5} style={{ flex: 1, minWidth: 200 }}>
+            {t.rules}
+          </Text>
+        </Group>
+        {t.id === "hexRoulette" && <HexRouletteBody {...gameProps} />}
+        {t.id === "dreamDice" && <DreamDiceBody {...gameProps} />}
+        {t.id === "paybackPyramid" && <PaybackPyramidBody {...gameProps} />}
+        {t.id === "shadowLotto" && <ShadowLottoBody uid={props.uid} tokens={props.tokens} record={props.record} />}
       </Box>
-      <Box>
-        <Caption>{props.label}</Caption>
-        <Text fz={26} fw={800} c="white" lh={1.1}>
-          {props.value.toLocaleString()}
-        </Text>
-      </Box>
-    </Group>
+    </Stack>
   );
 }
+
+/* --------------------------------- page ----------------------------------- */
 
 export default function Casino() {
   const { user } = useAuth();
   const uid = user?.uid;
+
+  const [seat, setSeat] = React.useState<TableDef["id"] | null>(null);
+  const [stake, setStake] = React.useState<number>(1);
+  const [session, setSession] = React.useState<Session>({ won: 0, lost: 0, streak: 0, best: 0 });
+
+  const record = React.useCallback((win: boolean, payout: number, wager: number) => {
+    setSession((s) => {
+      const streak = win ? s.streak + 1 : 0;
+      return {
+        won: s.won + Math.max(0, payout - wager),
+        lost: s.lost + Math.max(0, wager - payout),
+        streak,
+        best: Math.max(s.best, streak),
+      };
+    });
+  }, []);
 
   const currencies = useQuery({
     queryKey: ["currencies", uid],
@@ -822,61 +964,43 @@ export default function Casino() {
 
   const snagCoins = num(currencies.data?.pokecoin);
   const gengarTokens = num(currencies.data?.gengarcoin);
+  const seatTable = TABLES.find((t) => t.id === seat) ?? null;
 
   return (
-    <Box style={{ background: BG, minHeight: "100%" }}>
+    <Box style={{ background: INK, minHeight: "100%" }}>
       <Seo page="/Casino" />
       <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
         <PageHero
-          eyebrow={
-            <Group gap={8}>
-              <IconSkull size={16} color="#c084fc" />
-              <Text fz={14} fw={700} c="grape.3" tt="uppercase" style={{ letterSpacing: 3 }}>
-                The Casino &middot; Open All Night
-              </Text>
-            </Group>
-          }
-          title="Ghastly Gambling"
-          subtitle="Trade Snag Coins for Gengar Tokens and try your luck. The house RNG is server-side and final."
-          aside={
-            uid ? (
-              <Group gap={12} wrap="wrap">
-                <CurrencyCard
-                  icon={<IconCoin size={22} color="#F5C842" />}
-                  iconBg="#2a2410"
-                  label="Snag Coins"
-                  value={snagCoins}
-                  border="#5a4a1e"
-                />
-                <CurrencyCard
-                  icon={<IconGhost2 size={22} color="#c084fc" />}
-                  iconBg="#1f1633"
-                  label="Gengar Tokens"
-                  value={gengarTokens}
-                  border={PANEL_BORDER}
-                />
-              </Group>
-            ) : undefined
-          }
+          eyebrow="The Casino · Open All Night"
+          title="GHASTLY GAMBLING"
+          subtitle="Pick a table, set your chips, and try your luck. The house RNG is server-side and final."
+          aside={uid ? <WalletChips snagCoins={snagCoins} gengarTokens={gengarTokens} session={session} /> : undefined}
         />
 
         {!uid ? (
-          <Box p={24} style={{ background: PANEL, border: `1px solid ${PANEL_BORDER}`, borderRadius: 20 }}>
-            <Title order={2} fz={16} fw={400} c="dimmed" ta="center" lh="md">
+          <Box p={24} style={{ background: CARD, border: `1px solid ${CARD_BORDER}` }}>
+            <Text fz={16} c="dimmed" ta="center">
               Sign in to play.
-            </Title>
+            </Text>
           </Box>
         ) : currencies.isPending ? (
           <SectionLoader />
         ) : (
           <Stack gap={20}>
-            <ExchangeCard uid={uid} />
-            <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-              <HexRoulette uid={uid} tokens={gengarTokens} />
-              <DreamDice uid={uid} tokens={gengarTokens} />
-              <PaybackPyramid uid={uid} tokens={gengarTokens} />
-              <ShadowLotto uid={uid} tokens={gengarTokens} />
-            </SimpleGrid>
+            <ExchangeCage uid={uid} />
+            {seatTable ? (
+              <Seated
+                table={seatTable}
+                uid={uid}
+                tokens={gengarTokens}
+                stake={stake}
+                setStake={setStake}
+                record={record}
+                onStand={() => setSeat(null)}
+              />
+            ) : (
+              <Floor onSit={setSeat} />
+            )}
           </Stack>
         )}
       </Container>

@@ -1,21 +1,18 @@
 import {
   Anchor,
-  Avatar,
   Box,
-  Button,
   Container,
   Group,
   ScrollArea,
   Stack,
   Text,
-  TextInput,
 } from "@mantine/core";
-import { IconSend } from "@tabler/icons-react";
 import React from "react";
 import { Link } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 import { useAuth } from "../../context/AuthContext";
+import useMediaQuery from "../../hooks/useMediaQuery";
 import { SnagIcon } from "../../icons/SnagIcon";
 import { isAdmin } from "../../lib/permissions";
 import {
@@ -50,7 +47,7 @@ const TASK_LABEL: Record<SnagTask, string> = {
 
 function L(props: { to: string; children: React.ReactNode }) {
   return (
-    <Anchor component={Link} to={props.to} c="blue.3" fz="inherit">
+    <Anchor component={Link} to={props.to} c="#ddd6fe" fz="inherit">
       {props.children}
     </Anchor>
   );
@@ -1100,6 +1097,7 @@ const ADMIN_GREETING: React.ReactNode = (
 export default function SnagAgent() {
   const { user } = useAuth();
   const admin = isAdmin(user);
+  const { isOverSm } = useMediaQuery();
   const [messages, setMessages] = React.useState<Msg[]>([
     { from: "snag", node: admin ? ADMIN_GREETING : GREETING },
   ]);
@@ -1111,7 +1109,7 @@ export default function SnagAgent() {
   const push = (msg: Msg) => setMessages((m) => [...m, msg]);
   React.useEffect(() => {
     viewport.current?.scrollTo({ top: viewport.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [messages, busy]);
 
   const submitTicket = async (kind: Exclude<Intake, null>, text: string) => {
     const { addDoc, collection } = await import("firebase/firestore");
@@ -1179,7 +1177,7 @@ export default function SnagAgent() {
             component="button"
             type="button"
             fz="inherit"
-            c="blue.3"
+            c="#ddd6fe"
             onClick={() => startIntake("question")}
           >
             send it to the staff as a question
@@ -1241,78 +1239,162 @@ export default function SnagAgent() {
     { label: "Ask the staff", action: () => startIntake("question") },
   ];
 
+  // On mobile the chip row collapses to just "Report a bug" (keepOnMobile) to
+  // keep it uncluttered; the rest reappear at >= sm. The suggestion and
+  // question intakes stay reachable by typing, and the "outside my manual"
+  // reply offers an inline path to the staff.
+  const visibleChips = chips.filter((c) => isOverSm || c.keepOnMobile);
+
+  // Bot marker: the angled S.N.A.G. avatar tile carrying the walkie identity
+  // icon. Reused by every bot bubble and by the typing indicator.
+  const botAvatar = (
+    <Box
+      aria-hidden
+      style={{
+        flex: "none",
+        width: 38,
+        height: 38,
+        background: "#3a1d63",
+        border: "1px solid #3a3550",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        clipPath:
+          "polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)",
+      }}
+    >
+      <SnagIcon name="walkie" size={20} color="#fff" title="S.N.A.G." />
+    </Box>
+  );
+
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
       <Seo noindex title="S.N.A.G. | Snagem Guild" />
+
+      {/* Scoped animation + hover/focus states for the flat, angular chat panel
+          (matches the SNAG mockup; no border-radius, Quantico SEND). */}
+      <style>{`
+        @keyframes snagblink { 0%,80%,100% { opacity:.25 } 40% { opacity:1 } }
+        .snag-dot { width:7px; height:7px; background:#c79bd6; border-radius:50%; animation:snagblink 1.1s infinite; }
+        .snag-chip { font-family:Roboto,sans-serif; font-size:13px; font-weight:700; color:#e8dff0; background:#2a1a2e; border:1px solid #4b3f63; padding:8px 16px; cursor:pointer; clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%); transition:background .18s,border-color .18s,color .18s; }
+        .snag-chip:hover { background:#3c2a44; border-color:#7e2c75; color:#fff; }
+        .snag-input { flex:1; min-width:0; background:#1b1a1e; border:1px solid #2a2637; color:#fff; font-family:Roboto,sans-serif; font-size:15px; padding:14px 18px; outline:none; transition:border-color .18s,box-shadow .18s; }
+        .snag-input:focus { border-color:#7e2c75; box-shadow:0 0 0 2px rgba(199,155,214,.25); }
+        .snag-input::placeholder { color:#6f6a78; }
+        .snag-send { font-family:var(--font-display,'Quantico',sans-serif); font-size:14px; font-weight:700; letter-spacing:.12em; color:#fff; background:linear-gradient(90deg,#7E2C75,#E54156); border:none; cursor:pointer; padding:0 30px; clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%); transition:filter .18s; }
+        .snag-send:hover:not(:disabled) { filter:brightness(1.15); }
+        .snag-send:disabled { opacity:.5; cursor:not-allowed; }
+      `}</style>
+
       <PageHero
         eyebrow="Support Network Assistance Gadget"
         title="S.N.A.G."
+        titleSuffix={
+          admin ? (
+            <Text
+              component="span"
+              fz={11}
+              fw={700}
+              c="#1A1B1E"
+              px={12}
+              py={4}
+              style={{
+                display: "inline-block",
+                fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+                letterSpacing: "0.18em",
+                lineHeight: 1.6,
+                background: "linear-gradient(90deg,#FFD074,#C9940F)",
+                clipPath: "polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)",
+              }}
+            >
+              STAFF MODE
+            </Text>
+          ) : undefined
+        }
         subtitle="The guild's help device. Ask where things are, how systems work, or send the staff a suggestion, bug report, or question."
         mb={20}
       />
 
       <Box
         style={{
-          borderRadius: 16,
-          border: "1px solid #232028",
+          display: "flex",
+          flexDirection: "column",
           background: "#141318",
+          border: "1px solid #2a2637",
           overflow: "hidden",
+          clipPath: "polygon(0 0,100% 0,100% 100%,22px 100%,0 calc(100% - 22px))",
         }}
       >
-        <ScrollArea h={420} viewportRef={viewport} p="md">
-          <Stack gap={10} p={4}>
-            {messages.map((m, i) => (
-              <Group
-                key={i}
-                align="flex-start"
-                gap={8}
-                wrap="nowrap"
-                justify={m.from === "user" ? "flex-end" : "flex-start"}
-              >
-                {m.from === "snag" && (
-                  <Avatar radius="xl" size={30} bg="#241f2e">
-                    <SnagIcon name="walkie" size={18} cut="#241f2e" title="S.N.A.G." />
-                  </Avatar>
-                )}
+        <ScrollArea h={isOverSm ? 480 : 400} viewportRef={viewport} p={{ base: 16, sm: 26 }}>
+          <Stack gap={16}>
+            {messages.map((m, i) => {
+              const isUser = m.from === "user";
+              return (
+                <Group
+                  key={i}
+                  align="flex-start"
+                  gap={12}
+                  wrap="nowrap"
+                  justify={isUser ? "flex-end" : "flex-start"}
+                >
+                  {!isUser && botAvatar}
+                  <Box
+                    px={18}
+                    py={12}
+                    maw="78%"
+                    style={{
+                      background: isUser ? "#772976" : "#1b1a1e",
+                      border: `1px solid ${isUser ? "#8f3f8e" : "#2a2637"}`,
+                    }}
+                  >
+                    <Text
+                      fz={15}
+                      c={isUser ? "#fff" : "#e8e4ee"}
+                      style={{ lineHeight: 1.65, wordBreak: "break-word" }}
+                    >
+                      {m.node}
+                    </Text>
+                  </Box>
+                </Group>
+              );
+            })}
+            {busy && (
+              <Group align="flex-start" gap={12} wrap="nowrap" justify="flex-start">
+                {botAvatar}
                 <Box
-                  px={12}
-                  py={8}
-                  maw="80%"
+                  role="status"
+                  aria-live="polite"
+                  aria-label="S.N.A.G. is typing"
                   style={{
-                    borderRadius: 12,
-                    background: m.from === "user" ? "#772976" : "#211f26",
-                    border: m.from === "user" ? "none" : "1px solid #2a2637",
+                    display: "flex",
+                    gap: 6,
+                    alignItems: "center",
+                    padding: "16px 20px",
+                    background: "#1b1a1e",
+                    border: "1px solid #2a2637",
                   }}
                 >
-                  <Text fz={16} c="white" style={{ lineHeight: 1.55, wordBreak: "break-word" }}>
-                    {m.node}
-                  </Text>
+                  <span className="snag-dot" />
+                  <span className="snag-dot" style={{ animationDelay: ".2s" }} />
+                  <span className="snag-dot" style={{ animationDelay: ".4s" }} />
                 </Box>
               </Group>
-            ))}
-            {busy && (
-              <Text fz={14} c="dimmed" role="status" aria-live="polite">
-                S.N.A.G. is checking...
-              </Text>
             )}
           </Stack>
         </ScrollArea>
 
-        <Box p="sm" style={{ borderTop: "1px solid #232028" }}>
-          {/* On mobile the chip row collapses to just "Report a bug" to keep it
-              uncluttered; the rest carry visibleFrom="sm" and return on wider
-              screens. The suggestion and question intakes stay reachable by
-              typing, and the "outside my manual" reply offers an inline path to
-              the staff. */}
-          <Group gap={6} mb={8} wrap="wrap">
-            {chips.map((c) => (
-              <Button
+        <Box
+          px={{ base: 16, sm: 28 }}
+          pt={16}
+          pb={{ base: 16, sm: 20 }}
+          style={{ borderTop: "1px solid #232028" }}
+        >
+          <Group gap={8} mb={12} wrap="wrap">
+            {visibleChips.map((c) => (
+              <button
                 key={c.label}
-                size="compact-xs"
-                radius="xl"
-                variant="light"
-                color="grape"
-                visibleFrom={c.keepOnMobile ? undefined : "sm"}
+                type="button"
+                className="snag-chip"
                 onClick={() => {
                   if (c.action) c.action();
                   else if (c.text) {
@@ -1322,11 +1404,12 @@ export default function SnagAgent() {
                 }}
               >
                 {c.label}
-              </Button>
+              </button>
             ))}
           </Group>
-          <Group gap={8} wrap="nowrap">
-            <TextInput
+          <Group gap={12} wrap="nowrap" align="stretch">
+            <input
+              className="snag-input"
               placeholder={
                 intake
                   ? intake === "suggestion"
@@ -1342,23 +1425,19 @@ export default function SnagAgent() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSend();
               }}
-              radius="xl"
-              style={{ flex: 1 }}
-              styles={{ input: { background: "#2E2D2E" } }}
             />
-            <Button
-              radius="xl"
-              color="grape"
+            <button
+              type="button"
+              className="snag-send"
               onClick={handleSend}
               disabled={!input.trim() || busy}
               aria-label="Send message"
-              leftSection={<IconSend size={16} />}
             >
-              Send
-            </Button>
+              SEND
+            </button>
           </Group>
           {intake && (
-            <Text fz={14} c="gold.1" mt={6} role="status" aria-live="polite">
+            <Text fz={14} c="gold.1" mt={10} role="status" aria-live="polite">
               {intake === "suggestion"
                 ? "Recording a suggestion. Your next message goes to the staff."
                 : intake === "bug"
@@ -1368,7 +1447,7 @@ export default function SnagAgent() {
                 component="button"
                 type="button"
                 fz={14}
-                c="blue.3"
+                c="#ddd6fe"
                 onClick={() => {
                   setIntake(null);
                   push({ from: "snag", node: "Cancelled. What else can I help with?" });
@@ -1378,13 +1457,12 @@ export default function SnagAgent() {
               </Anchor>
             </Text>
           )}
+          <Text fz={12} c="#6f6a78" mt={12} ta="center" style={{ lineHeight: 1.5 }}>
+            S.N.A.G. answers from the guild&apos;s own manuals and your progress; it is not
+            connected to an external AI. Anything it cannot answer can be sent to the staff.
+          </Text>
         </Box>
       </Box>
-
-      <Text fz={14} c="dimmed" mt={10} ta="right">
-        S.N.A.G. answers from the guild&apos;s own manuals and your progress; it is not
-        connected to an external AI. Anything it cannot answer can be sent to the staff.
-      </Text>
     </Container>
   );
 }

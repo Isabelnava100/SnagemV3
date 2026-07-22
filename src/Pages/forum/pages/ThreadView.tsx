@@ -26,7 +26,7 @@ import { withSuffix } from "../../../lib/seo/site";
 import { stripHtml, truncate } from "../../../lib/seo/text";
 import { isAdmin } from "../../../lib/permissions";
 import useMediaQuery from "../../../hooks/useMediaQuery";
-import { FORUM_ACCENT, POSTS_PER_PAGE } from "../config";
+import { FORUM_ACCENT, POSTS_PER_PAGE, categoryByLink } from "../config";
 import { safariFightBonus } from "../../../lib/safari";
 import { attackDamageForStar } from "../../../lib/encounterStars";
 import { addBookmark, removeBookmark } from "../mutations";
@@ -35,7 +35,7 @@ import { hasCapability } from "../../../lib/permissions";
 import { Capability } from "../../../components/types/typesUsed";
 import CloseThreadModal from "../components/CloseThreadModal";
 import { getForumBookmarks, getPendingActions, getPostsCount, getPostsPage, getThread } from "../queries";
-import { EncounterBlock, ForumThread } from "../types";
+import { EncounterBlock, ForumThread, formatFireDate } from "../types";
 import { pokemonData } from "../../../data/pokemon";
 import PollBlock from "../components/PollBlock";
 import PostCard from "../components/PostCard";
@@ -64,41 +64,66 @@ export function userMayPost(thread: ForumThread | null | undefined, user: Return
 }
 
 /** Pinned banner shown at the top of a thread while a boss battle is active. */
-function BossBanner(props: { boss: NonNullable<ForumThread["bossBattle"]> }) {
-  const { boss } = props;
+function BossBanner(props: {
+  boss: NonNullable<ForumThread["bossBattle"]>;
+  weather?: string | null;
+  isOverSm: boolean;
+}) {
+  const { boss, weather, isOverSm } = props;
   const need = boss.requiredPosts ?? 0;
   const done = Math.round(Math.min(boss.attackPosts ?? 0, need || Infinity) * 10) / 10;
   const remaining = need ? Math.max(0, need - done) : 0;
   const healthPct = need ? Math.max(0, Math.round(((need - done) / need) * 100)) : 100;
 
+  const metaParts = [
+    boss.attackDamage ? `${boss.attackDamage} damage per hit` : null,
+    need ? `${remaining} of ${need} attack posts left` : "check posts to wear it down",
+    weather ? `weather: ${weather}` : null,
+    "shared boss",
+  ].filter(Boolean) as string[];
+
   return (
     <Box
-      mt={12}
-      p={12}
-      style={{ background: "#3a1f22", border: "1px solid #7a2b2b", borderRadius: 10 }}
+      mt={16}
+      style={{ background: "#2a1a1e", border: "1px solid #E54156", padding: isOverSm ? "20px 24px" : 16 }}
     >
-      <Group gap={12} wrap="nowrap" align="center">
-        <Avatar src={getPokemonImageURL(boss.slug)} alt={`${boss.name} sprite`} size={52} radius="xl" bg="#2b2a2b" />
-        <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
-          <Group gap={8} wrap="wrap">
-            <Text fz={16} c="white" fw={700}>
-              Boss Battle: {boss.name}
+      <Flex
+        gap={isOverSm ? 18 : 12}
+        align={isOverSm ? "center" : "flex-start"}
+        direction={isOverSm ? "row" : "column"}
+      >
+        <Group gap={12} wrap="nowrap" align="center" style={{ flex: 1, minWidth: 0 }}>
+          <Avatar
+            src={getPokemonImageURL(boss.slug)}
+            alt={`${boss.name} sprite`}
+            size={isOverSm ? 44 : 36}
+            radius="xl"
+            bg="#2b2a2b"
+            style={{ flex: "none" }}
+          />
+          <Box style={{ minWidth: 0 }}>
+            <Text
+              fz={isOverSm ? 16 : 14}
+              fw={700}
+              c="white"
+              style={{ fontFamily: "var(--font-display)", letterSpacing: ".06em", textTransform: "uppercase" }}
+            >
+              Boss Encounter · {boss.name}
             </Text>
-            <Badge color="red" variant="filled" size="sm">
-              Shared boss, everyone in the thread
-            </Badge>
-          </Group>
-          <Text fz={14} c="dimmed">
-            Wild {boss.name}, the boss for this thread.
+            <Text fz={isOverSm ? 14 : 12} c="#e5a3ac" mt={3}>
+              {metaParts.join(" · ")}
+            </Text>
+          </Box>
+        </Group>
+        <Box style={{ textAlign: isOverSm ? "right" : "left", width: isOverSm ? "auto" : "100%" }}>
+          <Text fz={isOverSm ? 20 : 17} fw={800} c="#FFD074">
+            {need ? `${remaining} / ${need} posts` : "in progress"}
           </Text>
-          <Progress value={healthPct} color="red.6" size="lg" radius="xl" striped animated />
-          <Text fz={14} c="dimmed">
-            {need
-              ? `${remaining} of ${need} attack posts left to defeat it.`
-              : "Check people's posts to wear it down."}
-          </Text>
-        </Stack>
-      </Group>
+          <Box mt={5} style={{ width: isOverSm ? 150 : "100%", height: 6, background: "rgba(0,0,0,.4)" }}>
+            <Box style={{ height: 6, background: "#E54156", width: `${healthPct}%` }} />
+          </Box>
+        </Box>
+      </Flex>
     </Box>
   );
 }
@@ -130,9 +155,9 @@ function PausedBanner(props: {
 
   return (
     <Box
-      mt={12}
-      p={12}
-      style={{ background: "#2a1a1e", border: "1px solid #E54156", borderRadius: 10 }}
+      mt={16}
+      p={16}
+      style={{ background: "#2a1a1e", border: "1px solid #E54156" }}
     >
       <Group gap={8} wrap="wrap" align="center">
         <Text fz={16} c="white" fw={700}>
@@ -199,9 +224,9 @@ function MissionTargetsBanner(props: { thread: ForumThread }) {
 
   return (
     <Box
-      mt={12}
-      p={12}
-      style={{ background: "#241f2e", border: "1px solid #4b3f63", borderRadius: 10 }}
+      mt={16}
+      p={16}
+      style={{ background: "#241f2e", border: "1px solid #4b3f63" }}
     >
       <Group gap={8} mb={8} wrap="wrap">
         <Text fz={16} c="white" fw={700}>
@@ -276,9 +301,9 @@ function EncounterBanner(props: { encounter: EncounterBlock }) {
 
   return (
     <Box
-      mt={12}
-      p={12}
-      style={{ background: "#14252a", border: "1px solid #1f6f7a", borderRadius: 10 }}
+      mt={16}
+      p={16}
+      style={{ background: "#14252a", border: "1px solid #1f6f7a" }}
     >
       <Group gap={12} wrap="nowrap" align="center">
         <Avatar src={getPokemonImageURL(enc.slug)} alt={`${enc.name} sprite`} size={52} radius="xl" bg="#12201f" />
@@ -479,20 +504,223 @@ export default function ThreadView() {
     ? truncate(firstPostText, 160)
     : `${truncate(thread.title, 80)}, a Pokemon roleplay thread on the Snagem Guild forums.`;
 
+  const CLIP = "polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)";
+  const DISPLAY = "var(--font-display)";
+
+  const board = categoryByLink(forum);
+  const boardLabel = (board?.label ?? forum.replace(/-/g, " ")).toUpperCase();
+
+  const statusPill = thread.closed
+    ? { label: "ARCHIVED", bg: "#772976" }
+    : thread.paused?.active
+    ? { label: "PAUSED", bg: "#E54156" }
+    : { label: "OPEN", bg: "#12B7B6" };
+
+  const replyCount =
+    thread.replyCount ??
+    (typeof totalPosts === "number" ? Math.max(0, totalPosts - 1) : undefined);
+  const startedDate = formatFireDate(thread.createdAt ?? thread.timePosted);
+  const metaBits = [
+    thread.createdBy ? `started by ${thread.createdBy}` : null,
+    startedDate || null,
+    replyCount != null ? `${replyCount} ${replyCount === 1 ? "reply" : "replies"}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const battleThread =
+    !!thread.bossBattle?.active ||
+    !!thread.encounterConfig?.enabled ||
+    (thread.lockedTeams ? Object.keys(thread.lockedTeams).length > 0 : false);
+
+  const postLabel = thread.trainingLog ? "LOG A TRAINING POST" : "MAKE A POST";
+  const goPost = () =>
+    // Training posts must start from the Colosseum Training Room so the target
+    // pokemon and daily window travel with the post.
+    thread.trainingLog ? navigate("/Colosseum") : navigate(`/Forum/${forum}/thread/${threadId}/post`);
+  const copyLink = () => {
+    navigator.clipboard
+      .writeText(window.location.href)
+      .then(() => setLinkCopied(true))
+      .catch(() => undefined);
+    window.setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const bookmarkSx = {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontFamily: DISPLAY,
+    fontSize: 14,
+    fontWeight: 700,
+    letterSpacing: ".1em",
+    padding: "12px 20px",
+    cursor: "pointer",
+    clipPath: CLIP,
+    ...(bookmarked
+      ? { background: "#FFD074", border: "1.5px solid #FFD074", color: "#1A1B1E" }
+      : {
+          background: "transparent",
+          border: "1.5px solid rgba(255,255,255,.4)",
+          color: "#fff",
+          "&:hover": { borderColor: "#FFD074", color: "#FFD074" },
+        }),
+    "&:disabled": { opacity: 0.6, cursor: "default" },
+  };
+  const hostSx = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    background: "transparent",
+    border: "1.5px solid rgba(255,255,255,.4)",
+    color: "#fff",
+    fontFamily: DISPLAY,
+    fontSize: 14,
+    fontWeight: 700,
+    letterSpacing: ".1em",
+    padding: "12px 20px",
+    cursor: "pointer",
+    clipPath: CLIP,
+    "&:hover": { borderColor: "#E54156", color: "#E54156" },
+  };
+  const redSx = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    background: "#E54156",
+    color: "#fff",
+    border: 0,
+    fontFamily: DISPLAY,
+    fontSize: 14,
+    fontWeight: 700,
+    letterSpacing: ".12em",
+    padding: "14px 26px",
+    cursor: "pointer",
+    clipPath: CLIP,
+    textDecoration: "none",
+    "&:hover": { background: "#fff", color: "#1A1B1E" },
+  };
+  const copySx = {
+    background: "transparent",
+    border: "1px solid #3a3550",
+    color: "#b6b1bc",
+    fontFamily: DISPLAY,
+    fontSize: 13,
+    fontWeight: 700,
+    letterSpacing: ".08em",
+    padding: "10px 16px",
+    cursor: "pointer",
+    clipPath: CLIP,
+    "&:hover": { borderColor: "#FFD074", color: "#FFD074" },
+  };
+
+  const mkHost = (grow?: boolean) =>
+    host ? (
+      <Box
+        component="button"
+        type="button"
+        onClick={() => navigate(`/Forum/${forum}/thread/${threadId}/host`)}
+        sx={hostSx}
+        style={grow ? { flex: 1 } : undefined}
+      >
+        OPEN HOST MENU
+      </Box>
+    ) : null;
+  const mkPost = (grow?: boolean) =>
+    mayPost ? (
+      <Box component="button" type="button" onClick={goPost} sx={redSx} style={grow ? { flex: 1 } : undefined}>
+        {postLabel}
+      </Box>
+    ) : null;
+  const mkCopy = (full?: boolean) => (
+    <Box
+      component="button"
+      type="button"
+      aria-label="Copy a link to this thread"
+      onClick={copyLink}
+      sx={copySx}
+      style={full ? { width: "100%" } : undefined}
+    >
+      {linkCopied ? "LINK COPIED" : "COPY LINK"}
+    </Box>
+  );
+
   return (
     <Container size="lg" style={{ marginTop: 20, paddingBottom: 100 }}>
       <Seo noindex title={seoTitle} description={seoDescription} ogType="article" />
-      <Title order={1} fz={isOverSm ? 30 : 20} c="white" fw={400}>
-        {thread.title}
-        {thread.closed ? " (Archived)" : ""}
-      </Title>
+
+      {/* Back link + bookmark toggle */}
+      <Flex align="center" justify="space-between" gap={12} wrap="wrap">
+        <Anchor
+          component={Link}
+          to={`/Forum/${forum}`}
+          underline="never"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            fontFamily: DISPLAY,
+            fontSize: 14,
+            fontWeight: 700,
+            letterSpacing: ".14em",
+            color: "#FFD074",
+          }}
+        >
+          &larr; {boardLabel}
+        </Anchor>
+        {user && (
+          <Box
+            component="button"
+            type="button"
+            aria-label={bookmarked ? "Remove this bookmark" : "Bookmark this thread"}
+            disabled={bookmarkMutation.isPending}
+            onClick={() => bookmarkMutation.mutateAsync()}
+            sx={bookmarkSx}
+          >
+            {bookmarked ? "★ BOOKMARKED" : "☆ BOOKMARK"}
+          </Box>
+        )}
+      </Flex>
+
+      {/* Title block: status pill + meta + h1 */}
+      <Box mt={18}>
+        <Group gap={12} mb={8} wrap="wrap" align="center">
+          <Text
+            component="span"
+            fz={isOverSm ? 14 : 11}
+            fw={700}
+            c="white"
+            style={{
+              fontFamily: DISPLAY,
+              letterSpacing: ".12em",
+              background: statusPill.bg,
+              padding: "4px 10px",
+            }}
+          >
+            {statusPill.label}
+          </Text>
+          {metaBits && (
+            <Text fz={isOverSm ? 14 : 12} c="#b6b1bc">
+              {metaBits}
+            </Text>
+          )}
+        </Group>
+        <Title
+          order={1}
+          fz={isOverSm ? 34 : 24}
+          c="white"
+          fw={700}
+          style={{ fontFamily: DISPLAY, letterSpacing: ".02em", lineHeight: 1.2, margin: 0 }}
+        >
+          {thread.title}
+          {thread.closed ? " (Archived)" : ""}
+        </Title>
+      </Box>
 
       {thread.missionId && (
-        <Box
-          mt={12}
-          p={12}
-          style={{ background: "#1f2a3a", border: "1px solid #2b4a7a", borderRadius: 10 }}
-        >
+        <Box mt={16} p={16} style={{ background: "#1f2a3a", border: "1px solid #2b4a7a" }}>
           <Text fz={14} c="white" fw={600}>
             This is a mission thread.{" "}
             <Text
@@ -512,11 +740,7 @@ export default function ThreadView() {
       )}
 
       {thread.trainingLog && (
-        <Box
-          mt={12}
-          p={12}
-          style={{ background: "#2a1f3a", border: "1px solid #5a3fb0", borderRadius: 10 }}
-        >
+        <Box mt={16} p={16} style={{ background: "#2a1f3a", border: "1px solid #5a3fb0" }}>
           <Text fz={14} c="white" fw={600}>
             Super Training Room log. Posts here start from the{" "}
             <Text component={Link} to="/Colosseum" fz={14} fw={700} c="grape.3" td="underline">
@@ -527,10 +751,30 @@ export default function ThreadView() {
         </Box>
       )}
 
-      <Anchor component={Link} to={`/Forum/${forum}`} fz={14} c="blue.3">
-        &larr; Back to the {forum.replace(/-/g, " ")} board
-      </Anchor>
-      {thread.bossBattle?.active && <BossBanner boss={thread.bossBattle} />}
+      {/* Host menu + make a post */}
+      {isOverSm ? (
+        <Flex align="center" justify="space-between" gap={12} wrap="wrap" mt={18}>
+          <Box>{mkHost()}</Box>
+          <Group gap={10} wrap="wrap">
+            {mkCopy()}
+            {mkPost()}
+          </Group>
+        </Flex>
+      ) : (
+        <Stack gap={10} mt={16}>
+          {(host || mayPost) && (
+            <Flex gap={10} align="stretch">
+              {mkHost(true)}
+              {mkPost(true)}
+            </Flex>
+          )}
+          {mkCopy(true)}
+        </Stack>
+      )}
+
+      {thread.bossBattle?.active && (
+        <BossBanner boss={thread.bossBattle} weather={thread.weather} isOverSm={isOverSm} />
+      )}
       {thread.paused?.active && (
         <PausedBanner
           forum={forum}
@@ -551,65 +795,18 @@ export default function ThreadView() {
 
       {pending?.encounter?.slug && <EncounterBanner encounter={pending.encounter} />}
 
-      <Flex justify="space-between" align="center" mt={14} gap={10} wrap="wrap">
-        <Pagination
-          total={lastPageNum}
-          value={Math.min(currentPage, lastPageNum)}
-          onChange={changePage}
-          color={FORUM_ACCENT}
-          size={isOverSm ? "sm" : "md"}
-          withEdges
-        />
-        <Group gap={8} wrap="wrap">
-          {host && (
-            <GradientButtonSecondary
-              radius="xl"
-              size="xs"
-              onClick={() => navigate(`/Forum/${forum}/thread/${threadId}/host`)}
-            >
-              Open Host Menu
-            </GradientButtonSecondary>
-          )}
-          {user && (
-            <GradientButtonSecondary
-              radius="xl"
-              size="xs"
-              loading={bookmarkMutation.isPending}
-              onClick={() => bookmarkMutation.mutateAsync()}
-            >
-              {bookmarked ? "Delete Bookmark" : "Create Bookmark"}
-            </GradientButtonSecondary>
-          )}
-          <GradientButtonSecondary
-            radius="xl"
-            size="xs"
-            onClick={() => {
-              navigator.clipboard
-                .writeText(window.location.href)
-                .then(() => setLinkCopied(true))
-                .catch(() => undefined);
-              window.setTimeout(() => setLinkCopied(false), 2000);
-            }}
-          >
-            {linkCopied ? "Link Copied!" : "Copy Link"}
-          </GradientButtonSecondary>
-          {mayPost && (
-            <GradientButtonPrimary
-              radius="xl"
-              size="xs"
-              onClick={() =>
-                // Training posts must start from the Colosseum Training Room so
-                // the target pokemon and daily window travel with the post.
-                thread.trainingLog
-                  ? navigate("/Colosseum")
-                  : navigate(`/Forum/${forum}/thread/${threadId}/post`)
-              }
-            >
-              {thread.trainingLog ? "Log a Training Post" : "Make a New Post"}
-            </GradientButtonPrimary>
-          )}
-        </Group>
-      </Flex>
+      {lastPageNum > 1 && (
+        <Flex justify={isOverSm ? "flex-start" : "center"} mt={16}>
+          <Pagination
+            total={lastPageNum}
+            value={Math.min(currentPage, lastPageNum)}
+            onChange={changePage}
+            color={FORUM_ACCENT}
+            size={isOverSm ? "sm" : "md"}
+            withEdges
+          />
+        </Flex>
+      )}
 
       {thread.restricted && (
         <Text fz={14} c="dimmed" mt={6}>
@@ -617,7 +814,7 @@ export default function ThreadView() {
         </Text>
       )}
 
-      <Stack gap={0} mt={14}>
+      <Stack gap={isOverSm ? 22 : 16} mt={18}>
         {thread.poll?.question && (
           <PollBlock poll={thread.poll} forum={forum} threadId={thread.id} />
         )}
@@ -642,16 +839,42 @@ export default function ThreadView() {
         )}
       </Stack>
 
-      <Flex justify="center" mt={16}>
-        <Pagination
-          total={lastPageNum}
-          value={Math.min(currentPage, lastPageNum)}
-          onChange={changePage}
-          color={FORUM_ACCENT}
-          size={isOverSm ? "sm" : "md"}
-          withEdges
-        />
-      </Flex>
+      {lastPageNum > 1 && (
+        <Flex justify="center" mt={22}>
+          <Pagination
+            total={lastPageNum}
+            value={Math.min(currentPage, lastPageNum)}
+            onChange={changePage}
+            color={FORUM_ACCENT}
+            size={isOverSm ? "sm" : "md"}
+            withEdges
+          />
+        </Flex>
+      )}
+
+      {mayPost && (
+        <Flex
+          mt={22}
+          gap={16}
+          direction={isOverSm ? "row" : "column"}
+          align={isOverSm ? "center" : "flex-start"}
+          justify="space-between"
+          wrap="wrap"
+          style={{
+            background: "#141318",
+            border: "1px solid #2a2637",
+            borderLeft: "3px solid #FFD074",
+            padding: isOverSm ? "18px 24px" : 16,
+          }}
+        >
+          <Text fz={isOverSm ? 14 : 13} c="#b6b1bc" style={{ lineHeight: 1.5 }}>
+            {battleThread
+              ? "Your team is locked to this battle thread. Replies are written in the composer."
+              : "Replies are written in the composer."}
+          </Text>
+          {mkPost()}
+        </Flex>
+      )}
 
       <ScrollAids postAnchorIds={anchorIds} />
     </Container>

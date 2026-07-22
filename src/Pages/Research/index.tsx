@@ -1,9 +1,20 @@
-import { Box, Button, Container, Flex, Group, Progress, Select, Stack, Text, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Group,
+  Select,
+  SimpleGrid,
+  Stack,
+  Text,
+  Title,
+  UnstyledButton,
+} from "@mantine/core";
 import {
   IconAlertTriangle,
   IconArrowRight,
   IconBone,
-  IconCheck,
   IconDiamond,
   IconExternalLink,
   IconFlask,
@@ -21,6 +32,7 @@ import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { Character } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
+import useMediaQuery from "../../hooks/useMediaQuery";
 import { isAdmin } from "../../lib/permissions";
 import { getCharacters, getItems } from "../../queries/dashboard";
 import {
@@ -38,32 +50,129 @@ import {
  * GUIDE for characters who have not entered a Division, and the Master CONSOLE
  * for characters who have. Which one shows is decided per character (a member
  * can have both a plain trainer and a Hybrid). The console's actions stay locked
- * behind Master clearance; anyone may preview it read-only.
+ * behind Master clearance; a character without clearance sees a locked console.
+ *
+ * Redesigned July 2026 to the cinematic game-site language: angular clip-path
+ * cards, Quantico display type, gradient pills and CTAs. Behaviour is unchanged;
+ * only the visuals were rebuilt from the hi-fi mockup.
  */
 
 const MISSIONS_PER_TYPE = 10;
 
-const PANEL = "#141019";
-const PANEL_BORDER = "#232028";
-const GRAD = "linear-gradient(135deg, #a855f7, #6d28d9)";
-const BAR_GRADIENT = "linear-gradient(90deg, #c026d3, #6366f1, #22d3ee)";
+const displayFont = "var(--font-display, 'Quantico', sans-serif)";
 
-const TYPE_COLORS: Record<string, string> = {
-  Normal: "#A8A878", Fire: "#F08030", Water: "#6890F0", Electric: "#E0B000",
-  Grass: "#78C850", Ice: "#98D8D8", Fighting: "#C03028", Poison: "#A040A0",
-  Ground: "#E0C068", Flying: "#A890F0", Psychic: "#F85888", Bug: "#A8B820",
-  Rock: "#B8A038", Ghost: "#705898", Dragon: "#7038F8", Dark: "#705848",
-  Steel: "#8888A8", Fairy: "#EE99AC",
-};
-const typeColor = (t?: string) => (t && TYPE_COLORS[t]) || "#7048e8";
+const CARD = "#141318";
+const CARD_BORDER = "#2a2637";
+const IDLE_BG = "#17151c";
+const DIM = "#b6b1bc";
+const FAINT = "#6f6a78";
+
+const ACTIVE_GRAD = "linear-gradient(90deg, #7E2C75, #E54156)";
+const ACTIVE_GRAD_135 = "linear-gradient(135deg, #7E2C75, #E54156)";
+const GOLD_GRAD = "linear-gradient(90deg, #FFD074, #C9940F)";
+const ASCEND_GRAD = "linear-gradient(90deg, #912691, #474d9b, #14e0de)";
+const BAR_GRAD = "linear-gradient(90deg, #912691, #14e0de)";
+
+const CLIP_PILL = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
+const CLIP_CTA = "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)";
+const CLIP_TAG = "polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%)";
+const CLIP_BR14 = "polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%)";
+const CLIP_BR16 = "polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)";
+const CLIP_BR22 = "polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%)";
+const CLIP_BL22 = "polygon(0 0, 100% 0, 100% 100%, 22px 100%, 0 calc(100% - 22px))";
+const CLIP_NUM5 = "polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px)";
+const CLIP_NUM6 = "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)";
+const CLIP_NUM8 = "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)";
 
 /* -------------------------------- Shared bits ------------------------------ */
 
+/** Angled gradient call-to-action (gold fills carry dark text per design rules). */
+function GradButton(props: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  gradient?: string;
+  loading?: boolean;
+  disabled?: boolean;
+  rightSection?: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
+  const bg = props.disabled ? "#2a2637" : props.gradient ?? ACTIVE_GRAD;
+  return (
+    <Button
+      onClick={props.onClick}
+      loading={props.loading}
+      disabled={props.disabled}
+      radius={0}
+      rightSection={props.rightSection}
+      styles={{
+        root: {
+          background: bg,
+          color: "#fff",
+          border: "none",
+          height: 50,
+          paddingLeft: 28,
+          paddingRight: 28,
+          clipPath: CLIP_CTA,
+          fontFamily: displayFont,
+          fontWeight: 700,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+        },
+      }}
+      style={props.style}
+    >
+      {props.children}
+    </Button>
+  );
+}
+
+/** Angled toggle / tab pill. */
+function AngledPill(props: {
+  label: string;
+  icon?: React.ReactNode;
+  active: boolean;
+  locked?: boolean;
+  onClick: () => void;
+  fz?: number;
+  px?: number;
+  py?: number;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <UnstyledButton
+      onClick={props.onClick}
+      aria-pressed={props.active}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        fontFamily: displayFont,
+        fontSize: props.fz ?? 13,
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        padding: `${props.py ?? 10}px ${props.px ?? 22}px`,
+        border: `1px solid ${props.active ? "#7E2C75" : CARD_BORDER}`,
+        background: props.active ? ACTIVE_GRAD : IDLE_BG,
+        color: props.active ? "#fff" : DIM,
+        clipPath: CLIP_PILL,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        ...props.style,
+      }}
+    >
+      {props.icon}
+      {props.label}
+      {props.locked && <IconLock size={12} />}
+    </UnstyledButton>
+  );
+}
+
 function Eyebrow({ color }: { color: string }) {
   return (
-    <Group gap={8} mb={10}>
-      <IconDiamond size={12} color={color} fill={color} />
-      <Text fz={14} fw={700} c={color} style={{ letterSpacing: 3 }}>
+    <Group gap={12} align="center" wrap="nowrap">
+      <Box style={{ width: 28, height: 3, background: "#E54156", flexShrink: 0 }} aria-hidden />
+      <Text fz={{ base: 11, sm: 13 }} fw={700} c={color} style={{ letterSpacing: "0.3em", fontFamily: displayFont }}>
         SNAGEM RESEARCH FACILITY &nbsp;&middot;&nbsp; CLEARANCE &#937;
       </Text>
     </Group>
@@ -79,7 +188,7 @@ function FacilityIcon({ granted }: { granted: boolean }) {
         borderRadius: 18,
         flexShrink: 0,
         background: "#181425",
-        border: `1px solid ${granted ? "#7c5cff" : "#2a2637"}`,
+        border: `1px solid ${granted ? "#7c5cff" : CARD_BORDER}`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -98,7 +207,7 @@ function FacilityIcon({ granted }: { granted: boolean }) {
             height: 26,
             borderRadius: "50%",
             background: "#0b0a10",
-            border: "1px solid #2a2637",
+            border: `1px solid ${CARD_BORDER}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -111,22 +220,25 @@ function FacilityIcon({ granted }: { granted: boolean }) {
   );
 }
 
+/** Angular ACCESS GRANTED / PENDING badge that sits beside the hero title. */
 function AccessBadge({ granted }: { granted: boolean }) {
+  const accent = granted ? "#12B7B6" : "#FFD074";
   return (
     <Text
-      display="inline-block"
-      fz={14}
-      fw={800}
-      tt="uppercase"
-      px={14}
-      py={6}
+      component="span"
       style={{
-        letterSpacing: 1,
-        borderRadius: 999,
-        color: granted ? "#0b0a10" : "#F5C842",
-        background: granted ? "#69db7c" : "transparent",
-        border: granted ? "none" : "1px solid #b89b2e",
-        boxShadow: granted ? "0 0 20px rgba(105,219,124,0.5)" : "none",
+        display: "inline-block",
+        whiteSpace: "nowrap",
+        fontFamily: displayFont,
+        fontSize: 13,
+        fontWeight: 700,
+        letterSpacing: "0.14em",
+        textTransform: "uppercase",
+        padding: "8px 18px",
+        color: accent,
+        border: `1px solid ${accent}`,
+        background: granted ? "rgba(18,183,182,.12)" : "rgba(255,208,116,.08)",
+        clipPath: CLIP_PILL,
       }}
     >
       {granted ? "Access Granted" : "Access Pending"}
@@ -134,14 +246,55 @@ function AccessBadge({ granted }: { granted: boolean }) {
   );
 }
 
-function SectionLabel({ children, color = "#F5C842" }: { children: React.ReactNode; color?: string }) {
+/** Section kicker: a Quantico label (h2) followed by a hairline rule. */
+function SectionLabel({ children, color = "#FFD074" }: { children: React.ReactNode; color?: string }) {
   return (
-    <Group gap={12} align="center" mb="md">
-      <Title order={2} fz={14} fw={700} c={color} lh="md" style={{ letterSpacing: 3 }}>
+    <Group gap={14} align="center" wrap="nowrap">
+      <Title
+        order={2}
+        fz={14}
+        fw={700}
+        c={color}
+        tt="uppercase"
+        style={{ letterSpacing: "0.28em", fontFamily: displayFont, margin: 0, whiteSpace: "nowrap" }}
+      >
         {children}
       </Title>
-      <Box style={{ flex: 1, height: 1, background: "#232028" }} />
+      <Box style={{ flex: 1, height: 1, background: CARD_BORDER }} />
     </Group>
+  );
+}
+
+/** Centered lock / classified screen used by the console and Chambers. */
+function LockScreen(props: {
+  title: string;
+  body: React.ReactNode;
+  action?: React.ReactNode;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <Box
+      p={{ base: 28, sm: 48 }}
+      style={{
+        background: CARD,
+        border: `1px solid ${CARD_BORDER}`,
+        clipPath: CLIP_BR22,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 14,
+        textAlign: "center",
+      }}
+    >
+      {props.icon ?? <IconLock size={40} color="#8a83a0" style={{ opacity: 0.7 }} />}
+      <Text fz={{ base: 22, sm: 26 }} fw={700} c="white" style={{ fontFamily: displayFont, letterSpacing: "0.02em" }}>
+        {props.title}
+      </Text>
+      <Text fz={15} c={DIM} maw={460} lh={1.6}>
+        {props.body}
+      </Text>
+      {props.action}
+    </Box>
   );
 }
 
@@ -150,25 +303,21 @@ function SectionLabel({ children, color = "#F5C842" }: { children: React.ReactNo
 const BENEFITS = [
   {
     icon: <IconSparkles size={22} color="#c4b5fd" />,
-    bg: "#1a1530",
     title: "Signature Abilities",
     body: "Ten bespoke, type-themed powers, one unlocked per Master Mission. Nobody else on the site has your exact kit.",
   },
   {
     icon: <IconDiamond size={22} color="#5eead4" />,
-    bg: "#12211f",
     title: "Mega Evolution & Z-Moves",
     body: "End-game transformations only finished Masters can research: Key Stones, Sparkling Stones and the summit of power.",
   },
   {
     icon: <IconAlertTriangle size={22} color="#ff8787" />,
-    bg: "#241618",
     title: "Legendary Access",
     body: "The Restricted Library is the only path to capturing Legendaries, and to Legendary hybrids. Story-driven, by request.",
   },
   {
-    icon: <IconStar size={22} color="#F5C842" />,
-    bg: "#231d10",
+    icon: <IconStar size={22} color="#FFD074" />,
     title: "Grand Master Prestige",
     body: "A title, a badge, and standing few ever reach. The end-game credential of the whole community.",
   },
@@ -214,144 +363,152 @@ interface ClearanceProps {
 
 function GuideView(props: { onPreview: () => void } & ClearanceProps) {
   return (
-    <Stack gap={44}>
-      <Box>
+    <Stack gap={30}>
+      {/* Ascending benefits */}
+      <Stack gap={20}>
         <SectionLabel>ASCENDING BENEFITS</SectionLabel>
-        <Text fz={16} c="gray.4" mb="lg">
-          Mastery isn't just a badge, it's a whole tier of the game that stays sealed until you earn
-          it. This is what waits inside.
+        <Text fz={15} c={DIM} lh={1.6}>
+          Mastery isn't just a badge, it's a whole tier of the game that stays sealed until you earn it. This is what
+          waits inside.
         </Text>
-        <Flex gap="md" wrap="wrap">
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={16}>
           {BENEFITS.map((b) => (
             <Box
               key={b.title}
-              p="lg"
-              style={{
-                flex: "1 1 380px",
-                minWidth: 0,
-                borderRadius: 16,
-                background: PANEL,
-                border: `1px solid ${PANEL_BORDER}`,
-              }}
+              className="dc-card-tile"
+              style={{ padding: "22px 24px", clipPath: CLIP_BR14, display: "flex", gap: 18, alignItems: "flex-start" }}
             >
-              <Group gap="md" wrap="nowrap" align="flex-start">
-                <Box
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 12,
-                    background: b.bg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  {b.icon}
-                </Box>
-                <Box style={{ minWidth: 0 }}>
-                  <Text fz={23} fw={800} c="white" mb={6}>
-                    {b.title}
-                  </Text>
-                  <Text fz={16} c="gray.5">
-                    {b.body}
-                  </Text>
-                </Box>
-              </Group>
+              <Box
+                style={{
+                  flexShrink: 0,
+                  width: 44,
+                  height: 44,
+                  background: "#3a1d63",
+                  border: "1px solid #3a3550",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  clipPath: CLIP_NUM6,
+                }}
+              >
+                {b.icon}
+              </Box>
+              <Box style={{ minWidth: 0 }}>
+                <Text fz={19} fw={700} c="white" mb={6} style={{ fontFamily: displayFont, letterSpacing: "0.02em" }}>
+                  {b.title}
+                </Text>
+                <Text fz={14} c={DIM} lh={1.6}>
+                  {b.body}
+                </Text>
+              </Box>
             </Box>
           ))}
-        </Flex>
-      </Box>
+        </SimpleGrid>
+      </Stack>
 
-      <Box>
-        <SectionLabel color="#b197fc">HOW TO EARN ACCESS</SectionLabel>
-        <Text fz={16} c="gray.4" mb="lg">
+      {/* How to earn access */}
+      <Stack gap={20}>
+        <SectionLabel color="#c79bd6">HOW TO EARN ACCESS</SectionLabel>
+        <Text fz={15} c={DIM} lh={1.6}>
           Four steps stand between you and the Ascension Track. None can be skipped, that's the point.
         </Text>
-        <Box style={{ position: "relative" }}>
-          <Stack gap="md">
-            {STEPS.map((s, i) => (
-              <Group key={s.title} gap="lg" wrap="nowrap" align="flex-start">
-                <Box
-                  style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 14,
-                    background: GRAD,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Text fz={26} fw={800} c="white">
-                    {i + 1}
-                  </Text>
-                </Box>
-                <Box
-                  p="md"
-                  style={{ flex: 1, borderRadius: 14, background: PANEL, border: `1px solid ${PANEL_BORDER}` }}
-                >
-                  <Text fz={22} fw={800} c="white" mb={4}>
-                    {s.title}
-                  </Text>
-                  <Text fz={16} c="gray.5">
-                    {s.body}
-                  </Text>
-                </Box>
-              </Group>
-            ))}
-          </Stack>
-        </Box>
-      </Box>
+        <Stack gap={12}>
+          {STEPS.map((s, i) => (
+            <Flex key={s.title} gap={16} align="stretch">
+              <Box
+                style={{
+                  flexShrink: 0,
+                  width: 52,
+                  background: ACTIVE_GRAD_135,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  clipPath: CLIP_PILL,
+                }}
+              >
+                <Text fz={22} fw={700} c="white" style={{ fontFamily: displayFont }}>
+                  {i + 1}
+                </Text>
+              </Box>
+              <Box className="dc-card-tile" style={{ flex: 1, minWidth: 0, padding: "18px 24px" }}>
+                <Text fz={18} fw={700} c="white" mb={4} style={{ fontFamily: displayFont, letterSpacing: "0.02em" }}>
+                  {s.title}
+                </Text>
+                <Text fz={14} c={DIM} lh={1.6}>
+                  {s.body}
+                </Text>
+              </Box>
+            </Flex>
+          ))}
+        </Stack>
+      </Stack>
 
-      <Box p="lg" style={{ borderRadius: 18, background: "#120f1c", border: "1px solid #2a2440" }}>
-        <Flex gap="xl" direction={{ base: "column", md: "row" }} justify="space-between">
-          <Box style={{ flex: "1 1 0%", minWidth: 0 }}>
-            <Text fz={30} fw={800} c="white" mb={4}>
+      {/* Are you ready + request clearance */}
+      <Box
+        p={{ base: 22, sm: 36 }}
+        style={{ background: CARD, border: `1px solid ${CARD_BORDER}`, clipPath: CLIP_BL22 }}
+      >
+        <Flex gap={40} wrap="wrap">
+          <Box style={{ flex: "1 1 320px", minWidth: 0 }}>
+            <Text fz={{ base: 26, sm: 30 }} fw={700} c="white" mb={12} style={{ fontFamily: displayFont, letterSpacing: "0.02em" }}>
               Are you ready?
             </Text>
-            <Text fz={16} c="gray.5" mb="lg">
+            <Text fz={15} c={DIM} mb={18} lh={1.6}>
               Check yourself against the entry requirements, then request a clearance review.
             </Text>
-            <Stack gap="md">
-              {CHECKLIST.map((c) => (
-                <Group key={c.title} gap={12} wrap="nowrap" align="flex-start">
-                  <Box
-                    style={{
-                      width: 24, height: 24, borderRadius: "50%", flexShrink: 0, marginTop: 2,
-                      background: c.ok ? "rgba(105,219,124,0.15)" : "rgba(245,197,24,0.15)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}
-                  >
-                    {c.ok ? (
-                      <IconCheck size={14} color="#69db7c" />
-                    ) : (
-                      <IconAlertTriangle size={13} color="#F5C842" />
-                    )}
-                  </Box>
-                  <Box>
-                    <Text fz={16} fw={700} c="white">
-                      {c.title}
-                    </Text>
-                    <Text fz={14} c="gray.5">
-                      {c.body}
-                    </Text>
-                  </Box>
-                </Group>
-              ))}
+            <Stack gap={16}>
+              {CHECKLIST.map((c) => {
+                const color = c.ok ? "#12B7B6" : "#FFD074";
+                return (
+                  <Group key={c.title} gap={14} wrap="nowrap" align="flex-start">
+                    <Box
+                      style={{
+                        flexShrink: 0,
+                        width: 26,
+                        height: 26,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color,
+                        border: `1px solid ${color}`,
+                        clipPath: CLIP_NUM5,
+                      }}
+                      aria-hidden
+                    >
+                      {c.ok ? "✓" : "!"}
+                    </Box>
+                    <Box>
+                      <Text fz={15} fw={700} c="white">
+                        {c.title}
+                      </Text>
+                      <Text fz={14} c={DIM} lh={1.5}>
+                        {c.body}
+                      </Text>
+                    </Box>
+                  </Group>
+                );
+              })}
             </Stack>
           </Box>
 
-          <Stack gap={12} align="flex-end" justify="flex-start" style={{ flexShrink: 0 }}>
+          <Stack gap={16} align="flex-end" justify="center" style={{ flex: "1 1 280px", minWidth: 0, textAlign: "right" }}>
             {props.alreadyCleared ? (
-              <Text fz={16} c="teal.3" ta="right" role="status" aria-live="polite">
-                This character already holds master clearance.
+              <Text
+                fz={16}
+                fw={700}
+                c="#12B7B6"
+                ta="right"
+                role="status"
+                aria-live="polite"
+                style={{ fontFamily: displayFont, letterSpacing: "0.04em" }}
+              >
+                This character already holds Master clearance.
               </Text>
             ) : props.requestPending ? (
-              <Text fz={16} c="gold.1" ta="right" role="status" aria-live="polite" maw={320}>
-                Clearance review requested. An admin will review your character and open the
-                console once approved.
+              <Text fz={15} fw={700} c="#FFD074" ta="right" role="status" aria-live="polite" maw={320}>
+                Clearance review requested. An admin will review your character and open the console once approved.
               </Text>
             ) : (
               <>
@@ -361,20 +518,17 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
                   value={props.track}
                   onChange={(v) => props.onTrackChange(v === "Channeler" ? "Channeler" : "Hybrid")}
                   w={220}
-                  styles={{ input: { background: "#141019" } }}
+                  maw="100%"
+                  styles={{ input: { background: IDLE_BG, borderColor: "#3a3550" } }}
                 />
-                <Button
-                  variant="gradient"
-                  gradient={{ from: "grape", to: "cyan", deg: 90 }}
-                  radius="xl"
-                  size="lg"
-                  rightSection={<IconArrowRight size={18} />}
+                <GradButton
+                  onClick={props.onRequest}
                   loading={props.requesting}
                   disabled={!props.characterSelected}
-                  onClick={props.onRequest}
+                  rightSection={<IconArrowRight size={18} />}
                 >
-                  Request Clearance Review
-                </Button>
+                  Request a Clearance Review
+                </GradButton>
                 {!props.characterSelected && (
                   <Text fz={14} c="dimmed" ta="right">
                     Pick a character above to request a review.
@@ -383,16 +537,19 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
               </>
             )}
             {props.requestStatus && (
-              <Text fz={14} c="grape.3" ta="right" role="status" aria-live="polite">
+              <Text fz={14} c="#c79bd6" ta="right" role="status" aria-live="polite">
                 {props.requestStatus}
               </Text>
             )}
-            <Text fz={14} c="dimmed" ta="right">
-              An admin gets notified the moment you ask. Progress is earned.
+            <Text fz={13} c={FAINT} ta="right" lh={1.5}>
+              An admin gets notified the moment you ask. Progress is earned, never bought.
             </Text>
-            <Button variant="subtle" color="grape" size="sm" onClick={props.onPreview}>
-              Preview the Facility console
-            </Button>
+            <UnstyledButton
+              onClick={props.onPreview}
+              style={{ fontSize: 15, fontWeight: 700, color: "#c79bd6" }}
+            >
+              Preview the Facility console &rarr;
+            </UnstyledButton>
           </Stack>
         </Flex>
       </Box>
@@ -404,48 +561,30 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
 
 type ConsoleTab = "overview" | "divisions" | "chambers" | "ascension";
 
-function TabPill(props: {
-  label: string;
-  icon: React.ReactNode;
-  active: boolean;
-  locked?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <Button
-      onClick={props.onClick}
-      radius="xl"
-      variant={props.active ? "gradient" : "default"}
-      gradient={{ from: "grape", to: "violet", deg: 90 }}
-      leftSection={props.icon}
-      rightSection={props.locked ? <IconLock size={13} /> : undefined}
-      styles={props.active ? undefined : { root: { background: "transparent", borderColor: "#2a2637", color: "#c9c4d6" } }}
-    >
-      {props.label}
-    </Button>
-  );
-}
-
+/** One dossier stat tile. */
 function DossierStat(props: { label: string; value: React.ReactNode; sub?: string; highlight?: boolean }) {
   return (
     <Box
-      p="md"
       style={{
-        flex: "1 1 200px",
-        minWidth: 0,
-        borderRadius: 12,
-        background: PANEL,
-        border: `1px solid ${props.highlight ? "#2f7d4f" : PANEL_BORDER}`,
+        background: CARD,
+        border: `1px solid ${props.highlight ? "#1f6f7a" : CARD_BORDER}`,
+        padding: "20px 22px",
       }}
     >
-      <Text fz={14} fw={700} c="dimmed" tt="uppercase" mb={8} style={{ letterSpacing: 1.5 }}>
+      <Text fz={12} fw={700} c={FAINT} tt="uppercase" mb={6} style={{ letterSpacing: "0.24em", fontFamily: displayFont }}>
         {props.label}
       </Text>
-      <Text fz={26} fw={800} c={props.highlight ? "#69db7c" : "white"} lh={1.1}>
+      <Text
+        fz={26}
+        fw={700}
+        c={props.highlight ? "#12B7B6" : "white"}
+        lh={1.1}
+        style={{ fontFamily: displayFont, letterSpacing: "0.02em" }}
+      >
         {props.value}
       </Text>
       {props.sub && (
-        <Text fz={14} c="dimmed" mt={4}>
+        <Text fz={13} c={DIM} mt={6}>
           {props.sub}
         </Text>
       )}
@@ -463,61 +602,65 @@ const PHASES = [
 type PhaseState = "done" | "current" | "sealed";
 
 function PhaseCard(props: { n: number; title: string; body: string; state: PhaseState }) {
-  const done = props.state === "done";
-  const current = props.state === "current";
+  const styles = {
+    done: { bg: CARD, border: CARD_BORDER, numBg: "#7E2C75", title: "#fff", status: "✓ Done", statusColor: "#12B7B6" },
+    current: {
+      bg: "#1c1526",
+      border: "#7E2C75",
+      numBg: ACTIVE_GRAD_135,
+      title: "#fff",
+      status: "▶ In progress",
+      statusColor: "#c79bd6",
+    },
+    sealed: { bg: CARD, border: "#232028", numBg: "#3C3A3C", title: FAINT, status: "Sealed", statusColor: FAINT },
+  }[props.state];
+
   return (
     <Box
-      p="md"
       style={{
-        flex: "1 1 220px",
-        minWidth: 0,
-        borderRadius: 14,
-        background: current ? "#1a1636" : PANEL,
-        border: `1px solid ${current ? "#5a3fb0" : PANEL_BORDER}`,
-        opacity: props.state === "sealed" ? 0.6 : 1,
+        background: styles.bg,
+        border: `1px solid ${styles.border}`,
+        padding: "20px 22px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        height: "100%",
       }}
     >
-      <Group gap={10} mb={10} wrap="nowrap">
+      <Group gap={10} wrap="nowrap" align="center">
         <Box
           style={{
-            width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-            background: props.state === "sealed" ? "#2a2637" : GRAD,
-            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+            width: 30,
+            height: 30,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: displayFont,
+            fontSize: 15,
+            fontWeight: 700,
+            color: "#fff",
+            background: styles.numBg,
+            clipPath: CLIP_NUM5,
           }}
         >
-          <Text fz={16} fw={800} c={props.state === "sealed" ? "#6a6580" : "white"}>
-            {props.n}
-          </Text>
+          {props.n}
         </Box>
-        <Text fz={20} fw={800} c="white">
+        <Text fz={17} fw={700} c={styles.title} style={{ fontFamily: displayFont, letterSpacing: "0.02em" }}>
           {props.title}
         </Text>
       </Group>
-      <Text fz={14} c="gray.5" mb={10}>
+      <Text fz={13} c={DIM} lh={1.55} style={{ flex: 1 }}>
         {props.body}
       </Text>
-      {done ? (
-        <Text fz={14} fw={800} c="#69db7c" tt="uppercase">
-          &#10003; Done
-        </Text>
-      ) : current ? (
-        <Text fz={14} fw={800} c="grape.3" tt="uppercase">
-          &#9654; In progress
-        </Text>
-      ) : (
-        <Text fz={14} fw={700} c="dimmed" tt="uppercase">
-          Sealed
-        </Text>
-      )}
+      <Text fz={12} fw={700} c={styles.statusColor} tt="uppercase" style={{ letterSpacing: "0.14em", fontFamily: displayFont }}>
+        {styles.status}
+      </Text>
     </Box>
   );
 }
 
-function OverviewTab(props: {
-  character?: Character;
-  progress?: ResearchProgress;
-  onEnter: () => void;
-}) {
+function OverviewTab(props: { character?: Character; progress?: ResearchProgress; onEnter: () => void }) {
   const { character, progress } = props;
   const active = progress?.types?.[0];
   const division = character?.type && character.type !== "None" ? character.type : "Pending";
@@ -533,22 +676,24 @@ function OverviewTab(props: {
   };
 
   return (
-    <Stack gap="xl">
-      <Box p="lg" style={{ borderRadius: 16, background: "#101820", border: "1px solid #1c2a2a" }}>
-        <Text fz={14} fw={700} c="teal.3" tt="uppercase" mb={8} style={{ letterSpacing: 2 }}>
+    <Stack gap={22}>
+      <Box
+        p={{ base: 22, sm: 28 }}
+        style={{ background: "#14252a", border: "1px solid #1f6f7a", clipPath: CLIP_BR16 }}
+      >
+        <Text fz={13} fw={700} c="#12B7B6" tt="uppercase" mb={10} style={{ letterSpacing: "0.28em", fontFamily: displayFont }}>
           Welcome, Operative
         </Text>
-        <Text fz={30} fw={800} c="white" mb={8}>
+        <Text fz={{ base: 26, sm: 30 }} fw={700} c="white" mb={10} style={{ fontFamily: displayFont, letterSpacing: "0.02em" }}>
           Your dossier is active.
         </Text>
-        <Text fz={16} c="gray.4" maw={720}>
-          The path to mastery is three phases: transform, master ten abilities, then face the Grand
-          Master. Track your ascension below; explore the Divisions and classified Chambers when
-          you're ready.
+        <Text fz={15} c={DIM} maw={720} lh={1.65}>
+          The path to mastery is three phases: transform, master ten abilities, then face the Grand Master. Track your
+          ascension below; explore the Divisions and classified Chambers when you're ready.
         </Text>
       </Box>
 
-      <Flex gap="md" wrap="wrap">
+      <SimpleGrid cols={{ base: 2, sm: 4 }} spacing={14}>
         <DossierStat label="Division" value={division} sub={`Research · Div. ${division === "Channeler" ? "II" : "I"}`} />
         <DossierStat
           label="Tracking Type"
@@ -557,121 +702,96 @@ function OverviewTab(props: {
         />
         <DossierStat label="Abilities" value={`${abilities} / ${MISSIONS_PER_TYPE}`} sub="earned so far" />
         <DossierStat label="Clearance" value="Ω GRANTED" sub="facility access" highlight />
-      </Flex>
+      </SimpleGrid>
 
-      <Box>
-        <SectionLabel color="#b197fc">THE PATH &middot; 3 PHASES</SectionLabel>
-        <Flex gap="md" wrap="wrap" align="stretch">
-          {PHASES.map((p) => (
-            <PhaseCard key={p.n} n={p.n} title={p.title} body={p.body} state={phaseState(p.n)} />
-          ))}
-        </Flex>
-        <Button
-          mt="lg"
-          onClick={props.onEnter}
-          variant="gradient"
-          gradient={{ from: "grape", to: "cyan", deg: 90 }}
-          radius="xl"
-          size="lg"
-          rightSection={<IconArrowRight size={18} />}
-        >
-          Enter the Ascension Track
-        </Button>
-      </Box>
+      <SectionLabel color="#c79bd6">THE PATH &middot; 3 PHASES</SectionLabel>
+      <SimpleGrid cols={{ base: 1, xs: 2, sm: 4 }} spacing={14}>
+        {PHASES.map((p) => (
+          <PhaseCard key={p.n} n={p.n} title={p.title} body={p.body} state={phaseState(p.n)} />
+        ))}
+      </SimpleGrid>
+
+      <GradButton gradient={ASCEND_GRAD} onClick={props.onEnter} rightSection={<IconArrowRight size={18} />} style={{ alignSelf: "flex-start" }}>
+        Enter the Ascension Track
+      </GradButton>
     </Stack>
   );
 }
 
-function DivisionPanel(props: {
-  numeral: string;
-  title: string;
-  accent: string;
-  intro: string;
-  rows: Array<{ tag: string; text: string }>;
-}) {
+/** One Division card; the member's own division wears a gold "Your Division" tag. */
+function DivisionCard(props: { icon: React.ReactNode; title: string; body: string; note: string; current: boolean }) {
   return (
     <Box
-      style={{ flex: "1 1 440px", minWidth: 0, borderRadius: 16, overflow: "hidden", border: `1px solid ${props.accent}55` }}
+      style={{
+        background: CARD,
+        border: `1px solid ${props.current ? "#7E2C75" : CARD_BORDER}`,
+        padding: "26px 28px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        clipPath: CLIP_BR16,
+      }}
     >
-      <Box px="lg" py="md" style={{ background: `linear-gradient(135deg, ${props.accent}44, ${props.accent}11)` }}>
-        <Text fz={14} fw={700} c="rgba(255,255,255,0.7)" tt="uppercase" style={{ letterSpacing: 2 }}>
-          Division {props.numeral}
-        </Text>
-        <Text fz={28} fw={800} c="white">
+      <Group gap={12} wrap="nowrap" align="center">
+        <Box style={{ flexShrink: 0 }}>{props.icon}</Box>
+        <Text fz={22} fw={700} c="white" style={{ fontFamily: displayFont, letterSpacing: "0.02em", flex: 1, minWidth: 0 }}>
           {props.title}
         </Text>
-      </Box>
-      <Box p="lg" style={{ background: PANEL }}>
-        <Text fz={16} c="gray.3" mb="md">
-          {props.intro}
-        </Text>
-        <Stack gap="md">
-          {props.rows.map((r) => (
-            <Group key={r.tag} gap={12} wrap="nowrap" align="flex-start">
-              <Text
-                fz={14}
-                fw={700}
-                tt="uppercase"
-                px={8}
-                py={2}
-                style={{ borderRadius: 6, background: `${props.accent}22`, color: props.accent, flexShrink: 0, letterSpacing: 0.5 }}
-              >
-                {r.tag}
-              </Text>
-              <Text fz={16} c="gray.4">
-                {r.text}
-              </Text>
-            </Group>
-          ))}
-        </Stack>
-      </Box>
+        {props.current && (
+          <Text
+            component="span"
+            style={{
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+              fontFamily: displayFont,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "#1A1B1E",
+              background: GOLD_GRAD,
+              padding: "4px 12px",
+              clipPath: CLIP_TAG,
+            }}
+          >
+            Your Division
+          </Text>
+        )}
+      </Group>
+      <Text fz={14} c={DIM} lh={1.65}>
+        {props.body}
+      </Text>
+      <Text fz={13} c={FAINT}>
+        {props.note}
+      </Text>
     </Box>
   );
 }
 
-function DivisionsTab() {
+function DivisionsTab(props: { character?: Character }) {
+  const division = props.character?.type && props.character.type !== "None" ? props.character.type : "None";
   return (
-    <Stack gap="lg">
-      <Text fz={16} c="gray.4">
-        To enter the Facility you must first become something more. Two doors, one choice, and it
-        cannot be undone. Both progress the same way: ten Master Missions, ten abilities, one Grand
-        Master trial.
-      </Text>
-      <Flex gap="lg" wrap="wrap" align="stretch">
-        <DivisionPanel
-          numeral="I"
-          title="Hybrid Research"
-          accent="#9775fa"
-          intro="Fuse your body with a Pokemon's essence. Hybrids are born from other hybrids, or made by accident and unusual phenomena, never casually."
-          rows={[
-            { tag: "Prereq", text: "You must already own the species you fuse with." },
-            { tag: "Warning", text: "Irreversible. There is no undoing what the Division makes of you." },
-            { tag: "Restricted", text: "Ditto, Smeargle, and all Legendary/Mythical/Ultra Beasts route through the Restricted Library." },
-            { tag: "Capstone", text: "Grand Master unlocks Mega Evolution and/or Z-Move access, if the species supports it." },
-          ]}
-        />
-        <DivisionPanel
-          numeral="II"
-          title="Channeler Research"
-          accent="#3bc9db"
-          intro="Channel power through bonded Pokemon rather than becoming one. It begins with a concept discussed with an admin and documented on your profile."
-          rows={[
-            { tag: "Requires", text: "A focal-point artifact, a primary bonded Pokemon, and same-type secondaries." },
-            { tag: "Rule", text: "All bonded Pokemon must share ONE type, that is the type you progress." },
-            { tag: "Abilities", text: "Ten skill tiers. Primary gates tiers 1, 5, 10 and the ultimate; secondaries cap at 2." },
-            { tag: "Innate", text: 'Each type grants a passive from the start, e.g. Fairy\'s "Moon\'s Blessing".' },
-          ]}
-        />
-      </Flex>
-    </Stack>
+    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={16}>
+      <DivisionCard
+        icon={<IconFlask size={26} color="#c4b5fd" />}
+        title="Hybrid Research"
+        body="Fuse with a species you own and become something new. Your body, moveset and story transform with each Master Mission."
+        note="Div. I · permanent choice"
+        current={division === "Hybrid"}
+      />
+      <DivisionCard
+        icon={<IconSparkles size={26} color="#5eead4" />}
+        title="Channeler Research"
+        body="Bond a same-type team through a focal artifact and channel their power without transforming. Same ten-mission path, different door."
+        note="Div. II · permanent choice"
+        current={division === "Channeler"}
+      />
+    </SimpleGrid>
   );
 }
 
-/** Chambers: fossil revive (functional) + gated end-game rooms. */
-function ChambersTab(props: {
-  canAct: boolean;
-  fossilItems: Array<{ id: string; name: string }>;
-}) {
+/** Chambers: fossil revive (functional) + gated end-game rooms, classified skin. */
+function ChambersTab(props: { canAct: boolean; fossilItems: Array<{ id: string; name: string }> }) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [status, setStatus] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -700,32 +820,50 @@ function ChambersTab(props: {
     children: React.ReactNode;
   }) => (
     <Box
-      p="lg"
-      style={{ flex: "1 1 300px", minWidth: 0, borderRadius: 16, background: PANEL, border: `1px solid ${p.borderColor}` }}
+      style={{
+        background: CARD,
+        border: `1px solid ${p.borderColor}`,
+        padding: "24px 26px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        clipPath: CLIP_BR16,
+      }}
     >
-      <Group gap={12} wrap="nowrap" mb={12} align="center">
+      <Group gap={12} wrap="nowrap" align="center">
         <Box
           style={{
-            width: 46, height: 46, borderRadius: 12, flexShrink: 0, background: p.iconBg,
-            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+            width: 46,
+            height: 46,
+            background: p.iconBg,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            clipPath: CLIP_NUM6,
           }}
         >
           {p.icon}
         </Box>
-        <Text fz={22} fw={800} c="white">
+        <Text fz={21} fw={700} c="white" style={{ fontFamily: displayFont, letterSpacing: "0.02em" }}>
           {p.title}
         </Text>
       </Group>
       {p.children}
       <Text
-        fz={14}
-        fw={800}
-        tt="uppercase"
-        mt={14}
-        display="inline-block"
-        px={10}
-        py={4}
-        style={{ borderRadius: 999, background: `${p.badgeColor}22`, color: p.badgeColor, letterSpacing: 0.5 }}
+        component="span"
+        style={{
+          alignSelf: "flex-start",
+          fontFamily: displayFont,
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: p.badgeColor,
+          border: `1px solid ${p.badgeColor}`,
+          padding: "5px 14px",
+          clipPath: CLIP_PILL,
+        }}
       >
         {p.badge}
       </Text>
@@ -733,12 +871,12 @@ function ChambersTab(props: {
   );
 
   return (
-    <Stack gap="lg">
-      <Text fz={16} c="gray.4" maw={820}>
-        Sealed rooms deeper in the Facility. Some open with a fee, some only after the Grand Master,
-        and one is <Text span c="#ff8787">classified</Text>, entered in-character, by request only.
-      </Text>
-      <Flex gap="lg" wrap="wrap" align="stretch">
+    <Stack gap={20}>
+      <LockScreen
+        title="Chambers · Classified"
+        body="Sealed rooms deeper in the Facility unseal as your ascension advances. Some open with a fee, some only after the Grand Master, and one is classified, entered in-character, by request only."
+      />
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing={16}>
         <Room
           icon={<IconBone size={22} color="#e9ecef" />}
           iconBg="#1c1a26"
@@ -747,27 +885,27 @@ function ChambersTab(props: {
           badgeColor="#63e6be"
           borderColor="#2f4a3a"
         >
-          <Text fz={16} c="gray.5">
-            Bring an Old Amber, Helix, Sail, Skull or Root Fossil and an empty Poke Ball. Pay the fee;
-            walk out with a revived Pokemon.
+          <Text fz={14} c={DIM} lh={1.6}>
+            Bring an Old Amber, Helix, Sail, Skull or Root Fossil and an empty Poke Ball. Pay the fee; walk out with a
+            revived Pokemon.
           </Text>
           {!props.canAct ? (
-            <Text fz={14} c="dimmed" mt={12}>
+            <Text fz={14} c="dimmed">
               Master clearance required to operate this chamber.
             </Text>
           ) : props.fossilItems.length ? (
-            <Stack gap={10} mt={12}>
+            <Stack gap={10}>
               <Select
                 placeholder="Pick a fossil"
                 data={props.fossilItems.map((f) => ({ value: f.id, label: f.name }))}
                 value={selected}
                 onChange={setSelected}
                 aria-label="Choose a fossil to revive"
-                styles={{ input: { background: "#0e0c14" } }}
+                styles={{ input: { background: "#0e0c14", borderColor: "#3a3550" } }}
               />
-              <Button color="grape" onClick={onRevive} loading={busy} disabled={!selected} leftSection={<IconFlask size={16} />}>
+              <GradButton onClick={onRevive} loading={busy} disabled={!selected} rightSection={<IconFlask size={16} />}>
                 Revive
-              </Button>
+              </GradButton>
               {status && (
                 <Text fz={14} c="gray.3" role="status" aria-live="polite">
                   {status}
@@ -775,7 +913,7 @@ function ChambersTab(props: {
               )}
             </Stack>
           ) : (
-            <Text fz={14} c="dimmed" mt={12}>
+            <Text fz={14} c="dimmed">
               You have no revivable fossils in your bag yet.
             </Text>
           )}
@@ -789,9 +927,9 @@ function ChambersTab(props: {
           badgeColor="#b197fc"
           borderColor="#3a2f55"
         >
-          <Text fz={16} c="gray.5">
-            Earn a Key Stone at the Tower of Mastery and a Sparkling Stone from the Tapu trials. One or
-            the other per mission, never both.
+          <Text fz={14} c={DIM} lh={1.6}>
+            Earn a Key Stone at the Tower of Mastery and a Sparkling Stone from the Tapu trials. One or the other per
+            mission, never both.
           </Text>
         </Room>
 
@@ -803,12 +941,12 @@ function ChambersTab(props: {
           badgeColor="#ff8787"
           borderColor="#4a2a2e"
         >
-          <Text fz={16} c="gray.5">
-            The only path to Legendary capture and Legendary hybrids. No costs, no tiers, a bespoke,
-            story-driven mission authored by an admin. Enter in-character.
+          <Text fz={14} c={DIM} lh={1.6}>
+            The only path to Legendary capture and Legendary hybrids. No costs, no tiers, a bespoke, story-driven
+            mission authored by an admin. Enter in-character.
           </Text>
         </Room>
-      </Flex>
+      </SimpleGrid>
     </Stack>
   );
 }
@@ -849,57 +987,62 @@ function AscensionTab(props: {
     }
   };
 
-  const tColor = typeColor(type);
   const pct = Math.round((completed / MISSIONS_PER_TYPE) * 100);
 
   return (
-    <Stack gap="lg">
-      <Group justify="space-between" align="center" wrap="wrap" gap="md">
+    <Stack gap={20}>
+      <Flex justify="space-between" align="center" gap={20} wrap="wrap">
         <Group gap={12} align="center" wrap="wrap">
-          <Text fz={14} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 2 }}>
+          <Text fz={13} fw={700} c={FAINT} tt="uppercase" style={{ letterSpacing: "0.28em", fontFamily: displayFont }}>
             Tracking Type
           </Text>
           <Group gap={6}>
             {typeOptions.map((t) => {
-              const active = t === type;
+              const on = t === type;
+              const clickable = typeOptions.length > 1;
               return (
-                <Text
+                <UnstyledButton
                   key={t}
-                  onClick={typeOptions.length > 1 ? () => setType(t) : undefined}
-                  fz={14}
-                  fw={800}
-                  px={14}
-                  py={4}
-                  c="#fff"
+                  onClick={clickable ? () => setType(t) : undefined}
+                  aria-pressed={on}
                   style={{
-                    borderRadius: 999,
-                    cursor: typeOptions.length > 1 ? "pointer" : "default",
-                    background: active ? typeColor(t) : "#1c1a26",
-                    opacity: active ? 1 : 0.6,
+                    fontFamily: displayFont,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    padding: "6px 16px",
+                    clipPath: CLIP_TAG,
+                    cursor: clickable ? "pointer" : "default",
+                    color: on ? "#1A1B1E" : DIM,
+                    background: on ? GOLD_GRAD : "#232028",
                   }}
                 >
                   {t}
-                </Text>
+                </UnstyledButton>
               );
             })}
           </Group>
         </Group>
-        <Group gap={14} align="center" style={{ flex: "1 1 240px", minWidth: 200, justifyContent: "flex-end" }}>
-          <Text fz={16} c="gray.4">
-            <Text span fz={30} fw={800} c="white">
-              {completed}
-            </Text>{" "}
-            / {MISSIONS_PER_TYPE} abilities
+        <Group gap={14} align="center" style={{ flex: "1 1 260px", minWidth: 200, justifyContent: "flex-end" }}>
+          <Text fz={20} fw={700} c="white" style={{ fontFamily: displayFont, whiteSpace: "nowrap" }}>
+            {completed}{" "}
+            <Text span fz={14} fw={400} c={DIM}>
+              / {MISSIONS_PER_TYPE} abilities
+            </Text>
           </Text>
-          <Box style={{ flex: 1, maxWidth: 260, height: 8, borderRadius: 999, background: "#2a2637", overflow: "hidden" }}>
-            <Box style={{ height: "100%", width: `${pct}%`, borderRadius: 999, background: BAR_GRADIENT }} />
+          <Box style={{ flex: 1, maxWidth: 480, height: 8, background: "#232028", clipPath: "polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%)" }}>
+            <Box style={{ height: "100%", width: `${pct}%`, background: BAR_GRAD }} />
           </Box>
         </Group>
-      </Group>
+      </Flex>
 
-      <Text fz={16} c="gray.5" maw={860}>
-        Ten missions, ten abilities, each one <Text span c="#b197fc">encrypted</Text> until the mission
-        before it is cleared. Request the next from the board; an admin authors your bespoke RP thread.
+      <Text fz={15} c={DIM} maw={760} lh={1.6}>
+        Ten missions, ten abilities, each one{" "}
+        <Text span c="#c79bd6" fw={700}>
+          encrypted
+        </Text>{" "}
+        until the mission before it is cleared. Request the next from the board; an admin authors your bespoke RP thread.
       </Text>
 
       <Stack gap={12}>
@@ -908,105 +1051,79 @@ function AscensionTab(props: {
           const available = i === completed;
           const num = String(i + 1).padStart(2, "0");
           const abilityName = abilities[i] || (available ? "Next ability" : "");
-          return (
-            <Box
-              key={i}
-              p="md"
-              style={{
-                borderRadius: 14,
-                background: available ? "#160f26" : "transparent",
-                border: `1px solid ${available ? "#5a3fb0" : PANEL_BORDER}`,
-                boxShadow: available ? "0 0 24px rgba(90,63,176,0.25)" : "none",
-                opacity: !cleared && !available ? 0.55 : 1,
-              }}
-            >
-              <Group justify="space-between" wrap="nowrap" gap="md" align="center">
-                <Group gap={16} wrap="nowrap" style={{ minWidth: 0 }}>
-                  <Box
-                    style={{
-                      width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      background: cleared ? tColor : available ? GRAD : "#161319",
-                      border: available ? "1px solid #7c5cff" : "none",
-                    }}
-                  >
-                    <Text fz={22} fw={800} c={cleared || available ? "#fff" : "#4a4560"}>
-                      {num}
-                    </Text>
-                  </Box>
-                  <Box style={{ minWidth: 0 }}>
-                    <Group gap={8} mb={2}>
-                      <Text fz={14} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
-                        Mission {num}
-                      </Text>
-                      {cleared ? (
-                        <Text fz={14} fw={800} c="#69db7c" tt="uppercase">
-                          &#10003; Cleared
-                        </Text>
-                      ) : available ? (
-                        <Text fz={14} fw={800} c="grape.3" tt="uppercase">
-                          &#9654; Available
-                        </Text>
-                      ) : (
-                        <Group gap={4} wrap="nowrap">
-                          <IconLock size={12} color="#8a83a0" />
-                          <Text fz={14} fw={800} c="dimmed" tt="uppercase">
-                            Encrypted
-                          </Text>
-                        </Group>
-                      )}
-                    </Group>
-                    {cleared || available ? (
-                      <Text fz={21} fw={800} c="white" lineClamp={1}>
-                        {abilityName}
-                      </Text>
-                    ) : (
-                      // redacted blocks
-                      <Group gap={4} mb={2}>
-                        {Array.from({ length: 9 }).map((__, k) => (
-                          <Box key={k} style={{ width: 14, height: 12, borderRadius: 3, background: "#1c1a26" }} />
-                        ))}
-                      </Group>
-                    )}
-                    <Text fz={14} c="dimmed" lineClamp={1}>
-                      {cleared
-                        ? "Ability unlocked."
-                        : available
-                          ? "Ready to request from the board."
-                          : "DECRYPTING... clear the prior mission to unlock."}
-                    </Text>
-                  </Box>
-                </Group>
 
-                {cleared ? (
-                  <Text
-                    component={Link}
-                    to="/Forum/Master-Mission"
-                    fz={16}
-                    fw={700}
-                    c="grape.3"
-                    style={{ whiteSpace: "nowrap", textDecoration: "none", flexShrink: 0 }}
-                  >
-                    View thread <IconExternalLink size={13} style={{ verticalAlign: "middle" }} />
-                  </Text>
-                ) : available && props.canAct ? (
-                  <Button
-                    variant="gradient"
-                    gradient={{ from: "grape", to: "violet", deg: 90 }}
-                    radius="xl"
-                    rightSection={<IconArrowRight size={16} />}
-                    onClick={() => onRequest(i)}
-                    loading={busy === i}
-                    style={{ flexShrink: 0 }}
-                  >
-                    Request Mission
-                  </Button>
-                ) : null}
-              </Group>
-            </Box>
+          const state = cleared
+            ? { bg: CARD, border: CARD_BORDER, opacity: 1, numBg: "#12B7B6", tag: "Cleared", tagColor: "#12B7B6", titleColor: "#fff" }
+            : available
+              ? { bg: "#1c1526", border: "#7E2C75", opacity: 1, numBg: ACTIVE_GRAD_135, tag: "Available", tagColor: "#c79bd6", titleColor: "#fff" }
+              : { bg: CARD, border: "#232028", opacity: 0.65, numBg: "#3C3A3C", tag: "Encrypted", tagColor: FAINT, titleColor: FAINT };
+
+          const title = cleared ? abilityName || "Ability unlocked" : available ? abilityName : "▪▪▪▪▪▪▪▪▪▪";
+          const sub = cleared
+            ? "Ability unlocked."
+            : available
+              ? "Ready to request from the board."
+              : "DECRYPTING... clear the prior mission to unlock.";
+
+          return (
+            <Flex
+              key={i}
+              align="center"
+              gap={20}
+              wrap="wrap"
+              style={{ background: state.bg, border: `1px solid ${state.border}`, padding: "18px 24px", opacity: state.opacity }}
+            >
+              <Box
+                style={{
+                  flexShrink: 0,
+                  width: 48,
+                  height: 48,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: displayFont,
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: "#fff",
+                  background: state.numBg,
+                  clipPath: CLIP_NUM8,
+                }}
+              >
+                {num}
+              </Box>
+              <Box style={{ flex: "1 1 auto", minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+                <Text fz={12} fw={700} c={state.tagColor} tt="uppercase" style={{ letterSpacing: "0.22em", fontFamily: displayFont }}>
+                  Mission {num} &middot; {state.tag}
+                </Text>
+                <Text fz={17} fw={700} c={state.titleColor} lineClamp={1}>
+                  {title}
+                </Text>
+                <Text fz={13} c={FAINT} lineClamp={1}>
+                  {sub}
+                </Text>
+              </Box>
+
+              {cleared ? (
+                <Text
+                  component={Link}
+                  to="/Forum/Master-Mission"
+                  fz={15}
+                  fw={700}
+                  c="#c79bd6"
+                  style={{ whiteSpace: "nowrap", textDecoration: "none", flexShrink: 0 }}
+                >
+                  View thread <IconExternalLink size={13} style={{ verticalAlign: "middle" }} />
+                </Text>
+              ) : available && props.canAct ? (
+                <GradButton onClick={() => onRequest(i)} loading={busy === i} rightSection={<IconArrowRight size={16} />} style={{ flexShrink: 0 }}>
+                  Request Mission
+                </GradButton>
+              ) : null}
+            </Flex>
           );
         })}
       </Stack>
+
       {status && (
         <Text fz={14} c="gray.3" role="status" aria-live="polite">
           {status}
@@ -1022,29 +1139,46 @@ function ConsoleView(props: {
   fallbackType: string;
   canAct: boolean;
   fossilItems: Array<{ id: string; name: string }>;
+  onBackToGuide: () => void;
 }) {
   const [tab, setTab] = React.useState<ConsoleTab>("overview");
+  const locked = !props.canAct;
+
   return (
-    <Stack gap="xl">
+    <Stack gap={22}>
       <Group gap={10} wrap="wrap">
-        <TabPill label="Overview" icon={<IconTargetArrow size={15} />} active={tab === "overview"} onClick={() => setTab("overview")} />
-        <TabPill label="Divisions" icon={<IconDiamond size={14} />} active={tab === "divisions"} onClick={() => setTab("divisions")} />
-        <TabPill label="Chambers" icon={<IconFlask size={14} />} active={tab === "chambers"} locked onClick={() => setTab("chambers")} />
-        <TabPill label="Ascension" icon={<IconStar size={14} />} active={tab === "ascension"} onClick={() => setTab("ascension")} />
+        <AngledPill label="Overview" icon={<IconTargetArrow size={15} />} active={tab === "overview"} onClick={() => setTab("overview")} />
+        <AngledPill label="Divisions" icon={<IconDiamond size={14} />} active={tab === "divisions"} onClick={() => setTab("divisions")} />
+        <AngledPill label="Chambers" icon={<IconFlask size={14} />} active={tab === "chambers"} locked onClick={() => setTab("chambers")} />
+        <AngledPill label="Ascension" icon={<IconStar size={14} />} active={tab === "ascension"} onClick={() => setTab("ascension")} />
       </Group>
 
-      {tab === "overview" && (
-        <OverviewTab character={props.character} progress={props.progress} onEnter={() => setTab("ascension")} />
-      )}
-      {tab === "divisions" && <DivisionsTab />}
-      {tab === "chambers" && <ChambersTab canAct={props.canAct} fossilItems={props.fossilItems} />}
-      {tab === "ascension" && props.character && (
-        <AscensionTab
-          characterId={props.character.id}
-          progress={props.progress}
-          fallbackType={props.fallbackType}
-          canAct={props.canAct}
+      {locked ? (
+        <LockScreen
+          title="No Facility Clearance"
+          body="This character hasn't earned clearance yet. Read the guide and request a review when the requirements are met."
+          action={
+            <GradButton onClick={props.onBackToGuide} style={{ marginTop: 4 }}>
+              Back to the Guide
+            </GradButton>
+          }
         />
+      ) : (
+        <>
+          {tab === "overview" && (
+            <OverviewTab character={props.character} progress={props.progress} onEnter={() => setTab("ascension")} />
+          )}
+          {tab === "divisions" && <DivisionsTab character={props.character} />}
+          {tab === "chambers" && <ChambersTab canAct={props.canAct} fossilItems={props.fossilItems} />}
+          {tab === "ascension" && props.character && (
+            <AscensionTab
+              characterId={props.character.id}
+              progress={props.progress}
+              fallbackType={props.fallbackType}
+              canAct={props.canAct}
+            />
+          )}
+        </>
       )}
     </Stack>
   );
@@ -1054,6 +1188,7 @@ function ConsoleView(props: {
 
 export default function Research() {
   const { user } = useAuth();
+  const { isOverSm } = useMediaQuery();
   const uid = user?.uid;
   const queryClient = useQueryClient();
 
@@ -1074,10 +1209,7 @@ export default function Research() {
     enabled: !!uid,
   });
 
-  const characters = React.useMemo(
-    () => charactersQuery.data?.sortedData ?? [],
-    [charactersQuery.data]
-  );
+  const characters = React.useMemo(() => charactersQuery.data?.sortedData ?? [], [charactersQuery.data]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
   // Default to the first Master-track character; fall back to the first of any.
@@ -1104,7 +1236,7 @@ export default function Research() {
   const selected = characters.find((c) => c.id === selectedId);
   const selectedProgress = selectedId ? progressMap[selectedId] : undefined;
   // A character has console clearance once it has entered a Division. Admins can
-  // always operate for support. Actions stay gated by this; anyone may preview.
+  // always operate for support. Actions stay gated by this flag.
   const canAct = (!!selected && selected.type !== "None") || isAdmin(user);
 
   const [view, setView] = React.useState<"guide" | "console">("guide");
@@ -1135,52 +1267,44 @@ export default function Research() {
       setRequestStatus("");
       queryClient.invalidateQueries({ queryKey: ["my-clearance-requests", uid] });
     },
-    onError: (e) =>
-      setRequestStatus((e as Error).message || "Could not send the request. Try again."),
+    onError: (e) => setRequestStatus((e as Error).message || "Could not send the request. Try again."),
   });
 
   const loading = configQuery.isPending || (!!uid && (charactersQuery.isPending || progressQuery.isPending));
   const granted = view === "console" && canAct;
-  const accentColor = granted ? "#b197fc" : "#F5C842";
+  const accentColor = granted ? "#c79bd6" : "#FFD074";
+
+  const toggleFz = isOverSm ? 13 : 11;
+  const togglePx = isOverSm ? 20 : 12;
 
   return (
     <Box style={{ background: "#0b0a10", minHeight: "100%" }}>
       <Seo page="/Research" />
       <Container size="lg" py={{ base: 20, sm: 32 }} px={{ base: 16, sm: 24 }}>
         {/* VIEW AS toggle + character picker */}
-        <Group justify="space-between" align="flex-end" wrap="wrap" gap="md" mb="xl">
-          <Group gap={10} align="center">
-            <Text fz={14} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 2 }}>
+        <Group justify="space-between" align="flex-end" wrap="wrap" gap={14} mb="xl">
+          <Group gap={12} align="center" wrap="wrap">
+            <Text fz={12} fw={700} c={FAINT} tt="uppercase" style={{ letterSpacing: "0.28em", fontFamily: displayFont }}>
               View as
             </Text>
-            <Group
-              gap={4}
-              p={4}
-              style={{ borderRadius: 999, background: "#141019", border: "1px solid #2a2637" }}
-            >
-              <Button
-                size="xs"
-                radius="xl"
-                variant={view === "guide" ? "gradient" : "subtle"}
-                gradient={{ from: "grape", to: "violet", deg: 90 }}
-                color="gray"
-                leftSection={<IconLock size={12} />}
+            <Flex>
+              <AngledPill
+                label="Not a Master · Guide"
+                active={view === "guide"}
                 onClick={() => setView("guide")}
-              >
-                Not a Master (guide)
-              </Button>
-              <Button
-                size="xs"
-                radius="xl"
-                variant={view === "console" ? "gradient" : "subtle"}
-                gradient={{ from: "grape", to: "violet", deg: 90 }}
-                color="gray"
-                leftSection={<IconStar size={12} />}
+                fz={toggleFz}
+                px={togglePx}
+                style={{ border: "1px solid #3a3550" }}
+              />
+              <AngledPill
+                label="Master · Console"
+                active={view === "console"}
                 onClick={() => setView("console")}
-              >
-                Master (console)
-              </Button>
-            </Group>
+                fz={toggleFz}
+                px={togglePx}
+                style={{ border: "1px solid #3a3550", marginLeft: -2 }}
+              />
+            </Flex>
           </Group>
 
           {characters.length > 0 && (
@@ -1194,7 +1318,7 @@ export default function Research() {
               maw={260}
               w="100%"
               aria-label="Choose which character to view"
-              styles={{ input: { background: "#141019" } }}
+              styles={{ input: { background: IDLE_BG, borderColor: "#3a3550", fontWeight: 700 } }}
             />
           )}
         </Group>
@@ -1221,6 +1345,7 @@ export default function Research() {
             fallbackType={fallbackType}
             canAct={canAct}
             fossilItems={fossilItems}
+            onBackToGuide={() => setView("guide")}
           />
         ) : (
           <GuideView
