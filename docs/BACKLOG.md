@@ -6,6 +6,15 @@ July 2026 build-out are marked (2026-07).
 
 ## Audits (2026-07, owner-requested)
 
+- **Dependabot vulnerabilities on the repo (2026-07).** GitHub reports 32
+  open vulnerabilities on `Isabelnava100/SnagemV3`'s default branch: 2
+  critical, 10 high, 16 moderate, 4 low. Surfaced on a `git push` to `main`.
+  Review and bump the flagged dependencies:
+  https://github.com/Isabelnava100/SnagemV3/security/dependabot . Since the
+  package manager is bun, resolve with `bun update` (or targeted bumps) and
+  re-run `bun run build` before shipping. Not a deploy blocker, but the
+  critical/high ones should be triaged soon.
+
 - **Annual security header renewal, due 2027-07.** The HSTS policy in
   `netlify.toml` runs on a 1 year max-age (set 2026-07). Any dev work in or
   after July 2027 must renew it: confirm the header is still served, re-test
