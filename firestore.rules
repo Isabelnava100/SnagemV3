@@ -96,17 +96,18 @@ service cloud.firestore {
       // owner-writable because the client-side evolution flow decrements a spend
       // item there; closing that fully means moving evolvePokemon to a callable.
       // 'snaglist' (the weekly activities checklist), 'daycare' (the breeding
-      // pair + egg timer), 'farm' (berry plots) and 'threadLocks' (open battle
-      // threads pinning this member's teams, read by the Trading Post) are
-      // excluded: only the Cloud Functions write them, so members cannot
-      // check their own boxes, forge an egg, or unlock a battling pokemon.
+      // pair + egg timer), 'farm' (berry plots), 'threadLocks' (open battle
+      // threads pinning this member's teams, read by the Trading Post) and
+      // 'casino_highlow' (Haunter's High-Low pot + stake) are excluded: only
+      // the Cloud Functions write them, so members cannot check their own
+      // boxes, forge an egg, unlock a battling pokemon, or edit their pot.
       match /bag/{doc} {
         allow read: if request.auth.uid == uid || isAdmin();
         allow write: if isAdmin()
                      || (request.auth.uid == uid
                          && doc != 'badges' && doc != 'snaglist'
                          && doc != 'daycare' && doc != 'farm'
-                         && doc != 'threadLocks');
+                         && doc != 'threadLocks' && doc != 'casino_highlow');
       }
       match /bookmarks/{doc} {
         allow read, write: if request.auth.uid == uid || isAdmin();

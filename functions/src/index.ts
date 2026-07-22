@@ -6262,6 +6262,19 @@ export const playCasinoGame = onCall(async (request) => {
       roll = randomInt(1, 5); // d4
       const isEven = roll % 2 === 0;
       if ((pick === "even") === isEven) { win = true; payout = bet * 2; }
+    } else if (game === "spookySlots") {
+      // 3 reels of 6 symbols. Triple pays 8x, any pair pays 2x.
+      const r1 = randomInt(1, 7);
+      const r2 = randomInt(1, 7);
+      const r3 = randomInt(1, 7);
+      roll = [r1, r2, r3];
+      if (r1 === r2 && r2 === r3) { win = true; payout = bet * 8; }
+      else if (r1 === r2 || r2 === r3 || r1 === r3) { win = true; payout = bet * 2; }
+    } else if (game === "ghostFlip") {
+      // 3 face-down cards, one hides Gengar. Find it for 3x.
+      const p = requireInt(pick, "pick", 0, 2);
+      roll = randomInt(0, 3); // 0, 1, or 2
+      if (roll === p) { win = true; payout = bet * 3; }
     } else {
       throw new HttpsError("invalid-argument", "Unknown game.");
     }
@@ -6272,6 +6285,83 @@ export const playCasinoGame = onCall(async (request) => {
   });
   await markSnagTask(uid, "casino");
   return { ok: true, ...result };
+});
+
+// Haunter's High-Low: a stateful ladder game. Deal a card, then call HIGHER or
+// LOWER. Each correct call doubles the pot; cash out any time or ride to 5
+// calls (32x) where it auto-pays. A wrong call (or a tie) loses the pot. State
+// lives at users/{uid}/bag/casino_highlow, server-written only (see rules).
+const HIGHLOW_MAX_CALLS = 5;
+
+export const startHighLow = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const bet = requireInt(request.data?.bet ?? 1, "bet", 1, 5);
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const stateRef = db.doc(`users/${uid}/bag/casino_highlow`);
+  const result = await db.runTransaction(async (tx) => {
+    const cur = (await tx.get(currencyRef)).data() ?? {};
+    let geng = parseInt(String(cur.gengarcoin ?? "0"), 10) || 0;
+    if (geng < bet) throw new HttpsError("failed-precondition", "Not enough Gengar Tokens.");
+    geng -= bet; // stake taken up front; the pot starts at the stake
+    const card = randomInt(1, 14); // 1..13 (Ace..King)
+    tx.set(currencyRef, { gengarcoin: geng }, { merge: true });
+    tx.set(stateRef, { card, pot: bet, bet, calls: 0, active: true });
+    return { card, pot: bet, calls: 0, active: true, gengarcoin: geng };
+  });
+  await markSnagTask(uid, "casino");
+  return { ok: true, ...result };
+});
+
+export const guessHighLow = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const dir = request.data?.direction;
+  if (dir !== "higher" && dir !== "lower")
+    throw new HttpsError("invalid-argument", "Guess higher or lower.");
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const stateRef = db.doc(`users/${uid}/bag/casino_highlow`);
+  return await db.runTransaction(async (tx) => {
+    const st = (await tx.get(stateRef)).data();
+    if (!st || !st.active) throw new HttpsError("failed-precondition", "No active hand. Deal first.");
+    const prev = Number(st.card) || 0;
+    const next = randomInt(1, 14);
+    const correct = dir === "higher" ? next > prev : next < prev; // a tie loses
+    if (!correct) {
+      tx.set(stateRef, { card: next, pot: 0, active: false }, { merge: true });
+      return { ok: true, correct: false, card: next, pot: 0, calls: Number(st.calls) || 0, active: false, cashedOut: false };
+    }
+    const pot = (Number(st.pot) || 0) * 2;
+    const calls = (Number(st.calls) || 0) + 1;
+    if (calls >= HIGHLOW_MAX_CALLS) {
+      const cur = (await tx.get(currencyRef)).data() ?? {};
+      let geng = parseInt(String(cur.gengarcoin ?? "0"), 10) || 0;
+      geng += pot;
+      tx.set(currencyRef, { gengarcoin: geng }, { merge: true });
+      tx.set(stateRef, { card: next, pot, calls, active: false }, { merge: true });
+      return { ok: true, correct: true, card: next, pot, calls, active: false, cashedOut: true, gengarcoin: geng };
+    }
+    tx.set(stateRef, { card: next, pot, calls, active: true }, { merge: true });
+    return { ok: true, correct: true, card: next, pot, calls, active: true, cashedOut: false };
+  });
+});
+
+export const cashoutHighLow = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const stateRef = db.doc(`users/${uid}/bag/casino_highlow`);
+  return await db.runTransaction(async (tx) => {
+    const st = (await tx.get(stateRef)).data();
+    if (!st || !st.active) throw new HttpsError("failed-precondition", "No active hand to cash out.");
+    const cur = (await tx.get(currencyRef)).data() ?? {};
+    let geng = parseInt(String(cur.gengarcoin ?? "0"), 10) || 0;
+    const pot = Number(st.pot) || 0;
+    geng += pot;
+    tx.set(currencyRef, { gengarcoin: geng }, { merge: true });
+    tx.set(stateRef, { active: false }, { merge: true });
+    return { ok: true, pot, active: false, gengarcoin: geng };
+  });
 });
 
 // --- Shadow Lotto: buy a ticket --------------------------------------------

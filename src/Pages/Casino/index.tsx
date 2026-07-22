@@ -1,7 +1,10 @@
 import { Box, Button, Container, Flex, Group, SimpleGrid, Stack, Text, UnstyledButton } from "@mantine/core";
 import {
   IconArrowsExchange,
+  IconArrowsUpDown,
+  IconCards,
   IconDice5,
+  IconStack2,
   IconTargetArrow,
   IconTicket,
   IconTriangleInverted,
@@ -17,13 +20,16 @@ import { hasCapability } from "../../lib/permissions";
 import {
   buyLottoTicket,
   CasinoGame,
+  cashoutHighLow,
   DEFAULT_LOTTO_MIN_TICKETS,
   drawLotto,
   exchangeTokens,
   getCasinoConfig,
   getLottoState,
   getMyCasino,
+  guessHighLow,
   playGame,
+  startHighLow,
 } from "../../queries/casino";
 import { getCurrencies } from "../../queries/dashboard";
 
@@ -35,9 +41,11 @@ import { getCurrencies } from "../../queries/dashboard";
  *
  * The cinematic "casino floor" restyle (July 2026): a striped hero with three
  * wallet chips, the Exchange Cage bar, a table-picker grid ("The Floor"), and a
- * seated single-game view driven by a shared 1 / 2 / 5 chip stake. Only the
- * presentation changed; the four server-backed games (Hex Roulette, Dream Dice,
- * Payback Pyramid, Shadow Lotto) keep their exact queries, mutations, and RNG.
+ * seated single-game view driven by a shared 1 / 2 / 5 chip stake. Seven games:
+ * the instant ones through playCasinoGame (Hex Roulette, Dream Dice, Payback
+ * Pyramid, Spooky Slots, Ghost Card Flip), the weekly Shadow Lotto, and the
+ * stateful Haunter's High-Low (startHighLow / guessHighLow / cashoutHighLow).
+ * Every outcome, balance check, and payout is decided server-side.
  */
 
 const DEFAULT_RATE = 2;
@@ -423,7 +431,7 @@ function ExchangeCage(props: { uid: string }) {
 /* ------------------------------- the floor -------------------------------- */
 
 interface TableDef {
-  id: CasinoGame | "shadowLotto";
+  id: CasinoGame | "shadowLotto" | "haunterHighLow";
   name: string;
   icon: React.ReactNode;
   payout: string;
@@ -455,6 +463,30 @@ const TABLES: TableDef[] = [
     payout: "Win 2x",
     blurb: "Even or odd on a d4. Simple, spooky, 50/50.",
     rules: "Call even or odd. The d4 pays 2x your chip.",
+  },
+  {
+    id: "spookySlots",
+    name: "Spooky Slots",
+    icon: <IconStack2 size={22} color={GOLD} />,
+    payout: "2x Pair · 8x Triple",
+    blurb: "Pull the lever and pray the reels agree with each other.",
+    rules: "Spin three reels. Any matching pair pays 2x your chip, a full triple pays 8x.",
+  },
+  {
+    id: "ghostFlip",
+    name: "Ghost Card Flip",
+    icon: <IconCards size={22} color={PURPLE_LT} />,
+    payout: "Win 3x",
+    blurb: "Three cards face down, one hides Gengar. Guess right.",
+    rules: "Pick one of three cards. Find the Gengar and take 3x your chip.",
+  },
+  {
+    id: "haunterHighLow",
+    name: "Haunter's High-Low",
+    icon: <IconArrowsUpDown size={22} color={CYAN} />,
+    payout: "Up to 32x",
+    blurb: "Call the next card higher or lower. Ride the streak or cash out.",
+    rules: "Deal a card, then call higher or lower. Each correct call doubles the pot; cash out any time. Five in a row pays 32x. A miss loses it all.",
   },
   {
     id: "shadowLotto",
@@ -579,7 +611,7 @@ function useGamePlay(
   const [state, setState] = React.useState<{ ok: boolean | null; msg: string | null }>({ ok: null, msg: null });
 
   const mutation = useMutation({
-    mutationFn: (vars: { game: CasinoGame; bet: number; pick: number | "even" | "odd" }) =>
+    mutationFn: (vars: { game: CasinoGame; bet: number; pick?: number | "even" | "odd" }) =>
       playGame(vars.game, vars.bet, vars.pick),
     onSuccess: (res, vars) => {
       queryClient.invalidateQueries({ queryKey: ["currencies", uid] });
@@ -870,6 +902,246 @@ function ShadowLottoBody(props: { uid: string; tokens: number; record: (win: boo
 
 /* ------------------------------ seated view ------------------------------- */
 
+/** Card rank label: A / 2-10 / J / Q / K. */
+function cardLabel(n: number): string {
+  if (n === 1) return "A";
+  if (n === 11) return "J";
+  if (n === 12) return "Q";
+  if (n === 13) return "K";
+  return String(n);
+}
+
+function SpookySlotsBody(props: GameProps) {
+  const [reels, setReels] = React.useState<[number, number, number]>([1, 2, 3]);
+  const { mutation, ok, msg, reset } = useGamePlay(
+    props.uid,
+    (res) => {
+      const r = Array.isArray(res.roll) ? res.roll : [];
+      return res.win
+        ? `The reels lock ${r.join(" · ")}. Take ${res.payout} Gengar Tokens.`
+        : `The reels lock ${r.join(" · ")}. No match this spin.`;
+    },
+    (res, bet) => {
+      if (Array.isArray(res.roll) && res.roll.length >= 3)
+        setReels([res.roll[0], res.roll[1], res.roll[2]]);
+      props.record(res.win, res.payout, bet);
+    }
+  );
+  const disabled = mutation.isPending || props.tokens < props.stake;
+  const reelTile = (v: number, key: number) => (
+    <Box
+      key={key}
+      style={{
+        width: 66,
+        height: 80,
+        background: "#1b1a1e",
+        border: `1px solid ${HERO_BORDER}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: displayFont,
+        fontSize: 34,
+        fontWeight: 700,
+        color: GOLD,
+        clipPath: CLIP_CHIP,
+      }}
+    >
+      {v}
+    </Box>
+  );
+  return (
+    <Stack gap={18}>
+      <Group gap={12}>{reels.map(reelTile)}</Group>
+      <Group gap={20} align="center" wrap="wrap">
+        <Text fz={14} c={DIM}>
+          {props.stake} token{props.stake > 1 ? "s" : ""} on the lever.
+        </Text>
+        <Cta
+          onClick={() => { reset(); mutation.mutate({ game: "spookySlots", bet: props.stake }); }}
+          loading={mutation.isPending}
+          disabled={disabled}
+        >
+          Pull the Lever &rarr;
+        </Cta>
+      </Group>
+      <GameMsg ok={ok}>{msg ?? "Set your chip and pull."}</GameMsg>
+      {props.tokens < props.stake && <NeedNote>You need {props.stake} Gengar Tokens for this chip.</NeedNote>}
+    </Stack>
+  );
+}
+
+function GhostFlipBody(props: GameProps) {
+  const [pick, setPick] = React.useState<number>(0);
+  const [revealed, setRevealed] = React.useState<number | null>(null);
+  const { mutation, ok, msg, reset } = useGamePlay(
+    props.uid,
+    (res) => {
+      const g = typeof res.roll === "number" ? res.roll : 0;
+      return res.win
+        ? `Gengar was under card ${g + 1}. Take ${res.payout} Gengar Tokens.`
+        : `Gengar was under card ${g + 1}. Better luck next flip.`;
+    },
+    (res, bet) => {
+      if (typeof res.roll === "number") setRevealed(res.roll);
+      props.record(res.win, res.payout, bet);
+    }
+  );
+  const disabled = mutation.isPending || props.tokens < props.stake;
+  return (
+    <Stack gap={18}>
+      <Group gap={14}>
+        {[0, 1, 2].map((i) => {
+          const selected = pick === i;
+          const isGengar = revealed === i;
+          return (
+            <UnstyledButton
+              key={i}
+              onClick={() => { setRevealed(null); reset(); setPick(i); }}
+              aria-label={`Card ${i + 1}`}
+              aria-pressed={selected}
+              style={{
+                width: 84,
+                height: 116,
+                background: isGengar ? "rgba(119,41,118,0.4)" : "#1b1a1e",
+                border: `2px solid ${selected ? PURPLE_LT : HERO_BORDER}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                clipPath: CLIP_CHIP,
+                fontFamily: displayFont,
+                fontSize: 15,
+                fontWeight: 700,
+                color: isGengar ? PURPLE_LT : DIM,
+              }}
+            >
+              {revealed === null ? "?" : isGengar ? "GENGAR" : "X"}
+            </UnstyledButton>
+          );
+        })}
+      </Group>
+      <Group gap={20} align="center" wrap="wrap">
+        <Text fz={14} c={DIM}>
+          {props.stake} token{props.stake > 1 ? "s" : ""} on card {pick + 1}.
+        </Text>
+        <Cta
+          onClick={() => { setRevealed(null); reset(); mutation.mutate({ game: "ghostFlip", bet: props.stake, pick }); }}
+          loading={mutation.isPending}
+          disabled={disabled}
+        >
+          Flip the Card &rarr;
+        </Cta>
+      </Group>
+      <GameMsg ok={ok}>{msg ?? "Pick a card and flip."}</GameMsg>
+      {props.tokens < props.stake && <NeedNote>You need {props.stake} Gengar Tokens for this chip.</NeedNote>}
+    </Stack>
+  );
+}
+
+function HighLowBody(props: GameProps) {
+  const queryClient = useQueryClient();
+  const [hand, setHand] = React.useState<{ card: number; pot: number; calls: number; active: boolean } | null>(null);
+  const [msg, setMsg] = React.useState<{ ok: boolean | null; text: string | null }>({ ok: null, text: null });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["currencies", props.uid] });
+
+  const startM = useMutation({
+    mutationFn: () => startHighLow(props.stake),
+    onSuccess: (res) => {
+      setHand({ card: res.card, pot: res.pot, calls: res.calls, active: res.active });
+      setMsg({ ok: null, text: `Dealt ${cardLabel(res.card)}. Higher or lower?` });
+      invalidate();
+    },
+    onError: (e) => setMsg({ ok: false, text: e instanceof Error ? e.message : "Could not deal." }),
+  });
+  const guessM = useMutation({
+    mutationFn: (dir: "higher" | "lower") => guessHighLow(dir),
+    onSuccess: (res) => {
+      setHand({ card: res.card, pot: res.pot, calls: res.calls, active: res.active });
+      if (res.correct && res.cashedOut) {
+        setMsg({ ok: true, text: `${cardLabel(res.card)}. Five in a row! ${res.pot} Gengar Tokens are yours.` });
+        props.record(true, res.pot, props.stake);
+      } else if (res.correct) {
+        setMsg({ ok: true, text: `${cardLabel(res.card)}. The pot is now ${res.pot}. Push it or cash out.` });
+      } else {
+        setMsg({ ok: false, text: `${cardLabel(res.card)}. The pot is gone.` });
+        props.record(false, 0, props.stake);
+      }
+      invalidate();
+    },
+    onError: (e) => setMsg({ ok: false, text: e instanceof Error ? e.message : "Guess failed." }),
+  });
+  const cashM = useMutation({
+    mutationFn: () => cashoutHighLow(),
+    onSuccess: (res) => {
+      setHand((h) => (h ? { ...h, active: false } : h));
+      setMsg({ ok: true, text: `Cashed out ${res.pot} Gengar Tokens.` });
+      props.record(true, res.pot, props.stake);
+      invalidate();
+    },
+    onError: (e) => setMsg({ ok: false, text: e instanceof Error ? e.message : "Cash out failed." }),
+  });
+
+  const busy = startM.isPending || guessM.isPending || cashM.isPending;
+  const active = !!hand?.active;
+  const canDeal = !active && props.tokens >= props.stake;
+
+  return (
+    <Stack gap={18}>
+      <Group gap={20} align="center" wrap="wrap">
+        <Box
+          style={{
+            width: 90,
+            height: 124,
+            background: "#1b1a1e",
+            border: `2px solid ${CYAN}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            clipPath: CLIP_CHIP,
+            fontFamily: displayFont,
+            fontSize: 32,
+            fontWeight: 700,
+            color: CYAN,
+          }}
+        >
+          {hand ? cardLabel(hand.card) : "?"}
+        </Box>
+        <Stack gap={10}>
+          <Text fz={14} c={DIM}>
+            Pot: <b style={{ color: GOLD }}>{hand?.pot ?? props.stake}</b> Gengar Tokens
+            {active ? ` · call ${hand!.calls}/5` : ""}
+          </Text>
+          {active ? (
+            <Group gap={10} wrap="wrap">
+              <Cta onClick={() => guessM.mutate("higher")} loading={guessM.isPending} disabled={busy}>
+                Higher &uarr;
+              </Cta>
+              <Cta onClick={() => guessM.mutate("lower")} loading={guessM.isPending} disabled={busy}>
+                Lower &darr;
+              </Cta>
+              <Cta onClick={() => cashM.mutate()} loading={cashM.isPending} disabled={busy}>
+                Cash Out
+              </Cta>
+            </Group>
+          ) : (
+            <Cta
+              onClick={() => { setMsg({ ok: null, text: null }); startM.mutate(); }}
+              loading={startM.isPending}
+              disabled={!canDeal || busy}
+            >
+              Deal a Card &rarr;
+            </Cta>
+          )}
+        </Stack>
+      </Group>
+      <GameMsg ok={msg.ok}>{msg.text ?? "Stake a chip and deal."}</GameMsg>
+      {props.tokens < props.stake && !active && (
+        <NeedNote>You need {props.stake} Gengar Tokens to deal.</NeedNote>
+      )}
+    </Stack>
+  );
+}
+
 function Seated(props: {
   table: TableDef;
   uid: string;
@@ -928,6 +1200,9 @@ function Seated(props: {
         {t.id === "hexRoulette" && <HexRouletteBody {...gameProps} />}
         {t.id === "dreamDice" && <DreamDiceBody {...gameProps} />}
         {t.id === "paybackPyramid" && <PaybackPyramidBody {...gameProps} />}
+        {t.id === "spookySlots" && <SpookySlotsBody {...gameProps} />}
+        {t.id === "ghostFlip" && <GhostFlipBody {...gameProps} />}
+        {t.id === "haunterHighLow" && <HighLowBody {...gameProps} />}
         {t.id === "shadowLotto" && <ShadowLottoBody uid={props.uid} tokens={props.tokens} record={props.record} />}
       </Box>
     </Stack>

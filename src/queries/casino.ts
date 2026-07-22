@@ -44,14 +44,50 @@ export const getMyCasino = async (uid: string): Promise<MyCasino> => {
 export const exchangeTokens = (direction: "buy" | "sell", amount: number) =>
   call<{ ok: boolean; gengarcoin: number; pokecoin: number }>("exchangeTokens", { direction, amount });
 
-export type CasinoGame = "hexRoulette" | "dreamDice" | "paybackPyramid";
+export type CasinoGame =
+  | "hexRoulette"
+  | "dreamDice"
+  | "paybackPyramid"
+  | "spookySlots"
+  | "ghostFlip";
 
-/** Play an instant casino game. pick: number (roulette 1-36, dice total 2-12) or "even"/"odd" (pyramid). */
-export const playGame = (game: CasinoGame, bet: number, pick: number | "even" | "odd") =>
+/**
+ * Play an instant casino game. pick: number (roulette 1-36, dice total 2-12,
+ * ghostFlip card 0-2), "even"/"odd" (pyramid), or omitted (spookySlots).
+ */
+export const playGame = (
+  game: CasinoGame,
+  bet: number,
+  pick?: number | "even" | "odd"
+) =>
   call<{ ok: boolean; win: boolean; roll: number | number[]; payout: number; gengarcoin: number }>(
     "playCasinoGame",
     { game, bet, pick }
   );
+
+/** Haunter's High-Low: server-authoritative ladder state. */
+export interface HighLowResult {
+  ok: boolean;
+  card: number;
+  pot: number;
+  calls: number;
+  active: boolean;
+  correct?: boolean;
+  cashedOut?: boolean;
+  gengarcoin?: number;
+}
+
+/** Deal a fresh High-Low hand, staking `bet` Gengar Tokens (1-5). */
+export const startHighLow = (bet: number) =>
+  call<HighLowResult>("startHighLow", { bet });
+
+/** Call the next card higher or lower. Correct doubles the pot; wrong loses it. */
+export const guessHighLow = (direction: "higher" | "lower") =>
+  call<HighLowResult>("guessHighLow", { direction });
+
+/** Cash out the current High-Low pot and end the hand. */
+export const cashoutHighLow = () =>
+  call<{ ok: boolean; pot: number; active: boolean; gengarcoin: number }>("cashoutHighLow", {});
 
 /** Buy a Shadow Lotto ticket (1 Gengar Token) for a number 1-50. */
 export const buyLottoTicket = (number: number) =>

@@ -21,7 +21,7 @@ import {
 import type { EmotionSx as Sx } from "@mantine/emotion";
 import { UseFormReturnType, useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
-import { IconTrash, IconX } from "@tabler/icons-react";
+import { IconLock, IconTrash, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -46,7 +46,7 @@ import { containsBlockedWord, excludeProperties, getPokemonImageURL } from "../.
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Edit2, FileSearch } from "../../../icons";
 import { getCharacters, getItems, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
-import { callSetHeldItem } from "../../../queries/game";
+import { callSetHeldItem, getThreadLocks } from "../../../queries/game";
 import { NATURE_GROUPS, NATURE_GROUP_LABEL, natureOf } from "../../../lib/natures";
 import { eggGroupsForDex } from "../../../lib/eggGroups";
 import { starForDex } from "../../../lib/encounterStars";
@@ -280,6 +280,21 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
   }));
   const teamCharacterName = characters?.sortedData.find((c) => c.id === team.characterId)?.name;
 
+  // A team pinned into an open battle thread is read-only: editing it mid-battle
+  // would desync the locked roster. threadLocks is server-written (see rules).
+  const { data: threadLocks } = useQuery({
+    queryKey: ["thread-locks", user?.uid],
+    queryFn: () => getThreadLocks(user!.uid),
+    enabled: !!user,
+  });
+  const lockedThread = React.useMemo(
+    () =>
+      Object.values(threadLocks ?? {}).find(
+        (l) => Array.isArray(l.teamIds) && l.teamIds.includes(team.id)
+      ) ?? null,
+    [threadLocks, team.id]
+  );
+
   const isEditing = React.useMemo(() => {
     return form.values?.id === team.id;
   }, [form.values?.id]);
@@ -368,18 +383,50 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
               </Group>
             }
             fallback={
-              <Group wrap="nowrap">
-                <DeleteTeam teamId={team.id} />
-                <GradientButtonPrimary
-                  onClick={() =>
-                    isOverLg ? loadTeamForEdit(team) : navigate(`/Dashboard/Pokemon/${team.id}`)
-                  }
-                  size="xs"
-                  rightSection={<Image src={Edit2} alt="Edit" />}
+              lockedThread ? (
+                // Locked into a live thread: no edit/delete, link to the thread.
+                <Anchor
+                  component={Link}
+                  to={`/Forum/${lockedThread.forum}/thread/${lockedThread.threadId}`}
+                  underline="never"
+                  title={lockedThread.title || "Open battle thread"}
                 >
-                  Edit
-                </GradientButtonPrimary>
-              </Group>
+                  <Group
+                    gap={6}
+                    wrap="nowrap"
+                    px={12}
+                    py={6}
+                    style={{ border: "1px solid #E54156" }}
+                  >
+                    <IconLock size={14} color="#E54156" />
+                    <Text
+                      fz={12}
+                      fw={700}
+                      c="#E54156"
+                      tt="uppercase"
+                      style={{
+                        fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+                        letterSpacing: "0.12em",
+                      }}
+                    >
+                      Locked to Thread
+                    </Text>
+                  </Group>
+                </Anchor>
+              ) : (
+                <Group wrap="nowrap">
+                  <DeleteTeam teamId={team.id} />
+                  <GradientButtonPrimary
+                    onClick={() =>
+                      isOverLg ? loadTeamForEdit(team) : navigate(`/Dashboard/Pokemon/${team.id}`)
+                    }
+                    size="xs"
+                    rightSection={<Image src={Edit2} alt="Edit" />}
+                  >
+                    Edit
+                  </GradientButtonPrimary>
+                </Group>
+              )
             }
           />
         </Flex>
