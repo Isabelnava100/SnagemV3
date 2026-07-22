@@ -3,7 +3,8 @@ import "@mantine/core/styles.css";
 import { MantineEmotionProvider, emotionTransform } from "@mantine/emotion";
 import { Notifications as MantineNotifications } from "@mantine/notifications";
 import "@mantine/notifications/styles.css";
-import "@mantine/tiptap/styles.css";
+// @mantine/tiptap styles load with the (lazy) Editor component instead of
+// eagerly here, so non-editor pages skip that CSS on first paint.
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "./assets/styles/index.css";
 

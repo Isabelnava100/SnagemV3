@@ -1,5 +1,6 @@
 import { useDisclosure } from "@mantine/hooks";
 import { Link, RichTextEditor } from "@mantine/tiptap";
+import "@mantine/tiptap/styles.css";
 import { IconColorPicker } from "@tabler/icons-react";
 import { Color } from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
