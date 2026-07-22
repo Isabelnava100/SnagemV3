@@ -125,6 +125,14 @@ export function NewRegister() {
     return () => clearTimeout(t);
   }, [application, email, canDraft]);
 
+  // Manual "Save Draft" (per the mockup) alongside the debounced autosave, so
+  // applicants can deliberately stash their essay before leaving.
+  const saveDraftNow = () => {
+    if (!canDraft) return;
+    localStorage.setItem(draftKey(email), application);
+    setDraftSaved(true);
+  };
+
   const handleSubmitReg = useCallback(async (values: typeof form.values) => {
     setWhenSubmit(true);
     try {
@@ -314,31 +322,51 @@ export function NewRegister() {
                 </>
               ) : (
                 <>
-                  <Textarea
-                    {...form.getInputProps("application")}
-                    ref={refTextarea}
-                    placeholder="Write your answer here."
-                    description="With a character in mind write out a brief Roleplaying example based on a moment in your character's life. It can be a short story about where the grew up, why the decided to join Team Snagem or whatever you want. Just have it ending with them joining Team Snagem, or deciding to. Furthermore in this scenario reveal your character's starter Pokemon and a battle scene. The pokemon can be any first stage non-legendary Pokemon that still evolves."
-                    label="Application"
-                    autosize
-                    minRows={12}
-                    maxRows={18}
-                    required
-                  />
-
-                  <Group justify="space-between">
-                    {canDraft && draftSaved ? (
-                      <Text size="xs" c="teal">
-                        Draft saved to this browser
+                  <Stack gap={7}>
+                    {/* Label row carries the live character counter on the right,
+                        per the mockup ("{n} / 500 minimum"). */}
+                    <Group justify="space-between" wrap="nowrap" gap={12}>
+                      <Text fz={14} fw={700} c="#fff">
+                        Your roleplay application
                       </Text>
-                    ) : (
-                      <span />
-                    )}
-                    <Text size="xs" c="dimmed">
-                      {refTextarea.current?.value.length ? refTextarea.current?.value.length : 0}{" "}
-                      Characters
+                      <Text fz={14} fw={400} c="#b6b1bc" style={{ whiteSpace: "nowrap" }}>
+                        {application.length} / 500 minimum
+                      </Text>
+                    </Group>
+                    <Textarea
+                      {...form.getInputProps("application")}
+                      ref={refTextarea}
+                      aria-label="Your roleplay application"
+                      placeholder="Introduce your trainer and write a short scene. Minimum 500 characters."
+                      description="With a character in mind write out a brief Roleplaying example based on a moment in your character's life. It can be a short story about where they grew up, why they decided to join Team Snagem or whatever you want. Just have it ending with them joining Team Snagem, or deciding to. Furthermore in this scenario reveal your character's starter Pokemon and a battle scene. The pokemon can be any first stage non-legendary Pokemon that still evolves."
+                      autosize
+                      minRows={11}
+                      maxRows={18}
+                      required
+                    />
+                  </Stack>
+
+                  {/* Manual Save Draft + its browser disclaimer (mockup). */}
+                  <Group gap={10} align="center" mt={8} wrap="wrap">
+                    <Button
+                      className="authDraftBtn"
+                      variant="default"
+                      radius={0}
+                      size="xs"
+                      onClick={saveDraftNow}
+                      disabled={!canDraft}
+                    >
+                      Save Draft
+                    </Button>
+                    <Text fz={14} c="#b6b1bc">
+                      Saves to this browser for later
                     </Text>
                   </Group>
+                  {canDraft && draftSaved && (
+                    <Text fz={12} c="teal" role="status" aria-live="polite" mt={4}>
+                      Draft saved to this browser
+                    </Text>
+                  )}
                 </>
               )}
 

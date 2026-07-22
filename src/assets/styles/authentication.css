@@ -83,6 +83,17 @@
   letter-spacing: 0.12em;
 }
 
+/* Small outline "Save Draft" button on the registration form (gold hover). */
+.authDraftBtn {
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  font-family: var(--font-display, "Quantico", sans-serif) !important;
+  letter-spacing: 0.08em;
+}
+.authDraftBtn:hover:not([data-disabled]) {
+  border-color: #ffd074 !important;
+  color: #ffd074 !important;
+}
+
 .authEevee {
   max-width: 200px;
   width: 100%;
