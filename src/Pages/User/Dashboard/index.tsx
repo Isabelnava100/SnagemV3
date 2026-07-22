@@ -29,6 +29,7 @@ import {
   Characters,
   Drafts,
   GengarCoins,
+  Marketplace,
   PokePesos,
   Pokemons,
   Profile,
@@ -269,7 +270,7 @@ function NotificationBell() {
           {/* Crisp vector alert icon (burst) from the Snag icon set; replaced
               the old bell.svg which scaled blurry. */}
           <Box style={{ width: 24, height: 24 }}>
-            <SnagIcon name="burst" size={24} title="Notifications" />
+            <SnagIcon name="bolt" size={24} title="Notifications" />
           </Box>
           {unread > 0 && (
             <Box
@@ -466,7 +467,7 @@ function TabsPanel() {
     { path: "/Bookmarks", icon: Bookmarks, label: "Bookmarks", enabled: true },
     { path: "/Drafts", icon: Drafts, label: "Drafts", enabled: true },
     { path: "/History", snag: "book", label: "History", enabled: true },
-    { path: "/Items", snag: "bag", label: "Items", enabled: true },
+    { path: "/Items", icon: Marketplace, label: "Items", enabled: true },
     { path: "/Characters", icon: Characters, label: "Characters", enabled: true },
     { path: "/Pokemon", icon: Pokemons, label: "Pokemon", enabled: true },
     { path: "/Profile", icon: Profile, label: "Profile", enabled: true },

@@ -437,7 +437,7 @@ function AlertsSideButton() {
           }}
         >
           <Box style={{ position: "relative" }}>
-            <SnagIcon name="burst" size={isUnder900 ? 40 : 44} title="Alerts" />
+            <SnagIcon name="bolt" size={isUnder900 ? 40 : 44} title="Alerts" />
             <AlertDot show={show} />
           </Box>
           {!isUnder900 && (
@@ -556,7 +556,7 @@ function AlertsTabButton() {
                   : "transparent",
               }}
             >
-              <SnagIcon name="burst" size={22} title="Alerts" style={{ opacity: opened ? 1 : 0.65 }} />
+              <SnagIcon name="bolt" size={22} title="Alerts" style={{ opacity: opened ? 1 : 0.65 }} />
               <AlertDot show={show} />
             </Box>
             <Text

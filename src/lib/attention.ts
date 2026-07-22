@@ -19,6 +19,15 @@ export interface AttentionItem {
 const ROD_KEYS = new Set(["old-rod", "good-rod", "super-rod", "fishing-rod"]);
 
 /**
+ * True on the day before the weekly reset (Monday 00:00 UTC), i.e. Sunday UTC.
+ * Used to hold back the unfinished-Snag-List nudge until it is actually urgent,
+ * matching the Sunday `weeklyDeadlineReminder` cloud function.
+ */
+function isNearWeeklyReset(): boolean {
+  return new Date().getUTCDay() === 0;
+}
+
+/**
  * Collects everything waiting on the member: hatchable egg, unused weekly
  * cast, unfinished Snag List / unclaimed box, open offers on their trade
  * listings, and their own open threads. Data is cached per react-query
@@ -147,10 +156,12 @@ export function useAttention(): { items: AttentionItem[]; loading: boolean } {
         text: "Your Weekly Mystery Box is ready to open!",
         link: "/Activities",
       });
-    } else if (done > 0 && done < SNAG_TASKS.length) {
+    } else if (done > 0 && done < SNAG_TASKS.length && isNearWeeklyReset()) {
+      // Only nag about unfinished Snag List tasks right before the Monday 00:00
+      // UTC reset (Sunday UTC), so it does not sit on the dashboard all week.
       items.push({
         key: "snaglist",
-        text: `Snag List: ${done}/${SNAG_TASKS.length} done this week.`,
+        text: `Snag List: ${done}/${SNAG_TASKS.length} done this week, resets soon.`,
         link: "/Activities",
       });
     }

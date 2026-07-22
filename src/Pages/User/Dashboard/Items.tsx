@@ -91,7 +91,7 @@ export default function Items() {
               {categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}
             </Box>
             <ScrollArea.Autosize mah={320}>
-              <SimpleGrid cols={2} spacing={12}>
+              <SimpleGrid cols={{ base: 2, sm: 3 }} spacing={12}>
                 {(data ?? [])
                   .filter((item) => item.category === categoryName)
                   .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
