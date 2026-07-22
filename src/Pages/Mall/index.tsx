@@ -182,72 +182,111 @@ function ShopCard(props: { shop: Shop; index: number; onEnter: () => void }) {
       stats = `${itemCount} items / ${rareCount} rare today`;
   }
 
+  const displayFont = "var(--font-display, 'Quantico', sans-serif)";
+  // Gold awning takes dark text on its label; others read on white.
+  const darkText = accent === "#FFD074" || accent === "#d68a3f";
   return (
-    <Card
-      p={0}
-      radius="md"
-      withBorder
-      style={{ overflow: "hidden", background: "#26252a" }}
+    <Box
+      className="dc-card"
+      style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}
     >
-      {/* Awning */}
+      {/* Striped awning */}
       <Box
-        h={14}
+        h={12}
         style={{
           backgroundImage: `repeating-linear-gradient(45deg, ${accent}, ${accent} 10px, rgba(255,255,255,0.85) 10px, rgba(255,255,255,0.85) 20px)`,
         }}
       />
-      {/* Signboard */}
-      <Box px={12} py={10} style={{ background: "#181719" }}>
-        <Text fz={16} fw={700} c="white" lineClamp={1}>
-          {shop.name}
-        </Text>
-        <Text fz={14} c="dimmed" tt="uppercase" fw={600}>
+      {/* Marquee header: per-shop accent gradient + kind kicker + name */}
+      <Box
+        px={16}
+        py={14}
+        style={{
+          background: `linear-gradient(120deg, ${accent}, rgba(10,9,13,0.55))`,
+          borderBottom: "1px solid #2a2637",
+        }}
+      >
+        <Text
+          fz={11}
+          fw={700}
+          tt="uppercase"
+          c={darkText ? "rgba(26,27,30,0.85)" : "rgba(255,255,255,0.85)"}
+          style={{ fontFamily: displayFont, letterSpacing: "0.18em" }}
+        >
           {shop.type}
         </Text>
+        <Text
+          fz={20}
+          fw={700}
+          lineClamp={1}
+          c={darkText ? "#1A1B1E" : "#fff"}
+          style={{ fontFamily: displayFont, letterSpacing: "0.02em" }}
+        >
+          {shop.name}
+        </Text>
       </Box>
-      {/* NPC panel */}
+      {/* Keeper panel (existing npc art) */}
       <Box
         h={96}
         style={{
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-end",
           justifyContent: "center",
           backgroundImage: shop.npc_image
-            ? `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url(${shop.npc_image})`
-            : `linear-gradient(135deg, ${accent}, rgba(0,0,0,0.4))`,
+            ? `linear-gradient(rgba(10,9,13,0.25), rgba(10,9,13,0.7)), url(${shop.npc_image})`
+            : `linear-gradient(135deg, ${accent}, rgba(10,9,13,0.6))`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
       >
         {shop.npc_name && (
-          <Text fz={16} fw={700} c="white" ta="center" px={8}>
+          <Text fz={14} fw={700} c="white" ta="center" px={8} pb={6} lineClamp={1}>
             {shop.npc_name}
           </Text>
         )}
       </Box>
       {/* Stats + enter */}
-      <Stack gap={10} p={12}>
-        <Text fz={14} c="dimmed" ta="center">
+      <Stack gap={12} p={16} style={{ flex: 1 }}>
+        <Text
+          fz={12}
+          c="#b6b1bc"
+          ta="center"
+          px={10}
+          py={6}
+          style={{ background: "#141318", border: "1px solid #232028" }}
+        >
           {stats}
         </Text>
-        <Button
-          fullWidth
-          radius="md"
+        <button
+          type="button"
           onClick={props.onEnter}
           aria-label={`Enter ${shop.name}`}
-          styles={{ root: { backgroundColor: accent } }}
+          style={{
+            marginTop: "auto",
+            border: 0,
+            cursor: "pointer",
+            padding: "12px 18px",
+            color: darkText ? "#1A1B1E" : "#fff",
+            background: `linear-gradient(90deg, ${accent}, rgba(10,9,13,0.35))`,
+            fontFamily: displayFont,
+            fontWeight: 700,
+            fontSize: 13,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)",
+          }}
         >
-          Enter
-        </Button>
+          Enter {shop.name} →
+        </button>
       </Stack>
-    </Card>
+    </Box>
   );
 }
 
 function ArcadeView(props: { shops: Shop[]; onEnter: (id: string) => void }) {
   if (!props.shops.length) {
     return (
-      <Card withBorder radius="md" p={40} bg="#26252a">
+      <Card withBorder radius="md" p={40} bg="#17151c">
         <Text c="dimmed" ta="center">
           The mall is being stocked, check back soon.
         </Text>
@@ -600,7 +639,7 @@ function RecycleItemsTab(props: {
                   withBorder
                   radius="md"
                   p={12}
-                  bg={picked ? "#332b3d" : "#26252a"}
+                  bg={picked ? "#332b3d" : "#17151c"}
                   {...(recyclable
                     ? {
                         ...clickable(() => toggle(item.id)),
@@ -641,7 +680,7 @@ function RecycleItemsTab(props: {
             })}
           </SimpleGrid>
 
-          <Card withBorder radius="md" p={12} bg="#181719">
+          <Card withBorder radius="md" p={12} bg="#141318">
             <Group justify="space-between">
               <Text fz={14} c="dimmed">
                 {selected.length} selected (estimate)
@@ -1171,7 +1210,7 @@ function ShopHeader(props: { shop: Shop; balance: number; onBack: () => void }) 
             />
             <Box style={{ minWidth: 0 }}>
               <Group gap={10} align="center" wrap="wrap">
-                <Text component="h1" c="white" fw={800} fz={{ base: 30, sm: 44 }} style={{ lineHeight: 1, margin: 0 }}>
+                <Text component="h1" c="white" fw={700} fz={{ base: 30, sm: 44 }} style={{ lineHeight: 1, margin: 0, fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.02em" }}>
                   {shop.name}
                 </Text>
                 {shop.type && (
@@ -1529,41 +1568,85 @@ export default function Mall() {
         )}
 
         {/* Off-mall services: exchange and breeding live on their own pages. */}
-        <Group gap={12} mt={28} wrap="wrap">
+        <Group gap={12} mt={28} wrap="wrap" align="stretch">
           <Card
             component={Link}
             to="/Trading"
-            withBorder
-            radius={16}
-            p="md"
-            style={{ flex: "1 1 280px", background: "#141822", borderColor: "#28324a", textDecoration: "none" }}
+            radius={0}
+            p={20}
+            style={{
+              flex: "1 1 280px",
+              background: "#17151c",
+              border: "1px solid #2a2637",
+              borderLeft: "3px solid #12B7B6",
+              textDecoration: "none",
+            }}
           >
-            <Title order={2} fz={14} fw={700} c="cyan.3" tt="uppercase" lh="md" style={{ letterSpacing: 2 }}>
+            <Title
+              order={2}
+              fz={13}
+              fw={700}
+              c="#12B7B6"
+              tt="uppercase"
+              style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.18em" }}
+            >
               The Trading Post
             </Title>
-            <Text fz={16} fw={700} c="white">
+            <Text fz={16} fw={700} c="white" mt={4}>
               Swap Pokemon with other members
             </Text>
-            <Text fz={13} c="dimmed">
+            <Text fz={13} c="#b6b1bc" mt={2}>
               Put one on the board, browse listings, make an offer.
+            </Text>
+            <Text
+              fz={12}
+              fw={700}
+              c="#12B7B6"
+              mt={10}
+              tt="uppercase"
+              style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.12em" }}
+            >
+              Open the Board →
             </Text>
           </Card>
           <Card
             component={Link}
             to="/Daycare"
-            withBorder
-            radius={16}
-            p="md"
-            style={{ flex: "1 1 280px", background: "#1a1420", borderColor: "#3a2a45", textDecoration: "none" }}
+            radius={0}
+            p={20}
+            style={{
+              flex: "1 1 280px",
+              background: "#17151c",
+              border: "1px solid #2a2637",
+              borderLeft: "3px solid #772976",
+              textDecoration: "none",
+            }}
           >
-            <Title order={2} fz={14} fw={700} c="pink.3" tt="uppercase" lh="md" style={{ letterSpacing: 2 }}>
+            <Title
+              order={2}
+              fz={13}
+              fw={700}
+              c="#c79bd6"
+              tt="uppercase"
+              style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.18em" }}
+            >
               The Daycare
             </Title>
-            <Text fz={16} fw={700} c="white">
+            <Text fz={16} fw={700} c="white" mt={4}>
               Leave a pair, hatch an egg
             </Text>
-            <Text fz={13} c="dimmed">
+            <Text fz={13} c="#b6b1bc" mt={2}>
               Shared egg group, one male + one female (or a Ditto).
+            </Text>
+            <Text
+              fz={12}
+              fw={700}
+              c="#c79bd6"
+              mt={10}
+              tt="uppercase"
+              style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.12em" }}
+            >
+              Open the Daycare →
             </Text>
           </Card>
         </Group>
