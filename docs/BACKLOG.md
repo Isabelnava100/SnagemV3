@@ -4,6 +4,59 @@ Living list of everything known-missing, deferred, or rough. Not blockers, thing
 to polish or finish when there's time. Grouped by kind. Newest additions from the
 July 2026 build-out are marked (2026-07).
 
+## Redesign + gameplay gap audit (2026-07, post-redesign)
+
+Full audit after the site-wide redesign. The callable layer is complete (every
+game callable referenced in `src/` exists in `functions/src/index.ts`); the
+long "needs a functions/rules deploy" list is deploy-pending, not missing code.
+Real gaps, highest value first:
+
+**Redesign mockup features not built:**
+- **Casino: 3 missing games + 2 simplified.** `Casino OK.dc.html` has 7 games;
+  the build backs 4. Missing entirely: **Spooky Slots** (3 reels; small, extend
+  `playCasinoGame`, no new CF), **Ghost Card Flip** (3 cards, pick index; small,
+  no new CF), **Haunter's High-Low** (call higher/lower, pot doubles, cash out;
+  needs a NEW stateful Cloud Function to persist the in-progress hand + query
+  wrappers). Simplified: **Hex Roulette** allows 1 pick at 5.5x vs mockup's up
+  to 5 hexes at 20x (`functions/src/index.ts:6253`); **Dream Dice** one total
+  vs up to 3. Extending both = CF payout-math + multi-select grid.
+- **Dashboard team "LOCKED TO THREAD" state missing** (`Pokemons.tsx`,
+  `SingleTeam`). Mockup shows a red locked badge instead of EDIT TEAM when a team
+  is locked into an open battle thread; build has zero lock awareness, so a
+  member can open the editor on a team locked into a live thread. Integrity
+  hole. Lock data already client-readable at `users/{uid}/bag/threadLocks`.
+  Medium, no CF (read + display-state + edit guard).
+- **Thread team-tile hover is name-only** vs the mockup's per-pokemon stat card
+  (Lv/type/HP/shadow/held). `PostCharacter.pokemon` denormalizes only
+  `{slug,name}`; surfacing the rest needs `publishForumPost` to denormalize
+  more onto the post team snapshot. Small client, medium overall (CF change).
+- **Activities "More things to do" place-card grid missing** (`Activities/
+  index.tsx` ~585-593 jumps to a "coming soon" line). Small, no CF (router Links).
+- **Research "Are you ready?" checklist is hardcoded** (identical per character;
+  the red "not met" state is unreachable) and the hero ACCESS badge keys off the
+  active view, not the character's clearance. Medium/small, no CF (data present).
+- **Colosseum friend-code regex validation missing** (`RegisterCard` only checks
+  non-empty; mockup gates `^SW-\d{4}-\d{4}-\d{4}$`). Small, no CF.
+
+**Gameplay gaps (redesign-independent):**
+- **Z-Crystals/Z-moves have no battle consumer.** Items exist, `progress.
+  zCrystals` + `zmoveUnlocked` are written, but `publishForumPost` has no Z
+  effect and there is no composer Z panel (Mega is fully wired for contrast).
+  Medium (functions + composer). Likely intended as deferred Mega-parity.
+- **Channeler per-type skill trees + cooldowns unauthored** (custom content
+  gap, `docs/RESEARCH_DATA.md`). Medium for the Research end-game.
+- **Mystery Pebble has no obtain source**, so the Mystery Sack recipe (needs 3)
+  is uncraftable though `craftItem` resolves it. Owner assigns a price/drop.
+- **Nature Tours (K&L) loot tables are a ~5-row subset** of the full ~30-row
+  biome tables (blocked on owner pasting the Gaia tables). Medium shop-balance.
+- **Challenges content is thin** (gym rosters names-only, no Elite Four/Champion,
+  Kanto/Johto/Hoenn only, island trials partial). Content gap.
+- **`submitMission` Cloud Function is orphaned** (zero client refs; onThreadClosed
+  auto-files instead). Dead server code, safe to remove.
+- Cosmetic: custom item sprites missing (Scents/Mega Stones/Z-Crystals/Emblems/
+  fossils/apricorns/evo items show blank), gen-9 shiny sprites fall back to
+  regular, gym badges use letter chips not art. All low.
+
 ## Audits (2026-07, owner-requested)
 
 - **Dependabot vulnerabilities on the repo (2026-07).** GitHub reports 32
