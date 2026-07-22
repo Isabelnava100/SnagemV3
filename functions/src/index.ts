@@ -38,11 +38,16 @@ import evolutionsJSON from "./evolutions.json";
 import levelingCurveJSON from "./levelingCurve.json";
 
 // Each 2nd-gen function is a Cloud Run service reserving CPU = maxInstances x cpu.
-// This project's regional CPU quota is capped at 20,000 milli vCPU (20 vCPU) and
-// is not currently raiseable, so all ~39 functions must fit inside it. cpu 0.25 x
-// maxInstances 1 = 250m each (~9,750m total), well under the cap with room to
-// spare. This guild's traffic is tiny; one instance at concurrency 80 is plenty.
-setGlobalOptions({ maxInstances: 1, cpu: 0.25 });
+// This project's regional CPU quota is 20,000 milli vCPU (20 vCPU) and every
+// function must fit inside it. The function count has grown past 80, so cpu 0.25
+// (81 x 250m = 20,250m) now exceeds the cap and deploys fail with "Quota
+// exceeded for total allowable CPU per project per region". cpu 0.2 x
+// maxInstances 1 = 200m each (81 x 200m = 16,200m), back under the cap with
+// headroom for more functions. Traffic is tiny; one instance at concurrency 80
+// is plenty. If cold starts ever suffer, request a regional CPU quota increase
+// (GCP Console > IAM & Admin > Quotas > Cloud Run CPU allocation, us-central1)
+// and raise cpu back up.
+setGlobalOptions({ maxInstances: 1, cpu: 0.2 });
 
 initializeApp();
 const db = getFirestore();
