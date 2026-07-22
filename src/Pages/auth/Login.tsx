@@ -2,7 +2,6 @@ import {
   Alert,
   Anchor,
   Button,
-  Container,
   Divider,
   Grid,
   Group,
@@ -68,9 +67,9 @@ export function Login() {
   return (
     <>
       <MarketingTopBar context="auth" />
-      <Container size={680} my={40}>
+      <div className="authShell">
       <Seo noindex title="Log In | Snagem Guild" />
-      <AuthCard title="Access the Dashboard">
+      <AuthCard title="Access the Dashboard" maw={780}>
         {pendingNotice && (
           <Alert
             color="yellow"
@@ -135,7 +134,8 @@ export function Login() {
                 fullWidth
                 mt="xl"
                 size="lg"
-                radius="md"
+                radius={0}
+                className="authBtnPrimary"
                 variant="gradient"
                 gradient={warmGradient}
                 disabled={submitted}
@@ -168,7 +168,8 @@ export function Login() {
                 <Button
                   component={Link}
                   to="/Register"
-                  radius="xl"
+                  radius={0}
+                  className="authBtnPrimary"
                   variant="gradient"
                   gradient={coolGradient}
                 >
@@ -179,7 +180,7 @@ export function Login() {
           </Grid>
         </form>
       </AuthCard>
-      </Container>
+      </div>
     </>
   );
 }

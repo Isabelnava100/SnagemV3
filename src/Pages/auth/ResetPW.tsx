@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import {
   PasswordInput,
-  Container, Group, Button, Progress, Popover,
+  Button, Progress, Popover,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import {
@@ -91,9 +91,9 @@ export function ResetPW() {
   return (
     <>
     <MarketingTopBar context="auth" />
-    <Container size={640} my={40}>
+    <div className="authShell">
       <Seo noindex title="Reset Password | Snagem Guild" />
-      <AuthCard title="Reset Your Password">
+      <AuthCard title="Reset Your Password" maw={540}>
         <form onSubmit={form.onSubmit(handlePasswordReset)}>
           <Popover
             opened={popoverOpened}
@@ -137,21 +137,22 @@ export function ResetPW() {
             required
           />
 
-          <Group justify="right" mt="xl">
-            <Button
-              type="submit"
-              size="lg"
-              radius="md"
-              variant="gradient"
-              gradient={warmGradient}
-              disabled={submitted}
-            >
-              {submitted ? "Updating..." : "Reset Password"}
-            </Button>
-          </Group>
+          <Button
+            type="submit"
+            size="lg"
+            mt="xl"
+            radius={0}
+            className="authBtnPrimary"
+            fullWidth
+            variant="gradient"
+            gradient={warmGradient}
+            disabled={submitted}
+          >
+            {submitted ? "Updating..." : "Reset Password"}
+          </Button>
         </form>
       </AuthCard>
-    </Container>
+    </div>
     </>
   );
 }

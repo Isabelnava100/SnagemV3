@@ -2,7 +2,6 @@ import {
   Alert,
   Anchor,
   Button,
-  Container,
   Grid,
   Group,
   PasswordInput,
@@ -170,8 +169,8 @@ export function NewRegister() {
     return (
       <>
       <MarketingTopBar context="auth" />
-      <Container size={560} my={40}>
-        <AuthCard title="Check your email">
+      <div className="authShell">
+        <AuthCard title="Check your email" maw={540}>
           <Stack gap={10}>
             <Alert color="teal" title="Application received" role="status" aria-live="polite">
               We sent a verification link to <b>{form.values.email}</b>. Open it to confirm your
@@ -187,7 +186,7 @@ export function NewRegister() {
             </Anchor>
           </Stack>
         </AuthCard>
-      </Container>
+      </div>
       </>
     );
   }
@@ -195,9 +194,9 @@ export function NewRegister() {
   return (
     <>
     <MarketingTopBar context="auth" />
-    <Container size={680} my={40}>
+    <div className="authShell">
       <Seo noindex title="Join the Guild | Snagem Guild" />
-      <AuthCard title="Apply to Join">
+      <AuthCard title="Apply to Join" maw={860}>
         <form
           data-netlify="true"
           name="newRegister"
@@ -343,18 +342,19 @@ export function NewRegister() {
                 </>
               )}
 
-              <Group justify="right" mt="xl">
-                <Button
-                  type="submit"
-                  size="lg"
-                  radius="md"
-                  variant="gradient"
-                  gradient={warmGradient}
-                  disabled={whensubmit}
-                >
-                  Submit
-                </Button>
-              </Group>
+              <Button
+                type="submit"
+                size="lg"
+                mt="xl"
+                radius={0}
+                className="authBtnPrimary"
+                fullWidth
+                variant="gradient"
+                gradient={warmGradient}
+                disabled={whensubmit}
+              >
+                Submit Application
+              </Button>
             </Grid.Col>
           </Grid>
         </form>
@@ -365,7 +365,7 @@ export function NewRegister() {
           Go to login.
         </Anchor>
       </Text>
-    </Container>
+    </div>
     </>
   );
 }

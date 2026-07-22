@@ -1,52 +1,102 @@
-/* Auth card shell (redesigned July 2026). Shared by Login / Register / Forgot /
-   Reset. Restyled to the redesign language (Quantico header, angled accent,
-   cinematic dark card) without touching the pages' form logic. */
+/* Auth shell + card (redesigned July 2026). Shared by Login / Register /
+   Forgot / Reset. Cinematic dark card with the signature gradient header, a
+   double angled-corner clip, and a radial-gradient backdrop. The pages' form
+   logic is untouched: this file only restyles the shell. */
+
+/* Full-height backdrop that centers the card, with the signature purple/cyan
+   radial washes from the mockup. Sits under the 72px marketing top bar. */
+.authShell {
+  min-height: calc(100vh - 72px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px 80px;
+  background:
+    radial-gradient(circle at 80% 10%, rgba(145, 38, 145, 0.25), transparent 55%),
+    radial-gradient(circle at 10% 90%, rgba(20, 224, 222, 0.12), transparent 50%);
+}
 
 .authCard {
+  width: 100%;
   margin: 0 auto;
-  border-radius: 5px;
-  overflow: hidden;
   background: #1b1a1e;
-  border: 1px solid var(--dc-hero-border, #3a3550);
+  border: 1px solid #2a2637;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  /* Top-left + bottom-right corners cut, per the mockup. */
+  clip-path: polygon(
+    26px 0,
+    100% 0,
+    100% calc(100% - 26px),
+    calc(100% - 26px) 100%,
+    0 100%,
+    0 26px
+  );
+  animation: dcRiseIn 0.7s ease both;
   position: relative;
 }
-.authCard::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #e54156, #ffd074);
+@media (prefers-reduced-motion: reduce) {
+  .authCard {
+    animation: none;
+  }
 }
 
 .authCardHeader {
   font-family: var(--font-display, "Quantico", sans-serif);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--dc-gradient-hero, linear-gradient(120deg, #3a1d63, #2c2352, #1c2a4a));
+  background: linear-gradient(90deg, #912691, #474d9b, #14e0de);
   color: #fff;
-  font-size: clamp(18px, 5vw, 24px);
-  text-align: center;
-  padding: 18px 16px;
+  font-size: clamp(20px, 5vw, 24px);
+  padding: 22px 40px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  position: relative;
+  /* Slant the header band's sides like the CTA buttons (parallelogram lean),
+     so the gradient bar reads as an angled banner, not a flat rectangle. */
+  clip-path: polygon(24px 0, 100% 0, calc(100% - 24px) 100%, 0 100%);
 }
 
 .authCardBody {
-  padding: 28px 32px 32px 32px;
+  padding: 36px 40px 40px;
+}
+
+/* Auth-card form fields: deep ink field, purple focus ring, white bold label. */
+.authCard .mantine-InputWrapper-label {
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+.authCard .mantine-Input-input,
+.authCard input,
+.authCard textarea {
+  background: #0e0d11;
+  border-color: #2a2637;
+  color: #fff;
+}
+.authCard .mantine-Input-input:focus,
+.authCard .mantine-Input-input:focus-within {
+  border-color: #c79bd6;
+}
+
+/* Angled gradient primary CTA (LOG IN / RESET PASSWORD / SUBMIT APPLICATION). */
+.authBtnPrimary {
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  font-family: var(--font-display, "Quantico", sans-serif) !important;
+  letter-spacing: 0.12em;
 }
 
 .authEevee {
-  max-width: 260px;
+  max-width: 200px;
   width: 100%;
   height: auto;
 }
 
 @media (max-width: 576px) {
+  .authCardHeader {
+    padding: 18px 20px;
+  }
   .authCardBody {
-    padding: 20px 16px 24px 16px;
+    padding: 24px 18px 28px;
   }
 }

@@ -3,8 +3,8 @@ import {
   Box,
   Button,
   Center,
-  Container,
   Stack,
+  Text,
   TextInput,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
@@ -49,15 +49,18 @@ export function ForgotPassword() {
   return (
     <>
     <MarketingTopBar context="auth" />
-    <Container size={640} my={40}>
+    <div className="authShell">
       <Seo noindex title="Forgot Password | Snagem Guild" />
-      <AuthCard title="Enter your email to get a reset link.">
+      <AuthCard title="Forgot Password" maw={540}>
         <form
           onSubmit={form.onSubmit((values) => {
             resetPassword(values.email);
           })}
         >
-          <Stack maw={340} mx="auto" gap="lg">
+          <Stack gap="lg">
+            <Text fz={15} c="#b6b1bc" lh={1.6}>
+              Enter your email to get a reset link.
+            </Text>
             <TextInput
               label="Email Address"
               required
@@ -66,7 +69,9 @@ export function ForgotPassword() {
             <Button
               type="submit"
               size="lg"
-              radius="md"
+              radius={0}
+              className="authBtnPrimary"
+              fullWidth
               variant="gradient"
               gradient={warmGradient}
             >
@@ -81,7 +86,7 @@ export function ForgotPassword() {
           </Anchor>
         </form>
       </AuthCard>
-    </Container>
+    </div>
     </>
   );
 }
