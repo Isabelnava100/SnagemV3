@@ -171,6 +171,49 @@
   }
 }
 
+/* Reusable redesign surfaces: angular dark cards with a colored hover border.
+   Used across the dashboard tabs and app-page grids so every card reads the
+   same. `.dc-card` is the panel surface; `.dc-card-tile` is the inner well. */
+.dc-card {
+  background: var(--dc-panel);
+  border: 1px solid var(--dc-border-alt);
+}
+.dc-card:hover {
+  border-color: var(--dc-red);
+}
+.dc-card-tile {
+  background: var(--dc-card);
+  border: 1px solid var(--dc-border-alt);
+}
+.dc-card-tile:hover {
+  border-color: var(--dc-purple);
+}
+/* List row that lights up on hover (history rows, thread lists). */
+.dc-row-hover:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Small section kicker inside panels: a short colored rule + Quantico label.
+   Defaults to cyan; set --dc-kicker-accent to recolor. */
+.dc-subkicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dc-kicker-accent, var(--dc-cyan));
+}
+.dc-subkicker::before {
+  content: "";
+  width: 22px;
+  height: 3px;
+  background: var(--dc-kicker-accent, var(--dc-cyan));
+  flex-shrink: 0;
+}
+
 /* Big-number section header (52px numeral + accent heading). */
 .dc-section-num {
   font-family: var(--font-display);
