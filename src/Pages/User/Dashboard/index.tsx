@@ -480,81 +480,72 @@ function TabsPanel() {
     <SectionWrapper
       title="Tabs"
       customHeader={
-        <Paper bg="#3C3A3C" style={RESET_READING_SCALE}>
+        <Paper bg="transparent" p={0} style={RESET_READING_SCALE}>
           {/* Horizontally scrollable so the tabs never overlap or overflow the
               viewport on mobile. */}
           <ScrollArea type="never" scrollbarSize={0}>
-            <Flex align="center" justify="start" gap={isOverMd ? 20 : 4} wrap="nowrap">
+            <Flex align="center" justify="start" gap={isOverMd ? 10 : 6} wrap="nowrap">
               {dashboardTabLinks
                 .filter((link) => link.enabled)
                 .map((link) => {
                   const linkPath = link.absolute ? link.path : `/Dashboard${link.path}`;
                   const isActive = currentPath.includes(linkPath);
+                  const iconBox = isOverMd ? 20 : 18;
                   return (
                     <Link
                       style={{
                         background: isActive
-                          ? "linear-gradient(180deg, #912691 28.65%, #4D14C4 89.06%)"
-                          : undefined,
-                        borderTopLeftRadius: 16,
-                        borderTopRightRadius: 16,
-                        paddingLeft: isOverMd ? 18 : 10,
-                        paddingRight: isOverMd ? 18 : 10,
-                        paddingTop: 8,
-                        paddingBottom: 6,
+                          ? "linear-gradient(135deg, #912691 0%, #4D14C4 100%)"
+                          : "#131019",
+                        border: isActive
+                          ? "1px solid transparent"
+                          : "1px solid rgba(255,255,255,0.10)",
+                        borderRadius: 8,
+                        paddingLeft: isOverMd ? 16 : 10,
+                        paddingRight: isOverMd ? 16 : 10,
+                        paddingTop: isOverMd ? 10 : 8,
+                        paddingBottom: isOverMd ? 10 : 8,
                         textDecoration: "none",
                         flexShrink: 0,
                       }}
                       to={linkPath}
                       key={link.path}
                     >
-                      {/* Icon + a tiny always-on label so the current tab is
-                          identifiable at a glance (like the bottom nav). The
-                          fixed box + fit=contain normalizes the icons so they
-                          all render the same visual size despite different SVG
-                          bounds. */}
-                      <Stack gap={2} align="center" justify="center">
+                      {/* Redesigned pill: icon beside an uppercase Quantico label,
+                          gradient fill on the active tab. The fixed box +
+                          fit=contain normalizes the different icon SVG bounds. */}
+                      <Group gap={isOverMd ? 8 : 6} wrap="nowrap" align="center">
                         <Box
                           style={{
-                            width: isOverMd ? 30 : 24,
-                            height: isOverMd ? 30 : 24,
+                            width: iconBox,
+                            height: iconBox,
+                            flexShrink: 0,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                           }}
                         >
                           {link.snag ? (
-                            <SnagIcon
-                              name={link.snag}
-                              size={isOverMd ? 30 : 24}
-                              title={link.label}
-                            />
+                            <SnagIcon name={link.snag} size={iconBox} title={link.label} />
                           ) : (
-                            <Image
-                              src={link.icon}
-                              alt={link.label}
-                              w="100%"
-                              h="100%"
-                              fit="contain"
-                            />
+                            <Image src={link.icon} alt={link.label} w="100%" h="100%" fit="contain" />
                           )}
                         </Box>
                         <Text
-                          fz={isOverMd ? 12 : 9}
+                          fz={isOverMd ? 13 : 11}
                           fw={700}
                           tt="uppercase"
-                          ta="center"
-                          c={isActive ? "white" : "rgba(255,255,255,0.6)"}
+                          c={isActive ? "white" : "rgba(255,255,255,0.62)"}
                           style={{
                             whiteSpace: "nowrap",
                             lineHeight: 1,
                             fontFamily: "var(--font-display, 'Quantico', sans-serif)",
-                            letterSpacing: "0.08em",
+                            letterSpacing: "0.1em",
                           }}
                         >
                           {link.label}
                         </Text>
-                      </Stack>
+                      </Group>
                     </Link>
                   );
                 })}
