@@ -280,6 +280,24 @@ const KB: KbEntry[] = [
       ),
   },
   {
+    // Item uses: how the bag items work (battle items, candy, vitamins, selling).
+    match: /\bitems?\b|z.?crystal|z.?move|\bgem\b|x.?(attack|defense|speed)|dire.?hit|exp.?candy|rare.?candy|vitamin|nugget|pearl|relic|sell.*(item|it)|how.*use.*(item|crystal|candy|gem|vitamin)|what.*(is|does|are).*(item|crystal|candy|gem|vitamin|nugget)|held item/i,
+    answer: () => (
+      <>
+        Most items are used in one of three places. In a battle post (the forum composer):
+        throw a Poke Ball at a beaten wild, use medicine or a berry, or tick a panel to
+        Mega Evolve, unleash a Z-Move (Z-Crystal, never used up), or spend battle items
+        (X Attack, Dire Hit, X Defense, X Speed, and type-matched Gems, which are used up).
+        From your <L to="/Items">bag Items tab</L>: click an Exp Candy or Rare Candy to
+        grant a pokemon XP, a Vitamin to raise its friendship, or a valuable (nugget,
+        pearl, relic, bottle cap) to sell it for Snag Coins. Held items equip on a boxed
+        pokemon for a passive battle effect. Hover any item to see exactly what it does and
+        where to get it. Full battle numbers:{" "}
+        <L to="/Library?tab=battle">Library &gt; The War Room</L>.
+      </>
+    ),
+  },
+  {
     match: /master\s*mission|hybrid|channeler|clearance/i,
     answer: () => (
       <>

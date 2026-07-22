@@ -7,6 +7,7 @@ import {
   rarityForItem,
 } from "../../lib/itemRarity";
 import { ItemSource } from "../../lib/itemSources";
+import { usageForItem } from "../../lib/itemUsage";
 
 /** The minimum an item needs to show its info card. */
 export interface HoverItem {
@@ -55,6 +56,14 @@ export function ItemHoverCard(props: {
         <Text fz={12} c="dimmed" mt={2}>
           {RARITY_OBTAIN[r]}
         </Text>
+        {(() => {
+          const usage = usageForItem(item.id, item.category ?? "");
+          return usage ? (
+            <Text fz={12} c="#e7e3ee" mt={6} style={{ lineHeight: 1.4 }}>
+              {usage}
+            </Text>
+          ) : null;
+        })()}
         {sources && sources.length > 0 && (
           <Box mt={8}>
             <Text fz={11} fw={700} c="#FFD074" tt="uppercase" style={{ letterSpacing: "0.1em" }}>
