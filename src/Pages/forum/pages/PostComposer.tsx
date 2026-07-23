@@ -294,12 +294,60 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     if (!pending) return;
     if (pending.dice) setDice(pending.dice);
     if (pending.random) setRandom(pending.random);
-    // Per-character: hydrate from the first active encounter in the map, else
-    // the legacy single encounter. (The full multi-character composer follows.)
+    // Per-character: hydrate the single-encounter battle UI from the first active
+    // encounter in the map (or the legacy single one). The per-character rows
+    // below drive the rest.
     const firstActive = pending.encounters ? Object.values(pending.encounters)[0] : undefined;
     if (firstActive) setEncounter(firstActive);
     else if (pending.encounter) setEncounter(pending.encounter);
   }, [pending]);
+
+  // Per-character battle actions: every posting character that has its own
+  // pending encounter can send one pokemon from its team to fight (or flee) this
+  // post. Build the list of such characters with their team pokemon.
+  const battleActionChars = React.useMemo(() => {
+    const encMap = pending?.encounters ?? {};
+    const teamById = new Map((teamsRaw ?? []).map((t) => [t.id, t]));
+    const ownedById = new Map((ownedForTraining?.sortedData ?? []).map((p) => [p.id, p]));
+    return characters
+      .filter((c) => c.teamId && encMap[c.id])
+      .map((c) => ({
+        charId: c.id,
+        charName: c.name,
+        encounter: encMap[c.id],
+        teamPokemon: ((teamById.get(c.teamId!)?.pokemon_ids ?? [])
+          .map((id) => ownedById.get(id))
+          .filter(Boolean) as OwnedPokemon[]),
+      }))
+      .filter((x) => x.teamPokemon.length);
+  }, [characters, pending, teamsRaw, ownedForTraining]);
+
+  const [battleActionMap, setBattleActionMap] = React.useState<
+    Record<string, { fighterId: string; action: "fight" | "flee" }>
+  >({});
+  // Default each character's fighter to the first team pokemon; prune stale ones.
+  React.useEffect(() => {
+    setBattleActionMap((prev) => {
+      const next: Record<string, { fighterId: string; action: "fight" | "flee" }> = {};
+      battleActionChars.forEach((ac) => {
+        const existing = prev[ac.charId];
+        const validFighter =
+          existing && ac.teamPokemon.some((p) => p.id === existing.fighterId)
+            ? existing.fighterId
+            : ac.teamPokemon[0]?.id ?? "";
+        next[ac.charId] = { fighterId: validFighter, action: existing?.action ?? "fight" };
+      });
+      return next;
+    });
+  }, [battleActionChars]);
+
+  const battleActionsPayload = battleActionChars
+    .map((ac) => ({
+      characterId: ac.charId,
+      fighterId: battleActionMap[ac.charId]?.fighterId ?? ac.teamPokemon[0]?.id ?? "",
+      action: battleActionMap[ac.charId]?.action ?? ("fight" as const),
+    }))
+    .filter((a) => a.fighterId);
 
   // Preload content when editing; prepend the quote when quoting.
   React.useEffect(() => {
@@ -529,9 +577,20 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
         attachSignature,
         ...(mode === "new" && attackBoss ? { attackBoss: true } : {}),
         ...(mode === "new" && thread?.safariContest && encounter ? { safariAction } : {}),
-        ...(mode === "new" && fleeAttempt && canFlee ? { fleeAttempt: true } : {}),
+        // Per-character battle actions drive the wild fighters. The first one is
+        // also sent as fighterId/fleeAttempt for the server's first-encounter path.
+        ...(mode === "new" && battleActionsPayload.length
+          ? { battleActions: battleActionsPayload }
+          : {}),
+        ...(mode === "new" &&
+        (battleActionsPayload[0] ? battleActionsPayload[0].action === "flee" : fleeAttempt) &&
+        canFlee
+          ? { fleeAttempt: true }
+          : {}),
         ...(mode === "new" && centerVisit ? { centerVisit: true } : {}),
-        ...(mode === "new" && fighterNeeded && fighterId ? { fighterId } : {}),
+        ...(mode === "new" && (battleActionsPayload[0]?.fighterId || (fighterNeeded && fighterId))
+          ? { fighterId: battleActionsPayload[0]?.fighterId || fighterId! }
+          : {}),
         ...(mode === "new" && evolve ? { evolve } : {}),
         ...(mode === "new" && mega ? { mega } : {}),
         ...(mode === "new" && zmove ? { zmove } : {}),
@@ -852,7 +911,60 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
               onSafariAction={setSafariAction}
             />
 
-            {fighterNeeded && (
+            {mode === "new" && battleActionChars.length > 0 && (
+              <ForumPanel title="Battle actions">
+                <PanelHint>
+                  Each character with an encounter sends one pokemon from its team
+                  to fight (or flee) this post. Each fighter takes its own hit back.
+                </PanelHint>
+                <Stack gap={14}>
+                  {battleActionChars.map((ac) => (
+                    <Stack key={ac.charId} gap={6}>
+                      <Text fw={700} c="white" fz={14}>
+                        {ac.charName}: wild {ac.encounter.name}
+                      </Text>
+                      <Select
+                        label="Fighting pokemon"
+                        placeholder="Choose a team pokemon"
+                        data={ac.teamPokemon.map((p) => ({
+                          value: p.id,
+                          label: p.species || p.name,
+                        }))}
+                        value={battleActionMap[ac.charId]?.fighterId ?? null}
+                        onChange={(v) =>
+                          setBattleActionMap((m) => ({
+                            ...m,
+                            [ac.charId]: { fighterId: v ?? "", action: m[ac.charId]?.action ?? "fight" },
+                          }))
+                        }
+                        allowDeselect={false}
+                        size="xs"
+                        styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+                      />
+                      {ac.encounter.catchable && (
+                        <Checkbox
+                          label="Flee from this encounter instead of fighting"
+                          checked={battleActionMap[ac.charId]?.action === "flee"}
+                          onChange={(e) =>
+                            setBattleActionMap((m) => ({
+                              ...m,
+                              [ac.charId]: {
+                                fighterId: m[ac.charId]?.fighterId ?? "",
+                                action: e.currentTarget.checked ? "flee" : "fight",
+                              },
+                            }))
+                          }
+                          color="grape"
+                          styles={{ label: { color: "white", fontSize: 13 } }}
+                        />
+                      )}
+                    </Stack>
+                  ))}
+                </Stack>
+              </ForumPanel>
+            )}
+
+            {fighterNeeded && !battleActionChars.length && (
               <ForumPanel title="Battle">
                 <PanelHint>
                   Your pokemon strikes first, then the enemy hits back (unless your

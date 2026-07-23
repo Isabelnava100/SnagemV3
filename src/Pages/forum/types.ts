@@ -116,31 +116,36 @@ export interface PostBlocks {
   shadowed?: { names: string[] };
   /** This post was spent visiting the Pokemon Center (team healed + cured). */
   center?: { healed: boolean };
-  /** The enemy's counter-attack on this post's chosen fighter (flat HP). */
-  battle?: {
-    fighterId: string;
-    fighterName: string;
-    fighterSlug: string;
-    /** Flat damage this hit took off the fighter (0 on a heals-only post). */
-    damageTaken: number;
-    /** The fighter's level-based max HP at the time of the hit. */
-    maxHp?: number;
-    /** HP left after the hit (0 = fainted for the thread). */
-    hpLeft: number;
-    fainted: boolean;
-    /** The fighter's nature (battle modifier). */
-    nature?: string;
-    /** Human-readable battle events: crits, statuses, missed balls. */
-    notes?: string[];
-    /** Healing items applied this post (potions/revives, auto-targeted). */
-    heals?: Array<{
-      itemName: string;
-      pokemonId: string;
-      pokemonName: string;
-      amount: number;
-      revive: boolean;
-    }>;
-  };
+  /** The enemy's counter-attack on the first character's fighter (flat HP). */
+  battle?: BattleBlock;
+  /** Per-fighter results when several characters battled this post (first + extras). */
+  battles?: BattleBlock[];
+}
+
+/** The enemy's counter-attack on one fighter (flat HP) for a post. */
+export interface BattleBlock {
+  fighterId: string;
+  fighterName: string;
+  fighterSlug: string;
+  /** Flat damage this hit took off the fighter (0 on a heals-only post). */
+  damageTaken: number;
+  /** The fighter's level-based max HP at the time of the hit. */
+  maxHp?: number;
+  /** HP left after the hit (0 = fainted for the thread). */
+  hpLeft: number;
+  fainted: boolean;
+  /** The fighter's nature (battle modifier). */
+  nature?: string;
+  /** Human-readable battle events: crits, statuses, missed balls. */
+  notes?: string[];
+  /** Healing items applied this post (potions/revives, auto-targeted). */
+  heals?: Array<{
+    itemName: string;
+    pokemonId: string;
+    pokemonName: string;
+    amount: number;
+    revive: boolean;
+  }>;
 }
 
 export type PostType = "user" | "boss_start" | "boss_end" | "evolution" | "shadowed";
