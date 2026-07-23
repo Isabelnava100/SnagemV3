@@ -317,7 +317,7 @@ function typeEffectiveness(attacker: string[], defender: string[]): number {
   return Math.max(0.5, Math.min(2, best));
 }
 const postsToBeatStar = (star: number): number => STAR_POSTS_TO_BEAT[star] ?? 5;
-const fleeChanceForStar = (star: number): number => STAR_FLEE_CHANCE[star] ?? 60;
+const fleeChanceForStar = (star: number): number => STAR_FLEE_CHANCE[star] ?? STAR_FLEE_CHANCE[3];
 const GEN_CAPS = [151, 251, 386, 493, 649, 721, 809, 905, 1025];
 const GEN_NAMES = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
 
@@ -5832,35 +5832,6 @@ export const pickUpMission = onCall(async (request) => {
   await markSnagTask(uid, "activity");
 
   return { threadId };
-});
-
-export const submitMission = onCall(async (request) => {
-  const uid = requireAuth(request);
-  const member = await loadMember(uid);
-  const missionId = requireString(request.data?.missionId, "mission", 80);
-  const threadLink = requireString(request.data?.threadLink, "threadLink", 500);
-
-  // Same lifetime dedup as the auto-filer: one submission per thread, ever.
-  const dup = await db
-    .collection("missionSubmissions")
-    .where("threadLink", "==", threadLink)
-    .limit(1)
-    .get();
-  if (!dup.empty) {
-    throw new HttpsError("failed-precondition", "That thread was already submitted for grading.");
-  }
-
-  const ref = await db.collection("missionSubmissions").add({
-    missionId,
-    submitterUid: uid,
-    submitterName: member.username,
-    threadLink,
-    status: "pending",
-    submittedAt: new Date(),
-  });
-  const staff = await staffUidsWithCaps(["ReviewRewards", "GiveItems"]);
-  await notifyUsers(staff, { type: "approval", text: `${member.username} submitted a mission for grading.`, link: "/Dashboard/Admin-Access" });
-  return { ok: true, id: ref.id };
 });
 
 // --- Missions: grade (grader-gated) ----------------------------------------
