@@ -186,7 +186,8 @@ function AutoBadges() {
   const toggleHidden = useMutation({
     mutationFn: async (badgeId: string) => {
       const { doc, setDoc, arrayUnion, arrayRemove } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
       await setDoc(
         doc(db, "users", user!.uid, "bag", "profile"),
         { hiddenAutoBadges: hidden.has(badgeId) ? arrayRemove(badgeId) : arrayUnion(badgeId) },

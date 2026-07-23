@@ -2,7 +2,7 @@ import { Box, Group, Loader, Select, SimpleGrid, Stack, Text, UnstyledButton } f
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { v4 as uuid } from "uuid";
-import { db } from "../../../context/firebase";
+import { getDb } from "../../../context/firebase";
 import { useAuth } from "../../../context/AuthContext";
 import { SnagIcon } from "../../../icons/SnagIcon";
 import { ImportEntries, ImportItem, ImportPokemon } from "../../../queries/imports";
@@ -153,18 +153,21 @@ const slugify = (name: string) =>
 
 const getIndex = async (): Promise<Record<string, string>> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "gaiaExports", "_index"));
   return (snap.data()?.names as Record<string, string>) ?? {};
 };
 
 const getExport = async (slug: string): Promise<GaiaExport | null> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "gaiaExports", slug));
   return snap.exists() ? (snap.data() as GaiaExport) : null;
 };
 
 const getOwnGaiaName = async (uid: string): Promise<string> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "users", uid));
   return (snap.data()?.gaiaName as string) ?? "";
 };
@@ -269,6 +272,7 @@ export default function GaiaPrefill(props: {
     mutationFn: async () => {
       if (!user || !packet) return 0;
       const { doc, getDoc, setDoc } = await import("firebase/firestore");
+      const db = await getDb();
       const ref = doc(db, "users", user.uid, "bag", "characters");
       const existing = ((await getDoc(ref)).data() as Record<string, { name?: string }>) ?? {};
       const have = new Set(

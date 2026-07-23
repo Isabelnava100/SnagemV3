@@ -35,7 +35,8 @@ export default function Navigation() {
   const save = useMutation({
     mutationFn: async (next: string[]) => {
       const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
       await setDoc(doc(db, "users", user!.uid), { settings: { navOrder: next } }, { merge: true });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["get-settings", user?.uid] }),

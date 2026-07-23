@@ -4,7 +4,7 @@ import React from "react";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
-import { db } from "../../../context/firebase";
+import { getDb } from "../../../context/firebase";
 import {
   getCharacters,
   getOwnedPokemons,
@@ -61,6 +61,7 @@ export default function FeaturedPicks() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { doc, setDoc } = await import("firebase/firestore");
+      const db = await getDb();
       await setDoc(
         doc(db, "users", user!.uid, "bag", "profile"),
         {

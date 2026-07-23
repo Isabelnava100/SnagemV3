@@ -22,7 +22,7 @@ import { ActivityLog } from "../../../../components/admin/ActivityLog";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { CAPABILITY_INFO, Capability, UserRoles } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
-import { db } from "../../../../context/firebase";
+import { getDb } from "../../../../context/firebase";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import {
   BattleConfig,
@@ -64,6 +64,7 @@ interface MemberRow {
  */
 const getMembersWithRoles = async (): Promise<MemberRow[]> => {
   const { collection, getDocs } = await import("firebase/firestore");
+  const db = await getDb();
   const [usersSnap, newSnap] = await Promise.all([
     getDocs(collection(db, "users")),
     getDocs(collection(db, "NewUsers")).catch(() => ({ docs: [] as never[] })),
@@ -118,6 +119,7 @@ export function CapabilityChecklist() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { doc, updateDoc } = await import("firebase/firestore");
+      const db = await getDb();
       await updateDoc(doc(db, selected!.source, selectedId!), {
         capabilities: caps,
         ...(role ? { permissions: role } : {}),

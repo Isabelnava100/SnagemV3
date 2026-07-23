@@ -667,7 +667,8 @@ function SafariZonesSection() {
     queryKey: ["safari-zones-public"],
     queryFn: async () => {
       const { getDoc, doc } = await import("firebase/firestore");
-      const { db } = await import("../../context/firebase");
+      const { getDb } = await import("../../context/firebase");
+      const db = await getDb();
       const data = (await getDoc(doc(db, "admin", "safari_config"))).data() ?? {};
       const zoneMap = (data.zones ?? { default: data }) as Record<string, any>;
       return Object.entries(zoneMap)

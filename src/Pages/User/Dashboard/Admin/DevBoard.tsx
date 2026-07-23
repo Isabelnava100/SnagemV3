@@ -66,7 +66,8 @@ const STATUS_COLOR: Record<string, string> = {
 
 async function fetchIncoming(): Promise<Incoming[]> {
   const { collection, getDocs, query, where } = await import("firebase/firestore");
-  const { db } = await import("../../../../context/firebase");
+  const { getDb } = await import("../../../../context/firebase");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "tickets"), where("type", "in", INCOMING_TYPES), where("status", "==", "new"))
   );
@@ -77,7 +78,8 @@ async function fetchIncoming(): Promise<Incoming[]> {
 
 async function fetchBoard(): Promise<BoardDoc[]> {
   const { collection, getDocs } = await import("firebase/firestore");
-  const { db } = await import("../../../../context/firebase");
+  const { getDb } = await import("../../../../context/firebase");
+  const db = await getDb();
   const snap = await getDocs(collection(db, "devBoard"));
   return snap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<BoardDoc, "id">) }))
@@ -111,7 +113,8 @@ export default function DevBoard() {
   const resolveIncoming = (item: Incoming, promote: boolean) =>
     act.mutate(async () => {
       const { addDoc, collection, doc, updateDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
       if (promote) {
         await addDoc(collection(db, "devBoard"), {
           kind: "ticket",
@@ -138,7 +141,8 @@ export default function DevBoard() {
   const setStatus = (id: string, status: string) =>
     act.mutate(async () => {
       const { doc, updateDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
       await updateDoc(doc(db, "devBoard", id), { status, updatedAt: new Date() });
       await logAuditEvent({
         action: "devboard.edit",
@@ -151,7 +155,8 @@ export default function DevBoard() {
   const removeDoc = (id: string) =>
     act.mutate(async () => {
       const { deleteDoc, doc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
       await deleteDoc(doc(db, "devBoard", id));
       await logAuditEvent({
         action: "devboard.edit",
@@ -165,7 +170,8 @@ export default function DevBoard() {
     act.mutate(async () => {
       if (!noteTitle.trim()) throw new Error("Give the note a title.");
       const { addDoc, collection } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
       await addDoc(collection(db, "devBoard"), {
         kind: "note",
         title: noteTitle.trim().slice(0, 120),

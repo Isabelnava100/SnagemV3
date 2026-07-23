@@ -47,7 +47,8 @@ function useUpdateOrAddDocument(documentId?: string) {
     mutationKey: ["updates-admin-pokemon-lists"],
     mutationFn: async ({ values }: { values?: Omit<AdminPokemonList, "id"> }) => {
       const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
 
       const docRef = doc(db, "admin", "pokemon_lists");
       await setDoc(
@@ -313,7 +314,8 @@ function DeleteSingleListItem(props: { itemId: string }) {
   const { mutateAsync, isPending: isLoading } = useMutation({
     mutationFn: async ({ itemIdInput }: { itemIdInput: string }) => {
       const { setDoc, doc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
 
       const docRef = doc(db, "admin", "pokemon_lists");
       const {

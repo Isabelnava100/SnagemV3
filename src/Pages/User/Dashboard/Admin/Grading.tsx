@@ -16,6 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
+import { call } from "../../../../queries/_callable";
 import {
   getGradedCount,
   getPendingMasterMissionRequests,
@@ -25,13 +26,6 @@ import {
 } from "../../../../queries/grading";
 import { getMission, gradeMission } from "../../../../queries/missions";
 import { grantMasterMission } from "../../../../queries/research";
-
-async function call<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../../../../context/firebase");
-  const res = await httpsCallable(getFunctions(), name)(data);
-  return res.data as T;
-}
 
 const awardRankingPoints = (uid: string, points: number) =>
   call<{ ok: boolean }>("awardRankingPoints", { uid, points });

@@ -175,7 +175,8 @@ function Avatars() {
 
       const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
       const { doc, arrayUnion, setDoc } = await import("firebase/firestore");
-      const { storage, db } = await import("../../../context/firebase");
+      const { getDb, getStorage } = await import("../../../context/firebase");
+      const [db, storage] = await Promise.all([getDb(), getStorage()]);
 
       const fileName = `${uuid()}.jpg`;
 
@@ -206,7 +207,8 @@ function Avatars() {
   const handleSelectAvatar = async (url: string) => {
     try {
       const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../context/firebase");
+      const { getDb } = await import("../../../context/firebase");
+      const db = await getDb();
 
       const docRef = doc(db, "users", user?.uid as string);
 
@@ -228,7 +230,8 @@ function Avatars() {
     const confirmed = window.confirm("Are you sure, you want to remove this permanently?");
     if (!confirmed) return;
     try {
-      const { storage, db } = await import("../../../context/firebase");
+      const { getDb, getStorage } = await import("../../../context/firebase");
+      const [db, storage] = await Promise.all([getDb(), getStorage()]);
       const { ref, deleteObject } = await import("firebase/storage");
       const { arrayRemove, doc, setDoc } = await import("firebase/firestore");
 
@@ -382,7 +385,8 @@ function CoverBackgrounds() {
 
       const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
       const { doc, setDoc, arrayUnion } = await import("firebase/firestore");
-      const { storage, db } = await import("../../../context/firebase");
+      const { getDb, getStorage } = await import("../../../context/firebase");
+      const [db, storage] = await Promise.all([getDb(), getStorage()]);
 
       const fileName = `${uuid()}.jpg`;
 
@@ -419,7 +423,8 @@ function CoverBackgrounds() {
   const handleSelectCoverImage = async (url: string) => {
     try {
       const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../context/firebase");
+      const { getDb } = await import("../../../context/firebase");
+      const db = await getDb();
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 
@@ -441,7 +446,8 @@ function CoverBackgrounds() {
     const confirmed = window.confirm("Are you sure, you want to remove this permanently?");
     if (!confirmed) return;
     try {
-      const { storage, db } = await import("../../../context/firebase");
+      const { getDb, getStorage } = await import("../../../context/firebase");
+      const [db, storage] = await Promise.all([getDb(), getStorage()]);
       const { ref, deleteObject } = await import("firebase/storage");
       const { arrayRemove, doc, setDoc } = await import("firebase/firestore");
 
@@ -598,7 +604,8 @@ function Tags() {
     try {
       setProcessing(true);
       const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../context/firebase");
+      const { getDb } = await import("../../../context/firebase");
+      const db = await getDb();
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 
@@ -679,7 +686,8 @@ function RightSideContent() {
   const saveChanges = async () => {
     try {
       const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../context/firebase");
+      const { getDb } = await import("../../../context/firebase");
+      const db = await getDb();
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "profile");
 

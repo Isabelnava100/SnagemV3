@@ -1215,7 +1215,8 @@ export default function SnagAgent() {
 
   const submitTicket = async (kind: Exclude<Intake, null>, text: string) => {
     const { addDoc, collection } = await import("firebase/firestore");
-    const { db } = await import("../../context/firebase");
+    const { getDb } = await import("../../context/firebase");
+    const db = await getDb();
     await addDoc(collection(db, "tickets"), {
       type: kind === "suggestion" ? "dev_suggestion" : kind === "bug" ? "dev_bug" : "member_question",
       text: text.slice(0, 4000),

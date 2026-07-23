@@ -112,7 +112,8 @@ export function renderEmailHtml(t: EmailTemplate): string {
 
 async function fetchTemplates(): Promise<Record<string, EmailTemplate>> {
   const { getDoc, doc } = await import("firebase/firestore");
-  const { db } = await import("../../../../context/firebase");
+  const { getDb } = await import("../../../../context/firebase");
+  const db = await getDb();
   return ((await getDoc(doc(db, "admin", "email_templates"))).data() ??
     {}) as Record<string, EmailTemplate>;
 }
@@ -137,7 +138,8 @@ export default function EmailTemplates() {
   const save = useMutation({
     mutationFn: async () => {
       const { setDoc, doc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
       const key = name.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-") || "template";
       await setDoc(doc(db, "admin", "email_templates"), { [key]: form }, { merge: true });
       return key;

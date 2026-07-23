@@ -143,7 +143,8 @@ function DiscordPublicToggle() {
     queryKey: ["discord-public", user?.uid],
     queryFn: async () => {
       const { doc, getDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
       const d = (await getDoc(doc(db, "users", user!.uid))).data();
       return { discordPublic: !!d?.discordPublic };
     },
@@ -153,7 +154,8 @@ function DiscordPublicToggle() {
   const saveMutation = useMutation({
     mutationFn: async (next: boolean) => {
       const { doc, updateDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
       await updateDoc(doc(db, "users", user!.uid), { discordPublic: next });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["discord-public", user?.uid] }),
@@ -359,7 +361,8 @@ export default function Notifications() {
     mutationKey: ["update-settings"],
     mutationFn: async ({ settingsInput }: { settingsInput: Settings }) => {
       const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
       const docRef = doc(db, "users", user?.uid as string);
       await setDoc(docRef, { settings: { ...settingsInput } }, { merge: true });
     },

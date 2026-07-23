@@ -120,7 +120,8 @@ export default function Donate() {
     try {
       setSending(true);
       const { doc, setDoc, increment } = await import("firebase/firestore");
-      const { db } = await import("../../../../context/firebase");
+      const { getDb } = await import("../../../../context/firebase");
+      const db = await getDb();
 
       for (const recipient of toUsers) {
         const docRef = doc(db, "users", recipient.id, "bag", "items");

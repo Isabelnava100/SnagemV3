@@ -69,7 +69,8 @@ function useUpdateOrAddDocument(documentId?: string) {
   const mutation = useMutation({
     mutationFn: async ({ values }: { values?: Omit<Character, "id"> }) => {
       const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../context/firebase");
+      const { getDb } = await import("../../../context/firebase");
+      const db = await getDb();
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "characters");
       await setDoc(
@@ -258,7 +259,8 @@ function DeleteCharacter(props: { characterId: string }) {
   const { mutateAsync, isPending: isLoading } = useMutation({
     mutationFn: async ({ characterIdInput }: { characterIdInput: string }) => {
       const { updateDoc, deleteField, doc } = await import("firebase/firestore");
-      const { db } = await import("../../../context/firebase");
+      const { getDb } = await import("../../../context/firebase");
+      const db = await getDb();
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "characters");
       await updateDoc(docRef, { [characterIdInput]: deleteField() });
@@ -312,7 +314,8 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
       setProcessing(true);
 
       const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
-      const { storage } = await import("../../../context/firebase");
+      const { getStorage } = await import("../../../context/firebase");
+      const storage = await getStorage();
 
       const fileName = `${uuid()}.jpg`;
       // Foldered + nested by uid so character media is easy to find/clean up.
@@ -330,7 +333,8 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
       // Persist right away so the image updates without needing a full edit +
       // save (the upload button is always visible below the avatar).
       const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../context/firebase");
+      const { getDb } = await import("../../../context/firebase");
+      const db = await getDb();
       await setDoc(
         doc(db, "users", user.uid, "bag", "characters"),
         { [id]: { imageURL: imagePublicURL } },
