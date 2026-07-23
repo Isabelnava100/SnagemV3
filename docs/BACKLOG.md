@@ -20,12 +20,12 @@ Real gaps, highest value first:
   wrappers). Simplified: **Hex Roulette** allows 1 pick at 5.5x vs mockup's up
   to 5 hexes at 20x (`functions/src/index.ts:6253`); **Dream Dice** one total
   vs up to 3. Extending both = CF payout-math + multi-select grid.
-- **Dashboard team "LOCKED TO THREAD" state missing** (`Pokemons.tsx`,
-  `SingleTeam`). Mockup shows a red locked badge instead of EDIT TEAM when a team
-  is locked into an open battle thread; build has zero lock awareness, so a
-  member can open the editor on a team locked into a live thread. Integrity
-  hole. Lock data already client-readable at `users/{uid}/bag/threadLocks`.
-  Medium, no CF (read + display-state + edit guard).
+- **Dashboard team "LOCKED TO THREAD" state** DONE (2026-07-23). `SingleTeam`
+  reads `users/{uid}/bag/threadLocks` (map keyed `${forum}__${threadId}` with
+  `teamIds` + `title`) and shows a red LOCKED TO THREAD badge (tooltip names
+  the thread) in place of EDIT/DELETE when a team is locked into an open
+  battle thread. The editor is also guarded in `isEditing`, the Edit click
+  handler, and `handleSave`, so a locked team cannot be opened for edits.
 - **Thread team-tile hover is name-only** vs the mockup's per-pokemon stat card
   (Lv/type/HP/shadow/held). `PostCharacter.pokemon` denormalizes only
   `{slug,name}`; surfacing the rest needs `publishForumPost` to denormalize
@@ -35,8 +35,9 @@ Real gaps, highest value first:
 - **Research "Are you ready?" checklist is hardcoded** (identical per character;
   the red "not met" state is unreachable) and the hero ACCESS badge keys off the
   active view, not the character's clearance. Medium/small, no CF (data present).
-- **Colosseum friend-code regex validation missing** (`RegisterCard` only checks
-  non-empty; mockup gates `^SW-\d{4}-\d{4}-\d{4}$`). Small, no CF.
+- **Colosseum friend-code regex validation** DONE (2026-07-23). `RegisterCard`
+  normalizes to uppercase and gates on `^SW-\d{4}-\d{4}-\d{4}$` with an inline
+  "Format: SW-1234-4567-8901" error; the same normalized value is saved.
 
 **Gameplay gaps (redesign-independent):**
 - **Z-Crystals/Z-moves have no battle consumer.** Items exist, `progress.
@@ -51,8 +52,10 @@ Real gaps, highest value first:
   biome tables (blocked on owner pasting the Gaia tables). Medium shop-balance.
 - **Challenges content is thin** (gym rosters names-only, no Elite Four/Champion,
   Kanto/Johto/Hoenn only, island trials partial). Content gap.
-- **`submitMission` Cloud Function is orphaned** (zero client refs; onThreadClosed
-  auto-files instead). Dead server code, safe to remove.
+- **`submitMission` Cloud Function REMOVED (2026-07-23).** It was orphaned
+  (zero client refs; onThreadClosed auto-files instead). Deleted from
+  `functions/src/index.ts` and from the live project
+  (`firebase functions:delete submitMission --region us-central1`).
 - Cosmetic: custom item sprites missing (Scents/Mega Stones/Z-Crystals/Emblems/
   fossils/apricorns/evo items show blank), gen-9 shiny sprites fall back to
   regular, gym badges use letter chips not art. All low.
@@ -61,22 +64,23 @@ Real gaps, highest value first:
 
 - **Dependabot vulnerabilities on the repo (2026-07).** GitHub reports 32
   open vulnerabilities on `Isabelnava100/SnagemV3`'s default branch: 2
-  critical, 10 high, 16 moderate, 4 low. Surfaced on a `git push` to `main`.
-  Review and bump the flagged dependencies:
-  https://github.com/Isabelnava100/SnagemV3/security/dependabot . Since the
-  package manager is bun, resolve with `bun update` (or targeted bumps) and
-  re-run `bun run build` before shipping. Not a deploy blocker, but the
-  critical/high ones should be triaged soon.
+  critical, 10 high, 16 moderate, 4 low. TRIAGED (2026-07-23): both
+  `bun audit` (root) and `npm audit` (functions/) report ZERO
+  vulnerabilities, so the GitHub findings are stale or already resolved in
+  the lockfiles. Dismiss them on the Dependabot page:
+  https://github.com/Isabelnava100/SnagemV3/security/dependabot . Re-audit
+  after major dependency bumps.
 
-- **Require email verification before sign-up completes (2026-07).** Owner
-  request: new users must verify their email before they can finish signing
-  up. Today registration sends a verification link (Register success screen
-  says "we sent a verification link") and accounts are manually approved, but
-  nothing hard-gates on the email actually being confirmed. Add enforcement:
-  block login and/or admin approval until Firebase `emailVerified === true`
-  (or gate the application submit on a verified email), and surface a
-  "resend verification" path. Touches `handleSignIn`, the registration flow,
-  and `approveNewUser`.
+- **Require email verification before sign-up completes** DONE (2026-07-23).
+  Password sign-in is refused when `emailVerified === false`: `handleSignIn`
+  signs the user straight back out and Login.tsx swaps to a "verify your
+  email" screen with a resend button (60s cooldown, `sendEmailVerification`,
+  live-region confirmations) and a wrong-email path. Google sign-in is
+  unaffected (always verified). `approveNewUser` also throws
+  failed-precondition for unverified applicants (admin UI surfaces the
+  message via `callableMessage`). Known limit: a session persisted before
+  this change is not force-revoked on reload; the gate lives in the login
+  flow.
 
 - **Annual security header renewal, due 2027-07.** The HSTS policy in
   `netlify.toml` runs on a 1 year max-age (set 2026-07). Any dev work in or
@@ -97,21 +101,34 @@ Real gaps, highest value first:
   "See Anticipated Updates" was the last and now goes to /Announcements).
   The S.N.A.G. suggestion box is the place to catch any stragglers members
   find; nothing else surfaced in a static sweep of Button/Link usage.
-- **Visibility concerns for public/regular users:**
-  - `users/{uid}` docs are readable by ANY signed-in member
-    (firestore.rules) and carry emails and settings. The members roster only
-    displays safe fields, but the raw doc is fetchable. Consider a public
-    profile subdocument or field-level split.
-  - `tickets` accepts writes from any signed-in user with arbitrary
-    payloads (S.N.A.G. relies on this). Fine for now; rate-limit or move
-    behind a callable if spam appears.
-  - `admin/star_overrides` and `admin/email_templates` are writable by the
-    generic admin/{doc} rule, which includes ManageLists/ManageBadges/
-    ManageSEO directors, wider than the admin-only UI implies.
-  - The Discord notify endpoint is still public in the bundle (known, below).
-  - Lore/announcement admin reads are gated by UI only in a few places; the
-    Firestore rules are the real boundary and were spot-checked, but a full
-    rules review before opening registration is recommended.
+- **Visibility concerns for public/regular users:** ALL ADDRESSED (2026-07-23):
+  - `users/{uid}` is no longer readable by every member: the rule is now
+    owner, admin, or capability holders only (emails + discordUID are
+    staff-only). Member-facing reads (members directory, @mention chips,
+    public-profile Discord badge) were repointed to the world-readable
+    `publicProfiles/{uid}` mirror, which now also mirrors
+    discordUID/discordUsername only when the member opted in via
+    `discordPublic`. REQUIRES: functions deploy + re-run of
+    `node functions/scripts/backfill-public-profiles.mjs` to populate the
+    Discord fields, THEN the rules deploy (order matters; the new client
+    depends on the mirror).
+  - `tickets` no longer accepts arbitrary writes: members get validated
+    create-only (actorUid pinned, key allowlist, status pinned to "new"),
+    update/delete are admin-only.
+  - `admin/{doc}` is admin-only by default; per-doc grants cover
+    pokemon_lists (ManageLists), badges (ManageBadges), seo (ManageSEO),
+    safari_config (HostEvents/ManageLists). Economy/balance docs
+    (battle_config, casino_config, star_overrides, email_templates) are
+    admin-only now.
+  - Also closed in the same pass: `bag/{doc}` wildcard owner-writes
+    (currency/items/owned_pokemons/research/challenges/casino are now
+    function/admin-only for real; the July "closed" note below was wrong
+    because overlapping rules OR), auditLogs create validation,
+    notifications update limited to `read`, importRequests owner updates
+    pinned to draft/pending/completed with reviewerNote/history protected,
+    SVG uploads excluded in storage.rules, per-uid 2s throttle on the roll
+    callables, and opt-in App Check (`VITE_APPCHECK_SITE_KEY`; console
+    enforcement is the remaining owner step).
 
 ## Assets & sprites
 
@@ -288,6 +305,18 @@ Status as of 2026-07:
 - **Font subsetting** (2026-07). Roboto now loads as the Google Fonts
   variable font (2 files, swap). Self-hosting a subset woff2 would shave a
   bit more, at the cost of manual font upkeep.
+- **Asset + bundle pass (2026-07-23).** Gen 9 box sprites moved from
+  src/assets to `public/images/sprites/gen9/` and load on demand by URL
+  (were 240 base64 data URIs inlined into a 254KB shared chunk, ~160KB
+  gzip off sprite-bearing pages). sylveon.svg (1.45MB raster-in-SVG)
+  replaced by a 45KB webp. Firestore + Storage now load lazily via
+  `getDb()`/`getStorage()` in `src/context/firebase.ts` (firebase chunk
+  split: app+auth 35KB gzip on the boot path, firestore 135KB gzip on
+  first data use). Members directory query staleTime raised to 30min (was
+  ~5N+1 reads every 2min). Admin Manage page lazy-loads its 16 tools.
+  Follow-ups: Grading.tsx still splits imperfectly (Inbox imports it
+  statically); directory counts could be denormalized onto publicProfiles
+  (1 read/member) if the directory ever gets hot.
 
 ## Backend / integrity
 

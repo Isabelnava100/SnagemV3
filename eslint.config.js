@@ -25,7 +25,7 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-expressions": "warn",
       "@typescript-eslint/no-empty-object-type": "warn",
       "react-hooks/exhaustive-deps": "warn",
-      "react-hooks/rules-of-hooks": "warn",
+      "react-hooks/rules-of-hooks": "error",
       "react-refresh/only-export-components": "off",
       "no-unsafe-finally": "warn",
       "no-extra-boolean-cast": "warn",

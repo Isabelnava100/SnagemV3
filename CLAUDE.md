@@ -27,7 +27,7 @@ deploy paths, and the environment gotchas.
 - `sx` prop works via `@mantine/emotion` (see `src/emotion.d.ts` + provider in `src/routes.tsx`). For new code prefer style props (`fz`, `fw`, `c`, `gap`, `justify`) over `sx`.
 - v9 prop names: `gap` not `spacing`, `justify` not `position`, `c` not `color` (Text/Title), `fw` not `weight`, `fz` for numeric font sizes, `leftSection`/`rightSection` not icons props, `wrap="nowrap"` not `noWrap`.
 - Dark theme only (`defaultColorScheme="dark"`, theme in `src/lib/mantine.ts`; palettes must be 10 shades).
-- Icons: `@tabler/icons-react` (NOT dead `@tabler/icons` v1) or existing `tabler-icons-react`.
+- Icons: `@tabler/icons-react` (NOT dead `@tabler/icons` v1).
 - **Everything must be mobile responsive.** Any new or edited UI must work at 375px width with no horizontal scroll: use Mantine responsive props (`span={{ base: 12, xs: 6 }}`, responsive style props), relative widths (`maw` + `w="100%"`) over fixed px, and verify at the mobile viewport before committing. Theme breakpoints: xs=480, sm=800 (`src/lib/mantine.ts`).
 
 ## SEO rules (owner's QA standard, apply to every new or edited page)
@@ -65,7 +65,8 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 - Mutation results: invalidate with `queryClient.invalidateQueries({ queryKey: [...] })` (object syntax).
 - react-query 5 names: `isPending` (aliased `isPending: isLoading` in older files), no `onSuccess` on queries, `gcTime` not `cacheTime`.
 - Firestore is billed per document read: prefer `query(where, limit, orderBy)` over full-collection `getDocs`; paginate server-side (startAfter) instead of fetching all posts and slicing client-side.
-- Never trust client checks for authz: admin gating in `Admin/index.tsx` is UI-only; real enforcement lives in Firestore security rules (kept in Firebase console, not this repo). Any new collection/write path needs a matching rule.
+- Firestore and Storage load lazily: `src/context/firebase.ts` exports async memoized `getDb()` / `getStorage()` (only `app` and `auth` are eager). Never statically import a `db`/`storage` binding from that module; call `await getDb()` at the usage site like the query modules do.
+- Never trust client checks for authz: admin gating in `Admin/index.tsx` is UI-only; real enforcement lives in Firestore security rules (`firestore.rules` in this repo, deployed with `firebase deploy --only firestore:rules`). Any new collection/write path needs a matching rule.
 - **Permissions: two orthogonal axes.** These are `role` (`permissions` field, forum-visibility tier) and `capabilities` (granted actions). Use helpers in `src/lib/permissions.ts` (`isAdmin`, `hasCapability`, `canAccessForum`), never raw string compares. Gate sensitive actions with `hasCapability` and log them via `src/lib/auditLog.ts`. Full model + roadmap: `docs/PERMISSIONS.md`. Database map + forum build plan: `docs/DATABASE.md`.
 
 ## Security rules
@@ -73,13 +74,17 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 - User-generated HTML (Tiptap output stored in Firestore) MUST be sanitized with `DOMPurify.sanitize()` before any `dangerouslySetInnerHTML`. Precedent: `src/Pages/forum/mainThreadLayout/components/EachPost.tsx`.
 - No secrets in client code. `VITE_*` env vars are PUBLIC (bundled). Firebase web config is fine; anything privileged (Discord bot endpoint) must validate/rate-limit server-side.
 - `.env` is gitignored. Keep it that way; update `.env.example` when adding vars.
+- Email verification is enforced (July 2026): password sign-in is refused until `emailVerified` (Login.tsx shows a resend path), and `approveNewUser` rejects unverified applicants server-side. Do not add a flow that lets unverified password accounts in.
+- Member PII: `users/{uid}` is readable only by its owner, admins, and capability holders (it carries email + discordUID). Member-facing displays of other members go through the world-readable `publicProfiles/{uid}` mirror (syncPublicProfile trigger; Discord fields only when the member opted in via `discordPublic`). Never read another member's users doc from member-facing UI.
+- App Check is opt-in: set `VITE_APPCHECK_SITE_KEY` (reCAPTCHA v3 site key) to enable the client side; enforcement is a Firebase console step. Server-side cost control today: per-uid throttle on the roll callables (rollDice/rollRandom/rollEncounter, 2s minimum interval).
 
 ## Build & dev
 
 - `npm run dev` / `bun run dev` (vite), `npm run build` = `tsc && vite build`. Both must pass before commit.
-- vite.config.ts `manualChunks` is a function (rolldown requires it). Only react and firebase are force-grouped; do NOT re-add mantine/tiptap groups, forcing them made the whole bundle load eagerly (~600KB extra on first paint).
-- Homepage hero + team images are self-hosted WebP in `public/images/` (converted from the old Firebase Storage originals). Keep new site imagery WebP, self-hosted, with width/height set; lazy-load below the fold only.
-- Typecheck: `npx tsc --noEmit`. Keep at zero errors.
+- CI runs on every push/PR to main (`.github/workflows/ci.yml`): `tsc --noEmit`, vitest, eslint, and the functions tsc build. Keep it green.
+- vite.config.ts `manualChunks` is a function (rolldown requires it). Only react and firebase are force-grouped (app+auth in `firebase`, firestore in its own lazy `firestore` chunk); do NOT re-add mantine/tiptap groups, forcing them made the whole bundle load eagerly (~600KB extra on first paint).
+- Homepage hero + team images are self-hosted WebP in `public/images/` (converted from the old Firebase Storage originals). Keep new site imagery WebP, self-hosted, with width/height set; lazy-load below the fold only. Gen 9 box sprites live in `public/images/sprites/gen9/` and load on demand by URL; do not move them back into src/assets (they were base64-inlined into a 254KB chunk).
+- Typecheck: `npx tsc --noEmit` (also `bun run typecheck`). Keep at zero errors. Tests: `bun run test` (vitest). `react-hooks/rules-of-hooks` is an eslint ERROR; the rest are warnings.
 - This repo lives in iCloud-synced Documents: if builds hang on file reads, node_modules was evicted: run `brctl download node_modules` and wait.
 
 ## Known deferred work
