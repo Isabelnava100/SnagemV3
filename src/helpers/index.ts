@@ -26,15 +26,31 @@ const gen9Modules = (import.meta as any).glob("../assets/sprites/gen9/*.png", {
   query: "?url",
   import: "default",
 }) as Record<string, string>;
+// Shiny Gen 9 box sprites live one level down in gen9/shiny/ (the "*" glob above
+// does not recurse, so the two sets never collide on their shared slug names).
+const gen9ShinyModules = (import.meta as any).glob(
+  "../assets/sprites/gen9/shiny/*.png",
+  { eager: true, query: "?url", import: "default" }
+) as Record<string, string>;
 const GEN9_SPRITE_BY_SLUG: Record<string, string> = {};
 for (const [path, url] of Object.entries(gen9Modules)) {
   const slug = path.split("/").pop()!.replace(/\.png$/, "");
   GEN9_SPRITE_BY_SLUG[slug] = url;
 }
+const GEN9_SHINY_SPRITE_BY_SLUG: Record<string, string> = {};
+for (const [path, url] of Object.entries(gen9ShinyModules)) {
+  const slug = path.split("/").pop()!.replace(/\.png$/, "");
+  GEN9_SHINY_SPRITE_BY_SLUG[slug] = url;
+}
 
 export const getPokemonImageURL = (slug: string, shiny = false) => {
-  // Bundled Gen 9 sprites are the regular set; a shiny Gen 9 set can be added
-  // later (until then a shiny Gen 9 species falls back to its regular sprite).
+  // Gen 9 (#906-1025) box sprites are bundled locally. Prefer the shiny set when
+  // asked; any Gen 9 species without a bundled shiny falls back to its regular
+  // local sprite, and non Gen 9 species come from the pokesprite CDN.
+  if (shiny) {
+    const localShiny = GEN9_SHINY_SPRITE_BY_SLUG[slug];
+    if (localShiny) return localShiny;
+  }
   const local = GEN9_SPRITE_BY_SLUG[slug];
   if (local) return local;
   return `${POKESPRITE_CDN}/pokemon-gen8/${shiny ? "shiny" : "regular"}/${slug}.png`;
