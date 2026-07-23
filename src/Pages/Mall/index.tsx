@@ -306,8 +306,75 @@ function ArcadeView(props: { shops: Shop[]; onEnter: (id: string) => void }) {
             onEnter={() => props.onEnter(shop.id)}
           />
         ))}
+        <ComingSoonShopCard />
       </SimpleGrid>
     </Stack>
+  );
+}
+
+/**
+ * A placeholder storefront for the future Gengar Token shop: a place to spend
+ * Casino winnings. Not open yet, so it shows "Coming Soon!" and cannot be
+ * entered. When it ships, seed a real shop with currency "gengarcoin".
+ */
+function ComingSoonShopCard() {
+  const accent = "#9775fa"; // the Gengar Token purple
+  const displayFont = "var(--font-display, 'Quantico', sans-serif)";
+  return (
+    <Box
+      className="dc-card"
+      aria-label="Gengar Token Shop, coming soon"
+      style={{ overflow: "hidden", display: "flex", flexDirection: "column", opacity: 0.9 }}
+    >
+      <Box
+        h={12}
+        style={{
+          backgroundImage: `repeating-linear-gradient(45deg, ${accent}, ${accent} 10px, rgba(255,255,255,0.85) 10px, rgba(255,255,255,0.85) 20px)`,
+        }}
+      />
+      <Box
+        px={16}
+        py={14}
+        style={{
+          background: `linear-gradient(120deg, ${accent}, rgba(10,9,13,0.55))`,
+          borderBottom: "1px solid #2a2637",
+        }}
+      >
+        <Text
+          fz={11}
+          fw={700}
+          tt="uppercase"
+          c="rgba(255,255,255,0.85)"
+          style={{ fontFamily: displayFont, letterSpacing: "0.18em" }}
+        >
+          Gengar Tokens
+        </Text>
+        <Text fz={20} fw={700} lineClamp={1} c="white" style={{ fontFamily: displayFont }}>
+          Gengar Token Shop
+        </Text>
+      </Box>
+      <Stack gap={12} p={16} justify="space-between" style={{ flex: 1 }}>
+        <Text fz={13} c="dimmed">
+          Spend your Casino winnings on exclusive goodies. The doors are not open yet.
+        </Text>
+        <Box
+          style={{
+            alignSelf: "flex-start",
+            background: accent,
+            color: "#0e0d11",
+            fontFamily: displayFont,
+            fontWeight: 700,
+            fontSize: 12,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            padding: "8px 16px",
+            clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)",
+          }}
+        >
+          Coming Soon!
+        </Box>
+      </Stack>
+    </Box>
   );
 }
 

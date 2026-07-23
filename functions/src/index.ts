@@ -6872,7 +6872,7 @@ export const playCasinoGame = onCall(async (request) => {
   const uid = requireAuth(request);
   await loadMember(uid);
   const game = requireString(request.data?.game, "game", 20);
-  const bet = requireInt(request.data?.bet ?? 1, "bet", 1, 5);
+  const bet = requireInt(request.data?.bet ?? 1, "bet", 1, 3);
   const pick = request.data?.pick;
 
   const currencyRef = db.doc(`users/${uid}/bag/currency`);
@@ -6886,34 +6886,38 @@ export const playCasinoGame = onCall(async (request) => {
     let roll: number | number[] = 0;
     let payout = 0;
 
+    // The house keeps an edge on every game (payouts below fair odds); winnings
+    // stay low by design. Retune these numbers to adjust the edge.
     if (game === "hexRoulette") {
-      const n = requireInt(pick, "pick", 1, 36);
-      roll = randomInt(1, 37);
-      if (roll === n) { win = true; payout = Math.round(bet * 5.5); }
+      const n = requireInt(pick, "pick", 1, 6);
+      roll = randomInt(1, 7); // d6
+      if (roll === n) { win = true; payout = bet * 4; } // 1/6 chance, ~33% house
     } else if (game === "dreamDice") {
       const total = requireInt(pick, "pick", 2, 12);
       const d1 = randomInt(1, 7);
       const d2 = randomInt(1, 7);
       roll = [d1, d2];
-      if (d1 + d2 === total) { win = true; payout = bet * (d1 === d2 ? 3 : 2); }
+      if (d1 + d2 === total) { win = true; payout = bet * 2; } // flat 2x, no doubles bonus
     } else if (game === "paybackPyramid") {
       if (pick !== "even" && pick !== "odd") throw new HttpsError("invalid-argument", "Pick even or odd.");
-      roll = randomInt(1, 5); // d4
-      const isEven = roll % 2 === 0;
-      if ((pick === "even") === isEven) { win = true; payout = bet * 2; }
+      roll = randomInt(1, 7); // d6; a 5 or 6 is Gengar's Payback (house wins)
+      if (roll <= 4) {
+        const isEven = roll % 2 === 0;
+        if ((pick === "even") === isEven) { win = true; payout = bet * 2; } // both sides 2/6, ~33% house
+      }
     } else if (game === "spookySlots") {
-      // 3 reels of 6 symbols. Triple pays 8x, any pair pays 2x.
+      // 3 reels of 6 symbols. Triple pays 3x, any pair pays 2x.
       const r1 = randomInt(1, 7);
       const r2 = randomInt(1, 7);
       const r3 = randomInt(1, 7);
       roll = [r1, r2, r3];
-      if (r1 === r2 && r2 === r3) { win = true; payout = bet * 8; }
+      if (r1 === r2 && r2 === r3) { win = true; payout = bet * 3; }
       else if (r1 === r2 || r2 === r3 || r1 === r3) { win = true; payout = bet * 2; }
     } else if (game === "ghostFlip") {
-      // 3 face-down cards, one hides Gengar. Find it for 3x.
+      // 3 face-down cards, one hides Gengar. Find it for 2x.
       const p = requireInt(pick, "pick", 0, 2);
       roll = randomInt(0, 3); // 0, 1, or 2
-      if (roll === p) { win = true; payout = bet * 3; }
+      if (roll === p) { win = true; payout = bet * 2; } // 1/3 chance, ~33% house
     } else {
       throw new HttpsError("invalid-argument", "Unknown game.");
     }
@@ -6930,12 +6934,12 @@ export const playCasinoGame = onCall(async (request) => {
 // LOWER. Each correct call doubles the pot; cash out any time or ride to 5
 // calls (32x) where it auto-pays. A wrong call (or a tie) loses the pot. State
 // lives at users/{uid}/bag/casino_highlow, server-written only (see rules).
-const HIGHLOW_MAX_CALLS = 5;
+const HIGHLOW_MAX_CALLS = 3;
 
 export const startHighLow = onCall(async (request) => {
   const uid = requireAuth(request);
   await loadMember(uid);
-  const bet = requireInt(request.data?.bet ?? 1, "bet", 1, 5);
+  const bet = requireInt(request.data?.bet ?? 1, "bet", 1, 3);
   const currencyRef = db.doc(`users/${uid}/bag/currency`);
   const stateRef = db.doc(`users/${uid}/bag/casino_highlow`);
   const result = await db.runTransaction(async (tx) => {
@@ -7026,9 +7030,9 @@ export const buyLottoTicket = onCall(async (request) => {
 
     tx.set(currencyRef, { gengarcoin: geng - 1 }, { merge: true });
     tx.set(lottoRef, {
-      // First-ever ticket seeds the 100-token base pot so the stored jackpot
+      // First-ever ticket seeds a small 10-token base pot so the stored jackpot
       // matches what the client is told (drawLotto re-seeds it after a draw).
-      jackpot: lottoSnap.exists ? FieldValue.increment(1) : 101,
+      jackpot: lottoSnap.exists ? FieldValue.increment(1) : 11,
       ticketCount: FieldValue.increment(1),
       weekId,
       tickets: FieldValue.arrayUnion({ uid, name: member.username, number, weekId }),
@@ -7036,7 +7040,7 @@ export const buyLottoTicket = onCall(async (request) => {
     tx.set(myRef, { lottoNumber: number, lottoWeekId: weekId }, { merge: true });
     return {
       number,
-      jackpot: (Number(lotto.jackpot ?? 100)) + 1,
+      jackpot: (Number(lotto.jackpot ?? 10)) + 1,
       ticketCount: (Number(lotto.ticketCount ?? 0)) + 1,
     };
   });
@@ -7072,7 +7076,7 @@ export const drawLotto = onCall(async (request) => {
   const lottoSnap = await lottoRef.get();
   const lotto = lottoSnap.data() ?? {};
   const drawn = randomInt(1, 51); // 1..50
-  const jackpot = Math.max(0, Math.trunc(Number(lotto.jackpot ?? 100)));
+  const jackpot = Math.max(0, Math.trunc(Number(lotto.jackpot ?? 10)));
   const tickets = (Array.isArray(lotto.tickets) ? lotto.tickets : []) as Array<{ uid: string; number: number }>;
   if (!tickets.length) {
     throw new HttpsError(
@@ -7096,7 +7100,7 @@ export const drawLotto = onCall(async (request) => {
   }
   // Reset the pot to the base for the next week.
   const nextWeek = String(Date.now());
-  batch.set(lottoRef, { drawNumber: drawn, jackpot: 100, ticketCount: 0, weekId: nextWeek, tickets: [] }, { merge: true });
+  batch.set(lottoRef, { drawNumber: drawn, jackpot: 10, ticketCount: 0, weekId: nextWeek, tickets: [] }, { merge: true });
   await batch.commit();
 
   // Notify winners of their actual share (top winners get one extra coin from the remainder).

@@ -41,7 +41,7 @@ import { getCurrencies } from "../../queries/dashboard";
  *
  * The cinematic "casino floor" restyle (July 2026): a striped hero with three
  * wallet chips, the Exchange Cage bar, a table-picker grid ("The Floor"), and a
- * seated single-game view driven by a shared 1 / 2 / 5 chip stake. Seven games:
+ * seated single-game view driven by a shared 1 / 2 / 3 chip stake. Seven games:
  * the instant ones through playCasinoGame (Hex Roulette, Dream Dice, Payback
  * Pyramid, Spooky Slots, Ghost Card Flip), the weekly Shadow Lotto, and the
  * stateful Haunter's High-Low (startHighLow / guessHighLow / cashoutHighLow).
@@ -444,49 +444,49 @@ const TABLES: TableDef[] = [
     id: "hexRoulette",
     name: "Hex Roulette",
     icon: <IconTargetArrow size={22} color={GOLD} />,
-    payout: "Win 5.5x",
+    payout: "Win 4x",
     blurb: "Cover a hex on the board, then one spin decides your fate.",
-    rules: "Pick a number 1 to 36 and set your chip. Land it and take 5.5x your stake.",
+    rules: "Pick a number 1 to 6 and set your chip. Land it and take 4x your stake.",
   },
   {
     id: "dreamDice",
     name: "Dream Dice",
     icon: <IconDice5 size={22} color={CYAN} />,
-    payout: "2x · 3x Doubles",
-    blurb: "Call the total before the bones land. Doubles pay extra.",
-    rules: "Call the 2d6 total and set your chip. A hit pays 2x, or 3x on doubles.",
+    payout: "Win 2x",
+    blurb: "Call the total before the bones land.",
+    rules: "Call the 2d6 total and set your chip. A hit pays 2x.",
   },
   {
     id: "paybackPyramid",
     name: "Payback Pyramid",
     icon: <IconTriangleInverted size={20} color={GOLD} />,
     payout: "Win 2x",
-    blurb: "Even or odd on a d4. Simple, spooky, 50/50.",
-    rules: "Call even or odd. The d4 pays 2x your chip.",
+    blurb: "Even or odd on a d6. A 5 or 6 is Gengar's Payback.",
+    rules: "Call even or odd on a d6. A 5 or 6 is the house's Payback (you lose). Otherwise a hit pays 2x your chip.",
   },
   {
     id: "spookySlots",
     name: "Spooky Slots",
     icon: <IconStack2 size={22} color={GOLD} />,
-    payout: "2x Pair · 8x Triple",
+    payout: "2x Pair · 3x Triple",
     blurb: "Pull the lever and pray the reels agree with each other.",
-    rules: "Spin three reels. Any matching pair pays 2x your chip, a full triple pays 8x.",
+    rules: "Spin three reels. Any matching pair pays 2x your chip, a full triple pays 3x.",
   },
   {
     id: "ghostFlip",
     name: "Ghost Card Flip",
     icon: <IconCards size={22} color={PURPLE_LT} />,
-    payout: "Win 3x",
+    payout: "Win 2x",
     blurb: "Three cards face down, one hides Gengar. Guess right.",
-    rules: "Pick one of three cards. Find the Gengar and take 3x your chip.",
+    rules: "Pick one of three cards. Find the Gengar and take 2x your chip.",
   },
   {
     id: "haunterHighLow",
     name: "Haunter's High-Low",
     icon: <IconArrowsUpDown size={22} color={CYAN} />,
-    payout: "Up to 32x",
+    payout: "Up to 8x",
     blurb: "Call the next card higher or lower. Ride the streak or cash out.",
-    rules: "Deal a card, then call higher or lower. Each correct call doubles the pot; cash out any time. Five in a row pays 32x. A miss loses it all.",
+    rules: "Deal a card, then call higher or lower. Each correct call doubles the pot; cash out any time. Three in a row pays 8x. A miss loses it all.",
   },
   {
     id: "shadowLotto",
@@ -566,7 +566,7 @@ function ChipSelector(props: { stake: number; setStake: (n: number) => void }) {
         Your Chips
       </Text>
       <Group gap={8} wrap="nowrap">
-        {[1, 2, 5].map((v) => {
+        {[1, 2, 3].map((v) => {
           const active = props.stake === v;
           return (
             <UnstyledButton
@@ -656,7 +656,7 @@ function HexRouletteBody(props: GameProps) {
     <Flex gap={28} wrap="wrap" align="flex-start">
       <Box style={{ flex: "1 1 300px", minWidth: 0, maxWidth: 372 }}>
         <Box style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 6 }}>
-          {Array.from({ length: 36 }, (_, i) => i + 1).map((n) => (
+          {Array.from({ length: 6 }, (_, i) => i + 1).map((n) => (
             <Cell key={n} n={n} label={`Number ${n}`} selected={pick === n} onClick={() => setPick(n)} h={44} fz={15} />
           ))}
         </Box>
@@ -752,8 +752,8 @@ function PaybackPyramidBody(props: GameProps) {
     props.uid,
     (res) =>
       res.win
-        ? `The d4 shows ${res.roll}. ${call.toUpperCase()} pays ${res.payout} Gengar Tokens.`
-        : `The d4 shows ${res.roll}. The pyramid takes its cut.`,
+        ? `The d6 shows ${res.roll}. ${call.toUpperCase()} pays ${res.payout} Gengar Tokens.`
+        : `The d6 shows ${res.roll}. The pyramid takes its cut.`,
     (res, bet) => {
       setFace(String(res.roll));
       props.record(res.win, res.payout, bet);
