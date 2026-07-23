@@ -34,7 +34,7 @@ import { Character } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { isAdmin } from "../../lib/permissions";
-import { getCharacters, getItems } from "../../queries/dashboard";
+import { getCharacters, getItems, getOwnedPokemons } from "../../queries/dashboard";
 import {
   ResearchProgress,
   getMyClearanceRequests,
@@ -342,12 +342,60 @@ const STEPS = [
   },
 ];
 
-const CHECKLIST = [
-  { ok: true, title: "Own the species first", body: "You must already own the Pokemon you intend to fuse or bond with." },
-  { ok: true, title: "Choose a Division", body: "Hybrid or Channeler, the only doors in. This choice is irreversible." },
-  { ok: true, title: "Document your character", body: "Concept, artifact and bonded Pokemon on your profile, ready for review." },
-  { ok: false, title: "Patience", body: "Ten missions per type. Most trainers spend months reaching the Grand Master." },
-];
+/**
+ * One "Are you ready?" requirement. `ok` is computed per character from real
+ * data (see buildChecklist); unmet rows render in red.
+ */
+interface ChecklistItem {
+  ok: boolean;
+  title: string;
+  body: string;
+}
+
+/**
+ * Evaluates the entry requirements against the selected character's actual
+ * data. "Patience" has no underlying data to check (it is a mindset, not a
+ * flag), so it stays a static, always-unmet reminder.
+ */
+function buildChecklist(args: {
+  character?: Character;
+  ownedSpecies: string[];
+  track: "Hybrid" | "Channeler";
+}): ChecklistItem[] {
+  const { character, ownedSpecies, track } = args;
+  const species = (character?.species ?? "").trim().toLowerCase();
+  // Hybrid intent: the member must own the fusion species itself. Channeler
+  // intent: any owned Pokemon can anchor a bonded team.
+  const ownsSpecies =
+    !!species && species !== "human" && ownedSpecies.includes(species);
+  const ownsAny = ownedSpecies.length > 0;
+  const documented =
+    !!character &&
+    ((character.short_description ?? "").trim().length > 0 ||
+      (character.history ?? "").trim().length > 0);
+  return [
+    {
+      ok: !!character && (track === "Hybrid" ? ownsSpecies : ownsAny),
+      title: "Own the species first",
+      body: "You must already own the Pokemon you intend to fuse or bond with.",
+    },
+    {
+      ok: !!character && (character.type !== "None" || !!track),
+      title: "Choose a Division",
+      body: "Hybrid or Channeler, the only doors in. This choice is irreversible.",
+    },
+    {
+      ok: documented,
+      title: "Document your character",
+      body: "Concept, artifact and bonded Pokemon on your profile, ready for review.",
+    },
+    {
+      ok: false,
+      title: "Patience",
+      body: "Ten missions per type. Most trainers spend months reaching the Grand Master.",
+    },
+  ];
+}
 
 /** Clearance-request state passed down from the page for the selected character. */
 interface ClearanceProps {
@@ -361,7 +409,7 @@ interface ClearanceProps {
   onRequest: () => void;
 }
 
-function GuideView(props: { onPreview: () => void } & ClearanceProps) {
+function GuideView(props: { onPreview: () => void; checklist: ChecklistItem[] } & ClearanceProps) {
   return (
     <Stack gap={30}>
       {/* Ascending benefits */}
@@ -457,8 +505,8 @@ function GuideView(props: { onPreview: () => void } & ClearanceProps) {
               Check yourself against the entry requirements, then request a clearance review.
             </Text>
             <Stack gap={16}>
-              {CHECKLIST.map((c) => {
-                const color = c.ok ? "#12B7B6" : "#FFD074";
+              {props.checklist.map((c) => {
+                const color = c.ok ? "#12B7B6" : "#E54156";
                 return (
                   <Group key={c.title} gap={14} wrap="nowrap" align="flex-start">
                     <Box
@@ -1208,6 +1256,11 @@ export default function Research() {
     queryFn: () => getItems(uid as string),
     enabled: !!uid,
   });
+  const pokemonQuery = useQuery({
+    queryKey: ["owned-pokemons", uid],
+    queryFn: () => getOwnedPokemons(uid as string),
+    enabled: !!uid,
+  });
 
   const characters = React.useMemo(() => charactersQuery.data?.sortedData ?? [], [charactersQuery.data]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -1271,8 +1324,21 @@ export default function Research() {
   });
 
   const loading = configQuery.isPending || (!!uid && (charactersQuery.isPending || progressQuery.isPending));
-  const granted = view === "console" && canAct;
+  // The hero badge mirrors the selected character's actual clearance (the type
+  // flip on approval), not which view happens to be on screen.
+  const granted = !!selected && selected.type !== "None";
   const accentColor = granted ? "#c79bd6" : "#FFD074";
+
+  // The guide's readiness checklist, evaluated against this character's data.
+  const ownedSpecies = React.useMemo(
+    () =>
+      (pokemonQuery.data?.sortedData ?? []).map((p) => (p.species ?? "").trim().toLowerCase()),
+    [pokemonQuery.data]
+  );
+  const checklist = React.useMemo(
+    () => buildChecklist({ character: selected, ownedSpecies, track }),
+    [selected, ownedSpecies, track]
+  );
 
   const toggleFz = isOverSm ? 13 : 11;
   const togglePx = isOverSm ? 20 : 12;
@@ -1350,6 +1416,7 @@ export default function Research() {
         ) : (
           <GuideView
             onPreview={() => setView("console")}
+            checklist={checklist}
             characterSelected={!!selectedId}
             alreadyCleared={!!selected && selected.type !== "None"}
             requestPending={clearancePending}

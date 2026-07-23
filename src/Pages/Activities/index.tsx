@@ -11,7 +11,16 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { IconCheck, IconGift, IconInfoCircle, IconLock } from "@tabler/icons-react";
+import {
+  IconArrowsExchange,
+  IconBook2,
+  IconCalendarEvent,
+  IconCheck,
+  IconEgg,
+  IconGift,
+  IconLock,
+  IconTrophy,
+} from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
@@ -182,6 +191,92 @@ function TaskCard(props: { task: TaskDef; done: boolean }) {
           {task.linkLabel} &rarr;
         </Text>
       </Group>
+    </Card>
+  );
+}
+
+/**
+ * "More things to do": activity destinations that are not already featured
+ * above (the Snag List tasks cover the Colosseum, Casino, Forum, Missions and
+ * the Mall, and the Berry Farm and Fishing Pond have their own cards).
+ */
+interface PlaceDef {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  desc: string;
+  link: string;
+}
+
+const PLACES: PlaceDef[] = [
+  {
+    icon: <IconArrowsExchange size={26} color="#ffa94d" />,
+    iconBg: "#3d2c1d",
+    title: "The Trading Post",
+    desc: "List a Pokemon or make an offer on someone else's.",
+    link: "/Trading",
+  },
+  {
+    icon: <IconEgg size={26} color="#ffd43b" />,
+    iconBg: "#3a3114",
+    title: "The Daycare",
+    desc: "Pair two Pokemon and come back for the Egg.",
+    link: "/Daycare",
+  },
+  {
+    icon: <IconTrophy size={26} color="#e599f7" />,
+    iconBg: "#33203d",
+    title: "Challenges",
+    desc: "Gyms, leagues and trials for your badge case.",
+    link: "/Challenges",
+  },
+  {
+    icon: <IconCalendarEvent size={26} color="#74c0fc" />,
+    iconBg: "#1d2f42",
+    title: "Events Forum",
+    desc: "Seasonal games, contests and staff-run happenings.",
+    link: "/Forum/Events",
+  },
+  {
+    icon: <IconBook2 size={26} color="#63e6be" />,
+    iconBg: "#1d3436",
+    title: "The Library",
+    desc: "Guides, registers and the guild's archives.",
+    link: "/Library",
+  },
+];
+
+function PlaceCard({ place }: { place: PlaceDef }) {
+  return (
+    <Card
+      component={Link}
+      to={place.link}
+      bg="#17141f"
+      radius="lg"
+      p="lg"
+      withBorder
+      style={{ borderColor: "#2a2637", textDecoration: "none" }}
+    >
+      <Box
+        mb="md"
+        style={{
+          width: 52,
+          height: 52,
+          borderRadius: 12,
+          background: place.iconBg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {place.icon}
+      </Box>
+      <Text fz={21} fw={700} c="white" mb={4}>
+        {place.title}
+      </Text>
+      <Text fz={14} c="dimmed">
+        {place.desc}
+      </Text>
     </Card>
   );
 }
@@ -584,13 +679,17 @@ export default function Activities() {
 
           <FishingPondCard />
 
-          <Group gap={8} wrap="nowrap" align="flex-start">
-            <IconInfoCircle size={16} color="#74c0fc" style={{ flexShrink: 0, marginTop: 2 }} />
-            <Text fz={14} c="dimmed">
-              More activities are coming soon. The Snag List is the first of the weekly events;
-              seasonal games and community challenges will join it here.
+          {/* More things to do: the rest of the site's activity destinations. */}
+          <Box>
+            <Text fz={14} fw={700} c="#F5C842" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
+              More things to do
             </Text>
-          </Group>
+            <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing="md">
+              {PLACES.map((place) => (
+                <PlaceCard key={place.link} place={place} />
+              ))}
+            </SimpleGrid>
+          </Box>
         </Stack>
       )}
     </Container>

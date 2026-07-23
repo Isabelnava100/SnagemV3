@@ -129,7 +129,7 @@ function AttributeList(props: { attributes: Record<string, string> }) {
 function EntryCard(props: { entry: LoreEntry; canEdit: boolean; onEdit: () => void; onDelete: () => void }) {
   const { entry } = props;
   return (
-    <Card bg="#26252a" radius="md" p={14} withBorder>
+    <Card bg="#26252a" radius="md" p={14} withBorder id={`lore-entry-${entry.id}`}>
       <Stack gap={8}>
         <Group justify="space-between" wrap="nowrap" align="flex-start" gap={8}>
           <Box style={{ minWidth: 0 }}>
@@ -425,10 +425,20 @@ function EntryEditor(props: {
 
 /* ------------------------------ Book view -------------------------------- */
 
-function BookView(props: { book: LoreBook; canEdit: boolean; onBack: () => void }) {
+function BookView(props: {
+  book: LoreBook;
+  canEdit: boolean;
+  onBack: () => void;
+  /** Prefill the in-book search (used when arriving from a cross-book match). */
+  initialSearch?: string;
+  /** Entry to scroll to once the entries load (cross-book search result). */
+  focusEntryId?: string | null;
+  /** Called after the focused entry has been scrolled to. */
+  onFocused?: () => void;
+}) {
   const { book } = props;
   const queryClient = useQueryClient();
-  const [search, setSearch] = React.useState("");
+  const [search, setSearch] = React.useState(props.initialSearch ?? "");
   const [editorOpen, editor] = useDisclosure(false);
   const [editing, setEditing] = React.useState<(Omit<LoreEntry, "id"> & { id?: string }) | null>(null);
 
@@ -456,11 +466,22 @@ function BookView(props: { book: LoreBook; canEdit: boolean; onBack: () => void 
     );
   }, [entries, q, props.canEdit]);
 
+  // Cross-book search arrival: scroll the focused entry into view once the
+  // entries have loaded and rendered.
+  const { focusEntryId, onFocused } = props;
+  React.useEffect(() => {
+    if (!focusEntryId || isPending) return;
+    const el = document.getElementById(`lore-entry-${focusEntryId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      onFocused?.();
+    }
+  }, [focusEntryId, isPending, shown, onFocused]);
+
   const openNew = () => {
     setEditing(emptyEntry(book.id, (entries?.length ?? 0) + 1));
     editor.open();
-  };
-  const openEdit = (entry: LoreEntry) => {
+  };  const openEdit = (entry: LoreEntry) => {
     setEditing(entry);
     editor.open();
   };
@@ -541,6 +562,8 @@ export default function LoreTab() {
   const queryClient = useQueryClient();
   const [openBookId, setOpenBookId] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
+  // Entry to scroll to when a cross-book search result opens its book.
+  const [focusEntryId, setFocusEntryId] = React.useState<string | null>(null);
   const [bookEditorOpen, bookEditor] = useDisclosure(false);
   const [editingBook, setEditingBook] = React.useState<
     (Omit<LoreBook, "id"> & { id?: string }) | null
@@ -581,20 +604,47 @@ export default function LoreTab() {
     );
   }, [books, q, booksWithContent, canEdit]);
 
-  // Cross-book entry search: matches on the entry title or body text, so a
-  // name like "Gyaan" is findable without knowing which book holds it.
-  const entryMatches = React.useMemo(() => {
-    if (!q || q.length < 2) return [];
+  // Cross-book entry search: matches on the entry title or body text (HTML
+  // tags stripped), so a name like "Gyaan" is findable without knowing which
+  // book holds it. Results are grouped by book, in shelf order.
+  const entryGroups = React.useMemo(() => {
+    if (!q || q.length < 2) return [] as { bookId: string; title: string; entries: LoreEntry[]; more: number }[];
     const strip = (html: string) => html.replace(/<[^>]*>/g, " ").toLowerCase();
-    return (allEntries ?? [])
-      .filter((e) => !isEmptyEntry(e))
-      .filter((e) => e.title.toLowerCase().includes(q) || strip(e.body ?? "").includes(q))
-      .slice(0, 12);
-  }, [allEntries, q]);
-  const bookTitleOf = (bookId: string) => books?.find((b) => b.id === bookId)?.title ?? bookId;
+    const byBook = new Map<string, LoreEntry[]>();
+    for (const e of allEntries ?? []) {
+      if (isEmptyEntry(e)) continue;
+      if (!e.title.toLowerCase().includes(q) && !strip(e.body ?? "").includes(q)) continue;
+      byBook.set(e.bookId, [...(byBook.get(e.bookId) ?? []), e]);
+    }
+    const PER_BOOK = 5;
+    const ordered = [
+      ...(books ?? []).map((b) => ({ bookId: b.id, title: b.title })),
+      ...[...byBook.keys()]
+        .filter((id) => !(books ?? []).some((b) => b.id === id))
+        .map((id) => ({ bookId: id, title: id })),
+    ];
+    return ordered
+      .filter((g) => byBook.has(g.bookId))
+      .map((g) => {
+        const all = byBook.get(g.bookId)!;
+        return { ...g, entries: all.slice(0, PER_BOOK), more: Math.max(0, all.length - PER_BOOK) };
+      });
+  }, [allEntries, books, q]);
 
   if (openBook) {
-    return <BookView book={openBook} canEdit={canEdit} onBack={() => setOpenBookId(null)} />;
+    return (
+      <BookView
+        book={openBook}
+        canEdit={canEdit}
+        onBack={() => {
+          setOpenBookId(null);
+          setFocusEntryId(null);
+        }}
+        initialSearch={q.length >= 2 ? q : ""}
+        focusEntryId={focusEntryId}
+        onFocused={() => setFocusEntryId(null)}
+      />
+    );
   }
 
   return (
@@ -645,34 +695,59 @@ export default function LoreTab() {
         </Group>
       )}
 
-      {!!entryMatches.length && (
-        <Stack gap={6}>
+      {!!entryGroups.length && (
+        <Stack gap={12} aria-label="Matching entries across all books">
           <Text fz={14} fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: 1 }}>
             Matching entries
           </Text>
-          {entryMatches.map((e) => (
-            <UnstyledButton
-              key={e.id}
-              onClick={() => {
-                setOpenBookId(e.bookId);
-                setSearch("");
-              }}
-              aria-label={`Open ${bookTitleOf(e.bookId)} at ${e.title}`}
-            >
-              <Text fz={15} c="#b088e6">
-                {e.title}{" "}
-                <Text span fz={13} c="dimmed">
-                  in {bookTitleOf(e.bookId)}
-                </Text>
+          {entryGroups.map((g) => (
+            <Box key={g.bookId}>
+              <Text fz={15} fw={700} c="white" mb={4}>
+                {g.title}
               </Text>
-            </UnstyledButton>
+              <Stack gap={4}>
+                {g.entries.map((e) => (
+                  <UnstyledButton
+                    key={e.id}
+                    onClick={() => {
+                      setOpenBookId(g.bookId);
+                      setFocusEntryId(e.id);
+                    }}
+                    aria-label={`Open ${g.title} at ${e.title}`}
+                  >
+                    <Text fz={15} c="#b088e6">
+                      {e.title}
+                      {e.category ? (
+                        <Text span fz={13} c="dimmed">
+                          {" "}
+                          · {e.category}
+                        </Text>
+                      ) : null}
+                    </Text>
+                  </UnstyledButton>
+                ))}
+                {g.more > 0 && (
+                  <UnstyledButton
+                    onClick={() => {
+                      setOpenBookId(g.bookId);
+                      setFocusEntryId(null);
+                    }}
+                    aria-label={`View all matching entries in ${g.title}`}
+                  >
+                    <Text fz={13} c="dimmed">
+                      +{g.more} more in this book
+                    </Text>
+                  </UnstyledButton>
+                )}
+              </Stack>
+            </Box>
           ))}
         </Stack>
       )}
 
       {isPending ? (
         <SectionLoader />
-      ) : !shelf.length && !entryMatches.length ? (
+      ) : !shelf.length && !entryGroups.length ? (
         <Text c="dimmed">
           {q ? "No books match your search." : "The Lore Library is empty for now."}
         </Text>
