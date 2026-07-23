@@ -6,19 +6,20 @@ import GradientButtonPrimary from "../../../../components/common/GradientButton"
 import Editor, { useRichTextEditor } from "../../../../components/editor/Editor";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { useAuth } from "../../../../context/AuthContext";
-import { db } from "../../../../context/firebase";
+import { getDb } from "../../../../context/firebase";
 
 const getSignature = async (uid: string): Promise<string> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "users", uid))).data();
   return String(data?.signature ?? "");
 };
 
 /**
- * Gaia-style post signature. Stored on the user doc (readable by everyone so
- * posts can render it); snapshotted onto each post at publish time when the
- * composer's "Attach Signature" box is checked. Sanitized before saving and
- * again at render.
+ * Gaia-style post signature. Stored on the user doc (owner/staff-only now; the
+ * world-safe publicProfiles mirror also carries it) and snapshotted onto each
+ * post at publish time when the composer's "Attach Signature" box is checked.
+ * Sanitized before saving and again at render.
  */
 export default function Signature() {
   const { user } = useAuth();
@@ -50,6 +51,7 @@ export default function Signature() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { doc, updateDoc } = await import("firebase/firestore");
+      const db = await getDb();
       const clean = DOMPurify.sanitize(html).slice(0, 10_000);
       await updateDoc(doc(db, "users", user!.uid), { signature: clean });
     },

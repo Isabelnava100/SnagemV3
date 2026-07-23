@@ -19,7 +19,9 @@ import { MarketingTopBar } from "../../components/redesign/Marketing";
 import { useAuth } from "../../context/AuthContext";
 import { AuthCard, coolGradient, warmGradient } from "./components/AuthCard";
 import { handleGoogleSignIn } from "./components/GoogleHandle";
-import { handleSignIn } from "./components/LoginHandle";
+import { handleSignIn, resendVerificationEmail } from "./components/LoginHandle";
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 const EEVEE_IMG =
   "https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/site%2Fsleepingeevee.png?alt=media&token=72f49c9d-9479-441f-bae3-4191b18ba42f";
@@ -31,6 +33,13 @@ export function Login() {
   // Application still in the NewUsers queue: show a clear notice instead of a
   // field error so applicants know a human is on it.
   const [pendingNotice, setPendingNotice] = useState(false);
+  // Unverified password accounts land here instead of the dashboard: the form
+  // keeps their credentials so "Resend" can re-authenticate just long enough
+  // to send a fresh link (see resendVerificationEmail).
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [cooldown, setCooldown] = useState(0);
   const { setUser, user } = useAuth();
   const form = useForm({
     initialValues: {
@@ -43,10 +52,34 @@ export function Login() {
   });
 
   useEffect(() => {
-    if (user) {
+    // The verify screen suppresses the redirect: resending briefly signs the
+    // unverified user back in, which would otherwise bounce them to the
+    // dashboard through this effect.
+    if (user && !unverifiedEmail) {
       navigate("/Dashboard");
     }
-  }, [user]);
+  }, [user, unverifiedEmail]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  const onResend = async () => {
+    setResending(true);
+    setResendMessage("");
+    const result = await resendVerificationEmail(form.values.email, form.values.password);
+    if (result === "sent") {
+      setResendMessage(`Verification email sent to ${unverifiedEmail}. Check your spam folder too.`);
+      setCooldown(RESEND_COOLDOWN_SECONDS);
+    } else if (result === "auth/too-many-requests") {
+      setResendMessage("Too many attempts. Wait a few minutes and try again.");
+    } else {
+      setResendMessage("Could not send the email. Try again in a moment.");
+    }
+    setResending(false);
+  };
 
   const onGoogle = async () => {
     setSub(true);
@@ -63,6 +96,68 @@ export function Login() {
     }
     setSub(false);
   };
+
+  // "Wrong email" path: the gate already signed them out, but sign out again
+  // defensively (a resend attempt may have left a transient session), then
+  // drop them back on the empty form.
+  const onWrongEmail = async () => {
+    const { signOut } = await import("firebase/auth");
+    const { auth } = await import("../../context/firebase");
+    await signOut(auth).catch(() => undefined);
+    setUnverifiedEmail("");
+    setResendMessage("");
+    setCooldown(0);
+    form.reset();
+  };
+
+  if (unverifiedEmail) {
+    return (
+      <>
+        <MarketingTopBar context="auth" />
+        <div className="authShell">
+        <Seo noindex title="Verify Your Email | Snagem Guild" />
+        <AuthCard title="Verify your email" maw={540}>
+          <Stack gap={10}>
+            <Alert
+              color="yellow"
+              variant="light"
+              title="Email not verified"
+              role="status"
+              aria-live="polite"
+            >
+              <b>{unverifiedEmail}</b> has not been verified yet. Open the verification link we
+              sent when you registered, then log in again.
+            </Alert>
+            <Button
+              fullWidth
+              size="lg"
+              radius={0}
+              className="authBtnPrimary"
+              variant="gradient"
+              gradient={warmGradient}
+              onClick={onResend}
+              disabled={resending || cooldown > 0}
+            >
+              {cooldown > 0
+                ? `Resend available in ${cooldown}s`
+                : resending
+                  ? "Sending..."
+                  : "Resend verification email"}
+            </Button>
+            {resendMessage && (
+              <Text c="dimmed" size="sm" ta="center" role="status" aria-live="polite">
+                {resendMessage}
+              </Text>
+            )}
+            <Anchor component="button" type="button" size="sm" ta="center" onClick={onWrongEmail}>
+              Wrong email? Sign out and use a different address
+            </Anchor>
+          </Stack>
+        </AuthCard>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -102,6 +197,8 @@ export function Login() {
                 "email",
                 "This login isn't linked to a member profile yet. Contact an admin to finish setting up your account."
               );
+            } else if (results === "unverified") {
+              setUnverifiedEmail(values.email);
             } else if (results === "success") {
               form.reset();
               navigate("/Dashboard");

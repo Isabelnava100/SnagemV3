@@ -1,9 +1,8 @@
 import { GoogleAuthProvider, deleteUser, signInWithPopup, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { Dispatch, SetStateAction } from "react";
 import { User } from "../../../components/types/typesUsed";
 import { getInfo } from "../../../context/AuthContext";
-import { auth, db } from "../../../context/firebase";
+import { auth, getDb } from "../../../context/firebase";
 
 export type GoogleSignInResult = "success" | "pending" | "no-account" | string;
 
@@ -32,6 +31,8 @@ export const handleGoogleSignIn = async (
       return "success";
     }
 
+    const { doc, getDoc } = await import("firebase/firestore");
+    const db = await getDb();
     const pendingDoc = await getDoc(doc(db, "NewUsers", uid));
     if (pendingDoc.exists()) {
       await signOut(auth);

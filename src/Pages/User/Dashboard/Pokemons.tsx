@@ -146,7 +146,8 @@ function useUpdateOrAddDocument(documentId?: string) {
   const mutation = useMutation({
     mutationFn: async ({ values }: { values?: EditTeamType }) => {
       const { doc, setDoc } = await import("firebase/firestore");
-      const { db } = await import("../../../context/firebase");
+      const { getDb } = await import("../../../context/firebase");
+      const db = await getDb();
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "teams");
       await setDoc(
@@ -219,7 +220,8 @@ function DeleteTeam(props: { teamId: string }) {
   const { mutateAsync, isPending: isLoading } = useMutation({
     mutationFn: async ({ teamId }: { teamId: string }) => {
       const { updateDoc, deleteField, doc } = await import("firebase/firestore");
-      const { db } = await import("../../../context/firebase");
+      const { getDb } = await import("../../../context/firebase");
+      const db = await getDb();
 
       const docRef = doc(db, "users", user?.uid as string, "bag", "teams");
       await updateDoc(docRef, { [teamId]: deleteField() });
@@ -297,9 +299,11 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
     [threadLocks, team.id]
   );
 
+  // A locked team never enters edit mode, even on the single-team route where
+  // the form starts preloaded with this team (direct URL while locked).
   const isEditing = React.useMemo(() => {
-    return form.values?.id === team.id;
-  }, [form.values?.id]);
+    return !lockedThread && form.values?.id === team.id;
+  }, [lockedThread, form.values?.id, team.id]);
 
   const teamPokemons = React.useMemo(() => {
     return isEditing ? form.values?.pokemons || [] : team.pokemons;
@@ -315,6 +319,9 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
 
   const handleSave = async () => {
     if (!form.values) return;
+    // Locks arrive async; a fast click between render and the locks query
+    // resolving must not save a team pinned to a live thread.
+    if (lockedThread) return;
     // Team naming rules (Q4): max 20 chars, no blocked words.
     const name = (form.values.team_name ?? "").trim();
     if (name.length > 20) {
@@ -386,42 +393,36 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
             }
             fallback={
               lockedThread ? (
-                // Locked into a live thread: no edit/delete, link to the thread.
-                <Anchor
-                  component={Link}
-                  to={`/Forum/${lockedThread.forum}/thread/${lockedThread.threadId}`}
-                  underline="never"
-                  title={lockedThread.title || "Open battle thread"}
+                // Locked into a live thread: the badge replaces EDIT/DELETE
+                // until the thread closes and the server clears the lock.
+                <Tooltip
+                  withArrow
+                  label={
+                    lockedThread.title
+                      ? `Locked in "${lockedThread.title}". You can edit this team once the thread closes.`
+                      : `Locked in an open battle thread (${lockedThread.threadId}).`
+                  }
                 >
-                  <Group
-                    gap={6}
-                    wrap="nowrap"
-                    px={12}
-                    py={6}
-                    style={{ border: "1px solid #E54156" }}
+                  <Badge
+                    color="red"
+                    variant="filled"
+                    size="lg"
+                    leftSection={<IconLock size={12} />}
                   >
-                    <IconLock size={14} color="#E54156" />
-                    <Text
-                      fz={12}
-                      fw={700}
-                      c="#E54156"
-                      tt="uppercase"
-                      style={{
-                        fontFamily: "var(--font-display, 'Quantico', sans-serif)",
-                        letterSpacing: "0.12em",
-                      }}
-                    >
-                      Locked to Thread
-                    </Text>
-                  </Group>
-                </Anchor>
+                    LOCKED TO THREAD
+                  </Badge>
+                </Tooltip>
               ) : (
                 <Group wrap="nowrap">
                   <DeleteTeam teamId={team.id} />
                   <GradientButtonPrimary
-                    onClick={() =>
-                      isOverLg ? loadTeamForEdit(team) : navigate(`/Dashboard/Pokemon/${team.id}`)
-                    }
+                    onClick={() => {
+                      // Guard the handler too, not just the button: a locked
+                      // team must not open the editor from any click path.
+                      if (lockedThread) return;
+                      if (isOverLg) loadTeamForEdit(team);
+                      else navigate(`/Dashboard/Pokemon/${team.id}`);
+                    }}
                     size="xs"
                     rightSection={<Image src={Edit2} alt="Edit" />}
                   >

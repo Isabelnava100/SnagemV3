@@ -51,6 +51,7 @@ import {
 import { getMyFriendCode, saveFriendCode } from "../../queries/settings";
 import { getOwnedPokemons } from "../../queries/dashboard";
 import { levelProgress } from "../../lib/leveling";
+import { toastError } from "../../lib/toast";
 import { OwnedPokemon } from "../../components/types/typesUsed";
 
 /**
@@ -1122,6 +1123,9 @@ function PrizesCard({ prizes }: { prizes: Record<string, string[]> }) {
 /** Full-dex options for the free-pick battle team (Switch play, not the dashboard). */
 const BATTLE_TEAM_OPTIONS = pokemonData.map((p) => ({ value: p.slug, label: p.name }));
 
+/** Switch friend code shape (SW-1234-4567-8901); input is uppercased first. */
+const FRIEND_CODE_FORMAT = /^SW-\d{4}-\d{4}-\d{4}$/;
+
 function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup[] }) {
   const { user } = useAuth();
   const uid = user?.uid;
@@ -1153,15 +1157,18 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
 
   const registerMutation = useMutation({
     mutationFn: async () => {
+      const code = friendCode.trim().toUpperCase();
       await registerForTournament({
         tournamentId: t.id,
         uid: uid as string,
         username: user?.username,
-        friendCode: friendCode.trim(),
+        friendCode: code,
         teamPokemon,
       });
-      if (friendCode.trim() && friendCode.trim() !== savedFriendCode) {
-        await saveFriendCode(uid as string, friendCode).catch(() => undefined);
+      if (code && code !== savedFriendCode) {
+        await saveFriendCode(uid as string, code).catch((err) =>
+          toastError(err, "Registered, but the friend code did not save to Settings.")
+        );
       }
     },
     onSuccess: () => {
@@ -1184,7 +1191,9 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
   });
 
   const closed = t.status === "complete" || t.status === "running";
-  const canRegister = !!friendCode.trim() && teamPokemon.length > 0;
+  const normalizedCode = friendCode.trim().toUpperCase();
+  const codeInvalid = normalizedCode.length > 0 && !FRIEND_CODE_FORMAT.test(normalizedCode);
+  const canRegister = FRIEND_CODE_FORMAT.test(normalizedCode) && teamPokemon.length > 0;
   const inputStyles = { input: { background: CARD_BG, borderColor: WELL_BORDER } };
 
   return (
@@ -1212,6 +1221,7 @@ function RegisterCard({ t, signups }: { t: Tournament; signups: TournamentSignup
               description="Saved to your Settings so it prefills next time."
               value={friendCode}
               onChange={(e) => setFriendCode(e.currentTarget.value)}
+              error={codeInvalid ? "Format: SW-1234-4567-8901" : undefined}
               styles={inputStyles}
             />
             <MultiSelect

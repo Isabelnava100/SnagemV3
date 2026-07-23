@@ -3,13 +3,12 @@ import {
   sendEmailVerification,
   updateProfile,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../../../context/firebase";
+import { auth, getDb } from "../../../context/firebase";
 import { generatePassword } from "./Components";
 
 /** A GaiaOnline name reduced to a stable, Firestore-safe claim key. */
 const gaiaClaimId = (gaiaName: string) =>
-  gaiaName.trim().toLowerCase().replace(/[/.#$\[\]]+/g, "_");
+  gaiaName.trim().toLowerCase().replace(/[/.#$[\]]+/g, "_");
 
 export const registerUser = async (
   email: string,
@@ -27,6 +26,8 @@ export const registerUser = async (
     const user = userCredential.user;
 
     if (user) {
+      const { doc, setDoc } = await import("firebase/firestore");
+      const db = await getDb();
       // Reserve the Gaia name first. The claim doc is create-once (rules deny
       // updates), so if it already exists this write fails and we roll back the
       // just-created auth account so no half-registered user is left behind.
@@ -64,7 +65,8 @@ export const registerUser = async (
       });
 
       // Verify the email up front. Firebase records emailVerified on the auth
-      // account (nothing reads it yet; approval stays a manual admin review).
+      // account; login refuses unverified password accounts and approveNewUser
+      // refuses to promote them, so this link is the applicant's only way in.
       // Non-fatal: a mail hiccup should not block the application itself.
       await sendEmailVerification(user).catch(() => undefined);
     }

@@ -1,8 +1,7 @@
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { sendEmailVerification, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { User } from "../../../components/types/typesUsed";
 import { getInfo } from "../../../context/AuthContext";
-import { auth, db } from "../../../context/firebase";
+import { auth, getDb } from "../../../context/firebase";
 
 export type SignInResult = "success" | "pending" | "unlinked" | string;
 
@@ -22,6 +21,14 @@ export const handleSignIn = async (
 
   const { uid, email, displayName } = result.user;
 
+  // Hard gate: unverified email, no dashboard. Google sign-in sets emailVerified
+  // itself, so this only stops password accounts that never opened their link.
+  // Sign back out so no session persists; the login page offers a resend path.
+  if (!result.user.emailVerified) {
+    await signOut(auth);
+    return "unverified";
+  }
+
   // Approval gate: only accounts promoted to the "users" collection may sign in.
   // Everyone else is still in the NewUsers queue awaiting admin approval.
   let otherinfo;
@@ -38,6 +45,8 @@ export const handleSignIn = async (
   // legacy/Gaia-imported members have a users doc (some imported ones lack a username);
   // they must be let in. Only accounts with NO users doc are still applicants/orphans.
   if (!otherinfo.exists) {
+    const { doc, getDoc } = await import("firebase/firestore");
+    const db = await getDb();
     const pending = await getDoc(doc(db, "NewUsers", uid)).catch(() => null);
     await signOut(auth);
     // "pending": application still in the approval queue.
@@ -55,4 +64,28 @@ export const handleSignIn = async (
     avatar: otherinfo.avatar,
   });
   return "success";
+};
+
+// Resend needs a signed-in user, but the gate above signs unverified users out.
+// So this re-authenticates with the credentials still on the login form, sends
+// the link, and signs straight back out; the caller keeps the "verify your
+// email" screen up so the transient session never reaches the dashboard.
+export const resendVerificationEmail = async (
+  email: string,
+  password: string
+): Promise<"sent" | string> => {
+  let cred;
+  try {
+    cred = await signInWithEmailAndPassword(auth, email, password);
+  } catch (error: any) {
+    return error?.code || "error";
+  }
+  try {
+    if (!cred.user.emailVerified) await sendEmailVerification(cred.user);
+    return "sent";
+  } catch (error: any) {
+    return error?.code || "error";
+  } finally {
+    await signOut(auth).catch(() => undefined);
+  }
 };

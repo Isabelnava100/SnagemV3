@@ -181,10 +181,10 @@ export function NewRegister() {
         <AuthCard title="Check your email" maw={540}>
           <Stack gap={10}>
             <Alert color="teal" title="Application received" role="status" aria-live="polite">
-              We sent a verification link to <b>{form.values.email}</b>. Open it to confirm your
-              email address is really yours.{" "}
+              We sent a verification link to <b>{form.values.email}</b>. You must open it and
+              verify your address before you can log in.{" "}
               {gaia === "No" ? "Our team reviews every application" : "Our team reviews every account"}{" "}
-              by hand, so expect a short wait before you can log in.
+              by hand, so expect a short wait after that before your account is approved.
             </Alert>
             <Text c="dimmed" size="sm">
               Did not get it? Check your spam folder. You can close this page.

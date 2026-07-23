@@ -11,6 +11,7 @@ import {
   NewUserApplicant,
   rejectNewUser,
 } from "../../../../queries/applicants";
+import { callableMessage } from "../../../forum/functionsClient";
 
 // Approval always grants Verified. Higher tiers (Master, Director) are assigned
 // later through Admin > Permissions, not at approval time.
@@ -24,12 +25,14 @@ export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () =
   const approve = useMutation({
     mutationFn: () => approveNewUser(applicant.id, role),
     onSuccess: props.onDone,
-    onError: (e) => setMessage((e as Error).message || "Could not approve."),
+    // callableMessage surfaces the server's HttpsError text (e.g. the
+    // unverified-email refusal) and hides raw "internal" noise.
+    onError: (e) => setMessage(callableMessage(e, "Could not approve.")),
   });
   const reject = useMutation({
     mutationFn: () => rejectNewUser(applicant.id, ""),
     onSuccess: props.onDone,
-    onError: (e) => setMessage((e as Error).message || "Could not reject."),
+    onError: (e) => setMessage(callableMessage(e, "Could not reject.")),
   });
 
   const busy = approve.isPending || reject.isPending;

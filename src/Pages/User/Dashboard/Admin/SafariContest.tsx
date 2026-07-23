@@ -23,6 +23,7 @@ import { getPokemonImageURL } from "../../../../helpers";
 import { PokemonHoverCard } from "../../../../components/pokemon/PokemonHoverCard";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
 import { hasCapability, isAdmin } from "../../../../lib/permissions";
+import { toastError } from "../../../../lib/toast";
 import { Capability } from "../../../../components/types/typesUsed";
 import {
   DEFAULT_SAFARI_RATES,
@@ -434,7 +435,10 @@ export default function SafariContest() {
           leftSection={<IconRocket size={16} />}
           disabled={launchBlocked}
           onClick={async () => {
-            const id = await writeZone(config).catch(() => null);
+            const id = await writeZone(config).catch((err) => {
+              toastError(err, "Could not save the zone. Try again.");
+              return null;
+            });
             if (id) {
               await logAuditEvent({
                 action: "event.host",

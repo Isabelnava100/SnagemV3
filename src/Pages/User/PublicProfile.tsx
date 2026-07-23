@@ -28,7 +28,7 @@ import { truncate } from "../../lib/seo/text";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { Character, OwnedPokemon } from "../../components/types/typesUsed";
 import { getColor1, getColor2 } from "../../components/user-forum/getColorBadges";
-import { db } from "../../context/firebase";
+import { getDb } from "../../context/firebase";
 import { useAuth } from "../../context/AuthContext";
 import OwnedPokemonAvatar from "../../components/pokemon/OwnedPokemonAvatar";
 import {
@@ -59,12 +59,18 @@ interface PublicUser {
   joinedAt?: { seconds: number };
   signature?: string;
   emojis?: string[];
+  /** Mirrored only when the member opted in via discordPublic. */
+  discordUID?: string;
+  discordUsername?: string;
 }
 
 // Reads the WORLD-safe projection (publicProfiles), never the users doc, so a
-// logged-out visitor can view the profile without exposing email or Discord.
+// logged-out visitor can view the profile without exposing email. The mirror
+// carries Discord (discordUID/discordUsername) only for members who opted in
+// via discordPublic; it is still shown to signed-in viewers only (below).
 const getPublicUser = async (username: string): Promise<PublicUser | null> => {
   const { collection, getDocs, limit, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "publicProfiles"), where("username", "==", username), limit(1))
   );
@@ -80,17 +86,9 @@ const getPublicUser = async (username: string): Promise<PublicUser | null> => {
     joinedAt: data.joinedAt,
     signature: data.signature,
     emojis: (data.emojis as string[]) ?? [],
+    discordUID: data.discordUID,
+    discordUsername: data.discordUsername,
   };
-};
-
-// Discord handle lives only on the members-only users doc, so it is fetched
-// separately and only when the viewer is signed in (never shown to the world).
-const getMemberDiscord = async (
-  uid: string
-): Promise<{ discordName?: string; discordPublic?: boolean }> => {
-  const { doc, getDoc } = await import("firebase/firestore");
-  const data = (await getDoc(doc(db, "users", uid))).data();
-  return { discordName: data?.discordName, discordPublic: !!data?.discordPublic };
 };
 
 /**
@@ -105,6 +103,7 @@ const getActivityCounts = async (
   const { collectionGroup, getCountFromServer, query, where } = await import(
     "firebase/firestore"
   );
+  const db = await getDb();
   const countPosts = async () => {
     try {
       const agg = await getCountFromServer(
@@ -261,12 +260,6 @@ export default function PublicProfile() {
   });
 
   const uid = user?.uid;
-  // Discord is members-only: only fetched when the viewer is signed in.
-  const { data: discord } = useQuery({
-    queryKey: ["public-discord", uid],
-    queryFn: () => getMemberDiscord(uid!),
-    enabled: !!uid && !!viewer,
-  });
   const { data: profile } = useQuery({
     queryKey: ["get-profile", uid],
     queryFn: () => getProfile(uid!),
@@ -463,7 +456,9 @@ export default function PublicProfile() {
             </Text>
           )}
 
-          {discord?.discordPublic && discord?.discordName && (
+          {/* Opted-in Discord handle, mirrored onto publicProfiles. Shown to
+              signed-in members only, matching the pre-mirror behavior. */}
+          {viewer && user.discordUsername && (
             <Badge
               variant="filled"
               color="indigo"
@@ -471,7 +466,7 @@ export default function PublicProfile() {
               radius="sm"
               mt={10}
             >
-              {discord.discordName}
+              {user.discordUsername}
             </Badge>
           )}
 
