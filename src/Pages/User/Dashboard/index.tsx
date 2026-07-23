@@ -479,6 +479,7 @@ function TabsPanel() {
   return (
     <SectionWrapper
       title="Tabs"
+      bg="transparent"
       customHeader={
         <Paper bg="transparent" p={0} style={RESET_READING_SCALE}>
           {/* Horizontally scrollable so the tabs never overlap or overflow the

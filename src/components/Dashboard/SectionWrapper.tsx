@@ -14,6 +14,7 @@ export default function SectionWrapper(props: {
   isLoading?: boolean;
   isError?: boolean;
   error?: string;
+  bg?: string;
 }) {
   const {
     title,
@@ -26,10 +27,11 @@ export default function SectionWrapper(props: {
     isLoading,
     isError,
     error,
+    bg = "#282727",
   } = props;
   const { isOverSm, isOverMd } = useMediaQuery();
   return (
-    <Paper style={style} bg="#282727" radius={16} sx={{ overflow: "hidden" }}>
+    <Paper style={style} bg={bg} radius={16} sx={{ overflow: "hidden" }}>
       {customHeader || (
         <Flex
           py={10}
