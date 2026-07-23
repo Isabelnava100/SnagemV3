@@ -54,7 +54,7 @@ service cloud.firestore {
       // through the setBadgeEnabled Cloud Function (which also syncs
       // users.badges), so badges are read-only for the owner. Admins and
       // ManageBadges directors may assign/revoke. Note the generic bag rule
-      // below excludes 'badges'; overlapping rules are OR'd in Firestore.
+      // below grants no owner writes; overlapping rules are OR'd in Firestore.
       match /bag/badges {
         allow read: if request.auth.uid == uid || isAdmin();
         allow write: if isAdmin() || hasCap('ManageBadges');
@@ -87,27 +87,23 @@ service cloud.firestore {
       // Currency is money: written ONLY by the server (shop/casino/recycle/craft
       // callables run with the Admin SDK, which bypasses rules) or by GiveItems
       // grants. Never owner-writable, so members cannot mint their own coins.
-      // Without this explicit rule the generic bag rule below would let them.
       match /bag/currency {
         allow read: if request.auth.uid == uid || isAdmin();
         allow write: if isAdmin() || hasCap('GiveItems');
       }
-      // All other per-user data: owner (or admin) only. Note bag/items stays
-      // owner-writable because the client-side evolution flow decrements a spend
-      // item there; closing that fully means moving evolvePokemon to a callable.
-      // 'snaglist' (the weekly activities checklist), 'daycare' (the breeding
-      // pair + egg timer), 'farm' (berry plots), 'threadLocks' (open battle
-      // threads pinning this member's teams, read by the Trading Post) and
-      // 'casino_highlow' (Haunter's High-Low pot + stake) are excluded: only
-      // the Cloud Functions write them, so members cannot check their own
-      // boxes, forge an egg, unlock a battling pokemon, or edit their pot.
+      // All other per-user data: owner-readable, admin-writable. Anything the
+      // owner may write directly (profile, characters, teams) or that a
+      // capability holder may write (items/currency via GiveItems, badges via
+      // ManageBadges) has its own explicit match above; overlapping rules are
+      // OR'd, so this wildcard must stay tight. Every game-state doc
+      // (currency, items, owned_pokemons, research, challenges, casino,
+      // snaglist, daycare, farm, threadLocks, casino_highlow) is written
+      // exclusively by Cloud Functions (the Admin SDK bypasses rules):
+      // members cannot mint coins, forge items or pokemon, or self-grant
+      // unlocks, badges, eggs, pots, or checklist state.
       match /bag/{doc} {
         allow read: if request.auth.uid == uid || isAdmin();
-        allow write: if isAdmin()
-                     || (request.auth.uid == uid
-                         && doc != 'badges' && doc != 'snaglist'
-                         && doc != 'daycare' && doc != 'farm'
-                         && doc != 'threadLocks' && doc != 'casino_highlow');
+        allow write: if isAdmin();
       }
       match /bookmarks/{doc} {
         allow read, write: if request.auth.uid == uid || isAdmin();
@@ -168,11 +164,25 @@ service cloud.firestore {
     }
 
     // ---- Admin-managed shared data ----------------------------------------
-    // Includes the badge catalog (admin/badges); ManageBadges may edit it.
+    // Default: admin-only writes. This match also covers the economy and
+    // balance docs (battle_config, casino_config, xp_defaults, leveling,
+    // mystery_boxes, star_overrides, email_templates, research_config), so it
+    // must stay tight: capability holders get per-doc grants only where their
+    // tool needs one (admin/seo and admin/safari_config above,
+    // pokemon_lists and badges below).
     match /admin/{doc} {
       allow read: if isSignedIn();
-      allow write: if isAdmin() || hasCap('ManageLists') || hasCap('ManageBadges')
-                   || hasCap('ManageSEO');
+      allow write: if isAdmin();
+    }
+    // Encounter/pokemon lists: the Adjust Lists tool (ManageLists).
+    match /admin/pokemon_lists {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasCap('ManageLists');
+    }
+    // Badge catalog (admin/badges): ManageBadges directors edit it.
+    match /admin/badges {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || hasCap('ManageBadges');
     }
 
     // Sensitive integration config (Discord client secret, webhook URL). Admin
@@ -192,10 +202,23 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // ---- Discord link requests --------------------------------------------
+    // ---- Member tickets -----------------------------------------------------
+    // S.N.A.G. intake (suggestions/bugs/questions) and XP-reward notes from
+    // thread closes. Members create their own; only admins triage the queue.
+    // Updates and deletes are admin-only so a member cannot rewrite or wipe
+    // other members' tickets.
     match /tickets/{doc} {
       allow read: if isAdmin();
-      allow write: if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.resource.data.actorUid == request.auth.uid
+                    && request.resource.data.keys().hasOnly([
+                         'type', 'text', 'actorUid', 'actorName', 'status',
+                         'threadPath', 'threadTitle', 'note', 'createdAt'])
+                    && request.resource.data.type is string
+                    && request.resource.data.type.size() <= 40
+                    && (!request.resource.data.keys().hasAny(['status'])
+                        || request.resource.data.status == 'new');
+      allow update, delete: if isAdmin();
     }
 
     // ---- Dev Board (admin collab) -----------------------------------------
@@ -244,7 +267,14 @@ service cloud.firestore {
       allow read: if isAdmin()
                   || (selfExists() && self().get('capabilities', []).size() > 0);
       allow create: if isSignedIn()
-                    && request.resource.data.actorUid == request.auth.uid;
+                    && request.resource.data.actorUid == request.auth.uid
+                    && request.resource.data.keys().hasOnly([
+                         'action', 'actorUid', 'actorName', 'targetPath',
+                         'details', 'createdAt'])
+                    && request.resource.data.action is string
+                    && request.resource.data.action.size() <= 40
+                    && request.resource.data.actorName is string
+                    && request.resource.data.actorName.size() <= 80;
       allow update, delete: if false;
     }
 
