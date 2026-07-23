@@ -2540,10 +2540,40 @@ export const publishForumPost = onCall(async (request) => {
       }
       resultPostId = editPostId;
     } else {
+      // Per-pokemon stat snapshot for the thread team-tile hover card: level
+      // and types from species data, held item + shadow state from the owned
+      // doc, and the owned id so the client can read this thread's live
+      // battle damage. Additive to {slug, name}: posts written before this
+      // change keep the old shape and the card hides the missing rows.
+      const charactersSnapshot = characters.map((c: any) => {
+        const teamOwned = (teamsData[String(c?.teamId ?? "")]?.pokemon_ids ?? [])
+          .map((id) => ({ id, poke: ownedForXp[id] }))
+          .filter((x) => x.poke);
+        return {
+          ...c,
+          pokemon: (Array.isArray(c?.pokemon) ? c.pokemon : []).map((p: any) => {
+            const hit = teamOwned.find((x) => String(x.poke.image_slug ?? "") === p.slug);
+            if (!hit) return p;
+            const shadow = Number(hit.poke.shadow ?? 0) || 0;
+            return {
+              ...p,
+              pokemonId: hit.id,
+              level: levelForXp(Number(hit.poke.experience ?? 0), curve),
+              types: typesForDex(Number(hit.poke.pokedex ?? 0)),
+              shadow,
+              shadowed: isShadowedShadow(shadow),
+              hpMax: maxHpOf(hit.id),
+              heldItem: String(
+                (hit.poke.heldItem as { name?: unknown } | undefined)?.name ?? ""
+              ),
+            };
+          }),
+        };
+      });
       tx.create(newPostRef!, {
         ...authorFields(member),
         character: characters.map((c) => c.name).join(", "),
-        characters,
+        characters: charactersSnapshot,
         text: html,
         signature: attachSignature ? member.signature : "",
         timePosted: now,
@@ -3576,28 +3606,71 @@ export const rejectNewUser = onCall(async (request) => {
 // Discord: account linking (OAuth) + channel webhook notifications
 // ---------------------------------------------------------------------------
 
-async function discordConfig(): Promise<{ clientSecret: string; webhookUrl: string }> {
+async function discordConfig(): Promise<{
+  clientId: string;
+  clientSecret: string;
+  webhookUrl: string;
+  redirectUris: string[];
+}> {
   const data = (await db.doc("adminSecrets/discord").get()).data() ?? {};
   return {
+    clientId: String(data.clientId ?? ""),
     clientSecret: String(data.clientSecret ?? ""),
     webhookUrl: String(data.webhookUrl ?? ""),
+    // Optional explicit allowlist of OAuth redirect URIs; when empty,
+    // linkDiscord falls back to the site origin / localhost check.
+    redirectUris: Array.isArray(data.redirectUris)
+      ? data.redirectUris.map((u: unknown) => String(u))
+      : [],
   };
 }
 
 /**
  * Complete the Discord OAuth code flow: exchange the code for the member's
- * Discord identity and store it on their user doc. The client id is public
- * (passed in), the client secret stays server-side in adminSecrets/discord.
+ * Discord identity and store it on their user doc. The client id and client
+ * secret are both read server-side from adminSecrets/discord (saved from Site
+ * Settings); the client only sends the auth code and the redirect URI it
+ * used, which is validated against the redirectUris allowlist, or against
+ * the site origin / localhost when no allowlist is configured.
  */
 export const linkDiscord = onCall(async (request) => {
   const uid = requireAuth(request);
   await loadMember(uid);
   const code = requireString(request.data?.code, "code", 512);
   const redirectUri = requireString(request.data?.redirectUri, "redirectUri", 512);
-  const clientId = requireString(request.data?.clientId, "clientId", 64);
-  const { clientSecret } = await discordConfig();
+  const { clientId, clientSecret, redirectUris } = await discordConfig();
   if (!clientSecret) {
     throw new HttpsError("failed-precondition", "Discord is not configured yet.");
+  }
+  if (!clientId) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Discord client id is not stored yet. An admin must open Site Settings and save the Discord settings again."
+    );
+  }
+
+  // Never trust a client-supplied redirect URI blindly: it must be on the
+  // configured allowlist, or (when no allowlist exists) point at the site
+  // origin or localhost for development.
+  if (redirectUris.length > 0) {
+    if (!redirectUris.includes(redirectUri)) {
+      throw new HttpsError("invalid-argument", "Redirect URI is not allowed.");
+    }
+  } else {
+    let parsed: URL;
+    try {
+      parsed = new URL(redirectUri);
+    } catch {
+      throw new HttpsError("invalid-argument", "Redirect URI is not a valid URL.");
+    }
+    const allowed =
+      parsed.origin === "https://snagemguild.com" ||
+      parsed.origin === "https://www.snagemguild.com" ||
+      parsed.hostname === "localhost" ||
+      parsed.hostname === "127.0.0.1";
+    if (!allowed) {
+      throw new HttpsError("invalid-argument", "Redirect URI is not allowed.");
+    }
   }
 
   const tokenRes = await fetch("https://discord.com/api/oauth2/token", {

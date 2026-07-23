@@ -13,6 +13,31 @@ export interface FireTimestamp {
   nanoseconds: number;
 }
 
+/**
+ * One team pokemon denormalized onto a post. The stat fields (everything past
+ * slug/name) are snapshot at publish time for the team-tile hover card; posts
+ * written before that change carry only {slug, name}, so every extra field is
+ * optional and the card hides the rows it does not have.
+ */
+export interface PostTeamPokemon {
+  slug: string;
+  name: string;
+  /** Owned pokemon id; matches the keys of the thread's battleDamage map. */
+  pokemonId?: string;
+  /** Level at publish time (from the xp curve). */
+  level?: number;
+  /** Species types at publish time (mega forms keep the base types). */
+  types?: string[];
+  /** Shadow corruption 0..100 at publish time. */
+  shadow?: number;
+  /** True when the shadow bar was full (Shadow'ed) at publish time. */
+  shadowed?: boolean;
+  /** Level-based max HP at publish time; pairs with battleDamage for current HP. */
+  hpMax?: number;
+  /** Held item display name ("" = holding nothing). */
+  heldItem?: string;
+}
+
 /** One selected character on a post, denormalized so posts render in one read. */
 export interface PostCharacter {
   id: string;
@@ -21,7 +46,7 @@ export interface PostCharacter {
   /** Team the character brought along (max 6, denormalized sprites). */
   teamId?: string;
   teamName?: string;
-  pokemon: Array<{ slug: string; name: string }>;
+  pokemon: PostTeamPokemon[];
 }
 
 export interface EncounterBlock {

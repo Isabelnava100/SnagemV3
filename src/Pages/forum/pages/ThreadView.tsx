@@ -859,6 +859,7 @@ export default function ThreadView() {
               threadId={thread.id}
               anchorId={`post-${post.id}`}
               threadClosed={thread.closed}
+              battleDamage={thread.battleDamage}
             />
           ))
         )}

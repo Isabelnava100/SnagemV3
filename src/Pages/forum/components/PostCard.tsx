@@ -5,6 +5,7 @@ import {
   Box,
   Flex,
   Group,
+  HoverCard,
   Popover,
   Stack,
   Text,
@@ -16,19 +17,140 @@ import { Link } from "react-router-dom";
 import { getColor1, getColor2 } from "../../../components/user-forum/getColorBadges";
 import { useAuth } from "../../../context/AuthContext";
 import { itemData } from "../../../data/item";
+import { pokemonData } from "../../../data/pokemon";
 import { getPokemonImageURL } from "../../../helpers";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { SnagIcon, type SnagIconName } from "../../../icons/SnagIcon";
 import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
-import { SHADOW_GUIDE_LINK } from "../../../lib/shadow";
-import { ForumPost, PostCharacter, formatFireTime } from "../types";
+import { SHADOW_GUIDE_LINK, STAT_MAX } from "../../../lib/shadow";
+import { typesForDex } from "../../../lib/typeChart";
+import { ForumPost, PostCharacter, PostTeamPokemon, formatFireTime } from "../types";
 import { ForumTextLink, GameResultText } from "./ui";
 
 const DISPLAY = "var(--font-display)";
 const LOG_BG = "#141318";
 
+// Standard Pokemon type colors for the type chips (same palette as the
+// challenge stage chips).
+const TYPE_COLORS: Record<string, string> = {
+  Normal: "#A8A878", Fire: "#F08030", Water: "#6890F0", Electric: "#E0B000",
+  Grass: "#78C850", Ice: "#98D8D8", Fighting: "#C03028", Poison: "#A040A0",
+  Ground: "#E0C068", Flying: "#A890F0", Psychic: "#F85888", Bug: "#A8B820",
+  Rock: "#B8A038", Ghost: "#705898", Dragon: "#7038F8", Dark: "#705848",
+  Steel: "#8888A8", Fairy: "#EE99AC",
+};
+const TYPE_TEXT_DARK = new Set(["#E0B000", "#98D8D8", "#EE99AC", "#E0C068"]);
+
+/**
+ * Hover stat card for one team tile under a post (the mockup's per-pokemon
+ * card). The post carries a publish-time snapshot; posts written before the
+ * snapshot existed have only {slug, name}, so every stat row renders only
+ * when its data is present (types fall back to the species lookup, which
+ * works for legacy posts too). HP pairs the snapshot's max HP with the
+ * thread's live battleDamage map for the post's owner.
+ */
+function TeamTileCard(props: {
+  pokemon: PostTeamPokemon;
+  /** Live damage on this thread for the post's owner (pokemonId -> damage). */
+  damage?: Record<string, number>;
+  children: React.ReactElement;
+}) {
+  const { pokemon: p, damage } = props;
+  const dex = pokemonData.find((m) => m.slug === p.slug)?.idx;
+  const types = p.types?.length ? p.types : dex ? typesForDex(dex) : [];
+  const hpMax = typeof p.hpMax === "number" && p.hpMax > 0 ? p.hpMax : 0;
+  const dmg = hpMax
+    ? Math.min(hpMax, Math.max(0, (p.pokemonId && damage?.[p.pokemonId]) || 0))
+    : 0;
+  const hpLeft = hpMax - dmg;
+
+  return (
+    <HoverCard width={240} shadow="md" openDelay={100} closeDelay={80} withArrow position="top">
+      <HoverCard.Target>{props.children}</HoverCard.Target>
+      <HoverCard.Dropdown bg="#1a1622" style={{ border: "1px solid #2a2637" }}>
+        <Stack gap={6}>
+          <Group gap={8} wrap="nowrap" align="flex-start">
+            <img
+              src={getPokemonImageURL(p.slug)}
+              alt=""
+              width={36}
+              height={36}
+              loading="lazy"
+              style={{ imageRendering: "pixelated" }}
+            />
+            <Box style={{ minWidth: 0 }}>
+              <Group gap={6} wrap="wrap">
+                <Text c="white" fw={700} fz={15}>
+                  {p.name}
+                </Text>
+                {typeof p.level === "number" && (
+                  <Badge size="xs" color="grape.2" variant="light">
+                    Lv {p.level}
+                  </Badge>
+                )}
+                {p.shadowed && (
+                  <Badge
+                    component={Link}
+                    to={SHADOW_GUIDE_LINK}
+                    size="xs"
+                    c="grape.2"
+                    style={{ background: "#000", border: "1px solid #5a3fb0", cursor: "pointer" }}
+                    title="This pokemon is shadowed. Open the growth & shadow guide."
+                  >
+                    Shadow&apos;ed
+                  </Badge>
+                )}
+              </Group>
+            </Box>
+          </Group>
+
+          {!!types.length && (
+            <Group gap={4}>
+              {types.map((t) => (
+                <Badge
+                  key={t}
+                  size="xs"
+                  style={{
+                    background: TYPE_COLORS[t] ?? "#8a8399",
+                    color: TYPE_TEXT_DARK.has(TYPE_COLORS[t] ?? "") ? "#1a1622" : "#fff",
+                  }}
+                >
+                  {t}
+                </Badge>
+              ))}
+            </Group>
+          )}
+
+          <Stack gap={2}>
+            {hpMax > 0 && (
+              <Text fz={13} c={hpLeft === 0 ? "red.4" : "gray.4"}>
+                HP: {hpLeft}/{hpMax}
+                {hpLeft === 0 ? " (fainted)" : ""}
+              </Text>
+            )}
+            {!p.shadowed && typeof p.shadow === "number" && p.shadow > 0 && (
+              <Text fz={13} c="gray.4">
+                Shadow: {p.shadow}/{STAT_MAX}
+              </Text>
+            )}
+            {p.heldItem ? (
+              <Text fz={13} c="gray.4">
+                Holding: {p.heldItem}
+              </Text>
+            ) : null}
+          </Stack>
+        </Stack>
+      </HoverCard.Dropdown>
+    </HoverCard>
+  );
+}
+
 /** One team's sprite tiles under a post, matching the mockup's TEAM footer row. */
-function CharacterTeam(props: { character: PostCharacter }) {
+function CharacterTeam(props: {
+  character: PostCharacter;
+  /** Live damage on this thread for the post's owner (pokemonId -> damage). */
+  damage?: Record<string, number>;
+}) {
   const { character } = props;
   const mons = character.pokemon.slice(0, 6);
   if (!mons.length) return null;
@@ -44,8 +166,8 @@ function CharacterTeam(props: { character: PostCharacter }) {
         {character.name || "Team"}
       </Text>
       <Flex gap={8} wrap="wrap">
-        {mons.map((p) => (
-          <PokemonHoverCard key={p.slug} species={{ slug: p.slug, name: p.name }}>
+        {mons.map((p, i) => (
+          <TeamTileCard key={p.pokemonId ?? `${p.slug}-${i}`} pokemon={p} damage={props.damage}>
             <Box
               w={44}
               h={44}
@@ -65,7 +187,7 @@ function CharacterTeam(props: { character: PostCharacter }) {
                 style={{ width: 32, height: 32, imageRendering: "pixelated" }}
               />
             </Box>
-          </PokemonHoverCard>
+          </TeamTileCard>
         ))}
       </Flex>
     </Box>
@@ -395,6 +517,8 @@ export default function PostCard(props: {
   anchorId?: string;
   /** Closed threads are read-only, so the edit control is hidden. */
   threadClosed?: boolean;
+  /** Thread battle damage (uid -> pokemonId -> damage), for team-tile HP. */
+  battleDamage?: Record<string, Record<string, number>>;
 }) {
   const { post, forum, threadId } = props;
   const { user } = useAuth();
@@ -503,7 +627,11 @@ export default function PostCard(props: {
     teamChars.length > 0 ? (
       <Flex gap={20} wrap="wrap" justify={isOverSm ? "flex-end" : "flex-start"}>
         {teamChars.map((c) => (
-          <CharacterTeam key={c.id} character={c} />
+          <CharacterTeam
+            key={c.id}
+            character={c}
+            damage={post.ownerUid ? props.battleDamage?.[post.ownerUid] : undefined}
+          />
         ))}
       </Flex>
     ) : null;
