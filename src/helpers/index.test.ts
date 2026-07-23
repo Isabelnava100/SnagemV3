@@ -25,6 +25,21 @@ describe("getPokemonImageURL", () => {
       "https://cdn.jsdelivr.net/gh/msikma/pokesprite@master/pokemon-gen8/shiny/pikachu.png"
     );
   });
+  it("serves Gen 9 sprites from the local public directory", () => {
+    expect(getPokemonImageURL("sprigatito")).toBe(
+      "/images/sprites/gen9/sprigatito.png"
+    );
+  });
+  it("serves Gen 9 shiny sprites from the local public directory", () => {
+    expect(getPokemonImageURL("sprigatito", true)).toBe(
+      "/images/sprites/gen9/shiny/sprigatito.png"
+    );
+  });
+  it("falls back to the CDN for unknown slugs", () => {
+    expect(getPokemonImageURL("not-a-pokemon", true)).toBe(
+      "https://cdn.jsdelivr.net/gh/msikma/pokesprite@master/pokemon-gen8/shiny/not-a-pokemon.png"
+    );
+  });
 });
 
 describe("getItemImageURL", () => {

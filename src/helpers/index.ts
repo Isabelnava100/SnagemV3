@@ -18,41 +18,31 @@ export function excludeProperties<T, K extends keyof T>(
 // (the old URLs were the main cause of slow sprite loading).
 const POKESPRITE_CDN = "https://cdn.jsdelivr.net/gh/msikma/pokesprite@master";
 
-// Gen 9 (#906-1025) is not in pokesprite, so those box sprites are bundled
-// locally (see src/assets/sprites/gen9). Vite inlines them as URLs at build
-// time, keyed by slug, and they take priority over the CDN.
-const gen9Modules = (import.meta as any).glob("../assets/sprites/gen9/*.png", {
-  eager: true,
-  query: "?url",
-  import: "default",
-}) as Record<string, string>;
-// Shiny Gen 9 box sprites live one level down in gen9/shiny/ (the "*" glob above
-// does not recurse, so the two sets never collide on their shared slug names).
-const gen9ShinyModules = (import.meta as any).glob(
-  "../assets/sprites/gen9/shiny/*.png",
-  { eager: true, query: "?url", import: "default" }
-) as Record<string, string>;
-const GEN9_SPRITE_BY_SLUG: Record<string, string> = {};
-for (const [path, url] of Object.entries(gen9Modules)) {
-  const slug = path.split("/").pop()!.replace(/\.png$/, "");
-  GEN9_SPRITE_BY_SLUG[slug] = url;
-}
-const GEN9_SHINY_SPRITE_BY_SLUG: Record<string, string> = {};
-for (const [path, url] of Object.entries(gen9ShinyModules)) {
-  const slug = path.split("/").pop()!.replace(/\.png$/, "");
-  GEN9_SHINY_SPRITE_BY_SLUG[slug] = url;
-}
+// Gen 9 (#906-1025) is not in pokesprite, so those box sprites are served
+// from /public (see public/images/sprites/gen9). They used to live in
+// src/assets with an eager import.meta.glob, which base64-inlined all ~240
+// PNGs into the shared JS chunk, so the URLs are now plain strings and the
+// local slug set is derived from the dex range instead (verified to match
+// the files on disk exactly, regular and shiny sets included).
+const GEN9_SPRITE_BASE = "/images/sprites/gen9";
+const GEN9_SLUGS = new Set(
+  pokemonData
+    .filter((p) => {
+      const dex = parseInt(p.idx, 10);
+      return dex >= 906 && dex <= 1025;
+    })
+    .map((p) => p.slug)
+);
 
 export const getPokemonImageURL = (slug: string, shiny = false) => {
-  // Gen 9 (#906-1025) box sprites are bundled locally. Prefer the shiny set when
-  // asked; any Gen 9 species without a bundled shiny falls back to its regular
-  // local sprite, and non Gen 9 species come from the pokesprite CDN.
-  if (shiny) {
-    const localShiny = GEN9_SHINY_SPRITE_BY_SLUG[slug];
-    if (localShiny) return localShiny;
+  // Gen 9 (#906-1025) box sprites are local files under /public. Prefer the
+  // shiny set when asked (every Gen 9 species has both variants on disk),
+  // and non Gen 9 species come from the pokesprite CDN.
+  if (GEN9_SLUGS.has(slug)) {
+    return shiny
+      ? `${GEN9_SPRITE_BASE}/shiny/${slug}.png`
+      : `${GEN9_SPRITE_BASE}/${slug}.png`;
   }
-  const local = GEN9_SPRITE_BY_SLUG[slug];
-  if (local) return local;
   return `${POKESPRITE_CDN}/pokemon-gen8/${shiny ? "shiny" : "regular"}/${slug}.png`;
 };
 

@@ -223,7 +223,13 @@ function MemberGridCard({ member }: { member: MemberCard }) {
 }
 
 export default function Users() {
-  const { data, isPending } = useQuery({ queryKey: ["members"], queryFn: getMembers });
+  const { data, isPending } = useQuery({
+    queryKey: ["members"],
+    queryFn: getMembers,
+    // The directory costs 5+ Firestore reads per member and changes rarely,
+    // so keep it fresh for 30 minutes instead of the 2 minute default.
+    staleTime: 30 * 60 * 1000,
+  });
   const { isOverSm } = useMediaQuery();
   const [search, setSearch] = React.useState("");
   const [role, setRole] = React.useState("All");

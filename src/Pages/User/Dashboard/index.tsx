@@ -17,7 +17,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useAttention } from "../../../lib/attention";
-import PokemonImage from "../../../assets/images/sylveon.svg";
+import PokemonImage from "../../../assets/images/sylveon.webp";
 import SectionWrapper, { ActionButton } from "../../../components/Dashboard/SectionWrapper";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { HERO_BORDER, HERO_GRADIENT, HERO_STRIPES } from "../../../components/common/PageHero";

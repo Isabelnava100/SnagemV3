@@ -26,7 +26,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
-import PokemonImage from "../../../assets/images/sylveon.svg";
+import PokemonImage from "../../../assets/images/sylveon.webp";
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary, {
   GradientButtonSecondary,

@@ -35,3 +35,7 @@ functions/scripts/backups/
 scripts/gaia-export/raw/
 scripts/gaia-export/accounts.json
 scripts/gaia-export/gap-report.md
+
+# Firebase emulator logs
+firestore-debug.log
+firebase-debug.log
