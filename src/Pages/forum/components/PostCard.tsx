@@ -193,8 +193,10 @@ export function GameBlocks(props: { post: ForumPost }) {
         "A trip to the Pokemon Center! Nurse Joy fully healed and cured this trainer's team. No battles for them until their next post.",
     });
   }
-  if (blocks.battle) {
-    const b = blocks.battle;
+  // One ENEMY row per fighter that battled (per-character posts have several).
+  // Falls back to the single `battle` block on older posts.
+  const battleBlocks = blocks.battles ?? (blocks.battle ? [blocks.battle] : []);
+  battleBlocks.forEach((b, i) => {
     const healLines = (b.heals ?? []).map((h) =>
       h.revive
         ? `${h.itemName} revived ${h.pokemonName} (+${h.amount} HP).`
@@ -209,8 +211,8 @@ export function GameBlocks(props: { post: ForumPost }) {
             } left).`
         : "";
     const text = [...(b.notes ?? []), ...healLines, hitLine].filter(Boolean).join(" ");
-    if (text) rows.push({ key: "battle", icon: "bolt", tag: "ENEMY", color: "#E54156", text });
-  }
+    if (text) rows.push({ key: `battle${i}`, icon: "bolt", tag: "ENEMY", color: "#E54156", text });
+  });
   blocks.itemsUsed?.forEach((item, i) => {
     // Resolve the display name from the canonical catalog by id so older posts
     // (stored with raw slug names) show the full name too.
