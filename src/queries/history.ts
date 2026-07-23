@@ -1,4 +1,4 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 
 /**
  * The member's own forum activity for the dashboard History tab. Both reads
@@ -22,6 +22,7 @@ export interface MyThreadItem {
 /** Every thread the member started (hostUid), newest first. */
 export const getMyThreads = async (uid: string): Promise<MyThreadItem[]> => {
   const { collectionGroup, getDocs, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collectionGroup(db, "threads"), where("hostUid", "==", uid))
   );
@@ -63,6 +64,7 @@ export const getMyPosts = async (uid: string): Promise<MyPostItem[]> => {
   const { collectionGroup, doc, getDoc, getDocs, limit, orderBy, query, where } = await import(
     "firebase/firestore"
   );
+  const db = await getDb();
   const snap = await getDocs(
     query(
       collectionGroup(db, "posts"),

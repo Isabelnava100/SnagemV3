@@ -1,4 +1,4 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 
 /**
  * Site-wide SEO settings, stored at admin/seo (public read per Firestore
@@ -26,6 +26,7 @@ export const DEFAULT_SEO: SEOSettings = {
 export const getSEOSettings = async (): Promise<SEOSettings> => {
   try {
     const { doc, getDoc } = await import("firebase/firestore");
+    const db = await getDb();
     const snap = await getDoc(doc(db, "admin", "seo"));
     const data = snap.data() as Partial<SEOSettings> | undefined;
     return { ...DEFAULT_SEO, ...(data ?? {}) };
@@ -38,5 +39,6 @@ export const getSEOSettings = async (): Promise<SEOSettings> => {
 
 export const saveSEOSettings = async (settings: SEOSettings): Promise<void> => {
   const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await setDoc(doc(db, "admin", "seo"), settings, { merge: true });
 };

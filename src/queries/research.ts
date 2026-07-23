@@ -1,4 +1,5 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
+import { call } from "./_callable";
 
 /** Static research config (fossil map, unlock rules). See docs/RESEARCH_DATA.md. */
 export interface ResearchConfig {
@@ -20,6 +21,7 @@ export interface ResearchProgress {
 
 export const getResearchConfig = async (): Promise<ResearchConfig> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "admin", "research_config"));
   return (snap.data() as ResearchConfig) || {};
 };
@@ -27,16 +29,10 @@ export const getResearchConfig = async (): Promise<ResearchConfig> => {
 /** A member's per-character research progress, keyed by characterId. */
 export const getResearchProgress = async (uid: string): Promise<Record<string, ResearchProgress>> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "users", uid, "bag", "research"));
   return (snap.data() as Record<string, ResearchProgress>) || {};
 };
-
-async function call<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase");
-  const res = await httpsCallable(getFunctions(), name)(data);
-  return res.data as T;
-}
 
 /**
  * A member's ask to clear a character into a master track. Approving flips the
@@ -57,6 +53,7 @@ export interface MasterClearanceRequest {
 /** The signed-in member's own clearance requests (drives the guide button). */
 export const getMyClearanceRequests = async (uid: string): Promise<MasterClearanceRequest[]> => {
   const { collection, getDocs, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "masterClearanceRequests"), where("uid", "==", uid))
   );
@@ -66,6 +63,7 @@ export const getMyClearanceRequests = async (uid: string): Promise<MasterClearan
 /** Staff view: clearance requests still waiting for review. */
 export const getPendingClearanceRequests = async (): Promise<MasterClearanceRequest[]> => {
   const { collection, getDocs, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "masterClearanceRequests"), where("status", "==", "requested"))
   );

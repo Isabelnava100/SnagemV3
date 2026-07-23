@@ -3,7 +3,8 @@ import { Settings } from "../components/types/typesUsed";
 
 export const getSettings = async (uid: string) => {
   const { getDoc, doc } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   // Default to {} so a missing user doc doesn't throw on destructure.
   const { settings } = ((await getDoc(doc(db, "users", uid))).data() ?? {}) as {
     settings?: Settings | null;
@@ -18,7 +19,8 @@ export const getSettings = async (uid: string) => {
 
 export const getBadges = async (uid: string) => {
   const { getDoc, doc } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "users", uid, "bag", "badges"))).data() as Record<
     string,
     [BadgeTypes, string, boolean]
@@ -33,7 +35,8 @@ export const getBadges = async (uid: string) => {
 
 export const getEmojis = async (uid: string) => {
   const { getDoc, doc } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "users", uid))).data();
   return (data ? data.emojis || [] : []) satisfies string[];
 };
@@ -45,13 +48,15 @@ export const getEmojis = async (uid: string) => {
  */
 export const getMyFriendCode = async (uid: string): Promise<string> => {
   const { getDoc, doc } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "users", uid));
   return String(snap.data()?.friendCode ?? "");
 };
 
 export const saveFriendCode = async (uid: string, friendCode: string): Promise<void> => {
   const { doc, updateDoc } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   await updateDoc(doc(db, "users", uid), { friendCode: friendCode.trim().slice(0, 40) });
 };

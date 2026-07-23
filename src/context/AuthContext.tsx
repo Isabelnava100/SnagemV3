@@ -2,13 +2,14 @@ import { LoadingOverlay } from "@mantine/core";
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from "react";
 import LoadingSpinner from "../components/navigation/loading";
 import { AuthContextType, SpecificUser, User } from "../components/types/typesUsed";
-import { auth, db } from "./firebase";
+import { auth, getDb } from "./firebase";
 
 // return the user avatar and username from here
 export const getInfo = async (
   uid: string
 ): Promise<SpecificUser & { avatar?: string; username: string; exists: boolean }> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
 
   const user = await getDoc(doc(db, "users", uid));
   const userData = user.data();

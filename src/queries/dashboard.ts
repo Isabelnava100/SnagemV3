@@ -8,17 +8,19 @@ import {
   Profile,
   Team,
 } from "../components/types/typesUsed";
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 import { itemData } from "../data/item";
 
 export const getCurrencies = async (uid: string): Promise<Currencies> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "users", uid, "bag", "currency"))).data() as Currencies;
   return data || [];
 };
 
 export const getItems = async (uid: string): Promise<Item[]> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "users", uid, "bag", "items"))).data() as Record<
     string,
     Omit<Item, "id">
@@ -42,6 +44,7 @@ export const getItems = async (uid: string): Promise<Item[]> => {
 
 export const getDrafts = async (uid: string): Promise<Draft[]> => {
   const { getDocs, collection } = await import("firebase/firestore");
+  const db = await getDb();
   const query = await getDocs(collection(db, "users", uid, "drafts"));
   const data: Draft[] = [];
 
@@ -59,6 +62,7 @@ export const getDrafts = async (uid: string): Promise<Draft[]> => {
 export const getBookmarks = async (uid: string) => {
   // One doc per forum location, each a threadId-keyed map of bookmarks.
   const { collection, getDocs } = await import("firebase/firestore");
+  const db = await getDb();
   const snapshot = await getDocs(collection(db, "users", uid, "bookmarks"));
   const rawData: Record<string, Bookmark> = {};
   const formattedData: Bookmark[] = [];
@@ -86,6 +90,7 @@ export const getBookmarks = async (uid: string) => {
 
 export const getCharacters = async (uid: string) => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "users", uid, "bag", "characters"))).data() as Record<
     string,
     Character
@@ -105,6 +110,7 @@ export const getCharacters = async (uid: string) => {
 
 export const getOwnedPokemons = async (uid: string) => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
 
   const data = (await getDoc(doc(db, "users", uid, "bag", "owned_pokemons"))).data() as Record<
     string,
@@ -132,6 +138,7 @@ export const getOwnedPokemons = async (uid: string) => {
  */
 export const getTeamsRaw = async (uid: string): Promise<Team[]> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
 
   const data = (await getDoc(doc(db, "users", uid, "bag", "teams"))).data() as Record<
     string,
@@ -160,6 +167,7 @@ export const hydrateTeams = (teams: Team[], ownedPokemons: OwnedPokemon[]): Team
 
 export const getProfile = async (uid: string) => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "users", uid, "bag", "profile"))).data() as Profile;
   return data || {};
 };

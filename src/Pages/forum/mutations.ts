@@ -1,5 +1,5 @@
 import { Bookmark, User } from "../../components/types/typesUsed";
-import { db } from "../../context/firebase";
+import { getDb } from "../../context/firebase";
 import {
   callPublishPost,
   callPublishThread,
@@ -146,6 +146,7 @@ export async function updateThreadDetails(
   update: ThreadDetailsUpdate
 ): Promise<void> {
   const { doc, updateDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await updateDoc(doc(db, ...threadDocPath(forum, threadId)), { ...update });
 }
 
@@ -155,6 +156,7 @@ export async function setThreadArchived(
   archived: boolean
 ): Promise<void> {
   const { doc, updateDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await updateDoc(doc(db, ...threadDocPath(forum, threadId)), { closed: archived });
 }
 
@@ -169,6 +171,7 @@ export async function addBookmark(
   thread: ForumThread
 ): Promise<void> {
   const { arrayUnion, doc, setDoc, updateDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const now = Date.now();
   const bookmark: Omit<Bookmark, "id"> = {
     title: thread.title,
@@ -208,6 +211,7 @@ export async function removeBookmark(
   threadId: string
 ): Promise<void> {
   const { arrayRemove, deleteField, doc, setDoc, updateDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await setDoc(
     doc(db, "users", user.uid, "bookmarks", forum),
     { [threadId]: deleteField() },
@@ -241,6 +245,7 @@ export const DRAFT_WARNING_AT = 55;
  */
 export async function saveDraft(input: SaveDraftInput): Promise<number> {
   const { addDoc, collection, getCountFromServer } = await import("firebase/firestore");
+  const db = await getDb();
   const draftsCol = collection(db, "users", input.user.uid, "drafts");
   const count = (await getCountFromServer(draftsCol)).data().count;
   if (count >= MAX_DRAFTS) {
@@ -269,12 +274,14 @@ export async function saveDraft(input: SaveDraftInput): Promise<number> {
 /** A draft is consumed (deleted) once a post is published from it (Q3). */
 export async function deleteDraft(uid: string, draftId: string): Promise<void> {
   const { deleteDoc, doc } = await import("firebase/firestore");
+  const db = await getDb();
   await deleteDoc(doc(db, "users", uid, "drafts", draftId)).catch(() => undefined);
 }
 
 /** Clear-all for the Drafts tab (offered from 40 drafts up). */
 export async function deleteAllDrafts(uid: string): Promise<void> {
   const { collection, deleteDoc, getDocs } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(collection(db, "users", uid, "drafts"));
   await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
 }
@@ -293,6 +300,7 @@ export async function closeThread(
   note: string
 ): Promise<void> {
   const { addDoc, collection, doc, updateDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await updateDoc(doc(db, ...threadDocPath(forum, threadId)), { closed: true });
   if (note) {
     await addDoc(collection(db, "tickets"), {

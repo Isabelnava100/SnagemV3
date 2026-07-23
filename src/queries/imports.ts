@@ -1,4 +1,5 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
+import { call } from "./_callable";
 
 /**
  * Returning-member data import (Gaia onboarding). A member builds a draft of
@@ -71,8 +72,10 @@ export const emptyEntries = (): ImportEntries => ({
   pokemon: [],
 });
 
-const importRef = (uid: string) => {
-  return import("firebase/firestore").then(({ doc }) => doc(db, "importRequests", uid));
+const importRef = async (uid: string) => {
+  const db = await getDb();
+  const { doc } = await import("firebase/firestore");
+  return doc(db, "importRequests", uid);
 };
 
 export const getImportRequest = async (uid: string): Promise<ImportRequest | null> => {
@@ -109,6 +112,7 @@ export const completeOnboarding = async (uid: string): Promise<void> => {
 
 /** Reviewer queue: every import awaiting approval. */
 export const getPendingImports = async (): Promise<Array<ImportRequest & { uid: string }>> => {
+  const db = await getDb();
   const { collection, getDocs, query, where } = await import("firebase/firestore");
   const snap = await getDocs(
     query(collection(db, "importRequests"), where("status", "==", "pending"))
@@ -124,10 +128,7 @@ export interface ApproveEntries {
 }
 
 async function callFn<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase");
-  const result = await httpsCallable(getFunctions(), name)(data);
-  return result.data as T;
+  return call<T>(name, data);
 }
 
 /** Reviewer approves and applies an import (server-side grant). */

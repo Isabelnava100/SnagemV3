@@ -2,7 +2,8 @@ import { AdminPokemonList } from "../components/types/typesUsed";
 
 export const getPokemonLists = async () => {
   const { getDoc, doc } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "admin", "pokemon_lists"))).data() as Record<
     string,
     Omit<AdminPokemonList, "id">
@@ -18,10 +19,18 @@ export const getPokemonLists = async () => {
   return { data, formattedData };
 };
 
+/**
+ * All members as {id, username} for picker dropdowns (mentions, host menus,
+ * restricted posters, staff grant tools). Reads the world-safe publicProfiles
+ * mirror, not the users collection: that collection is owner/staff-only (it
+ * holds email + discordUID), and mention chips / thread hosts are regular
+ * members. Every caller needs only id + username, which the mirror has.
+ */
 export const getUsers = async () => {
   const { getDocs, collection } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
-  const data = (await getDocs(collection(db, "users"))).docs.map((doc) => {
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
+  const data = (await getDocs(collection(db, "publicProfiles"))).docs.map((doc) => {
     const user = doc.data();
     return { id: doc.id, username: user.username };
   });
@@ -37,7 +46,8 @@ export const getUsers = async () => {
  */
 export const getStarOverrides = async (): Promise<Record<string, number>> => {
   const { getDoc, doc } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "admin", "star_overrides"))).data() ?? {};
   const clean: Record<string, number> = {};
   for (const [idx, star] of Object.entries(data)) {
@@ -50,7 +60,8 @@ export const getStarOverrides = async (): Promise<Record<string, number>> => {
 /** Set one species' star override; pass null to reset it to the default. */
 export const setStarOverride = async (idx: string, star: number | null): Promise<void> => {
   const { setDoc, doc, deleteField } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   const key = String(Number(idx));
   await setDoc(
     doc(db, "admin", "star_overrides"),

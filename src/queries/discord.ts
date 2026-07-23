@@ -1,4 +1,5 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
+import { call } from "./_callable";
 
 /** Public Discord OAuth client id (safe to expose; the secret is server-side). */
 export const DISCORD_CLIENT_ID = import.meta.env.VITE_DISCORD_CLIENT_ID as string | undefined;
@@ -19,10 +20,7 @@ export const discordAuthorizeUrl = () => {
 };
 
 async function callFn<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase");
-  const result = await httpsCallable(getFunctions(), name)(data);
-  return result.data as T;
+  return call<T>(name, data);
 }
 
 export const linkDiscord = (code: string) =>
@@ -39,6 +37,7 @@ export const getMyDiscord = async (
   uid: string
 ): Promise<{ discordUID?: string; discordUsername?: string }> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "users", uid))).data() ?? {};
   return { discordUID: data.discordUID, discordUsername: data.discordUsername };
 };
@@ -52,11 +51,13 @@ export interface DiscordConfig {
 
 export const getDiscordConfig = async (): Promise<DiscordConfig> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "adminSecrets", "discord"))).data() ?? {};
   return { clientSecret: String(data.clientSecret ?? ""), webhookUrl: String(data.webhookUrl ?? "") };
 };
 
 export const saveDiscordConfig = async (config: DiscordConfig): Promise<void> => {
   const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await setDoc(doc(db, "adminSecrets", "discord"), config, { merge: true });
 };

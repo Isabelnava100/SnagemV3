@@ -1,4 +1,5 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
+import { call } from "./_callable";
 
 /** A mission brief from the missions catalog (see docs/MISSIONS_DATA.md). */
 export interface Mission {
@@ -32,6 +33,7 @@ export interface Mission {
 }
 
 export const getMissions = async (): Promise<Mission[]> => {
+  const db = await getDb();
   const { collection, getDocs } = await import("firebase/firestore");
   const snap = await getDocs(collection(db, "missions"));
   return snap.docs
@@ -41,17 +43,11 @@ export const getMissions = async (): Promise<Mission[]> => {
 };
 
 export const getMission = async (id: string): Promise<Mission | null> => {
+  const db = await getDb();
   const { doc, getDoc } = await import("firebase/firestore");
   const snap = await getDoc(doc(db, "missions", id));
   return snap.exists() ? ({ id: snap.id, ...(snap.data() as Omit<Mission, "id">) }) : null;
 };
-
-async function call<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase");
-  const res = await httpsCallable(getFunctions(), name)(data);
-  return res.data as T;
-}
 
 /**
  * Picks up a mission: the server creates the Quests thread with the briefing

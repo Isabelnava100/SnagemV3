@@ -1,4 +1,5 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
+import { call } from "./_callable";
 
 /**
  * Game-layer data: thread-close reward sessions, in-app notifications,
@@ -42,6 +43,7 @@ export const getRewardSession = async (
   threadId: string
 ): Promise<RewardSession | null> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "rewardSessions", rewardSessionId(forum, threadId)));
   return snap.exists() ? (snap.data() as RewardSession) : null;
 };
@@ -49,6 +51,7 @@ export const getRewardSession = async (
 /** Save-in-progress state so the closer can come back later (Q1). */
 export const saveRewardSession = async (session: RewardSession): Promise<void> => {
   const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await setDoc(doc(db, "rewardSessions", rewardSessionId(session.forum, session.threadId)), {
     ...session,
     updatedAt: new Date(),
@@ -68,6 +71,7 @@ export interface AppNotification {
 
 export const getNotifications = async (uid: string): Promise<AppNotification[]> => {
   const { collection, getDocs, limit, orderBy, query } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "users", uid, "notifications"), orderBy("createdAt", "desc"), limit(30))
   );
@@ -76,6 +80,7 @@ export const getNotifications = async (uid: string): Promise<AppNotification[]> 
 
 export const markNotificationsRead = async (uid: string, ids: string[]): Promise<void> => {
   const { doc, writeBatch } = await import("firebase/firestore");
+  const db = await getDb();
   const batch = writeBatch(db);
   ids.forEach((id) => batch.update(doc(db, "users", uid, "notifications", id), { read: true }));
   await batch.commit();
@@ -103,6 +108,7 @@ export const XP_STAT_FIELDS = [
 
 export const getXPDefaults = async (): Promise<XPDefaults> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "admin", "xp_defaults"))).data();
   return {
     // Back-compat: an old `perPost` value maps to experience.
@@ -116,6 +122,7 @@ export const getXPDefaults = async (): Promise<XPDefaults> => {
 
 export const saveXPDefaults = async (defaults: XPDefaults): Promise<void> => {
   const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await setDoc(doc(db, "admin", "xp_defaults"), defaults);
 };
 
@@ -253,6 +260,7 @@ const readStageCosts = (data: unknown, fallback: StageCosts): StageCosts => {
 
 export const getBattleConfig = async (): Promise<BattleConfig> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "admin", "battle_config"))).data();
   const hpRaw = (data?.hp ?? {}) as Partial<HpScaling>;
   const dmgRaw = (data?.starDamage ?? {}) as Record<string, unknown>;
@@ -286,6 +294,7 @@ export const getBattleConfig = async (): Promise<BattleConfig> => {
 
 export const saveBattleConfig = async (config: BattleConfig): Promise<void> => {
   const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await setDoc(doc(db, "admin", "battle_config"), config);
 };
 
@@ -314,6 +323,7 @@ export interface MysteryBoxConfig {
 
 export const getMysteryBoxes = async (): Promise<Record<string, MysteryBoxConfig>> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   return ((await getDoc(doc(db, "admin", "mystery_boxes"))).data() ?? {}) as Record<
     string,
     MysteryBoxConfig
@@ -325,6 +335,7 @@ export const saveMysteryBox = async (
   config: MysteryBoxConfig | null
 ): Promise<void> => {
   const { deleteField, doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await setDoc(
     doc(db, "admin", "mystery_boxes"),
     { [boxItemId]: config ?? deleteField() },
@@ -337,10 +348,7 @@ export const saveMysteryBox = async (
 // and invokes the callables.
 
 async function callGame<TResult>(name: string, data: unknown): Promise<TResult> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase"); // ensure the app is initialized
-  const result = await httpsCallable(getFunctions(), name)(data);
-  return result.data as TResult;
+  return call<TResult>(name, data);
 }
 
 /** The one Daycare pair per member (users/{uid}/bag/daycare, server-written). */
@@ -358,6 +366,7 @@ export interface DaycareState {
 
 export const getDaycare = async (uid: string): Promise<DaycareState | null> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "users", uid, "bag", "daycare"));
   return snap.exists() ? (snap.data() as DaycareState) : null;
 };
@@ -425,6 +434,7 @@ export interface TradeListing {
 
 export const getTradeListings = async (): Promise<TradeListing[]> => {
   const { collection, getDocs, limit, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "tradeListings"), where("status", "==", "open"), limit(80))
   );
@@ -444,6 +454,7 @@ export interface ThreadLockEntry {
 
 export const getThreadLocks = async (uid: string): Promise<Record<string, ThreadLockEntry>> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   return ((await getDoc(doc(db, "users", uid, "bag", "threadLocks"))).data() ?? {}) as Record<
     string,
     ThreadLockEntry
@@ -505,6 +516,7 @@ export interface FarmState {
 
 export const getFarm = async (uid: string): Promise<FarmState> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   return ((await getDoc(doc(db, "users", uid, "bag", "farm"))).data() ?? {}) as FarmState;
 };
 

@@ -120,7 +120,8 @@ export interface AuditRow extends AuditEntry {
 /** Most recent audit rows, newest first. Readable by any staff member. */
 export async function getAuditLogs(max = 60): Promise<AuditRow[]> {
   const { collection, getDocs, query, orderBy, limit } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "auditLogs"), orderBy("createdAt", "desc"), limit(max))
   );
@@ -140,7 +141,8 @@ export async function getAuditLogs(max = 60): Promise<AuditRow[]> {
 export async function logAuditEvent(entry: AuditEntry): Promise<void> {
   try {
     const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
-    const { db } = await import("../context/firebase");
+    const { getDb } = await import("../context/firebase");
+    const db = await getDb();
     await addDoc(collection(db, "auditLogs"), {
       ...entry,
       createdAt: serverTimestamp(),

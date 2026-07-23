@@ -1,4 +1,4 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 import { call } from "./_callable";
 
 /** Casino config (exchange rate + game table). See docs/CASINO_DATA.md. */
@@ -26,16 +26,19 @@ export interface MyCasino {
 
 export const getCasinoConfig = async (): Promise<CasinoConfig> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   return ((await getDoc(doc(db, "admin", "casino_config"))).data() as CasinoConfig) || {};
 };
 
 export const getLottoState = async (): Promise<LottoState> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   return ((await getDoc(doc(db, "casino", "lotto"))).data() as LottoState) || {};
 };
 
 export const getMyCasino = async (uid: string): Promise<MyCasino> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   return ((await getDoc(doc(db, "users", uid, "bag", "casino"))).data() as MyCasino) || {};
 };
 

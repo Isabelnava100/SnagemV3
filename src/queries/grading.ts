@@ -1,4 +1,4 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 
 export interface PendingSubmission {
   id: string;
@@ -22,6 +22,7 @@ export interface PendingMMRequest {
 /** All mission submissions awaiting a grader, oldest first. */
 export const getPendingMissionSubmissions = async (): Promise<PendingSubmission[]> => {
   const { collection, getDocs, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "missionSubmissions"), where("status", "==", "pending"))
   );
@@ -36,6 +37,7 @@ export const getPendingMissionSubmissions = async (): Promise<PendingSubmission[
  */
 export const getGradedCount = async (missionId: string, submitterUid: string): Promise<number> => {
   const { collection, getCountFromServer, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getCountFromServer(
     query(
       collection(db, "missionSubmissions"),
@@ -50,6 +52,7 @@ export const getGradedCount = async (missionId: string, submitterUid: string): P
 /** All master mission requests awaiting a grant. */
 export const getPendingMasterMissionRequests = async (): Promise<PendingMMRequest[]> => {
   const { collection, getDocs, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "masterMissionRequests"), where("status", "==", "requested"))
   );

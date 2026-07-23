@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 import { currentWeekId, getSnagList, SNAG_TASKS } from "../queries/activities";
 import { getDaycare, getBattleConfig, DEFAULT_BATTLE_MECHANICS } from "../queries/game";
 import { getItems } from "../queries/dashboard";
@@ -62,6 +62,7 @@ export function useAttention(): { items: AttentionItem[]; loading: boolean } {
     queryKey: ["user-post-count", uid],
     queryFn: async () => {
       const { doc, getDoc } = await import("firebase/firestore");
+      const db = await getDb();
       return Number((await getDoc(doc(db, "users", uid!))).data()?.postCount) || 0;
     },
     enabled: !!uid && !!daycare.data?.active,
@@ -73,6 +74,7 @@ export function useAttention(): { items: AttentionItem[]; loading: boolean } {
     queryKey: ["fishing-pond-claim", uid],
     queryFn: async () => {
       const { doc, getDoc } = await import("firebase/firestore");
+      const db = await getDb();
       const cfg = (await getDoc(doc(db, "admin", "fishing"))).data();
       const pondThreadId = typeof cfg?.pondThreadId === "string" ? cfg.pondThreadId : "";
       if (!pondThreadId) return { hasPond: false, castUsed: false };
@@ -88,6 +90,7 @@ export function useAttention(): { items: AttentionItem[]; loading: boolean } {
     queryKey: ["my-trade-listings", uid],
     queryFn: async () => {
       const { collection, getDocs, query, where } = await import("firebase/firestore");
+      const db = await getDb();
       const snap = await getDocs(
         query(
           collection(db, "tradeListings"),
@@ -110,6 +113,7 @@ export function useAttention(): { items: AttentionItem[]; loading: boolean } {
     queryKey: ["my-open-threads", uid],
     queryFn: async () => {
       const { collectionGroup, getDocs, query, where } = await import("firebase/firestore");
+      const db = await getDb();
       const snap = await getDocs(
         query(collectionGroup(db, "threads"), where("hostUid", "==", uid))
       );

@@ -1,4 +1,4 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 
 // -- Admin email config (adminSecrets/email) ---------------------------------
 // Powers approval/rejection emails from the approveNewUser/rejectNewUser
@@ -12,6 +12,7 @@ export interface EmailConfig {
 
 export const getEmailConfig = async (): Promise<EmailConfig> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "adminSecrets", "email"))).data() ?? {};
   return {
     sendgridApiKey: String(data.sendgridApiKey ?? ""),
@@ -22,5 +23,6 @@ export const getEmailConfig = async (): Promise<EmailConfig> => {
 
 export const saveEmailConfig = async (config: EmailConfig): Promise<void> => {
   const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await setDoc(doc(db, "adminSecrets", "email"), config, { merge: true });
 };

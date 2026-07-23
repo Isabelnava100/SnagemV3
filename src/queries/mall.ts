@@ -1,4 +1,4 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 import { call } from "./_callable";
 
 /** A storefront in the Snag Mall (see docs/SHOP_DATA.md). */
@@ -45,6 +45,7 @@ const isEmptyStore = (s: Shop): boolean => {
 
 export const getShops = async (): Promise<Shop[]> => {
   const { collection, getDocs } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(collection(db, "shops"));
   return snap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<Shop, "id">) }))
@@ -57,12 +58,14 @@ export const getShops = async (): Promise<Shop[]> => {
 
 export const getShop = async (id: string): Promise<Shop | null> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "shops", id));
   return snap.exists() ? ({ id: snap.id, ...(snap.data() as Omit<Shop, "id">) }) : null;
 };
 
 export const getRecipes = async (): Promise<Recipe[]> => {
   const { collection, getDocs } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(collection(db, "recipes"));
   return snap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<Recipe, "id">) }))

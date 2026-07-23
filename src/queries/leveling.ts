@@ -1,4 +1,4 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 import { DEFAULT_XP_CURVE, MAX_LEVEL, setActiveCurve } from "../lib/leveling";
 
 /**
@@ -9,6 +9,7 @@ import { DEFAULT_XP_CURVE, MAX_LEVEL, setActiveCurve } from "../lib/leveling";
 
 export const getLevelingCurve = async (): Promise<number[]> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "admin", "leveling"));
   const stored = snap.data()?.curve as number[] | undefined;
   return stored && stored.length > 1 ? stored : DEFAULT_XP_CURVE;
@@ -16,6 +17,7 @@ export const getLevelingCurve = async (): Promise<number[]> => {
 
 export const saveLevelingCurve = async (curve: number[]): Promise<void> => {
   const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   // Normalize: level 1 is always 0, values are non-decreasing integers.
   const clean = [0, 0];
   for (let l = 2; l <= MAX_LEVEL; l++) {

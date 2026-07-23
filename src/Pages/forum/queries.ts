@@ -1,6 +1,6 @@
 import type { QueryDocumentSnapshot } from "firebase/firestore";
 import { AdminPokemonList, Bookmark } from "../../components/types/typesUsed";
-import { db } from "../../context/firebase";
+import { getDb } from "../../context/firebase";
 import { pokemonData } from "../../data/pokemon";
 import { ForumPost, ForumThread } from "./types";
 
@@ -25,6 +25,7 @@ export const getThreadList = async (
   archive = false
 ): Promise<ForumThread[]> => {
   const { collection, getDocs, limit, orderBy, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const colRef = collection(db, ...threadsPath(forum));
   let snapshot;
   try {
@@ -52,6 +53,7 @@ export const getThreadList = async (
 
 export const getThread = async (forum: string, threadId: string): Promise<ForumThread | null> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, ...threadsPath(forum), threadId));
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() } as ForumThread;
@@ -59,6 +61,7 @@ export const getThread = async (forum: string, threadId: string): Promise<ForumT
 
 export const getPostsCount = async (forum: string, threadId: string): Promise<number> => {
   const { collection, getCountFromServer, query } = await import("firebase/firestore");
+  const db = await getDb();
   const colRef = collection(db, ...threadsPath(forum), threadId, "posts");
   const snapshot = await getCountFromServer(query(colRef));
   return snapshot.data().count;
@@ -86,6 +89,7 @@ export const getPostsPage = async (
   const { collection, getDocs, limit, orderBy, query, startAfter } = await import(
     "firebase/firestore"
   );
+  const db = await getDb();
   const colRef = collection(db, ...threadsPath(forum), threadId, "posts");
   const lastPage = Math.max(1, Math.ceil(totalCount / perPage));
   const safePage = Math.min(Math.max(1, page), lastPage);
@@ -134,6 +138,7 @@ export const getPost = async (
   postId: string
 ): Promise<ForumPost | null> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, ...threadsPath(forum), threadId, "posts", postId));
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() } as ForumPost;
@@ -174,6 +179,7 @@ export const getPendingActions = async (
   encounters?: Record<string, import("./types").EncounterBlock>;
 }> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, ...threadsPath(forum), threadId, "pending", uid));
   return (snap.data() as any) ?? {};
 };
@@ -181,6 +187,7 @@ export const getPendingActions = async (
 /** A single saved draft (dashboard Drafts shape) for composer preloading. */
 export const getDraft = async (uid: string, draftId: string) => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "users", uid, "drafts", draftId));
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() } as import("../../components/types/typesUsed").Draft;
@@ -192,6 +199,7 @@ export const getForumBookmarks = async (
   forum: string
 ): Promise<Record<string, Bookmark>> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "users", uid, "bookmarks", forum));
   return (snap.data() as Record<string, Bookmark>) ?? {};
 };

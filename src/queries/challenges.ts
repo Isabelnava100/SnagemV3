@@ -1,4 +1,5 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
+import { call } from "./_callable";
 
 /** A gym in a region gauntlet (see docs/CHALLENGES_DATA.md). */
 export interface Gym {
@@ -47,6 +48,7 @@ export interface ChallengeProgress {
 
 export const getGymRegions = async (): Promise<GymRegion[]> => {
   const { collection, getDocs } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(collection(db, "gymRegions"));
   return snap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<GymRegion, "id">) }))
@@ -55,6 +57,7 @@ export const getGymRegions = async (): Promise<GymRegion[]> => {
 
 export const getIslandTrials = async (): Promise<IslandTrial[]> => {
   const { collection, getDocs } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(collection(db, "islandTrials"));
   return snap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<IslandTrial, "id">) }))
@@ -63,16 +66,10 @@ export const getIslandTrials = async (): Promise<IslandTrial[]> => {
 
 export const getChallengeProgress = async (uid: string): Promise<ChallengeProgress> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "users", uid, "bag", "challenges"));
   return (snap.data() as ChallengeProgress) || {};
 };
-
-async function call<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase");
-  const res = await httpsCallable(getFunctions(), name)(data);
-  return res.data as T;
-}
 
 /** Grader action: mark a badge/trial/elite/champion step cleared for a member. */
 export const grantChallengeStep = (
@@ -107,6 +104,7 @@ export interface ChallengeRequest {
 /** The signed-in member's own challenge requests (drives the page's buttons). */
 export const getMyChallengeRequests = async (uid: string): Promise<ChallengeRequest[]> => {
   const { collection, getDocs, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "challengeRequests"), where("uid", "==", uid))
   );
@@ -116,6 +114,7 @@ export const getMyChallengeRequests = async (uid: string): Promise<ChallengeRequ
 /** Staff view: every request still waiting for someone to accept it. */
 export const getPendingChallengeRequests = async (): Promise<ChallengeRequest[]> => {
   const { collection, getDocs, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "challengeRequests"), where("status", "==", "requested"))
   );

@@ -31,7 +31,8 @@ function normalizeConfig(raw: unknown): SafariConfig {
 /** All saved zones, sorted by name. Falls back to the baked Meadow Zone. */
 export async function getSafariZones(): Promise<SafariZone[]> {
   const { doc, getDoc } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   const snap = await getDoc(doc(db, ...SAFARI_PATH));
   const data = snap.data() as any;
 
@@ -60,7 +61,8 @@ export async function getSafariZoneById(id?: string | null): Promise<SafariConfi
 /** Upsert one zone. */
 export async function saveSafariZone(id: string, config: SafariConfig): Promise<void> {
   const { doc, setDoc } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   // JSON round-trip drops any undefined so Firestore accepts the nested state.
   await setDoc(
     doc(db, ...SAFARI_PATH),
@@ -72,7 +74,8 @@ export async function saveSafariZone(id: string, config: SafariConfig): Promise<
 /** Remove one zone from the library. */
 export async function deleteSafariZone(id: string): Promise<void> {
   const { deleteField, doc, setDoc } = await import("firebase/firestore");
-  const { db } = await import("../context/firebase");
+  const { getDb } = await import("../context/firebase");
+  const db = await getDb();
   await setDoc(doc(db, ...SAFARI_PATH), { zones: { [id]: deleteField() } }, { merge: true });
 }
 

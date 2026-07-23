@@ -3,26 +3,67 @@ import { IconArrowLeft } from "@tabler/icons-react";
 
 const displayFont = "var(--font-display, 'Quantico', sans-serif)";
 import React from "react";
-import { ActivityLog } from "../../components/admin/ActivityLog";
-import DesignSystem from "../../components/admin/DesignSystem";
-import DevBoard from "../User/Dashboard/Admin/DevBoard";
-import EmailTemplates from "../User/Dashboard/Admin/EmailTemplates";
+import { SectionLoader } from "../../components/navigation/loading";
 import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import { hasCapability, isAdmin } from "../../lib/permissions";
-import AdjustLists from "../User/Dashboard/Admin/AdjustLists";
-import SafariContest from "../User/Dashboard/Admin/SafariContest";
-import Announcements from "../User/Dashboard/Admin/Announcements";
-import Badges from "../User/Dashboard/Admin/Badges";
-import Donate from "../User/Dashboard/Admin/Donate";
-import MysteryBoxes from "../User/Dashboard/Admin/MysteryBoxes";
-import {
-  BattleCostsSection,
-  CapabilityChecklist,
-  LevelingCurveSection,
-  XPDefaultsSection,
-} from "../User/Dashboard/Admin/Permissions";
-import { BattleRankingsForm, ChallengeStepForm } from "../User/Dashboard/Admin/Grading";
+import { lazyImport } from "../../utils/lazyImport";
+
+// Every admin tool editor lazy-loads: the Manage grid is reachable by any
+// director, but a tool's code (and its Firestore queries) only downloads when
+// that tool is actually opened.
+const { ActivityLog } = lazyImport(() => import("../../components/admin/ActivityLog"), "ActivityLog");
+const { default: DesignSystem } = lazyImport(
+  () => import("../../components/admin/DesignSystem"),
+  "default"
+);
+const { default: AdjustLists } = lazyImport(
+  () => import("../User/Dashboard/Admin/AdjustLists"),
+  "default"
+);
+const { default: Announcements } = lazyImport(
+  () => import("../User/Dashboard/Admin/Announcements"),
+  "default"
+);
+const { default: Badges } = lazyImport(() => import("../User/Dashboard/Admin/Badges"), "default");
+const { default: DevBoard } = lazyImport(() => import("../User/Dashboard/Admin/DevBoard"), "default");
+const { default: Donate } = lazyImport(() => import("../User/Dashboard/Admin/Donate"), "default");
+const { default: EmailTemplates } = lazyImport(
+  () => import("../User/Dashboard/Admin/EmailTemplates"),
+  "default"
+);
+const { default: MysteryBoxes } = lazyImport(
+  () => import("../User/Dashboard/Admin/MysteryBoxes"),
+  "default"
+);
+const { default: SafariContest } = lazyImport(
+  () => import("../User/Dashboard/Admin/SafariContest"),
+  "default"
+);
+const { BattleRankingsForm } = lazyImport(
+  () => import("../User/Dashboard/Admin/Grading"),
+  "BattleRankingsForm"
+);
+const { ChallengeStepForm } = lazyImport(
+  () => import("../User/Dashboard/Admin/Grading"),
+  "ChallengeStepForm"
+);
+const { BattleCostsSection } = lazyImport(
+  () => import("../User/Dashboard/Admin/Permissions"),
+  "BattleCostsSection"
+);
+const { CapabilityChecklist } = lazyImport(
+  () => import("../User/Dashboard/Admin/Permissions"),
+  "CapabilityChecklist"
+);
+const { LevelingCurveSection } = lazyImport(
+  () => import("../User/Dashboard/Admin/Permissions"),
+  "LevelingCurveSection"
+);
+const { XPDefaultsSection } = lazyImport(
+  () => import("../User/Dashboard/Admin/Permissions"),
+  "XPDefaultsSection"
+);
 
 type ToolKey =
   | "roles"
@@ -256,7 +297,9 @@ export default function Manage() {
           All tools
         </Button>
         <Divider color="#2a2637" />
-        <Box>{active.render()}</Box>
+        <Box>
+          <React.Suspense fallback={<SectionLoader />}>{active.render()}</React.Suspense>
+        </Box>
       </Stack>
     );
   }

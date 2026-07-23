@@ -1,4 +1,5 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
+import { call } from "./_callable";
 
 /**
  * Manageable badge catalog. Lives in the shared admin/badges doc (readable by
@@ -115,6 +116,7 @@ type StoredBadge = { name: string; background: string; description?: string; col
 /** All badges: the defaults (with any saved edits) plus custom badges. */
 export const getBadgeCatalog = async (): Promise<BadgeDef[]> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, ...ADMIN_BADGES_DOC));
   const stored = (snap.data() as Record<string, StoredBadge> | undefined) ?? {};
 
@@ -136,6 +138,7 @@ export const getBadgeCatalog = async (): Promise<BadgeDef[]> => {
 /** Create or edit a badge (name + colors/background + optional description). */
 export const saveBadge = async (badge: BadgeDef): Promise<void> => {
   const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await setDoc(
     doc(db, ...ADMIN_BADGES_DOC),
     {
@@ -158,20 +161,20 @@ export const saveBadge = async (badge: BadgeDef): Promise<void> => {
 export const deleteBadge = async (id: string, removeFromUsers = false): Promise<void> => {
   if (DEFAULT_IDS.has(id)) throw new Error("Default badges can't be deleted.");
   const { doc, updateDoc, deleteField } = await import("firebase/firestore");
+  const db = await getDb();
   await updateDoc(doc(db, ...ADMIN_BADGES_DOC), { [id]: deleteField() });
   if (removeFromUsers) {
     // Full cleanup (bag + enabled-display list on every owner's user doc) runs
     // through a Cloud Function so ManageBadges directors get it too, not just
     // admins (directors can't write another member's user doc from the client).
-    const { getFunctions, httpsCallable } = await import("firebase/functions");
-    await import("../context/firebase");
-    await httpsCallable(getFunctions(), "removeBadgeFromUsers")({ badgeId: id });
+    await call("removeBadgeFromUsers", { badgeId: id });
   }
 };
 
 /** Assign a badge (disabled by default; the user enables it themselves). */
 export const assignBadgeToUsers = async (badge: BadgeDef, uids: string[]): Promise<void> => {
   const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await Promise.all(
     uids.map((uid) =>
       setDoc(
@@ -186,5 +189,6 @@ export const assignBadgeToUsers = async (badge: BadgeDef, uids: string[]): Promi
 /** Remove a badge a user owns. */
 export const revokeBadgeFromUser = async (uid: string, badgeId: string): Promise<void> => {
   const { doc, updateDoc, deleteField } = await import("firebase/firestore");
+  const db = await getDb();
   await updateDoc(doc(db, "users", uid, "bag", "badges"), { [badgeId]: deleteField() });
 };

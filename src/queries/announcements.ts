@@ -1,4 +1,4 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 
 /**
  * Admin-managed dashboard announcement banner. Stored at admin/announcements
@@ -36,6 +36,7 @@ const stripHistory = (data: AnnouncementDoc): Announcement => {
 
 export const getAnnouncement = async (): Promise<Announcement | null> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "admin", "announcements"));
   const data = snap.data() as AnnouncementDoc | undefined;
   return data?.id ? stripHistory(data) : null;
@@ -44,6 +45,7 @@ export const getAnnouncement = async (): Promise<Announcement | null> => {
 /** All previously sent announcements, newest first. */
 export const getAnnouncementHistory = async (): Promise<Announcement[]> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "admin", "announcements"));
   const data = snap.data() as AnnouncementDoc | undefined;
   return data?.history ?? [];
@@ -51,6 +53,7 @@ export const getAnnouncementHistory = async (): Promise<Announcement[]> => {
 
 export const saveAnnouncement = async (announcement: Announcement): Promise<void> => {
   const { doc, getDoc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const ref = doc(db, "admin", "announcements");
   const existing = (await getDoc(ref)).data() as AnnouncementDoc | undefined;
   const stamped: Announcement = { ...announcement, savedAt: announcement.savedAt ?? Date.now() };
@@ -68,6 +71,7 @@ export const saveAnnouncement = async (announcement: Announcement): Promise<void
  */
 export const deleteAnnouncement = async (id: string): Promise<void> => {
   const { doc, getDoc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const ref = doc(db, "admin", "announcements");
   const existing = (await getDoc(ref)).data() as AnnouncementDoc | undefined;
   if (!existing) return;
@@ -82,12 +86,14 @@ export const deleteAnnouncement = async (id: string): Promise<void> => {
 /** Announcement ids this user dismissed (field on their own user doc). */
 export const getReadAnnouncements = async (uid: string): Promise<string[]> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const data = (await getDoc(doc(db, "users", uid))).data();
   return (data?.readAnnouncements as string[]) ?? [];
 };
 
 export const markAnnouncementRead = async (uid: string, announcementId: string): Promise<void> => {
   const { arrayUnion, doc, updateDoc } = await import("firebase/firestore");
+  const db = await getDb();
   await updateDoc(doc(db, "users", uid), { readAnnouncements: arrayUnion(announcementId) });
 };
 

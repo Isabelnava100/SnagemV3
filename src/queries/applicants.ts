@@ -1,4 +1,5 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
+import { call } from "./_callable";
 
 export interface NewUserApplicant {
   id: string;
@@ -14,6 +15,7 @@ export interface NewUserApplicant {
 /** All pending applicants in the NewUsers queue (admin-readable). */
 export const getNewUsers = async (): Promise<NewUserApplicant[]> => {
   const { collection, getDocs } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(collection(db, "NewUsers"));
   return snap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<NewUserApplicant, "id">) }))
@@ -21,10 +23,7 @@ export const getNewUsers = async (): Promise<NewUserApplicant[]> => {
 };
 
 async function callFn<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase");
-  const result = await httpsCallable(getFunctions(), name)(data);
-  return result.data as T;
+  return call<T>(name, data);
 }
 
 /** Approve an applicant into the users collection with a starting role. */

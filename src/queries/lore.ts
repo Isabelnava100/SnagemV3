@@ -1,4 +1,4 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 
 /**
  * Lore Library data access. Worldbuilding content (Gaia's read-only "Library"
@@ -54,6 +54,7 @@ const byOrder = <T extends { order?: number; title?: string }>(a: T, b: T) =>
 
 export const getLoreBooks = async (): Promise<LoreBook[]> => {
   const { collection, getDocs } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(collection(db, "loreBooks"));
   return snap.docs
     .map((d) => ({ id: d.id, ...(d.data() as Omit<LoreBook, "id">) }))
@@ -66,6 +67,7 @@ export const getLoreBooks = async (): Promise<LoreBook[]> => {
  */
 export const getAllLoreEntries = async (): Promise<LoreEntry[]> => {
   const { collection, getDocs } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(collection(db, "loreEntries"));
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<LoreEntry, "id">) }));
 };
@@ -76,6 +78,7 @@ export const getAllLoreEntries = async (): Promise<LoreEntry[]> => {
  */
 export const getLoreEntries = async (bookId: string): Promise<LoreEntry[]> => {
   const { collection, getDocs, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(collection(db, "loreEntries"), where("bookId", "==", bookId))
   );
@@ -87,6 +90,7 @@ export const getLoreEntries = async (bookId: string): Promise<LoreEntry[]> => {
 /** Create (no id) or update (with id) a book. Returns the book id. */
 export const upsertLoreBook = async (book: Omit<LoreBook, "id"> & { id?: string }) => {
   const { collection, doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const ref = book.id ? doc(db, "loreBooks", book.id) : doc(collection(db, "loreBooks"));
   const { id: _ignored, ...data } = book;
   await setDoc(ref, data, { merge: true });
@@ -98,6 +102,7 @@ export const deleteLoreBook = async (bookId: string) => {
   const { collection, deleteDoc, doc, getDocs, query, where } = await import(
     "firebase/firestore"
   );
+  const db = await getDb();
   const entries = await getDocs(
     query(collection(db, "loreEntries"), where("bookId", "==", bookId))
   );
@@ -108,6 +113,7 @@ export const deleteLoreBook = async (bookId: string) => {
 /** Create (no id) or update (with id) an entry. Returns the entry id. */
 export const upsertLoreEntry = async (entry: Omit<LoreEntry, "id"> & { id?: string }) => {
   const { collection, doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const ref = entry.id ? doc(db, "loreEntries", entry.id) : doc(collection(db, "loreEntries"));
   const { id: _ignored, ...data } = entry;
   await setDoc(ref, data, { merge: true });
@@ -116,5 +122,6 @@ export const upsertLoreEntry = async (entry: Omit<LoreEntry, "id"> & { id?: stri
 
 export const deleteLoreEntry = async (entryId: string) => {
   const { deleteDoc, doc } = await import("firebase/firestore");
+  const db = await getDb();
   await deleteDoc(doc(db, "loreEntries", entryId));
 };

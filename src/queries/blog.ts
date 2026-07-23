@@ -1,4 +1,4 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
 
 /**
  * Public marketing blog. Posts live in blogPosts/{slug} (the doc id IS the
@@ -37,6 +37,7 @@ export const slugify = (s: string): string =>
 /** Published posts, newest first (composite index: published + publishedAt). */
 export const getPublishedPosts = async (): Promise<BlogPost[]> => {
   const { collection, getDocs, orderBy, query, where } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(
     query(
       collection(db, "blogPosts"),
@@ -50,12 +51,14 @@ export const getPublishedPosts = async (): Promise<BlogPost[]> => {
 /** Every post including drafts; admin-only per rules. */
 export const getAllPosts = async (): Promise<BlogPost[]> => {
   const { collection, getDocs, orderBy, query } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDocs(query(collection(db, "blogPosts"), orderBy("createdAt", "desc")));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as BlogPost);
 };
 
 export const getPost = async (slug: string): Promise<BlogPost | null> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const snap = await getDoc(doc(db, "blogPosts", slug));
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() } as BlogPost;
@@ -67,6 +70,7 @@ export const saveBlogPost = async (
   isNew: boolean,
 ): Promise<void> => {
   const { doc, getDoc, serverTimestamp, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const ref = doc(db, "blogPosts", slug);
   const existing = isNew ? null : (await getDoc(ref)).data();
   // publishedAt is stamped the first time the post goes live and then kept
@@ -87,6 +91,7 @@ export const saveBlogPost = async (
 
 export const deleteBlogPost = async (slug: string): Promise<void> => {
   const { deleteDoc, doc } = await import("firebase/firestore");
+  const db = await getDb();
   await deleteDoc(doc(db, "blogPosts", slug));
 };
 

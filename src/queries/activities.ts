@@ -1,4 +1,5 @@
-import { db } from "../context/firebase";
+import { getDb } from "../context/firebase";
+import { call } from "./_callable";
 
 /**
  * The Snag List: weekly activities checklist. State lives at
@@ -41,17 +42,11 @@ export const resetCountdown = (): string => {
 };
 
 export const getSnagList = async (uid: string): Promise<SnagList> => {
+  const db = await getDb();
   const { doc, getDoc } = await import("firebase/firestore");
   const snap = await getDoc(doc(db, "users", uid, "bag", "snaglist"));
   return (snap.data() as SnagList) || {};
 };
-
-async function call<T>(name: string, data: unknown): Promise<T> {
-  const { getFunctions, httpsCallable } = await import("firebase/functions");
-  await import("../context/firebase");
-  const res = await httpsCallable(getFunctions(), name)(data);
-  return res.data as T;
-}
 
 /** Open the weekly Mystery Box (all six tasks required, once per week). */
 export const claimSnagBox = (choice: "random" | "currency" | "egg") =>
