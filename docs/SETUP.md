@@ -149,8 +149,8 @@ Firestore and are edited through the admin UI on the live site:
 | Secret | Where | Set via |
 | --- | --- | --- |
 | SendGrid API key, verified sender | `adminSecrets/email` | Admin > Site Settings > Email notices |
-| Discord webhook URL | Site Settings | Admin > Site Settings |
-| Discord OAuth client secret | Site Settings | Admin > Site Settings |
+| Discord webhook URL | `adminSecrets/discord` | Admin > Site Settings |
+| Discord OAuth client id and client secret | `adminSecrets/discord` | Admin > Site Settings |
 
 Consequence: a fresh clone with a correct `.env` is fully functional, because
 the secrets are already in the database. You do not re-enter them per machine.

@@ -389,7 +389,8 @@ function StoreBody(props: { shop: Shop; balance: number }) {
   const [message, setMessage] = React.useState("");
   const [error, setError] = React.useState("");
 
-  const buy = async (itemId: string, price: number) => {
+  // _price is passed by the caller but unused: buyShopItem prices server-side.
+  const buy = async (itemId: string, _price: number) => {
     setPendingId(itemId);
     setMessage("");
     setError("");

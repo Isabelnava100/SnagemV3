@@ -302,7 +302,7 @@ function DeleteCharacter(props: { characterId: string }) {
 }
 
 function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }) {
-  const { id, form, ...character } = props;
+  const { id, form } = props;
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [fileBlob, setFileBlob] = useState<Blob>();

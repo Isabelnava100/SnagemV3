@@ -6,7 +6,7 @@ import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Capability } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
-import { DISCORD_CLIENT_ID, DiscordConfig, discordRedirectUri, getDiscordConfig, saveDiscordConfig } from "../../../queries/discord";
+import { DiscordConfig, discordRedirectUri, getDiscordConfig, saveDiscordConfig } from "../../../queries/discord";
 import { EmailConfig, getEmailConfig, saveEmailConfig } from "../../../queries/email";
 import { hasCapability, isAdmin } from "../../../lib/permissions";
 import SEO from "./Admin/SEO";
@@ -87,7 +87,7 @@ function EmailConfigSection() {
   );
 }
 
-/** Admin-only Discord integration config (client secret + channel webhook). */
+/** Admin-only Discord integration config (client id, client secret + channel webhook). */
 function DiscordConfigSection() {
   const queryClient = useQueryClient();
   const { data, isPending } = useQuery({ queryKey: ["discord-config"], queryFn: getDiscordConfig });
@@ -114,11 +114,21 @@ function DiscordConfigSection() {
         Discord
       </Title>
       <Text fz={14} c="dimmed">
-        Connects the site to your Discord server. The client id is set in the
-        site's environment ({DISCORD_CLIENT_ID ? "configured" : "not set yet"}); the
-        client secret and channel webhook are stored here, admin-only. In the
-        Discord app, add this OAuth redirect URL: {discordRedirectUri()}
+        Connects the site to your Discord server. The OAuth client id, client
+        secret and channel webhook are stored here, admin-only, and used
+        server-side to link accounts. In the Discord app, add this OAuth
+        redirect URL: {discordRedirectUri()}
       </Text>
+      <TextInput
+        label="OAuth client id"
+        description="From the Discord app's OAuth2 page. Safe to expose; stored here so the server never trusts a client-supplied id."
+        value={form.clientId}
+        onChange={(e) => {
+          setSaved(false);
+          setForm({ ...form, clientId: e.currentTarget.value });
+        }}
+        styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+      />
       <PasswordInput
         label="OAuth client secret"
         description="From the Discord app's OAuth2 page. Used server-side to link accounts."

@@ -70,7 +70,6 @@ import { OwnedPokemon } from "../../components/types/typesUsed";
 
 const FONT_D = "var(--font-display, 'Quantico', sans-serif)";
 const GRAD_PR = "linear-gradient(90deg, #7E2C75, #E54156)";
-const GRAD_CYAN = "linear-gradient(90deg, #14e0de, #12B7B6)";
 
 // Angled clip-paths from the mockup (bottom-right cut panels, chevron pills).
 const CLIP_PANEL_16 = "polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)";

@@ -94,7 +94,6 @@ const TYPE_COLORS: Record<string, string> = {
   Steel: "#8888A8", Fairy: "#EE99AC",
 };
 const typeColor = (t?: string) => (t && TYPE_COLORS[t]) || "#8a8399";
-const TYPE_TEXT_DARK = new Set(["#E0B000", "#98D8D8", "#EE99AC", "#E0C068"]);
 
 /** Kind chip accent per stage type (mockup palette). */
 function tagColor(kind: StageKind): string {

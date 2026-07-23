@@ -3,8 +3,6 @@ import { useMediaQuery as useMediaQueryCore } from "@mantine/hooks";
 import { memo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { SideBar } from "./components/navigation/SideBar";
-import { useAuth } from "./context/AuthContext";
-import useMediaQuery from "./hooks/useMediaQuery";
 
 // Full-bleed routes rendered outside the app shell (no sidebar / bottom tabs /
 // gradient frame): the marketing pages and the logged-out auth screens, which
@@ -12,11 +10,8 @@ import useMediaQuery from "./hooks/useMediaQuery";
 const MARKETING_ROUTES = ["/", "/about", "/login", "/register", "/forgot", "/reset"];
 
 export const App = memo(() => {
-  const { user } = useAuth();
-  const loginName = user ? "Profile" : "Login";
   const isUnder900 = useMediaQueryCore("(max-width: 900px)");
   const hasLessHeight = useMediaQueryCore("(max-height: 900px)");
-  const { isOverMd } = useMediaQuery();
   const { pathname } = useLocation();
 
   if (MARKETING_ROUTES.includes(pathname.toLowerCase().replace(/\/$/, "") || "/")) {

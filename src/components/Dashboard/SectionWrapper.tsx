@@ -12,21 +12,19 @@ export default function SectionWrapper(props: {
   customHeader?: React.ReactNode;
   willFetchData?: boolean;
   isLoading?: boolean;
+  // Accepted but not rendered yet: no error UI exists for failed section loads.
   isError?: boolean;
   error?: string;
   bg?: string;
 }) {
   const {
     title,
-    icon,
     children,
     action,
     style,
     customHeader,
     willFetchData = false,
     isLoading,
-    isError,
-    error,
     bg = "#282727",
   } = props;
   const { isOverSm, isOverMd } = useMediaQuery();

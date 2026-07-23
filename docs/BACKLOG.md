@@ -26,15 +26,23 @@ Real gaps, highest value first:
   the thread) in place of EDIT/DELETE when a team is locked into an open
   battle thread. The editor is also guarded in `isEditing`, the Edit click
   handler, and `handleSave`, so a locked team cannot be opened for edits.
-- **Thread team-tile hover is name-only** vs the mockup's per-pokemon stat card
-  (Lv/type/HP/shadow/held). `PostCharacter.pokemon` denormalizes only
-  `{slug,name}`; surfacing the rest needs `publishForumPost` to denormalize
-  more onto the post team snapshot. Small client, medium overall (CF change).
-- **Activities "More things to do" place-card grid missing** (`Activities/
-  index.tsx` ~585-593 jumps to a "coming soon" line). Small, no CF (router Links).
-- **Research "Are you ready?" checklist is hardcoded** (identical per character;
-  the red "not met" state is unreachable) and the hero ACCESS badge keys off the
-  active view, not the character's clearance. Medium/small, no CF (data present).
+- **Thread team-tile hover stat card** DONE (2026-07-23). `publishForumPost`
+  now denormalizes level, types, hpMax, shadow state, held item and the owned
+  pokemonId onto the post team snapshot (additive; legacy posts keep
+  `{slug,name}`). The hover card (`TeamTileCard` in PostCard.tsx) renders
+  sprite, Lv, type chips, live HP from `thread.battleDamage`, shadow state and
+  held item, and degrades row-by-row on legacy posts.
+- **Activities "More things to do" place-card grid** DONE (2026-07-23).
+  `Activities/index.tsx` now ends with a responsive `PlaceCard` grid linking
+  to Trading, Daycare, Challenges, Events Forum and Library (the destinations
+  not already featured above).
+- **Research "Are you ready?" checklist** DONE (2026-07-23). Items now
+  evaluate the selected character's real data (`buildChecklist`):
+  species ownership from `bag/owned_pokemons`, division from
+  `character.type`/the request form, documentation from the character
+  profile; unmet items render red. "Patience" stays static (no underlying
+  data). The hero ACCESS badge now keys off the character's actual clearance
+  (`type !== "None"`) instead of the active view.
 - **Colosseum friend-code regex validation** DONE (2026-07-23). `RegisterCard`
   normalizes to uppercase and gates on `^SW-\d{4}-\d{4}-\d{4}$` with an inline
   "Format: SW-1234-4567-8901" error; the same normalized value is saved.
@@ -88,6 +96,21 @@ Real gaps, highest value first:
   at securityheaders.com, and update HSTS/CSP/the rest to current best
   practice. Repeat yearly. Also noted in CLAUDE.md SEO rules so it surfaces
   in every session.
+
+- **Hardening batch (2026-07-23).** Blog listing paginates server-side
+  (limit 20 + cursor, "Load more" via useInfiniteQuery; admin list capped
+  at 50). Admin Inbox lazy-loads Grading cards (Grading.tsx can now split
+  into its own chunk). `linkDiscord` reads the OAuth client id from
+  `adminSecrets/discord` instead of the request, and validates redirectUri
+  against an optional `redirectUris` allowlist (default: snagemguild.com +
+  localhost). NOTE: an admin must open Site Settings and save the Discord
+  settings once so the client id lands in `adminSecrets/discord`; until
+  then linkDiscord throws a clear failed-precondition. eslint-plugin-jsx-a11y
+  added in warn mode (13 advisories, none errors). tsconfig gained
+  noUnusedLocals + noUnusedParameters (18 fixes); useMediaQuery.js converted
+  to TS. `noUncheckedIndexedAccess` trialed and DEFERRED: 112 errors, worst
+  files Onboarding/csv.ts, queries/dashboard.ts, Challenges, Casino; its own
+  workstream if ever wanted.
 
 - **Item sprites, remote 404s.** SWEPT (2026-07-20): HEAD-checked all 994
   catalog filenames against the jsDelivr CDN. 25 failed. 16 were a data bug:
@@ -267,7 +290,10 @@ Status as of 2026-07:
   Ice, Steel) were NEVER WRITTEN on Gaia and do not exist -- creating them is fresh authoring, an
   OWNER DECISION, not a migration. OWNER DECISION also: Team Shout vs Team Yell (the Gaia
   [Team Shout] post is a completely empty stub; nothing there says whether it renames Team Yell,
-  so the repo's "Team Yell" was left untouched). Optional: cross-book search; Tiptap editor for
+  so the repo's "Team Yell" was left untouched). Cross-book search DONE
+  (2026-07-23): the Lore tab search now matches across all books, groups
+  results by book with per-book overflow rows, and click-through opens the
+  book scrolled to the entry. Optional remaining: Tiptap editor for
   bodies (today an HTML textarea with sanitized preview).
 - **Scheduled Shadow Lotto draw** (2026-07). DONE for now as a manual admin action:
   `drawLotto` splits the jackpot among matching tickets and there is a grader/admin "Draw

@@ -10,7 +10,6 @@ import {
   ScrollArea,
   Stack,
   Text,
-  Title,
   UnstyledButton,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -53,7 +52,6 @@ import { handleLogout } from "../../auth/components/LogoutHandle";
 import "/src/assets/styles/dashboard.css";
 
 export function Dashboard() {
-  const { user } = useAuth();
   const { isOverMd, isOverXl } = useMediaQuery();
 
   return (

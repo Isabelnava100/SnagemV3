@@ -1,3 +1,4 @@
+import type { QueryDocumentSnapshot } from "firebase/firestore";
 import { getDb } from "../context/firebase";
 
 /**
@@ -34,25 +35,49 @@ export const slugify = (s: string): string =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
 
-/** Published posts, newest first (composite index: published + publishedAt). */
-export const getPublishedPosts = async (): Promise<BlogPost[]> => {
-  const { collection, getDocs, orderBy, query, where } = await import("firebase/firestore");
+/** Posts per page on the public blog listing. */
+export const BLOG_PAGE_SIZE = 20;
+
+export interface BlogPostsPage {
+  posts: BlogPost[];
+  /** Last doc of the page; pass it back as the cursor for the next page. */
+  cursor: QueryDocumentSnapshot | null;
+}
+
+/**
+ * One page of published posts, newest first (composite index: published +
+ * publishedAt). Cursor-based so the public listing never reads the whole
+ * collection; pass the previous page's cursor to continue.
+ */
+export const getPublishedPostsPage = async (
+  cursor?: QueryDocumentSnapshot,
+): Promise<BlogPostsPage> => {
+  const { collection, getDocs, limit, orderBy, query, startAfter, where } = await import(
+    "firebase/firestore"
+  );
   const db = await getDb();
   const snap = await getDocs(
     query(
       collection(db, "blogPosts"),
       where("published", "==", true),
       orderBy("publishedAt", "desc"),
+      ...(cursor ? [startAfter(cursor)] : []),
+      limit(BLOG_PAGE_SIZE),
     ),
   );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as BlogPost);
+  return {
+    posts: snap.docs.map((d) => ({ id: d.id, ...d.data() }) as BlogPost),
+    cursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : null,
+  };
 };
 
-/** Every post including drafts; admin-only per rules. */
+/** Recent posts including drafts (newest 50); admin-only per rules. */
 export const getAllPosts = async (): Promise<BlogPost[]> => {
-  const { collection, getDocs, orderBy, query } = await import("firebase/firestore");
+  const { collection, getDocs, limit, orderBy, query } = await import("firebase/firestore");
   const db = await getDb();
-  const snap = await getDocs(query(collection(db, "blogPosts"), orderBy("createdAt", "desc")));
+  const snap = await getDocs(
+    query(collection(db, "blogPosts"), orderBy("createdAt", "desc"), limit(50)),
+  );
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as BlogPost);
 };
 

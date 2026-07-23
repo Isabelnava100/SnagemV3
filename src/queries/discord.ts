@@ -27,7 +27,6 @@ export const linkDiscord = (code: string) =>
   callFn<{ discordUID: string; discordUsername: string }>("linkDiscord", {
     code,
     redirectUri: discordRedirectUri(),
-    clientId: DISCORD_CLIENT_ID ?? "",
   });
 
 export const unlinkDiscord = () => callFn<{ ok: boolean }>("unlinkDiscord", {});
@@ -45,6 +44,8 @@ export const getMyDiscord = async (
 // -- Admin Discord config (adminSecrets/discord) -----------------------------
 
 export interface DiscordConfig {
+  /** OAuth client id, stored here so linkDiscord never trusts the client. */
+  clientId: string;
   clientSecret: string;
   webhookUrl: string;
 }
@@ -53,7 +54,13 @@ export const getDiscordConfig = async (): Promise<DiscordConfig> => {
   const { doc, getDoc } = await import("firebase/firestore");
   const db = await getDb();
   const data = (await getDoc(doc(db, "adminSecrets", "discord"))).data() ?? {};
-  return { clientSecret: String(data.clientSecret ?? ""), webhookUrl: String(data.webhookUrl ?? "") };
+  return {
+    // Older configs predate the stored client id; prefill from the build env
+    // so saving the form once migrates it.
+    clientId: String(data.clientId ?? DISCORD_CLIENT_ID ?? ""),
+    clientSecret: String(data.clientSecret ?? ""),
+    webhookUrl: String(data.webhookUrl ?? ""),
+  };
 };
 
 export const saveDiscordConfig = async (config: DiscordConfig): Promise<void> => {

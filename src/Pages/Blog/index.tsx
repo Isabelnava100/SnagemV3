@@ -14,7 +14,8 @@ import {
   Title,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import type { QueryDocumentSnapshot } from "firebase/firestore";
 import { type CSSProperties, type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import snagLogo from "../../assets/images/snag-hand-logo.png";
@@ -31,10 +32,11 @@ import { useAuth } from "../../context/AuthContext";
 import { isAdmin } from "../../lib/permissions";
 import { SITE_URL } from "../../lib/seo/site";
 import {
+  BLOG_PAGE_SIZE,
   BlogPost,
   formatPostDate,
   getAllPosts,
-  getPublishedPosts,
+  getPublishedPostsPage,
 } from "../../queries/blog";
 
 const DISPLAY_FONT = "var(--font-display, 'Quantico', sans-serif)";
@@ -322,12 +324,28 @@ export function BlogFooter() {
 export default function Blog() {
   const { user } = useAuth();
   const admin = isAdmin(user);
-  const { data: posts, isPending } = useQuery({
-    queryKey: ["blog-posts", admin ? "all" : "published"],
-    queryFn: admin ? getAllPosts : getPublishedPosts,
+  // Admins get the flat editor list (drafts included, capped server-side);
+  // everyone else pages through published posts BLOG_PAGE_SIZE at a time.
+  const adminQuery = useQuery({
+    queryKey: ["blog-posts", "all"],
+    queryFn: getAllPosts,
+    enabled: admin,
+  });
+  const publicQuery = useInfiniteQuery({
+    queryKey: ["blog-posts", "published"],
+    queryFn: ({ pageParam }) => getPublishedPostsPage(pageParam),
+    initialPageParam: undefined as QueryDocumentSnapshot | undefined,
+    getNextPageParam: (last) =>
+      last.posts.length === BLOG_PAGE_SIZE ? (last.cursor ?? undefined) : undefined,
+    enabled: !admin,
   });
 
-  const published = (posts ?? []).filter((p) => p.published);
+  const posts = admin
+    ? (adminQuery.data ?? [])
+    : (publicQuery.data?.pages.flatMap((page) => page.posts) ?? []);
+  const isPending = admin ? adminQuery.isPending : publicQuery.isPending;
+
+  const published = posts.filter((p) => p.published);
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
@@ -369,31 +387,46 @@ export default function Blog() {
 
       {isPending ? (
         <SectionLoader />
-      ) : (posts ?? []).length === 0 ? (
+      ) : posts.length === 0 ? (
         <Box py={40}>
           <Title order={2} fz={18} fw={600} c="white" lh="md" ta="center">
             No posts yet. The first story is on its way!
           </Title>
         </Box>
       ) : (
-        <SimpleGrid cols={{ base: 1, xs: 2, md: 3 }} spacing="lg">
-          {(posts ?? []).map((post) => (
-            <Stack key={post.id} gap={6}>
-              <PostCard post={post} />
-              {admin && (
-                <Button
-                  component={Link}
-                  to={`/Blog/edit/${post.id}`}
-                  variant="default"
-                  size="xs"
-                  radius="xl"
-                >
-                  Edit
-                </Button>
-              )}
-            </Stack>
-          ))}
-        </SimpleGrid>
+        <>
+          <SimpleGrid cols={{ base: 1, xs: 2, md: 3 }} spacing="lg">
+            {posts.map((post) => (
+              <Stack key={post.id} gap={6}>
+                <PostCard post={post} />
+                {admin && (
+                  <Button
+                    component={Link}
+                    to={`/Blog/edit/${post.id}`}
+                    variant="default"
+                    size="xs"
+                    radius="xl"
+                  >
+                    Edit
+                  </Button>
+                )}
+              </Stack>
+            ))}
+          </SimpleGrid>
+          {!admin && publicQuery.hasNextPage && (
+            <Group justify="center" mt="xl">
+              <Button
+                variant="light"
+                color="grape"
+                radius="xl"
+                loading={publicQuery.isFetchingNextPage}
+                onClick={() => publicQuery.fetchNextPage()}
+              >
+                Load more
+              </Button>
+            </Group>
+          )}
+        </>
       )}
 
       <SubscribeBand />

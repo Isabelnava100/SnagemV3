@@ -1,7 +1,6 @@
 import { Anchor, Box, Group, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
 import { AuditRow, auditTitle, describeAuditDetails, getAuditLogs } from "../../lib/auditLog";
 import { SectionLoader } from "../navigation/loading";
 

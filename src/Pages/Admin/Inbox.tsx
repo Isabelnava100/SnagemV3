@@ -28,8 +28,19 @@ import {
   resolveMasterClearance,
 } from "../../queries/research";
 import { ApplicantCard } from "../User/Dashboard/Admin/Applicants";
-import { MMRequestCard, SubmissionCard } from "../User/Dashboard/Admin/Grading";
 import { ReviewCard } from "../User/Dashboard/Admin/Imports";
+import { lazyImport } from "../../utils/lazyImport";
+
+// Grading is a heavy module; lazy-load it (same split as Manage) so the Inbox
+// bundle does not block Grading from getting its own chunk.
+const { MMRequestCard } = lazyImport(
+  () => import("../User/Dashboard/Admin/Grading"),
+  "MMRequestCard"
+);
+const { SubmissionCard } = lazyImport(
+  () => import("../User/Dashboard/Admin/Grading"),
+  "SubmissionCard"
+);
 
 type InboxType = "application" | "import" | "mission" | "master" | "challenge" | "clearance";
 
@@ -408,6 +419,7 @@ export default function Inbox() {
               description="Nothing is waiting for review. New requests will appear here."
             />
           ) : (
+            <React.Suspense fallback={<SectionLoader />}>
             <Stack gap="md">
               {appList.map((a) => (
             <InboxRow
@@ -472,6 +484,7 @@ export default function Inbox() {
             </InboxRow>
           ))}
             </Stack>
+            </React.Suspense>
           )}
         </Box>
       </Box>

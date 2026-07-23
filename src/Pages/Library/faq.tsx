@@ -1,4 +1,4 @@
-import { Accordion, Box, List, Stack, Text, Title } from "@mantine/core";
+import { Accordion, Box, List, Stack, Text } from "@mantine/core";
 
 /**
  * Guild FAQ, ported from the GaiaOnline guild thread. Answers sit in an

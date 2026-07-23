@@ -31,7 +31,8 @@ import {
 
 interface CustomSwitchProps extends SwitchProps {}
 
-const CustomSwitch = React.forwardRef<HTMLInputElement, CustomSwitchProps>((props, ref) => {
+// NOTE: the forwarded ref is accepted but never attached to the inner Switch.
+const CustomSwitch = React.forwardRef<HTMLInputElement, CustomSwitchProps>((props, _ref) => {
   const { label, ...restProps } = props;
   return (
     <Switch

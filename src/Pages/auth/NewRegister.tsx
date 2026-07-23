@@ -291,8 +291,8 @@ export function NewRegister() {
                         label="Password"
                         description="Should include letters in lower and uppercase, at least 1 number and at least 1 special symbol."
                         value={value}
-                        onFocus={() => setPopoverOpened((o) => true)}
-                        onBlur={() => setPopoverOpened((o) => false)}
+                        onFocus={() => setPopoverOpened(true)}
+                        onBlur={() => setPopoverOpened(false)}
                         onChange={(event) => {
                           setValue(event.currentTarget.value);
                           form.setFieldValue("password", event.currentTarget.value);
