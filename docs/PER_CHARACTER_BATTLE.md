@@ -97,9 +97,23 @@ its own active encounter, all display, and a post resolves the posting
 character's encounter with correct per-key write-back (other characters' pending
 encounters preserved). Backward-compatible with legacy single-encounter threads.
 
-REMAINING (tracked, do as a tested pass before prod): resolve EVERY posting
-character's encounter in the SAME post (the multi-fighter loop + per-character
-battle-action rows in the composer). Today a multi-character post resolves the
-first posting character's encounter; the others resolve on that character's next
-post. This is an enhancement, not a broken state. Payload/types (battleActions)
-are already in place for it.
+## Multi-fighter loop (BUILT on feature/multi-fighter-battle)
+
+publishForumPost now resolves EVERY posting character's encounter in one post:
+- The first character's encounter uses the existing proven path (fighterId +
+  ball/catch + safari action). Untouched.
+- Every OTHER posting character with an encounter runs a fight-or-flee turn via
+  an additive extras loop: its chosen fighter attacks its own encounter
+  (progress + STAB/weather/nature/held/paralysis/crit) and takes its own
+  counter-damage into the shared damageNow map. Resolved (fled / trainer-beaten)
+  clears that character's pending key; survivors persist; all beaten mission foes
+  join defeatedEncounters. blocks.encounters + blocks.battles hold every result.
+- Composer "Battle actions" panel: one fighter Select + Flee checkbox per
+  character with an encounter; builds battleActions and sends the first row as
+  fighterId/fleeAttempt. The old single picker shows only for boss/legacy posts.
+- PostCard renders one ENEMY row per fighter (blocks.battles).
+
+v1 limits (refine later): catching a ball is still one-per-post on the FIRST
+encounter (extras only fight/flee, no ball); safari extras fight/flee (no ball);
+a single safari encounter shows both the Safari controls and a redundant fighter
+row. Boss stays single-fighter. Needs a firebase functions deploy.
