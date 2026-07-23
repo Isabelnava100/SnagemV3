@@ -84,7 +84,7 @@ const stageForDex = (idx: number): string =>
 const STAR_POSTS_TO_BEAT: Record<number, number> = { 1: 2, 2: 3, 3: 5, 4: 7, 5: 9, 6: 12, 7: 20 };
 // Chance (percent) a run-away attempt succeeds, by the enemy's star. Bosses
 // and trainer-owned (non-catchable) Pokemon cannot be fled.
-const STAR_FLEE_CHANCE: Record<number, number> = { 1: 80, 2: 70, 3: 60, 4: 50, 5: 40, 6: 30, 7: 20 };
+const STAR_FLEE_CHANCE: Record<number, number> = { 1: 95, 2: 95, 3: 90, 4: 90, 5: 80, 6: 75, 7: 70 };
 // Flat damage one enemy attack deals, by the enemy's star. The defender's max
 // HP is level-based (see hpConfigFrom). The user's pokemon always strikes
 // first: an enemy beaten (or a boss felled) on this post does not hit back.

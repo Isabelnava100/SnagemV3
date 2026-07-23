@@ -132,7 +132,7 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
   Pokedex (stored in `admin/star_overrides`, read by `rollEncounter`, audited
   as `stars.edit`). Details: docs/FORUM.md.
 - Battle damage + run-away (July 2026) need a functions deploy: wild
-  encounters can be fled at post time (success 80/70/60/50/40/30/20% by star;
+  encounters can be fled at post time (success 95/95/90/90/80/75/70% by star;
   failure wastes the turn and the enemy still hits); trainer-owned
   (non-catchable) encounters battle to the end (no flee, no catch,
   auto-clear when beaten). Every battle post picks a fighter from the locked

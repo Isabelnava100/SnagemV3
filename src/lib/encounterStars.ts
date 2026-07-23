@@ -31,13 +31,13 @@ export const STAR_POSTS_TO_BEAT: Record<EncounterStar, number> = {
  * be fled; a failed attempt wastes the turn and the enemy still attacks.
  */
 export const STAR_FLEE_CHANCE: Record<EncounterStar, number> = {
-  1: 80,
-  2: 70,
-  3: 60,
-  4: 50,
-  5: 40,
-  6: 30,
-  7: 20,
+  1: 95,
+  2: 95,
+  3: 90,
+  4: 90,
+  5: 80,
+  6: 75,
+  7: 70,
 };
 
 /**
