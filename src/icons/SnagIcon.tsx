@@ -16,6 +16,12 @@ import React from "react";
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+/** Colors are interpolated raw into SVG attributes, so only hex is allowed;
+ * anything else falls back instead of reaching the markup. */
+const HEX_COLOR = /^#[0-9a-fA-F]{3,8}$/;
+const safeColor = (value: string, fallback: string) =>
+  HEX_COLOR.test(value) ? value : fallback;
+
 // Geometry is verbatim from the design file. Do not hand-edit paths; re-port
 // from the design project if the set changes.
 function iconSet(fg: string, cut: string, label: string): Record<string, string> {
@@ -152,7 +158,7 @@ export function SnagIcon({
   title,
 }: SnagIconProps) {
   const inner = React.useMemo(() => {
-    const set = iconSet(color, cut, esc(label));
+    const set = iconSet(safeColor(color, "#fff"), safeColor(cut, "#1c1a22"), esc(label));
     return set[name] ?? set.pokeball;
   }, [name, color, cut, label]);
   return (

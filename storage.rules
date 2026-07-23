@@ -14,8 +14,10 @@ service firebase.storage {
     function signedInAs(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
+    // SVG is excluded: it can carry scripts, so it is not a safe upload.
     function isImageUnder5MB() {
       return request.resource.contentType.matches('image/.*')
+        && request.resource.contentType != 'image/svg+xml'
         && request.resource.size < 5 * 1024 * 1024;
     }
 

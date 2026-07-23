@@ -14,6 +14,7 @@
  */
 import { randomInt, randomUUID } from "crypto";
 import { initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import {
   DocumentReference,
   DocumentSnapshot,
@@ -402,6 +403,29 @@ async function loadMember(uid: string): Promise<Member> {
 const isAdmin = (m: Member) => m.permissions === "Admin";
 const hasCap = (m: Member, cap: string) => isAdmin(m) || m.capabilities.includes(cap);
 
+// Per-uid throttle for the roll callables (rollDice / rollRandom /
+// rollEncounter), which are otherwise free server-side RNG spam vectors.
+// maxInstances is 1 (setGlobalOptions above), so this in-memory map is shared
+// by every call. One roll per ROLL_MIN_INTERVAL_MS per member; entries older
+// than ROLL_PRUNE_AFTER_MS are pruned to bound memory. Admins are exempt
+// (hosting/testing tools roll in bursts).
+const ROLL_MIN_INTERVAL_MS = 2000;
+const ROLL_PRUNE_AFTER_MS = 5 * 60 * 1000;
+const rollLastCallAt = new Map<string, number>();
+
+function throttleRoll(uid: string, member: Member): void {
+  if (isAdmin(member)) return;
+  const now = Date.now();
+  for (const [key, at] of rollLastCallAt) {
+    if (now - at > ROLL_PRUNE_AFTER_MS) rollLastCallAt.delete(key);
+  }
+  const last = rollLastCallAt.get(uid) ?? 0;
+  if (now - last < ROLL_MIN_INTERVAL_MS) {
+    throw new HttpsError("resource-exhausted", "Slow down a moment before rolling again.");
+  }
+  rollLastCallAt.set(uid, now);
+}
+
 /** Whether a member may create a thread in a forum (see FORUM_CREATE_POLICY). */
 function canCreateInForum(forum: string, member: Member): boolean {
   switch (FORUM_CREATE_POLICY[forum]) {
@@ -775,7 +799,7 @@ export const rollDice = onCall(async (request) => {
   if (!Number.isInteger(count) || count < 1 || count > 20) {
     throw new HttpsError("invalid-argument", "Roll between 1 and 20 dice.");
   }
-  await loadMember(uid);
+  throttleRoll(uid, await loadMember(uid));
 
   const dice = {
     sides,
@@ -813,7 +837,7 @@ export const rollRandom = onCall(async (request) => {
   if (Math.abs(min) > 1_000_000_000 || Math.abs(max) > 1_000_000_000) {
     throw new HttpsError("invalid-argument", "Bounds are too large.");
   }
-  await loadMember(uid);
+  throttleRoll(uid, await loadMember(uid));
 
   const random = { min, max, result: randomInt(min, max + 1) };
 
@@ -940,7 +964,7 @@ export const rollEncounter = onCall(async (request) => {
   // When set, the encounter is stored per-character (pending.encounters[charId])
   // so each of a member's characters can have its own active encounter.
   const characterId = String(request.data?.characterId ?? "").slice(0, 80) || forCharacterIds[0] || "";
-  await loadMember(uid);
+  throttleRoll(uid, await loadMember(uid));
 
   // Fishing (the Fishing Pond thread only): any rod from the Snag Mall gets
   // you a weekly cast, and a better rod means better bites. Star odds by
@@ -3452,6 +3476,19 @@ export const approveNewUser = onCall(async (request) => {
   if (!newSnap.exists) throw new HttpsError("not-found", "That applicant no longer exists.");
   const data = newSnap.data()!;
 
+  // Never approve an unverified applicant: the login form also refuses them,
+  // so promoting one here would strand an account that can never sign in. A
+  // missing auth record fails the same way (nothing to verify against).
+  const authRecord = await getAuth()
+    .getUser(targetUid)
+    .catch(() => null);
+  if (!authRecord?.emailVerified) {
+    throw new HttpsError(
+      "failed-precondition",
+      "That applicant has not verified their email address yet. Ask them to open the verification link in their inbox, then approve them."
+    );
+  }
+
   // Create the promoted user doc (skip if one already exists to avoid clobber).
   if (!userSnap.exists) {
     await userRef.set({
@@ -4179,11 +4216,13 @@ export const onMemberUpdated = onDocumentUpdated("users/{uid}", async (event) =>
 });
 
 // --- Public profile projection --------------------------------------------
-// Profiles are world-readable, but the users doc holds PII (email, discordUID)
-// that must NOT be, and Firestore reads are per-document. So we mirror only the
+// Profiles are world-readable, but the users doc holds PII (email) that must
+// NOT be, and Firestore reads are per-document. So we mirror only the
 // world-safe display fields into publicProfiles/{uid}. Explicitly excludes
-// email, capabilities, isGaia, and every discord field (Discord stays visible
-// to signed-in members only, read from the members-only users doc).
+// email, capabilities, and isGaia. Discord (discordUID + discordUsername) is
+// mirrored ONLY when the member opted in via discordPublic on the users doc;
+// the mirror is rewritten with merge: false, so opting back out drops the
+// Discord fields on the next sync.
 function publicProfileFrom(data: FirebaseFirestore.DocumentData): Record<string, unknown> {
   return {
     username: data.username ?? "",
@@ -4193,6 +4232,9 @@ function publicProfileFrom(data: FirebaseFirestore.DocumentData): Record<string,
     signature: data.signature ?? "",
     emojis: Array.isArray(data.emojis) ? data.emojis : [],
     joinedAt: data.joinedAt ?? null,
+    ...(data.discordPublic === true && data.discordUID
+      ? { discordUID: data.discordUID, discordUsername: data.discordUsername ?? "" }
+      : {}),
   };
 }
 

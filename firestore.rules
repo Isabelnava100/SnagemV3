@@ -23,16 +23,24 @@ service cloud.firestore {
     function hasCap(cap) {
       return isAdmin() || (selfExists() && cap in self().get('capabilities', []));
     }
+    // Staff: admins plus any director holding at least one capability.
+    function isStaff() {
+      return isAdmin() || (selfExists() && self().get('capabilities', []).size() > 0);
+    }
     // A field is "unchanged" if the incoming write keeps its current value.
     function unchanged(field) {
       return request.resource.data.get(field, null) == resource.data.get(field, null);
     }
 
     // ---- Approved members --------------------------------------------------
-    // permissions/capabilities/badges are Admin-only; a user may edit the rest
-    // of their own doc (settings, myBookmarks, profile fields, etc).
+    // The user doc carries PII (email, discordUID) plus private settings, so
+    // reads are owner or staff only (staff = admins + capability holders).
+    // Members see each other through the world-safe publicProfiles/{uid}
+    // mirror instead. permissions/capabilities/badges are Admin-only writes;
+    // a user may edit the rest of their own doc (settings, myBookmarks,
+    // profile fields, etc).
     match /users/{uid} {
-      allow read: if isSignedIn();
+      allow read: if request.auth.uid == uid || isStaff();
       allow create: if isAdmin();            // promotion from NewUsers is admin/console only
       allow delete: if isAdmin();
       allow update: if isAdmin() || (
@@ -61,7 +69,7 @@ service cloud.firestore {
       }
       // Public-profile subset: WORLD-readable so logged-out visitors can view
       // profiles (see docs/PROFILE_DATA.md). These hold no PII. The user doc
-      // itself stays members-only (it has email + discordUID); its world-safe
+      // itself is owner/staff-only (it has email + discordUID); its world-safe
       // display fields are mirrored into the public publicProfiles/{uid} doc.
       // Writes stay owner/admin. Currency, items, bookmarks, drafts and
       // notifications remain private via the rules above/below.
@@ -112,9 +120,15 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == uid || isAdmin();
       }
       // In-app notifications: created by Cloud Functions only; the owner can
-      // read them, mark them read, and delete them.
+      // read them, mark them read, and delete them. The only client update is
+      // flipping the read flag (markNotificationsRead in src/queries/game.ts),
+      // so owner updates are diff-locked to `read`.
       match /notifications/{noteId} {
-        allow read, update, delete: if request.auth.uid == uid || isAdmin();
+        allow read, delete: if request.auth.uid == uid || isAdmin();
+        allow update: if isAdmin() || (
+          request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        );
         allow create: if false;
       }
     }
@@ -256,7 +270,19 @@ service cloud.firestore {
     // or their own bag here.
     match /importRequests/{uid} {
       allow read: if request.auth.uid == uid || isAdmin() || hasCap('ApproveImports');
-      allow create, update: if request.auth.uid == uid;
+      allow create: if request.auth.uid == uid;
+      // Owner updates are draft-building, submitting, and finishing onboarding
+      // (see src/queries/imports.ts): status may only move to draft, pending or
+      // completed. granted/rejected are reviewer-side transitions written by
+      // the approveImport / rejectImport Cloud Functions, so they stay off
+      // limits here. reviewerNote is the reviewer's field: the owner may leave
+      // it alone or clear it (submitImportRequest sends '' on resubmit), never
+      // write content into it. history is grant records, CF-written only.
+      allow update: if request.auth.uid == uid
+                    && request.resource.data.status in ['draft', 'pending', 'completed']
+                    && (unchanged('reviewerNote')
+                        || request.resource.data.get('reviewerNote', null) == '')
+                    && unchanged('history');
       allow delete: if false;
     }
 
@@ -284,8 +310,9 @@ service cloud.firestore {
     // Cloud Functions with the Admin SDK, so clients never write these.
     // World-safe mirror of each member's display fields (username, avatar,
     // badges, role, signature, emojis). Written only by the syncPublicProfile
-    // Cloud Function; never carries email or Discord. Public so logged-out
-    // visitors can view profiles.
+    // Cloud Function; never carries email, and carries Discord (discordUID +
+    // discordUsername) only for members who opted in via discordPublic.
+    // Public so logged-out visitors can view profiles.
     match /publicProfiles/{uid} {
       allow read: if true;
       allow write: if false;

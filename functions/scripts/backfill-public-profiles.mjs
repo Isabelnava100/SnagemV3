@@ -6,7 +6,9 @@
 //   gcloud auth application-default login   (or GOOGLE_APPLICATION_CREDENTIALS=key.json)
 //   node scripts/backfill-public-profiles.mjs
 //
-// Writes ONLY world-safe display fields. Never copies email or Discord.
+// Writes ONLY world-safe display fields. Never copies email; Discord
+// (discordUID + discordUsername) is copied only for members who opted in
+// via discordPublic on the users doc.
 
 import admin from "firebase-admin";
 
@@ -23,6 +25,9 @@ function publicProfileFrom(data) {
     signature: data.signature ?? "",
     emojis: Array.isArray(data.emojis) ? data.emojis : [],
     joinedAt: data.joinedAt ?? null,
+    ...(data.discordPublic === true && data.discordUID
+      ? { discordUID: data.discordUID, discordUsername: data.discordUsername ?? "" }
+      : {}),
   };
 }
 

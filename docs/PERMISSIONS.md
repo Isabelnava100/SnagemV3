@@ -108,6 +108,11 @@ enforce them. Priorities:
   `capabilities` are Admin-only** (deny client changes on create *and* update; pin
   `permissions` to a safe default on self-create). This is the single most
   important rule: without it any user can self-assign `permissions: "Admin"`.
+- **`users/{uid}` reads**: owner or staff only (`isStaff()` = Admin or any
+  capability holder). The doc holds email + discordUID + settings, so members
+  no longer read each other's user docs; cross-member display goes through the
+  world-safe `publicProfiles/{uid}` mirror (which also carries Discord id and
+  username only for members who opted in via `discordPublic`).
 - **`NewUsers/{uid}`**: create allowed for the authenticated owner; `permissions`
   pinned to `"New"`. Promotion to `users` is Admin/Cloud-Function only.
 - **`users/{uid}/bag/items`**: writable only by the owner or an Admin (blocks the
