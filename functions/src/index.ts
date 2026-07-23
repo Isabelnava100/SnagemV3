@@ -1247,6 +1247,20 @@ export const publishForumPost = onCall(async (request) => {
   // cost). Only out of battle, and it blocks battling this post + the next.
   const centerVisit = request.data?.centerVisit === true;
   const fighterIdReq = request.data?.fighterId ? String(request.data.fighterId).slice(0, 80) : "";
+  // Per-character battle actions: one pokemon from each participating character's
+  // team acts on that character's own encounter this post (fight or flee). When
+  // omitted, the single fighterId / fleeAttempt path handles the one encounter.
+  const battleActionsReq: { characterId: string; fighterId: string; action: string }[] =
+    Array.isArray(request.data?.battleActions)
+      ? (request.data.battleActions as any[])
+          .slice(0, 12)
+          .map((a) => ({
+            characterId: String(a?.characterId ?? "").slice(0, 80),
+            fighterId: String(a?.fighterId ?? "").slice(0, 80),
+            action: String(a?.action ?? "fight").slice(0, 20),
+          }))
+          .filter((a) => a.characterId)
+      : [];
   // Optional: evolve one of this post's team pokemon on publish (the composer
   // asks the poster to confirm first). Validated + applied server-side.
   const evolveReq =
@@ -2142,14 +2156,155 @@ export const publishForumPost = onCall(async (request) => {
       if (!others.length) pauseThread = true;
     }
 
+    // -- Per-character extra encounters: every OTHER posting character that has
+    // an active encounter takes a fight-or-flee turn with its own fighter this
+    // post (the first character's encounter was resolved above). Each fighter
+    // takes its own counter-damage. Catching (a ball) stays one-per-post on the
+    // first encounter; extras only fight/flee here.
+    const extraEncounters: Record<string, any>[] = [];
+    const extraBattles: Record<string, unknown>[] = [];
+    const extraBeatenSlugs: string[] = [];
+    const extraResolvedCharIds: string[] = []; // pending.encounters keys to delete
+    const extraSurvivingByChar: Record<string, Record<string, any>> = {};
+    if (!editPostId) {
+      for (const c of characters as Array<{ id: string; teamId?: string }>) {
+        const cid = String(c.id);
+        if (cid === encounterCharId) continue; // first encounter handled above
+        const encSrc = pendingEncounters[cid];
+        if (!encSrc) continue;
+        const enc: Record<string, any> = { ...encSrc };
+        const teamIds = c.teamId ? teamsData[c.teamId]?.pokemon_ids ?? [] : [];
+        if (!teamIds.length) continue;
+        const act = battleActionsReq.find((a) => a.characterId === cid);
+        let fid = act?.fighterId && teamIds.includes(act.fighterId) ? act.fighterId : "";
+        if (!fid) fid = teamIds.find((id) => !isFainted(id)) ?? teamIds[0];
+        if (!fid || isFainted(fid)) continue; // no conscious fighter to send
+        const action = act?.action === "flee" ? "flee" : "fight";
+        battledThisPost = true;
+
+        const fTypes = typesForDex(Number(ownedForXp[fid]?.pokedex ?? 0));
+        const fNature = natureOf(ownedForXp[fid], fid);
+        const fNatureKind = NATURES[fNature] ?? "neutral";
+        const fHeld = heldKeyOf(ownedForXp[fid]);
+        const fStatus = statusNow[fid];
+
+        if (safariCfg && enc.star) {
+          // Safari extra: a fight turn wears health down; flee ends it. No ball.
+          const postsToDefeat = Math.max(3, Number(enc.postsToDefeat) || 3);
+          let fightPosts = Number(enc.fightPosts) || 0;
+          const runAway = Math.max(0, Math.min(100, Number(safariCfg.runAwayChance) || 0));
+          let outcome = "weakened";
+          if (action === "flee") outcome = "fled";
+          else {
+            fightPosts += 1;
+            outcome = fightPosts >= postsToDefeat ? "ko" : "weakened";
+            if (outcome === "weakened" && runAway > 0 && randomInt(100) < runAway) outcome = "fled";
+          }
+          enc.fightPosts = fightPosts;
+          enc.outcome = outcome;
+          extraEncounters.push(enc);
+          if (outcome === "ko" || outcome === "fled") extraResolvedCharIds.push(cid);
+          else extraSurvivingByChar[cid] = enc;
+          continue; // safari deals no counter-damage in this model
+        }
+
+        // Normal extra encounter.
+        const required = Number(enc.required) || 1;
+        const enemyIdx = Number(catalogBySlug.get(String(enc.slug))?.idx ?? 0);
+        const enemyStar = Number(enc.star) || starForDex(enemyIdx);
+        const enemyTypes = typesForDex(enemyIdx);
+        let progress = Number(enc.progress) || 0;
+        const wasBeaten = progress >= required;
+
+        if (action === "flee" && enc.catchable && !wasBeaten) {
+          const chance = Math.min(
+            95,
+            fleeChanceForStar(enemyStar) +
+              (fNatureKind === "speed" ? mech.natureEffect : 0) +
+              (HELD_FLEE.has(fHeld) ? mech.heldFleeBonus : 0)
+          );
+          enc.fleeChance = chance;
+          if (randomInt(100) < chance) {
+            enc.outcome = "fled";
+            extraEncounters.push(enc);
+            extraResolvedCharIds.push(cid);
+            continue;
+          }
+          enc.outcome = "flee_failed";
+        }
+
+        // Attack: weaken the encounter (skipped on a failed flee or already beaten).
+        let attackMult = typeEffectiveness(fTypes, enemyTypes) * (mech.stab || 1);
+        attackMult *= weatherMult(threadWeather, fTypes, mech.weatherBoost);
+        if (fNatureKind === "attack") attackMult *= 1 + mech.natureEffect / 100;
+        if (HELD_ATTACK.has(fHeld) && mech.heldAttackBonus > 0) attackMult *= 1 + mech.heldAttackBonus / 100;
+        if (fStatus === "paralysis") attackMult *= mech.paralysisMult;
+        if (randomInt(10000) < Math.round(mech.critChance * 100)) attackMult *= mech.critMult;
+        attackMult = Math.round(attackMult * 100) / 100;
+        if (enc.outcome !== "flee_failed" && !wasBeaten) {
+          progress = Math.round((progress + attackMult) * 100) / 100;
+          enc.attackEffect = Math.round(typeEffectiveness(fTypes, enemyTypes) * 100) / 100;
+        }
+        enc.progress = progress;
+
+        // Enemy counter-attack on this character's fighter (a beaten foe never hits).
+        const nowBeaten = progress >= required;
+        let enemyHit = 0;
+        if (!nowBeaten) {
+          let defenseMult = typeEffectiveness(enemyTypes, fTypes);
+          defenseMult *= weatherMult(threadWeather, enemyTypes, mech.weatherBoost);
+          if (fNatureKind === "defense") defenseMult *= 1 - mech.natureEffect / 100;
+          if (HELD_DEFENSE.has(fHeld) && mech.heldDefenseBonus > 0) defenseMult *= 1 - mech.heldDefenseBonus / 100;
+          const enemyCrit = randomInt(10000) < Math.round(mech.critChance * 100);
+          enemyHit = Math.max(
+            1,
+            Math.round(starDamageFrom(battleCfg, enemyStar) * defenseMult * (enemyCrit ? mech.critMult : 1))
+          );
+          enc.defenseEffect = Math.round(typeEffectiveness(enemyTypes, fTypes) * 100) / 100;
+        }
+        if (enemyHit > 0) {
+          const maxHp = maxHpOf(fid);
+          const before = Number(damageNow[fid]) || 0;
+          const healTick = HELD_HEAL.has(fHeld) && mech.heldHealTick > 0 ? mech.heldHealTick : 0;
+          let total = Math.min(maxHp, Math.max(0, before + enemyHit - healTick));
+          if (HELD_SURVIVE.has(fHeld) && before === 0 && total >= maxHp) total = maxHp - 1;
+          damageNow[fid] = total;
+          const fi = ownedForXp[fid] ?? {};
+          extraBattles.push({
+            fighterId: fid,
+            fighterName: String(fi.species ?? fi.name ?? "Your pokemon"),
+            fighterSlug: String(fi.image_slug ?? ""),
+            damageTaken: enemyHit,
+            maxHp,
+            hpLeft: maxHp - total,
+            fainted: total >= maxHp,
+            nature: fNature,
+          });
+        }
+        if (thread.missionId && progress >= required) extraBeatenSlugs.push(String(enc.slug ?? ""));
+
+        enc.forCharacterIds = [cid];
+        enc.characterId = cid;
+        extraEncounters.push(enc);
+        const trainerBeaten = !enc.catchable && progress >= required;
+        if (trainerBeaten) extraResolvedCharIds.push(cid);
+        else extraSurvivingByChar[cid] = enc;
+      }
+    }
+
     const blocks: Record<string, unknown> = {};
     if (centerVisit && !editPostId) blocks.center = { healed: true };
     if (megaInfo) blocks.mega = { ...megaInfo };
     if (zInfo) blocks.z = { ...zInfo };
     if (battleFx.usedNames.length) blocks.battleItems = battleFx.usedNames.slice();
-    if (encounter) blocks.encounters = [encounter];
+    // Encounters resolved this post: the first character's plus every extra.
+    const allEncounterBlocks = [...(encounter ? [encounter] : []), ...extraEncounters];
+    if (allEncounterBlocks.length) blocks.encounters = allEncounterBlocks;
     if (battleBlock) blocks.battle = battleBlock;
     else if (healsOnlyBlock) blocks.battle = healsOnlyBlock;
+    // Per-fighter battle results (first fighter + every extra fighter that was hit).
+    const allBattleBlocks = [...(battleBlock ? [battleBlock] : []), ...extraBattles];
+    if (allBattleBlocks.length) blocks.battles = allBattleBlocks;
     if (itemsUsed.length) {
       blocks.itemsUsed = itemsUsed.map(({ isBall, isFood, category, ...item }) => item);
     }
@@ -2439,9 +2594,13 @@ export const publishForumPost = onCall(async (request) => {
             : {}),
           // Mission requirement bookkeeping: a beaten (or caught) foe joins the
           // thread's defeated list, checked when the host closes the thread.
-          ...(encounterBeatenSlug
-            ? { defeatedEncounters: FieldValue.arrayUnion(encounterBeatenSlug) }
-            : {}),
+          // Includes every character's foe beaten on this post.
+          ...((() => {
+            const beaten = [encounterBeatenSlug, ...extraBeatenSlugs].filter(Boolean);
+            return beaten.length
+              ? { defeatedEncounters: FieldValue.arrayUnion(...beaten) }
+              : {};
+          })()),
           // Per-pokemon damage entries that changed this post (heals + hit).
           // Skipped entirely on a Center visit (the whole map is deleted).
           ...(centerVisit
@@ -2551,11 +2710,22 @@ export const publishForumPost = onCall(async (request) => {
       const pendingUpdate: Record<string, unknown> = {};
       if (pending.dice) pendingUpdate.dice = FieldValue.delete();
       if (pending.random) pendingUpdate.random = FieldValue.delete();
+      // First (or legacy) encounter.
+      const encountersUpdate: Record<string, unknown> = {};
       if (encounter) {
         const encVal = encounterSurvives ? encounter : FieldValue.delete();
-        if (encounterCharId) pendingUpdate.encounters = { [encounterCharId]: encVal };
+        if (encounterCharId) encountersUpdate[encounterCharId] = encVal;
         else pendingUpdate.encounter = encVal;
       }
+      // Per-character extras: surviving ones keep their new state, resolved ones
+      // (fled / trainer-beaten) are cleared. Other characters stay untouched.
+      Object.entries(extraSurvivingByChar).forEach(([cid, enc]) => {
+        encountersUpdate[cid] = enc;
+      });
+      extraResolvedCharIds.forEach((cid) => {
+        encountersUpdate[cid] = FieldValue.delete();
+      });
+      if (Object.keys(encountersUpdate).length) pendingUpdate.encounters = encountersUpdate;
       if (Object.keys(pendingUpdate).length) tx.set(pRef, pendingUpdate, { merge: true });
     }
     return {
