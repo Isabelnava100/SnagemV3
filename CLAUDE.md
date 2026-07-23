@@ -3,6 +3,11 @@
 Pokemon roleplay community site (forums, dashboard, character/team management).
 Live: snagemguild.com. Deploy: Netlify (`netlify.toml`, SPA redirect to index.html).
 
+**Setting this up on a new machine? Read `docs/SETUP.md` first.** It covers the
+`.env` you must create by hand, `firebase use snagemguild` (there is no
+`.firebaserc` in the repo), where the runtime secrets actually live, both
+deploy paths, and the environment gotchas.
+
 ## Writing style
 
 - NEVER use em dashes anywhere: user-facing copy, UI text, descriptions, placeholders, docs, code comments, or commit messages. Rewrite with a comma, colon, period, parentheses, or by rephrasing, and fix grammar so the sentence reads correctly. This applies to all new writing and to any existing text you touch.
