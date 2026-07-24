@@ -1,11 +1,9 @@
 import {
   ActionIcon,
-  Alert,
   Avatar,
   Box,
   Flex,
   Image,
-  ScrollArea,
   Stack,
   TagsInput,
   Text,
@@ -17,7 +15,6 @@ import { useDebouncedValue } from "@mantine/hooks";
 import { IconExternalLink, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useMemo, useState } from "react";
-import { IconInfoCircle } from "@tabler/icons-react";
 import DOMPurify from "dompurify";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
@@ -53,74 +50,64 @@ export default function Profile() {
   if (isLoading) return <SectionLoader />;
   if (isError) return <></>;
   return (
-    <Stack gap={10} w="100%">
+    <Stack gap={18} w="100%">
       {/* Everything below edits the public profile; this jumps to the real thing. */}
       {user?.username && (
         <GradientButtonSecondary
-          radius="xl"
-          size="xs"
+          size="sm"
           w="fit-content"
+          gradient={{ from: "#912691", to: "#14e0de", deg: 90 }}
           rightSection={<IconExternalLink size={14} />}
           onClick={() => navigate(`/Users/${user.username}`)}
         >
           View your public profile
         </GradientButtonSecondary>
       )}
-      <Flex
-        gap={10}
-        sx={{ flexDirection: isOverLg ? "row" : "column" }}
-        justify="space-between"
-        align="stretch"
+      {/* Mockup: 5fr / 7fr two-column grid on desktop, single column on mobile. */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: isOverLg ? "5fr 7fr" : "1fr",
+          gap: 18,
+          alignItems: "start",
+        }}
       >
         <LeftSideContent />
         <RightSideContent />
-      </Flex>
+      </Box>
     </Stack>
   );
 }
 
 function LeftSideContent() {
-  const { isOverLg } = useMediaQuery();
   return (
-    <Stack w="100%" maw={isOverLg ? 450 : undefined} gap={15}>
+    <Stack w="100%" miw={0} gap={18}>
       <Avatars />
       <CoverBackgrounds />
       <Tags />
-      <FeaturedPicks />
     </Stack>
   );
 }
 
-/**
- * Sticky save bar: stays pinned to the bottom of the description column via
- * CSS `position: sticky` (in-flow, no fixed overlap), so there's a single,
- * always-reachable save action while editing.
- */
-function StickySaveBar(props: { onSave: () => void; loading?: boolean }) {
+/** Quantico panel heading used by every profile card (mockup: 16px desktop, 14px mobile). */
+function SectionTitle(props: { children: React.ReactNode }) {
+  const { isOverLg } = useMediaQuery();
   return (
-    <Box
-      sx={{
-        position: "sticky",
-        bottom: 8,
-        zIndex: 5,
-        marginTop: 8,
-        padding: 8,
-        borderRadius: 0,
-        background: "rgba(30, 29, 32, 0.92)",
-        backdropFilter: "blur(4px)",
-        border: "1px solid #2a2637",
-      }}
+    <Text
+      fz={isOverLg ? 16 : 14}
+      fw={700}
+      c="white"
+      tt="uppercase"
+      style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.1em" }}
     >
-      <GradientButtonPrimary fullWidth radius="xl" loading={props.loading} onClick={props.onSave}>
-        Save Your Changes
-      </GradientButtonPrimary>
-    </Box>
+      {props.children}
+    </Text>
   );
 }
 
 function Wrapper(props: { children: React.ReactNode } & StackProps) {
   const { isOverLg } = useMediaQuery();
-  const { children, p = isOverLg ? 25 : 15, sx, style, ...restProps } = props;
+  const { children, p = isOverLg ? "24px 26px" : "18px 16px", sx, style, ...restProps } = props;
   // Redesigned surface: the dark angular panel from the mockup replaces the old
   // grey rounded card. Inline style wins over any caller `sx` radius so every
   // profile card reads angular. (Kept `sx` passthrough for layout overrides.)
@@ -150,6 +137,7 @@ function EmptyMessage(props: { message: string }) {
 
 function Avatars() {
   const { data } = useProfileQuery();
+  const { isOverLg } = useMediaQuery();
   const [fileBlob, setFileBlob] = useState<Blob>();
   const [isProcessing, setProcessing] = useState(false);
   const { user } = useAuth();
@@ -268,108 +256,95 @@ function Avatars() {
   }, [fileBlob]);
 
   return (
-    <Wrapper
-      sx={{
-        display: "flex",
-        borderRadius: 22,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 14,
-      }}
-      p={16}
-    >
-      <Avatar
-        src={user?.avatar || DefaultAvatar}
-        alt={`${user?.displayName ?? user?.username ?? "Your"} avatar`}
-        w={100}
-        h={100}
-        sx={{ borderRadius: "100%", flexShrink: 0, border: "4px solid white" }}
-      />
-      <Stack w="100%" maw="100%" sx={{ flex: 1, overflow: "hidden" }}>
-        <Flex w="100%" justify="space-between" align="center">
-          <Text
-            fz={16}
-            fw={700}
-            c="white"
-            tt="uppercase"
-            style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.1em" }}
-          >
-            Avatars
-          </Text>
-          <UploadAndCropImage
-            setStateAction={setFileBlob}
-            target={
-              <GradientButtonPrimary
-                disabled={isProcessing || !canUpload}
-                loading={isProcessing}
-                rightSection={<Image src={Upload} alt="Upload" />}
-              >
-                Upload
-              </GradientButtonPrimary>
-            }
-          />
-        </Flex>
-        {!canUpload && (
-          <Text fz={14} c="#E54156">
-            You&apos;ve reached the max of {MAX_ITEMS_COUNT} avatars. Remove one before adding more.
-          </Text>
-        )}
-        <Conditional
-          condition={!!data?.avatars?.length}
-          component={
-            <ScrollArea pb={20}>
-              <Flex gap={6} sx={{ flexWrap: "nowrap" }}>
-                {/* all of them except the one the has picked as his profile avatar */}
-                {data &&
-                  data.avatars &&
-                  data.avatars
-                    .filter((avatarUrl) => avatarUrl !== user?.avatar)
-                    .reverse()
-                    .map((avatarUrl) => {
-                      return (
-                        <div key={avatarUrl} className="relative">
-                          <Avatar
-                            onClick={() => handleSelectAvatar(avatarUrl)}
-                            src={avatarUrl}
-                            alt="Saved avatar option"
-                            w={60}
-                            h={60}
-                            radius="xl"
-                            sx={{ cursor: "pointer" }}
-                          />
-                          <div className="absolute top-0 right-0">
-                            <Tooltip label="Remove">
-                              <ActionIcon
-                                onClick={() => handleRemoveAvatar(avatarUrl)}
-                                color="red"
-                                variant="filled"
-                                radius="xl"
-                                size="xs"
-                              >
-                                <IconX />
-                              </ActionIcon>
-                            </Tooltip>
-                          </div>
-                        </div>
-                      );
-                    })}
-                {Array(REMAINING_ITEMS_COUNT)
-                  .fill(0)
-                  .map((_) => (
-                    <Box key={uuid()} bg="#3C3A3C" w={60} h={60} sx={{ borderRadius: "100%" }} />
-                  ))}
-              </Flex>
-            </ScrollArea>
+    <Wrapper>
+      <Flex w="100%" justify="space-between" align="center" mb={14}>
+        <SectionTitle>Avatars</SectionTitle>
+        <UploadAndCropImage
+          setStateAction={setFileBlob}
+          target={
+            <GradientButtonPrimary
+              disabled={isProcessing || !canUpload}
+              loading={isProcessing}
+              rightSection={<Image src={Upload} alt="Upload" />}
+            >
+              Upload
+            </GradientButtonPrimary>
           }
-          fallback={<EmptyMessage message="No avatars found" />}
         />
-      </Stack>
+      </Flex>
+      {!canUpload && (
+        <Text fz={14} c="#E54156" mb={10}>
+          You&apos;ve reached the max of {MAX_ITEMS_COUNT} avatars. Remove one before adding more.
+        </Text>
+      )}
+      <Flex gap={14} wrap="wrap" align="center">
+        {/* The picked avatar leads the row: larger circle with the gold ring
+            (mockup). It keeps its remove action hidden, exactly as before when
+            it was excluded from the list, so the active avatar can't be
+            deleted out from under the profile. */}
+        <Box sx={{ position: "relative", flexShrink: 0 }}>
+          <Avatar
+            src={user?.avatar || DefaultAvatar}
+            alt={`${user?.displayName ?? user?.username ?? "Your"} avatar (selected)`}
+            w={isOverLg ? 86 : 70}
+            h={isOverLg ? 86 : 70}
+            sx={{ borderRadius: "100%", border: "3px solid #FFD074" }}
+          />
+        </Box>
+        {/* all of them except the one the has picked as his profile avatar */}
+        {data &&
+          data.avatars &&
+          data.avatars
+            .filter((avatarUrl) => avatarUrl !== user?.avatar)
+            .reverse()
+            .map((avatarUrl) => {
+              return (
+                <Box key={avatarUrl} sx={{ position: "relative", flexShrink: 0 }}>
+                  <Avatar
+                    onClick={() => handleSelectAvatar(avatarUrl)}
+                    src={avatarUrl}
+                    alt="Saved avatar option"
+                    w={60}
+                    h={60}
+                    radius="xl"
+                    sx={{ cursor: "pointer", border: "1px solid #2a2637" }}
+                  />
+                  <Box sx={{ position: "absolute", top: -4, right: -4 }}>
+                    <Tooltip label="Remove">
+                      <ActionIcon
+                        onClick={() => handleRemoveAvatar(avatarUrl)}
+                        color="red"
+                        variant="filled"
+                        radius="xl"
+                        size="xs"
+                        aria-label="Delete avatar"
+                      >
+                        <IconX />
+                      </ActionIcon>
+                    </Tooltip>
+                  </Box>
+                </Box>
+              );
+            })}
+        {Array(REMAINING_ITEMS_COUNT)
+          .fill(0)
+          .map((_) => (
+            <Box
+              key={uuid()}
+              bg="#3C3A3C"
+              w={60}
+              h={60}
+              sx={{ borderRadius: "100%", border: "1px solid #2a2637", flexShrink: 0 }}
+            />
+          ))}
+      </Flex>
     </Wrapper>
   );
 }
 
 function CoverBackgrounds() {
   const { data } = useProfileQuery();
+  const { isOverLg } = useMediaQuery();
   const [fileBlob, setFileBlob] = useState<Blob>();
   const [isProcessing, setProcessing] = useState(false);
   const { user } = useAuth();
@@ -484,109 +459,111 @@ function CoverBackgrounds() {
   }, [fileBlob]);
 
   return (
-    <Wrapper p={16}>
-      <Stack>
-        <Flex w="100%" justify="space-between" align="center">
-          <Text
-            fz={16}
-            fw={700}
-            c="white"
-            tt="uppercase"
-            style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.1em" }}
-          >
-            Cover Background
-          </Text>
-          <UploadAndCropImage
-            setStateAction={setFileBlob}
-            target={
-              <GradientButtonPrimary
-                disabled={isProcessing || !canUpload}
-                loading={isProcessing}
-                rightSection={<Image src={Upload} alt="Upload" />}
-              >
-                Upload
-              </GradientButtonPrimary>
-            }
-          />
-        </Flex>
-        {!canUpload && (
-          <Text fz={14} c="#E54156">
-            You&apos;ve reached the max of 6 cover backgrounds. Remove one before adding more.
-          </Text>
-        )}
-        <Conditional
-          condition={!!data?.cover_backgrounds?.length}
-          component={
-            <ScrollArea pb={12} offsetScrollbars>
-              <Flex gap={12} sx={{ flexWrap: "nowrap" }}>
-                {data &&
-                  data.cover_backgrounds &&
-                  data.cover_backgrounds
-                    .slice()
-                    .reverse()
-                    .map((cover_background_url) => {
-                      const isActive = data.coverBG === cover_background_url;
-                      return (
-                        <Box
-                          key={cover_background_url}
-                          onClick={() => handleSelectCoverImage(cover_background_url)}
-                          role="img"
-                          aria-label={isActive ? "Selected cover background" : "Cover background option"}
-                          sx={{
-                            position: "relative",
-                            flexShrink: 0,
-                            width: 180,
-                            height: 100,
-                            borderRadius: 12,
-                            overflow: "hidden",
-                            cursor: "pointer",
-                            border: isActive ? "3px solid #17F1F0" : "2px solid #5a545f",
-                            backgroundImage: `url(${cover_background_url})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }}
-                        >
-                          {isActive && (
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                bottom: 0,
-                                left: 0,
-                                width: "100%",
-                                padding: "4px 0",
-                                background: "rgba(0,0,0,0.55)",
-                              }}
-                            >
-                              <Text tt="uppercase" c="white" ta="center" fw="bold" fz={14}>
-                                Selected
-                              </Text>
-                            </Box>
-                          )}
-                          <Box sx={{ position: "absolute", top: 4, right: 4 }}>
-                            <Tooltip label="Remove">
-                              <ActionIcon
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRemoveCoverImage(cover_background_url);
-                                }}
-                                color="red"
-                                variant="filled"
-                                radius="xl"
-                                size="sm"
-                              >
-                                <IconX size={14} />
-                              </ActionIcon>
-                            </Tooltip>
-                          </Box>
-                        </Box>
-                      );
-                    })}
-              </Flex>
-            </ScrollArea>
+    <Wrapper>
+      <Flex w="100%" justify="space-between" align="center" mb={14}>
+        <SectionTitle>Cover Background</SectionTitle>
+        <UploadAndCropImage
+          setStateAction={setFileBlob}
+          target={
+            <GradientButtonPrimary
+              disabled={isProcessing || !canUpload}
+              loading={isProcessing}
+              rightSection={<Image src={Upload} alt="Upload" />}
+            >
+              Upload
+            </GradientButtonPrimary>
           }
-          fallback={<EmptyMessage message="No covers found" />}
         />
-      </Stack>
+      </Flex>
+      {!canUpload && (
+        <Text fz={14} c="#E54156" mb={14}>
+          You&apos;ve reached the max of 6 cover backgrounds. Remove one before adding more.
+        </Text>
+      )}
+      <Conditional
+        condition={!!data?.cover_backgrounds?.length}
+        component={
+          /* Mockup: 2-column swatch grid; the active cover gets a cyan border
+             and a SELECTED tag strip along the bottom. */
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: isOverLg ? 12 : 10,
+            }}
+          >
+            {data &&
+              data.cover_backgrounds &&
+              data.cover_backgrounds
+                .slice()
+                .reverse()
+                .map((cover_background_url) => {
+                  const isActive = data.coverBG === cover_background_url;
+                  return (
+                    /* Outer wrapper stays visible so the delete button can
+                       overhang the swatch corner (mockup). */
+                    <Box key={cover_background_url} sx={{ position: "relative" }}>
+                      <Box
+                        onClick={() => handleSelectCoverImage(cover_background_url)}
+                        role="img"
+                        aria-label={isActive ? "Selected cover background" : "Cover background option"}
+                        sx={{
+                          height: isOverLg ? 76 : 60,
+                          overflow: "hidden",
+                          cursor: "pointer",
+                          border: isActive ? "2px solid #14e0de" : "1px solid #2a2637",
+                          backgroundImage: `url(${cover_background_url})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          display: "flex",
+                          alignItems: "flex-end",
+                          justifyContent: "center",
+                          "&:hover": { borderColor: "#12B7B6" },
+                        }}
+                      >
+                        {isActive && (
+                          <Text
+                            tt="uppercase"
+                            c="white"
+                            ta="center"
+                            fw={700}
+                            fz={isOverLg ? 14 : 10}
+                            w="100%"
+                            py={4}
+                            sx={{
+                              fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+                              letterSpacing: "0.16em",
+                              background: "rgba(10,9,13,0.6)",
+                            }}
+                          >
+                            Selected
+                          </Text>
+                        )}
+                      </Box>
+                      <Box sx={{ position: "absolute", top: -4, right: -4 }}>
+                        <Tooltip label="Remove">
+                          <ActionIcon
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveCoverImage(cover_background_url);
+                            }}
+                            color="red"
+                            variant="filled"
+                            radius="xl"
+                            size="sm"
+                            aria-label="Delete cover"
+                          >
+                            <IconX size={14} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  );
+                })}
+          </Box>
+        }
+        fallback={<EmptyMessage message="No covers found" />}
+      />
     </Wrapper>
   );
 }
@@ -639,30 +616,32 @@ function Tags() {
   }, [items.length]);
 
   return (
-    <Wrapper p={16}>
-      <Stack>
-        <Flex align="start" justify="center">
-          <Text
-            fz={16}
-            fw={700}
-            c="white"
-            tt="uppercase"
-            style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.1em" }}
-          >
-            Tags
-          </Text>
-          <Alert icon={<IconInfoCircle />} py={0} color="gray" bg="transparent" sx={{ flex: 1 }}>
-            Maximum 6 tags allowed. These are used to make filtering and searching easy on the users
-            page.
-          </Alert>
-        </Flex>
-        <TagsInput
-          onChange={(values) => setItems(values.map((value) => ({ value, label: value })))}
-          disabled={processing}
-          value={items.map((selectItem) => selectItem.value)}
-          maxTags={6}
-        />
-      </Stack>
+    <Wrapper>
+      <SectionTitle>Tags</SectionTitle>
+      <Text fz={14} c="#b6b1bc" mt={8} mb={14}>
+        Maximum 6 tags allowed. These are used to make filtering and searching easy on the users
+        page.
+      </Text>
+      {/* Mockup pills: dark grey rounded chips; TagsInput keeps the add/remove
+          behavior and the 6-tag cap. */}
+      <TagsInput
+        onChange={(values) => setItems(values.map((value) => ({ value, label: value })))}
+        disabled={processing}
+        value={items.map((selectItem) => selectItem.value)}
+        maxTags={6}
+        styles={{
+          pill: {
+            background: "#3C3A3C",
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 700,
+            borderRadius: 50,
+            padding: "7px 8px 7px 14px",
+            height: "auto",
+          },
+          input: { background: "#0e0d11", borderColor: "#2a2637" },
+        }}
+      />
     </Wrapper>
   );
 }
@@ -706,9 +685,9 @@ function RightSideContent() {
   }, [debounced]);
 
   return (
-    <Stack sx={{ flex: 1 }}>
-      <Wrapper id="profile-save-anchor" sx={{ flex: 1, borderRadius: 22 }}>
-        <Flex justify="space-between" align="center">
+    <Stack miw={0} gap={18}>
+      <Wrapper id="profile-save-anchor">
+        <Flex justify="space-between" align="center" mb={10}>
           <Title
             c="white"
             order={2}
@@ -718,14 +697,29 @@ function RightSideContent() {
           >
             Description
           </Title>
-          {isLoading && <Text>Saving changes...</Text>}
-          {isSuccess && <Text color="green">Saved</Text>}
+          <Text fz={14} c={isLoading ? "dimmed" : "#12B7B6"} role="status" aria-live="polite">
+            {isLoading ? "Saving changes..." : isSuccess ? "Saved" : ""}
+          </Text>
         </Flex>
-        <Box sx={{ borderRadius: 12, overflow: "hidden" }}>
+        <Text fz={14} fw={700} c="#12B7B6" mb={10}>
+          The content is automatically saved.
+        </Text>
+        <Box sx={{ border: "1px solid #2a2637", overflow: "hidden" }}>
           <Editor editor={editor} />
         </Box>
-        <StickySaveBar onSave={() => mutate()} loading={isLoading} />
+        <GradientButtonPrimary
+          fullWidth
+          mt={16}
+          loading={isLoading}
+          onClick={() => mutate()}
+          styles={{ root: { paddingTop: 16, paddingBottom: 16, height: "auto" } }}
+        >
+          Save Your Changes
+        </GradientButtonPrimary>
       </Wrapper>
+      {/* Featured picks moved to the right column under Description (desktop
+          mockup); on mobile it simply stacks below. */}
+      <FeaturedPicks />
     </Stack>
   );
 }

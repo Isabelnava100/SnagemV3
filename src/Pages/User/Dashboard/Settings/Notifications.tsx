@@ -15,7 +15,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ConfirmPopover } from "../../../../components/common/ConfirmPopover";
-import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
+import GradientButtonPrimary, {
+  GradientButtonSecondary,
+} from "../../../../components/common/GradientButton";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { Settings } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
@@ -32,18 +34,25 @@ import {
 interface CustomSwitchProps extends SwitchProps {}
 
 // NOTE: the forwarded ref is accepted but never attached to the inner Switch.
+// Mockup toggle: cyan track (#12B7B6) when on, dark grey (#3C3A3C) when off;
+// both come from the Switch CSS vars so the checked state keeps its color.
 const CustomSwitch = React.forwardRef<HTMLInputElement, CustomSwitchProps>((props, _ref) => {
   const { label, ...restProps } = props;
   return (
     <Switch
       label={label}
       size="md"
-      color="cyan.1"
-      styles={{ label: { color: "white" } }}
+      style={{ "--switch-bg": "#3C3A3C", "--switch-color": "#12B7B6" } as React.CSSProperties}
+      styles={{ label: { color: "white", fontWeight: 700, fontSize: 15 } }}
       {...restProps}
     />
   );
 });
+
+/** Thin section separator used between settings groups (mockup border-top). */
+function SectionDivider() {
+  return <Box mt={18} pt={18} sx={{ borderTop: "1px solid #2a2637" }} />;
+}
 
 /**
  * In-app notification inbox (Q7): bookmarked-thread posts, @mentions, boss
@@ -309,24 +318,35 @@ function FriendCodeSection() {
 
   return (
     <Stack gap={6}>
-      <TextInput
-        label="Switch friend code"
-        placeholder="SW-0000-0000-0000"
-        description="Used to prefill tournament registrations in the Colosseum."
-        value={code}
-        onChange={(e) => setCode(e.currentTarget.value)}
-        maw={320}
-      />
-      <Button
-        size="xs"
-        variant="light"
-        w="fit-content"
-        loading={saveMutation.isPending}
-        disabled={code.trim() === (savedCode ?? "")}
-        onClick={() => saveMutation.mutate()}
+      <Text
+        c="white"
+        fz={15}
+        fw={700}
+        style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.08em" }}
       >
-        Save friend code
-      </Button>
+        SWITCH FRIEND CODE
+      </Text>
+      <Text fz={14} c="#b6b1bc">
+        Used to prefill tournament registrations in the Colosseum.
+      </Text>
+      <Group gap={10} wrap="wrap" align="center">
+        <TextInput
+          aria-label="Switch friend code"
+          placeholder="SW-0000-0000-0000"
+          value={code}
+          onChange={(e) => setCode(e.currentTarget.value)}
+          w={260}
+          styles={{ input: { background: "#0e0d11", borderColor: "#2a2637" } }}
+        />
+        <GradientButtonPrimary
+          size="sm"
+          loading={saveMutation.isPending}
+          disabled={code.trim() === (savedCode ?? "")}
+          onClick={() => saveMutation.mutate()}
+        >
+          Save friend code
+        </GradientButtonPrimary>
+      </Group>
       {status && (
         <Text fz={14} c="dimmed" role="status" aria-live="polite">
           {status}
@@ -414,8 +434,11 @@ export default function Notifications() {
   if (isError) return <></>;
 
   return (
-    <Box className="bg-[#17151c] border border-[#2a2637] max-w-full flex-1 overflow-auto p-4">
-      <Stack>
+    <Box
+      className="bg-[#17151c] border border-[#2a2637] max-w-full flex-1 overflow-auto"
+      p={{ base: "18px 16px", lg: "28px 32px" }}
+    >
+      <Stack gap={18}>
         <NotificationsInbox />
         <CustomSwitch
           {...getInputProps("siteNotifications", { type: "checkbox" })}
@@ -426,7 +449,7 @@ export default function Notifications() {
             {...getInputProps("discordNotifications", { type: "checkbox" })}
             label="Enable Discord notifications"
           />
-          <Text fz={14} c="dimmed">
+          <Text fz={14} c="#b6b1bc">
             Your site notifications also ping you in the guild's Discord
             notifications channel (never a private message). Requires a
             connected Discord account below.
@@ -434,7 +457,9 @@ export default function Notifications() {
           <ConnectDiscord />
           <DiscordPublicToggle />
         </Stack>
+        <SectionDivider />
         <FriendCodeSection />
+        <SectionDivider />
         <CustomSwitch
           {...getInputProps("postsAndBookmarkedThreadsNotification", { type: "checkbox" })}
           label="Receive notifications for new posts on your bookmarked threads"
@@ -445,10 +470,20 @@ export default function Notifications() {
         />
         <Stack gap={2}>
           <CustomSwitch
+            {...getInputProps("emailUpdates", { type: "checkbox" })}
+            label="Receive information via Email"
+          />
+          <Text fz={14} c="#b6b1bc">
+            Announcements and site updates by email. Account emails such as
+            password resets always come through, even with this off.
+          </Text>
+        </Stack>
+        <Stack gap={2}>
+          <CustomSwitch
             {...getInputProps("weeklyReminders", { type: "checkbox" })}
             label="Weekly reset reminders"
           />
-          <Text fz={14} c="dimmed">
+          <Text fz={14} c="#b6b1bc">
             A Sunday nudge if your Snag List is unfinished, plus a Monday ping when it
             resets, the Fishing Pond restocks, and your weekly cast is back.
           </Text>
@@ -458,7 +493,7 @@ export default function Notifications() {
             {...getInputProps("activityNotifications", { type: "checkbox" })}
             label="Activity notifications"
           />
-          <Text fz={14} c="dimmed">
+          <Text fz={14} c="#b6b1bc">
             Off by default. Turn on to be pinged when someone makes an offer on your
             trade listing and when your Daycare egg is ready to hatch.
           </Text>

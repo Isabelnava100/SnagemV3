@@ -101,10 +101,10 @@ const BadgePill = React.forwardRef<
     style={{
       background,
       color: "white",
-      fontSize: 20,
-      fontWeight: 400,
+      fontSize: 14,
+      fontWeight: 700,
       lineHeight: 1,
-      padding: "7px 16px",
+      padding: "8px 18px",
       borderRadius: 999,
       whiteSpace: "nowrap",
       display: "inline-flex",
@@ -118,6 +118,22 @@ const BadgePill = React.forwardRef<
   </Box>
 ));
 
+/** Quantico section heading shared by the collections panels (mockup). */
+function SectionTitle(props: { children: React.ReactNode; order?: 2 | 3 | 4 }) {
+  return (
+    <Title
+      order={props.order ?? 3}
+      c="white"
+      fz={17}
+      fw={700}
+      tt="uppercase"
+      style={{ fontFamily: "var(--font-display, 'Quantico', sans-serif)", letterSpacing: "0.08em" }}
+    >
+      {props.children}
+    </Title>
+  );
+}
+
 function BadgesSectionWrapper(props: {
   title: string;
   secondaryText?: string;
@@ -125,24 +141,32 @@ function BadgesSectionWrapper(props: {
   showEnabledOnly?: boolean;
   onToggle: (badge: Badge) => void;
   toggling: boolean;
+  /** Mockup right-aligns the "disabled" column on desktop. */
+  alignEnd?: boolean;
 }) {
-  const { title, secondaryText, badges, showEnabledOnly = true, onToggle, toggling } = props;
+  const {
+    title,
+    secondaryText,
+    badges,
+    showEnabledOnly = true,
+    onToggle,
+    toggling,
+    alignEnd = false,
+  } = props;
   const enabledBadges = badges.filter((badge) => badge.enabled);
   const disabledBadges = badges.filter((badge) => !badge.enabled);
   const displayedBadges = showEnabledOnly ? enabledBadges : disabledBadges;
   return (
-    <Stack gap={12}>
-      <Group align="center">
-        <Title size={28} c="white" fw={400} order={3}>
-          {title}
-        </Title>
+    <Stack gap={12} sx={{ flex: 1, minWidth: 0 }}>
+      <Group align="baseline" gap={12} justify={alignEnd ? "flex-end" : undefined}>
+        <SectionTitle>{title}</SectionTitle>
         {secondaryText && (
-          <Text c="rgba(255, 255, 255, 0.50)" fz={20} fw={400}>
+          <Text c="#b6b1bc" fz={14} fw={400}>
             {secondaryText}
           </Text>
         )}
       </Group>
-      <Flex gap={8} wrap="wrap">
+      <Flex gap={8} wrap="wrap" justify={alignEnd ? "flex-end" : undefined}>
         {displayedBadges.map((badge) => (
           <BadgePill
             key={badge.label}
@@ -154,7 +178,7 @@ function BadgesSectionWrapper(props: {
           />
         ))}
         {!displayedBadges.length && (
-          <Text fz={14} c="dimmed">
+          <Text fz={14} c="#b6b1bc">
             {showEnabledOnly ? "No badges inserted." : "Nothing here."}
           </Text>
         )}
@@ -209,11 +233,9 @@ function AutoBadges() {
 
   return (
     <Stack gap={8}>
-      <Group gap={6} align="center">
-        <Title size={22} c="white" fw={400} order={4}>
-          Earned Automatically
-        </Title>
-        <Text c="rgba(255, 255, 255, 0.50)" fz={14}>
+      <Group gap={12} align="baseline">
+        <SectionTitle order={4}>Earned Automatically</SectionTitle>
+        <Text c="#b6b1bc" fz={14}>
           from your account status
         </Text>
       </Group>
@@ -241,7 +263,7 @@ function AutoBadges() {
           );
         })}
       </Flex>
-      <Text c="rgba(255, 255, 255, 0.50)" fz={14}>
+      <Text c="#b6b1bc" fz={14}>
         Click a badge to hide it from your public profile (or show it again).
       </Text>
     </Stack>
@@ -283,7 +305,9 @@ function Badges() {
 
   return (
     <Stack gap={8}>
-      <Flex justify="space-between" align="flex-start" gap={12}>
+      {/* Mockup: enabled/disabled as two columns; wraps to one column on
+          mobile. The swap icon between them is kept. */}
+      <Flex justify="space-between" align="flex-start" gap={12} wrap="wrap">
         {badges.length ? (
           <>
             <BadgesSectionWrapper
@@ -312,6 +336,7 @@ function Badges() {
               showEnabledOnly={false}
               onToggle={toggle}
               toggling={toggleMutation.isPending}
+              alignEnd
             />
           </>
         ) : (
@@ -342,9 +367,7 @@ function Emojis() {
   return (
     <SimpleSectionWrapper>
       <Stack gap={18}>
-        <Title size={28} c="white" fw={400} order={3}>
-          Your Emoji Collection
-        </Title>
+        <SectionTitle>Your Emoji Collection</SectionTitle>
         {emojiIds.length ? (
           <Flex gap={10} wrap="wrap">
             {emojiIds.map((emojiId: string) => {
@@ -440,9 +463,7 @@ function EmojiCollection() {
   const userEmojiIds = data;
   return (
     <Stack gap={18}>
-      <Title size={28} c="white" fw={400} order={3}>
-        Collection of All Emojis
-      </Title>
+      <SectionTitle>Collection of All Emojis</SectionTitle>
       <Flex wrap="wrap" gap={8}>
         {emojiData.map((emoji, index) => {
           const existingEmoji = userEmojiIds.find(
@@ -555,10 +576,8 @@ function BadgesCollection() {
   return (
     <Stack gap={18}>
       <Stack gap={0}>
-        <Title size={28} c="white" fw={400} order={3}>
-          Collection of All Badges
-        </Title>
-        <Text>Here&apos;s a list of all badges and how to obtain them.</Text>
+        <SectionTitle>Collection of All Badges</SectionTitle>
+        <Text c="#b6b1bc">Here&apos;s a list of all badges and how to obtain them.</Text>
       </Stack>
       <Flex wrap="wrap" gap={6}>
         {(catalog ?? []).map((badge, index) => {
@@ -629,14 +648,17 @@ export default function Collections() {
       <SimpleSectionWrapper>
         <Stack gap={16}>
           <Badges />
-          <AutoBadges />
+          {/* Mockup separates the earned-automatically group with a rule. */}
+          <Box pt={20} sx={{ borderTop: "1px solid #2a2637" }}>
+            <AutoBadges />
+          </Box>
         </Stack>
       </SimpleSectionWrapper>
       <Emojis />
       <Stack align="end">
         <button
           onClick={() => setShowCollections((pre) => !pre)}
-          className="text-[#E54156] bg-transparent border-none outline-none text-[16px] font-[400] underline cursor-pointer"
+          className="text-[#ddd6fe] bg-transparent border-none outline-none text-[14px] font-[700] underline cursor-pointer"
         >
           {showCollections ? "Hide all collections" : "Show all collections"}
         </button>

@@ -1,7 +1,8 @@
-import { Box, Divider, Stack, Text, Title } from "@mantine/core";
+import { Box, Stack, Text, Title } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
+import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLayout";
 import GradientButtonPrimary from "../../../../components/common/GradientButton";
 import Editor, { useRichTextEditor } from "../../../../components/editor/Editor";
 import { SectionLoader } from "../../../../components/navigation/loading";
@@ -64,47 +65,68 @@ export default function Signature() {
   if (isPending) return <SectionLoader />;
 
   return (
-    <Stack w="100%" maw={640} gap={12}>
-      <Title order={2} c="white" size={28} fw={400}>
-        Post Signature
-      </Title>
-      <Text fz={14} c="dimmed">
-        Shown under your forum posts when &quot;Attach Signature&quot; is checked in the
-        composer. Keep it tasteful; hosts can ask you to change it.
-      </Text>
-      <Box sx={{ borderRadius: 0, overflow: "hidden" }}>
-        <Editor editor={editor} />
-      </Box>
-
-      {/* Live preview, rendered the same way posts render it */}
-      {html.replace(/<[^>]*>/g, "").trim().length > 0 && (
-        <Box p={12} bg="#141318" sx={{ borderRadius: 0 }}>
-          <Text fz={14} c="dimmed" tt="uppercase" fw={700}>
-            Preview
-          </Text>
-          <Divider color="#4a464a" my={6} />
-          <Text
-            fz={14}
-            c="gray.4"
-            className="forum-post-body"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
-          />
-        </Box>
-      )}
-
-      {saved && (
-        <Text fz={14} c="green.0">
-          Signature saved.
+    <SimpleSectionWrapper>
+      <Stack w="100%" maw={640} gap={12}>
+        <Title
+          order={2}
+          c="white"
+          fz={17}
+          fw={700}
+          tt="uppercase"
+          style={{
+            fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+            letterSpacing: "0.08em",
+          }}
+        >
+          Post Signature
+        </Title>
+        <Text fz={14} c="#b6b1bc">
+          Shown under your forum posts when &quot;Attach Signature&quot; is checked in the
+          composer. Keep it tasteful; hosts can ask you to change it.
         </Text>
-      )}
-      <GradientButtonPrimary
-        radius="xl"
-        w="fit-content"
-        loading={saveMutation.isPending}
-        onClick={() => saveMutation.mutateAsync()}
-      >
-        Save Signature
-      </GradientButtonPrimary>
-    </Stack>
+        <Box sx={{ border: "1px solid #2a2637", overflow: "hidden" }}>
+          <Editor editor={editor} />
+        </Box>
+
+        {/* Live preview, rendered the same way posts render it (mockup box). */}
+        {html.replace(/<[^>]*>/g, "").trim().length > 0 && (
+          <Box p="16px 20px" bg="#141318" sx={{ border: "1px solid #2a2637" }}>
+            <Text
+              fz={14}
+              c="#b6b1bc"
+              tt="uppercase"
+              fw={700}
+              pb={8}
+              mb={10}
+              sx={{
+                fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+                letterSpacing: "0.16em",
+                borderBottom: "1px solid #2a2637",
+              }}
+            >
+              Preview
+            </Text>
+            <Text
+              fz={14}
+              c="gray.4"
+              className="forum-post-body"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+            />
+          </Box>
+        )}
+
+        <Text fz={14} c="green.0" role="status" aria-live="polite">
+          {saved ? "Signature saved." : ""}
+        </Text>
+        <GradientButtonPrimary
+          w="fit-content"
+          loading={saveMutation.isPending}
+          onClick={() => saveMutation.mutateAsync()}
+          styles={{ root: { paddingLeft: 30, paddingRight: 30 } }}
+        >
+          Save Signature
+        </GradientButtonPrimary>
+      </Stack>
+    </SimpleSectionWrapper>
   );
 }

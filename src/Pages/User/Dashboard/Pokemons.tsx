@@ -27,6 +27,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 import PokemonImage from "../../../assets/images/sylveon.webp";
+import DefaultCharacterImage from "../../../assets/images/character-default.jpg";
 import { Conditional } from "../../../components/common/Conditional";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
@@ -34,6 +35,7 @@ import GradientButtonPrimary, {
 import { EmptyMessage } from "../../../components/common/Message";
 import { SectionLoader } from "../../../components/navigation/loading";
 import {
+  Character,
   OwnedPokemon,
   PokemonGenerations,
   PokemonTypes,
@@ -48,6 +50,7 @@ import { Edit2, FileSearch } from "../../../icons";
 import { getCharacters, getItems, getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
 import { callSetHeldItem, getThreadLocks } from "../../../queries/game";
 import { NATURE_GROUPS, NATURE_GROUP_LABEL, natureOf } from "../../../lib/natures";
+import { levelProgress } from "../../../lib/leveling";
 import { eggGroupsForDex } from "../../../lib/eggGroups";
 import { starForDex } from "../../../lib/encounterStars";
 import { getItemImageURL } from "../../../helpers";
@@ -96,26 +99,21 @@ export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team })
   };
 
   return (
-    <Flex
-      sx={{
-        // Side-by-side only on large screens; below that the panels stack
-        // vertically so neither the team editor nor "All Your Pokemon" gets
-        // squeezed on phones/tablets.
-        flexDirection: isOverLg ? "row" : "column",
-      }}
-      gap={15}
-      align="start"
-    >
+    // Redesign: everything stacks full width (per-character team panels, then
+    // "All Your Pokemon"); the old side-by-side split squeezed both panes.
+    <Stack gap="clamp(14px, 2vw, 20px)" w="100%">
       <Conditional
         condition={isSingleTeam}
         component={
-          <SingleTeam
-            form={currentForm}
-            isSingleTeam={isSingleTeam}
-            loadTeamForEdit={loadTeamForEdit}
-            resetEditing={resetEditing}
-            team={team as Team}
-          />
+          <Box className="dc-card" p={{ base: 16, lg: "26px 30px" }} w="100%">
+            <SingleTeam
+              form={currentForm}
+              isSingleTeam={isSingleTeam}
+              loadTeamForEdit={loadTeamForEdit}
+              resetEditing={resetEditing}
+              team={team as Team}
+            />
+          </Box>
         }
         fallback={
           <Teams form={currentForm} loadTeamForEdit={loadTeamForEdit} resetEditing={resetEditing} />
@@ -136,7 +134,7 @@ export default function Pokemons(props: { isSingleTeam?: boolean; team?: Team })
           />
         )
       )}
-    </Flex>
+    </Stack>
   );
 }
 
@@ -179,7 +177,12 @@ function Teams(props: EditingProps) {
     queryKey: ["get-owned-pokemons", user?.uid],
     queryFn: () => getOwnedPokemons(user?.uid as string),
   });
-  const { isOverLg } = useMediaQuery();
+  // Characters, so teams can be grouped into the mockup's per-character panels.
+  const { data: characters } = useQuery({
+    queryKey: ["get-characters", user?.uid],
+    queryFn: () => getCharacters(user!.uid),
+    enabled: !!user,
+  });
 
   if (isLoading || !owned) return <SectionLoader />;
   if (isError)
@@ -190,24 +193,104 @@ function Teams(props: EditingProps) {
     );
 
   const sortedData = hydrateTeams(rawTeams ?? [], owned.sortedData);
+  const chars = characters?.sortedData ?? [];
+  const groups = chars
+    .map((character) => ({
+      character,
+      teams: sortedData.filter((t) => t.characterId === character.id),
+    }))
+    .filter((g) => g.teams.length > 0);
+  // Teams with no (or a deleted) character stay shared for compatibility.
+  const shared = sortedData.filter(
+    (t) => !t.characterId || !chars.some((c) => c.id === t.characterId)
+  );
 
   return (
-    <Stack align="end" w="100%" maw={isOverLg ? 455 : undefined}>
-      {sortedData.length ? (
-        sortedData.map((team) => (
-          <SingleTeam
-            form={form}
-            resetEditing={resetEditing}
-            loadTeamForEdit={loadTeamForEdit}
-            team={team}
-            key={team.id}
-          />
-        ))
-      ) : (
+    <Stack gap="clamp(14px, 2vw, 20px)" w="100%">
+      <Flex justify="space-between" align="center" gap={12} wrap="wrap">
+        <Text fz={14} c="#b6b1bc" maw={560}>
+          Teams are grouped by character. Hover a pokemon for its full stats.
+        </Text>
+        <CreateNewTeam />
+      </Flex>
+      {groups.map((g) => (
+        <CharacterTeamPanel
+          key={g.character.id}
+          character={g.character}
+          teams={g.teams}
+          form={form}
+          loadTeamForEdit={loadTeamForEdit}
+          resetEditing={resetEditing}
+        />
+      ))}
+      {shared.length > 0 && (
+        <CharacterTeamPanel
+          character={null}
+          teams={shared}
+          form={form}
+          loadTeamForEdit={loadTeamForEdit}
+          resetEditing={resetEditing}
+        />
+      )}
+      {!sortedData.length && (
         <EmptyMessage title="No teams" description="You currently have no teams created" />
       )}
-      <CreateNewTeam />
     </Stack>
+  );
+}
+
+/** One mockup panel: character header (avatar, name, pokemon count) with that
+ * character's teams stacked below. `character` null = the shared group. */
+function CharacterTeamPanel(props: { character: Character | null; teams: Team[] } & EditingProps) {
+  const { character, teams, form, loadTeamForEdit, resetEditing } = props;
+  const count = teams.reduce((n, t) => n + t.pokemons.length, 0);
+  return (
+    <Box className="dc-card" p={{ base: 16, lg: "26px 30px" }} w="100%">
+      <Flex
+        align="center"
+        gap={{ base: 12, lg: 14 }}
+        mb={{ base: 16, lg: 22 }}
+        pb={{ base: 12, lg: 16 }}
+        style={{ borderBottom: "1px solid #2a2637" }}
+      >
+        {character ? (
+          <Avatar
+            src={character.imageURL || DefaultCharacterImage}
+            alt=""
+            size={40}
+            radius="xl"
+            style={{ border: "2px solid #772976", flexShrink: 0 }}
+          />
+        ) : (
+          <Box className="dc-diamond" style={{ background: "#772976" }} aria-hidden />
+        )}
+        <Title
+          order={2}
+          className="dc-display"
+          c="white"
+          fz={{ base: 16, lg: 19 }}
+          tt="uppercase"
+          lineClamp={1}
+          style={{ letterSpacing: "0.06em", minWidth: 0 }}
+        >
+          {character?.name ?? "Shared Teams"}
+        </Title>
+        <Text fz={{ base: 12, lg: 14 }} c="#b6b1bc" style={{ flexShrink: 0 }}>
+          {count} pokemon
+        </Text>
+      </Flex>
+      <Stack gap="clamp(18px, 2vw, 22px)">
+        {teams.map((team) => (
+          <SingleTeam
+            key={team.id}
+            team={team}
+            form={form}
+            loadTeamForEdit={loadTeamForEdit}
+            resetEditing={resetEditing}
+          />
+        ))}
+      </Stack>
+    </Box>
   );
 }
 
@@ -309,11 +392,9 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
     return isEditing ? form.values?.pokemons || [] : team.pokemons;
   }, [isEditing, form.values?.pokemons, team.pokemons]);
 
-  const MAX_SLOTS_IN_A_ROW = 3;
-  const firstRow = teamPokemons.slice(0, 3);
-  const lastRow = teamPokemons.slice(3);
-  const slotsRemainingRow1 = MAX_SLOTS_IN_A_ROW - firstRow.length;
-  const slotsRemainingRow2 = MAX_SLOTS_IN_A_ROW - lastRow.length;
+  // The grid shows up to 6 pokemon; unfilled slots get a placeholder well.
+  const displayedPokemons = teamPokemons.slice(0, 6);
+  const emptySlots = 6 - displayedPokemons.length;
 
   const [nameError, setNameError] = React.useState("");
 
@@ -348,151 +429,167 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
   };
 
   return (
-    <Box bg="#17151c" w="100%" p={20} sx={{ border: "1px solid #2a2637", overflow: "hidden" }}>
-      <Stack align={isOverLg ? undefined : "center"}>
-        <Flex justify="space-between" align="center" w="100%">
-          <Conditional
-            condition={isEditing}
-            component={
-              <TextInput
-                size="sm"
-                maw={isOverLg ? undefined : 100}
-                maxLength={20}
-                error={nameError || undefined}
-                {...form.getInputProps("team_name")}
-              />
-            }
-            fallback={
-              <Title
-                lineClamp={1}
-                sx={{ whiteSpace: "normal" }}
-                order={3}
-                size={isOverLg ? 22 : 18}
-                c="white"
-              >
+    <Box w="100%">
+      <Flex justify="space-between" align="center" gap={8} wrap="nowrap" mb={{ base: 12, lg: 14 }}>
+        <Conditional
+          condition={isEditing}
+          component={
+            <TextInput
+              size="sm"
+              maw={220}
+              maxLength={20}
+              error={nameError || undefined}
+              aria-label="Team name"
+              {...form.getInputProps("team_name")}
+            />
+          }
+          fallback={
+            <Title
+              order={3}
+              className="dc-display"
+              lineClamp={1}
+              fz={{ base: 14, lg: 16 }}
+              c="white"
+              style={{ letterSpacing: "0.06em", minWidth: 0 }}
+            >
+              TEAM ·{" "}
+              <Text component="span" inherit c="#FFD074">
                 {team.team_name}
-              </Title>
-            }
-          />
-          <Conditional
-            condition={isEditing}
-            component={
-              <Group wrap="nowrap" gap={0}>
+              </Text>
+            </Title>
+          }
+        />
+        <Conditional
+          condition={isEditing}
+          component={
+            <Group wrap="nowrap" gap={0}>
+              <Button
+                onClick={() => (isSingleTeam ? navigate("/Dashboard/Pokemon") : resetEditing())}
+                color="gray"
+                size="xs"
+                variant="subtle"
+              >
+                Cancel
+              </Button>
+              <GradientButtonSecondary size="xs" loading={isLoading} onClick={handleSave}>
+                Save
+              </GradientButtonSecondary>
+            </Group>
+          }
+          fallback={
+            lockedThread ? (
+              // Locked into a live thread: the badge replaces EDIT/DELETE
+              // until the thread closes and the server clears the lock.
+              <Tooltip
+                withArrow
+                label={
+                  lockedThread.title
+                    ? `Locked in "${lockedThread.title}". You can edit this team once the thread closes.`
+                    : `Locked in an open battle thread (${lockedThread.threadId}).`
+                }
+              >
+                <Badge
+                  variant="outline"
+                  size="lg"
+                  leftSection={<IconLock size={12} />}
+                  styles={{
+                    root: {
+                      borderColor: "#E54156",
+                      color: "#E54156",
+                      background: "transparent",
+                      fontFamily: "var(--font-display)",
+                      letterSpacing: "0.14em",
+                      flexShrink: 0,
+                    },
+                  }}
+                >
+                  {isOverLg ? "LOCKED TO THREAD" : "LOCKED"}
+                </Badge>
+              </Tooltip>
+            ) : (
+              <Group wrap="nowrap" gap={6} style={{ flexShrink: 0 }}>
+                <DeleteTeam teamId={team.id} />
                 <Button
-                  onClick={() => (isSingleTeam ? navigate("/Dashboard/Pokemon") : resetEditing())}
-                  color="gray"
+                  variant="outline"
                   size="xs"
-                  variant="subtle"
+                  rightSection={<Image src={Edit2} alt="Edit" />}
+                  onClick={() => {
+                    // Guard the handler too, not just the button: a locked
+                    // team must not open the editor from any click path.
+                    if (lockedThread) return;
+                    if (isOverLg) loadTeamForEdit(team);
+                    else navigate(`/Dashboard/Pokemon/${team.id}`);
+                  }}
+                  styles={{
+                    root: {
+                      borderColor: "#12B7B6",
+                      color: "#12B7B6",
+                      background: "transparent",
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 700,
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                      "&:hover": { background: "#12B7B6", color: "#1A1B1E" },
+                    },
+                  }}
                 >
-                  Cancel
+                  Edit Team
                 </Button>
-                <GradientButtonSecondary size="xs" loading={isLoading} onClick={handleSave}>
-                  Save
-                </GradientButtonSecondary>
               </Group>
-            }
-            fallback={
-              lockedThread ? (
-                // Locked into a live thread: the badge replaces EDIT/DELETE
-                // until the thread closes and the server clears the lock.
-                <Tooltip
-                  withArrow
-                  label={
-                    lockedThread.title
-                      ? `Locked in "${lockedThread.title}". You can edit this team once the thread closes.`
-                      : `Locked in an open battle thread (${lockedThread.threadId}).`
-                  }
-                >
-                  <Badge
-                    color="red"
-                    variant="filled"
-                    size="lg"
-                    leftSection={<IconLock size={12} />}
-                  >
-                    LOCKED TO THREAD
-                  </Badge>
-                </Tooltip>
-              ) : (
-                <Group wrap="nowrap">
-                  <DeleteTeam teamId={team.id} />
-                  <GradientButtonPrimary
-                    onClick={() => {
-                      // Guard the handler too, not just the button: a locked
-                      // team must not open the editor from any click path.
-                      if (lockedThread) return;
-                      if (isOverLg) loadTeamForEdit(team);
-                      else navigate(`/Dashboard/Pokemon/${team.id}`);
-                    }}
-                    size="xs"
-                    rightSection={<Image src={Edit2} alt="Edit" />}
-                  >
-                    Edit
-                  </GradientButtonPrimary>
-                </Group>
-              )
-            }
-          />
-        </Flex>
-        {isEditing ? (
-          <Select
-            label="Owned by"
-            placeholder="Any character (shared)"
-            data={characterOptions}
-            clearable
-            size="xs"
-            w="100%"
-            {...form.getInputProps("characterId")}
-            styles={{ input: { background: "#0e0d11" }, label: { color: "white" } }}
-          />
-        ) : (
-          teamCharacterName && (
-            <Text fz={14} c="dimmed">
-              Character: {teamCharacterName}
-            </Text>
-          )
-        )}
-        <Flex justify="center" w="100%" wrap="wrap" gap={7}>
-          <SimpleGrid sx={{ flexShrink: 0 }} cols={3} spacing={7}>
-            {firstRow.map((pokemon) => (
-              <SinglePokemon form={form} isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
-            ))}
-            {Array(slotsRemainingRow1)
-              .fill(0)
-              .map((_, index) => (
-                <Box
-                  w={60}
-                  h={60}
-                  key={index}
-                  sx={{
-                    border: isEditing ? "1px solid #DB5866" : undefined,
-                    borderRadius: "100%",
-                    flexShrink: 0,
-                  }}
-                  bg="#3C3A3C"
-                />
-              ))}
-          </SimpleGrid>
-          <SimpleGrid cols={3} spacing={7} sx={{ flexShrink: 0 }}>
-            {lastRow.slice(0, 3).map((pokemon) => (
-              <SinglePokemon form={form} isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
-            ))}
-            {Array(slotsRemainingRow2)
-              .fill(0)
-              .map((_, index) => (
-                <Box
-                  w={60}
-                  h={60}
-                  key={index}
-                  sx={{
-                    border: isEditing ? "1px solid #DB5866" : undefined,
-                    borderRadius: "100%",
-                    flexShrink: 0,
-                  }}
-                  bg="#3C3A3C"
-                />
-              ))}
-          </SimpleGrid>
-        </Flex>
+            )
+          }
+        />
+      </Flex>
+      {isEditing ? (
+        <Select
+          label="Owned by"
+          placeholder="Any character (shared)"
+          data={characterOptions}
+          clearable
+          size="xs"
+          w="100%"
+          mb={12}
+          {...form.getInputProps("characterId")}
+          styles={{ input: { background: "#0e0d11" }, label: { color: "white" } }}
+        />
+      ) : (
+        isSingleTeam &&
+        teamCharacterName && (
+          <Text fz={14} c="dimmed" mb={12}>
+            Character: {teamCharacterName}
+          </Text>
+        )
+      )}
+      <SimpleGrid cols={{ base: 3, lg: 6 }} spacing={{ base: 8, lg: 12 }}>
+        {displayedPokemons.map((pokemon) => (
+          <SinglePokemon form={form} isEditing={isEditing} key={pokemon.id} pokemon={pokemon} />
+        ))}
+        {Array.from({ length: emptySlots }).map((_, index) => (
+          <EmptySlot key={`empty-${index}`} isEditing={isEditing} />
+        ))}
+      </SimpleGrid>
+    </Box>
+  );
+}
+
+/** Placeholder well for an unfilled team slot (dashed red while editing). */
+function EmptySlot(props: { isEditing: boolean }) {
+  return (
+    <Box
+      className="dc-card-tile"
+      p={{ base: "12px 8px", lg: "14px 10px" }}
+      style={props.isEditing ? { border: "1px dashed #DB5866" } : undefined}
+    >
+      <Stack gap={7} align="center">
+        <Box
+          w={{ base: 46, lg: 52 }}
+          h={{ base: 46, lg: 52 }}
+          style={{ background: "#0e0d11", border: "1px solid #232028", borderRadius: "100%" }}
+        />
+        <Text fz={{ base: 11, lg: 12 }} c="dimmed" tt="uppercase" style={{ letterSpacing: "0.1em" }}>
+          Empty
+        </Text>
+        <Box w="100%" h={4} bg="#2a2637" />
       </Stack>
     </Box>
   );
@@ -623,7 +720,7 @@ function OwnedPokemons(props: EditingProps) {
   const darkInput = { input: { background: "#0e0d11" }, label: { color: "white" } };
 
   return (
-    <Box bg="#17151c" w="100%" p={20} sx={{ border: "1px solid #2a2637", overflow: "hidden" }}>
+    <Box className="dc-card" w="100%" p={{ base: 16, lg: "26px 30px" }} sx={{ overflow: "hidden" }}>
       <Stack>
         <Flex justify="space-between" align="center" gap={8} wrap="wrap">
           <Group align="end">
@@ -730,9 +827,9 @@ function OwnedPokemons(props: EditingProps) {
             </Popover.Dropdown>
           </Popover>
         </Flex>
-        <Flex sx={{ flexWrap: "wrap" }} gap={7}>
-          {displayedData.length ? (
-            displayedData.map((pokemon) => (
+        {displayedData.length ? (
+          <SimpleGrid cols={{ base: 3, sm: 4, lg: 6 }} spacing={{ base: 8, lg: 12 }}>
+            {displayedData.map((pokemon) => (
               <SinglePokemon
                 form={form}
                 key={pokemon.id}
@@ -740,13 +837,13 @@ function OwnedPokemons(props: EditingProps) {
                 pokemon={pokemon}
                 isEditing={!!form.values?.id}
               />
-            ))
-          ) : (
-            <Text fz={14} c="dimmed">
-              No pokemon match these filters.
-            </Text>
-          )}
-        </Flex>
+            ))}
+          </SimpleGrid>
+        ) : (
+          <Text fz={14} c="dimmed">
+            No pokemon match these filters.
+          </Text>
+        )}
       </Stack>
     </Box>
   );
@@ -1033,59 +1130,83 @@ function SinglePokemon(props: {
   };
 
   const shadowed = isShadowed(pokemon);
+  const prog = levelProgress(pokemon.experience ?? 0);
   return (
-    <Flex
-      p={10}
-      bg={shadowed ? "#000" : "#141318"}
-      justify="center"
-      align="center"
-      pos="relative"
-      w={60}
-      h={60}
-      sx={{
-        // Shadowed pokemon read as a black square with a soft corner; normal
-        // ones stay round. (All sprites have transparent backgrounds.)
-        borderRadius: shadowed ? 4 : "100%",
-        // Selected (already in team) = white so it reads clearly; hover = purple.
-        border: isEditing
-          ? `${isAlreadyInTeam ? 2 : 1}px solid ${isAlreadyInTeam ? "#FFFFFF" : "#DB5866"}`
-          : shadowed
-            ? "1px solid #5a3fb0"
-            : undefined,
-        "&:hover": isEditing ? { borderColor: "#762B77" } : undefined,
-        flexShrink: 0,
-      }}
-    >
-      {/* Hover (not click) reveals the info card: species, catch date, game
-          stats. Clicking a sprite otherwise triggered the browser's image menu
-          on mobile. The owned list while editing gets an Add-to-Team button. */}
-      <HoverCard position="top" withArrow shadow="md" openDelay={80} closeDelay={100} width={280}>
-        <HoverCard.Target>
-          <PokemonAvatar src={getPokemonImageURL(pokemon.image_slug, pokemon.shiny)} alt={pokemon.name} />
-        </HoverCard.Target>
-        <HoverCard.Dropdown bg="#1E1D20" sx={{ borderRadius: 22 }} p={16}>
-          <Stack gap={12}>
-            <PokemonDetails pokemon={pokemon} />
-            {canAddToTeam &&
-              (isAlreadyInTeam ? (
-                <Text fz={14} c="dimmed">
-                  Already in this team.
-                </Text>
-              ) : (
-                <GradientButtonPrimary onClick={handleAddPokemonToTeam} radius="xl" size="xs">
-                  Add to Team
-                </GradientButtonPrimary>
-              ))}
+    // Hover (not click) reveals the info card: species, catch date, game
+    // stats. Clicking a sprite otherwise triggered the browser's image menu
+    // on mobile. The owned list while editing gets an Add-to-Team button.
+    <HoverCard position="top" withArrow shadow="md" openDelay={80} closeDelay={100} width={280}>
+      <HoverCard.Target>
+        <Box
+          className="dc-card-tile"
+          pos="relative"
+          p={{ base: "12px 8px", lg: "14px 10px" }}
+          style={{
+            cursor: "default",
+            // Selected (already in team) = white so it reads clearly while
+            // editing; shadowed mons keep a purple frame otherwise.
+            ...(isEditing
+              ? {
+                  border: `${isAlreadyInTeam ? 2 : 1}px solid ${
+                    isAlreadyInTeam ? "#FFFFFF" : "#DB5866"
+                  }`,
+                }
+              : shadowed
+                ? { border: "1px solid #5a3fb0" }
+                : {}),
+          }}
+        >
+          <Stack gap={7} align="center">
+            <Box w={{ base: 46, lg: 52 }} h={{ base: 46, lg: 52 }}>
+              <PokemonAvatar
+                src={getPokemonImageURL(pokemon.image_slug, pokemon.shiny)}
+                alt={pokemon.name}
+                sx={{
+                  imageRendering: "pixelated",
+                  // Shadow mons read desaturated, per the mockup.
+                  filter: shadowed ? "saturate(.3) brightness(.8)" : undefined,
+                }}
+              />
+            </Box>
+            <Text c="white" fw={700} fz={{ base: 12, lg: 14 }} ta="center" lineClamp={1} w="100%">
+              {pokemon.name || pokemon.species}
+            </Text>
+            <Text c="#b6b1bc" fz={{ base: 11, lg: 14 }}>
+              Lv {prog.level}
+            </Text>
+            {/* XP to next level: cyan bar, purple for shadow mons. */}
+            <Box w="100%" h={4} bg="#2a2637">
+              <Box
+                h={4}
+                w={`${Math.round(prog.ratio * 100)}%`}
+                bg={shadowed ? "#772976" : "#12B7B6"}
+              />
+            </Box>
           </Stack>
-        </HoverCard.Dropdown>
-      </HoverCard>
-      {/* This option is not shown in owned pokemons. Only in team pokemons to remove a pokemon from team */}
-      <RemovePokemonFromTeam
-        form={form}
-        isEditing={isEditing as boolean}
-        isOwned={isOwned}
-        pokemonId={pokemon.id}
-      />
-    </Flex>
+          {/* This option is not shown in owned pokemons. Only in team pokemons to remove a pokemon from team */}
+          <RemovePokemonFromTeam
+            form={form}
+            isEditing={isEditing as boolean}
+            isOwned={isOwned}
+            pokemonId={pokemon.id}
+          />
+        </Box>
+      </HoverCard.Target>
+      <HoverCard.Dropdown bg="#1E1D20" sx={{ borderRadius: 22 }} p={16}>
+        <Stack gap={12}>
+          <PokemonDetails pokemon={pokemon} />
+          {canAddToTeam &&
+            (isAlreadyInTeam ? (
+              <Text fz={14} c="dimmed">
+                Already in this team.
+              </Text>
+            ) : (
+              <GradientButtonPrimary onClick={handleAddPokemonToTeam} radius="xl" size="xs">
+                Add to Team
+              </GradientButtonPrimary>
+            ))}
+        </Stack>
+      </HoverCard.Dropdown>
+    </HoverCard>
   );
 }

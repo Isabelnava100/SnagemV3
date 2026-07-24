@@ -55,7 +55,7 @@ export default function Bookmarks() {
     );
 
   return (
-    <SimpleGrid spacing={25} cols={isOverLg ? 2 : 1}>
+    <SimpleGrid spacing={16} cols={isOverLg ? 2 : 1}>
       {sortedData.map((bookmark) => (
         <SingleBookmark key={bookmark.id} {...bookmark} />
       ))}
@@ -100,18 +100,34 @@ function SingleBookmark(props: Bookmark) {
         shadow="md"
       >
         <Popover.Target>
+          {/* Mockup remove button: small dark square over the top-right of the
+              card, trash glyph kept from the original build. */}
           <ActionIcon
-            color="red"
             variant="filled"
             title="Remove bookmark"
+            aria-label="Remove bookmark"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setConfirmOpened((o) => !o);
             }}
-            style={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}
+            style={{
+              position: "absolute",
+              top: isOverXs ? 8 : 6,
+              right: isOverXs ? 8 : 6,
+              zIndex: 2,
+              width: isOverXs ? 28 : 24,
+              height: isOverXs ? 28 : 24,
+              minWidth: isOverXs ? 28 : 24,
+              minHeight: isOverXs ? 28 : 24,
+              padding: 0,
+              background: "rgba(10,9,13,0.65)",
+              border: "1px solid rgba(255,255,255,0.3)",
+              borderRadius: 0,
+              color: "#fff",
+            }}
           >
-            <IconTrash size={16} />
+            <IconTrash size={14} />
           </ActionIcon>
         </Popover.Target>
         <Popover.Dropdown
@@ -152,22 +168,21 @@ function SingleBookmark(props: Bookmark) {
             {formatter.format(new Date((latestPostAt?.seconds ?? date?.seconds ?? 0) * 1000))}
           </Text>
         </Stack>
-        {isOverXs && (
-          <Flex
-            justify="center"
-            align="center"
-            w={78}
-            sx={{ flexShrink: 0 }}
-            bg={color}
-          >
-            <Avatar
-              size={44}
-              alt={`${title} thread avatar`}
-              sx={{ objectFit: "cover", borderRadius: "100%", border: "2px solid rgba(255,255,255,0.5)" }}
-              src={DefaultCharacterAvatarSrc}
-            />
-          </Flex>
-        )}
+        {/* Colored avatar strip on the right (78px desktop, 60px on phones). */}
+        <Flex
+          justify="center"
+          align="center"
+          w={isOverXs ? 78 : 60}
+          sx={{ flexShrink: 0 }}
+          bg={color}
+        >
+          <Avatar
+            size={isOverXs ? 44 : 38}
+            alt={`${title} thread avatar`}
+            sx={{ objectFit: "cover", borderRadius: "100%", border: "2px solid rgba(255,255,255,0.5)" }}
+            src={DefaultCharacterAvatarSrc}
+          />
+        </Flex>
       </Flex>
     </Paper>
   );

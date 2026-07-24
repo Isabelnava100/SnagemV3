@@ -1,6 +1,5 @@
 import {
   ActionIcon,
-  Badge,
   Box,
   Button,
   Flex,
@@ -71,12 +70,12 @@ function DraftsHeader(props: { count: number }) {
 
   return (
     <Flex justify="space-between" align="center" gap={10} wrap="wrap">
-      <Text c={count >= 55 ? "#E54156" : "dimmed"} fz={14}>
-        {count}/60 drafts
+      <Text c={count >= 55 ? "#E54156" : "#b6b1bc"} fz={14}>
+        {count} of 60 draft slots used.
         {count >= 60
-          ? ". You're at the limit; delete drafts to save new ones."
+          ? " You're at the limit; delete drafts to save new ones."
           : count >= 55
-            ? ". You'll run out of draft space soon."
+            ? " You'll run out of draft space soon."
             : ""}
       </Text>
       {count >= 40 &&
@@ -135,15 +134,21 @@ function DeleteDraft(props: { draftId: string }) {
   return (
     <Popover opened={opened} onChange={close} position="bottom-end" withArrow shadow="md">
       <Popover.Target>
+        {/* Mockup delete button: transparent square with a dim border, trash
+            glyph kept from the original build. */}
         <ActionIcon
-          color="gray"
           variant="default"
           radius={0}
           size={34}
           title="Delete draft"
           aria-label="Delete draft"
           onClick={open}
-          style={{ flexShrink: 0 }}
+          style={{
+            flexShrink: 0,
+            background: "transparent",
+            border: "1px solid #2a2637",
+            color: "#b6b1bc",
+          }}
         >
           <IconTrash size={16} />
         </ActionIcon>
@@ -173,13 +178,15 @@ function DeleteDraft(props: { draftId: string }) {
 }
 
 function SingleDraft(props: Draft) {
+  const { isOverXs } = useMediaQuery();
   const isPost = props.thread_id && props.thread_id !== "new-thread";
   const continueUrl = isPost
     ? `/Forum/${props.location_db}/thread/${props.thread_id}/post?draft=${props.id}`
     : `/Forum/${props.location_db || "Main-Forum"}/new?draft=${props.id}`;
+  const savedLine = `Saved ${formatter.format(new Date((props.date_saved?.seconds ?? 0) * 1000))}`;
   return (
     <Paper className="dc-card" radius={0} pos="relative">
-      <Flex align="center" gap={16} px={22} py={20} wrap="nowrap">
+      <Flex align="center" gap={{ base: 12, sm: 18 }} px={{ base: 16, sm: 22 }} py={{ base: 16, sm: 20 }} wrap="nowrap">
         {/* The title block continues the draft (replaces the old edit pencil). */}
         <Box
           component={Link}
@@ -191,17 +198,34 @@ function SingleDraft(props: Draft) {
             <Text c="white" fw={700} fz={16} lineClamp={1}>
               {props.title_thread}
             </Text>
-            <Badge
+            {/* Mockup badge: solid gold (post) / teal (thread) chip with dark
+                uppercase Quantico text. */}
+            <Box
+              component="span"
               w="fit-content"
-              variant="light"
-              color={isPost ? "cyan.0" : "pink.0"}
+              px={isOverXs ? 10 : 9}
+              py={4}
+              style={{
+                fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+                fontSize: isOverXs ? 14 : 11,
+                fontWeight: 700,
+                letterSpacing: isOverXs ? "0.12em" : "0.1em",
+                textTransform: "uppercase",
+                lineHeight: 1.2,
+                color: "#1A1B1E",
+                background: isPost ? "#FFD074" : "#12B7B6",
+              }}
             >
               {isPost ? "Post draft" : "Thread draft"}
-            </Badge>
+            </Box>
+            {/* Phones stack the saved line under the badge. */}
+            <Text fz={12} c="#b6b1bc" hiddenFrom="sm">
+              {savedLine}
+            </Text>
           </Stack>
         </Box>
-        <Text fz={14} c="#b6b1bc" ta="right" style={{ flexShrink: 0 }}>
-          Saved {formatter.format(new Date((props.date_saved?.seconds ?? 0) * 1000))}
+        <Text fz={14} c="#b6b1bc" ta="right" visibleFrom="sm" style={{ flexShrink: 0 }}>
+          {savedLine}
         </Text>
         <DeleteDraft draftId={props.id} />
       </Flex>

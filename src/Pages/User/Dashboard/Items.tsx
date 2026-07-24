@@ -10,7 +10,6 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  Title,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
@@ -23,7 +22,6 @@ import { clickable } from "../../../lib/a11y";
 import { isEvolutionItem } from "../../../lib/evolution";
 import { EvolveItemModal } from "../../../components/pokemon/EvolveItemModal";
 import { getItemImageURL } from "../../../helpers";
-import useMediaQuery from "../../../hooks/useMediaQuery";
 import { getItems, getOwnedPokemons } from "../../../queries/dashboard";
 import {
   callApplyMint,
@@ -38,13 +36,13 @@ import { NATURE_GROUPS, NATURE_GROUP_LABEL, NatureGroup } from "../../../lib/nat
 import { toastError, toastSuccess } from "../../../lib/toast";
 
 /**
- * Items tab (moved off the dashboard top block). Categories stack vertically
- * on mobile and lay out in a responsive grid on desktop, no more sideways
- * scrolling. Mystery-box items open the reveal pop-up.
+ * Items tab (moved off the dashboard top block). Category cards (BALLS,
+ * MEDICINE, HELD ITEMS, ...) each hold a 2-col grid of item tiles: an icon
+ * well with the sprite, the name and the owned count, per the redesign
+ * mockup. Mystery-box items open the reveal pop-up.
  */
 export default function Items() {
   const { user } = useAuth();
-  const { isOverLg } = useMediaQuery();
   const { data, isPending: isLoading } = useQuery({
     queryKey: ["get-items", user?.uid],
     queryFn: () => getItems(user?.uid as string),
@@ -79,18 +77,17 @@ export default function Items() {
   }
 
   return (
-    <Stack gap={14}>
-      <Title order={2} c="white" size={isOverLg ? 24 : 20} fw={400}>
-        Your Items
-      </Title>
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 2 }} spacing={16}>
+    <>
+      {/* 2-col category grid on desktop, stacked on mobile; each category
+          card holds a 2-col tile grid like the mockup. */}
+      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing={{ base: 14, lg: 20 }}>
         {categories.map((categoryName) => (
           <Box key={categoryName} className="dc-card" p={{ base: 16, sm: 22 }}>
-            <Box className="dc-subkicker" mb={16}>
+            <Box className="dc-subkicker" mb={{ base: 12, sm: 16 }}>
               {categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}
             </Box>
             <ScrollArea.Autosize mah={320}>
-              <SimpleGrid cols={{ base: 2, sm: 3 }} spacing={12}>
+              <SimpleGrid cols={2} spacing={{ base: 10, sm: 12 }}>
                 {(data ?? [])
                   .filter((item) => item.category === categoryName)
                   .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
@@ -121,7 +118,7 @@ export default function Items() {
                       <Box
                         key={item.id}
                         className="dc-card-tile"
-                        p={14}
+                        p={{ base: 12, sm: 14 }}
                         {...(interactive
                           ? {
                               ...clickable(onUse),
@@ -135,7 +132,7 @@ export default function Items() {
                           <Flex
                             align="center"
                             justify="center"
-                            h={64}
+                            h={{ base: 52, sm: 64 }}
                             style={{ background: "#0e0d11", border: "1px solid #232028" }}
                           >
                             <ItemHoverCard
@@ -201,7 +198,7 @@ export default function Items() {
       <EvolveItemModal item={evolveItem} onClose={() => setEvolveItem(null)} />
       <MintModal item={mintItem} onClose={() => setMintItem(null)} />
       <ItemActionModal item={actionItem} onClose={() => setActionItem(null)} />
-    </Stack>
+    </>
   );
 }
 

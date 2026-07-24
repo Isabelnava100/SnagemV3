@@ -66,9 +66,9 @@ export function Dashboard() {
       <Stack gap={isOverMd ? 24 : 12} w="100%">
         <DashboardHeader />
         <CurrencyBar />
+        <ImportBanner />
         <NeedsAttention />
         <Announcements />
-        <ImportBanner />
         <TabsPanel />
       </Stack>
     </Paper>
@@ -161,12 +161,28 @@ function DashboardHeader() {
 function NeedsAttention() {
   const { items } = useAttention();
   if (!items.length) return null;
+  // Gold banner language, same as the Gaia import banner below: tinted gold
+  // card, gold border, angled bottom-right clip.
   return (
     <Box
-      p="md"
-      style={{ borderRadius: 12, background: "rgba(240,198,116,0.08)", border: "1px solid #4a3f28" }}
+      p={{ base: 14, sm: 18 }}
+      style={{
+        background: "rgba(255,208,116,0.07)",
+        border: "1px solid rgba(255,208,116,0.4)",
+        clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)",
+      }}
     >
-      <Text fz={14} fw={800} c="#F5C842" tt="uppercase" mb={6} style={{ letterSpacing: 2 }}>
+      <Text
+        fz={14}
+        fw={700}
+        c="#FFD074"
+        tt="uppercase"
+        mb={8}
+        style={{
+          letterSpacing: "0.12em",
+          fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+        }}
+      >
         Needs your attention
       </Text>
       <Stack gap={4}>
@@ -210,15 +226,15 @@ function ImportBanner() {
     <Group
       align="center"
       wrap="nowrap"
-      gap={16}
-      px={22}
-      py={16}
+      gap={14}
+      px={{ base: 16, sm: 22 }}
+      py={{ base: 14, sm: 16 }}
       style={{ background: "rgba(255,208,116,0.07)", border: "1px solid rgba(255,208,116,0.4)" }}
     >
       <Box style={{ width: 24, height: 24, flexShrink: 0 }}>
         <SnagIcon name="gift" size={24} title="Import" />
       </Box>
-      <Text fz={15} c="white" style={{ flex: 1, minWidth: 0 }}>
+      <Text fz={{ base: 13, sm: 15 }} c="white" style={{ flex: 1, minWidth: 0 }}>
         {message}
       </Text>
       <Link to="/Onboarding" className="dc-cta dc-cta-gold" style={{ flexShrink: 0 }}>
@@ -328,75 +344,103 @@ function NotificationBell() {
 }
 
 /**
- * Compact currency chip: icon + amount + label, contained so it never breaks.
- * The label is clamped to one line (it gets cut off on narrow phones), so the
- * whole chip is tappable and opens a popover with the full name + amount.
+ * Currency stat tile (redesign): colored accent border (left on wide screens,
+ * top on phones), currency icon, a large value and a small uppercase label.
+ * The whole tile is tappable and opens a popover with the full name + balance.
  */
-function CurrencyChip(props: { amount: number | string; name: string; color: string; icon: string }) {
+function CurrencyChip(props: {
+  amount: number | string;
+  name: string;
+  /** Accent border color for the currency. */
+  color: string;
+  /** Color of the big value (gold for Snag Coins, white otherwise). */
+  valueColor: string;
+  icon: string;
+  /** Small dimmed suffix after the value, e.g. "+ 1 piece". */
+  suffix?: string;
+}) {
   const { isOverXs } = useMediaQuery();
-  const displayFont = "var(--font-display, 'Quantico', sans-serif)";
   // Tolerate both number (migrated) and string (legacy) currency values.
-  const amount = String(props.amount ?? 0).padStart(3, "0");
+  const numeric = Number(props.amount ?? 0);
+  const amount = Number.isFinite(numeric) ? numeric.toLocaleString("en-US") : String(props.amount);
+  const value = (
+    <>
+      {amount}
+      {props.suffix && (
+        <Text component="span" fz={isOverXs ? 14 : 11} fw={700} c="#b6b1bc">
+          {" "}
+          {props.suffix}
+        </Text>
+      )}
+    </>
+  );
   return (
     <Popover position="bottom" withArrow shadow="md" width={180}>
       <Popover.Target>
         <UnstyledButton style={{ flex: 1, minWidth: 0 }}>
           {isOverXs ? (
-            // Desktop/tablet: wide horizontal tile, colored left border.
+            // Desktop/tablet: horizontal tile, colored left accent border.
             <Flex
-              bg="#17151c"
               align="center"
-              gap={12}
-              px={18}
-              py={14}
+              gap={14}
+              px={20}
+              py={16}
               style={{
                 minWidth: 0,
+                background: "#17151c",
                 border: "1px solid #2a2637",
                 borderLeft: `3px solid ${props.color}`,
               }}
             >
-              <Box
-                style={{
-                  width: 34,
-                  height: 34,
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Image src={props.icon} w={34} h={34} style={{ objectFit: "contain" }} alt={props.name} />
-              </Box>
+              <Image
+                src={props.icon}
+                w={30}
+                h={30}
+                fit="contain"
+                alt={props.name}
+                style={{ flexShrink: 0 }}
+              />
               <Stack gap={0} style={{ minWidth: 0 }}>
-                <Text c={props.color} fz={22} fw={800} lh={1.1} style={{ fontFamily: displayFont }}>
-                  {amount}
+                <Text c={props.valueColor} fz={22} fw={800} lh={1.1}>
+                  {value}
                 </Text>
-                <Text c="#b6b1bc" fz={14} fw={700} tt="uppercase" lineClamp={1} style={{ letterSpacing: "0.16em" }}>
+                <Text
+                  c="#b6b1bc"
+                  fz={14}
+                  fw={700}
+                  tt="uppercase"
+                  lineClamp={1}
+                  style={{ letterSpacing: "0.16em" }}
+                >
                   {props.name}
                 </Text>
               </Stack>
             </Flex>
           ) : (
-            // Phone: stacked tile with a colored top border, so the full label
-            // fits at a small size instead of truncating to "S...".
+            // Phone: stacked tile with a colored top accent border, so the full
+            // label fits at a small size instead of truncating to "S...".
             <Stack
-              bg="#17151c"
-              gap={3}
+              gap={2}
               px={12}
               py={12}
               style={{
                 minWidth: 0,
+                background: "#17151c",
                 border: "1px solid #2a2637",
                 borderTop: `3px solid ${props.color}`,
               }}
             >
-              <Box style={{ width: 22, height: 22, display: "flex", alignItems: "center" }}>
-                <Image src={props.icon} w={22} h={22} style={{ objectFit: "contain" }} alt={props.name} />
-              </Box>
-              <Text c={props.color} fz={17} fw={800} lh={1.1} style={{ fontFamily: displayFont }}>
-                {amount}
+              <Image src={props.icon} w={22} h={22} fit="contain" alt={props.name} />
+              <Text c={props.valueColor} fz={17} fw={800} lh={1.1}>
+                {value}
               </Text>
-              <Text c="#b6b1bc" fz={10} fw={700} tt="uppercase" style={{ letterSpacing: "0.06em", lineHeight: 1.15 }}>
+              <Text
+                c="#b6b1bc"
+                fz={9}
+                fw={700}
+                tt="uppercase"
+                style={{ letterSpacing: "0.1em", lineHeight: 1.3 }}
+              >
                 {props.name}
               </Text>
             </Stack>
@@ -422,22 +466,43 @@ function CurrencyChip(props: { amount: number | string; name: string; color: str
   );
 }
 
-/** Currency stays on top (mobile + desktop) as a compact, always-visible row. */
+/** Currency stays on top (mobile + desktop) as a row of three stat tiles. */
 function CurrencyBar() {
   const { user } = useAuth();
-  const { isOverLg } = useMediaQuery();
   const { data } = useQuery({
     queryKey: ["get-currencies", user?.uid],
     queryFn: () => getCurrencies(user?.uid as string),
   });
-  // Accent colors per currency (gold / purple / teal), used for the tile number.
+  // Emblem pieces are cumulative; every 3 grant one emblem, so the remainder
+  // is the progress toward the next one (the "+ N piece" suffix).
+  const pieces = Number(data?.snagEmblemPieces ?? 0) % 3;
+  // Accent colors per currency (gold / purple / teal), per the redesign.
   const chips = [
-    { icon: PokePesos, amount: data?.pokecoin || "0", name: "Snag Coins", color: "#FFD074" },
-    { icon: GengarCoins, amount: data?.gengarcoin || "0", name: "Gengar Tokens", color: "#C17DC1" },
-    { icon: SnagCoins, amount: data?.snagemblem || "0", name: "Snag Emblems", color: "#3ACCCB" },
+    {
+      icon: PokePesos,
+      amount: data?.pokecoin || "0",
+      name: "Snag Coins",
+      color: "#FFD074",
+      valueColor: "#FFD074",
+    },
+    {
+      icon: GengarCoins,
+      amount: data?.gengarcoin || "0",
+      name: "Gengar Coins",
+      color: "#772976",
+      valueColor: "#FFFFFF",
+    },
+    {
+      icon: SnagCoins,
+      amount: data?.snagemblem || "0",
+      name: "Snag Emblems",
+      color: "#12B7B6",
+      valueColor: "#FFFFFF",
+      suffix: pieces > 0 ? `+ ${pieces} piece${pieces === 1 ? "" : "s"}` : undefined,
+    },
   ];
   return (
-    <Flex gap={10} wrap="nowrap" maw={isOverLg ? 720 : undefined}>
+    <Flex gap={{ base: 8, sm: 14 }} wrap="nowrap">
       {chips.map((chip) => (
         <CurrencyChip key={chip.name} {...chip} />
       ))}
@@ -481,75 +546,76 @@ function TabsPanel() {
       customHeader={
         <Paper bg="transparent" p={0} style={RESET_READING_SCALE}>
           {/* Horizontally scrollable so the tabs never overlap or overflow the
-              viewport on mobile. */}
-          <ScrollArea type="never" scrollbarSize={0}>
-            <Flex align="center" justify="start" gap={isOverMd ? 10 : 6} wrap="nowrap">
-              {dashboardTabLinks
-                .filter((link) => link.enabled)
-                .map((link) => {
-                  const linkPath = link.absolute ? link.path : `/Dashboard${link.path}`;
-                  const isActive = currentPath.includes(linkPath);
-                  const iconBox = isOverMd ? 20 : 18;
-                  return (
-                    <Link
-                      style={{
-                        background: isActive
-                          ? "linear-gradient(135deg, #912691 0%, #4D14C4 100%)"
-                          : "#131019",
-                        border: isActive
-                          ? "1px solid transparent"
-                          : "1px solid rgba(255,255,255,0.10)",
-                        borderRadius: 8,
-                        paddingLeft: isOverMd ? 16 : 10,
-                        paddingRight: isOverMd ? 16 : 10,
-                        paddingTop: isOverMd ? 10 : 8,
-                        paddingBottom: isOverMd ? 10 : 8,
-                        textDecoration: "none",
-                        flexShrink: 0,
-                      }}
-                      to={linkPath}
-                      key={link.path}
-                    >
-                      {/* Redesigned pill: icon beside an uppercase Quantico label,
-                          gradient fill on the active tab. The fixed box +
-                          fit=contain normalizes the different icon SVG bounds. */}
-                      <Group gap={isOverMd ? 8 : 6} wrap="nowrap" align="center">
-                        <Box
-                          style={{
-                            width: iconBox,
-                            height: iconBox,
-                            flexShrink: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          {link.snag ? (
-                            <SnagIcon name={link.snag} size={iconBox} title={link.label} />
-                          ) : (
-                            <Image src={link.icon} alt={link.label} w="100%" h="100%" fit="contain" />
-                          )}
-                        </Box>
-                        <Text
-                          fz={isOverMd ? 13 : 11}
-                          fw={700}
-                          tt="uppercase"
-                          c={isActive ? "white" : "rgba(255,255,255,0.62)"}
-                          style={{
-                            whiteSpace: "nowrap",
-                            lineHeight: 1,
-                            fontFamily: "var(--font-display, 'Quantico', sans-serif)",
-                            letterSpacing: "0.1em",
-                          }}
-                        >
-                          {link.label}
-                        </Text>
-                      </Group>
-                    </Link>
-                  );
-                })}
-            </Flex>
-          </ScrollArea>
+              viewport on mobile (scrollbar hidden). */}
+          <Box component="nav" aria-label="Dashboard tabs">
+            <ScrollArea type="never" scrollbarSize={0}>
+              <Flex align="center" justify="start" gap={8} wrap="nowrap">
+                {dashboardTabLinks
+                  .filter((link) => link.enabled)
+                  .map((link) => {
+                    const linkPath = link.absolute ? link.path : `/Dashboard${link.path}`;
+                    const isActive = currentPath.includes(linkPath);
+                    const iconBox = isOverMd ? 20 : 18;
+                    return (
+                      <Link
+                        className="dc-dash-tab"
+                        style={{
+                          background: isActive
+                            ? "linear-gradient(90deg, #912691, #4D14C4)"
+                            : "#17151c",
+                          border: isActive ? "1px solid transparent" : "1px solid #2a2637",
+                          paddingLeft: isOverMd ? 22 : 16,
+                          paddingRight: isOverMd ? 22 : 16,
+                          paddingTop: isOverMd ? 13 : 11,
+                          paddingBottom: isOverMd ? 13 : 11,
+                          textDecoration: "none",
+                          flexShrink: 0,
+                        }}
+                        to={linkPath}
+                        key={link.path}
+                      >
+                        {/* Redesigned pill: icon beside an uppercase Quantico label,
+                            purple gradient fill on the active tab, dark bordered
+                            pill otherwise. The fixed box + fit=contain normalizes
+                            the different icon SVG bounds. */}
+                        <Group gap={isOverMd ? 8 : 6} wrap="nowrap" align="center">
+                          <Box
+                            style={{
+                              width: iconBox,
+                              height: iconBox,
+                              flexShrink: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {link.snag ? (
+                              <SnagIcon name={link.snag} size={iconBox} title={link.label} />
+                            ) : (
+                              <Image src={link.icon} alt={link.label} w="100%" h="100%" fit="contain" />
+                            )}
+                          </Box>
+                          <Text
+                            fz={isOverMd ? 14 : 12}
+                            fw={700}
+                            tt="uppercase"
+                            c="white"
+                            style={{
+                              whiteSpace: "nowrap",
+                              lineHeight: 1,
+                              fontFamily: "var(--font-display, 'Quantico', sans-serif)",
+                              letterSpacing: isOverMd ? "0.12em" : "0.1em",
+                            }}
+                          >
+                            {link.label}
+                          </Text>
+                        </Group>
+                      </Link>
+                    );
+                  })}
+              </Flex>
+            </ScrollArea>
+          </Box>
         </Paper>
       }
     >

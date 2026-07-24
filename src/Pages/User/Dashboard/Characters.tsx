@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Avatar,
+  Box,
   Button,
   Flex,
   Group,
@@ -8,6 +9,7 @@ import {
   Paper,
   Popover,
   Select,
+  SimpleGrid,
   Stack,
   Text,
   TextInput,
@@ -54,13 +56,16 @@ export default function Characters() {
         action={<CreateNewCharacter />}
       />
     );
+  // Redesign: compact character cards (portrait + name + bio + EDIT) in a
+  // 2-col grid, with the dashed create card as the last cell. Editing expands
+  // a card to the full-width profile form.
   return (
-    <Stack align="end">
+    <SimpleGrid cols={{ base: 1, md: 2 }} spacing={{ base: 12, sm: 16 }}>
       {sortedData.map((character) => (
         <SingleCharacter key={character.id} {...character} />
       ))}
       <CreateNewCharacter />
-    </Stack>
+    </SimpleGrid>
   );
 }
 
@@ -132,14 +137,25 @@ function CreateNewCharacter() {
     }
   };
 
+  // Dashed "+ CREATE A CHARACTER" card from the mockup. A name is still
+  // required up front, so the card holds the input plus the create button.
   return (
-    <Group gap={8} align="flex-end" wrap="nowrap">
+    <Stack
+      gap={12}
+      justify="center"
+      p={{ base: 16, sm: 22 }}
+      style={{ border: "2px dashed #3a3550", minHeight: 120 }}
+      sx={{
+        transition: "border-color .2s ease",
+        "&:hover, &:focus-within": { borderColor: "#FFD074" },
+      }}
+    >
       <TextInput
         label="Character name"
         placeholder="Name your character"
         value={name}
         onChange={(e) => setName(e.currentTarget.value)}
-        styles={{ label: { color: "white" } }}
+        styles={{ label: { color: "white" }, input: { background: "#0e0d11" } }}
       />
       <GradientButtonSecondary
         id="create-character-button"
@@ -147,9 +163,9 @@ function CreateNewCharacter() {
         loading={isLoading}
         disabled={!name.trim()}
       >
-        Create a new Character
+        + Create a Character
       </GradientButtonSecondary>
-    </Group>
+    </Stack>
   );
 }
 
@@ -398,142 +414,166 @@ function SingleCharacter(props: Character) {
     setEditing(false);
   };
 
-  return (
-    <Stack
-      bg="#17151c"
-      p={20}
-      align="end"
-      w="100%"
-      sx={{
-        border: "1px solid #2a2637",
-        overflow: "hidden",
-      }}
-    >
-      <Flex sx={{ flexDirection: isOverSm ? "row" : "column" }} gap={40} w="100%" align="stretch">
-        <Stack gap={19} align="center">
-          <Avatar
-            style={{ border: "4px solid #FFFFFF", borderRadius: "100%" }}
-            w={150}
-            src={form.values.imageURL || DefaultCharacterImage}
-            alt={`${form.values.name ?? "Character"} avatar`}
-            h={150}
-            sx={{ objectFit: "cover" }}
-          />
-          {/* Always show the upload so it's clear the image can be changed;
-              it saves immediately, no need to be in edit mode. */}
-          <UploadAvatar form={form} {...props} />
-        </Stack>
-        <Stack gap={isOverSm ? 8 : 16} w="100%">
-          <Flex
-            sx={{ flexDirection: isOverSm ? "row" : "column" }}
-            justify="space-between"
-            align="center"
-            gap={5}
-          >
-            {isEditing ? (
-              <TextInput {...form.getInputProps("name")} />
-            ) : (
-              <Text fz={28} color="white" bg="#0e0d11" px={20} py={5} sx={{ borderRadius: 0 }}>
+  // Display mode: the mockup's compact card (portrait, name, bio, EDIT).
+  if (!isEditing) {
+    return (
+      <Box className="dc-card" w="100%" sx={{ overflow: "hidden" }}>
+        <Flex align="stretch">
+          <Box w={{ base: 100, sm: 120 }} style={{ flexShrink: 0 }}>
+            <Image
+              src={form.values.imageURL || DefaultCharacterImage}
+              alt={`${form.values.name ?? "Character"} portrait`}
+              w="100%"
+              h="100%"
+              style={{ objectFit: "cover", display: "block" }}
+            />
+          </Box>
+          <Stack gap={6} p={{ base: 16, sm: 20 }} style={{ flex: 1, minWidth: 0 }}>
+            <Flex justify="space-between" align="flex-start" gap={8}>
+              <Text
+                className="dc-display"
+                c="white"
+                fz={{ base: 16, sm: 18 }}
+                tt="uppercase"
+                lineClamp={1}
+                style={{ letterSpacing: "0.04em", minWidth: 0 }}
+              >
                 {form.values.name}
               </Text>
-            )}
-            {isOverSm &&
-              (!isEditing ? (
-                <Group>
-                  <DeleteCharacter characterId={props.id} />
-                  <GradientButtonPrimary
-                    rightSection={<Image src={Edit2} alt="Edit icon" />}
-                    fullWidth={!isOverSm}
-                    onClick={() => setEditing(true)}
-                  >
-                    Edit
-                  </GradientButtonPrimary>
-                </Group>
-              ) : (
-                <Group>
-                  <Button color="gray" variant="light" onClick={handleCancelEdit}>
-                    Cancel
-                  </Button>
-                  <GradientButtonSecondary
-                    loading={isLoading}
-                    fullWidth={!isOverSm}
-                    onClick={handleSaveChanges}
-                  >
-                    Save Your Changes
-                  </GradientButtonSecondary>
-                </Group>
-              ))}
-          </Flex>
-          <Flex
-            w="100%"
-            sx={{ flexDirection: isOverSm ? "row" : "column" }}
-            align="stretch"
-            gap={8}
-          >
-            <Stack w={isOverSm ? 220 : "100%"} gap={8}>
-              <InputWrapper
-                form={form}
-                name="species"
-                isEditing={isEditing}
-                locked={!canEditType}
-                title="Species"
-              />
-              <InputWrapper
-                form={form}
-                name="type"
-                inputType="select"
-                options={characterTypes}
-                isEditing={isEditing}
-                locked={!canEditType}
-                title="Type"
-              />
-              <InputWrapper form={form} name="height" isEditing={isEditing} title="Height" />
-              <InputWrapper form={form} name="age" isEditing={isEditing} title="Age" />
-              <InputWrapper form={form} name="birthday" isEditing={isEditing} title="Birthday" />
-              <InputWrapper form={form} name="pronouns" isEditing={isEditing} title="Pronouns" />
-            </Stack>
-            <Stack gap={8} sx={{ flex: 1 }}>
-              <TextareaWrapper
-                name="moveset"
-                isMoveSet
-                form={form}
-                isEditing={isEditing}
-                locked={!canEditType}
-                title="Moveset"
-              />
-              <TextareaWrapper
-                name="short_description"
-                form={form}
-                isEditing={isEditing}
-                title="Short description"
-              />
-              <TextareaWrapper
-                name="history"
-                form={form}
-                isEditing={isEditing}
-                title="History & profile info"
-              />
-            </Stack>
-          </Flex>
-          {!isOverSm &&
-            (!isEditing ? (
-              <Group grow>
-                <DeleteCharacter characterId={props.id} />
-                <GradientButtonPrimary fullWidth={!isOverSm} onClick={() => setEditing(true)}>
-                  Edit
-                </GradientButtonPrimary>
-              </Group>
-            ) : (
-              <GradientButtonSecondary
-                loading={isLoading}
-                fullWidth={!isOverSm}
-                onClick={handleSaveChanges}
+              <DeleteCharacter characterId={props.id} />
+            </Flex>
+            <Text fz={{ base: 13, sm: 14 }} c="#b6b1bc" lh={1.6} style={{ flex: 1 }}>
+              {form.values.short_description ||
+                "No short description yet. Hit EDIT CHARACTER to add one."}
+            </Text>
+            <Group gap={8} mt={6} wrap="wrap">
+              <Button
+                variant="outline"
+                size="xs"
+                rightSection={<Image src={Edit2} alt="Edit icon" />}
+                onClick={() => setEditing(true)}
+                styles={{
+                  root: {
+                    borderColor: "#FFD074",
+                    color: "#FFD074",
+                    background: "transparent",
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 700,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    "&:hover": { background: "#FFD074", color: "#1A1B1E" },
+                  },
+                }}
               >
-                Save Your Changes
-              </GradientButtonSecondary>
-            ))}
-        </Stack>
-      </Flex>
-    </Stack>
+                Edit Character
+              </Button>
+              {/* Always show the upload so it's clear the image can be changed;
+                  it saves immediately, no need to be in edit mode. */}
+              <UploadAvatar form={form} {...props} />
+            </Group>
+          </Stack>
+        </Flex>
+      </Box>
+    );
+  }
+
+  // Edit mode: the full profile form, expanded across the whole grid row.
+  return (
+    <Box
+      className="dc-card"
+      w="100%"
+      p={20}
+      style={{ gridColumn: "1 / -1" }}
+      sx={{ overflow: "hidden" }}
+    >
+      <Stack align="end" w="100%">
+        <Flex sx={{ flexDirection: isOverSm ? "row" : "column" }} gap={40} w="100%" align="stretch">
+          <Stack gap={19} align="center">
+            <Avatar
+              style={{ border: "4px solid #FFFFFF", borderRadius: "100%" }}
+              w={150}
+              src={form.values.imageURL || DefaultCharacterImage}
+              alt={`${form.values.name ?? "Character"} avatar`}
+              h={150}
+              sx={{ objectFit: "cover" }}
+            />
+            <UploadAvatar form={form} {...props} />
+          </Stack>
+          <Stack gap={isOverSm ? 8 : 16} w="100%">
+            <Flex
+              sx={{ flexDirection: isOverSm ? "row" : "column" }}
+              justify="space-between"
+              align="center"
+              gap={5}
+            >
+              <TextInput sx={{ flex: 1 }} aria-label="Character name" {...form.getInputProps("name")} />
+              <Group>
+                <Button color="gray" variant="light" onClick={handleCancelEdit}>
+                  Cancel
+                </Button>
+                <GradientButtonSecondary
+                  loading={isLoading}
+                  fullWidth={!isOverSm}
+                  onClick={handleSaveChanges}
+                >
+                  Save Your Changes
+                </GradientButtonSecondary>
+              </Group>
+            </Flex>
+            <Flex
+              w="100%"
+              sx={{ flexDirection: isOverSm ? "row" : "column" }}
+              align="stretch"
+              gap={8}
+            >
+              <Stack w={isOverSm ? 220 : "100%"} gap={8}>
+                <InputWrapper
+                  form={form}
+                  name="species"
+                  isEditing={isEditing}
+                  locked={!canEditType}
+                  title="Species"
+                />
+                <InputWrapper
+                  form={form}
+                  name="type"
+                  inputType="select"
+                  options={characterTypes}
+                  isEditing={isEditing}
+                  locked={!canEditType}
+                  title="Type"
+                />
+                <InputWrapper form={form} name="height" isEditing={isEditing} title="Height" />
+                <InputWrapper form={form} name="age" isEditing={isEditing} title="Age" />
+                <InputWrapper form={form} name="birthday" isEditing={isEditing} title="Birthday" />
+                <InputWrapper form={form} name="pronouns" isEditing={isEditing} title="Pronouns" />
+              </Stack>
+              <Stack gap={8} sx={{ flex: 1 }}>
+                <TextareaWrapper
+                  name="moveset"
+                  isMoveSet
+                  form={form}
+                  isEditing={isEditing}
+                  locked={!canEditType}
+                  title="Moveset"
+                />
+                <TextareaWrapper
+                  name="short_description"
+                  form={form}
+                  isEditing={isEditing}
+                  title="Short description"
+                />
+                <TextareaWrapper
+                  name="history"
+                  form={form}
+                  isEditing={isEditing}
+                  title="History & profile info"
+                />
+              </Stack>
+            </Flex>
+          </Stack>
+        </Flex>
+      </Stack>
+    </Box>
   );
 }
