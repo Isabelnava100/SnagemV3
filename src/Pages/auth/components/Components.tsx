@@ -42,7 +42,7 @@ export const requirements = [
     const values = crypto.getRandomValues(new Uint32Array(length));
     let retVal = "";
     for (let i = 0; i < length; ++i) {
-        retVal += charset.charAt(values[i] % charset.length);
+        retVal += charset.charAt((values[i] ?? 0) % charset.length);
     }
     return retVal;
 }

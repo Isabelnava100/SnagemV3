@@ -26,10 +26,10 @@ export const getBadges = async (uid: string) => {
     [BadgeTypes, string, boolean]
   >;
   if (!data) return { data: {}, formattedData: [] };
-  const formattedData = Object.keys(data).map((key) => {
-    const badge = data[key];
-    return { label: badge[0], background: badge[1], enabled: badge[2] } satisfies Badge;
-  });
+  const formattedData = Object.entries(data).map(
+    ([, badge]) =>
+      ({ label: badge[0], background: badge[1], enabled: badge[2] }) satisfies Badge
+  );
   return { data, formattedData };
 };
 

@@ -221,16 +221,16 @@ export default function DesignSystem() {
             ))}
           </SimpleGrid>
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing={12}>
-            <Swatch color={theme.colors.brand[3]} name="Espeon Lilac" role="brand.3 · light purple accents" />
+            <Swatch color={theme.colors.brand?.[3] ?? ""} name="Espeon Lilac" role="brand.3 · light purple accents" />
             <Swatch color={theme.colors.violet[0]} name="Crobat Violet" role="violet.0 · gradient start" />
             <Swatch color={theme.colors.cyan[0]} name="Suicune Cyan" role="cyan.0 · gradient end, success" />
           </SimpleGrid>
 
           <Panel>
             <Stack gap={14}>
-              <TupleRow label="Gengar Purple ramp" role="brand, 10 shades · primary" colors={theme.colors.brand} />
+              <TupleRow label="Gengar Purple ramp" role="brand, 10 shades · primary" colors={theme.colors.brand ?? []} />
               <TupleRow label="Magikarp Red ramp" role="pink.* · alerts + primary gradient" colors={theme.colors.pink.slice(0, 4)} />
-              <TupleRow label="Pikachu Gold ramp" role="gold.* · fills + accents" colors={theme.colors.gold.slice(0, 4)} />
+              <TupleRow label="Pikachu Gold ramp" role="gold.* · fills + accents" colors={theme.colors.gold?.slice(0, 4) ?? []} />
             </Stack>
           </Panel>
 

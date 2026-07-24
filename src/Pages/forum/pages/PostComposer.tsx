@@ -310,15 +310,20 @@ export default function PostComposer(props: { mode: "new" | "edit" }) {
     const teamById = new Map((teamsRaw ?? []).map((t) => [t.id, t]));
     const ownedById = new Map((ownedForTraining?.sortedData ?? []).map((p) => [p.id, p]));
     return characters
-      .filter((c) => c.teamId && encMap[c.id])
-      .map((c) => ({
-        charId: c.id,
-        charName: c.name,
-        encounter: encMap[c.id],
-        teamPokemon: ((teamById.get(c.teamId!)?.pokemon_ids ?? [])
-          .map((id) => ownedById.get(id))
-          .filter(Boolean) as OwnedPokemon[]),
-      }))
+      .flatMap((c) => {
+        const encounter = encMap[c.id];
+        if (!c.teamId || !encounter) return [];
+        return [
+          {
+            charId: c.id,
+            charName: c.name,
+            encounter,
+            teamPokemon: ((teamById.get(c.teamId)?.pokemon_ids ?? [])
+              .map((id) => ownedById.get(id))
+              .filter(Boolean) as OwnedPokemon[]),
+          },
+        ];
+      })
       .filter((x) => x.teamPokemon.length);
   }, [characters, pending, teamsRaw, ownedForTraining]);
 

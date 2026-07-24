@@ -67,7 +67,7 @@ export const getPublishedPostsPage = async (
   );
   return {
     posts: snap.docs.map((d) => ({ id: d.id, ...d.data() }) as BlogPost),
-    cursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : null,
+    cursor: snap.docs.at(-1) ?? null,
   };
 };
 

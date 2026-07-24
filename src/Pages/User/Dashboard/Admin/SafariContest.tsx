@@ -159,11 +159,12 @@ export default function SafariContest() {
 
   // Load the first saved zone on the first render so the editor is never empty.
   React.useEffect(() => {
-    if (zones && zones.length && !config) {
-      setConfig(zones[0].config);
-      setLoadedId(zones[0].id);
-      setPickedId(zones[0].id);
-      setSaveTarget(zones[0].id);
+    const first = zones?.[0];
+    if (first && !config) {
+      setConfig(first.config);
+      setLoadedId(first.id);
+      setPickedId(first.id);
+      setSaveTarget(first.id);
     }
   }, [zones, config]);
 

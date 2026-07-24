@@ -12,14 +12,14 @@ long "needs a functions/rules deploy" list is deploy-pending, not missing code.
 Real gaps, highest value first:
 
 **Redesign mockup features not built:**
-- **Casino: 3 missing games + 2 simplified.** `Casino OK.dc.html` has 7 games;
-  the build backs 4. Missing entirely: **Spooky Slots** (3 reels; small, extend
-  `playCasinoGame`, no new CF), **Ghost Card Flip** (3 cards, pick index; small,
-  no new CF), **Haunter's High-Low** (call higher/lower, pot doubles, cash out;
-  needs a NEW stateful Cloud Function to persist the in-progress hand + query
-  wrappers). Simplified: **Hex Roulette** allows 1 pick at 5.5x vs mockup's up
-  to 5 hexes at 20x (`functions/src/index.ts:6253`); **Dream Dice** one total
-  vs up to 3. Extending both = CF payout-math + multi-select grid.
+- **Casino: 3 missing games + 2 simplified.** GAMES DONE (2026-07-23): Spooky
+  Slots (3 reels of 6 symbols; any pair pays 2x, triple pays 3x) and Ghost Card
+  Flip (pick 1 of 3 cards, Gengar pays 2x) extend `playCasinoGame` with no new
+  CF; Haunter's High-Low is its own stateful trio (startHighLow/guessHighLow/
+  cashoutHighLow, pot doubles per call, auto-pays at 3 calls for 8x). Still
+  simplified vs the mockup: **Hex Roulette** allows 1 pick at 4x vs mockup's up
+  to 5 hexes at 20x; **Dream Dice** one total vs up to 3. Extending both = CF
+  payout-math + multi-select grid.
 - **Dashboard team "LOCKED TO THREAD" state** DONE (2026-07-23). `SingleTeam`
   reads `users/{uid}/bag/threadLocks` (map keyed `${forum}__${threadId}` with
   `teamIds` + `title`) and shows a red LOCKED TO THREAD badge (tooltip names
@@ -108,9 +108,11 @@ Real gaps, highest value first:
   then linkDiscord throws a clear failed-precondition. eslint-plugin-jsx-a11y
   added in warn mode (13 advisories, none errors). tsconfig gained
   noUnusedLocals + noUnusedParameters (18 fixes); useMediaQuery.js converted
-  to TS. `noUncheckedIndexedAccess` trialed and DEFERRED: 112 errors, worst
-  files Onboarding/csv.ts, queries/dashboard.ts, Challenges, Casino; its own
-  workstream if ever wanted.
+  to TS. `noUncheckedIndexedAccess` DONE (2026-07-23): enabled and all 81
+  resulting errors fixed (bounds guards, Object.entries restructures,
+  ?? fallbacks with preserved semantics; 3 commented non-null assertions).
+  Also fixed: HighLowBody copy said "Five in a row" /5 while the server
+  caps at 3 calls (now "Three in a row" /3).
 
 - **Item sprites, remote 404s.** SWEPT (2026-07-20): HEAD-checked all 994
   catalog filenames against the jsDelivr CDN. 25 failed. 16 were a data bug:
@@ -293,20 +295,25 @@ Status as of 2026-07:
   so the repo's "Team Yell" was left untouched). Cross-book search DONE
   (2026-07-23): the Lore tab search now matches across all books, groups
   results by book with per-book overflow rows, and click-through opens the
-  book scrolled to the entry. Optional remaining: Tiptap editor for
-  bodies (today an HTML textarea with sanitized preview).
+  book scrolled to the entry. Tiptap editor for bodies DONE (2026-07-23):
+  the entry modal body is now the shared rich text Editor (lazy-loaded, same
+  embedding as the blog editor), still DOMPurify-sanitized on save and display,
+  with the sanitized preview kept.
 - **Scheduled Shadow Lotto draw** (2026-07). DONE for now as a manual admin action:
   `drawLotto` splits the jackpot among matching tickets and there is a grader/admin "Draw
   winner" button on the Casino Shadow Lotto card. A weekly cron is intentionally NOT used
   (owner's call). Add an `onSchedule` job later if an automatic weekly draw is wanted.
-- **Tournament bracket management** (2026-07). Bracket DISPLAY is now built: the
+- **Tournament bracket management** (2026-07). DONE. Bracket DISPLAY: the
   `Tournament` type carries an optional `bracket: BracketRound[]` (`src/queries/colosseum.ts`),
   and `BracketCard` renders it read-only (rounds as columns, winner highlighted, mobile
   horizontal-scroll) inside the featured tournament (`src/Pages/Colosseum/index.tsx`).
-  Verified rendering with an injected sample. STILL DEFERRED: an in-app bracket EDITOR.
-  Authoring the `bracket`/standings fields is admin-only and needs a Firestore write rule
-  on `tournaments/{id}` (console) before a client editor can be shipped; today the field is
-  populated via seed/console.
+  The in-app bracket EDITOR is built: admins get an "Edit bracket" button on the
+  featured tournament (`src/Pages/Colosseum/BracketEditor.tsx`) that edits rounds,
+  matches, entrants (free text with signed-up member suggestions) and winners, then
+  saves the whole bracket via `saveTournamentBracket` (setDoc merge on
+  `tournaments/{id}`, allowed to admins by the existing Firestore rule) and logs a
+  `tournament.bracket` audit entry. Standings/rankings points remain out of scope
+  (entered by admins from reported battles, as before).
 - **Dedicated mission detail design** DONE (2026-07, owner greenlit building it
   in-house). `/Missions/:id` keeps the striped hero + two-column brief and now
   reads threat at a glance: hero chips for Threat level (toughest star in the
@@ -343,6 +350,19 @@ Status as of 2026-07:
   Follow-ups: Grading.tsx still splits imperfectly (Inbox imports it
   statically); directory counts could be denormalized onto publicProfiles
   (1 read/member) if the directory ever gets hot.
+- **Directory counters denormalized (2026-07-23).** publicProfiles/{uid}
+  now carries postCount (incremented in the publishForumPost transaction),
+  characterCount and pokemonCount (recounted by two new triggers on the
+  bag map docs). getMembers reads the mirror plus only the two bag docs
+  the featured tile needs: 3 reads/member (was 5+ with a live count
+  aggregation). syncPublicProfile and the backfillPublicProfiles callable
+  now merge and delete Discord fields explicitly, so counters survive
+  resyncs. REQUIRES after the functions deploy:
+  `node scripts/backfill-member-counters.mjs` from functions/ (may print
+  a one-click composite-index link for the ownerUid+type count; create it
+  if asked). Counts are eventually consistent; post deletions do not
+  decrement (no member post-delete flow exists). Grading/Inbox split is
+  DONE (Inbox lazy-loads the Grading cards).
 
 ## Backend / integrity
 

@@ -983,7 +983,7 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
         <Text fz={14}>Purification pts: {pokemon.purification ?? 0} / {STAT_MAX}</Text>
         <Text fz={14}>Shadow pts: {pokemon.shadow ?? 0} / {STAT_MAX}</Text>
         <Text fz={14}>
-          Nature: {natureOf(pokemon)} ({NATURE_GROUP_LABEL[NATURE_GROUPS[natureOf(pokemon)]]})
+          Nature: {natureOf(pokemon)} ({NATURE_GROUP_LABEL[NATURE_GROUPS[natureOf(pokemon)] ?? "neutral"]})
         </Text>
         <Text fz={14}>
           Star level: {"★".repeat(starForDex(Number(pokemon.pokedex) || 0))} (

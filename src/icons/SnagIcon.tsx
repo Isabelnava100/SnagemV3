@@ -159,7 +159,7 @@ export function SnagIcon({
 }: SnagIconProps) {
   const inner = React.useMemo(() => {
     const set = iconSet(safeColor(color, "#fff"), safeColor(cut, "#1c1a22"), esc(label));
-    return set[name] ?? set.pokeball;
+    return set[name] ?? set.pokeball ?? "";
   }, [name, color, cut, label]);
   return (
     <svg

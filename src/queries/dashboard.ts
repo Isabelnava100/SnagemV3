@@ -29,14 +29,14 @@ export const getItems = async (uid: string): Promise<Item[]> => {
   // Always resolve the display name + sprite from the canonical catalog by id
   // (older bag entries stored raw slug names / stale paths); fall back to the
   // stored values for anything not in the catalog.
-  const formattedData = Object.keys(data).map((id) => {
+  const formattedData = Object.entries(data).map(([id, entry]) => {
     const catalog = itemData.find((item) => item.id === id);
     return {
       id,
-      name: catalog?.name ?? data[id].name,
-      category: catalog?.category ?? data[id].category,
-      quantity: data[id].quantity,
-      filePath: catalog?.filePath ?? data[id].filePath,
+      name: catalog?.name ?? entry.name,
+      category: catalog?.category ?? entry.category,
+      quantity: entry.quantity,
+      filePath: catalog?.filePath ?? entry.filePath,
     };
   }) as Item[];
   return formattedData;
@@ -69,12 +69,12 @@ export const getBookmarks = async (uid: string) => {
   snapshot.forEach((docSnap) => {
     const forumLink = docSnap.id;
     const data = docSnap.data() as Record<string, Bookmark>;
-    Object.keys(data).forEach((threadId) => {
+    Object.entries(data).forEach(([threadId, entry]) => {
       const bookmark = {
-        ...data[threadId],
+        ...entry,
         id: `${forumLink}/${threadId}`,
-        threadID: data[threadId].threadID ?? threadId,
-        threadLocation: (data[threadId].threadLocation ?? forumLink) as Bookmark["threadLocation"],
+        threadID: entry.threadID ?? threadId,
+        threadLocation: (entry.threadLocation ?? forumLink) as Bookmark["threadLocation"],
       };
       rawData[bookmark.id] = bookmark;
       formattedData.push(bookmark);

@@ -907,7 +907,7 @@ const TOUR_AREAS = [
 function TourBody() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [area, setArea] = React.useState<string>(TOUR_AREAS[0].name);
+  const [area, setArea] = React.useState<string>(TOUR_AREAS[0]?.name ?? "Cool Canyon");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState("");
   const [result, setResult] = React.useState<{
@@ -1236,7 +1236,8 @@ const KIND_STYLE: Record<string, { grad: string; accent: string }> = {
   tour: { grad: "linear-gradient(120deg, #0f2a30, #123a3a 60%, #0a2024)", accent: "#3bc9db" },
   evo: { grad: "linear-gradient(120deg, #2a1545, #3a1d63 60%, #1c1030)", accent: "#b197fc" },
 };
-const kindStyle = (kind?: string) => KIND_STYLE[kind ?? "store"] ?? KIND_STYLE.store;
+// KIND_STYLE.store is guaranteed by the literal above; it is the default look.
+const kindStyle = (kind?: string) => KIND_STYLE[kind ?? "store"] ?? KIND_STYLE.store!;
 
 const CURRENCY_BADGE: Record<Shop["currency"], { letter: string; color: string }> = {
   pokecoin: { letter: "C", color: "#7c5cff" },

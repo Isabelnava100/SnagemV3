@@ -55,7 +55,8 @@ export async function getSafariZones(): Promise<SafariZone[]> {
 export async function getSafariZoneById(id?: string | null): Promise<SafariConfig> {
   const zones = await getSafariZones();
   const found = id ? zones.find((z) => z.id === id) : undefined;
-  return (found ?? zones[0]).config;
+  // getSafariZones always yields at least one zone (see its default returns).
+  return (found ?? zones[0]!).config;
 }
 
 /** Upsert one zone. */

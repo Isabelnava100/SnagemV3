@@ -358,9 +358,9 @@ export default function ThreadRewards() {
                   <Box key={uid} p={10} bg="#211f21" style={{ borderRadius: 10 }}>
                     <Flex justify="space-between" align="center" gap={8} wrap="wrap">
                       <Group gap={8}>
-                        <Avatar src={participant.avatar || undefined} alt={`${participant.name ?? "User"} avatar`} size={30} radius="xl" />
+                        <Avatar src={participant?.avatar || undefined} alt={`${participant?.name ?? "User"} avatar`} size={30} radius="xl" />
                         <Text c="white" fz={16} fw={600}>
-                          {participant.name}
+                          {participant?.name}
                         </Text>
                       </Group>
                       <PerUserAdd

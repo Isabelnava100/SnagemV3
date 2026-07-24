@@ -125,7 +125,7 @@ export const CATCH_CAP = 95;
 /** Derive a ball's key ("poke", "great", ...) from its sprite path or name. */
 export function safariBallKey(input: { filePath?: string; name?: string }): string {
   const match = (input.filePath ?? "").match(/ball\/([a-z0-9-]+)/i);
-  if (match) return match[1].toLowerCase();
+  if (match && match[1] !== undefined) return match[1].toLowerCase();
   return (input.name ?? "").toLowerCase().replace(/\s*ball$/, "").trim();
 }
 

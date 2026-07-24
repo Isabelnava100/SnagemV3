@@ -125,7 +125,9 @@ export const getPostsPage = async (
       : query(colRef, orderBy("timePosted", "asc"), limit(perPage));
     docs = (await getDocs(q)).docs;
     if (!docs.length) break; // ran past the end
-    cursor = docs[docs.length - 1];
+    const last = docs[docs.length - 1];
+    if (!last) break; // docs is non-empty past the check above
+    cursor = last;
     pageCursors.set(cursorKey(forum, threadId, p), cursor);
   }
 

@@ -62,8 +62,10 @@ export function hasForwardEvolution(idx: number): boolean {
 export function preEvolutionDepth(idx: number): number {
   let depth = 0;
   let current = idx;
-  while (PRE_EVO[current] !== undefined && depth < 5) {
-    current = PRE_EVO[current];
+  while (depth < 5) {
+    const next = PRE_EVO[current];
+    if (next === undefined) break;
+    current = next;
     depth++;
   }
   return depth;

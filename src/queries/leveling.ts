@@ -21,7 +21,7 @@ export const saveLevelingCurve = async (curve: number[]): Promise<void> => {
   // Normalize: level 1 is always 0, values are non-decreasing integers.
   const clean = [0, 0];
   for (let l = 2; l <= MAX_LEVEL; l++) {
-    const v = Math.max(clean[l - 1], Math.round(Number(curve[l]) || 0));
+    const v = Math.max(clean[l - 1] ?? 0, Math.round(Number(curve[l]) || 0));
     clean[l] = v;
   }
   await setDoc(doc(db, "admin", "leveling"), { curve: clean }, { merge: true });

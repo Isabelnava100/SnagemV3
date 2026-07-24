@@ -1008,12 +1008,12 @@ function AscensionTab(props: {
 }) {
   const typeEntries = props.progress?.types ?? [];
   const typeOptions = typeEntries.length ? typeEntries.map((t) => t.type) : [props.fallbackType];
-  const [type, setType] = React.useState<string>(typeOptions[0]);
+  const [type, setType] = React.useState<string>(typeOptions[0] ?? props.fallbackType);
   const [status, setStatus] = React.useState("");
   const [busy, setBusy] = React.useState<number | null>(null);
 
   React.useEffect(() => {
-    setType(typeOptions[0]);
+    setType(typeOptions[0] ?? props.fallbackType);
     setStatus("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.characterId]);
@@ -1267,9 +1267,10 @@ export default function Research() {
 
   // Default to the first Master-track character; fall back to the first of any.
   React.useEffect(() => {
-    if (selectedId || !characters.length) return;
+    const first = characters[0];
+    if (selectedId || !first) return;
     const master = characters.find((c) => c.type !== "None");
-    setSelectedId((master ?? characters[0]).id);
+    setSelectedId((master ?? first).id);
   }, [characters, selectedId]);
 
   const config = configQuery.data ?? {};

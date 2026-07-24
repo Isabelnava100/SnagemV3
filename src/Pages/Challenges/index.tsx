@@ -735,7 +735,7 @@ function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress }
   const [regionId, setRegionId] = React.useState<string | null>(regions[0]?.id ?? null);
 
   React.useEffect(() => {
-    if (regions.length && !regions.some((r) => r.id === regionId)) setRegionId(regions[0].id);
+    if (regions.length && !regions.some((r) => r.id === regionId)) setRegionId(regions[0]?.id ?? null);
   }, [regions, regionId]);
 
   if (!regions.length) {
@@ -746,7 +746,8 @@ function GymRunsTab(props: { regions: GymRegion[]; progress: ChallengeProgress }
     );
   }
 
-  const region = regions.find((r) => r.id === regionId) ?? regions[0];
+  // regions[0] is guaranteed by the early return above when regions is empty.
+  const region = regions.find((r) => r.id === regionId) ?? regions[0]!;
   const gyms = [...(region.gyms ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const earned = progress.badges?.[region.id] ?? [];
   const stages = buildGymStages(region, progress);

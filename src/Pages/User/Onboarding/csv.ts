@@ -76,8 +76,7 @@ export function parseImportCsv(text: string, kind: "items" | "pokemon", look: Lo
   if (rows.length < 2) return { items, pokemon, matched: 0, skipped };
 
   // Skip the header row.
-  for (let r = 1; r < rows.length; r++) {
-    const cols = rows[r];
+  for (const cols of rows.slice(1)) {
     if (kind === "items") {
       const name = (cols[0] ?? "").trim();
       if (!name) continue;

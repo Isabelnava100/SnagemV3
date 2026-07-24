@@ -38,7 +38,11 @@ function extractObjectLiteral(src: string, name: string): string {
 function parseFlatTable(literal: string): Record<string, number> {
   const out: Record<string, number> = {};
   for (const m of literal.matchAll(/(\w+)\s*:\s*(-?[\d.]+)/g)) {
-    out[m[1]] = Number(m[2]);
+    const key = m[1];
+    const val = m[2];
+    // Both capture groups are required by the regex, so this never triggers.
+    if (key === undefined || val === undefined) continue;
+    out[key] = Number(val);
   }
   if (Object.keys(out).length === 0) throw new Error("no numeric entries parsed");
   return out;
@@ -48,7 +52,11 @@ function parseFlatTable(literal: string): Record<string, number> {
 function parseNestedTable(literal: string): Record<string, Record<string, number>> {
   const out: Record<string, Record<string, number>> = {};
   for (const m of literal.matchAll(/(\w+)\s*:\s*\{([^{}]*)\}/g)) {
-    out[m[1]] = parseFlatTable(m[2]);
+    const key = m[1];
+    const body = m[2];
+    // Both capture groups are required by the regex, so this never triggers.
+    if (key === undefined || body === undefined) continue;
+    out[key] = parseFlatTable(body);
   }
   if (Object.keys(out).length === 0) throw new Error("no nested entries parsed");
   return out;

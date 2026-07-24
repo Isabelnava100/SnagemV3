@@ -76,6 +76,7 @@ const getPublicUser = async (username: string): Promise<PublicUser | null> => {
   );
   if (snap.empty) return null;
   const docSnap = snap.docs[0];
+  if (!docSnap) return null;
   const data = docSnap.data();
   return {
     uid: docSnap.id,

@@ -407,7 +407,7 @@ export function LevelingCurveSection() {
                 </Table.Td>
                 <Table.Td>
                   <Text c="dimmed" fz={14}>
-                    +{Math.max(0, curve[l] - (curve[l - 1] ?? 0))}
+                    +{Math.max(0, (curve[l] ?? 0) - (curve[l - 1] ?? 0))}
                   </Text>
                 </Table.Td>
               </Table.Tr>

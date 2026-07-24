@@ -486,10 +486,12 @@ export default function Policies() {
   const [searchParams, setSearchParams] = useSearchParams();
   // Allow deep links like /Policies?tab=conduct (the forum links here for rules).
   const requested = searchParams.get("tab");
+  // TABS is a non-empty constant, so the first entry always exists.
+  const fallbackTab = TABS[0]!;
   const active = TABS.some((t) => t.value === requested)
     ? (requested as string)
-    : TABS[0].value;
-  const activeTab = TABS.find((t) => t.value === active) ?? TABS[0];
+    : fallbackTab.value;
+  const activeTab = TABS.find((t) => t.value === active) ?? fallbackTab;
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>

@@ -292,7 +292,7 @@ export function EncounterPostPanel(props: {
   // Default to the only character when there is just one (no picking needed).
   React.useEffect(() => {
     const list = characters?.sortedData ?? [];
-    if (list.length === 1 && !forCharacterId) setForCharacterId(list[0].id);
+    if (list.length === 1 && !forCharacterId) setForCharacterId(list[0]?.id ?? null);
   }, [characters, forCharacterId]);
 
   // The server validates the list, allowance and mode, then binds the result to

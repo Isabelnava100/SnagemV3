@@ -47,7 +47,11 @@ export default function Navigation() {
     const target = index + dir;
     if (target < 0 || target >= order.length) return;
     const next = [...order];
-    [next[index], next[target]] = [next[target], next[index]];
+    const a = next[index];
+    const b = next[target];
+    if (a === undefined || b === undefined) return;
+    next[index] = b;
+    next[target] = a;
     setOrder(next);
     save.mutate(next);
   };

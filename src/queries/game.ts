@@ -286,7 +286,7 @@ export const getBattleConfig = async (): Promise<BattleConfig> => {
         String(s),
         Number(dmgRaw[String(s)]) > 0
           ? Number(dmgRaw[String(s)])
-          : DEFAULT_BATTLE_CONFIG.starDamage[String(s)],
+          : (DEFAULT_BATTLE_CONFIG.starDamage[String(s)] ?? 0),
       ])
     ),
   };

@@ -515,7 +515,7 @@ export default function ThreadView() {
       ? `${truncate(thread.title, 46)} Page ${currentPage}`
       : truncate(thread.title, 60),
   );
-  const firstPostText = posts?.length ? stripHtml(posts[0].text ?? "") : "";
+  const firstPostText = posts?.length ? stripHtml(posts[0]?.text ?? "") : "";
   const seoDescription = firstPostText
     ? truncate(firstPostText, 160)
     : `${truncate(thread.title, 80)}, a Pokemon roleplay thread on the Snagem Guild forums.`;

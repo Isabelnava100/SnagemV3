@@ -23,7 +23,7 @@ export function natureOf(pokemon: { id: string; nature?: string }): string {
   if (NATURE_GROUPS[stored]) return stored;
   let h = 0;
   for (const ch of pokemon.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return NATURE_NAMES[h % NATURE_NAMES.length];
+  return NATURE_NAMES[h % NATURE_NAMES.length] ?? "Hardy";
 }
 
 export const NATURE_GROUP_LABEL: Record<NatureGroup, string> = {

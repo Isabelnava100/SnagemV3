@@ -10,5 +10,5 @@ export function generationOf(idx: number | string): string {
   const n = Number(idx) || 0;
   if (n < 1) return "";
   const gi = GEN_CAPS.findIndex((cap) => n <= cap);
-  return GEN_NAMES[gi === -1 ? GEN_NAMES.length - 1 : gi];
+  return GEN_NAMES[gi === -1 ? GEN_NAMES.length - 1 : gi] ?? "";
 }
