@@ -2,13 +2,24 @@ import { Button, Center, Stack, Text } from "@mantine/core";
 import type { JSX } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { Loader } from "./loading";
 
 type Props = {
   children: JSX.Element;
 };
 
 export const Protect = ({ children }: Props) => {
-  const { user } = useAuth();
+  const { user, pending } = useAuth();
+
+  // The auth context no longer gates the tree on the first emission, so
+  // protected routes must wait for it here before judging the user.
+  if (pending) {
+    return (
+      <Center w="100%" h="100%">
+        <Loader />
+      </Center>
+    );
+  }
 
   if (!user) {
     return (

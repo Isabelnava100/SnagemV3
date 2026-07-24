@@ -241,6 +241,10 @@ export type SpecificUser = {
 export type AuthContextType = {
   user: User | undefined;
   setUser: Dispatch<SetStateAction<User | undefined>>;
+  // True until the first onAuthStateChanged emission. Public pages render
+  // through it (user reads as logged-out); only protected gates (Protect)
+  // should wait on it.
+  pending: boolean;
 };
 //AuthContent
 

@@ -1,6 +1,4 @@
-import { LoadingOverlay } from "@mantine/core";
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from "react";
-import LoadingSpinner from "../components/navigation/loading";
 import { AuthContextType, SpecificUser, User } from "../components/types/typesUsed";
 import { auth, getDb } from "./firebase";
 
@@ -67,12 +65,12 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
     return () => authConst();
   }, []);
 
-  const value = useMemo(() => ({ user, setUser }), [user]);
+  const value = useMemo(() => ({ user, setUser, pending }), [user, pending]);
 
-  if (pending) {
-    return <LoadingOverlay visible={pending} loaderProps={{ children: <LoadingSpinner /> }} />;
-  }
-
+  // Children render immediately, even while the first auth emission is still
+  // pending: gating the whole tree on auth pushed the marketing homepage's
+  // LCP past a second for no benefit (public pages render the same logged
+  // out). Only Protect waits on `pending` now.
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

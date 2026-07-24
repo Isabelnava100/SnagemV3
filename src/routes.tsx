@@ -15,9 +15,13 @@ import { Loader } from "./components/navigation/loading";
 import { theme } from "./lib/mantine";
 import { queryClient } from "./lib/react-query";
 import { lazyImport } from "./utils/lazyImport";
+// Boot path stays eager: the marketing homepage must paint in under a
+// second, and a serial lazy chain (entry -> auth chunk -> shell -> page)
+// pushed LCP past 2s. Everything below stays route-lazy.
+import { App } from "./App";
+import { HomePage } from "./Pages/Homepage";
+import { AuthContextProvider } from "./context/AuthContext";
 
-const { App } = lazyImport(() => import("./App"), "App");
-const { HomePage } = lazyImport(() => import("./Pages/Homepage"), "HomePage");
 const { Dashboard } = lazyImport(() => import("./Pages/User/Dashboard"), "Dashboard");
 const { ForgotPassword } = lazyImport(() => import("./Pages/auth/ForgotPW"), "ForgotPassword");
 const { Login } = lazyImport(() => import("./Pages/auth/Login"), "Login");
@@ -62,10 +66,6 @@ const { default: MissionDetail } = lazyImport(() => import("./Pages/Missions/Mis
 const { ErrorPage } = lazyImport(() => import("./components/navigation/error-page"), "ErrorPage");
 const { default: Activities } = lazyImport(() => import("./Pages/Activities"), "default");
 const { Protect } = lazyImport(() => import("./components/navigation/Protect"), "Protect");
-const { AuthContextProvider } = lazyImport(
-  () => import("./context/AuthContext"),
-  "AuthContextProvider"
-);
 const { default: Bookmarks } = lazyImport(
   () => import("./Pages/User/Dashboard/Bookmarks"),
   "default"
