@@ -469,11 +469,15 @@ const KB: KbEntry[] = [
     match: /casino|roulette|dice|lotto|gamb|jackpot/i,
     answer: () => (
       <>
-        The <L to="/Casino">Casino</L> runs on Gengar Tokens. Hex Roulette: pick 1-36,
-        win pays 5.5x your bet. Dream Dice: predict the 2d6 total, pays 2x (3x on
-        doubles), bets 1-5. Shadow Lotto: 1 token a ticket, pick 1-50, the pot splits
-        among matching tickets when staff run the weekly draw. Playing any game checks
-        off your Snag List casino task.
+        The <L to="/Casino">Casino</L> runs on Gengar Tokens (trade Snag Coins at the
+        Exchange Cage), staked 1-3 a play. The floor: Hex Roulette (pick 1-6, pays
+        4x), Dream Dice (call the 2d6 total, pays 2x), Payback Pyramid (even or odd
+        on a d6, pays 2x, but a 5 or 6 is the house&apos;s), Spooky Slots (any reel
+        pair pays 2x, a triple pays 3x), Ghost Card Flip (find Gengar under 1 of 3
+        cards, pays 2x) and Haunter&apos;s High-Low (call higher or lower, the pot
+        doubles each hit, cash out or ride three calls to 8x). Shadow Lotto: 1 token
+        a ticket, pick 1-50, the pot splits among matching tickets when staff run
+        the weekly draw. Playing any game checks off your Snag List casino task.
       </>
     ),
   },
@@ -747,7 +751,8 @@ const KB: KbEntry[] = [
       <>
         The <L to="/Casino">Casino</L> (Darts&apos; Ghastly Gambling) runs on Gengar
         Tokens: trade Snag Coins for tokens at the counter, then wager them on Hex
-        Roulette, Dream Dice, Payback Pyramid, or buy into the Shadow Lotto draw. Every
+        Roulette, Dream Dice, Payback Pyramid, Spooky Slots, Ghost Card Flip or
+        Haunter&apos;s High-Low, or buy into the Shadow Lotto draw. Every
         roll is server-side and final. Snag Coins come from missions, events and reward
         reviews; Gengar Tokens only spend here.
       </>

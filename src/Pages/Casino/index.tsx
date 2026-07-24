@@ -692,7 +692,10 @@ function DreamDiceBody(props: GameProps) {
         : `You rolled ${shown}. That total missed.`;
     },
     (res, bet) => {
-      if (Array.isArray(res.roll) && res.roll.length >= 2) setDice([res.roll[0], res.roll[1]]);
+      if (Array.isArray(res.roll) && res.roll.length >= 2) {
+        const [a, b] = res.roll;
+        if (a !== undefined && b !== undefined) setDice([a, b]);
+      }
       props.record(res.win, res.payout, bet);
     }
   );
@@ -922,8 +925,10 @@ function SpookySlotsBody(props: GameProps) {
         : `The reels lock ${r.join(" · ")}. No match this spin.`;
     },
     (res, bet) => {
-      if (Array.isArray(res.roll) && res.roll.length >= 3)
-        setReels([res.roll[0], res.roll[1], res.roll[2]]);
+      if (Array.isArray(res.roll) && res.roll.length >= 3) {
+        const [a, b, c] = res.roll;
+        if (a !== undefined && b !== undefined && c !== undefined) setReels([a, b, c]);
+      }
       props.record(res.win, res.payout, bet);
     }
   );
@@ -1058,7 +1063,7 @@ function HighLowBody(props: GameProps) {
     onSuccess: (res) => {
       setHand({ card: res.card, pot: res.pot, calls: res.calls, active: res.active });
       if (res.correct && res.cashedOut) {
-        setMsg({ ok: true, text: `${cardLabel(res.card)}. Five in a row! ${res.pot} Gengar Tokens are yours.` });
+        setMsg({ ok: true, text: `${cardLabel(res.card)}. Three in a row! ${res.pot} Gengar Tokens are yours.` });
         props.record(true, res.pot, props.stake);
       } else if (res.correct) {
         setMsg({ ok: true, text: `${cardLabel(res.card)}. The pot is now ${res.pot}. Push it or cash out.` });
@@ -1109,7 +1114,7 @@ function HighLowBody(props: GameProps) {
         <Stack gap={10}>
           <Text fz={14} c={DIM}>
             Pot: <b style={{ color: GOLD }}>{hand?.pot ?? props.stake}</b> Gengar Tokens
-            {active ? ` · call ${hand!.calls}/5` : ""}
+            {active ? ` · call ${hand!.calls}/3` : ""}
           </Text>
           {active ? (
             <Group gap={10} wrap="wrap">

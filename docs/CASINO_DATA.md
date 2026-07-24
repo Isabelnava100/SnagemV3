@@ -3,6 +3,15 @@
 Machine-readable inventory for the **Casino** (an Activities feature, build later).
 No route exists yet. Paste any section into another AI tool as context.
 
+> Update (2026-07-23): the casino SHIPPED at /Casino and this file now describes
+> the original plan, not the live build. Shipped games: Hex Roulette (pick 1-6,
+> 4x), Dream Dice (call the 2d6 total, flat 2x), Payback Pyramid (even/odd d6,
+> 2x, 5-6 is the house's), Spooky Slots (pair 2x, triple 3x), Ghost Card Flip
+> (1 of 3 cards, 2x), Haunter's High-Low (pot doubles, 3 calls pays 8x) and the
+> Shadow Lotto. Bets are 1-3 tokens via `playCasinoGame` (High-Low has its own
+> start/guess/cashout callables); only `exchangeRate` and `lottoMinTickets` are
+> tunable in admin/casino_config.
+
 Legend. `visibility`: public · admin. `effort`: stored · computed · new.
 Status: **deferred** per your note ("build it out later").
 
