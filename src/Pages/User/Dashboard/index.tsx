@@ -278,13 +278,14 @@ function NotificationBell() {
             alignItems: "center",
             justifyContent: "center",
             background: "rgba(10,9,13,0.5)",
-            border: "1px solid rgba(255,255,255,0.18)",
+            border: unread > 0 ? "1px solid rgba(229,65,86,0.6)" : "1px solid rgba(255,255,255,0.18)",
           }}
         >
           {/* Crisp vector alert icon (burst) from the Snag icon set; replaced
-              the old bell.svg which scaled blurry. */}
+              the old bell.svg which scaled blurry. Turns red with the border
+              while anything is unread, white when the inbox is clear. */}
           <Box style={{ width: 24, height: 24 }}>
-            <SnagIcon name="bolt" size={24} title="Notifications" />
+            <SnagIcon name="bolt" size={24} color={unread > 0 ? "#E54156" : "#fff"} title="Notifications" />
           </Box>
           {unread > 0 && (
             <Box
