@@ -32,6 +32,12 @@ import React from "react";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { canManageLore } from "../../lib/permissions";
+import { lazyImport } from "../../utils/lazyImport";
+
+// The rich text body editor lazy-loads (like the Manage.tsx admin tools) so
+// Tiptap stays out of the reader-facing Library chunk; it only downloads when
+// an editor actually opens the entry modal.
+const { default: LoreBodyEditor } = lazyImport(() => import("./LoreBodyEditor"), "default");
 import {
   deleteLoreBook,
   deleteLoreEntry,
@@ -325,13 +331,20 @@ function EntryEditor(props: {
   onSaved: () => void;
 }) {
   const [draft, setDraft] = React.useState(props.initial ?? emptyEntry("", 0));
+  // The body lives in the rich text editor; bodyHtml mirrors its latest HTML
+  // for the sanitized preview and the save mutation. `draft.body` stays at the
+  // loaded value so the editor's initial content never changes mid-typing.
+  const [bodyHtml, setBodyHtml] = React.useState(draft.body);
   React.useEffect(() => {
-    if (props.initial) setDraft(props.initial);
+    if (props.initial) {
+      setDraft(props.initial);
+      setBodyHtml(props.initial.body ?? "");
+    }
   }, [props.initial]);
 
   const mutation = useMutation({
     mutationFn: () =>
-      upsertLoreEntry({ ...draft, body: DOMPurify.sanitize(draft.body ?? "") }),
+      upsertLoreEntry({ ...draft, body: DOMPurify.sanitize(bodyHtml) }),
     onSuccess: () => {
       props.onSaved();
       props.onClose();
@@ -388,21 +401,20 @@ function EntryEditor(props: {
           value={draft.attributes ?? {}}
           onChange={(attributes) => setDraft({ ...draft, attributes })}
         />
-        <Textarea
-          label="Body (HTML)"
-          description="Paste the migrated post HTML. It is sanitized on save and on display."
-          autosize
-          minRows={4}
-          maxRows={16}
-          value={draft.body}
-          onChange={(e) => setDraft({ ...draft, body: e.currentTarget.value })}
-        />
-        {draft.body.trim() && (
+        <Box>
+          <Text fz={14} fw={500} c="white" mb={4}>
+            Body
+          </Text>
+          <React.Suspense fallback={<SectionLoader />}>
+            <LoreBodyEditor initialHtml={draft.body} onChange={setBodyHtml} />
+          </React.Suspense>
+        </Box>
+        {bodyHtml.trim() && (
           <Card bg="#1c1b1f" p={10} radius="md" withBorder>
             <Text fz={14} c="dimmed" mb={4}>
-              Preview
+              Preview (as readers see it, sanitized)
             </Text>
-            <LoreProse html={draft.body} />
+            <LoreProse html={bodyHtml} />
           </Card>
         )}
         {mutation.isError && (
