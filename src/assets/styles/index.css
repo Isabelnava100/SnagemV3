@@ -1,4 +1,21 @@
 /* @import url("./fonts.css"); */
+/* Roboto is self-hosted (public/fonts, latin variable files) so text never
+   waits on the Google Fonts RTT chain. Keep weights synced to what the UI
+   uses (400-800) if this is ever re-downloaded. */
+@font-face {
+  font-family: "Roboto";
+  src: url("/fonts/Roboto-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("/fonts/Roboto-Italic-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
 /* Tailwind 4: theme + utilities only, preflight intentionally excluded (was disabled in v3 config) */
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);

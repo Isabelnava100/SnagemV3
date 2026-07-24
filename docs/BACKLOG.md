@@ -335,9 +335,30 @@ Status as of 2026-07:
   `refFromURL` (Profile avatars), and a dead compat import changed.
   Remaining QA: a logged-in pass over login, Google sign-in, register,
   password reset, logout, and avatar upload/delete on the live site.
-- **Font subsetting** (2026-07). Roboto now loads as the Google Fonts
-  variable font (2 files, swap). Self-hosting a subset woff2 would shave a
-  bit more, at the cost of manual font upkeep.
+- **Font subsetting** DONE (2026-07-24). Roboto is self-hosted as latin
+  variable woff2 (regular + italic, ~80KB total) in public/fonts with
+  @font-face in src/assets/styles/index.css; the Google Fonts css2 link and
+  preconnects are gone (one less render-blocking RTT chain), the regular
+  file is preloaded, and font-src/style-src no longer allow Google origins.
+  Quantico was also fixed the same day: the redesign referenced
+  /fonts/Quantico.woff2 but the files were never committed (every page got
+  SPA-fallback HTML and a decode error). The real latin set (4 styles,
+  ~6KB each) now lives in public/fonts.
+- **Homepage sub-second pass (2026-07-24).** LCP went ~3.5s to ~1.2s on a
+  slow link (FCP 484ms; ~0.5-0.7s LCP on normal broadband). What shipped:
+  hero art preloaded in index.html and recompressed 193KB to 60KB (1120w
+  q45; originals in /tmp are gone, re-export from source if needed), the
+  auth gate removed so public pages render before the first
+  onAuthStateChanged (context exposes `pending`; only Protect waits), the
+  boot path made eager then the entry graph made firebase-free (Seo,
+  SideBar, AuthContext dynamic-import their firebase bits), and a
+  PERMANENT static hero shell in index.html (#boot-shell, outside #root)
+  that React never remounts, so the LCP paint is never replaced. The shell
+  mirrors the Homepage hero markup and its inline critical CSS mirrors
+  homepage.css/redesign.css: KEEP THEM IN SYNC when editing the hero, the
+  top bar, or the .dc-cta/.dc-kicker classes. A CSP-hashed inline script
+  removes the shell on non-home initial loads; App.tsx hides/shows it per
+  route. Remaining floor is network latency to the image, not the site.
 - **Asset + bundle pass (2026-07-23).** Gen 9 box sprites moved from
   src/assets to `public/images/sprites/gen9/` and load on demand by URL
   (were 240 base64 data URIs inlined into a 254KB shared chunk, ~160KB

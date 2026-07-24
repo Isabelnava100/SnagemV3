@@ -1,4 +1,5 @@
-import { Box, BoxProps, Flex, Paper, Title } from "@mantine/core";
+import { Box, BoxProps, Flex, Paper, Text, Title } from "@mantine/core";
+import { IconAlertCircle } from "@tabler/icons-react";
 import React from "react";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { SectionLoader } from "../navigation/loading";
@@ -12,7 +13,6 @@ export default function SectionWrapper(props: {
   customHeader?: React.ReactNode;
   willFetchData?: boolean;
   isLoading?: boolean;
-  // Accepted but not rendered yet: no error UI exists for failed section loads.
   isError?: boolean;
   error?: string;
   bg?: string;
@@ -25,6 +25,8 @@ export default function SectionWrapper(props: {
     customHeader,
     willFetchData = false,
     isLoading,
+    isError,
+    error,
     bg = "#282727",
   } = props;
   const { isOverSm, isOverMd } = useMediaQuery();
@@ -49,7 +51,33 @@ export default function SectionWrapper(props: {
           {action && action}
         </Flex>
       )}
-      <Box p={isOverMd ? 25 : 10}>{willFetchData && isLoading ? <SectionLoader /> : children}</Box>
+      <Box p={isOverMd ? 25 : 10}>
+        {willFetchData && isLoading ? (
+          <SectionLoader />
+        ) : willFetchData && isError ? (
+          <Flex
+            role="alert"
+            align="center"
+            gap={10}
+            p={14}
+            style={{ background: "#141318", border: "1px solid #232028", borderRadius: 10 }}
+          >
+            <IconAlertCircle size={18} color="#E54156" style={{ flexShrink: 0 }} />
+            <Box style={{ minWidth: 0 }}>
+              <Text fz={14} c="white">
+                This section could not load
+              </Text>
+              {error && (
+                <Text fz={14} c="dimmed" mt={2} style={{ overflowWrap: "anywhere" }}>
+                  {error}
+                </Text>
+              )}
+            </Box>
+          </Flex>
+        ) : (
+          children
+        )}
+      </Box>
     </Paper>
   );
 }

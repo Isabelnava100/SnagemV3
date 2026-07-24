@@ -7,12 +7,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Early connections for the data the app fetches on every load. -->
     <link rel="preconnect" href="https://firestore.googleapis.com" />
     <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
     <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
+    <!-- Roboto is self-hosted (see @font-face in src/assets/styles/index.css);
+         preload the regular variable file so body text paints in it fast.
+         Italic loads on demand. -->
     <!-- Homepage LCP image: discovered here at t=0 instead of when the lazy
          homepage chunk renders (~2s in). It is a CSS background, so the
          markup alone would not reveal it early. -->
@@ -54,13 +54,7 @@
         .hp-hero-inner { position: absolute; left: 56px; top: 90px; padding: 0; gap: 26px; max-width: 760px; }
       }
     </style>
-    <!-- Variable Roboto: one file per italic axis covers weights 100-900
-         (the site uses 400-800), instead of 18 separate static files.
-         display=swap keeps text visible while the font loads. -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/Roboto-Variable.woff2" crossorigin />
     <title>Snagem Guild | Pokemon Roleplay Community &amp; Forums</title>
     <!-- Static fallbacks for crawlers and link unfurlers that do not run JS.
          The Seo component (src/components/common/Seo.tsx) takes over per page. -->

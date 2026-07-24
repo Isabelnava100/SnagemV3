@@ -77,8 +77,8 @@ function Section(props: { index: string; eyebrow: string; title: string; hint?: 
   );
 }
 
-/** A single color chip with its hex + role. Contrast dot flips on light swatches. */
-function Swatch(props: { color: string; name: string; role?: string }) {
+/** A single color chip with its hex + usage. Contrast dot flips on light swatches. */
+function Swatch(props: { color: string; name: string; usage?: string }) {
   return (
     <Box style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #232028", background: "#141318" }}>
       <Box style={{ background: props.color, height: 56 }} />
@@ -89,9 +89,9 @@ function Swatch(props: { color: string; name: string; role?: string }) {
         <Text ff="monospace" fz={14} c="dimmed" tt="uppercase">
           {props.color}
         </Text>
-        {props.role && (
+        {props.usage && (
           <Text fz={14} c="dimmed" mt={2} lh={1.3}>
-            {props.role}
+            {props.usage}
           </Text>
         )}
       </Box>
@@ -99,7 +99,7 @@ function Swatch(props: { color: string; name: string; role?: string }) {
   );
 }
 
-function TupleRow(props: { label: string; role: string; colors: readonly string[] }) {
+function TupleRow(props: { label: string; usage: string; colors: readonly string[] }) {
   return (
     <Box>
       <Group justify="space-between" mb={6} wrap="nowrap">
@@ -107,7 +107,7 @@ function TupleRow(props: { label: string; role: string; colors: readonly string[
           {props.label}
         </Text>
         <Text fz={14} c="dimmed">
-          {props.role}
+          {props.usage}
         </Text>
       </Group>
       <Group gap={0} wrap="nowrap" style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #232028" }}>
@@ -148,22 +148,22 @@ function Panel(props: { children: React.ReactNode }) {
 
 // Surfaces are CSS literals scattered across the app; documented here so there
 // is one place to see the intended stacking order (darkest page up to raised).
-const SURFACES: { color: string; name: string; role: string }[] = [
-  { color: "#1E1D20", name: "Page", role: "App background / nav" },
-  { color: "#17151c", name: "Panel", role: "Grouped section card" },
-  { color: "#141318", name: "Card", role: "Inner tool / list card" },
-  { color: "#232028", name: "Border", role: "Hairline on cards" },
-  { color: "#2a2637", name: "Border alt", role: "Pills / dividers" },
-  { color: "#3C3A3C", name: "Raised", role: "Nav tiles / chips" },
+const SURFACES: { color: string; name: string; usage: string }[] = [
+  { color: "#1E1D20", name: "Page", usage: "App background / nav" },
+  { color: "#17151c", name: "Panel", usage: "Grouped section card" },
+  { color: "#141318", name: "Card", usage: "Inner tool / list card" },
+  { color: "#232028", name: "Border", usage: "Hairline on cards" },
+  { color: "#2a2637", name: "Border alt", usage: "Pills / dividers" },
+  { color: "#3C3A3C", name: "Raised", usage: "Nav tiles / chips" },
 ];
 
 // The homepage CTA classes (src/assets/styles/homepage.css) reference the
 // theme tokens via Mantine CSS variables; listed here with their fun names.
-const CTA_COLORS: { color: string; name: string; role: string }[] = [
-  { color: "#E54156", name: "Magikarp Red", role: "pink.0 · CTAs, alerts, red text" },
-  { color: "#772976", name: "Gengar Purple", role: "brand.5 · the primary purple" },
-  { color: "#FFD074", name: "Pikachu Gold", role: "gold.0 · gold fills (dark text)" },
-  { color: "#4049C9", name: "Murkrow Blue", role: "indigo.0 · saturated CTA blue" },
+const CTA_COLORS: { color: string; name: string; usage: string }[] = [
+  { color: "#E54156", name: "Magikarp Red", usage: "pink.0 · CTAs, alerts, red text" },
+  { color: "#772976", name: "Gengar Purple", usage: "brand.5 · the primary purple" },
+  { color: "#FFD074", name: "Pikachu Gold", usage: "gold.0 · gold fills (dark text)" },
+  { color: "#4049C9", name: "Murkrow Blue", usage: "indigo.0 · saturated CTA blue" },
 ];
 
 // The 14px floor scale: nothing renders below 14, body text is 16, and the
@@ -221,16 +221,16 @@ export default function DesignSystem() {
             ))}
           </SimpleGrid>
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing={12}>
-            <Swatch color={theme.colors.brand?.[3] ?? ""} name="Espeon Lilac" role="brand.3 · light purple accents" />
-            <Swatch color={theme.colors.violet[0]} name="Crobat Violet" role="violet.0 · gradient start" />
-            <Swatch color={theme.colors.cyan[0]} name="Suicune Cyan" role="cyan.0 · gradient end, success" />
+            <Swatch color={theme.colors.brand?.[3] ?? ""} name="Espeon Lilac" usage="brand.3 · light purple accents" />
+            <Swatch color={theme.colors.violet[0]} name="Crobat Violet" usage="violet.0 · gradient start" />
+            <Swatch color={theme.colors.cyan[0]} name="Suicune Cyan" usage="cyan.0 · gradient end, success" />
           </SimpleGrid>
 
           <Panel>
             <Stack gap={14}>
-              <TupleRow label="Gengar Purple ramp" role="brand, 10 shades · primary" colors={theme.colors.brand ?? []} />
-              <TupleRow label="Magikarp Red ramp" role="pink.* · alerts + primary gradient" colors={theme.colors.pink.slice(0, 4)} />
-              <TupleRow label="Pikachu Gold ramp" role="gold.* · fills + accents" colors={theme.colors.gold?.slice(0, 4) ?? []} />
+              <TupleRow label="Gengar Purple ramp" usage="brand, 10 shades · primary" colors={theme.colors.brand ?? []} />
+              <TupleRow label="Magikarp Red ramp" usage="pink.* · alerts + primary gradient" colors={theme.colors.pink.slice(0, 4)} />
+              <TupleRow label="Pikachu Gold ramp" usage="gold.* · fills + accents" colors={theme.colors.gold?.slice(0, 4) ?? []} />
             </Stack>
           </Panel>
 

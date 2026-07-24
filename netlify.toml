@@ -13,11 +13,13 @@
 
 # Security headers (owner QA standard; keep securityheaders.com passing).
 # Netlify serves HTTPS only, so HSTS is safe to preload. The CSP allows
-# Google Fonts, Firebase (Firestore, Auth, Storage, Functions), reCAPTCHA
-# (required by Firebase App Check; blocking it stalls Firestore, App Check
-# never produces a token and the SDK waits on it), and inline styles
-# (Mantine/Emotion inject style tags at runtime). When adding a new
-# third-party origin, extend the matching CSP directive here.
+# Firebase (Firestore, Auth, Storage, Functions), reCAPTCHA (required by
+# Firebase App Check; blocking it stalls Firestore, App Check never
+# produces a token and the SDK waits on it), the hashed inline boot-script
+# in index.html (non-home routes strip the hero shell), and inline styles
+# (Mantine/Emotion inject style tags at runtime). Fonts are self-hosted,
+# so no Google origins are needed. When adding a new third-party origin,
+# extend the matching CSP directive here.
 [[headers]]
   for = "/*"
   [headers.values]
@@ -26,7 +28,7 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-6/JYtGsy621iUFICUYWGttfy5d93YyJ13HjEuPOdBxY=' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' https: wss:; frame-src 'self' https://*.firebaseapp.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-6/JYtGsy621iUFICUYWGttfy5d93YyJ13HjEuPOdBxY=' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' https: wss:; frame-src 'self' https://*.firebaseapp.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests"
     X-XSS-Protection = "0"
 
 # Forums, threads, and member profiles are never crawlable or indexable, by

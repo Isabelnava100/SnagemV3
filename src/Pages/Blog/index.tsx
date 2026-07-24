@@ -222,35 +222,38 @@ export function SubscribeBand() {
           }}
         >
           <Flex gap={12} align="flex-end" wrap="wrap">
-            <div style={{ display: "flex", flexDirection: "column", flex: "1 1 170px", minWidth: 0 }}>
-              <label htmlFor="sub-name" style={labelStyle}>
-                Name
-              </label>
+            <label
+              htmlFor="sub-name"
+              style={{ display: "flex", flexDirection: "column", flex: "1 1 170px", minWidth: 0 }}
+            >
+              <span style={labelStyle}>Name</span>
               <input
                 id="sub-name"
                 type="text"
                 name="name"
                 placeholder="Your name"
+                aria-label="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 style={inputStyle}
               />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", flex: "1 1 200px", minWidth: 0 }}>
-              <label htmlFor="sub-email" style={labelStyle}>
-                Email
-              </label>
+            </label>
+            <label
+              htmlFor="sub-email"
+              style={{ display: "flex", flexDirection: "column", flex: "1 1 200px", minWidth: 0 }}
+            >
+              <span style={labelStyle}>Email</span>
               <input
                 id="sub-email"
                 type="email"
                 name="email"
                 placeholder="you@email.com"
-                aria-label="Your email"
+                aria-label="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={inputStyle}
               />
-            </div>
+            </label>
             <button
               type="submit"
               className="dc-cta dc-cta-red"

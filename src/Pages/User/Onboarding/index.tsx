@@ -856,6 +856,7 @@ function BulkUpload(props: {
           type="file"
           accept=".csv,text/csv"
           hidden
+          aria-label="Items CSV file"
           onChange={(e) => {
             const f = e.currentTarget.files?.[0];
             if (f) handleFile(f, "items");
@@ -867,6 +868,7 @@ function BulkUpload(props: {
           type="file"
           accept=".csv,text/csv"
           hidden
+          aria-label="Pokemon CSV file"
           onChange={(e) => {
             const f = e.currentTarget.files?.[0];
             if (f) handleFile(f, "pokemon");

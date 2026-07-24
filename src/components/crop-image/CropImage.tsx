@@ -35,12 +35,27 @@ export default function CropImg(props: propsType) {
   const imgRef = useRef<HTMLImageElement>(null);
   const blobUrlRef = React.useRef("");
 
-  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
-    if (aspect) {
-      const { width, height } = e.currentTarget;
-      setCrop(centerAspectCrop(width, height, aspect));
-    }
-  }
+  // Setting the initial crop needs the rendered image size. Wire the load
+  // event from the ref callback instead of an onLoad JSX prop: lint treats
+  // image handlers as interactive handlers, and this img is not
+  // user-interactive. aspect only feeds the initial centered crop; re-running
+  // after the aspect toggle recomputes the same crop the toggle already set.
+  const setImgRef = React.useCallback(
+    (el: HTMLImageElement | null) => {
+      imgRef.current = el;
+      if (!el || !aspect) return;
+      const applyCrop = () => {
+        const { width, height } = el;
+        setCrop(centerAspectCrop(width, height, aspect));
+      };
+      if (el.complete && el.naturalWidth > 0) {
+        applyCrop();
+      } else {
+        el.addEventListener("load", applyCrop, { once: true });
+      }
+    },
+    [aspect]
+  );
 
   useDebounceEffect(
     async () => {
@@ -138,11 +153,10 @@ export default function CropImg(props: propsType) {
               aspect={aspect}
             >
               <img
-                ref={imgRef}
+                ref={setImgRef}
                 alt="Crop me"
                 src={src}
                 style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
-                onLoad={onImageLoad}
               />
             </ReactCrop>
           )}
@@ -151,6 +165,7 @@ export default function CropImg(props: propsType) {
           <Box>
             <canvas
               ref={previewCanvasRef}
+              aria-label="Cropped image preview"
               style={{
                 border: "1px solid #000",
                 objectFit: "contain",
