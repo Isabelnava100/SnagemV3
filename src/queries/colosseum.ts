@@ -65,9 +65,9 @@ export interface Tournament {
   order?: number;
   /**
    * Ordered bracket rounds for a running/complete tournament. Authored by
-   * admins (currently via seed/console; a matching Firestore write rule is
-   * required before an in-app editor can populate it). The featured card
-   * renders it read-only when present.
+   * admins through the in-app bracket editor (the Firestore rule on
+   * tournaments/{id} allows admin writes). The featured card renders it
+   * read-only when present.
    */
   bracket?: BracketRound[];
 }
@@ -150,6 +150,20 @@ export const withdrawFromTournament = async (tournamentId: string, uid: string):
   const { doc, deleteDoc } = await import("firebase/firestore");
   const db = await getDb();
   await deleteDoc(doc(db, "tournaments", tournamentId, "signups", uid));
+};
+
+/**
+ * Replace a tournament's whole bracket (admin-only by Firestore rule). Merges
+ * so the other tournament fields are untouched. Callers must pass a sanitized
+ * bracket: Firestore rejects undefined field values.
+ */
+export const saveTournamentBracket = async (
+  tournamentId: string,
+  bracket: BracketRound[]
+): Promise<void> => {
+  const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
+  await setDoc(doc(db, "tournaments", tournamentId), { bracket }, { merge: true });
 };
 
 /** Log one training post; awards evolution + happiness points to the pokemon. */

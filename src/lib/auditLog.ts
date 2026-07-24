@@ -21,7 +21,8 @@ export type AuditAction =
   | "event.host"
   | "safari.zone_save"
   | "devboard.edit"
-  | "stars.edit";
+  | "stars.edit"
+  | "tournament.bracket";
 
 export type AuditEntry = {
   action: AuditAction | string;
@@ -53,6 +54,7 @@ const ACTION_TITLES: Record<string, string> = {
   "safari.zone_save": "Saved a Safari zone",
   "devboard.edit": "Updated the Dev Board",
   "stars.edit": "Changed a species star rating",
+  "tournament.bracket": "Updated a tournament bracket",
 };
 
 export const auditTitle = (action: string): string => ACTION_TITLES[action] ?? action;
@@ -82,6 +84,9 @@ const DETAIL_LABELS: Record<string, string> = {
   zone: "Zone",
   deleted: "Deleted",
   ticket: "Ticket",
+  tournament: "Tournament",
+  rounds: "Rounds",
+  matches: "Matches",
 };
 
 const CURRENCY_NAMES: Record<string, string> = {

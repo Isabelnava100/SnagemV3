@@ -22,8 +22,10 @@ import { IconBolt, IconCheck, IconFlame, IconTrophy } from "@tabler/icons-react"
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { isAdmin } from "../../lib/permissions";
 import { SHADOW_GUIDE_LINK } from "../../lib/shadow";
 import { ConfirmPopover } from "../../components/common/ConfirmPopover";
+import BracketEditor from "./BracketEditor";
 import { HeroStat as HeroStatChip, PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 import { PokemonHoverCard } from "../../components/pokemon/PokemonHoverCard";
@@ -340,7 +342,8 @@ function TrainingRoomTab() {
 
   // Default the target to the first owned pokemon once they load.
   React.useEffect(() => {
-    if (!selectedId && pokemons.length) setSelectedId(pokemons[0].id);
+    const first = pokemons[0];
+    if (!selectedId && first) setSelectedId(first.id);
   }, [pokemons, selectedId]);
 
   const selected = pokemons.find((p) => p.id === selectedId);
@@ -663,7 +666,7 @@ const AVATAR_COLORS = ["red", "blue", "green", "grape", "teal", "orange", "cyan"
 function avatarColor(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length] ?? "red";
 }
 
 const POINT_RULES: Array<{ what: string; pts: string; color: string }> = [
@@ -1363,6 +1366,7 @@ function BracketCard({ bracket }: { bracket: BracketRound[] }) {
 }
 
 function FeaturedTournament({ t }: { t: Tournament }) {
+  const { user } = useAuth();
   const { data: signups } = useQuery({
     queryKey: ["tournament-signups", t.id],
     queryFn: () => getTournamentSignups(t.id),
@@ -1455,6 +1459,11 @@ function FeaturedTournament({ t }: { t: Tournament }) {
 
           {t.rules && <RulesCard html={t.rules} />}
           {t.bracket && t.bracket.length > 0 && <BracketCard bracket={t.bracket} />}
+          {isAdmin(user) && (
+            <Group>
+              <BracketEditor t={t} signups={signups ?? []} />
+            </Group>
+          )}
         </Stack>
       </Box>
 
@@ -1534,11 +1543,12 @@ function TournamentsTab() {
     );
   }
 
+  // featured is guaranteed by the empty-list early return above.
   const [featured, ...rest] = tournaments;
 
   return (
     <Stack gap="xl">
-      <FeaturedTournament t={featured} />
+      <FeaturedTournament t={featured!} />
       {rest.length > 0 && (
         <Stack gap="md">
           <PanelLabel color="white" spacing="0.1em" fz={14}>
@@ -1588,8 +1598,9 @@ export default function Colosseum() {
       .map((t) => t.start_date?.seconds)
       .filter((s): s is number => typeof s === "number" && s * 1000 > now)
       .sort((a, b) => a - b);
-    if (!upcoming.length) return "-";
-    const days = Math.ceil((upcoming[0] * 1000 - now) / (24 * 60 * 60 * 1000));
+    const soonest = upcoming[0];
+    if (soonest === undefined) return "-";
+    const days = Math.ceil((soonest * 1000 - now) / (24 * 60 * 60 * 1000));
     return `${days}d`;
   }, [tournaments]);
 
