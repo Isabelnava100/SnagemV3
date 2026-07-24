@@ -226,7 +226,7 @@ export default function Users() {
   const { data, isPending } = useQuery({
     queryKey: ["members"],
     queryFn: getMembers,
-    // The directory costs 5+ Firestore reads per member and changes rarely,
+    // The directory costs 3 Firestore reads per member and changes rarely,
     // so keep it fresh for 30 minutes instead of the 2 minute default.
     staleTime: 30 * 60 * 1000,
   });

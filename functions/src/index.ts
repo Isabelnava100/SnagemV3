@@ -2582,6 +2582,15 @@ export const publishForumPost = onCall(async (request) => {
         ...(postXpEarned ? { xpEarned: postXpEarned } : {}),
       });
 
+      // Directory counter on the world-safe mirror: real member posts only
+      // (not edits, not the system announcements below). Denormalized so the
+      // members directory skips a per-member count query.
+      tx.set(
+        db.doc(`publicProfiles/${uid}`),
+        { postCount: FieldValue.increment(1) },
+        { merge: true }
+      );
+
       // Pin the poster to this team for the rest of the thread (anti-farm).
       // Also mirror the lock into the member's bag so the Trading Post can
       // grey out (and the server can refuse) trading pokemon mid-battle.
@@ -4294,8 +4303,8 @@ export const onMemberUpdated = onDocumentUpdated("users/{uid}", async (event) =>
 // world-safe display fields into publicProfiles/{uid}. Explicitly excludes
 // email, capabilities, and isGaia. Discord (discordUID + discordUsername) is
 // mirrored ONLY when the member opted in via discordPublic on the users doc;
-// the mirror is rewritten with merge: false, so opting back out drops the
-// Discord fields on the next sync.
+// syncs merge and delete the Discord fields explicitly on opt-out, so the
+// server-maintained directory counters on the mirror survive every resync.
 function publicProfileFrom(data: FirebaseFirestore.DocumentData): Record<string, unknown> {
   return {
     username: data.username ?? "",
@@ -4319,8 +4328,44 @@ export const syncPublicProfile = onDocumentWritten("users/{uid}", async (event) 
     await ref.delete().catch(() => undefined);
     return;
   }
-  await ref.set(publicProfileFrom(after), { merge: false });
+  // Merge, so the server-maintained directory counters (postCount,
+  // characterCount, pokemonCount) on the mirror survive the resync. The
+  // Discord fields are deleted explicitly when the member stops opting in,
+  // which merge alone would leave behind.
+  const data: Record<string, unknown> = { ...publicProfileFrom(after) };
+  if (!("discordUID" in data)) {
+    data.discordUID = FieldValue.delete();
+    data.discordUsername = FieldValue.delete();
+  }
+  await ref.set(data, { merge: true });
 });
+
+/**
+ * Directory counters for the members page: recount the bag map docs on every
+ * write and merge the sizes onto the world-safe mirror, so the directory
+ * reads publicProfiles alone instead of every member's bag. These are
+ * eventually consistent (one trigger round trip behind the bag write).
+ */
+export const syncPublicProfileCharacterCount = onDocumentWritten(
+  "users/{userId}/bag/characters",
+  async (event) => {
+    const after = event.data?.after.data() ?? {};
+    await db
+      .doc(`publicProfiles/${event.params.userId}`)
+      .set({ characterCount: Object.keys(after).length }, { merge: true });
+  }
+);
+
+/** Same as syncPublicProfileCharacterCount, for the owned pokemon map. */
+export const syncPublicProfilePokemonCount = onDocumentWritten(
+  "users/{userId}/bag/owned_pokemons",
+  async (event) => {
+    const after = event.data?.after.data() ?? {};
+    await db
+      .doc(`publicProfiles/${event.params.userId}`)
+      .set({ pokemonCount: Object.keys(after).length }, { merge: true });
+  }
+);
 
 /** One-off: backfill publicProfiles for every existing user (admin only). */
 export const backfillPublicProfiles = onCall(async (request) => {
@@ -4332,7 +4377,14 @@ export const backfillPublicProfiles = onCall(async (request) => {
   let pending = 0;
   let written = 0;
   for (const d of users.docs) {
-    batch.set(db.doc(`publicProfiles/${d.id}`), publicProfileFrom(d.data()), { merge: false });
+    // Merge like syncPublicProfile does: the directory counters on the mirror
+    // must survive a backfill, and Discord fields drop explicitly on opt-out.
+    const data: Record<string, unknown> = { ...publicProfileFrom(d.data()) };
+    if (!("discordUID" in data)) {
+      data.discordUID = FieldValue.delete();
+      data.discordUsername = FieldValue.delete();
+    }
+    batch.set(db.doc(`publicProfiles/${d.id}`), data, { merge: true });
     pending++;
     written++;
     if (pending >= 400) {
