@@ -213,7 +213,7 @@
   border: 1px solid var(--dc-border-alt);
 }
 .dc-card-tile:hover {
-  border-color: var(--dc-purple);
+  border-color: var(--dc-tile-hover, var(--dc-purple));
 }
 /* List row that lights up on hover (history rows, thread lists). */
 .dc-row-hover:hover {
@@ -249,6 +249,78 @@
 }
 .dc-open-btn:hover {
   background: var(--dc-purple, #7e2c75);
+}
+
+/* Approvals-queue action buttons (Admin): square Quantico chips per the mockup.
+   Variants: --outline (expander / secondary), --approve (solid cyan),
+   --reject (red outline that fills on hover). */
+.dc-queue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    filter 0.15s ease;
+}
+.dc-queue-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.dc-queue-btn--outline {
+  border-color: var(--dc-hero-border);
+  color: #c79bd6;
+}
+.dc-queue-btn--outline:hover:not(:disabled) {
+  border-color: #c79bd6;
+  color: #fff;
+}
+.dc-queue-btn--approve {
+  background: var(--dc-cyan);
+}
+.dc-queue-btn--approve:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+.dc-queue-btn--reject {
+  border-color: var(--dc-red);
+  color: var(--dc-red);
+}
+.dc-queue-btn--reject:hover:not(:disabled) {
+  background: var(--dc-red);
+  color: #fff;
+}
+
+/* Stat tile button (Admin inbox): full-width dark tile, colored left accent. */
+.dc-stat-tile {
+  flex: 1;
+  min-width: 150px;
+  background: var(--dc-panel);
+  border: 1px solid var(--dc-border-alt);
+  border-left: 3px solid var(--dc-tile-accent, var(--dc-red));
+  padding: 16px 20px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.dc-stat-tile:hover {
+  border-color: var(--dc-tile-accent, var(--dc-red));
+}
+@media (max-width: 48em) {
+  .dc-stat-tile {
+    min-width: calc(50% - 8px);
+    padding: 14px 16px;
+  }
 }
 
 /* Small section kicker inside panels: a short colored rule + Quantico label.

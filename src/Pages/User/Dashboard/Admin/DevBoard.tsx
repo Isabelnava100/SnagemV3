@@ -16,6 +16,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { ConfirmPopover } from "../../../../components/common/ConfirmPopover";
 import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
+import { Incoming, getIncomingTickets } from "../../../../queries/devBoard";
 
 /**
  * Dev Board: the staff's development inbox and planning space.
@@ -28,14 +29,6 @@ import { actorFrom, logAuditEvent } from "../../../../lib/auditLog";
  * Storage: devBoard collection (admin-only by rules).
  */
 
-interface Incoming {
-  id: string;
-  type: string;
-  text: string;
-  actorName: string;
-  createdAt?: { seconds?: number };
-}
-
 interface BoardDoc {
   id: string;
   kind: "ticket" | "note";
@@ -47,7 +40,6 @@ interface BoardDoc {
   updatedAt?: { seconds?: number };
 }
 
-const INCOMING_TYPES = ["dev_suggestion", "dev_bug", "member_question"];
 const TYPE_BADGE: Record<string, { label: string; color: string }> = {
   dev_suggestion: { label: "Suggestion", color: "cyan" },
   dev_bug: { label: "Bug", color: "pink" },
@@ -63,18 +55,6 @@ const STATUS_COLOR: Record<string, string> = {
   in_progress: "indigo",
   done: "cyan",
 };
-
-async function fetchIncoming(): Promise<Incoming[]> {
-  const { collection, getDocs, query, where } = await import("firebase/firestore");
-  const { getDb } = await import("../../../../context/firebase");
-  const db = await getDb();
-  const snap = await getDocs(
-    query(collection(db, "tickets"), where("type", "in", INCOMING_TYPES), where("status", "==", "new"))
-  );
-  return snap.docs
-    .map((d) => ({ id: d.id, ...(d.data() as Omit<Incoming, "id">) }))
-    .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
-}
 
 async function fetchBoard(): Promise<BoardDoc[]> {
   const { collection, getDocs } = await import("firebase/firestore");
@@ -97,7 +77,7 @@ export default function DevBoard() {
   const [noteBody, setNoteBody] = React.useState("");
   const [error, setError] = React.useState("");
 
-  const incoming = useQuery({ queryKey: ["dev-incoming"], queryFn: fetchIncoming });
+  const incoming = useQuery({ queryKey: ["dev-incoming"], queryFn: getIncomingTickets });
   const board = useQuery({ queryKey: ["dev-board"], queryFn: fetchBoard });
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["dev-incoming"] });

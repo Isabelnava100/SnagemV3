@@ -1,7 +1,9 @@
-import { Badge, Box, Button, Flex, Group, Select, Stack, Text, TextInput } from "@mantine/core";
+import { Box, Flex, Group, Select, Stack, Text, TextInput } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const displayFont = "var(--font-display, 'Quantico', sans-serif)";
+// Gradient section header bar, same pattern as the forum composer panels.
+const HEADER_GRADIENT = "linear-gradient(90deg,#762B77 7%,#17F1F0 66%)";
 import { IconChevronDown } from "@tabler/icons-react";
 import React from "react";
 import { ConfirmPopover } from "../../components/common/ConfirmPopover";
@@ -17,6 +19,7 @@ import {
   getPendingChallengeRequests,
   resolveChallengeRequest,
 } from "../../queries/challenges";
+import { getIncomingTickets } from "../../queries/devBoard";
 import {
   getPendingMasterMissionRequests,
   getPendingMissionSubmissions,
@@ -44,13 +47,13 @@ const { SubmissionCard } = lazyImport(
 
 type InboxType = "application" | "import" | "mission" | "master" | "challenge" | "clearance";
 
-const TYPE_META: Record<InboxType, { label: string; color: string; action: string }> = {
-  application: { label: "Application", color: "#a855f7", action: "Review" },
-  import: { label: "Import", color: "#3b82f6", action: "Review" },
-  mission: { label: "Mission", color: "#ef4444", action: "Grade" },
-  master: { label: "Master Req", color: "#14b8a6", action: "Grant" },
-  challenge: { label: "Challenge", color: "#f59e0b", action: "Review" },
-  clearance: { label: "Clearance", color: "#8b5cf6", action: "Review" },
+const TYPE_META: Record<InboxType, { tag: string; color: string; action: string }> = {
+  application: { tag: "APP", color: "#a855f7", action: "Review" },
+  import: { tag: "IMPORT", color: "#3b82f6", action: "Review" },
+  mission: { tag: "MISSION", color: "#ef4444", action: "Grade" },
+  master: { tag: "MASTER", color: "#14b8a6", action: "Grant" },
+  challenge: { tag: "CHALLENGE", color: "#f59e0b", action: "Review" },
+  clearance: { tag: "CLEARANCE", color: "#8b5cf6", action: "Review" },
 };
 
 /**
@@ -88,31 +91,28 @@ function ClearanceRequestCard(props: { request: MasterClearanceRequest; onDone: 
         maw={220}
       />
       <Group gap="sm">
-        <Button
-          color="teal"
-          radius="xl"
-          size="sm"
-          loading={resolveMutation.isPending}
+        <button
+          type="button"
+          className="dc-queue-btn dc-queue-btn--approve"
+          disabled={resolveMutation.isPending}
           onClick={() => resolveMutation.mutate(true)}
         >
           Approve clearance
-        </Button>
+        </button>
         <ConfirmPopover
           message="Decline this master clearance request? The member is notified and will need to reapply."
           confirmLabel="Decline"
           loading={resolveMutation.isPending}
           onConfirm={() => resolveMutation.mutate(false)}
           target={(open) => (
-            <Button
-              variant="light"
-              color="red"
-              radius="xl"
-              size="sm"
-              loading={resolveMutation.isPending}
+            <button
+              type="button"
+              className="dc-queue-btn dc-queue-btn--reject"
+              disabled={resolveMutation.isPending}
               onClick={open}
             >
               Decline
-            </Button>
+            </button>
           )}
         />
       </Group>
@@ -170,31 +170,28 @@ function ChallengeRequestCard(props: { request: ChallengeRequest; onDone: () => 
         onChange={(e) => setThreadLink(e.currentTarget.value)}
       />
       <Group gap="sm">
-        <Button
-          color="teal"
-          radius="xl"
-          size="sm"
-          loading={resolveMutation.isPending}
+        <button
+          type="button"
+          className="dc-queue-btn dc-queue-btn--approve"
+          disabled={resolveMutation.isPending}
           onClick={() => resolveMutation.mutate(true)}
         >
           Accept challenge
-        </Button>
+        </button>
         <ConfirmPopover
           message="Decline this challenge request? The member is notified they'll need to ask again."
           confirmLabel="Decline"
           loading={resolveMutation.isPending}
           onConfirm={() => resolveMutation.mutate(false)}
           target={(open) => (
-            <Button
-              variant="light"
-              color="red"
-              radius="xl"
-              size="sm"
-              loading={resolveMutation.isPending}
+            <button
+              type="button"
+              className="dc-queue-btn dc-queue-btn--reject"
+              disabled={resolveMutation.isPending}
               onClick={open}
             >
               Decline
-            </Button>
+            </button>
           )}
         />
       </Group>
@@ -207,7 +204,11 @@ function ChallengeRequestCard(props: { request: ChallengeRequest; onDone: () => 
   );
 }
 
-/** Collapsed summary row that expands to the full review card for that item. */
+/**
+ * One queue row, aligned to the mockup: mono type tag + name + note on one
+ * line (stacked on mobile), with an outline expander button. Expanding opens
+ * the full review card in an inset panel accented in the queue type's color.
+ */
 function InboxRow(props: {
   type: InboxType;
   title: string;
@@ -217,50 +218,66 @@ function InboxRow(props: {
   const meta = TYPE_META[props.type];
   const [open, setOpen] = React.useState(false);
   return (
-    <Box
-      style={{
-        background: "#141318",
-        border: "1px solid #2a2637",
-        borderLeft: `4px solid ${meta.color}`,
-        overflow: "hidden",
-      }}
-    >
-      <Group justify="space-between" wrap="nowrap" gap="md" p="md">
-        <Group gap="md" wrap="nowrap" style={{ minWidth: 0 }}>
-          <Badge radius="sm" tt="uppercase" style={{ background: meta.color, color: "#fff" }}>
-            {meta.label}
-          </Badge>
-          <Box style={{ minWidth: 0 }}>
-            <Text fw={700} c="white" lineClamp={1}>
-              {props.title}
-            </Text>
-            {props.subtitle && (
-              <Text fz={14} c="dimmed" lineClamp={1}>
-                {props.subtitle}
-              </Text>
-            )}
-          </Box>
+    <Box style={{ borderTop: "1px solid #2a2637" }}>
+      <Flex
+        direction={{ base: "column", sm: "row" }}
+        align={{ base: "stretch", sm: "center" }}
+        gap={{ base: 10, sm: 20 }}
+        px={{ base: 18, sm: 26 }}
+        py={16}
+      >
+        <Group gap={10} wrap="nowrap" style={{ flexShrink: 0 }}>
+          <Text
+            component="span"
+            ff="monospace"
+            fz={{ base: 11, sm: 14 }}
+            c="#12B7B6"
+            tt="uppercase"
+            w={{ sm: 80 }}
+            style={{ flexShrink: 0 }}
+          >
+            {meta.tag}
+          </Text>
+          <Text fw={700} c="white" fz={{ base: 14, sm: 15 }} w={{ sm: 200 }} lineClamp={1}>
+            {props.title}
+          </Text>
         </Group>
-        <Button
-          variant={open ? "light" : "gradient"}
-          gradient={{ from: "indigo", to: "cyan", deg: 90 }}
-          color="gray"
-          size="sm"
-          radius="xl"
-          rightSection={
+        {props.subtitle && (
+          <Text
+            fz={{ base: 13, sm: 14 }}
+            c="#b6b1bc"
+            lineClamp={1}
+            style={{ flex: 1, minWidth: 0 }}
+          >
+            {props.subtitle}
+          </Text>
+        )}
+        <Box style={{ flexShrink: 0 }}>
+          <button
+            type="button"
+            className="dc-queue-btn dc-queue-btn--outline"
+            aria-expanded={open}
+            onClick={() => setOpen((o) => !o)}
+          >
+            {open ? "Close" : meta.action}
             <IconChevronDown
               size={16}
               style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform 150ms" }}
             />
-          }
-          onClick={() => setOpen((o) => !o)}
-          style={{ flexShrink: 0 }}
-        >
-          {open ? "Close" : meta.action}
-        </Button>
-      </Group>
+          </button>
+        </Box>
+      </Flex>
       {open && (
-        <Box px="md" pb="md">
+        <Box
+          mx={{ base: 18, sm: 26 }}
+          mb={18}
+          p={{ base: "14px 16px", sm: "16px 20px" }}
+          style={{
+            background: "#141318",
+            border: "1px solid #2a2637",
+            borderLeft: `3px solid ${meta.color}`,
+          }}
+        >
           {props.children}
         </Box>
       )}
@@ -268,31 +285,48 @@ function InboxRow(props: {
   );
 }
 
-/** Accent stat tile (redesign): colored left border, big count, uppercase label. */
-function StatTile(props: { label: string; count: number; color: string }) {
+/**
+ * Accent stat tile (redesign mockup): colored left border, big count,
+ * uppercase label. The whole tile is a real button that jumps to its section.
+ */
+function StatTile(props: {
+  label: string;
+  count: number;
+  color: string;
+  /** Number color when it differs from the accent (mockup: help desk is white). */
+  numberColor?: string;
+  onClick: () => void;
+}) {
   return (
-    <Box
-      px={20}
-      py={16}
-      style={{
-        flex: 1,
-        minWidth: 150,
-        background: "#17151c",
-        border: "1px solid #2a2637",
-        borderLeft: `3px solid ${props.color}`,
-      }}
+    <button
+      type="button"
+      className="dc-stat-tile"
+      style={{ "--dc-tile-accent": props.color } as React.CSSProperties}
+      onClick={props.onClick}
     >
-      <Text fz={22} fw={800} c={props.count ? props.color : "#b6b1bc"} lh={1}>
+      <Text
+        fz={{ base: 20, sm: 22 }}
+        fw={800}
+        c={props.count ? (props.numberColor ?? props.color) : "#b6b1bc"}
+        lh={1}
+      >
         {props.count}
       </Text>
-      <Text fz={14} fw={700} c="#b6b1bc" tt="uppercase" mt={2} style={{ letterSpacing: "0.16em" }}>
+      <Text
+        fz={{ base: 10, sm: 14 }}
+        fw={700}
+        c="#b6b1bc"
+        tt="uppercase"
+        mt={2}
+        style={{ letterSpacing: "0.14em" }}
+      >
         {props.label}
       </Text>
-    </Box>
+    </button>
   );
 }
 
-export default function Inbox() {
+export default function Inbox(props: { onOpenHelpDesk?: () => void }) {
   const { user } = useAuth();
   const admin = isAdmin(user);
   const queryClient = useQueryClient();
@@ -348,6 +382,13 @@ export default function Inbox() {
     refetchOnMount: "always",
     staleTime: 0,
   });
+  // "Help desk open" tile: member suggestions/bugs/questions awaiting triage.
+  // Same key + fetcher as the Dev Board tool, so the counts never diverge.
+  const helpDesk = useQuery({
+    queryKey: ["dev-incoming"],
+    queryFn: getIncomingTickets,
+    enabled: admin,
+  });
   const { data: users } = useQuery({
     queryKey: ["get-all-users"],
     queryFn: getUsers,
@@ -363,6 +404,7 @@ export default function Inbox() {
   const masterList = canGrade ? master.data ?? [] : [];
   const challengeList = canChallenges ? challenges.data ?? [] : [];
   const clearanceList = canGrade ? clearances.data ?? [] : [];
+  const helpDeskCount = admin ? (helpDesk.data ?? []).length : 0;
 
   const loading =
     (canApps && apps.isPending) ||
@@ -378,115 +420,152 @@ export default function Inbox() {
     challengeList.length +
     clearanceList.length;
 
+  const scrollToQueue = () =>
+    document.getElementById("approvals-queue")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
   return (
     <Stack gap="lg">
-      <Flex gap={14} wrap="wrap">
+      <Flex gap={{ base: 10, sm: 14 }} wrap="wrap">
         {canApps && (
-          <StatTile label="Pending Applications" count={appList.length} color="#E54156" />
+          <StatTile
+            label="Pending Applications"
+            count={appList.length}
+            color="#E54156"
+            onClick={scrollToQueue}
+          />
         )}
-        {canGrade && <StatTile label="Missions to Grade" count={missionList.length} color="#FFD074" />}
-        {canImports && <StatTile label="Imports in Review" count={importList.length} color="#12B7B6" />}
-        {canGrade && <StatTile label="Master Requests" count={masterList.length} color="#772976" />}
-        {canChallenges && (
-          <StatTile label="Challenge Requests" count={challengeList.length} color="#f59e0b" />
+        {canGrade && (
+          <StatTile
+            label="Missions to Grade"
+            count={missionList.length}
+            color="#FFD074"
+            onClick={scrollToQueue}
+          />
         )}
-        {canGrade && <StatTile label="Clearance Reviews" count={clearanceList.length} color="#8b5cf6" />}
+        {canImports && (
+          <StatTile
+            label="Imports in Review"
+            count={importList.length}
+            color="#12B7B6"
+            onClick={scrollToQueue}
+          />
+        )}
+        {admin && (
+          <StatTile
+            label="Help Desk Open"
+            count={helpDeskCount}
+            color="#772976"
+            numberColor="#fff"
+            onClick={() => props.onOpenHelpDesk?.()}
+          />
+        )}
       </Flex>
 
-      <Box style={{ background: "#17151c", border: "1px solid #2a2637" }}>
+      <Box
+        id="approvals-queue"
+        style={{ background: "#17151c", border: "1px solid #2a2637", scrollMarginTop: 90 }}
+      >
         <Box
-          px={26}
-          py={15}
-          style={{ background: "linear-gradient(90deg, #762B77 7%, #17F1F0 66%)" }}
+          px={{ base: 18, sm: 26 }}
+          py={{ base: 13, sm: 15 }}
+          style={{ background: HEADER_GRADIENT }}
         >
           <Text
             component="h2"
             c="white"
             fw={700}
-            fz={16}
+            fz={{ base: 14, sm: 16 }}
             tt="uppercase"
             style={{ fontFamily: displayFont, letterSpacing: "0.08em", margin: 0 }}
           >
             Approvals Queue
           </Text>
         </Box>
-        <Box p={{ base: 14, sm: 20 }}>
-          {loading ? (
+        {loading ? (
+          <Box p={{ base: 18, sm: 26 }}>
             <SectionLoader />
-          ) : total === 0 ? (
+          </Box>
+        ) : total === 0 ? (
+          <Box p={{ base: 18, sm: 26 }}>
             <EmptyMessage
               title="Inbox zero"
               description="Nothing is waiting for review. New requests will appear here."
             />
-          ) : (
-            <React.Suspense fallback={<SectionLoader />}>
-            <Stack gap="md">
+          </Box>
+        ) : (
+          <React.Suspense
+            fallback={
+              <Box p={{ base: 18, sm: 26 }}>
+                <SectionLoader />
+              </Box>
+            }
+          >
+            <Box>
               {appList.map((a) => (
-            <InboxRow
-              key={`app-${a.id}`}
-              type="application"
-              title={a.username || "Unnamed"}
-              subtitle={`New member${a.email ? ` · ${a.email}` : ""}`}
-            >
-              <ApplicantCard applicant={a} onDone={refresh("new-users")} />
-            </InboxRow>
-          ))}
-          {importList.map((req) => (
-            <InboxRow
-              key={`imp-${req.uid}`}
-              type="import"
-              title={nameFor(req.uid)}
-              subtitle={`${req.currency?.pokecoin ?? 0} coins · ${req.items?.length ?? 0} items · ${
-                req.pokemon?.length ?? 0
-              } Pokemon`}
-            >
-              <ReviewCard req={req} username={nameFor(req.uid)} />
-            </InboxRow>
-          ))}
-          {missionList.map((s) => (
-            <InboxRow
-              key={`mis-${s.id}`}
-              type="mission"
-              title={s.submitterName || "Unknown member"}
-              subtitle={`Mission ${s.missionId || "unknown"}`}
-            >
-              <SubmissionCard submission={s} onDone={refresh("pending-submissions")} />
-            </InboxRow>
-          ))}
-          {masterList.map((r) => (
-            <InboxRow
-              key={`mm-${r.id}`}
-              type="master"
-              title={r.username || "Unknown member"}
-              subtitle={`${r.type || "Master"} Master Mission #${r.number ?? "?"}`}
-            >
-              <MMRequestCard request={r} onDone={refresh("pending-mm-requests")} />
-            </InboxRow>
-          ))}
-          {challengeList.map((r) => (
-            <InboxRow
-              key={`ch-${r.id}`}
-              type="challenge"
-              title={r.username || "Unknown member"}
-              subtitle={r.stageTitle || r.stageId}
-            >
-              <ChallengeRequestCard request={r} onDone={refresh("pending-challenge-requests")} />
-            </InboxRow>
-          ))}
-          {clearanceList.map((r) => (
-            <InboxRow
-              key={`cl-${r.id}`}
-              type="clearance"
-              title={r.username || "Unknown member"}
-              subtitle={`Master clearance · ${r.characterName || r.characterId}`}
-            >
-              <ClearanceRequestCard request={r} onDone={refresh("pending-clearance-requests")} />
-            </InboxRow>
-          ))}
-            </Stack>
-            </React.Suspense>
-          )}
-        </Box>
+                <InboxRow
+                  key={`app-${a.id}`}
+                  type="application"
+                  title={a.username || "Unnamed"}
+                  subtitle={`New member${a.email ? ` · ${a.email}` : ""}`}
+                >
+                  <ApplicantCard applicant={a} onDone={refresh("new-users")} />
+                </InboxRow>
+              ))}
+              {importList.map((req) => (
+                <InboxRow
+                  key={`imp-${req.uid}`}
+                  type="import"
+                  title={nameFor(req.uid)}
+                  subtitle={`${req.currency?.pokecoin ?? 0} coins · ${req.items?.length ?? 0} items · ${
+                    req.pokemon?.length ?? 0
+                  } Pokemon`}
+                >
+                  <ReviewCard req={req} username={nameFor(req.uid)} />
+                </InboxRow>
+              ))}
+              {missionList.map((s) => (
+                <InboxRow
+                  key={`mis-${s.id}`}
+                  type="mission"
+                  title={s.submitterName || "Unknown member"}
+                  subtitle={`Mission ${s.missionId || "unknown"}`}
+                >
+                  <SubmissionCard submission={s} onDone={refresh("pending-submissions")} />
+                </InboxRow>
+              ))}
+              {masterList.map((r) => (
+                <InboxRow
+                  key={`mm-${r.id}`}
+                  type="master"
+                  title={r.username || "Unknown member"}
+                  subtitle={`${r.type || "Master"} Master Mission #${r.number ?? "?"}`}
+                >
+                  <MMRequestCard request={r} onDone={refresh("pending-mm-requests")} />
+                </InboxRow>
+              ))}
+              {challengeList.map((r) => (
+                <InboxRow
+                  key={`ch-${r.id}`}
+                  type="challenge"
+                  title={r.username || "Unknown member"}
+                  subtitle={r.stageTitle || r.stageId}
+                >
+                  <ChallengeRequestCard request={r} onDone={refresh("pending-challenge-requests")} />
+                </InboxRow>
+              ))}
+              {clearanceList.map((r) => (
+                <InboxRow
+                  key={`cl-${r.id}`}
+                  type="clearance"
+                  title={r.username || "Unknown member"}
+                  subtitle={`Master clearance · ${r.characterName || r.characterId}`}
+                >
+                  <ClearanceRequestCard request={r} onDone={refresh("pending-clearance-requests")} />
+                </InboxRow>
+              ))}
+            </Box>
+          </React.Suspense>
+        )}
       </Box>
     </Stack>
   );

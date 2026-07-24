@@ -65,7 +65,7 @@ const { XPDefaultsSection } = lazyImport(
   "XPDefaultsSection"
 );
 
-type ToolKey =
+export type ToolKey =
   | "roles"
   | "grant"
   | "battle"
@@ -101,7 +101,7 @@ const GROUPS: ToolGroup[] = [
   {
     title: "Members & Access",
     subtitle: "People management: roles, capabilities, and direct grants.",
-    dot: "#c026d3",
+    dot: "#c79bd6",
     tools: [
       {
         key: "roles",
@@ -134,7 +134,7 @@ const GROUPS: ToolGroup[] = [
   {
     title: "Game Content",
     subtitle: "Everything players see: encounter lists, boxes, badges and announcements.",
-    dot: "#3b82f6",
+    dot: "#4dabf7",
     tools: [
       {
         key: "lists",
@@ -176,7 +176,7 @@ const GROUPS: ToolGroup[] = [
   {
     title: "Game Balance",
     subtitle: "The numbers behind the game: XP curve and battle costs.",
-    dot: "#14b8a6",
+    dot: "#12B7B6",
     tools: [
       {
         key: "xp",
@@ -202,7 +202,7 @@ const GROUPS: ToolGroup[] = [
   {
     title: "Reference",
     subtitle: "Brand and design guidance, plus the staff audit trail.",
-    dot: "#a78bfa",
+    dot: "#9a7bd0",
     tools: [
       {
         key: "emails",
@@ -238,9 +238,15 @@ const GROUPS: ToolGroup[] = [
 
 const ALL_TOOLS: Tool[] = GROUPS.flatMap((g) => g.tools);
 
-function ToolCard(props: { tool: Tool; onOpen: () => void }) {
+function ToolCard(props: { tool: Tool; accent: string; onOpen: () => void }) {
   return (
-    <Stack gap={10} p={20} h="100%" className="dc-card-tile">
+    <Stack
+      gap={10}
+      p={20}
+      h="100%"
+      className="dc-card-tile"
+      style={{ "--dc-tile-hover": props.accent } as React.CSSProperties}
+    >
       <Box style={{ minWidth: 0, flex: 1 }}>
         <Text fw={700} fz={16} c="white" mb={4}>
           {props.tool.label}
@@ -261,19 +267,19 @@ function ToolCard(props: { tool: Tool; onOpen: () => void }) {
   );
 }
 
-export default function Manage() {
+export default function Manage(props: {
+  selected: ToolKey | null;
+  onSelect: (key: ToolKey | null) => void;
+}) {
+  const { selected, onSelect } = props;
   const { user } = useAuth();
   const admin = isAdmin(user);
-  const [selected, setSelected] = React.useState<ToolKey | null>(null);
 
   const canSee = (tool: Tool) => admin || (tool.cap !== null && hasCapability(user, tool.cap));
 
-  const active = selected ? ALL_TOOLS.find((t) => t.key === selected) : null;
-  // Guard against a selected tool the user can't actually see.
-  if (active && !canSee(active)) {
-    setSelected(null);
-    return null;
-  }
+  const wanted = selected ? ALL_TOOLS.find((t) => t.key === selected) : null;
+  // Guard against a selected tool the user can't actually see: fall back to the grid.
+  const active = wanted && canSee(wanted) ? wanted : null;
 
   if (active) {
     return (
@@ -292,7 +298,7 @@ export default function Manage() {
           radius="xl"
           w="fit-content"
           leftSection={<IconArrowLeft size={16} />}
-          onClick={() => setSelected(null)}
+          onClick={() => onSelect(null)}
         >
           All tools
         </Button>
@@ -328,11 +334,12 @@ export default function Manage() {
           fz={{ base: 24, sm: 30 }}
           fw={700}
           c="white"
+          tt="uppercase"
           style={{ fontFamily: displayFont, letterSpacing: "0.02em", margin: 0 }}
         >
           Every Tool, Four Areas
         </Text>
-        <Text fz={15} c="#b6b1bc" mt={4}>
+        <Text fz={{ base: 13, sm: 15 }} c="#b6b1bc" mt={4}>
           All editors and config, grouped so you always know where a tool lives.
         </Text>
       </Box>
@@ -340,7 +347,8 @@ export default function Manage() {
       {visibleGroups.map((g) => (
         <Box
           key={g.title}
-          p={{ base: 20, sm: 28 }}
+          py={{ base: 18, sm: 26 }}
+          px={{ base: 16, sm: 28 }}
           style={{
             background: "#17151c",
             border: "1px solid #2a2637",
@@ -350,20 +358,21 @@ export default function Manage() {
           <Group gap={10} mb={4} align="center">
             <Box className="dc-diamond" style={{ background: g.dot }} />
             <Text
-              fz={21}
+              fz={{ base: 17, sm: 21 }}
               fw={700}
               c="white"
+              tt="uppercase"
               style={{ fontFamily: displayFont, letterSpacing: "0.03em" }}
             >
               {g.title}
             </Text>
           </Group>
-          <Text fz={14} c="#b6b1bc" mb="md">
+          <Text fz={{ base: 13, sm: 14 }} c="#b6b1bc" mb="md">
             {g.subtitle}
           </Text>
           <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={14}>
             {g.tools.map((t) => (
-              <ToolCard key={t.key} tool={t} onOpen={() => setSelected(t.key)} />
+              <ToolCard key={t.key} tool={t} accent={g.dot} onOpen={() => onSelect(t.key)} />
             ))}
           </SimpleGrid>
         </Box>

@@ -1,4 +1,5 @@
 import { Box, Container, Text } from "@mantine/core";
+import React from "react";
 import { Navigate } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
@@ -6,16 +7,19 @@ import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import { canAccessStaffArea, hasCapability, isAdmin } from "../../lib/permissions";
 import Inbox from "./Inbox";
-import Manage from "./Manage";
+import Manage, { ToolKey } from "./Manage";
 
 /**
  * Top-level Admin Access page: the Inbox (unified pending stream) with the
  * Manage area (grouped editors + config) stacked directly below it, so staff
  * see everything on one page. Capability gating is unchanged (admins see all,
- * directors see the tools their capabilities cover).
+ * directors see the tools their capabilities cover). The selected Manage tool
+ * is lifted here so the Inbox's "Help Desk Open" tile can deep-link into the
+ * Dev Board.
  */
 export default function AdminPage() {
   const { user } = useAuth();
+  const [tool, setTool] = React.useState<ToolKey | null>(null);
 
   // A director with only content/balance caps has nothing in the Inbox.
   const canInbox =
@@ -24,6 +28,11 @@ export default function AdminPage() {
     hasCapability(user, Capability.ReviewRewards);
 
   if (!canAccessStaffArea(user)) return <Navigate to="/Dashboard" replace />;
+
+  const openHelpDesk = () => {
+    setTool("devboard");
+    document.getElementById("admin-manage")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
@@ -50,12 +59,12 @@ export default function AdminPage() {
         }
       />
       {canInbox && (
-        <Box mb={36}>
-          <Inbox />
+        <Box mb={26}>
+          <Inbox onOpenHelpDesk={openHelpDesk} />
         </Box>
       )}
-      <Box>
-        <Manage />
+      <Box id="admin-manage" style={{ scrollMarginTop: 90 }}>
+        <Manage selected={tool} onSelect={setTool} />
       </Box>
     </Container>
   );
