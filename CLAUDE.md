@@ -18,7 +18,7 @@ deploy paths, and the environment gotchas.
 - Mantine 9 (+ `@mantine/emotion` for `sx` support), Tailwind 4 (CSS-first, no config file, preflight OFF)
 - Firebase 12 (fully modular SDK; init in `src/context/firebase.ts`, compat layer removed July 2026, do not reintroduce `firebase/compat`)
 - @tanstack/react-query 5, Tiptap 3, react-router-dom 6
-- Package manager: **bun** (`bun.lock`). Never introduce package-lock.json.
+- Package manager: **bun** (`bun.lock`). Never introduce package-lock.json in the repo root. Exception: `functions/package-lock.json` is tracked on purpose (the firebase.json predeploy and CI run `npm` in functions/).
 
 ## UI rules
 
