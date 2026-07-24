@@ -1,8 +1,13 @@
 import { Box, Flex, Paper } from "@mantine/core";
 import { useMediaQuery as useMediaQueryCore } from "@mantine/hooks";
-import { memo } from "react";
+import { Suspense, lazy, memo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { SideBar } from "./components/navigation/SideBar";
+
+// The sidebar (and its query/firebase import chain) is lazy: marketing
+// routes render without it, keeping the public boot graph small.
+const SideBar = lazy(() =>
+  import("./components/navigation/SideBar").then((m) => ({ default: m.SideBar }))
+);
 
 // Full-bleed routes rendered outside the app shell (no sidebar / bottom tabs /
 // gradient frame): the marketing pages and the logged-out auth screens, which
@@ -78,7 +83,9 @@ export const App = memo(() => {
                 }
           }
         >
-          <SideBar />
+          <Suspense fallback={null}>
+            <SideBar />
+          </Suspense>
         </nav>
         <div
           style={{

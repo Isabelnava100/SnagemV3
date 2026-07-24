@@ -1,12 +1,12 @@
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from "react";
 import { AuthContextType, SpecificUser, User } from "../components/types/typesUsed";
-import { auth, getDb } from "./firebase";
 
 // return the user avatar and username from here
 export const getInfo = async (
   uid: string
 ): Promise<SpecificUser & { avatar?: string; username: string; exists: boolean }> => {
   const { doc, getDoc } = await import("firebase/firestore");
+  const { getDb } = await import("./firebase");
   const db = await getDb();
 
   const user = await getDoc(doc(db, "users", uid));
@@ -35,9 +35,16 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<boolean>(true);
 
   useEffect(() => {
-    // Subscribe exactly once: a [user] dependency here re-subscribes on every
-    // setUser and loops onAuthStateChanged -> getInfo (a billed Firestore read) forever.
-    const authConst = auth.onAuthStateChanged(async (firebaseUser) => {
+    // The firebase app/auth chunk is deliberately NOT in the boot graph (it
+    // would delay first paint on public pages): it dynamic-imports here after
+    // mount, then the single auth subscription attaches. Do not add a [user]
+    // dependency: that re-subscribes on every setUser and loops
+    // onAuthStateChanged -> getInfo (a billed Firestore read) forever.
+    let unsubscribe = () => undefined as void;
+    let cancelled = false;
+    import("./firebase").then(({ auth }) => {
+      if (cancelled) return;
+      unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       try {
         if (firebaseUser) {
           const { uid, email, displayName } = firebaseUser;
@@ -61,8 +68,12 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
       } finally {
         setPending(false);
       }
+      });
     });
-    return () => authConst();
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const value = useMemo(() => ({ user, setUser, pending }), [user, pending]);

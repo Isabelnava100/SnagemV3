@@ -9,7 +9,8 @@ import {
   SITE_URL,
   absoluteUrl,
 } from "../../lib/seo/site";
-import { getSEOSettings } from "../../queries/seo";
+// The SEO settings query module is dynamic-imported at query time so the
+// firebase app/auth chunk stays out of the marketing boot graph.
 
 interface RegistryPage {
   path: string;
@@ -101,7 +102,7 @@ export default function Seo({
   const location = useLocation();
   const { data: settings } = useQuery({
     queryKey: ["seo-settings"],
-    queryFn: getSEOSettings,
+    queryFn: () => import("../../queries/seo").then((m) => m.getSEOSettings()),
     staleTime: 60 * 60 * 1000,
   });
 
