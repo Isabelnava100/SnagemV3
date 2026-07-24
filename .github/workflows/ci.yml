@@ -33,6 +33,7 @@ jobs:
         run: npx eslint src
 
       - name: Functions typecheck
+        working-directory: functions
         run: |
-          npm ci --prefix functions
-          npm run --prefix functions build
+          npm ci
+          npm run build
