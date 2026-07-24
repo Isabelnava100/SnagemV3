@@ -31,6 +31,7 @@ export default function SubTabsLayout(props: {
         sx={{
           flexShrink: 0,
           border: "1px solid #2a2637",
+          clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)",
           background: isActive
             ? "linear-gradient(90deg, #762B77 13.54%, #14B1B6 70.83%)"
             : "#17151c",

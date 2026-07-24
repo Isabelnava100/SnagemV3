@@ -6,9 +6,11 @@
       box-shadow:0px 4px 8px rgba(180, 103, 179, 0.4);
 }
 
-/* Dashboard tab pills: red hover border per the redesign mockups. The pills
-   set their resting border inline, so the hover needs !important. */
+/* Dashboard tab pills: angled brand silhouette (the mockup's 8px cut) and a
+   red hover border. The pills set their resting border inline, so the hover
+   needs !important. */
 .dc-dash-tab {
+    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
     transition: border-color 0.2s ease;
 }
 .dc-dash-tab:hover {

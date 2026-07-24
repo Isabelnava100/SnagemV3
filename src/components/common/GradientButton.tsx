@@ -5,7 +5,7 @@ type GradientButtonProps = { children: React.ReactNode } & ButtonProps &
   HTMLAttributes<HTMLButtonElement>;
 
 const GradientButtonPrimary = React.forwardRef<HTMLButtonElement, GradientButtonProps>(
-  ({ children, variant = "gradient", radius = "xl", gradient = undefined, ...props }, ref) => {
+  ({ children, variant = "gradient", radius = 0, gradient = undefined, ...props }, ref) => {
     const theme = useMantineTheme();
     return (
       <Button
@@ -24,7 +24,7 @@ const GradientButtonPrimary = React.forwardRef<HTMLButtonElement, GradientButton
 export default GradientButtonPrimary;
 
 export const GradientButtonSecondary = React.forwardRef<HTMLButtonElement, GradientButtonProps>(
-  ({ children, variant = "gradient", radius = "xl", gradient = undefined, ...props }, ref) => {
+  ({ children, variant = "gradient", radius = 0, gradient = undefined, ...props }, ref) => {
     const theme = useMantineTheme();
     return (
       <Button

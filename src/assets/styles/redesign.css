@@ -422,6 +422,13 @@
   }
 }
 
+/* Every Mantine Button takes the brand's sharp angled silhouette: the theme
+   supplies the clip-path, and radius is pinned to zero here so a stray
+   radius="xl"/"md" prop cannot round the corners back off. */
+.mantine-Button-root {
+  border-radius: 0 !important;
+}
+
 /* Global button focus: the angled clip-path cuts a normal outline, so keep
    keyboard focus visible with an inset ring instead. */
 .mantine-Button-root:focus-visible {
