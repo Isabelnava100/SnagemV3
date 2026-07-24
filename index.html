@@ -13,6 +13,10 @@
     <link rel="preconnect" href="https://firestore.googleapis.com" />
     <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
     <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
+    <!-- Homepage LCP image: discovered here at t=0 instead of when the lazy
+         homepage chunk renders (~2s in). It is a CSS background, so the
+         markup alone would not reveal it early. -->
+    <link rel="preload" as="image" href="/images/hero-bg.webp" fetchpriority="high" />
     <!-- Variable Roboto: one file per italic axis covers weights 100-900
          (the site uses 400-800), instead of 18 separate static files.
          display=swap keeps text visible while the font loads. -->

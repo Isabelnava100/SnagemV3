@@ -119,8 +119,8 @@ export const HomePage = () => {
             className="hp-team-img"
             src="/images/team-group.webp"
             alt="Team Snagem members and their Pokemon"
-            width={1040}
-            height={1370}
+            width={880}
+            height={1159}
             loading="lazy"
             decoding="async"
           />
