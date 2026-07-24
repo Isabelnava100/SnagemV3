@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
-import snagemLogo from "../../assets/images/snag-hand-logo.png";
+
+// Served from public/images so the static boot shell in index.html and this
+// component render the exact same file (no duplicate hashed download).
+const snagemLogo = "/images/snag-hand-logo.png";
 
 /**
  * Shared building blocks for the redesigned marketing pages (Homepage, About).

@@ -1,12 +1,12 @@
 import { preload } from "react-dom";
 import { Link } from "react-router-dom";
-import snagLogo from "../assets/images/snag-hand-logo.png";
 import Seo from "../components/common/Seo";
 import { MarketingTopBar } from "../components/redesign/Marketing";
 import "/src/assets/styles/homepage.css";
 
-// The hero background is the LCP image. Preload it as soon as the homepage
-// chunk executes; never lazy-load it.
+// The hero background is the LCP image. Also preloaded in index.html at t=0;
+// never lazy-load it. The boot shell in index.html mirrors this hero's
+// markup: keep the two in sync when editing it.
 preload("/images/hero-bg.webp", { as: "image", fetchPriority: "high" });
 
 const MARQUEE = "THE SNAGEM GUILD ✦ WRITE THE STORY ✦ PLAY THE GAME ✦ CHARTERED 2004 ✦ ";
@@ -135,7 +135,7 @@ export const HomePage = () => {
       {/* Footer */}
       <footer className="hp-footer">
         <div className="hp-footer-left">
-          <img src={snagLogo} alt="Snagem Guild" width={26} height={26} />
+          <img src="/images/snag-hand-logo.png" alt="Snagem Guild" width={26} height={26} />
           <span>&copy; 2026 The Snagem Guild</span>
         </div>
         <nav className="hp-footer-links">

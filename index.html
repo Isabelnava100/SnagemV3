@@ -17,6 +17,40 @@
          homepage chunk renders (~2s in). It is a CSS background, so the
          markup alone would not reveal it early. -->
     <link rel="preload" as="image" href="/images/hero-bg.webp" fetchpriority="high" />
+    <!-- Quantico Bold drives the hero H1; preloading avoids a late font swap
+         on the LCP element. The full face set lives in public/fonts. -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/Quantico-Bold.woff2" crossorigin />
+    <!-- Critical CSS for the static boot shell below: paints the hero before
+         any JavaScript downloads. Mirrors src/assets/styles/homepage.css and
+         redesign.css (.hp-*, .dc-*); keep in sync when editing those. -->
+    <style>
+      body { margin: 0; background: #0e0d11; }
+      .hp { background: #0e0d11; color: #fff; min-height: 100vh; overflow-x: hidden; --font-display: "Quantico", "Roboto", sans-serif; }
+      .dc-topbar { position: sticky; top: 0; z-index: 50; height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #0e0d11; border-bottom: 1px solid #232028; }
+      .dc-topbar-brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: 0.2em; color: #fff; text-decoration: none; }
+      .dc-topbar-brand img { height: 38px; width: auto; flex-shrink: 0; }
+      .dc-topbar-links { display: flex; align-items: center; gap: 20px; font-family: var(--font-display); font-size: 14px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+      .dc-topbar-links a { color: rgba(255, 255, 255, 0.7); text-decoration: none; }
+      .dc-topbar-links a:hover { color: #fff; }
+      .hp-hero { position: relative; overflow: hidden; background: #0e0d11; }
+      .hp-hero-art { position: absolute; inset: 0; background: url("/images/hero-bg.webp") center 35% / cover no-repeat; clip-path: polygon(38% 0, 100% 0, 100% 100%, 26% 100%); }
+      .hp-hero-overlay { position: absolute; inset: 0; background: linear-gradient(100deg, #0e0d11 30%, rgba(76, 9, 75, 0.55) 60%, rgba(229, 65, 86, 0.25) 100%); }
+      .hp-hero-inner { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 22px; padding: 44px 20px 52px; }
+      .dc-kicker { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #ffd074; }
+      .dc-kicker::before { content: ""; width: 32px; height: 2px; background: #e54156; }
+      .hp-h1 { font-family: var(--font-display); font-weight: 700; color: #fff; margin: 0; line-height: 0.94; letter-spacing: 0.01em; display: flex; flex-direction: column; font-size: clamp(60px, 17vw, 130px); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5), 0 0 30px rgba(145, 38, 145, 0.5); }
+      .hp-lede { font-size: clamp(15px, 2.2vw, 19px); color: rgba(255, 255, 255, 0.85); max-width: 600px; line-height: 1.55; margin: 0; }
+      .hp-hero-cta { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; max-width: 360px; }
+      .dc-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; padding: 15px 26px; cursor: pointer; border: 0; text-decoration: none; clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
+      .dc-cta-red { background: #e54156; color: #fff !important; }
+      .dc-cta-outline { background: transparent; color: #fff !important; box-shadow: inset 0 0 0 1px #3a3550; }
+      @media (min-width: 560px) { .hp-hero-cta { flex-direction: row; max-width: none; } }
+      @media (min-width: 720px) { .dc-topbar { padding: 0 56px; } }
+      @media (min-width: 900px) {
+        .hp-hero { height: 760px; }
+        .hp-hero-inner { position: absolute; left: 56px; top: 90px; padding: 0; gap: 26px; max-width: 760px; }
+      }
+    </style>
     <!-- Variable Roboto: one file per italic axis covers weights 100-900
          (the site uses 400-800), instead of 18 separate static files.
          display=swap keeps text visible while the font loads. -->
@@ -75,7 +109,45 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static boot shell: replaced by React on mount (createRoot swaps the
+           container's children). It paints the homepage hero before any JS
+           downloads, so first paint and LCP do not wait for the bundle.
+           Mirrors src/Pages/Homepage.tsx hero markup: keep in sync. -->
+      <div class="hp">
+        <header class="dc-topbar">
+          <a class="dc-topbar-brand" href="/" aria-label="Snagem Guild home">
+            <img src="/images/snag-hand-logo.png" alt="" height="38" />
+            <span>SNAGEM</span>
+          </a>
+          <nav class="dc-topbar-links">
+            <a href="/" style="color: #fff; border-bottom: 2px solid #e54156; padding-bottom: 2px">Home</a>
+            <a href="/About">About</a>
+            <a href="/Login" class="dc-cta dc-cta-red" style="padding: 8px 18px; font-size: 12px">Login</a>
+          </nav>
+        </header>
+        <section class="hp-hero">
+          <div class="hp-hero-art" aria-hidden="true"></div>
+          <div class="hp-hero-overlay" aria-hidden="true"></div>
+          <div class="hp-hero-inner">
+            <div class="dc-kicker">Pokemon Roleplay // Est 2004</div>
+            <h1 class="hp-h1">
+              <span>WRITE.</span>
+              <span>BATTLE.</span>
+              <span>SNAG.</span>
+            </h1>
+            <p class="hp-lede">
+              Every post you write is a move in the game. Roll encounters and snag wild Pokemon
+              while you roleplay.
+            </p>
+            <div class="hp-hero-cta">
+              <a href="/About" class="dc-cta dc-cta-red">Discover What We Do</a>
+              <a href="/Forum/Main-Forum" class="dc-cta dc-cta-outline">Go to the Forums</a>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
