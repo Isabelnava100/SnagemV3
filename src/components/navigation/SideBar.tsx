@@ -11,7 +11,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconBooks, IconFileText, IconHome, IconNews, IconSpeakerphone, IconX } from "@tabler/icons-react";
+import { IconBooks, IconFileText, IconHome, IconLogin, IconNews, IconSpeakerphone, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Capability } from "../../components/types/typesUsed";
@@ -210,7 +210,10 @@ function useDrawerTiles(overflow: NavItem[]): DrawerTileDef[] {
       icon: { img: AdminAccessIcon },
     });
   }
-  return [...overflowTiles, ...SECONDARY_DRAWER_TILES, ...adminTiles];
+  const tiles: DrawerTileDef[] = [...overflowTiles, ...SECONDARY_DRAWER_TILES, ...adminTiles];
+  // Logged-out visitors get an explicit way into Login/Register from the menu.
+  if (!user) tiles.push({ link: "/Login", label: "Log in / Join", tabler: IconLogin });
+  return tiles;
 }
 
 function DrawerTileIcon({ tile }: { tile: DrawerTileDef }) {
@@ -271,10 +274,15 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
   const { label, link, icon } = props;
   const isUnder900 = useCoreMediaQuery("(max-width: 900px)");
   const { isOverSm, isOverMd } = useMediaQuery();
+  const { pathname } = useLocation();
   return (
     <NavLink
       to={link}
-      style={({ isActive }) => ({
+      style={({ isActive }) => {
+        // Forum boards are siblings of the nav target (/Forum/Main-Forum), so
+        // NavLink alone lights nothing on them; prefix-match the section.
+        const active = isActive || (link.startsWith("/Forum") && pathname.startsWith("/Forum"));
+        return {
         display: "flex",
         height: "100%",
         flexDirection: "column",
@@ -286,13 +294,14 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
         justifyContent: "center",
         alignItems: "center",
         textDecoration: "none",
-        background: isActive
+        background: active
           ? "linear-gradient(180deg, #912691 41.15%, #4D14C4 90.1%)"
           : undefined,
         borderTopRightRadius: isOverMd ? 30 : 0,
         borderBottomLeftRadius: isOverMd ? 0 : 15,
         borderBottomRightRadius: isOverMd ? 30 : 15,
-      })}
+        };
+      }}
     >
       <NavGlyph icon={icon} size={isUnder900 ? 40 : 44} title={label} />
       {!isUnder900 && (
@@ -702,6 +711,14 @@ export const SideBar = () => {
           justifyContent: "safe center",
         }}
       >
+        {/* Brand home link: the rail had no persistent way back to the site. */}
+        <Link
+          to="/"
+          aria-label="Snagem Guild home"
+          style={{ display: "flex", justifyContent: "center", padding: "14px 0 6px" }}
+        >
+          <img src="/images/snag-hand-logo.png" alt="" height={30} />
+        </Link>
         {visibleLinks.map((link) => (
           <SingleLink {...link} key={link.label} />
         ))}

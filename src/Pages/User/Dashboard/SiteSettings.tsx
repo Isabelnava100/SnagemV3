@@ -4,6 +4,7 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import GradientButtonPrimary from "../../../components/common/GradientButton";
 import { SectionLoader } from "../../../components/navigation/loading";
+import { toastError } from "../../../lib/toast";
 import { Capability } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import { DiscordConfig, discordRedirectUri, getDiscordConfig, saveDiscordConfig } from "../../../queries/discord";
@@ -28,6 +29,7 @@ function EmailConfigSection() {
       setSaved(true);
       queryClient.invalidateQueries({ queryKey: ["email-config"] });
     },
+    onError: (e) => toastError(e, "Could not save the email settings."),
   });
 
   if (isPending || !form) return <SectionLoader />;
@@ -104,6 +106,7 @@ function DiscordConfigSection() {
       setSaved(true);
       queryClient.invalidateQueries({ queryKey: ["discord-config"] });
     },
+    onError: (e) => toastError(e, "Could not save the Discord settings."),
   });
 
   if (isPending || !form) return <SectionLoader />;

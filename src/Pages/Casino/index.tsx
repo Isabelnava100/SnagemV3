@@ -17,6 +17,7 @@ import { SectionLoader } from "../../components/navigation/loading";
 import { Capability } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
 import { hasCapability } from "../../lib/permissions";
+import { friendlyMessage } from "../../lib/toast";
 import {
   buyLottoTicket,
   CasinoGame,
@@ -357,7 +358,7 @@ function ExchangeCage(props: { uid: string }) {
       });
     },
     onError: (err: unknown) => {
-      setNote({ ok: false, text: err instanceof Error ? err.message : "Exchange failed." });
+      setNote({ ok: false, text: friendlyMessage(err, "Exchange failed.") });
     },
   });
 
@@ -619,7 +620,7 @@ function useGamePlay(
       onResult?.(res, vars.bet);
     },
     onError: (err: unknown) => {
-      setState({ ok: false, msg: err instanceof Error ? err.message : "The play failed." });
+      setState({ ok: false, msg: friendlyMessage(err, "The play failed.") });
     },
   });
 
@@ -821,7 +822,7 @@ function ShadowLottoBody(props: { uid: string; tokens: number; record: (win: boo
       props.record(false, 0, 1);
       setState({ ok: true, msg: `Ticket Nº ${res.number} is in the draw. Jackpot is now ${res.jackpot} Gengar Tokens.` });
     },
-    onError: (err: unknown) => setState({ ok: false, msg: err instanceof Error ? err.message : "Ticket purchase failed." }),
+    onError: (err: unknown) => setState({ ok: false, msg: friendlyMessage(err, "Ticket purchase failed.") }),
   });
 
   const { user } = useAuth();
@@ -841,7 +842,7 @@ function ShadowLottoBody(props: { uid: string; tokens: number; record: (win: boo
           : `Drawn: ${res.drawn}. No winning tickets this round.`,
       });
     },
-    onError: (err: unknown) => setState({ ok: false, msg: err instanceof Error ? err.message : "The draw failed." }),
+    onError: (err: unknown) => setState({ ok: false, msg: friendlyMessage(err, "The draw failed.") }),
   });
 
   const jackpot = lotto.data?.jackpot;
@@ -1056,7 +1057,7 @@ function HighLowBody(props: GameProps) {
       setMsg({ ok: null, text: `Dealt ${cardLabel(res.card)}. Higher or lower?` });
       invalidate();
     },
-    onError: (e) => setMsg({ ok: false, text: e instanceof Error ? e.message : "Could not deal." }),
+    onError: (e) => setMsg({ ok: false, text: friendlyMessage(e, "Could not deal.") }),
   });
   const guessM = useMutation({
     mutationFn: (dir: "higher" | "lower") => guessHighLow(dir),
@@ -1073,7 +1074,7 @@ function HighLowBody(props: GameProps) {
       }
       invalidate();
     },
-    onError: (e) => setMsg({ ok: false, text: e instanceof Error ? e.message : "Guess failed." }),
+    onError: (e) => setMsg({ ok: false, text: friendlyMessage(e, "Guess failed.") }),
   });
   const cashM = useMutation({
     mutationFn: () => cashoutHighLow(),
@@ -1083,7 +1084,7 @@ function HighLowBody(props: GameProps) {
       props.record(true, res.pot, props.stake);
       invalidate();
     },
-    onError: (e) => setMsg({ ok: false, text: e instanceof Error ? e.message : "Cash out failed." }),
+    onError: (e) => setMsg({ ok: false, text: friendlyMessage(e, "Cash out failed.") }),
   });
 
   const busy = startM.isPending || guessM.isPending || cashM.isPending;

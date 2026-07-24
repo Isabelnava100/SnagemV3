@@ -16,6 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
+import { friendlyMessage } from "../../../../lib/toast";
 import { call } from "../../../../queries/_callable";
 import {
   getGradedCount,
@@ -114,7 +115,7 @@ export function SubmissionCard(props: { submission: PendingSubmission; onDone: (
     },
     onError: (e) => {
       setError(true);
-      setMessage((e as Error).message || "Could not approve this submission.");
+      setMessage(friendlyMessage(e, "Could not approve this submission."));
     },
   });
 
@@ -127,7 +128,7 @@ export function SubmissionCard(props: { submission: PendingSubmission; onDone: (
     },
     onError: (e) => {
       setError(true);
-      setMessage((e as Error).message || "Could not reject this submission.");
+      setMessage(friendlyMessage(e, "Could not reject this submission."));
     },
   });
 
@@ -248,7 +249,7 @@ export function MMRequestCard(props: { request: PendingMMRequest; onDone: () => 
     },
     onError: (e) => {
       setError(true);
-      setMessage((e as Error).message || "Could not grant this master mission.");
+      setMessage(friendlyMessage(e, "Could not grant this master mission."));
     },
   });
 
@@ -313,7 +314,7 @@ export function BattleRankingsForm() {
     },
     onError: (e) => {
       setError(true);
-      setMessage((e as Error).message || "Could not award ranking points.");
+      setMessage(friendlyMessage(e, "Could not award ranking points."));
     },
   });
 
@@ -420,7 +421,7 @@ export function BattleReportForm() {
     },
     onError: (e) => {
       setError(true);
-      setMessage((e as Error).message || "Could not award battle points.");
+      setMessage(friendlyMessage(e, "Could not award battle points."));
     },
   });
 
@@ -582,7 +583,7 @@ export function ChallengeStepForm() {
     },
     onError: (e) => {
       setError(true);
-      setMessage((e as Error).message || "Could not grant this challenge step.");
+      setMessage(friendlyMessage(e, "Could not grant this challenge step."));
     },
   });
 

@@ -16,6 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
 import { EmptyMessage } from "../../../components/common/Message";
+import { toastError } from "../../../lib/toast";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Draft } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
@@ -33,10 +34,26 @@ export default function Drafts() {
   const { isOverLg } = useMediaQuery();
 
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <EmptyMessage
+        title="Could not load drafts"
+        description="Something went wrong loading your drafts. Refresh to try again."
+      />
+    );
 
   if (!data.length)
-    return <EmptyMessage title="No drafts" description="You currently have no drafts created" />;
+    return (
+      <EmptyMessage
+        title="No drafts"
+        description={
+          <>
+            You currently have no drafts created. Start a{" "}
+            <Link to="/Forum/Main-Forum">new thread or post</Link> and it can wait here for you.
+          </>
+        }
+      />
+    );
 
   return (
     <Stack>
@@ -66,6 +83,7 @@ function DraftsHeader(props: { count: number }) {
       setConfirming(false);
       queryClient.invalidateQueries({ queryKey: ["get-drafts", user?.uid] });
     },
+    onError: (e) => toastError(e, "Could not clear your drafts."),
   });
 
   return (
@@ -129,6 +147,7 @@ function DeleteDraft(props: { draftId: string }) {
       close();
       queryClient.invalidateQueries({ queryKey: ["get-drafts", user?.uid] });
     },
+    onError: (e) => toastError(e, "Could not delete that draft."),
   });
 
   return (

@@ -7,7 +7,6 @@ import {
   Button,
   Flex,
   Group,
-  HoverCard,
   Image,
   Popover,
   Select,
@@ -233,7 +232,10 @@ function Teams(props: EditingProps) {
         />
       )}
       {!sortedData.length && (
-        <EmptyMessage title="No teams" description="You currently have no teams created" />
+        <EmptyMessage
+          title="No teams"
+          description="You currently have no teams created. Use the Create a New Team button above to build your first one."
+        />
       )}
     </Stack>
   );
@@ -331,13 +333,13 @@ function DeleteTeam(props: { teamId: string }) {
       </Popover.Target>
       <Popover.Dropdown>
         <Stack>
-          <Text>Are you sure, you want to delete this team?</Text>
+          <Text>Delete this team? This can&apos;t be undone.</Text>
           <Group>
-            <Button loading={isLoading} onClick={handleDelete}>
-              Yes
+            <Button loading={isLoading} onClick={handleDelete} color="red">
+              Delete
             </Button>
-            <Button onClick={close} loading={isLoading} color="gray">
-              No
+            <Button onClick={close} disabled={isLoading} color="gray">
+              Cancel
             </Button>
           </Group>
         </Stack>
@@ -903,14 +905,18 @@ function RemovePokemonFromTeam(props: {
   };
 
   return (
-    <div className="absolute top-0 right-0">
+    <div className="absolute top-0 right-0" data-no-card-toggle>
       <Tooltip label="Remove">
         <ActionIcon
-          onClick={handleRemovePokemonFromTeam}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleRemovePokemonFromTeam();
+          }}
           color="red"
           variant="filled"
           radius="xl"
           size="xs"
+          aria-label="Remove from team"
         >
           <IconX />
         </ActionIcon>
@@ -1131,18 +1137,41 @@ function SinglePokemon(props: {
 
   const shadowed = isShadowed(pokemon);
   const prog = levelProgress(pokemon.experience ?? 0);
+  const [cardOpen, setCardOpen] = React.useState(false);
+  const isCoarse = () => window.matchMedia("(pointer: coarse)").matches;
   return (
-    // Hover (not click) reveals the info card: species, catch date, game
-    // stats. Clicking a sprite otherwise triggered the browser's image menu
-    // on mobile. The owned list while editing gets an Add-to-Team button.
-    <HoverCard position="top" withArrow shadow="md" openDelay={80} closeDelay={100} width={280}>
-      <HoverCard.Target>
+    // The info card (species, catch date, game stats, Add-to-Team) works on
+    // hover for fine pointers and tap/keyboard for coarse ones; the remove
+    // chip is walled off via data-no-card-toggle so it never toggles the card.
+    <Popover position="top" withArrow shadow="md" width={280} opened={cardOpen} onChange={setCardOpen}>
+      <Popover.Target>
         <Box
           className="dc-card-tile"
           pos="relative"
           p={{ base: "12px 8px", lg: "14px 10px" }}
+          tabIndex={0}
+          role="button"
+          aria-expanded={cardOpen}
+          aria-label={`${pokemon.name || pokemon.species} details`}
+          onMouseEnter={() => {
+            if (!isCoarse()) setCardOpen(true);
+          }}
+          onMouseLeave={() => {
+            if (!isCoarse()) setCardOpen(false);
+          }}
+          onClick={(e) => {
+            if (!isCoarse()) return;
+            if ((e.target as HTMLElement).closest("[data-no-card-toggle]")) return;
+            setCardOpen((o) => !o);
+          }}
+          onKeyDown={(e) => {
+            if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) {
+              e.preventDefault();
+              setCardOpen((o) => !o);
+            }
+          }}
           style={{
-            cursor: "default",
+            cursor: "pointer",
             // Selected (already in team) = white so it reads clearly while
             // editing; shadowed mons keep a purple frame otherwise.
             ...(isEditing
@@ -1171,7 +1200,7 @@ function SinglePokemon(props: {
             <Text c="white" fw={700} fz={{ base: 12, lg: 14 }} ta="center" lineClamp={1} w="100%">
               {pokemon.name || pokemon.species}
             </Text>
-            <Text c="#b6b1bc" fz={{ base: 11, lg: 14 }}>
+            <Text c="#b6b1bc" fz={{ base: 12, lg: 14 }}>
               Lv {prog.level}
             </Text>
             {/* XP to next level: cyan bar, purple for shadow mons. */}
@@ -1191,8 +1220,8 @@ function SinglePokemon(props: {
             pokemonId={pokemon.id}
           />
         </Box>
-      </HoverCard.Target>
-      <HoverCard.Dropdown bg="#1E1D20" sx={{ borderRadius: 22 }} p={16}>
+      </Popover.Target>
+      <Popover.Dropdown bg="#1E1D20" sx={{ borderRadius: 22 }} p={16}>
         <Stack gap={12}>
           <PokemonDetails pokemon={pokemon} />
           {canAddToTeam &&
@@ -1206,7 +1235,7 @@ function SinglePokemon(props: {
               </GradientButtonPrimary>
             ))}
         </Stack>
-      </HoverCard.Dropdown>
-    </HoverCard>
+      </Popover.Dropdown>
+    </Popover>
   );
 }

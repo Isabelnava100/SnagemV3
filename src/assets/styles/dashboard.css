@@ -1,11 +1,3 @@
-.cardDashboard {
-    border:1px solid #772976;
-      border-radius:5px;
-      margin:8px 4px 16px 4px;
-      padding:8px;
-      box-shadow:0px 4px 8px rgba(180, 103, 179, 0.4);
-}
-
 /* Dashboard tab pills: angled brand silhouette (the mockup's 8px cut) and a
    red hover border. The pills set their resting border inline, so the hover
    needs !important. */

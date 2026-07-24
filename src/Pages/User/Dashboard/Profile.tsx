@@ -19,6 +19,7 @@ import DOMPurify from "dompurify";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
 import { Conditional } from "../../../components/common/Conditional";
+import { ConfirmPopover } from "../../../components/common/ConfirmPopover";
 import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
@@ -30,6 +31,7 @@ import { useAuth } from "../../../context/AuthContext";
 import useMediaQuery from "../../../hooks/useMediaQuery";
 import { Upload } from "../../../icons";
 import { STORAGE_FOLDERS, storagePath } from "../../../lib/storage";
+import { toastError } from "../../../lib/toast";
 import { getProfile } from "../../../queries/dashboard";
 import DefaultAvatar from "/src/assets/images/character-default.jpg";
 
@@ -48,7 +50,12 @@ export default function Profile() {
   const navigate = useNavigate();
   const { isLoading, isError } = useProfileQuery();
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <Text c="white" fz={15}>
+        Could not load your profile. Refresh to try again.
+      </Text>
+    );
   return (
     <Stack gap={18} w="100%">
       {/* Everything below edits the public profile; this jumps to the real thing. */}
@@ -186,7 +193,7 @@ function Avatars() {
 
       setFileBlob(undefined);
     } catch (err) {
-      console.log(err);
+      toastError(err, "Could not upload the image.");
     } finally {
       setProcessing(false);
     }
@@ -210,13 +217,11 @@ function Avatars() {
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
     } catch (err) {
-      //
+      toastError(err, "Could not save that. Try again.");
     }
   };
 
   const handleRemoveAvatar = async (url: string) => {
-    const confirmed = window.confirm("Are you sure, you want to remove this permanently?");
-    if (!confirmed) return;
     try {
       const { getDb, getStorage } = await import("../../../context/firebase");
       const [db, storage] = await Promise.all([getDb(), getStorage()]);
@@ -242,7 +247,7 @@ function Avatars() {
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
     } catch (err) {
-      //
+      toastError(err, "Could not save that. Try again.");
     }
   };
 
@@ -310,18 +315,25 @@ function Avatars() {
                     sx={{ cursor: "pointer", border: "1px solid #2a2637" }}
                   />
                   <Box sx={{ position: "absolute", top: -4, right: -4 }}>
-                    <Tooltip label="Remove">
-                      <ActionIcon
-                        onClick={() => handleRemoveAvatar(avatarUrl)}
-                        color="red"
-                        variant="filled"
-                        radius="xl"
-                        size="xs"
-                        aria-label="Delete avatar"
-                      >
-                        <IconX />
-                      </ActionIcon>
-                    </Tooltip>
+                    <ConfirmPopover
+                      message="Remove this avatar permanently?"
+                      confirmLabel="Remove"
+                      onConfirm={() => handleRemoveAvatar(avatarUrl)}
+                      target={(open) => (
+                        <Tooltip label="Remove">
+                          <ActionIcon
+                            onClick={open}
+                            color="red"
+                            variant="filled"
+                            radius="xl"
+                            size="xs"
+                            aria-label="Delete avatar"
+                          >
+                            <IconX />
+                          </ActionIcon>
+                        </Tooltip>
+                      )}
+                    />
                   </Box>
                 </Box>
               );
@@ -389,7 +401,7 @@ function CoverBackgrounds() {
 
       setFileBlob(undefined);
     } catch (err) {
-      //
+      toastError(err, "Could not save that. Try again.");
     } finally {
       setProcessing(false);
     }
@@ -413,13 +425,11 @@ function CoverBackgrounds() {
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
     } catch (err) {
-      //
+      toastError(err, "Could not save that. Try again.");
     }
   };
 
   const handleRemoveCoverImage = async (url: string) => {
-    const confirmed = window.confirm("Are you sure, you want to remove this permanently?");
-    if (!confirmed) return;
     try {
       const { getDb, getStorage } = await import("../../../context/firebase");
       const [db, storage] = await Promise.all([getDb(), getStorage()]);
@@ -445,7 +455,7 @@ function CoverBackgrounds() {
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
     } catch (err) {
-      //
+      toastError(err, "Could not save that. Try again.");
     }
   };
 
@@ -541,21 +551,28 @@ function CoverBackgrounds() {
                         )}
                       </Box>
                       <Box sx={{ position: "absolute", top: -4, right: -4 }}>
-                        <Tooltip label="Remove">
-                          <ActionIcon
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveCoverImage(cover_background_url);
-                            }}
-                            color="red"
-                            variant="filled"
-                            radius="xl"
-                            size="sm"
-                            aria-label="Delete cover"
-                          >
-                            <IconX size={14} />
-                          </ActionIcon>
-                        </Tooltip>
+                        <ConfirmPopover
+                          message="Remove this cover permanently?"
+                          confirmLabel="Remove"
+                          onConfirm={() => handleRemoveCoverImage(cover_background_url)}
+                          target={(open) => (
+                            <Tooltip label="Remove">
+                              <ActionIcon
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  open();
+                                }}
+                                color="red"
+                                variant="filled"
+                                radius="xl"
+                                size="sm"
+                                aria-label="Delete cover"
+                              >
+                                <IconX size={14} />
+                              </ActionIcon>
+                            </Tooltip>
+                          )}
+                        />
                       </Box>
                     </Box>
                   );
@@ -596,7 +613,7 @@ function Tags() {
 
       await queryClient.invalidateQueries({ queryKey: ["get-profile"] });
     } catch (err) {
-      //
+      toastError(err, "Could not save that. Try again.");
     } finally {
       setProcessing(false);
     }
@@ -673,7 +690,7 @@ function RightSideContent() {
       // Sanitize before persisting so stored HTML is safe for any render path
       await setDoc(docRef, { description: DOMPurify.sanitize(debounced ?? "") }, { merge: true });
     } catch (err) {
-      //
+      toastError(err, "Could not save that. Try again.");
     }
   };
 

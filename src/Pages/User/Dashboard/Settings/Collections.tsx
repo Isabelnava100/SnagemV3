@@ -276,7 +276,12 @@ function Badges() {
   const { data: catalog } = useQuery({ queryKey: ["badge-catalog"], queryFn: getBadgeCatalog });
   const toggleMutation = useToggleBadgeMutation();
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <Text c="white" fz={15}>
+        Could not load this collection. Refresh to try again.
+      </Text>
+    );
   const { formattedData } = data;
 
   // Consolidate against the catalog: use each badge's canonical background (so
@@ -355,7 +360,12 @@ function Badges() {
 function Emojis() {
   const { data, isPending: isLoading, isError } = useGetEmojisQuery();
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <Text c="white" fz={15}>
+        Could not load this collection. Refresh to try again.
+      </Text>
+    );
   const emojiIds = data;
   // No per-user obtain data yet, so show today as a temporary placeholder until
   // the "how you earn emojis" flow ships with Activities.
@@ -459,7 +469,12 @@ function Emojis() {
 function EmojiCollection() {
   const { data, isPending: isLoading, isError } = useGetEmojisQuery();
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <Text c="white" fz={15}>
+        Could not load this collection. Refresh to try again.
+      </Text>
+    );
   const userEmojiIds = data;
   return (
     <Stack gap={18}>
@@ -571,7 +586,12 @@ function BadgesCollection() {
   const { data, isPending: isLoading, isError } = useGetBadgesQuery();
   const { data: catalog } = useQuery({ queryKey: ["badge-catalog"], queryFn: getBadgeCatalog });
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <Text c="white" fz={15}>
+        Could not load this collection. Refresh to try again.
+      </Text>
+    );
   const { formattedData: userBadges } = data;
   return (
     <Stack gap={18}>

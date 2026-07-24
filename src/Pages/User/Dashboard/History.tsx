@@ -249,6 +249,17 @@ export default function History() {
 
   const threads = threadsQuery.data ?? [];
   const posts = postsQuery.data ?? [];
+  const activeQueryFailed = tab === "posts" ? postsQuery.isError : threadsQuery.isError;
+
+  if (activeQueryFailed) {
+    return (
+      <Box className="dc-card" p={{ base: 16, sm: 30 }}>
+        <Text c="white" fz={15}>
+          Could not load your history. Refresh to try again.
+        </Text>
+      </Box>
+    );
+  }
 
   return (
     <Box className="dc-card" p={{ base: 16, sm: 30 }}>
@@ -283,7 +294,12 @@ export default function History() {
           ) : posts.length === 0 ? (
             <EmptyMessage
               title="No posts yet"
-              description="Your forum posts will show up here as you play."
+              description={
+                <>
+                  Your forum posts will show up here as you play.{" "}
+                  <Link to="/Forum/Main-Forum">Jump into the forums.</Link>
+                </>
+              }
             />
           ) : (
             <Stack gap={8}>
@@ -305,7 +321,12 @@ export default function History() {
           ) : threads.length === 0 ? (
             <EmptyMessage
               title="No threads yet"
-              description="Threads you start (roleplays, missions, challenges) will show up here."
+              description={
+                <>
+                  Threads you start (roleplays, missions, challenges) will show up here.{" "}
+                  <Link to="/Forum/Main-Forum">Start one in the forums.</Link>
+                </>
+              }
             />
           ) : (
             <Stack gap={8}>

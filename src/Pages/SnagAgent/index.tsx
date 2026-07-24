@@ -1397,6 +1397,7 @@ export default function SnagAgent() {
       <style>{`
         @keyframes snagblink { 0%,80%,100% { opacity:.25 } 40% { opacity:1 } }
         .snag-dot { width:7px; height:7px; background:#c79bd6; border-radius:50%; animation:snagblink 1.1s infinite; }
+        @media (prefers-reduced-motion: reduce) { .snag-dot { animation:none; opacity:.8; } }
         .snag-chip { font-family:Roboto,sans-serif; font-size:13px; font-weight:700; color:#e8dff0; background:#2a1a2e; border:1px solid #4b3f63; padding:8px 16px; cursor:pointer; clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%); transition:background .18s,border-color .18s,color .18s; }
         .snag-chip:hover { background:#3c2a44; border-color:#7e2c75; color:#fff; }
         .snag-input { flex:1; min-width:0; background:#1b1a1e; border:1px solid #2a2637; color:#fff; font-family:Roboto,sans-serif; font-size:15px; padding:14px 18px; outline:none; transition:border-color .18s,box-shadow .18s; }

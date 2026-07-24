@@ -258,7 +258,7 @@ export default function Missions() {
   const [filter, setFilter] = React.useState<FilterKey>("all");
   const [search, setSearch] = React.useState("");
 
-  const { data: missions, isPending } = useQuery({
+  const { data: missions, isPending, isError } = useQuery({
     queryKey: ["missions"],
     queryFn: getMissions,
   });
@@ -338,6 +338,10 @@ export default function Missions() {
 
         {isPending ? (
           <SectionLoader />
+        ) : isError ? (
+          <Text c="white" fz={16} ta="center" py={40} role="alert">
+            Could not load the mission board. Refresh to try again.
+          </Text>
         ) : !shown.length ? (
           <Text c="dimmed" fz={16} ta="center" py={40} role="status" aria-live="polite">
             No missions match your filters.

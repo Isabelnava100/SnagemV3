@@ -27,6 +27,7 @@ import GradientButtonPrimary, {
   GradientButtonSecondary,
 } from "../../../components/common/GradientButton";
 import { EmptyMessage } from "../../../components/common/Message";
+import { toastError, toastSuccess } from "../../../lib/toast";
 import { UploadAndCropImage } from "../../../components/crop-image/UploadAndCropImage";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Character, characterTypes } from "../../../components/types/typesUsed";
@@ -46,7 +47,13 @@ export default function Characters() {
   });
 
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <EmptyMessage
+        title="Could not load characters"
+        description="Something went wrong loading your characters. Refresh to try again."
+      />
+    );
   const { sortedData } = data;
   if (!sortedData.length)
     return (
@@ -133,7 +140,7 @@ function CreateNewCharacter() {
       setName("");
       await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
     } catch (err) {
-      //
+      toastError(err, "Could not create the character.");
     }
   };
 
@@ -289,7 +296,7 @@ function DeleteCharacter(props: { characterId: string }) {
       close();
       await queryClient.invalidateQueries({ queryKey: ["get-characters", user?.uid] });
     } catch (err) {
-      //
+      toastError(err, "Could not delete the character.");
     }
   };
 
@@ -302,13 +309,13 @@ function DeleteCharacter(props: { characterId: string }) {
       </Popover.Target>
       <Popover.Dropdown>
         <Stack>
-          <Text>Are you sure, you want to delete this character?</Text>
+          <Text>Delete this character? This can&apos;t be undone.</Text>
           <Group>
-            <Button loading={isLoading} onClick={handleDelete}>
-              Yes
+            <Button loading={isLoading} onClick={handleDelete} color="red">
+              Delete
             </Button>
-            <Button onClick={close} loading={isLoading} color="gray">
-              No
+            <Button onClick={close} color="gray" disabled={isLoading}>
+              Cancel
             </Button>
           </Group>
         </Stack>
@@ -360,7 +367,7 @@ function UploadAvatar(props: Character & { form: UseFormReturnType<FormFields> }
 
       setFileBlob(undefined);
     } catch (err) {
-      //
+      toastError(err, "Could not upload the image.");
     } finally {
       setProcessing(false);
     }
@@ -404,9 +411,14 @@ function SingleCharacter(props: Character) {
   const queryClient = useQueryClient();
 
   const handleSaveChanges = async () => {
-    await mutateAsync({ values: form.values });
-    await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
-    setEditing(false);
+    try {
+      await mutateAsync({ values: form.values });
+      await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
+      toastSuccess("Character saved.");
+      setEditing(false);
+    } catch (err) {
+      toastError(err, "Could not save the character.");
+    }
   };
 
   const handleCancelEdit = () => {

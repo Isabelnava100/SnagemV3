@@ -15,6 +15,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
 import { EmptyMessage } from "../../../components/common/Message";
+import { toastError } from "../../../lib/toast";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { Bookmark } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
@@ -34,7 +35,13 @@ export default function Bookmarks() {
   const { isOverLg } = useMediaQuery();
 
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <EmptyMessage
+        title="Could not load bookmarks"
+        description="Something went wrong loading your bookmarks. Refresh to try again."
+      />
+    );
 
   const { sortedData } = data;
 
@@ -81,6 +88,7 @@ function SingleBookmark(props: Bookmark) {
       queryClient.invalidateQueries({ queryKey: ["get-bookmarks"] });
       queryClient.invalidateQueries({ queryKey: ["forum-bookmarks"] });
     },
+    onError: (e) => toastError(e, "Could not remove that bookmark."),
   });
 
   return (

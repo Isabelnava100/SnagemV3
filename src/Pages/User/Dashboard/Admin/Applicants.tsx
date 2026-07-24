@@ -2,6 +2,7 @@ import { Badge, Box, Button, Group, Select, Stack, Text, Title } from "@mantine/
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
+import { ConfirmPopover } from "../../../../components/common/ConfirmPopover";
 import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLayout";
@@ -91,21 +92,29 @@ export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () =
         >
           Approve
         </GradientButtonSecondary>
-        <Button
-          radius="lg"
-          size="xs"
-          variant="light"
-          color="red"
+        <ConfirmPopover
+          message="Reject and remove this application? This cannot be undone."
+          confirmLabel="Reject"
+          awaitConfirm
           loading={reject.isPending}
-          disabled={busy}
-          onClick={() => {
-            if (!window.confirm("Reject and remove this application? This cannot be undone.")) return;
+          onConfirm={() => {
             setMessage("");
-            reject.mutateAsync().catch(() => undefined);
+            return reject.mutateAsync();
           }}
-        >
-          Reject
-        </Button>
+          target={(open) => (
+            <Button
+              radius="lg"
+              size="xs"
+              variant="light"
+              color="red"
+              loading={reject.isPending}
+              disabled={busy}
+              onClick={open}
+            >
+              Reject
+            </Button>
+          )}
+        />
       </Group>
       {message && (
         <Text fz={14} c="#E54156" mt={6} role="status" aria-live="polite">

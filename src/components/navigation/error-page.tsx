@@ -1,45 +1,36 @@
-import { isRouteErrorResponse, Link, useRouteError } from "react-router-dom";
+import { Button, Container, Group, Stack, Text, Title } from "@mantine/core";
+import { Link } from "react-router-dom";
 import Seo from "../common/Seo";
-// import Navigation from "../components/navigation/NavBase";
 
+/**
+ * Catch-all 404 for unmatched routes. Static on purpose: the app uses
+ * BrowserRouter (not a data router), so useRouteError() has nothing to read
+ * and calling it here throws into the app-wide ErrorBoundary.
+ */
 export function ErrorPage() {
-  const error = useRouteError();
-
-  if (isRouteErrorResponse(error)) {
-    // if (error.status === 401) {
-    //   // ...
-    //   console.log(error);
-    // }
-    // else if (error.status === 404) {
-    //   // ...
-    //   console.log(error);
-    // }
-
-    return (
-      <div id="error-page">
-        <Seo noindex title="Page Not Found | Snagem Guild" />
-        <h1>Oops! {error.status}</h1>
-        <p>{error.statusText}</p>
-        {error.data?.message && (
-          <p>
-            <i>{error.data.message}</i>
-          </p>
-        )}
-         <Link to='/'>Go back to HQ</Link>
-      </div>
-    );
-  } else if (error instanceof Error) {
-    <div id="error-page">
-      <h1>Oops! Unexpected Error</h1>
-      <p>Something went wrong.</p>
-      <p>
-        <i>{error.message}</i>
-      </p>
-         <Link to='/'>Go back to HQ</Link>
-    </div>;
-  } else {
-    return <Seo noindex title="Page Not Found | Snagem Guild" />;
-  }
-
-  return <Seo noindex title="Page Not Found | Snagem Guild" />;
+  return (
+    <Container size="sm" mt={80} px={{ base: 16, sm: 24 }} pb={80}>
+      <Seo noindex title="Page Not Found | Snagem Guild" />
+      <Stack align="center" gap={14}>
+        <Title order={1} c="white" fw={500} ta="center">
+          This page doesn&apos;t exist
+        </Title>
+        <Text c="dimmed" ta="center" maw={420}>
+          The link may be old, or the address may have a typo. The rest of the
+          guild is right where you left it.
+        </Text>
+        <Group justify="center" gap={10} wrap="wrap">
+          <Button component={Link} to="/" radius="xl">
+            Home
+          </Button>
+          <Button component={Link} to="/Forum" variant="light" radius="xl">
+            Forum
+          </Button>
+          <Button component={Link} to="/Dashboard" variant="light" radius="xl">
+            Dashboard
+          </Button>
+        </Group>
+      </Stack>
+    </Container>
+  );
 }

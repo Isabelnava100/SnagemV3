@@ -1,5 +1,6 @@
+import { Anchor, Container, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
 import { getOwnedPokemons, getTeamsRaw, hydrateTeams } from "../../../queries/dashboard";
@@ -20,10 +21,20 @@ export default function PokemonTeam() {
   });
 
   if (isLoading || !owned) return <SectionLoader />;
-  if (isError) return <></>;
 
   const team = hydrateTeams(rawTeams ?? [], owned.sortedData).find((t) => t.id === teamId);
-  if (!team) return <></>;
+  if (isError || !team) {
+    return (
+      <Container size="sm" mt={60}>
+        <Text c="white" fz={18} fw={700}>
+          {isError ? "Could not load your teams. Refresh to try again." : "This team doesn't exist."}
+        </Text>
+        <Anchor component={Link} to="/Dashboard/Pokemon" c="blue.3" mt={8} display="inline-block">
+          &larr; Back to your teams
+        </Anchor>
+      </Container>
+    );
+  }
 
   return <Pokemons isSingleTeam team={team} />;
 }

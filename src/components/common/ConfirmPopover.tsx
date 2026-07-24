@@ -24,10 +24,17 @@ export function ConfirmPopover(props: {
   message: ReactNode;
   /** Renders the trigger; call `open` from its onClick to raise the confirm. */
   target: (open: () => void) => ReactNode;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<unknown>;
   confirmLabel?: string;
   cancelLabel?: string;
   loading?: boolean;
+  /**
+   * When true, onConfirm is awaited: the popover stays open (showing
+   * `loading`) while the action runs, closes on success, and stays open on
+   * failure so the caller's error feedback lands in view. Default closes
+   * immediately (legacy behavior for callers whose trigger shows progress).
+   */
+  awaitConfirm?: boolean;
   color?: string;
   position?:
     | "top"
@@ -46,6 +53,7 @@ export function ConfirmPopover(props: {
     confirmLabel = "Delete",
     cancelLabel = "Keep",
     loading,
+    awaitConfirm = false,
     color = "red",
     position = "bottom-end",
   } = props;
@@ -62,9 +70,18 @@ export function ConfirmPopover(props: {
               size="xs"
               color={color}
               loading={loading}
-              onClick={() => {
-                onConfirm();
-                close();
+              onClick={async () => {
+                if (!awaitConfirm) {
+                  onConfirm();
+                  close();
+                  return;
+                }
+                try {
+                  await onConfirm();
+                  close();
+                } catch {
+                  // The caller's error feedback (toast) explains; stay open.
+                }
               }}
             >
               {confirmLabel}

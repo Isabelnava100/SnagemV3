@@ -1,7 +1,9 @@
 import { useState, useCallback } from "react";
 import {
+  Anchor,
   PasswordInput,
   Button, Progress, Popover,
+  Text,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import {
@@ -9,7 +11,7 @@ import {
   PasswordRequirement,
   getStrength,
 } from "./components/Components";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { confirmPasswordReset } from "firebase/auth";
 import Seo from "../../components/common/Seo";
 import { MarketingTopBar } from "../../components/redesign/Marketing";
@@ -19,11 +21,11 @@ import { AuthCard, warmGradient } from "./components/AuthCard";
 export function ResetPW() {
   const [searchParams] = useSearchParams();
   const oobCode = searchParams.get("oobCode");
-  const navigate = useNavigate();
 
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [value, setValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const strength = getStrength(value);
   const color = strength === 100 ? "teal" : strength > 50 ? "gold.1" : "red";
 
@@ -67,20 +69,25 @@ export function ResetPW() {
 
   const handlePasswordReset = (values: typeof form.values) => {
     if (!oobCode) {
-      alert("Invalid or missing password reset link. Please request a new email from the Forgot Password screen.");
+      setStatus({
+        ok: false,
+        text: "Invalid or missing password reset link. Please request a new email from the Forgot Password screen.",
+      });
       return;
     }
     setSubmitted(true);
     confirmPasswordReset(auth, oobCode, values.password)
       .then(() => {
-        alert("Your password has been successfully reset! You can now log in.");
-        navigate("/Login");
+        setStatus({ ok: true, text: "Your password has been reset. You can now log in." });
       })
       .catch((error) => {
         if (error.code === "auth/invalid-action-code") {
-          alert("The reset link has expired or has already been used. Please request a new one.");
+          setStatus({
+            ok: false,
+            text: "The reset link has expired or has already been used. Please request a new one.",
+          });
         } else {
-           alert("Something went wrong changing your password. " + error.message);
+          setStatus({ ok: false, text: "Something went wrong changing your password. Try again." });
         }
       })
       .finally(() => {
@@ -150,6 +157,16 @@ export function ResetPW() {
           >
             {submitted ? "Updating..." : "Reset Password"}
           </Button>
+          {status && (
+            <Text role="status" aria-live="polite" fz={14} c={status.ok ? "green.0" : "red.0"}>
+              {status.text}
+            </Text>
+          )}
+          {status?.ok && (
+            <Anchor component={Link} to="/Login" c="blue.3" fz={14}>
+              Continue to login
+            </Anchor>
+          )}
         </form>
       </AuthCard>
     </div>

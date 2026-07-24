@@ -1,5 +1,7 @@
 /* Forum v2 shared styles */
 
+/* Reading comfort: cap line length on desktop (about 72ch at 16px). */
+.forum-post-body { max-width: 72ch; }
 .forum-post-body h1 { font-size: 26px; font-weight: bold; }
 .forum-post-body h2 { font-size: 20px; font-weight: bold; }
 .forum-post-body h3 { font-size: 16px; font-weight: bold; }

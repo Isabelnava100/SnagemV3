@@ -19,6 +19,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconTrash, IconUpload } from "@tabler/icons-react";
 import React from "react";
+import { Link } from "react-router-dom";
 import Seo from "../../../components/common/Seo";
 import { ItemHoverCard } from "../../../components/common/ItemHoverCard";
 import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
@@ -266,6 +267,16 @@ export default function Onboarding() {
       <Seo noindex title="Onboarding | Snagem Guild" />
       <Stack gap={22}>
         <Box>
+          <Anchor
+            component={Link}
+            to="/Dashboard"
+            c="blue.3"
+            fz={14}
+            display="inline-block"
+            mb={10}
+          >
+            &larr; Back to dashboard
+          </Anchor>
           <Text
             component="h1"
             c="white"

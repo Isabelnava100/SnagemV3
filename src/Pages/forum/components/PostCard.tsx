@@ -394,7 +394,7 @@ export function GameBlocks(props: { post: ForumPost }) {
               <SnagIcon name={r.icon} size={16} color={r.color} cut={LOG_BG} />
             </Box>
             <Text
-              fz={isOverSm ? 14 : 11}
+              fz={isOverSm ? 14 : 12}
               fw={700}
               c={r.color}
               style={{
@@ -406,7 +406,7 @@ export function GameBlocks(props: { post: ForumPost }) {
             >
               {r.tag}
             </Text>
-            <Text fz={isOverSm ? 14 : 12} c="#d7d2de" style={{ lineHeight: 1.5 }}>
+            <Text fz={isOverSm ? 14 : 13} c="#d7d2de" style={{ lineHeight: 1.5 }}>
               {r.text}
             </Text>
           </Flex>
@@ -540,9 +540,9 @@ export default function PostCard(props: {
     return (
       <Box id={props.anchorId} bg="#282727" p={isOverSm ? 20 : 16} style={{ border: "1px solid #2a2637" }}>
         <Flex justify="space-between" align="center" gap={8} wrap="wrap" mb={12}>
-          <Group gap={8}>
+          <Group gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
             <Avatar src={post.avatar || undefined} alt={`${post.owner ?? "User"} avatar`} size={26} radius="xl" />
-            <Text fz={14} fw={700} c="white" style={{ fontFamily: DISPLAY }}>
+            <Text fz={14} fw={700} c="white" lineClamp={1} style={{ fontFamily: DISPLAY }}>
               {post.owner}
             </Text>
           </Group>

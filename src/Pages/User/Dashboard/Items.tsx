@@ -164,7 +164,7 @@ export default function Items() {
                             const r = rarityForItem(item.id);
                             return (
                               <Text
-                                fz={10}
+                                fz={12}
                                 fw={700}
                                 tt="uppercase"
                                 c={RARITY_COLORS[r]}
@@ -176,7 +176,7 @@ export default function Items() {
                             );
                           })()}
                           {more && (
-                            <Text fz={11} c="dimmed" lineClamp={1}>
+                            <Text fz={12} c="dimmed" lineClamp={1}>
                               Get more: {more}
                             </Text>
                           )}
@@ -243,7 +243,7 @@ function ItemActionModal(props: {
       invalidate();
       onClose();
     },
-    onError: (e) => toastError((e as Error).message || "Could not sell that."),
+    onError: (e) => toastError(e, "Could not sell that."),
   });
 
   const useOnPokemon = useMutation({
@@ -255,7 +255,7 @@ function ItemActionModal(props: {
       invalidate();
       onClose();
     },
-    onError: (e) => toastError((e as Error).message || "Could not use that item."),
+    onError: (e) => toastError(e, "Could not use that item."),
   });
 
   const pokeOptions = (owned?.sortedData ?? []).map((p) => ({

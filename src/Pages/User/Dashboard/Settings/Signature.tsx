@@ -6,6 +6,7 @@ import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLa
 import GradientButtonPrimary from "../../../../components/common/GradientButton";
 import Editor, { useRichTextEditor } from "../../../../components/editor/Editor";
 import { SectionLoader } from "../../../../components/navigation/loading";
+import { toastError } from "../../../../lib/toast";
 import { useAuth } from "../../../../context/AuthContext";
 import { getDb } from "../../../../context/firebase";
 
@@ -60,6 +61,7 @@ export default function Signature() {
       setSaved(true);
       queryClient.invalidateQueries({ queryKey: ["signature", user?.uid] });
     },
+    onError: (e) => toastError(e, "Could not save your signature."),
   });
 
   if (isPending) return <SectionLoader />;

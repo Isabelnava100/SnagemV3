@@ -336,7 +336,8 @@ function NotificationBell() {
           </ScrollArea.Autosize>
         ) : (
           <Text fz={14} c="dimmed" ta="center" py={16}>
-            You have no notifications yet.
+            You have no notifications yet. Bookmark a thread in the forums to get pinged about new
+            posts.
           </Text>
         )}
       </Popover.Dropdown>

@@ -32,6 +32,11 @@
   margin: 0 auto;
   animation: dcRiseIn 0.7s ease;
 }
+@media (prefers-reduced-motion: reduce) {
+  .ab-hero-inner {
+    animation: none;
+  }
+}
 .ab-h1 {
   font-family: var(--font-display);
   font-weight: 700;

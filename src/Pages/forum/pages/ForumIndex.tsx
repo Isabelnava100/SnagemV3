@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { GradientButtonSecondary } from "../../../components/common/GradientButton";
 import { PageHero } from "../../../components/common/PageHero";
 import Seo from "../../../components/common/Seo";
@@ -229,11 +229,32 @@ export default function ForumIndex() {
   const activeLink = forum && forum !== "Forum" ? forum : "Main-Forum";
   const category = categoryByLink(activeLink);
 
-  const [archive, setArchive] = React.useState(false);
-  const [search, setSearch] = React.useState("");
-  const [searchAll, setSearchAll] = React.useState(false);
-  const [page, setPage] = React.useState(1);
+  // List state lives in the URL so refresh, share, and back-from-thread all
+  // restore the same view (replace: no history spam while typing/paging).
+  const [params, setParams] = useSearchParams();
+  const archive = params.get("archive") === "1";
+  const search = params.get("q") ?? "";
+  const searchAll = params.get("all") === "1";
+  const page = Math.max(1, Number(params.get("page")) || 1);
   const [hoverTab, setHoverTab] = React.useState<string | null>(null);
+
+  const patchParams = (patch: Record<string, string | null>) => {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const [key, value] of Object.entries(patch)) {
+          if (value === null || value === "") next.delete(key);
+          else next.set(key, value);
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  };
+  const setArchive = (v: boolean) => patchParams({ archive: v ? "1" : null, page: null });
+  const setSearch = (v: string) => patchParams({ q: v || null, page: null });
+  const setSearchAll = (v: boolean) => patchParams({ all: v ? "1" : null });
+  const setPage = (v: number) => patchParams({ page: v > 1 ? String(v) : null });
 
   // Main-Forum is publicly viewable; every other board is members-only
   // (mirrored in firestore.rules, which is the real enforcement).

@@ -9,7 +9,8 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { Link, useNavigate } from "react-router-dom";
+import React from "react";
+import { Link } from "react-router-dom";
 import { IconArrowLeft } from "@tabler/icons-react";
 import Seo from "../../components/common/Seo";
 import { MarketingTopBar } from "../../components/redesign/Marketing";
@@ -17,7 +18,7 @@ import { auth } from "../../context/firebase";
 import { AuthCard, warmGradient } from "./components/AuthCard";
 
 export function ForgotPassword() {
-  const navigate = useNavigate();
+  const [status, setStatus] = React.useState<{ ok: boolean; text: string } | null>(null);
 
   const form = useForm({
     initialValues: {
@@ -33,8 +34,7 @@ export function ForgotPassword() {
 
     sendPasswordResetEmail(auth, email)
       .then(() => {
-        alert("Reset email has been sent !");
-        navigate("/Login");
+        setStatus({ ok: true, text: "Reset email sent. Check your inbox, then log in." });
       })
       .catch((error) => {
         if (error.code === "auth/invalid-email") {
@@ -43,6 +43,7 @@ export function ForgotPassword() {
         if (error.code === "auth/user-not-found") {
           return form.setErrors({ email: "Invalid email." });
         }
+        setStatus({ ok: false, text: "Could not send the reset email. Try again in a moment." });
       });
   }
 
@@ -77,6 +78,11 @@ export function ForgotPassword() {
             >
               Reset Password
             </Button>
+            {status && (
+              <Text role="status" aria-live="polite" fz={14} c={status.ok ? "green.0" : "red.0"}>
+                {status.text}
+              </Text>
+            )}
           </Stack>
           <Anchor component={Link} to="/Login" c="dimmed" size="sm" mt="xl" display="inline-block">
             <Center inline>

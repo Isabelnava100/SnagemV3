@@ -260,7 +260,7 @@ export function NewRegister() {
               ) : (
                 <Text c="dimmed" size="sm" mt={5}>
                   Your registration will be accepted based on your application.{" "}
-                  <Anchor<"a"> href="/About" size="sm" target="_blank">
+                  <Anchor component={Link} to="/About" size="sm">
                     {" "}
                     Learn more about Team Snagem here.{" "}
                   </Anchor>

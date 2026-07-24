@@ -11,6 +11,7 @@ import { getPokemonImageURL } from "../../helpers";
 import { SnagIcon } from "../../icons/SnagIcon";
 import { clickable } from "../../lib/a11y";
 import { canBreed, eggGroupsForDex } from "../../lib/eggGroups";
+import { friendlyMessage } from "../../lib/toast";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { getOwnedPokemons } from "../../queries/dashboard";
 import {
@@ -78,7 +79,7 @@ export default function Daycare() {
       setRightId(null);
       refresh();
     },
-    onError: (e) => setMessage((e as Error).message || "They did not get along."),
+    onError: (e) => setMessage(friendlyMessage(e, "They did not get along.")),
   });
   const hatch = useMutation({
     mutationFn: callHatchEgg,
@@ -86,7 +87,7 @@ export default function Daycare() {
       setMessage(`The egg hatched into ${name}!`);
       refresh();
     },
-    onError: (e) => setMessage((e as Error).message || "The egg is not ready yet."),
+    onError: (e) => setMessage(friendlyMessage(e, "The egg is not ready yet.")),
   });
 
   if (!user) return null;

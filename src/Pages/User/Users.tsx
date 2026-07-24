@@ -223,7 +223,7 @@ function MemberGridCard({ member }: { member: MemberCard }) {
 }
 
 export default function Users() {
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: ["members"],
     queryFn: getMembers,
     // The directory costs 3 Firestore reads per member and changes rarely,
@@ -256,7 +256,13 @@ export default function Users() {
         <PageHero
           eyebrow="The Guild Roster"
           title="Snagem Members"
-          subtitle={isPending ? "Loading the roster..." : `${members.length} of ${total} trainers`}
+          subtitle={
+            isPending
+              ? "Loading the roster..."
+              : isError
+                ? "Could not load the roster"
+                : `${members.length} of ${total} trainers`
+          }
           aside={
             <TextInput
               value={search}
@@ -349,6 +355,12 @@ export default function Users() {
 
         {isPending ? (
           <SectionLoader />
+        ) : isError ? (
+          <Center py={60}>
+            <Text fz={15} c="white" ta="center" role="alert">
+              Could not load the roster. Refresh to try again.
+            </Text>
+          </Center>
         ) : !members.length ? (
           <Center py={60}>
             <Text fz={15} c="#b6b1bc" ta="center">

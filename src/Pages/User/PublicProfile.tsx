@@ -318,6 +318,17 @@ export default function PublicProfile() {
           <Text c="dimmed" ta="center">
             No member named &quot;{username}&quot; was found.
           </Text>
+          <Anchor
+            component={Link}
+            to="/Users"
+            underline="never"
+            c={DIM}
+            display="inline-block"
+            mt={10}
+            style={{ fontFamily: DISPLAY_FONT, fontSize: 14, fontWeight: 700, letterSpacing: "0.14em" }}
+          >
+            ← GUILD ROSTER
+          </Anchor>
         </Stack>
       </Container>
     );

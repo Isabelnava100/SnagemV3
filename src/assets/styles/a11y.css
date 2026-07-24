@@ -34,13 +34,25 @@ button:focus-visible,
   outline-offset: 2px;
 }
 
-/* Larger tap targets on touch devices (WCAG 2.5.5, first pass). */
+/* Larger tap targets on touch devices (WCAG 2.5.5): 44px floor across the
+   interactive Mantine classes, plus the redesign's plain-button classes. */
 @media (pointer: coarse) {
   .mantine-Button-root {
-    min-height: 40px;
+    min-height: 44px;
   }
   .mantine-ActionIcon-root {
-    min-width: 36px;
-    min-height: 36px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .mantine-Pagination-control {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .mantine-SegmentedControl-control {
+    min-height: 44px;
+  }
+  .dc-open-btn,
+  .dc-queue-btn {
+    min-height: 44px;
   }
 }

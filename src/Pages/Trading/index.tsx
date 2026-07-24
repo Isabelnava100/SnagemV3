@@ -30,6 +30,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { clickable } from "../../lib/a11y";
+import { friendlyMessage } from "../../lib/toast";
 import { ALL_TYPES, typesForDex } from "../../lib/typeChart";
 import { levelProgress } from "../../lib/leveling";
 import { starForDex } from "../../lib/encounterStars";
@@ -426,7 +427,7 @@ function OwnPokemonCard(props: {
       }
     >
       <Avatar src={getPokemonImageURL(p.image_slug, p.shiny)} size={44} radius="xl" />
-      <Text fz={12} fw={700} c="white" lineClamp={1} ta="center">
+      <Text fz={13} fw={700} c="white" lineClamp={1} ta="center">
         {p.name || p.species}{" "}
         <Text span c={GENDER_COLOR(p.gender)} fw={700}>
           {p.gender ?? ""}
@@ -474,7 +475,7 @@ function CreateListing(props: {
       setWants(EMPTY_WANTS);
       props.onCreated();
     },
-    onError: (e) => setMessage((e as Error).message || "Could not create the listing."),
+    onError: (e) => setMessage(friendlyMessage(e, "Could not create the listing.")),
   });
 
   const speciesOptions = React.useMemo(
@@ -707,7 +708,7 @@ function ListingCard(props: {
       setOfferFor(null);
       props.onChanged();
     },
-    onError: (e) => setMessage((e as Error).message || "That did not go through."),
+    onError: (e) => setMessage(friendlyMessage(e, "That did not go through.")),
   });
 
   const openOffers = Object.entries(l.offers ?? {}).filter(([, o]) => o.status === "open");
@@ -1011,7 +1012,7 @@ function SelfTradeSection(props: { owned: OwnedPokemon[]; onChanged: () => void 
       setPokemonId(null);
       props.onChanged();
     },
-    onError: (e) => setMessage((e as Error).message || "Could not move that pokemon."),
+    onError: (e) => setMessage(friendlyMessage(e, "Could not move that pokemon.")),
   });
   return (
     <Box

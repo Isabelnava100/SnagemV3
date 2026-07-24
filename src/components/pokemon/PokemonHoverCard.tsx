@@ -1,5 +1,5 @@
-import { Badge, Group, HoverCard, Stack, Text } from "@mantine/core";
-import { ReactElement } from "react";
+import { Badge, Box, Group, Popover, Stack, Text } from "@mantine/core";
+import React, { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { OwnedPokemon } from "../types/typesUsed";
 import { pokemonData } from "../../data/pokemon";
@@ -77,10 +77,54 @@ export function PokemonHoverCard(props: {
   const nature = pokemon ? natureOf(pokemon) : undefined;
   const natureGroup = nature ? NATURE_GROUPS[nature] : undefined;
 
+  const [opened, setOpened] = React.useState(false);
+  const isCoarse = () => window.matchMedia("(pointer: coarse)").matches;
+
+  // One controlled Popover serves every input: hover opens it on fine
+  // pointers, tap toggles it on coarse pointers, Enter/Space toggles it from
+  // the keyboard, and Mantine closes it on outside click/Escape.
+  const target = (
+    <Box
+      component="span"
+      onMouseEnter={() => {
+        if (!isCoarse()) setOpened(true);
+      }}
+      onMouseLeave={() => {
+        if (!isCoarse()) setOpened(false);
+      }}
+      style={{ display: "inline-flex", lineHeight: 0 }}
+    >
+      {React.cloneElement(children, {
+        onClick: (e: React.MouseEvent) => {
+          (children.props as { onClick?: (e: React.MouseEvent) => void }).onClick?.(e);
+          if (isCoarse()) setOpened((o) => !o);
+        },
+        onKeyDown: (e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpened((o) => !o);
+          }
+        },
+        tabIndex: (children.props as { tabIndex?: number }).tabIndex ?? 0,
+        role: "button",
+        "aria-expanded": opened,
+        "aria-label": `${name} details`,
+        style: { cursor: "pointer", ...((children.props as { style?: React.CSSProperties }).style ?? {}) },
+      } as Partial<ReactElement["props"]>)}
+    </Box>
+  );
+
   return (
-    <HoverCard width={width} shadow="md" openDelay={100} closeDelay={80} withArrow position="top">
-      <HoverCard.Target>{children}</HoverCard.Target>
-      <HoverCard.Dropdown bg="#1a1622" style={{ border: "1px solid #2a2637" }}>
+    <Popover
+      width={width}
+      shadow="md"
+      withArrow
+      position="top"
+      opened={opened}
+      onChange={setOpened}
+    >
+      <Popover.Target>{target}</Popover.Target>
+      <Popover.Dropdown bg="#1a1622" style={{ border: "1px solid #2a2637" }}>
         <Stack gap={6}>
           <Group gap={6} wrap="wrap">
             <Text c="white" fw={700} fz={16}>
@@ -158,7 +202,7 @@ export function PokemonHoverCard(props: {
             )}
           </Stack>
         </Stack>
-      </HoverCard.Dropdown>
-    </HoverCard>
+      </Popover.Dropdown>
+    </Popover>
   );
 }

@@ -107,10 +107,10 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
               radius="xl"
               onClick={() => {
                 this.setState({ hasError: false, isChunkError: false, message: "" });
-                window.location.assign("/Dashboard");
+                window.location.assign("/");
               }}
             >
-              Go to Dashboard
+              Go Home
             </Button>
           </Group>
         </Stack>

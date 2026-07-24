@@ -21,6 +21,7 @@ import GradientButtonPrimary, {
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { Settings } from "../../../../components/types/typesUsed";
 import { useAuth } from "../../../../context/AuthContext";
+import { toastError } from "../../../../lib/toast";
 import { getNotifications, markNotificationsRead } from "../../../../queries/game";
 import { getMyFriendCode, getSettings, saveFriendCode } from "../../../../queries/settings";
 import {
@@ -82,6 +83,9 @@ function NotificationsInbox() {
     return (
       <Text fz={14} c="dimmed" mb={10}>
         You have no notifications yet.
+        <br />
+        Bookmark a thread in the <Link to="/Forum/Main-Forum">Forums</Link> to get pinged about new
+        posts.
       </Text>
     );
   }
@@ -290,6 +294,7 @@ function FriendCodeSection() {
   const queryClient = useQueryClient();
   const [code, setCode] = React.useState("");
   const [status, setStatus] = React.useState("");
+  const [statusIsError, setStatusIsError] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
 
   const { data: savedCode, isPending } = useQuery({
@@ -305,13 +310,21 @@ function FriendCodeSection() {
     }
   }, [savedCode, loaded]);
 
+  // Same shape as the Colosseum register card; normalized on save.
+  const normalizedCode = code.trim().toUpperCase();
+  const codeInvalid = normalizedCode.length > 0 && !/^SW-\d{4}-\d{4}-\d{4}$/.test(normalizedCode);
+
   const saveMutation = useMutation({
-    mutationFn: () => saveFriendCode(user!.uid, code),
+    mutationFn: () => saveFriendCode(user!.uid, normalizedCode),
     onSuccess: () => {
       setStatus("Friend code saved.");
+      setStatusIsError(false);
       queryClient.invalidateQueries({ queryKey: ["friend-code", user?.uid] });
     },
-    onError: () => setStatus("Could not save your friend code. Try again."),
+    onError: () => {
+      setStatus("Could not save your friend code. Try again.");
+      setStatusIsError(true);
+    },
   });
 
   if (isPending) return null;
@@ -335,20 +348,21 @@ function FriendCodeSection() {
           placeholder="SW-0000-0000-0000"
           value={code}
           onChange={(e) => setCode(e.currentTarget.value)}
+          error={codeInvalid ? "Format: SW-1234-4567-8901" : undefined}
           w={260}
           styles={{ input: { background: "#0e0d11", borderColor: "#2a2637" } }}
         />
         <GradientButtonPrimary
           size="sm"
           loading={saveMutation.isPending}
-          disabled={code.trim() === (savedCode ?? "")}
+          disabled={codeInvalid || normalizedCode === (savedCode ?? "")}
           onClick={() => saveMutation.mutate()}
         >
           Save friend code
         </GradientButtonPrimary>
       </Group>
       {status && (
-        <Text fz={14} c="dimmed" role="status" aria-live="polite">
+        <Text fz={14} c={statusIsError ? "red.4" : "dimmed"} role="status" aria-live="polite">
           {status}
         </Text>
       )}
@@ -378,6 +392,7 @@ export default function Notifications() {
   });
   const [debouncedValue] = useDebouncedValue(values, 100);
 
+  const [saveStatus, setSaveStatus] = React.useState("");
   const { mutateAsync } = useMutation({
     mutationKey: ["update-settings"],
     mutationFn: async ({ settingsInput }: { settingsInput: Settings }) => {
@@ -387,6 +402,11 @@ export default function Notifications() {
       const docRef = doc(db, "users", user?.uid as string);
       await setDoc(docRef, { settings: { ...settingsInput } }, { merge: true });
     },
+    onSuccess: () => setSaveStatus("Saved"),
+    onError: (e) => {
+      setSaveStatus("");
+      toastError(e, "Could not save settings.");
+    },
   });
 
   const queryClient = useQueryClient();
@@ -395,8 +415,8 @@ export default function Notifications() {
     try {
       await mutateAsync({ settingsInput: values });
       await queryClient.invalidateQueries({ queryKey: ["get-settings"] });
-    } catch (err) {
-      console.log(err);
+    } catch {
+      // Reported via the mutation's onError toast.
     }
   };
 
@@ -431,7 +451,12 @@ export default function Notifications() {
   }, [debouncedValue]);
 
   if (isLoading) return <SectionLoader />;
-  if (isError) return <></>;
+  if (isError)
+    return (
+      <Text c="white" fz={15}>
+        Could not load your notification settings. Refresh to try again.
+      </Text>
+    );
 
   return (
     <Box
@@ -439,6 +464,15 @@ export default function Notifications() {
       p={{ base: "18px 16px", lg: "28px 32px" }}
     >
       <Stack gap={18}>
+        <Text
+          role="status"
+          aria-live="polite"
+          fz={13}
+          c="#12B7B6"
+          style={{ minHeight: 18, visibility: saveStatus ? "visible" : "hidden" }}
+        >
+          {saveStatus || "saved"}
+        </Text>
         <NotificationsInbox />
         <CustomSwitch
           {...getInputProps("siteNotifications", { type: "checkbox" })}

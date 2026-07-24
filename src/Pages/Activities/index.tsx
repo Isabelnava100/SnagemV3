@@ -25,6 +25,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Link } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
+import { friendlyMessage } from "../../lib/toast";
 import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
@@ -313,7 +314,7 @@ function BerryFarm(props: { uid: string }) {
       setPickFor(null);
       refresh();
     },
-    onError: (e) => setMessage((e as Error).message || "That could not be planted."),
+    onError: (e) => setMessage(friendlyMessage(e, "That could not be planted.")),
   });
   const harvest = useMutation({
     mutationFn: (slot: number) => callHarvestBerry(slot),
@@ -321,7 +322,7 @@ function BerryFarm(props: { uid: string }) {
       setMessage(`Harvested ${res.qty}x ${res.harvested}!`);
       refresh();
     },
-    onError: (e) => setMessage((e as Error).message || "Not ready yet."),
+    onError: (e) => setMessage(friendlyMessage(e, "Not ready yet.")),
   });
 
   const plots = farm?.plots ?? {};
@@ -440,7 +441,7 @@ function FishingPondCard() {
     onSuccess: (res) => {
       window.location.assign(`/Forum/Events/thread/${res.threadId}/last`);
     },
-    onError: (e) => setMessage((e as Error).message || "Could not reach the pond. Try again."),
+    onError: (e) => setMessage(friendlyMessage(e, "Could not reach the pond. Try again.")),
   });
   return (
     <Card bg="#101720" radius="lg" p="lg" withBorder style={{ borderColor: "#24374a" }}>
@@ -506,7 +507,7 @@ export default function Activities() {
       queryClient.invalidateQueries({ queryKey: ["owned-pokemons", uid] });
     },
     onError: (e) =>
-      setClaimMessage((e as Error).message || "Could not open the box. Try again."),
+      setClaimMessage(friendlyMessage(e, "Could not open the box. Try again.")),
   });
 
   // Stale docs from a previous week read as an empty checklist.

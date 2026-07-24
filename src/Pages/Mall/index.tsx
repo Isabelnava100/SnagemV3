@@ -21,13 +21,14 @@ import { IconArrowLeft, IconLock, IconRefresh, IconShoppingBag, IconSparkles } f
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ItemHoverCard } from "../../components/common/ItemHoverCard";
 import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { useAuth } from "../../context/AuthContext";
 import { isMaster } from "../../lib/permissions";
+import { friendlyMessage } from "../../lib/toast";
 import { itemData } from "../../data/item";
 import { getItemImageURL } from "../../helpers";
 import { clickable } from "../../lib/a11y";
@@ -399,7 +400,7 @@ function StoreBody(props: { shop: Shop; balance: number }) {
       setMessage("Purchase complete, the item is in your bag.");
       queryClient.invalidateQueries({ queryKey: ["currencies", user?.uid] });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not complete the purchase.");
+      setError(friendlyMessage(e, "Could not complete the purchase."));
     } finally {
       setPendingId(null);
     }
@@ -625,7 +626,7 @@ function RecycleBody() {
       queryClient.invalidateQueries({ queryKey: ["currencies", user?.uid] });
       queryClient.invalidateQueries({ queryKey: ["bag-items", user?.uid] });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not recycle those items.");
+      setError(friendlyMessage(e, "Could not recycle those items."));
     } finally {
       setPending(false);
     }
@@ -828,7 +829,7 @@ function CandyToScentPanel() {
       });
     },
     onError: (err: unknown) => {
-      setStatus({ color: "red", text: err instanceof Error ? err.message : "Conversion failed." });
+      setStatus({ color: "red", text: friendlyMessage(err, "Conversion failed.") });
     },
   });
 
@@ -929,7 +930,7 @@ function TourBody() {
       });
       queryClient.invalidateQueries({ queryKey: ["currencies", user?.uid] });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "The tour could not roll right now.");
+      setError(friendlyMessage(e, "The tour could not roll right now."));
     } finally {
       setPending(false);
     }
@@ -1080,7 +1081,7 @@ function EvoBody() {
       setMessage("Service applied.");
       queryClient.invalidateQueries({ queryKey: ["currencies", user?.uid] });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "The service could not be applied.");
+      setError(friendlyMessage(e, "The service could not be applied."));
     } finally {
       setPending(null);
     }
@@ -1385,7 +1386,7 @@ function CraftRecipeRow(props: { recipe: Recipe; bag: Map<string, number>; onDon
     },
     onError: (e) => {
       setMessage("");
-      setError(e instanceof Error ? e.message : "The craft failed. Try again.");
+      setError(friendlyMessage(e, "The craft failed. Try again."));
     },
   });
 
@@ -1597,7 +1598,17 @@ function CurrencyChip(props: { badge: string; label: string; value: string }) {
 
 export default function Mall() {
   const { user } = useAuth();
-  const [activeShopId, setActiveShopId] = React.useState<string | null>(null);
+  // The active shop lives in the URL (?shop=id) so refresh keeps it and the
+  // phone back button returns to the arcade landing instead of exiting.
+  const [params, setParams] = useSearchParams();
+  const activeShopId = params.get("shop");
+  const setActiveShopId = (id: string | null) =>
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (id) next.set("shop", id);
+      else next.delete("shop");
+      return next;
+    });
 
   const { data: shops, isPending: shopsPending } = useQuery({
     queryKey: ["shops"],

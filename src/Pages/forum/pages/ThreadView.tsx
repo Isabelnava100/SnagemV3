@@ -31,6 +31,7 @@ import { FORUM_ACCENT, POSTS_PER_PAGE, categoryByLink } from "../config";
 import { safariFightBonus } from "../../../lib/safari";
 import { attackDamageForStar } from "../../../lib/encounterStars";
 import { addBookmark, removeBookmark } from "../mutations";
+import { toastError } from "../../../lib/toast";
 import { callResolveThreadPause } from "../functionsClient";
 import { hasCapability } from "../../../lib/permissions";
 import { Capability } from "../../../components/types/typesUsed";
@@ -462,6 +463,7 @@ export default function ThreadView() {
       queryClient.invalidateQueries({ queryKey: ["forum-bookmarks", user?.uid, forum] });
       queryClient.invalidateQueries({ queryKey: ["get-bookmarks"] });
     },
+    onError: (e) => toastError(e, "Could not update the bookmark."),
   });
 
   if (publicOnly) {
@@ -470,8 +472,11 @@ export default function ThreadView() {
         <Seo noindex title="Members Only | Snagem Guild Forums" />
         <Stack gap={10} align="center" py={40}>
           <Text fz={16} c="white" ta="center">
-            This thread is on a members-only board. Log in to read it, or
-            browse the public Main Adventures board.
+            This thread is on a members-only board. Log in to read it, or{" "}
+            <Anchor component={Link} to="/Forum/Main-Forum" c="blue.3">
+              browse the public Main Adventures board
+            </Anchor>
+            .
           </Text>
           <GradientButtonSecondary radius="xl" size="xs" onClick={() => navigate("/Login")}>
             Log In
@@ -490,7 +495,12 @@ export default function ThreadView() {
   if (!thread) {
     return (
       <Container size="lg" mt={20}>
-        <Text c="white">This thread does not exist.</Text>
+        <Stack gap={12} align="flex-start">
+          <Text c="white">This thread does not exist.</Text>
+          <Anchor component={Link} to={`/Forum/${forum}`} c="blue.3">
+            &larr; Back to {categoryByLink(forum)?.label ?? "the board"}
+          </Anchor>
+        </Stack>
       </Container>
     );
   }
