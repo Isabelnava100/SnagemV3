@@ -1,7 +1,6 @@
 import { preload } from "react-dom";
 import { Link } from "react-router-dom";
 import Seo from "../components/common/Seo";
-import { MarketingTopBar } from "../components/redesign/Marketing";
 import "/src/assets/styles/homepage.css";
 
 // The hero background is the LCP image. Also preloaded in index.html at t=0;
@@ -52,33 +51,10 @@ export const HomePage = () => {
   return (
     <div className="hp">
       <Seo page="/" />
-      <MarketingTopBar active="home" />
-
-      {/* Hero: diagonal art panel on the right, text on the dark left */}
-      <section className="hp-hero">
-        <div className="hp-hero-art" aria-hidden />
-        <div className="hp-hero-overlay" aria-hidden />
-        <div className="hp-hero-inner">
-          <div className="dc-kicker">Pokemon Roleplay // Est 2004</div>
-          <h1 className="hp-h1">
-            <span>WRITE.</span>
-            <span>BATTLE.</span>
-            <span>SNAG.</span>
-          </h1>
-          <p className="hp-lede">
-            Every post you write is a move in the game. Roll encounters and snag wild Pokemon
-            while you roleplay.
-          </p>
-          <div className="hp-hero-cta">
-            <Link to="/About" className="dc-cta dc-cta-red">
-              Discover What We Do
-            </Link>
-            <Link to="/Forum/Main-Forum" className="dc-cta dc-cta-outline">
-              Go to the Forums
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* The top bar and hero are the permanent static shell in index.html:
+          they paint before any JS and React never remounts them, so the LCP
+           paint is never replaced. This component renders everything below
+           the hero. Keep the shell in sync when editing this page. */}
 
       {/* Marquee */}
       <div className="hp-marquee" aria-hidden>

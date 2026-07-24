@@ -22,10 +22,13 @@
     <link rel="preload" as="font" type="font/woff2" href="/fonts/Quantico-Bold.woff2" crossorigin />
     <!-- Critical CSS for the static boot shell below: paints the hero before
          any JavaScript downloads. Mirrors src/assets/styles/homepage.css and
-         redesign.css (.hp-*, .dc-*); keep in sync when editing those. -->
+         redesign.css (.hp-*, .dc-*); keep in sync when editing those. The
+         #boot-shell rule pins height so the app stylesheet's .hp min-height
+         (100vh) cannot push the React content below the fold. -->
     <style>
       body { margin: 0; background: #0e0d11; }
-      .hp { background: #0e0d11; color: #fff; min-height: 100vh; overflow-x: hidden; --font-display: "Quantico", "Roboto", sans-serif; }
+      #boot-shell { min-height: 0 !important; }
+      .hp { background: #0e0d11; color: #fff; overflow-x: hidden; --font-display: "Quantico", "Roboto", sans-serif; }
       .dc-topbar { position: sticky; top: 0; z-index: 50; height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #0e0d11; border-bottom: 1px solid #232028; }
       .dc-topbar-brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: 0.2em; color: #fff; text-decoration: none; }
       .dc-topbar-brand img { height: 38px; width: auto; flex-shrink: 0; }
@@ -109,11 +112,12 @@
     </script>
   </head>
   <body>
-    <div id="root">
-      <!-- Static boot shell: replaced by React on mount (createRoot swaps the
-           container's children). It paints the homepage hero before any JS
-           downloads, so first paint and LCP do not wait for the bundle.
-           Mirrors src/Pages/Homepage.tsx hero markup: keep in sync. -->
+    <!-- Static hero shell: PERMANENT, React never re-renders it (the React
+         homepage starts below it), so the LCP paint is never replaced by a
+         remount. The inline script removes it synchronously on non-home
+         initial loads; after that, src/App.tsx hides/shows it per route.
+         Mirrors the hero in src/Pages/Homepage.tsx: keep in sync. -->
+    <div id="boot-shell">
       <div class="hp">
         <header class="dc-topbar">
           <a class="dc-topbar-brand" href="/" aria-label="Snagem Guild home">
@@ -148,6 +152,10 @@
         </section>
       </div>
     </div>
+    <script>
+      "/" !== location.pathname && document.getElementById("boot-shell")?.remove();
+    </script>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

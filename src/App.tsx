@@ -1,6 +1,6 @@
 import { Box, Flex, Paper } from "@mantine/core";
 import { useMediaQuery as useMediaQueryCore } from "@mantine/hooks";
-import { Suspense, lazy, memo } from "react";
+import { Suspense, lazy, memo, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 // The sidebar (and its query/firebase import chain) is lazy: marketing
@@ -18,6 +18,14 @@ export const App = memo(() => {
   const isUnder900 = useMediaQueryCore("(max-width: 900px)");
   const hasLessHeight = useMediaQueryCore("(max-height: 900px)");
   const { pathname } = useLocation();
+
+  // The static hero shell in index.html is permanent (React never re-renders
+  // it, so the LCP paint is never replaced): show it on the marketing
+  // homepage only, hide it everywhere else.
+  useEffect(() => {
+    const shell = document.getElementById("boot-shell");
+    if (shell) shell.style.display = pathname === "/" ? "" : "none";
+  }, [pathname]);
 
   if (MARKETING_ROUTES.includes(pathname.toLowerCase().replace(/\/$/, "") || "/")) {
     return (
