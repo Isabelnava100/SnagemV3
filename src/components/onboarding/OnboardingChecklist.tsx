@@ -86,8 +86,9 @@ function StepRow(props: { done: boolean; label: string; children?: React.ReactNo
 }
 
 /** Inline starter claim, shown while the member owns zero pokemon: a sprite
- * grid (classic starters first) with a search filter. */
-function StarterPicker() {
+ * grid (classic starters first) with a search filter. Also used by the
+ * First Adventure wizard (/Welcome). */
+export function StarterPicker() {
   const queryClient = useQueryClient();
   const options = React.useMemo(starterOptions, []);
   const [slug, setSlug] = React.useState<string | null>(null);

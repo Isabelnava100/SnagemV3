@@ -167,26 +167,27 @@ const KB: KbEntry[] = [
       ),
   },
   {
-    // New-member setup: the three-step gate before posting (July 2026).
-    match: /starter|first pokemon|getting started|new (member|user|trainer)|before.*post|set.*up.*account|can.?t.*post/i,
+    // New-member setup: the required First Adventure wizard before posting.
+    match: /starter|first pokemon|getting started|new (member|user|trainer)|before.*post|set.*up.*account|can.?t.*post|first adventure|how (do|to) (i )?(play|roleplay)|welcome/i,
     answer: ({ admin }) =>
       admin ? (
         <>
-          New members set themselves up: the dashboard welcome checklist walks them
-          through creating a character, claiming a one-time starter (any 1★ species or a
-          classic starter, only while they own zero pokemon), and building a team. The
-          forum refuses posts until all three are done (server-enforced). Admins can
-          still grant extra pokemon via <L to="/Admin">Admin</L> tools; approving an
-          applicant no longer grants anything by itself.
+          New members land on the <L to="/Welcome">First Adventure wizard</L>: create a
+          character, claim a one-time starter (any 1★ species or a classic starter, only
+          while they own zero pokemon), and build a team, all inline on that page. The
+          dashboard, composers, Daycare, and Trading redirect there until all three are
+          done, and the forum refuses posts server-side too. Admins can still grant
+          extra pokemon via <L to="/Admin">Admin</L> tools.
         </>
       ) : (
         <>
-          Before your first post you need three things, and your{" "}
-          <L to="/Dashboard">Console dashboard</L> checklist walks you through them:
-          create a character, claim your free starter (any 1★ species or a classic
-          starter), and build a team with at least one pokemon. After that, every post
-          brings a character and their team, and the team earns experience as you
-          roleplay.
+          Welcome! Your <L to="/Welcome">First Adventure</L> walks you through the three
+          things you need before posting: create a character, claim your free starter
+          (any 1★ species or a classic starter), and build a team with at least one
+          pokemon, all right on that page. After that, every post brings a character
+          and their team, and the team earns experience as you roleplay. Steps 4 and 5
+          of the wizard explain how posting works; come back to me any time you have a
+          question.
         </>
       ),
   },

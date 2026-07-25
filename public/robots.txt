@@ -10,6 +10,7 @@ Disallow: /Dashboard
 Disallow: /Admin
 Disallow: /SNAG
 Disallow: /Onboarding
+Disallow: /Welcome
 Disallow: /Daycare
 Disallow: /Trading
 Disallow: /Login
@@ -54,6 +55,7 @@ Disallow: /Dashboard
 Disallow: /Admin
 Disallow: /SNAG
 Disallow: /Onboarding
+Disallow: /Welcome
 Disallow: /Daycare
 Disallow: /Trading
 Disallow: /Login

@@ -10,8 +10,10 @@ import "./assets/styles/index.css";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
+import type { JSX } from "react";
 import { ErrorBoundary } from "./components/navigation/ErrorBoundary";
 import { Loader } from "./components/navigation/loading";
+import { useOnboardingStatus } from "./components/onboarding/OnboardingChecklist";
 import { theme } from "./lib/mantine";
 import { queryClient } from "./lib/react-query";
 import { lazyImport } from "./utils/lazyImport";
@@ -95,6 +97,7 @@ const { default: SiteSettings } = lazyImport(
   "default"
 );
 const { default: Onboarding } = lazyImport(() => import("./Pages/User/Onboarding"), "default");
+const { default: Welcome } = lazyImport(() => import("./Pages/Welcome"), "default");
 const { default: Policies } = lazyImport(() => import("./Pages/Policies"), "default");
 const { default: Library } = lazyImport(() => import("./Pages/Library"), "default");
 const { default: About } = lazyImport(() => import("./Pages/About"), "default");
@@ -140,6 +143,20 @@ function ScrollToTop() {
   return null;
 }
 
+/**
+ * The First Adventure gate: members who have not finished the three setup
+ * steps (character, starter, ready team) are sent to /Welcome before the
+ * dashboard, the composers, or any page that needs a team. Fails open while
+ * the status loads and on read errors (the publish callables enforce the
+ * same rule server-side, so nobody is ever hard-locked by a flaky read).
+ */
+function RequireOnboarding(props: { children: JSX.Element }) {
+  const status = useOnboardingStatus();
+  if (status.loading) return <Loader />;
+  if (!status.complete) return <Navigate to="/Welcome" replace />;
+  return props.children;
+}
+
 export default function AppRoutes() {
   return (
     <MantineProvider theme={theme} defaultColorScheme="dark" stylesTransform={emotionTransform}>
@@ -158,7 +175,9 @@ export default function AppRoutes() {
                       path="/Dashboard"
                       element={
                         <Protect>
-                          <Dashboard />
+                          <RequireOnboarding>
+                            <Dashboard />
+                          </RequireOnboarding>
                         </Protect>
                       }
                     >
@@ -221,6 +240,14 @@ export default function AppRoutes() {
                         </Protect>
                       }
                     />
+                    <Route
+                      path="/Welcome"
+                      element={
+                        <Protect>
+                          <Welcome />
+                        </Protect>
+                      }
+                    />
                     <Route path="/About" element={<About />} />
                     <Route path="/Announcements" element={<Announcements />} />
                     <Route path="/Blog" element={<Blog />} />
@@ -237,7 +264,9 @@ export default function AppRoutes() {
                       path="/Daycare"
                       element={
                         <Protect>
-                          <Daycare />
+                          <RequireOnboarding>
+                            <Daycare />
+                          </RequireOnboarding>
                         </Protect>
                       }
                     />
@@ -245,7 +274,9 @@ export default function AppRoutes() {
                       path="/Trading"
                       element={
                         <Protect>
-                          <Trading />
+                          <RequireOnboarding>
+                            <Trading />
+                          </RequireOnboarding>
                         </Protect>
                       }
                     />
@@ -270,7 +301,9 @@ export default function AppRoutes() {
                         path=":forum/new"
                         element={
                           <Protect>
-                            <NewThreadComposer />
+                            <RequireOnboarding>
+                              <NewThreadComposer />
+                            </RequireOnboarding>
                           </Protect>
                         }
                       />
@@ -279,7 +312,9 @@ export default function AppRoutes() {
                         path=":forum/thread/:id/post"
                         element={
                           <Protect>
-                            <PostComposer mode="new" />
+                            <RequireOnboarding>
+                              <PostComposer mode="new" />
+                            </RequireOnboarding>
                           </Protect>
                         }
                       />
