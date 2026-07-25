@@ -12,7 +12,7 @@ import {
 import { getSettings } from "../../../../queries/settings";
 
 /**
- * Reorder the navigation. The top items pin to the nav bar (6 on desktop, 4 on
+ * Reorder the navigation. The top items pin to the nav bar (4 on desktop, 4 on
  * mobile); everything below the line lives in the Menu drawer. The same order
  * drives both platforms. Saved to users/{uid}.settings.navOrder.
  */

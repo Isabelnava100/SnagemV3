@@ -711,14 +711,6 @@ export const SideBar = () => {
           justifyContent: "safe center",
         }}
       >
-        {/* Brand home link: the rail had no persistent way back to the site. */}
-        <Link
-          to="/"
-          aria-label="Snagem Guild home"
-          style={{ display: "flex", justifyContent: "center", padding: "14px 0 6px" }}
-        >
-          <img src="/images/snag-hand-logo.png" alt="" height={30} />
-        </Link>
         {visibleLinks.map((link) => (
           <SingleLink {...link} key={link.label} />
         ))}

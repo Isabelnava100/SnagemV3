@@ -1,12 +1,12 @@
 /**
  * Customizable navigation order. Members reorder these destinations in
- * Settings; the first N pin to the nav bar (6 on desktop, 4 on mobile) and the
+ * Settings; the first N pin to the nav bar (4 on desktop, 4 on mobile) and the
  * rest fall into the "Menu" drawer. The order is shared across desktop and
  * mobile, only the bar cutoff differs. Icons/routes live in SideBar; this file
  * is the label list + resolver, imported by both SideBar and the Settings UI.
  */
 
-export const NAV_BAR_LIMIT_DESKTOP = 6;
+export const NAV_BAR_LIMIT_DESKTOP = 4;
 export const NAV_BAR_LIMIT_MOBILE = 4;
 
 /** Pinnable destinations in their default order (top pins to the bar first). */
