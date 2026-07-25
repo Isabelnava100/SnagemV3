@@ -12,7 +12,9 @@ export default forwardRef((props, ref) => {
     const item = props.items[index]
 
     if (item) {
-      props.command({ id: item })
+      // label drives the visible text, id drives the data attribute the
+      // server scans when it pings mentioned members.
+      props.command({ id: item, label: item })
     }
   }
 
@@ -52,10 +54,15 @@ export default forwardRef((props, ref) => {
   }))
 
   return (
-    <div className="items">
+    // mousedown + preventDefault keeps the editor's selection alive: a plain
+    // click lets the contentEditable blur first, the suggestion plugin treats
+    // it as an outside click and dismisses the dropdown BEFORE onClick can
+    // run, which is why picking a name did nothing.
+    <div className="items" onMouseDown={(e) => e.preventDefault()}>
       {props.items.length
         ? props.items.map((item, index) => (
           <button
+            type="button"
             className={`item ${index === selectedIndex ? 'is-selected' : ''}`}
             key={index}
             onClick={() => selectItem(index)}

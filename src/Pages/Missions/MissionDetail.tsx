@@ -324,6 +324,14 @@ export default function MissionDetail() {
         title={withSuffix(mission.title)}
         description={seoDescription || undefined}
         canonicalPath={`/Missions/${id}`}
+        schema={{
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://snagemguild.com/" },
+            { "@type": "ListItem", position: 2, name: "The Mission Vault", item: "https://snagemguild.com/Missions" },
+            { "@type": "ListItem", position: 3, name: mission.title },
+          ],
+        }}
       />
       <Container size="lg" pt={{ base: 20, sm: 28 }} pb={{ base: 24, sm: 48 }} px={{ base: 16, sm: 24 }}>
         {/* Striped hero */}

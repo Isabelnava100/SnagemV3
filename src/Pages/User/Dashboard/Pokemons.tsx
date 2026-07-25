@@ -1120,15 +1120,34 @@ function SinglePokemon(props: {
   form: TeamForm;
 }) {
   const { pokemon, isEditing, isOwned = false, form } = props;
+  const { user } = useAuth();
+  // Shared cached query (same key as the page), so every tile reads the same
+  // character list without extra network: needed for the ownership guard.
+  const { data: characters } = useQuery({
+    queryKey: ["get-characters", user?.uid],
+    queryFn: () => getCharacters(user!.uid),
+    enabled: !!user,
+  });
+  const ownerName = (characters?.sortedData ?? []).find((c) => c.id === pokemon.characterId)?.name;
   const isAlreadyInTeam = React.useMemo(() => {
     return form.values?.pokemon_ids.includes(pokemon.id);
   }, [form.values?.pokemon_ids]);
 
   // Only the owned list while editing can add to the team.
   const canAddToTeam = Boolean(isOwned && isEditing);
+  // Ownership rule: a Pokemon assigned to a character may only join THAT
+  // character's team. Unassigned Pokemon and shared teams stay open.
+  const teamCharId = form.values?.characterId;
+  const blockedByCharacter = Boolean(
+    canAddToTeam && pokemon.characterId && teamCharId && pokemon.characterId !== teamCharId
+  );
 
   const handleAddPokemonToTeam = () => {
     if (!form.values || !canAddToTeam) return;
+    if (blockedByCharacter) {
+      toastError(new Error(""), `Only ${ownerName ?? "another character"}'s Pokemon can join this team.`);
+      return;
+    }
     if (!form.values.pokemon_ids.includes(pokemon.id)) {
       form.setFieldValue("pokemon_ids", [...form.values.pokemon_ids, pokemon.id]);
       form.setFieldValue("pokemons", [...form.values.pokemons, pokemon]);
@@ -1228,6 +1247,11 @@ function SinglePokemon(props: {
             (isAlreadyInTeam ? (
               <Text fz={14} c="dimmed">
                 Already in this team.
+              </Text>
+            ) : blockedByCharacter ? (
+              <Text fz={14} c="dimmed">
+                Belongs to {ownerName ?? "another character"}; only their Pokemon can join this
+                team.
               </Text>
             ) : (
               <GradientButtonPrimary onClick={handleAddPokemonToTeam} radius="xl" size="xs">

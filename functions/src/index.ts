@@ -1397,6 +1397,22 @@ export const publishForumPost = onCall(async (request) => {
       if (teamPokemonIds.length || evolveReq || megaReq || zReq || battleItemsReq.length) {
         ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
       }
+      // Ownership rule (mirrors the dashboard add-to-team guard): a Pokemon
+      // assigned to a character may only battle on THAT character's team.
+      // Unassigned Pokemon and shared teams (no characterId) stay open.
+      for (const teamId of teamIds) {
+        const teamChar = (teamsData[teamId] as { characterId?: string } | undefined)?.characterId;
+        if (!teamChar) continue;
+        const mismatched = (teamsData[teamId]?.pokemon_ids ?? []).some(
+          (id) => ownedForXp[id]?.characterId && ownedForXp[id].characterId !== teamChar
+        );
+        if (mismatched) {
+          throw new HttpsError(
+            "failed-precondition",
+            "One or more Pokemon on this team belong to a different character. Move them to their own character's team under Dashboard, Pokemon."
+          );
+        }
+      }
     } else if (evolveReq && !editPostId) {
       ownedForXp = ((await tx.get(ownedRef)).data() as Record<string, any>) ?? {};
     }

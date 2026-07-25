@@ -1,4 +1,4 @@
-import { Box, Container, Group, Text, TextInput, UnstyledButton } from "@mantine/core";
+import { Box, Container, Group, Text, TextInput, Title, UnstyledButton } from "@mantine/core";
 import { IconSearch, IconStar } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
@@ -288,7 +288,17 @@ export default function Missions() {
 
   return (
     <Box>
-      <Seo page="/Missions" />
+      <Seo
+        page="/Missions"
+        pageType="CollectionPage"
+        schema={{
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://snagemguild.com/" },
+            { "@type": "ListItem", position: 2, name: "The Mission Vault" },
+          ],
+        }}
+      />
       <Container size="xl" pt={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
         <PageHero
           eyebrow="Take on a Mission!"
@@ -306,6 +316,9 @@ export default function Missions() {
       </Container>
 
       <Container size="xl" py={{ base: 20, sm: 28 }} px={{ base: 16, sm: 24 }}>
+        <Title order={2} c="white" fw={700} fz={{ base: 20, sm: 26 }} mb={14}>
+          Available missions
+        </Title>
         <Group justify="space-between" align="center" wrap="wrap" gap={16} mb={24}>
           <Group gap={10} wrap="wrap">
             {FILTERS.map((f) => (

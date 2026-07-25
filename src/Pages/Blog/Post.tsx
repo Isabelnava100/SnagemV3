@@ -64,18 +64,28 @@ export default function BlogPostPage() {
         canonicalPath={canonical}
         noindex={!post.published}
         ogType="article"
-        schema={{
-          "@type": "BlogPosting",
-          headline: truncate(post.title, 110),
-          description: truncate(description, 160),
-          url: `${SITE_URL}${canonical}`,
-          image: post.coverImageUrl || DEFAULT_OG_IMAGE,
-          datePublished: isoPostDate(post.publishedAt),
-          dateModified: isoPostDate(post.updatedAt ?? post.publishedAt),
-          author: { "@type": "Person", name: post.author },
-          publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
-          mainEntityOfPage: `${SITE_URL}${canonical}`,
-        }}
+        schema={[
+          {
+            "@type": "BlogPosting",
+            headline: truncate(post.title, 110),
+            description: truncate(description, 160),
+            url: `${SITE_URL}${canonical}`,
+            image: post.coverImageUrl || DEFAULT_OG_IMAGE,
+            datePublished: isoPostDate(post.publishedAt),
+            dateModified: isoPostDate(post.updatedAt ?? post.publishedAt),
+            author: { "@type": "Person", name: post.author },
+            publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+            mainEntityOfPage: `${SITE_URL}${canonical}`,
+          },
+          {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+              { "@type": "ListItem", position: 2, name: "The Guild Blog", item: `${SITE_URL}/Blog` },
+              { "@type": "ListItem", position: 3, name: truncate(post.title, 60) },
+            ],
+          },
+        ]}
       />
 
       {/* Scoped typography for the sanitized Tiptap body: Quantico subheads,

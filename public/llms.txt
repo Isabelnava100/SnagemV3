@@ -8,7 +8,7 @@ The guild is a non-commercial, fan-made community project. Pokemon and related n
 
 - A Pokemon roleplay community: a new imagined way of storytelling through play-by-post roleplay based on Pokemon.
 - Themed around Team Snagem: Snag Machines, Shadow Pokemon, and a guild balanced on the line between outlaw and family.
-- Established 2022 and still actively developed, with regular feature updates posted on the Announcements page.
+- Started on Gaia Online in 2004 and still actively developed, with regular feature updates posted on the Announcements page.
 - Free to join: create an account, build a trainer character, pick a starter team, and start writing.
 
 ## Main features
@@ -22,6 +22,7 @@ The guild is a non-commercial, fan-made community project. Pokemon and related n
 - Ghastly Gambling Casino: trade Snag Coins for Gengar Tokens and play games of luck.
 - Research paths: become a master of Hybrid, Channeler, Fossil, or Mega research.
 - Weekly activities: the Snag List weekly checklist, berry farming, a fishing pond, a Daycare for breeding, and a Trading Post.
+- The Guild Blog: stories, dev updates, and guides at https://snagemguild.com/Blog.
 - The Great Snagem Library: a public reference wing with a Pokedex, battle guides (The War Room), Shadow Pokemon lore (Growth and Shadow, The Shadow Codex), guild canon (The Archives), a forum how-to (The Charter), and an FAQ (The Help Desk).
 
 ## How the roleplay works
