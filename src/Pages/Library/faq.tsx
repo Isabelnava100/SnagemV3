@@ -39,6 +39,33 @@ interface FaqItem {
 /** Exported so the Library page can build FAQPage JSON-LD from the entries. */
 export const FAQ: FaqItem[] = [
   {
+    q: "How do I start playing?",
+    a: (
+      <P>
+        Finish your First Adventure (the page you land on after registering, always
+        reachable at /Welcome): create a character, claim your free starter (any 1
+        star species or a classic starter), and build a team with at least one
+        Pokemon on it. Those three steps unlock the dashboard and the forums. Then
+        open a thread in Main Adventures (or start your own) and write: every post
+        earns your team experience and friendship, wild Pokemon appear to battle
+        and snag, and your team locks to the thread you first post in. Questions
+        along the way? Ask S.N.A.G., the walkie icon in the nav bar.
+      </P>
+    ),
+  },
+  {
+    q: "Why won't this Pokemon join my team?",
+    a: (
+      <P>
+        A Pokemon belongs to the character whose box it lives in, and it can only
+        join THAT character's team. If the picker says "Belongs to...", the Pokemon
+        is assigned to one of your other characters: build the team under that
+        character instead, or reassign the Pokemon first. Teams with no character
+        set are shared and stay open to everyone in your account.
+      </P>
+    ),
+  },
+  {
     q: "What is a Snag Machine?",
     a: (
       <P>

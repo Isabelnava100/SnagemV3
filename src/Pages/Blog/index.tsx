@@ -304,7 +304,7 @@ export function BlogFooter() {
           </Text>
         </Group>
         <Group gap={26}>
-          <Anchor component={Link} to="/Policies" fz={14} c="#b6b1bc" underline="never">
+          <Anchor component={Link} to="/Library?tab=policies" fz={14} c="#b6b1bc" underline="never">
             Policies
           </Anchor>
           <Anchor component={Link} to="/Library" fz={14} c="#b6b1bc" underline="never">

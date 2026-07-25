@@ -37,7 +37,7 @@ The guild is a non-commercial, fan-made community project. Pokemon and related n
 
 - About: https://snagemguild.com/About
 - The Library (guides and lore): https://snagemguild.com/Library
-- House Rules and Policies: https://snagemguild.com/Policies
+- House Rules and Policies: https://snagemguild.com/Library?tab=policies
 - The Mission Vault: https://snagemguild.com/Missions
 - The Colosseum: https://snagemguild.com/Colosseum
 - Gyms and Island Trials: https://snagemguild.com/Challenges

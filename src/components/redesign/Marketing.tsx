@@ -72,7 +72,7 @@ export function MarketingFooter() {
       <img src={snagemLogo} alt="Snagem Guild" height={34} style={{ marginBottom: 10 }} />
       <div style={{ fontSize: 13 }}>&copy; 2026 The Snagem Guild</div>
       <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 10 }}>
-        <Link to="/Policies">Policies</Link>
+        <Link to="/Library?tab=policies">Policies</Link>
         <Link to="/Library">Library</Link>
         <Link to="/About">About</Link>
       </div>

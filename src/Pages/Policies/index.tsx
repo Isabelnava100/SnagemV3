@@ -82,7 +82,7 @@ function RuleGroup(props: { title: string }) {
   );
 }
 
-function Privacy() {
+export function Privacy() {
   return (
     <Stack gap={20}>
       <SectionTitle>
@@ -171,7 +171,7 @@ function Privacy() {
   );
 }
 
-function Cookies() {
+export function Cookies() {
   return (
     <Stack gap={20}>
       <SectionTitle>
@@ -204,7 +204,7 @@ function Cookies() {
   );
 }
 
-function Terms() {
+export function Terms() {
   return (
     <Stack gap={20}>
       <SectionTitle>
@@ -237,7 +237,7 @@ function Terms() {
   );
 }
 
-function Conduct() {
+export function Conduct() {
   return (
     <Stack gap={16}>
       <SectionTitle>
@@ -412,7 +412,7 @@ function Conduct() {
   );
 }
 
-function Credits() {
+export function Credits() {
   return (
     <Stack gap={20}>
       <SectionTitle>

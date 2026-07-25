@@ -47,6 +47,7 @@ import LoreTab from "./lore";
 import MovesTab from "./moves";
 import BattleGuideTab from "./battle";
 import ForumGuideTab from "./forums";
+import PoliciesWing from "./policies";
 
 /**
  * Public data library. Any visitor (signed in or not) can browse the system's
@@ -828,6 +829,8 @@ type Wing = {
   blurb: string;
   accent: string;
   icon: SnagIconName;
+  /** Directory grouping: wings render under category headers with dividers. */
+  category: "Reference" | "Gameplay" | "Guild" | "House Rules";
   content: React.ReactNode;
 };
 
@@ -840,6 +843,7 @@ const WINGS: Wing[] = [
     blurb: "Every catalogued species, searchable by name or number, with its encounter star rating.",
     accent: "#f472b6",
     icon: "pokeball",
+    category: "Reference",
     content: <PokedexTab />,
   },
   {
@@ -850,6 +854,7 @@ const WINGS: Wing[] = [
     blurb: "The full item catalog: balls, medicine, berries, held items and rare relics.",
     accent: GOLD,
     icon: "bag",
+    category: "Reference",
     content: <ItemsTab />,
   },
   {
@@ -860,6 +865,7 @@ const WINGS: Wing[] = [
     blurb: "Stars, health, damage, run-away and type effectiveness: how posting fights work.",
     accent: RED,
     icon: "swords",
+    category: "Gameplay",
     content: <BattleGuideTab />,
   },
   {
@@ -870,6 +876,7 @@ const WINGS: Wing[] = [
     blurb: "Experience, friendship, shadow and purification, and how to cure a shadowed pokemon.",
     accent: "#9775fa",
     icon: "ghost",
+    category: "Gameplay",
     content: <ShadowGuideTab />,
   },
   {
@@ -880,6 +887,7 @@ const WINGS: Wing[] = [
     blurb: "Shadow Moves by class, and the rules that govern them.",
     accent: "#b197fc",
     icon: "bolt",
+    category: "Gameplay",
     content: <MovesTab />,
   },
   {
@@ -890,6 +898,7 @@ const WINGS: Wing[] = [
     blurb: "Shared encounter lists and Safari zones hosts can attach to a roleplay.",
     accent: "#5eead4",
     icon: "map",
+    category: "Gameplay",
     content: <ListsTab />,
   },
   {
@@ -900,6 +909,7 @@ const WINGS: Wing[] = [
     blurb: "What each forum is for, who can create threads, and where gated things start.",
     accent: "#4049C9",
     icon: "shieldcheck",
+    category: "Guild",
     content: <ForumGuideTab />,
   },
   {
@@ -910,6 +920,7 @@ const WINGS: Wing[] = [
     blurb: "Bound volumes of the guild's canon and mythologies.",
     accent: "#e879f9",
     icon: "sparkle",
+    category: "Guild",
     content: <LoreTab />,
   },
   {
@@ -920,17 +931,36 @@ const WINGS: Wing[] = [
     blurb: "Answers to the questions new members ask most.",
     accent: "#74c0fc",
     icon: "walkie",
+    category: "Guild",
     content: <FaqTab />,
+  },
+  {
+    value: "policies",
+    name: "House Rules",
+    callNo: "010.HR",
+    meta: "Rules and policies",
+    blurb: "Community rules, privacy policy, cookies, terms of use, and credits.",
+    accent: "#adb5bd",
+    icon: "book",
+    category: "House Rules",
+    content: <PoliciesWing />,
   },
 ];
 
 const READING_ROOM = "reading-room";
 const READING_ROOM_CALL = "000.RR";
 
-/** Directory entries (Reading Room first, then every wing). */
-const DIRECTORY: { value: string; label: string; callNo: string }[] = [
-  { value: READING_ROOM, label: "Reading Room", callNo: READING_ROOM_CALL },
-  ...WINGS.map((w) => ({ value: w.value, label: w.name, callNo: w.callNo })),
+/** Directory groups (Reading Room first, then wings under category headers). */
+const DIRECTORY_GROUPS: { category: string | null; entries: { value: string; label: string; callNo: string }[] }[] = [
+  { category: null, entries: [{ value: READING_ROOM, label: "Reading Room", callNo: READING_ROOM_CALL }] },
+  ...(["Reference", "Gameplay", "Guild", "House Rules"] as const).map((category) => ({
+    category: category as string,
+    entries: WINGS.filter((w) => w.category === category).map((w) => ({
+      value: w.value,
+      label: w.name,
+      callNo: w.callNo,
+    })),
+  })),
 ];
 
 /** The left directory: a sticky call-number rail on desktop, a horizontal
@@ -954,7 +984,32 @@ function Directory(props: {
           scrollbarWidth: "none",
         }}
       >
-        {DIRECTORY.map((d) => {
+        {DIRECTORY_GROUPS.map((group) => (
+          <React.Fragment key={group.category ?? "home"}>
+            {group.category && (
+              <Box
+                aria-hidden
+                style={{
+                  flex: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "0 2px",
+                  color: "#8f8a99",
+                  fontFamily: DISPLAY,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <span style={{ width: 12, height: 1, background: "#2a2637" }} />
+                {group.category}
+                <span style={{ width: 12, height: 1, background: "#2a2637" }} />
+              </Box>
+            )}
+            {group.entries.map((d) => {
           const active = props.active === d.value;
           return (
             <UnstyledButton
@@ -980,7 +1035,9 @@ function Directory(props: {
               {d.label}
             </UnstyledButton>
           );
-        })}
+            })}
+          </React.Fragment>
+        ))}
       </Box>
     );
   }
@@ -1007,7 +1064,27 @@ function Directory(props: {
       >
         DIRECTORY
       </Text>
-      {DIRECTORY.map((d) => {
+      {DIRECTORY_GROUPS.map((group) => (
+        <React.Fragment key={group.category ?? "home"}>
+          {group.category && (
+            <Box
+              aria-hidden
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 4px 2px" }}
+            >
+              <span style={{ flex: 1, height: 1, background: "#2a2637" }} />
+              <Text
+                fz={10}
+                fw={700}
+                c="#8f8a99"
+                tt="uppercase"
+                style={{ fontFamily: DISPLAY, letterSpacing: "0.2em" }}
+              >
+                {group.category}
+              </Text>
+              <span style={{ flex: 1, height: 1, background: "#2a2637" }} />
+            </Box>
+          )}
+          {group.entries.map((d) => {
         const active = props.active === d.value;
         return (
           <UnstyledButton
@@ -1054,7 +1131,9 @@ function Directory(props: {
             <span style={{ lineHeight: 1.2 }}>{d.label}</span>
           </UnstyledButton>
         );
-      })}
+          })}
+        </React.Fragment>
+      ))}
     </Box>
   );
 }
@@ -1165,7 +1244,7 @@ export default function Library() {
           schema={faqSchema}
         />
         <PageHero
-          eyebrow="The Great Snagem Library · Est 2022"
+          eyebrow="The Great Snagem Library · Est 2004"
           title="The Library"
           subtitle="Every guide, register, and archive the guild keeps: the Pokedex, battle rules, shadow lore, and the help desk. Choose a wing from the directory, then browse or search its holdings."
           mb={28}

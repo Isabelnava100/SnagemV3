@@ -115,7 +115,7 @@ export const HomePage = () => {
           <span>&copy; 2026 The Snagem Guild</span>
         </div>
         <nav className="hp-footer-links">
-          <Link to="/Policies">Policies</Link>
+          <Link to="/Library?tab=policies">Policies</Link>
           <Link to="/Library">Library</Link>
           <Link to="/About">About</Link>
         </nav>

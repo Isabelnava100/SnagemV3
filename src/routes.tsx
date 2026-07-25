@@ -5,7 +5,7 @@ import { Notifications as MantineNotifications } from "@mantine/notifications";
 import "@mantine/notifications/styles.css";
 // @mantine/tiptap styles load with the (lazy) Editor component instead of
 // eagerly here, so non-editor pages skip that CSS on first paint.
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
 import "./assets/styles/index.css";
 
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -98,7 +98,6 @@ const { default: SiteSettings } = lazyImport(
 );
 const { default: Onboarding } = lazyImport(() => import("./Pages/User/Onboarding"), "default");
 const { default: Welcome } = lazyImport(() => import("./Pages/Welcome"), "default");
-const { default: Policies } = lazyImport(() => import("./Pages/Policies"), "default");
 const { default: Library } = lazyImport(() => import("./Pages/Library"), "default");
 const { default: About } = lazyImport(() => import("./Pages/About"), "default");
 const { default: Announcements } = lazyImport(() => import("./Pages/Announcements"), "default");
@@ -155,6 +154,13 @@ function RequireOnboarding(props: { children: JSX.Element }) {
   if (status.loading) return <Loader />;
   if (!status.complete) return <Navigate to="/Welcome" replace />;
   return props.children;
+}
+
+/** /Policies moved to the Library's House Rules wing; forward ?tab= as ?doc=. */
+function PoliciesRedirect() {
+  const [searchParams] = useSearchParams();
+  const doc = searchParams.get("tab");
+  return <Navigate to={`/Library?tab=policies${doc ? `&doc=${encodeURIComponent(doc)}` : ""}`} replace />;
 }
 
 export default function AppRoutes() {
@@ -288,7 +294,14 @@ export default function AppRoutes() {
                         </Protect>
                       }
                     />
-                    <Route path="/Policies" element={<Policies />} />
+                    <Route
+                      path="/Policies"
+                      element={
+                        // Policies moved into the Library (House Rules wing);
+                        // forward old sub-document links (?tab=) as ?doc=.
+                        <PoliciesRedirect />
+                      }
+                    />
                     <Route path="/Library" element={<Library />} />
                     <Route path="/Login" element={<Login />} />
                     <Route path="/Register" element={<NewRegister />} />

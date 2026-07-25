@@ -17,16 +17,9 @@
     {
       "path": "/Library",
       "title": "The Great Snagem Library | Pokemon Roleplay Guides",
-      "description": "Browse the Snagem Library: Pokedex, battle guides, Shadow Pokemon lore, forum how-tos, and answers to every question about our Pokemon roleplay community.",
+      "description": "Browse the Snagem Library: Pokedex, battle guides, Shadow Pokemon lore, forum how-tos, house rules and policies, and answers about our Pokemon roleplay community.",
       "changefreq": "monthly",
       "priority": 0.8
-    },
-    {
-      "path": "/Policies",
-      "title": "House Rules & Policies | Snagem Guild",
-      "description": "Community rules, privacy policy, cookies, terms of use, and credits for the Snagem Guild, a fan-made, non-commercial Pokemon roleplay community.",
-      "changefreq": "yearly",
-      "priority": 0.4
     },
     {
       "path": "/Blog",

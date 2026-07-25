@@ -179,7 +179,7 @@ const SECONDARY_DRAWER_TILES: DrawerTileDef[] = [
   // About reuses the Admin Access icon per the owner's request.
   { link: "/About", label: "About", icon: { img: AdminAccessIcon } },
   { link: "/Library", label: "Library", tabler: IconBooks },
-  { link: "/Policies", label: "Policies", tabler: IconFileText },
+  { link: "/Library?tab=policies", label: "Policies", tabler: IconFileText },
 ];
 
 /**

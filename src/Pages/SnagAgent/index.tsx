@@ -192,6 +192,30 @@ const KB: KbEntry[] = [
       ),
   },
   {
+    // Team ownership rule: a Pokemon belongs to its character only.
+    match: /own.*(pokemon|team)|another character|belong|can.?t.*(add|place|put).*(pokemon|team)|wrong.*team|team.*(another|other).*character|not.*(my|their) team/i,
+    answer: () => (
+      <>
+        Every Pokemon belongs to the character whose box it lives in, and it can only
+        join THAT character&apos;s team. If the picker says &quot;Belongs to...&quot;,
+        the Pokemon is assigned to one of your other characters: edit a team under that
+        character instead, or reassign the Pokemon first (your box, owner line). Shared
+        teams with no character stay open to everyone in your account.
+      </>
+    ),
+  },
+  {
+    // Switch friend codes for Colosseum signups.
+    match: /friend code|SW-\d|switch code|register.*tournament|sign.*tournament/i,
+    answer: () => (
+      <>
+        Colosseum tournament signups ask for your Switch friend code in the format
+        SW-0000-0000-0001. It is validated when you register, and you can save it for
+        next time under <L to="/Dashboard/Settings">Settings, Notifications</L>.
+      </>
+    ),
+  },
+  {
     // Returning Gaia members: the import/onboarding flow.
     match: /gaia|import|returning|restore.*collection|old (account|profile)/i,
     answer: ({ admin }) =>
@@ -245,16 +269,17 @@ const KB: KbEntry[] = [
       admin ? (
         <>
           Applications queue in <L to="/Admin">Admin &gt; Inbox</L>: every registration
-          is verified manually (pick a role, approve or reject). Applicants see a
-          &quot;checked manually by an admin&quot; notice if they try to log in early.
-          Approving creates their member account; they then run the new-member
-          checklist themselves (character, starter, team).
+          is verified manually (pick a role, approve or reject). Approval is blocked
+          until the applicant has verified their email, so nudge them to click the
+          link first. Approving creates their member account; they then run the
+          First Adventure wizard (character, starter, team).
         </>
       ) : (
         <>
-          Every registration is checked manually by an admin, so there is a short wait
-          between applying and your first login. You will get a notification when you
-          are approved. Waiting on a friend&apos;s application? Tell them to watch
+          Two steps before you get in: verify your email (the link we send at
+          registration; the login page can resend it), then a short wait while an
+          admin manually approves your application. You will get a notification when
+          you are approved. Waiting on a friend&apos;s application? Tell them to watch
           their email for the verification link first.
         </>
       ),
@@ -1179,7 +1204,7 @@ const KB: KbEntry[] = [
     match: /rule|conduct|policy|privacy|terms/i,
     answer: () => (
       <>
-        House rules live under <L to="/Policies">Policies</L>: community rules, privacy,
+        House rules live under <L to="/Library?tab=policies">Policies</L>: community rules, privacy,
         cookies, and terms.
       </>
     ),
