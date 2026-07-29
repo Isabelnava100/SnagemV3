@@ -18,6 +18,11 @@ const snagemLogo = "/images/snag-hand-logo.png";
  */
 export function MarketingTopBar(props: { active?: "home" | "about"; context?: "auth" }) {
   const activeStyle = { color: "#fff", borderBottom: "2px solid #E54156", paddingBottom: 2 };
+  // On the auth screens the applicant may be part-way through a long form, so
+  // reading links open in a new tab instead of navigating their answers away.
+  // The logo and "Back to site" stay in-place: those are deliberate exits.
+  const newTab =
+    props.context === "auth" ? ({ target: "_blank", rel: "noopener noreferrer" } as const) : {};
   return (
     <header className="dc-topbar">
       <Link to="/" className="dc-topbar-brand" aria-label="Snagem Guild home">
@@ -30,7 +35,7 @@ export function MarketingTopBar(props: { active?: "home" | "about"; context?: "a
             Home
           </Link>
         )}
-        <Link to="/About" style={props.active === "about" ? activeStyle : undefined}>
+        <Link to="/About" style={props.active === "about" ? activeStyle : undefined} {...newTab}>
           About
         </Link>
         {props.context === "auth" ? (

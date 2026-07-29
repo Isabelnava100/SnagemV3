@@ -153,6 +153,14 @@ export type User = {
   displayName: string | null;
   otherinfo?: SpecificUser;
   username: string;
+  /**
+   * Whether a users/{uid} doc exists, i.e. an admin approved this account.
+   * Undefined means "not known yet" (the profile read failed), and the access
+   * gate fails open on it so a flaky read never locks a real member out.
+   */
+  profileExists?: boolean;
+  /** Mirrors the Firebase auth flag so the access gate can read it without auth. */
+  emailVerified?: boolean;
 };
 //Database for Users
 

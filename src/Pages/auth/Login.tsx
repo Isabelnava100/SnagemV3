@@ -1,5 +1,4 @@
 import {
-  Alert,
   Anchor,
   Button,
   Divider,
@@ -14,14 +13,13 @@ import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { IconBrandGoogle } from "@tabler/icons-react";
+import { AccessGate } from "../../components/auth/AccessGate";
 import Seo from "../../components/common/Seo";
 import { MarketingTopBar } from "../../components/redesign/Marketing";
 import { useAuth } from "../../context/AuthContext";
 import { AuthCard, coolGradient, warmGradient } from "./components/AuthCard";
-import { handleGoogleSignIn } from "./components/GoogleHandle";
+import { handleGoogleSignIn, lastGoogleEmail } from "./components/GoogleHandle";
 import { handleSignIn, resendVerificationEmail } from "./components/LoginHandle";
-
-const RESEND_COOLDOWN_SECONDS = 60;
 
 const EEVEE_IMG =
   "https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/site%2Fsleepingeevee.png?alt=media&token=72f49c9d-9479-441f-bae3-4191b18ba42f";
@@ -30,17 +28,15 @@ export function Login() {
   const navigate = useNavigate();
   const [submitted, setSub] = useState(false);
   const [googleError, setGoogleError] = useState("");
-  // Application still in the NewUsers queue: show a clear notice instead of a
-  // field error so applicants know a human is on it.
-  const [pendingNotice, setPendingNotice] = useState(false);
+  // Application still in the NewUsers queue: verified, but no admin decision
+  // yet. Shown as step 2 of the access gate.
+  const [pendingEmail, setPendingEmail] = useState("");
   // Unverified password accounts land here instead of the dashboard: the form
   // keeps their credentials so "Resend" can re-authenticate just long enough
   // to send a fresh link (see resendVerificationEmail).
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
-  const [resending, setResending] = useState(false);
-  const [resendMessage, setResendMessage] = useState("");
-  const [cooldown, setCooldown] = useState(0);
   const { setUser, user } = useAuth();
+  const gateEmail = unverifiedEmail || pendingEmail;
   const form = useForm({
     initialValues: {
       email: "",
@@ -52,34 +48,17 @@ export function Login() {
   });
 
   useEffect(() => {
-    // The verify screen suppresses the redirect: resending briefly signs the
+    // The gate screen suppresses the redirect: resending briefly signs the
     // unverified user back in, which would otherwise bounce them to the
     // dashboard through this effect.
-    if (user && !unverifiedEmail) {
+    if (user && !gateEmail) {
       navigate("/Dashboard");
     }
-  }, [user, unverifiedEmail]);
+  }, [user, gateEmail]);
 
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [cooldown]);
-
-  const onResend = async () => {
-    setResending(true);
-    setResendMessage("");
-    const result = await resendVerificationEmail(form.values.email, form.values.password);
-    if (result === "sent") {
-      setResendMessage(`Verification email sent to ${unverifiedEmail}. Check your spam folder too.`);
-      setCooldown(RESEND_COOLDOWN_SECONDS);
-    } else if (result === "auth/too-many-requests") {
-      setResendMessage("Too many attempts. Wait a few minutes and try again.");
-    } else {
-      setResendMessage("Could not send the email. Try again in a moment.");
-    }
-    setResending(false);
-  };
+  // No session on this screen (the gate signed them back out), so a resend has
+  // to re-authenticate with the credentials still on the form.
+  const onResend = () => resendVerificationEmail(form.values.email, form.values.password);
 
   const onGoogle = async () => {
     setSub(true);
@@ -88,7 +67,7 @@ export function Login() {
     if (result === "success") {
       navigate("/Dashboard");
     } else if (result === "pending") {
-      setPendingNotice(true);
+      setPendingEmail(lastGoogleEmail || form.values.email || "your account");
     } else if (result === "no-account") {
       setGoogleError("No account matches that Google email. Apply to join first.");
     } else if (result !== "auth/popup-closed-by-user" && result !== "auth/cancelled-popup-request") {
@@ -105,55 +84,32 @@ export function Login() {
     const { auth } = await import("../../context/firebase");
     await signOut(auth).catch(() => undefined);
     setUnverifiedEmail("");
-    setResendMessage("");
-    setCooldown(0);
+    setPendingEmail("");
     form.reset();
   };
 
-  if (unverifiedEmail) {
+  // Both "not verified yet" and "verified, waiting on an admin" land on the
+  // same two-step gate, so an applicant always sees the whole path in.
+  if (gateEmail) {
     return (
       <>
         <MarketingTopBar context="auth" />
         <div className="authShell">
-        <Seo noindex title="Verify Your Email | Snagem Guild" />
-        <AuthCard title="Verify your email" maw={540}>
-          <Stack gap={10}>
-            <Alert
-              color="yellow"
-              variant="light"
-              title="Email not verified"
-              role="status"
-              aria-live="polite"
-            >
-              <b>{unverifiedEmail}</b> has not been verified yet. Open the verification link we
-              sent when you registered, then log in again.
-            </Alert>
-            <Button
-              fullWidth
-              size="lg"
-              radius={0}
-              className="authBtnPrimary"
-              variant="gradient"
-              gradient={warmGradient}
-              onClick={onResend}
-              disabled={resending || cooldown > 0}
-            >
-              {cooldown > 0
-                ? `Resend available in ${cooldown}s`
-                : resending
-                  ? "Sending..."
-                  : "Resend verification email"}
-            </Button>
-            {resendMessage && (
-              <Text c="dimmed" size="sm" ta="center" role="status" aria-live="polite">
-                {resendMessage}
-              </Text>
-            )}
-            <Anchor component="button" type="button" size="sm" ta="center" onClick={onWrongEmail}>
-              Wrong email? Sign out and use a different address
-            </Anchor>
-          </Stack>
-        </AuthCard>
+          <Seo noindex title="Almost In | Snagem Guild" />
+          <AuthCard title="Almost in" maw={900}>
+            <AccessGate
+              email={gateEmail}
+              emailVerified={!unverifiedEmail}
+              onResend={onResend}
+              footer={
+                <Group gap={10}>
+                  <Anchor component="button" type="button" size="sm" onClick={onWrongEmail}>
+                    Wrong email? Start over with a different address
+                  </Anchor>
+                </Group>
+              }
+            />
+          </AuthCard>
         </div>
       </>
     );
@@ -165,20 +121,6 @@ export function Login() {
       <div className="authShell">
       <Seo noindex title="Log In | Snagem Guild" />
       <AuthCard title="Access the Dashboard" maw={780}>
-        {pendingNotice && (
-          <Alert
-            color="yellow"
-            variant="light"
-            mb={16}
-            title="Application received"
-            role="status"
-            aria-live="polite"
-          >
-            Your registration is being checked manually by an admin. This usually takes a day or
-            two. You will be able to log in as soon as it is approved, and returning Gaia members
-            can then import their collection from the dashboard.
-          </Alert>
-        )}
         <form
           onSubmit={form.onSubmit(async (values) => {
             setSub(true);
@@ -191,7 +133,7 @@ export function Login() {
             } else if (results === "auth/too-many-requests") {
               form.setFieldError("email", "Too many attempts");
             } else if (results === "pending") {
-              setPendingNotice(true);
+              setPendingEmail(values.email);
             } else if (results === "unlinked") {
               form.setFieldError(
                 "email",

@@ -1,13 +1,25 @@
-import { Badge, Box, Button, Group, Select, Stack, Text, Title } from "@mantine/core";
+import {
+  Badge,
+  Box,
+  Button,
+  Group,
+  Modal,
+  Select,
+  Stack,
+  Text,
+  Textarea,
+  Title,
+} from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { GradientButtonSecondary } from "../../../../components/common/GradientButton";
-import { ConfirmPopover } from "../../../../components/common/ConfirmPopover";
 import { EmptyMessage } from "../../../../components/common/Message";
 import { SectionLoader } from "../../../../components/navigation/loading";
 import { SimpleSectionWrapper } from "../../../../components/Dashboard/SubTabsLayout";
 import {
+  ApplicationLogEntry,
   approveNewUser,
+  getApplicationLog,
   getNewUsers,
   NewUserApplicant,
   rejectNewUser,
@@ -22,6 +34,11 @@ export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () =
   const { applicant } = props;
   const [role, setRole] = React.useState("Verified");
   const [message, setMessage] = React.useState("");
+  // Rejecting asks for a written reason: it is emailed to the applicant and
+  // kept in the application log, so it is not optional.
+  const [rejectOpen, setRejectOpen] = React.useState(false);
+  const [reason, setReason] = React.useState("");
+  const [reasonError, setReasonError] = React.useState("");
 
   const approve = useMutation({
     mutationFn: () => approveNewUser(applicant.id, role),
@@ -31,10 +48,23 @@ export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () =
     onError: (e) => setMessage(callableMessage(e, "Could not approve.")),
   });
   const reject = useMutation({
-    mutationFn: () => rejectNewUser(applicant.id, ""),
-    onSuccess: props.onDone,
+    mutationFn: () => rejectNewUser(applicant.id, reason.trim()),
+    onSuccess: () => {
+      setRejectOpen(false);
+      props.onDone();
+    },
     onError: (e) => setMessage(callableMessage(e, "Could not reject.")),
   });
+
+  const submitReject = () => {
+    if (reason.trim().length < 10) {
+      setReasonError("Write at least a sentence. The applicant is sent this reason.");
+      return;
+    }
+    setReasonError("");
+    setMessage("");
+    reject.mutateAsync().catch(() => undefined);
+  };
 
   const busy = approve.isPending || reject.isPending;
 
@@ -92,34 +122,148 @@ export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () =
         >
           Approve
         </GradientButtonSecondary>
-        <ConfirmPopover
-          message="Reject and remove this application? This cannot be undone."
-          confirmLabel="Reject"
-          awaitConfirm
+        <Button
+          radius="lg"
+          size="xs"
+          variant="light"
+          color="red"
           loading={reject.isPending}
-          onConfirm={() => {
-            setMessage("");
-            return reject.mutateAsync();
+          disabled={busy}
+          onClick={() => {
+            setReasonError("");
+            setRejectOpen(true);
           }}
-          target={(open) => (
-            <Button
-              radius="lg"
-              size="xs"
-              variant="light"
-              color="red"
-              loading={reject.isPending}
-              disabled={busy}
-              onClick={open}
-            >
-              Reject
-            </Button>
-          )}
-        />
+        >
+          Reject
+        </Button>
       </Group>
       {message && (
         <Text fz={14} c="#E54156" mt={6} role="status" aria-live="polite">
           {message}
         </Text>
+      )}
+
+      <Modal
+        opened={rejectOpen}
+        onClose={() => setRejectOpen(false)}
+        title={`Reject ${applicant.username || "this application"}`}
+        centered
+      >
+        <Stack gap={10}>
+          <Text fz={14} c="dimmed">
+            The reason below is emailed to {applicant.email || "the applicant"} and saved to the
+            application log. Write it for them to read: say what was missing and whether they may
+            apply again.
+          </Text>
+          <Textarea
+            label="Reason for rejection"
+            placeholder="For example: the writing sample was under the length we ask for, and the starter pokemon chosen was a fully evolved species. You are welcome to reapply with a longer sample."
+            value={reason}
+            onChange={(event) => setReason(event.currentTarget.value)}
+            error={reasonError}
+            autosize
+            minRows={5}
+            maxRows={12}
+            required
+          />
+          <Group justify="flex-end" gap={8}>
+            <Button variant="default" size="sm" onClick={() => setRejectOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              size="sm"
+              loading={reject.isPending}
+              onClick={submitReject}
+            >
+              Reject and send email
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </Box>
+  );
+}
+
+/** Read-only history of decided applications, newest first. */
+export function ApplicationLog() {
+  const { data, isPending } = useQuery({
+    queryKey: ["application-log"],
+    queryFn: () => getApplicationLog(100),
+  });
+
+  if (isPending) return <SectionLoader />;
+  if (!data || !data.length) {
+    return (
+      <EmptyMessage
+        title="No decisions yet"
+        description="Approved and rejected applications are recorded here."
+      />
+    );
+  }
+
+  return (
+    <Stack gap={10}>
+      {data.map((entry) => (
+        <ApplicationLogRow key={entry.id} entry={entry} />
+      ))}
+    </Stack>
+  );
+}
+
+function ApplicationLogRow(props: { entry: ApplicationLogEntry }) {
+  const { entry } = props;
+  const [open, setOpen] = React.useState(false);
+  const rejected = entry.decision === "rejected";
+  const decided = entry.decidedAt?.seconds
+    ? new Date(entry.decidedAt.seconds * 1000).toLocaleDateString()
+    : "";
+
+  return (
+    <Box p={14} bg="#2b2a2b" style={{ borderRadius: 12 }}>
+      <Group justify="space-between" wrap="wrap" gap={8}>
+        <Group gap={8}>
+          <Badge variant="light" color={rejected ? "red" : "teal"} size="sm">
+            {rejected ? "Rejected" : "Approved"}
+          </Badge>
+          <Text c="white" fw={600}>
+            {entry.username || "Unnamed"}
+          </Text>
+          {entry.isGaia === "Yes" && (
+            <Badge variant="light" color="grape" size="sm">
+              Gaia{entry.gaiaName ? `: ${entry.gaiaName}` : ""}
+            </Badge>
+          )}
+        </Group>
+        <Text fz={14} c="dimmed">
+          {[entry.email, decided ? `decided ${decided}` : "", entry.reviewerName ? `by ${entry.reviewerName}` : ""]
+            .filter(Boolean)
+            .join(" • ")}
+        </Text>
+      </Group>
+      {rejected && entry.reason && (
+        <Box p={10} mt={8} bg="#211f21" style={{ borderRadius: 8 }}>
+          <Text fz={14} fw={700} c="dimmed" tt="uppercase" mb={2}>
+            Reason sent to the applicant
+          </Text>
+          <Text fz={14} c="rgba(255,255,255,0.8)" style={{ whiteSpace: "pre-wrap" }}>
+            {entry.reason}
+          </Text>
+        </Box>
+      )}
+      {entry.application && (
+        <>
+          <Button variant="subtle" size="compact-xs" mt={8} onClick={() => setOpen((v) => !v)}>
+            {open ? "Hide application" : "Show application"}
+          </Button>
+          {open && (
+            <Box p={10} mt={6} bg="#211f21" style={{ borderRadius: 8 }}>
+              <Text fz={14} c="rgba(255,255,255,0.8)" style={{ whiteSpace: "pre-wrap" }}>
+                {entry.application}
+              </Text>
+            </Box>
+          )}
+        </>
       )}
     </Box>
   );
@@ -134,7 +278,10 @@ export default function Applicants() {
     staleTime: 0,
   });
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["new-users"] });
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["new-users"] });
+    queryClient.invalidateQueries({ queryKey: ["application-log"] });
+  };
 
   return (
     <SimpleSectionWrapper>
@@ -158,6 +305,15 @@ export default function Applicants() {
         ) : (
           <EmptyMessage title="All caught up" description="There are no pending applicants." />
         )}
+
+        <Title order={2} c="white" size={24} fw={400} mt={10}>
+          Past Applications
+        </Title>
+        <Text fz={14} c="dimmed">
+          Every decided application is kept here with the essay and, for rejections, the reason the
+          applicant was sent.
+        </Text>
+        <ApplicationLog />
       </Stack>
     </SimpleSectionWrapper>
   );

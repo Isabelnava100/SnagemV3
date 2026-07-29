@@ -35,6 +35,7 @@ export function NewRegister() {
   const [emailExists, setEmailExists] = useState<boolean>(false);
   const [draftSaved, setDraftSaved] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [pasteBlocked, setPasteBlocked] = useState<boolean>(false);
   const strength = getStrength(value);
   const color = strength === 100 ? "teal" : strength > 50 ? "gold.1" : "red";
 
@@ -124,6 +125,21 @@ export function NewRegister() {
     }, 600);
     return () => clearTimeout(t);
   }, [application, email, canDraft]);
+
+  // The application essay must be written in the box, not pasted in from an AI
+  // tool or another document, so paste / drop / copy / cut are all refused here.
+  // This is a speed bump, not real enforcement (devtools defeat it), but it
+  // stops the casual copy-paste.
+  const refuseTransfer = (event: { preventDefault: () => void }) => {
+    event.preventDefault();
+    setPasteBlocked(true);
+  };
+
+  useEffect(() => {
+    if (!pasteBlocked) return;
+    const t = setTimeout(() => setPasteBlocked(false), 6000);
+    return () => clearTimeout(t);
+  }, [pasteBlocked]);
 
   // Manual "Save Draft" (per the mockup) alongside the debounced autosave, so
   // applicants can deliberately stash their essay before leaving.
@@ -225,7 +241,13 @@ export function NewRegister() {
               {emailExists && (
                 <Text c="gold.1" size="xs" mt={4}>
                   An account already exists for this email.{" "}
-                  <Anchor component={Link} to="/Login" size="xs">
+                  <Anchor
+                    component={Link}
+                    to="/Login"
+                    size="xs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     Log in instead
                   </Anchor>
                   .
@@ -260,9 +282,14 @@ export function NewRegister() {
               ) : (
                 <Text c="dimmed" size="sm" mt={5}>
                   Your registration will be accepted based on your application.{" "}
-                  <Anchor component={Link} to="/About" size="sm">
-                    {" "}
-                    Learn more about Team Snagem here.{" "}
+                  <Anchor
+                    component={Link}
+                    to="/About"
+                    size="sm"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Learn more about Team Snagem here (opens in a new tab).
                   </Anchor>
                 </Text>
               )}
@@ -337,6 +364,11 @@ export function NewRegister() {
                       {...form.getInputProps("application")}
                       ref={refTextarea}
                       aria-label="Your roleplay application"
+                      onPaste={refuseTransfer}
+                      onDrop={refuseTransfer}
+                      onCopy={refuseTransfer}
+                      onCut={refuseTransfer}
+                      onContextMenu={(event) => event.preventDefault()}
                       placeholder="Introduce your trainer and write a short scene. Minimum 500 characters."
                       description="With a character in mind write out a brief Roleplaying example based on a moment in your character's life. It can be a short story about where they grew up, why they decided to join Team Snagem or whatever you want. Just have it ending with them joining Team Snagem, or deciding to. Furthermore in this scenario reveal your character's starter Pokemon and a battle scene. The pokemon can be any first stage non-legendary Pokemon that still evolves."
                       autosize
@@ -344,6 +376,15 @@ export function NewRegister() {
                       maxRows={18}
                       required
                     />
+                    <Text fz={12} c="dimmed">
+                      Copy and paste is turned off here. Please write your application in this box,
+                      in your own words.
+                    </Text>
+                    {pasteBlocked && (
+                      <Text fz={12} c="gold.1" role="status" aria-live="polite">
+                        Pasting is disabled. Write your application here in your own words.
+                      </Text>
+                    )}
                   </Stack>
 
                   {/* Manual Save Draft + its browser disclaimer (mockup). */}
@@ -389,7 +430,7 @@ export function NewRegister() {
       </AuthCard>
       <Text c="dimmed" size="sm" ta="center" mt={5}>
         Already have an account?{" "}
-        <Anchor component={Link} to="/Login" size="sm">
+        <Anchor component={Link} to="/Login" size="sm" target="_blank" rel="noopener noreferrer">
           Go to login.
         </Anchor>
       </Text>

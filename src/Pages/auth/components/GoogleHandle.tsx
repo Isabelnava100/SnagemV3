@@ -6,6 +6,13 @@ import { auth, getDb } from "../../../context/firebase";
 
 export type GoogleSignInResult = "success" | "pending" | "no-account" | string;
 
+/**
+ * The signed-in address, kept alongside the result so the caller can name it on
+ * the access gate. The Google session is signed back out for a pending
+ * applicant, so the email is not readable from auth afterwards.
+ */
+export let lastGoogleEmail = "";
+
 // Google sign-in is only allowed for existing members: the account must already
 // be approved (doc in "users"). Firebase links the Google credential to the
 // existing email/password account when the emails match, so the uid is stable.
@@ -16,6 +23,7 @@ export const handleGoogleSignIn = async (
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     const { uid, email, displayName } = result.user;
+    lastGoogleEmail = email ?? "";
 
     const otherinfo = await getInfo(uid);
     // Gate on the users doc existing, not on username (imported members may lack it).

@@ -142,6 +142,15 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ---- Decided application history --------------------------------------
+    // Written only by approveNewUser / rejectNewUser (Admin SDK bypasses these
+    // rules). Holds the essay plus the rejection reason that was emailed, so
+    // it stays admin-read and client-write is refused outright.
+    match /applicationLog/{doc} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // ---- One-time Gaia usernames ------------------------------------------
     // Each GaiaOnline guild name can back only ONE account. The doc id is the
     // normalized name; it is create-once (updates denied), so a second signup

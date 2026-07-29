@@ -3516,6 +3516,47 @@ export const chooseStarter = onCall(async (request) => {
 
 const APPROVABLE_ROLES = ["New", "Verified", "Master", "Director"];
 
+/** Escape user text before it goes into an HTML email body. */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
+ * Keep a permanent record of every decided application in `applicationLog`.
+ * The NewUsers doc is deleted on both approve and reject, so without this the
+ * essay and the reviewer's reasoning would be gone. Admin-read only per rules;
+ * only these callables ever write it.
+ */
+async function archiveApplication(args: {
+  targetUid: string;
+  data: FirebaseFirestore.DocumentData;
+  decision: "approved" | "rejected";
+  reason: string;
+  reviewerUid: string;
+  reviewerName: string;
+  role?: string;
+}): Promise<void> {
+  await db.collection("applicationLog").add({
+    uid: args.targetUid,
+    username: String(args.data.username ?? ""),
+    email: String(args.data.email ?? ""),
+    application: String(args.data.application ?? ""),
+    isGaia: String(args.data.isGaia ?? "No"),
+    gaiaName: String(args.data.gaiaName ?? ""),
+    decision: args.decision,
+    reason: args.reason,
+    reviewerUid: args.reviewerUid,
+    reviewerName: args.reviewerName,
+    ...(args.role ? { role: args.role } : {}),
+    appliedAt: args.data.joinedAt ?? null,
+    decidedAt: new Date(),
+  });
+}
+
 /** Approve a NewUsers applicant: create their users doc and clear the queue. */
 export const approveNewUser = onCall(async (request) => {
   const uid = requireAuth(request);
@@ -3566,6 +3607,16 @@ export const approveNewUser = onCall(async (request) => {
   }
   await newRef.delete();
 
+  await archiveApplication({
+    targetUid,
+    data,
+    decision: "approved",
+    reason: "",
+    reviewerUid: uid,
+    reviewerName: String(member.username ?? ""),
+    role,
+  });
+
   await db.collection("auditLogs").add({
     action: "user.approve",
     actorUid: uid,
@@ -3594,32 +3645,49 @@ export const approveNewUser = onCall(async (request) => {
   return { ok: true };
 });
 
-/** Reject / remove a NewUsers applicant from the queue. */
+/**
+ * Reject / remove a NewUsers applicant from the queue. The reviewer's reason
+ * is archived in `applicationLog` and emailed to the applicant so they know
+ * why they were turned down and what to fix before reapplying.
+ */
 export const rejectNewUser = onCall(async (request) => {
   const uid = requireAuth(request);
   const member = await loadMember(uid);
   if (!isAdmin(member)) throw new HttpsError("permission-denied", "Admins only.");
   const targetUid = requireString(request.data?.uid, "uid", 200);
-  const note = String(request.data?.note ?? "").slice(0, 1000);
+  const note = String(request.data?.note ?? "").trim().slice(0, 2000);
+  // The applicant only ever hears the reviewer's reason, so it is required.
+  if (!note) throw new HttpsError("invalid-argument", "A reason for the rejection is required.");
 
   const newRef = db.doc(`NewUsers/${targetUid}`);
   const snap = await newRef.get();
   if (!snap.exists) return { ok: true };
+  const data = snap.data()!;
   await newRef.delete();
+
+  await archiveApplication({
+    targetUid,
+    data,
+    decision: "rejected",
+    reason: note,
+    reviewerUid: uid,
+    reviewerName: String(member.username ?? ""),
+  });
 
   await db.collection("auditLogs").add({
     action: "user.reject",
     actorUid: uid,
     actorName: member.username,
-    details: { username: snap.data()?.username, note, targetUid },
+    details: { username: data.username, note, targetUid },
     createdAt: new Date(),
   });
   await sendEmail(
-    String(snap.data()?.email ?? ""),
+    String(data.email ?? ""),
     "About your Snagem Guild application",
     `<p>Thanks for applying to the Snagem Guild. Our team could not approve the
      application this time.</p>
-     ${note ? `<p>Reviewer note: ${note.replace(/</g, "&lt;")}</p>` : ""}
+     <p><b>Why:</b></p>
+     <p style="white-space:pre-wrap">${escapeHtml(note)}</p>
      <p>You are welcome to apply again at
      <a href="https://snagemguild.com/Register">snagemguild.com</a>.</p>`
   );

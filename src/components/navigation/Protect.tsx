@@ -1,6 +1,7 @@
-import { Button, Center, Stack, Text } from "@mantine/core";
+import { Button, Center, Group, Stack, Text } from "@mantine/core";
 import type { JSX } from "react";
 import { Link } from "react-router-dom";
+import { AccessGatePage } from "../auth/AccessGate";
 import { useAuth } from "../../context/AuthContext";
 import { Loader } from "./loading";
 
@@ -9,7 +10,7 @@ type Props = {
 };
 
 export const Protect = ({ children }: Props) => {
-  const { user, pending } = useAuth();
+  const { user, pending, setUser } = useAuth();
 
   // The auth context no longer gates the tree on the first emission, so
   // protected routes must wait for it here before judging the user.
@@ -34,16 +35,64 @@ export const Protect = ({ children }: Props) => {
     );
   }
 
-  // if(pathname.includes('/Forum')){
-  //     switch (true) {
-  //         case pathname.includes('/Forum/3'):
-  //         case pathname.includes('/Forum/6'):
-  //         case pathname.includes('/Forum/7'):
-  //             return <>You don't have the permissions to view this page.</>;
-  //         default:
-  //             return children;
-  //       }
-  // }
+  // A Firebase session alone is not membership. A brand new applicant is signed
+  // in the moment they register, so without this they could walk straight into
+  // /Onboarding before verifying their email or being approved. Both steps are
+  // shown as cards instead of a bare error so they know what is left.
+  //
+  // Fails open when profileExists is undefined: that means the users doc read
+  // failed (offline, rules hiccup), not that the member is unapproved.
+  const needsVerification = user.emailVerified === false;
+  const needsApproval = user.profileExists === false;
+  if (needsVerification || needsApproval) {
+    const onResend = async () => {
+      const { sendEmailVerification } = await import("firebase/auth");
+      const { auth } = await import("../../context/firebase");
+      if (!auth.currentUser) return "error";
+      try {
+        await sendEmailVerification(auth.currentUser);
+        return "sent";
+      } catch (error: any) {
+        return error?.code || "error";
+      }
+    };
+
+    // emailVerified is baked into the cached auth user, so a link opened in
+    // another tab only shows up after a reload of the Firebase user.
+    const onRecheck = async () => {
+      const { auth } = await import("../../context/firebase");
+      if (!auth.currentUser) return;
+      await auth.currentUser.reload().catch(() => undefined);
+      if (auth.currentUser.emailVerified) {
+        setUser({ ...user, emailVerified: true });
+      }
+    };
+
+    const onSignOut = async () => {
+      const { signOut } = await import("firebase/auth");
+      const { auth } = await import("../../context/firebase");
+      await signOut(auth).catch(() => undefined);
+    };
+
+    return (
+      <AccessGatePage
+        email={user.email ?? ""}
+        emailVerified={!needsVerification}
+        onResend={onResend}
+        onRecheck={onRecheck}
+        footer={
+          <Group gap={10}>
+            <Button variant="default" size="sm" onClick={onSignOut}>
+              Sign out
+            </Button>
+            <Button component={Link} to="/" variant="subtle" size="sm">
+              Back to the site
+            </Button>
+          </Group>
+        }
+      />
+    );
+  }
 
   return children;
 };

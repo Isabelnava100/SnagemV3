@@ -47,11 +47,22 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
       unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       try {
         if (firebaseUser) {
-          const { uid, email, displayName } = firebaseUser;
+          const { uid, email, displayName, emailVerified } = firebaseUser;
           const { avatar, username, exists, ...otherinfo } = await getInfo(uid);
           // Fall back to the auth displayName so imported members with a doc but no
           // username field still render a name instead of a blank.
-          setUser({ uid, email, displayName, username: username || displayName || "", avatar, otherinfo });
+          // `profileExists` + `emailVerified` are what the access gate reads to
+          // decide whether this account has cleared both approval steps.
+          setUser({
+            uid,
+            email,
+            displayName,
+            username: username || displayName || "",
+            avatar,
+            otherinfo,
+            profileExists: exists,
+            emailVerified,
+          });
           // Install the admin-configured XP curve for level displays.
           import("../queries/leveling").then((m) => m.loadActiveCurve());
         } else {
@@ -61,8 +72,10 @@ function AuthContextProvider({ children }: { children: ReactNode }) {
         // Profile read failed (offline/rules) but Firebase Auth IS signed in:
         // keep a minimal user so guards don't render a false logged-out state.
         if (firebaseUser) {
-          const { uid, email, displayName } = firebaseUser;
-          setUser((prev) => prev ?? { uid, email, displayName, username: displayName ?? "" });
+          const { uid, email, displayName, emailVerified } = firebaseUser;
+          // profileExists stays undefined here on purpose: the read failed, so
+          // the access gate must not treat that as "not approved".
+          setUser((prev) => prev ?? { uid, email, displayName, username: displayName ?? "", emailVerified });
         }
         console.error("Failed to load user profile", error);
       } finally {
