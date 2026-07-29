@@ -59,6 +59,9 @@ export const handleGoogleSignIn = async (
     setUser(undefined);
     return "no-account";
   } catch (error: any) {
+    // Logged as well as returned: the popup failures (blocked popup, bad
+    // domain, one-account-per-email) are otherwise invisible from a screenshot.
+    console.error("Google sign-in failed", error?.code, error);
     return error?.code || "error";
   }
 };

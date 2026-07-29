@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Box,
+  Button,
   Drawer,
   Group,
   Image,
@@ -11,7 +12,8 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure, useMediaQuery as useCoreMediaQuery } from "@mantine/hooks";
-import { IconBooks, IconFileText, IconHome, IconLogin, IconNews, IconSpeakerphone, IconX } from "@tabler/icons-react";
+import { useState } from "react";
+import { IconBooks, IconFileText, IconHome, IconLogin, IconNews, IconSpeakerphone, IconTrash, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Capability } from "../../components/types/typesUsed";
@@ -25,7 +27,13 @@ import {
   NAV_BAR_LIMIT_MOBILE,
   resolveNavOrder,
 } from "../../lib/navConfig";
-import { AppNotification, getNotifications, markNotificationsRead } from "../../queries/game";
+import {
+  AppNotification,
+  deleteAllNotifications,
+  deleteNotification,
+  getNotifications,
+  markNotificationsRead,
+} from "../../queries/game";
 import {
   AdminAccessIcon,
   Forum,
@@ -321,11 +329,32 @@ function SingleLink(props: { label: string; link: string; icon: IconRef }) {
 function AlertsDropdown(props: { onClose: () => void }) {
   const { user } = useAuth();
   const { staffPending } = useAlertsBadge();
+  const queryClient = useQueryClient();
+  // Inline rather than a ConfirmPopover: a nested popover portals outside this
+  // one, which closes the alerts dropdown out from under the confirm.
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   const { data: notifications } = useQuery({
     queryKey: ["notifications", user?.uid],
     queryFn: () => getNotifications(user!.uid),
     enabled: !!user,
+  });
+
+  // The alerts dot derives from this same query (useAlertsBadge), so one
+  // invalidation refreshes both the list and the badge.
+  const refreshAlerts = () =>
+    queryClient.invalidateQueries({ queryKey: ["notifications", user?.uid] });
+
+  const dismissOne = useMutation({
+    mutationFn: (id: string) => deleteNotification(user!.uid, id),
+    onSuccess: refreshAlerts,
+  });
+  const clearAll = useMutation({
+    mutationFn: () => deleteAllNotifications(user!.uid),
+    onSuccess: () => {
+      setConfirmingClear(false);
+      refreshAlerts();
+    },
   });
   const { data: unseenAnnouncement } = useQuery({
     queryKey: ["announcement-unseen", user?.uid],
@@ -373,14 +402,78 @@ function AlertsDropdown(props: { onClose: () => void }) {
         </Text>
       ) : (
         items.map((n) => (
-          <Link key={n.id} to={n.link || "/Dashboard"} onClick={props.onClose} style={linkStyle}>
-            <Box style={rowStyle}>
+          <Box key={n.id} style={{ ...rowStyle, display: "flex", gap: 6, alignItems: "start" }}>
+            {/* The dismiss control sits outside the anchor so clicking it never
+                navigates. */}
+            <Link
+              to={n.link || "/Dashboard"}
+              onClick={props.onClose}
+              style={{ ...linkStyle, flex: 1, minWidth: 0 }}
+            >
               <Text fz={14} c="white" lineClamp={2}>
                 {n.text}
               </Text>
-            </Box>
-          </Link>
+            </Link>
+            <ActionIcon
+              size="sm"
+              variant="subtle"
+              color="gray"
+              aria-label={`Dismiss alert: ${n.text.slice(0, 60)}`}
+              loading={dismissOne.isPending && dismissOne.variables === n.id}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                dismissOne.mutate(n.id);
+              }}
+            >
+              <IconX size={14} />
+            </ActionIcon>
+          </Box>
         ))
+      )}
+
+      {items.length > 0 &&
+        (confirmingClear ? (
+          <Box style={{ ...rowStyle, border: "1px solid #7a2b33" }}>
+            <Stack gap={8}>
+              <Text fz={14} c="white">
+                Clear every alert? They cannot be brought back.
+              </Text>
+              <Group gap={8}>
+                <Button
+                  size="compact-sm"
+                  color="red"
+                  loading={clearAll.isPending}
+                  onClick={() => clearAll.mutate()}
+                >
+                  Clear all
+                </Button>
+                <Button
+                  size="compact-sm"
+                  variant="default"
+                  onClick={() => setConfirmingClear(false)}
+                >
+                  Keep
+                </Button>
+              </Group>
+            </Stack>
+          </Box>
+        ) : (
+          <Button
+            size="compact-sm"
+            variant="subtle"
+            color="gray"
+            leftSection={<IconTrash size={14} />}
+            onClick={() => setConfirmingClear(true)}
+          >
+            Clear all alerts
+          </Button>
+        ))}
+
+      {(dismissOne.isError || clearAll.isError) && (
+        <Text fz={12} c="red.4" role="status" aria-live="polite">
+          Could not clear that. Try again in a moment.
+        </Text>
       )}
     </Stack>
   );

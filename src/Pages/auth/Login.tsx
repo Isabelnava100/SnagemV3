@@ -70,8 +70,22 @@ export function Login() {
       setPendingEmail(lastGoogleEmail || form.values.email || "your account");
     } else if (result === "no-account") {
       setGoogleError("No account matches that Google email. Apply to join first.");
+    } else if (result === "auth/account-exists-with-different-credential") {
+      // Firebase is set to one account per email, so Google cannot sign into an
+      // address that was registered with a password. Point them at the form.
+      setGoogleError(
+        "That email already has a password account here. Log in with your email and password above."
+      );
+    } else if (result === "auth/popup-blocked") {
+      setGoogleError("Your browser blocked the Google popup. Allow popups for this site and retry.");
+    } else if (result === "auth/unauthorized-domain") {
+      setGoogleError("This domain is not authorized for Google sign-in yet. Tell an admin.");
+    } else if (result === "auth/operation-not-allowed") {
+      setGoogleError("Google sign-in is switched off for this project. Tell an admin.");
     } else if (result !== "auth/popup-closed-by-user" && result !== "auth/cancelled-popup-request") {
-      setGoogleError("Google sign-in failed. Please try again.");
+      // Show the raw code: a bare "try again" makes these impossible to debug
+      // from a screenshot.
+      setGoogleError(`Google sign-in failed (${result}). Please try again.`);
     }
     setSub(false);
   };

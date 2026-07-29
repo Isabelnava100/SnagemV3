@@ -78,6 +78,32 @@ export const getNotifications = async (uid: string): Promise<AppNotification[]> 
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as AppNotification);
 };
 
+/** Dismiss one alert. Rules let the owner delete their own notifications. */
+export const deleteNotification = async (uid: string, id: string): Promise<void> => {
+  const { deleteDoc, doc } = await import("firebase/firestore");
+  const db = await getDb();
+  await deleteDoc(doc(db, "users", uid, "notifications", id));
+};
+
+/**
+ * Clear the whole list. Deletes every notification the member currently has,
+ * in batches, not just the page the dropdown happens to show.
+ */
+export const deleteAllNotifications = async (uid: string): Promise<number> => {
+  const { collection, getDocs, query, writeBatch } = await import("firebase/firestore");
+  const db = await getDb();
+  const snap = await getDocs(query(collection(db, "users", uid, "notifications")));
+  // Firestore caps a batch at 500 writes.
+  const chunks: (typeof snap.docs)[] = [];
+  for (let i = 0; i < snap.docs.length; i += 450) chunks.push(snap.docs.slice(i, i + 450));
+  for (const chunk of chunks) {
+    const batch = writeBatch(db);
+    chunk.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+  return snap.docs.length;
+};
+
 export const markNotificationsRead = async (uid: string, ids: string[]): Promise<void> => {
   const { doc, writeBatch } = await import("firebase/firestore");
   const db = await getDb();
