@@ -282,14 +282,16 @@ Status as of 2026-07:
   Approval and rejection notices go out through `sendEmail` in `functions/src/index.ts`,
   which reads `adminSecrets/email` (Site Settings > Email notices: API key, verified
   from address, from name). Steps left for the owner:
-  1. **Rotate the key.** The key generated on 2026-07-29 was pasted into a chat
-     transcript, so treat it as compromised: revoke it in SendGrid, issue a new one
-     with Mail Send permission only, and paste that into Site Settings. Never commit a
-     key to this repo, and never expose one as a `VITE_*` var (those are bundled and
-     public).
-  2. **Verify the sender** in SendGrid (single sender or domain auth) and set the from
-     address to something on snagemguild.com, e.g. `support@snagemguild.com`
-     (`SUPPORT_EMAIL` in `src/lib/contact.ts`). SendGrid refuses unverified senders.
+  1. **Rotate the key** at <https://app.sendgrid.com/settings/api_keys> (Create API Key,
+     Restricted Access, Mail Send only). The key generated on 2026-07-29 was pasted into
+     a chat transcript, so treat it as compromised: delete that one on the same page,
+     then paste the new key into Site Settings. SendGrid shows a key once, at creation.
+     Never commit a key to this repo, and never expose one as a `VITE_*` var (those are
+     bundled and public).
+  2. **Verify the sender** at <https://app.sendgrid.com/settings/sender_auth> (single
+     sender or domain auth) and set the from address to something on snagemguild.com,
+     e.g. `support@snagemguild.com` (`SUPPORT_EMAIL` in `src/lib/contact.ts`). SendGrid
+     refuses unverified senders.
   3. **Send one test approval** and confirm it lands, then check Site Settings >
      Unsent notices is empty.
   NOT a blocker: with no key (or a cancelled subscription) every notice is still
