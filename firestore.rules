@@ -205,6 +205,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // The Discord OAuth client id only. Public by design (it travels in the
+    // authorize URL), mirrored out of admin-only adminSecrets/discord so a
+    // member's browser can build the Connect Discord link without the id
+    // being baked into the bundle at build time. The SECRET never lands here.
+    match /admin/discord_public {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // ---- Admin-managed shared data ----------------------------------------
     // Default: admin-only writes. This match also covers the economy and
     // balance docs (battle_config, casino_config, xp_defaults, leveling,

@@ -277,6 +277,33 @@ Status as of 2026-07:
 
 ## Unbuilt features
 
+- **OWNER TODO: finish the Discord setup** (2026-07-29). Code is DONE and deployed;
+  `adminSecrets/discord` does not exist yet, so both halves are inert: `linkDiscord`
+  refuses with "Discord is not configured yet", and the notification mirror in
+  `notifyUsers` returns early on the missing webhook. Everything is saved from
+  Dashboard > Site Settings > Discord (admin only). Two independent halves:
+  - **Account linking (OAuth).** At <https://discord.com/developers/applications>:
+    New Application, then OAuth2. Copy the **Client ID** and a **Client Secret**
+    (shown once, reset it if lost). Under OAuth2 > Redirects add BOTH
+    `https://snagemguild.com/Dashboard/Settings/Notifications` and
+    `http://localhost:5173/Dashboard/Settings/Notifications` for development; they must
+    match `discordRedirectUri()` in `src/queries/discord.ts` character for character,
+    trailing slash included, or Discord rejects the authorize call. Scope is `identify`
+    only (no bot, no guild scopes). Paste the id and secret into Site Settings.
+  - **Channel notifications (webhook).** In the Discord server: Channel Settings >
+    Integrations > Webhooks > New Webhook, pick the channel, Copy Webhook URL, paste it
+    into Site Settings. Notifications are mirrored as CHANNEL pings, never DMs, and only
+    for members who both linked Discord and turned on `settings.discordNotifications`.
+    `allowed_mentions` is locked to `users`, so post text can never trigger @everyone.
+  - Optional `redirectUris` (array on `adminSecrets/discord`, no UI): an explicit
+    allowlist for `linkDiscord`. Empty means the callable falls back to accepting the
+    site origin or localhost, which is the intended default.
+  - The client id is mirrored to world-readable `admin/discord_public` on save, so the
+    member-facing Connect Discord button works without a redeploy. `VITE_DISCORD_CLIENT_ID`
+    is now only a legacy fallback and does not need to be set.
+  - Nothing is needed from the bot side: the site never runs a Discord bot, it only
+    posts to the webhook and exchanges an OAuth code.
+
 - **OWNER TODO: finish the SendGrid email setup** (2026-07-29). The code side is DONE
   and deployed; only the config is outstanding, and the site works without it.
   Approval and rejection notices go out through `sendEmail` in `functions/src/index.ts`,

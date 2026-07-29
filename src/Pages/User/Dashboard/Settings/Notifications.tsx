@@ -25,8 +25,8 @@ import { toastError } from "../../../../lib/toast";
 import { getNotifications, markNotificationsRead } from "../../../../queries/game";
 import { getMyFriendCode, getSettings, saveFriendCode } from "../../../../queries/settings";
 import {
-  DISCORD_CLIENT_ID,
   discordAuthorizeUrl,
+  getDiscordPublicClientId,
   getMyDiscord,
   linkDiscord,
   unlinkDiscord,
@@ -202,6 +202,12 @@ function ConnectDiscord() {
     queryFn: () => getMyDiscord(user!.uid),
     enabled: !!user,
   });
+  // Read at runtime rather than from a build-time env var, so an admin saving
+  // the Discord settings turns this button on without a redeploy.
+  const { data: discordClientId } = useQuery({
+    queryKey: ["discord-client-id"],
+    queryFn: getDiscordPublicClientId,
+  });
 
   const linkMutation = useMutation({
     mutationFn: (code: string) => linkDiscord(code),
@@ -260,13 +266,13 @@ function ConnectDiscord() {
             )}
           />
         </Group>
-      ) : DISCORD_CLIENT_ID ? (
+      ) : discordClientId ? (
         <GradientButtonSecondary
           radius="lg"
           w="fit-content"
           loading={linkMutation.isPending}
           onClick={() => {
-            window.location.href = discordAuthorizeUrl();
+            window.location.href = discordAuthorizeUrl(discordClientId);
           }}
         >
           Connect Discord
