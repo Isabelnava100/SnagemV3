@@ -277,6 +277,30 @@ Status as of 2026-07:
 
 ## Unbuilt features
 
+- **OWNER TODO: finish the SendGrid email setup** (2026-07-29). The code side is DONE
+  and deployed; only the config is outstanding, and the site works without it.
+  Approval and rejection notices go out through `sendEmail` in `functions/src/index.ts`,
+  which reads `adminSecrets/email` (Site Settings > Email notices: API key, verified
+  from address, from name). Steps left for the owner:
+  1. **Rotate the key.** The key generated on 2026-07-29 was pasted into a chat
+     transcript, so treat it as compromised: revoke it in SendGrid, issue a new one
+     with Mail Send permission only, and paste that into Site Settings. Never commit a
+     key to this repo, and never expose one as a `VITE_*` var (those are bundled and
+     public).
+  2. **Verify the sender** in SendGrid (single sender or domain auth) and set the from
+     address to something on snagemguild.com, e.g. `support@snagemguild.com`
+     (`SUPPORT_EMAIL` in `src/lib/contact.ts`). SendGrid refuses unverified senders.
+  3. **Send one test approval** and confirm it lands, then check Site Settings >
+     Unsent notices is empty.
+  NOT a blocker: with no key (or a cancelled subscription) every notice is still
+  recorded in full to `mailOutbox` and listed under Site Settings > Unsent notices,
+  with a mailto link and copyable text, so staff can send it by hand. Non-2xx SendGrid
+  responses are recorded as failed with the status line, so a dead key is visible
+  rather than silent. Rules: `mailOutbox` is admin read/update/delete, create denied
+  (server-only). If SendGrid is dropped for good, the cleanest replacement is SMTP via
+  the guild mailbox (nodemailer + credentials in `adminSecrets/email`), reusing the same
+  outbox fallback.
+
 - **Donations: PayPal sync + Supporter badge automation** (2026-07). The Support the
   Guild wing (`/Library?tab=support`, `src/Pages/Library/support.tsx`) is SHIPPED, with
   config in `admin/donations` (public read, admin write; Site Settings > Donations) and

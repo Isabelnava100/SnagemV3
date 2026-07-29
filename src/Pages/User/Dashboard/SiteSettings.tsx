@@ -1,4 +1,5 @@
 import {
+  Button,
   Container,
   Divider,
   Group,
@@ -24,7 +25,15 @@ import {
   getDonationConfig,
   saveDonationConfig,
 } from "../../../queries/donations";
-import { EmailConfig, getEmailConfig, saveEmailConfig } from "../../../queries/email";
+import {
+  EmailConfig,
+  MailOutboxItem,
+  deleteMailItem,
+  getEmailConfig,
+  getMailOutbox,
+  markMailHandled,
+  saveEmailConfig,
+} from "../../../queries/email";
 import { hasCapability, isAdmin } from "../../../lib/permissions";
 import SEO from "./Admin/SEO";
 
@@ -61,11 +70,14 @@ function EmailConfigSection() {
         Email notices
       </Title>
       <Text fz={14} c="dimmed">
-        Sends applicants an email when their registration is approved or rejected (they
-        cannot see in-app notifications before their first login). Uses SendGrid: create
-        a free account, add an API key with Mail Send permission, and verify the sender
-        address there. Until a key is saved, no emails are sent and approvals work as
-        before.
+        Sends applicants an email when their registration is approved or rejected (they cannot see
+        in-app notifications before their first login). Uses SendGrid: create an account, add an
+        API key with Mail Send permission, and verify the sender address there.
+      </Text>
+      <Text fz={14} c="dimmed">
+        This is optional. With no key saved, or if the subscription is cancelled later, approvals
+        and rejections still work: each notice is recorded in full under Unsent notices below for
+        staff to send by hand from the guild address.
       </Text>
       <PasswordInput
         label="SendGrid API key"
@@ -181,6 +193,114 @@ function DiscordConfigSection() {
       >
         Save Discord Settings
       </GradientButtonPrimary>
+    </Stack>
+  );
+}
+
+/** Strip the notice's HTML down to something an admin can paste into a mail client. */
+function plainBody(html: string): string {
+  return html
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * Notices the server could not send, listed so staff can send them by hand.
+ *
+ * The site does not depend on SendGrid: if no key is saved (or the
+ * subscription lapses and the key stops working) every approval and rejection
+ * notice is still recorded in full, and shows up here with a mailto link and a
+ * copyable body. Nobody is left without an answer because a bill went unpaid.
+ */
+function UnsentNoticesSection() {
+  const queryClient = useQueryClient();
+  const { data, isPending } = useQuery({ queryKey: ["mail-outbox"], queryFn: () => getMailOutbox(50) });
+  const [copied, setCopied] = React.useState("");
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["mail-outbox"] });
+  const handled = useMutation({ mutationFn: markMailHandled, onSuccess: refresh });
+  const remove = useMutation({ mutationFn: deleteMailItem, onSuccess: refresh });
+
+  const pending = (data ?? []).filter((m) => m.status === "queued" || m.status === "failed");
+
+  const copy = async (item: MailOutboxItem) => {
+    await navigator.clipboard.writeText(`Subject: ${item.subject}\n\n${plainBody(item.html)}`);
+    setCopied(item.id);
+  };
+
+  if (isPending) return <SectionLoader />;
+
+  return (
+    <Stack gap={10} maw={720}>
+      <Title order={2} c="white" size={28} fw={400}>
+        Unsent notices
+      </Title>
+      <Text fz={14} c="dimmed">
+        Approval and rejection notices that could not be emailed, either because no provider is
+        configured or because the send failed. Send them yourself from the guild address, then mark
+        them done. This list is the reason the site keeps working without an email subscription.
+      </Text>
+      {pending.length === 0 ? (
+        <Text fz={14} c="green.0" role="status" aria-live="polite">
+          Nothing waiting. Every notice went out.
+        </Text>
+      ) : (
+        pending.map((item) => (
+          <Stack key={item.id} gap={6} p={12} style={{ background: "#2b2a2b", borderRadius: 10 }}>
+            <Group justify="space-between" wrap="wrap" gap={8}>
+              <Text c="white" fw={600} fz={14}>
+                {item.subject}
+              </Text>
+              <Text fz={13} c={item.status === "failed" ? "#E54156" : "dimmed"}>
+                {item.status === "failed" ? `Send failed: ${item.detail}` : "Not sent"}
+              </Text>
+            </Group>
+            <Text fz={13} c="dimmed">
+              To: {item.to}
+            </Text>
+            <Text fz={13} c="rgba(255,255,255,0.75)" style={{ whiteSpace: "pre-wrap" }}>
+              {plainBody(item.html)}
+            </Text>
+            <Group gap={8} wrap="wrap">
+              <Button
+                size="compact-sm"
+                variant="light"
+                component="a"
+                href={`mailto:${item.to}?subject=${encodeURIComponent(item.subject)}&body=${encodeURIComponent(plainBody(item.html))}`}
+              >
+                Open in mail app
+              </Button>
+              <Button size="compact-sm" variant="default" onClick={() => copy(item)}>
+                {copied === item.id ? "Copied" : "Copy text"}
+              </Button>
+              <Button
+                size="compact-sm"
+                variant="subtle"
+                loading={handled.isPending && handled.variables === item.id}
+                onClick={() => handled.mutate(item.id)}
+              >
+                Mark as sent
+              </Button>
+              <Button
+                size="compact-sm"
+                variant="subtle"
+                color="red"
+                loading={remove.isPending && remove.variables === item.id}
+                onClick={() => remove.mutate(item.id)}
+              >
+                Discard
+              </Button>
+            </Group>
+          </Stack>
+        ))
+      )}
     </Stack>
   );
 }
@@ -361,6 +481,8 @@ export default function SiteSettings() {
             <DiscordConfigSection />
             <Divider color="#4a464a" />
             <EmailConfigSection />
+            <Divider color="#4a464a" />
+            <UnsentNoticesSection />
             <Divider color="#4a464a" />
             <DonationConfigSection />
           </>

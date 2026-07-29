@@ -151,6 +151,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- Outgoing email log / manual-send queue ---------------------------
+    // Written only by sendEmail (Admin SDK). Holds the full body of every
+    // notice, including ones that could not be sent because no provider is
+    // configured, so staff can send them by hand. Admin-read; admins may mark
+    // one handled or clear it, but nothing may be forged from a client.
+    match /mailOutbox/{doc} {
+      allow read, update, delete: if isAdmin();
+      allow create: if false;
+    }
+
     // ---- One-time Gaia usernames ------------------------------------------
     // Each GaiaOnline guild name can back only ONE account. The doc id is the
     // normalized name; it is create-once (updates denied), so a second signup

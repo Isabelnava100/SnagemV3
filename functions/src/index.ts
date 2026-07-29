@@ -710,25 +710,69 @@ const CURRENCY_NAMES: Record<CurrencyKey, string> = {
  * Settings; until an admin saves a key this is a silent no-op, same pattern as
  * the Discord webhook. Errors never fail the calling flow.
  */
+/** Record of one outgoing notice, so nothing is lost when sending cannot happen. */
+async function recordOutbox(
+  to: string,
+  subject: string,
+  html: string,
+  status: "sent" | "queued" | "failed",
+  detail: string
+): Promise<void> {
+  await db
+    .collection("mailOutbox")
+    .add({ to, subject, html, status, detail, createdAt: new Date() })
+    .catch((err) => console.warn("mailOutbox write failed", err));
+}
+
+/**
+ * Send a transactional notice through SendGrid, with a fallback that keeps the
+ * site working without it.
+ *
+ * There may be no email provider at all: the SendGrid subscription can be
+ * cancelled, or the key never saved. Rather than dropping the message on the
+ * floor, every notice is written to `mailOutbox`. Anything not actually sent is
+ * listed in Site Settings for staff to send by hand from the guild address, so
+ * an applicant is never left without an answer because a subscription lapsed.
+ *
+ * Sends that fail loudly (a revoked key returns 401) are recorded as failed
+ * with the status line: the old code ignored the response entirely, so a dead
+ * key looked exactly like a successful send.
+ */
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+  if (!to) return;
   try {
-    if (!to) return;
     const cfg = (await db.doc("adminSecrets/email").get()).data() ?? {};
     const key = String(cfg.sendgridApiKey ?? "");
     const from = String(cfg.fromEmail ?? "");
-    if (!key || !from) return;
-    await fetch("https://api.sendgrid.com/v3/mail/send", {
+    if (!key || !from) {
+      await recordOutbox(to, subject, html, "queued", "No email provider configured.");
+      return;
+    }
+    const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
-        from: { email: from, name: String(cfg.fromName ?? "Snagem Guild") },
+        from: { email: from, name: String(cfg.fromName ?? "The Snagem Guild") },
         subject,
         content: [{ type: "text/html", value: html }],
       }),
     });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      await recordOutbox(
+        to,
+        subject,
+        html,
+        "failed",
+        `SendGrid ${res.status}: ${body.slice(0, 300)}`
+      );
+      return;
+    }
+    await recordOutbox(to, subject, html, "sent", "");
   } catch (err) {
     console.warn("sendEmail failed", err);
+    await recordOutbox(to, subject, html, "failed", String(err).slice(0, 300));
   }
 }
 
