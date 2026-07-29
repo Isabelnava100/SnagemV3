@@ -67,6 +67,15 @@ export const DEFAULT_BADGES: BadgeDef[] = [
     description: "Assigned to anyone with any permissions/capabilities.",
     isDefault: true,
   },
+  {
+    id: "supporter",
+    name: "Supporter",
+    background: "linear-gradient(90deg, #f783ac 0%, #FFD074 100%)",
+    // Assigned by hand after a monthly pledge shows up in PayPal: there is no
+    // PayPal sync yet (docs/BACKLOG.md), so it stays off the auto list.
+    description: "Members with an active monthly pledge. Cosmetic only, no gameplay effect.",
+    isDefault: true,
+  },
 ];
 
 const DEFAULT_IDS = new Set(DEFAULT_BADGES.map((b) => b.id));

@@ -48,6 +48,7 @@ import MovesTab from "./moves";
 import BattleGuideTab from "./battle";
 import ForumGuideTab from "./forums";
 import PoliciesWing from "./policies";
+import SupportWing from "./support";
 
 /**
  * Public data library. Any visitor (signed in or not) can browse the system's
@@ -944,6 +945,17 @@ const WINGS: Wing[] = [
     icon: "book",
     category: "House Rules",
     content: <PoliciesWing />,
+  },
+  {
+    value: "support",
+    name: "Support the Guild",
+    callNo: "011.SG",
+    meta: "Costs and donations",
+    blurb: "What the site costs to run each year, this year's goal, and how to chip in.",
+    accent: "#f783ac",
+    icon: "gift",
+    category: "Guild",
+    content: <SupportWing />,
   },
 ];
 

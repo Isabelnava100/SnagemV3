@@ -1,4 +1,15 @@
-import { Container, Divider, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import {
+  Container,
+  Divider,
+  Group,
+  NumberInput,
+  PasswordInput,
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Navigate } from "react-router-dom";
@@ -8,6 +19,11 @@ import { toastError } from "../../../lib/toast";
 import { Capability } from "../../../components/types/typesUsed";
 import { useAuth } from "../../../context/AuthContext";
 import { DiscordConfig, discordRedirectUri, getDiscordConfig, saveDiscordConfig } from "../../../queries/discord";
+import {
+  DonationConfig,
+  getDonationConfig,
+  saveDonationConfig,
+} from "../../../queries/donations";
 import { EmailConfig, getEmailConfig, saveEmailConfig } from "../../../queries/email";
 import { hasCapability, isAdmin } from "../../../lib/permissions";
 import SEO from "./Admin/SEO";
@@ -170,6 +186,159 @@ function DiscordConfigSection() {
 }
 
 /**
+ * Admin-only donation config for the Library's Support the Guild wing. Read by
+ * the public page, so keep every field here non-secret: PayPal hosted button
+ * ids and share links are meant to be seen.
+ */
+function DonationConfigSection() {
+  const queryClient = useQueryClient();
+  const { data, isPending } = useQuery({
+    queryKey: ["donation-config"],
+    queryFn: getDonationConfig,
+  });
+  const [form, setForm] = React.useState<DonationConfig | null>(null);
+  const [saved, setSaved] = React.useState(false);
+
+  React.useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data, form]);
+
+  const save = useMutation({
+    mutationFn: () => saveDonationConfig(form!),
+    onSuccess: () => {
+      setSaved(true);
+      queryClient.invalidateQueries({ queryKey: ["donation-config"] });
+    },
+    onError: (e) => toastError(e, "Could not save the donation settings."),
+  });
+
+  if (isPending || !form) return <SectionLoader />;
+
+  const set = (patch: Partial<DonationConfig>) => {
+    setSaved(false);
+    setForm({ ...form, ...patch });
+  };
+  const inputStyles = { input: { background: "#2E2D2E" }, label: { color: "white" } };
+
+  return (
+    <Stack gap={10} maw={640}>
+      <Title order={2} c="white" size={28} fw={400}>
+        Donations
+      </Title>
+      <Text fz={14} c="dimmed">
+        Powers Library, Support the Guild. The cost table on that page is fixed in code; the goal
+        tiers, the raised total and the PayPal links come from here. Nothing appears on the public
+        page until at least one PayPal link or button id is filled in.
+      </Text>
+      <Switch
+        checked={form.enabled}
+        onChange={(e) => set({ enabled: e.currentTarget.checked })}
+        label="Show the donate controls"
+        description="Off keeps the costs and goal visible but hides every PayPal button."
+      />
+      <TextInput
+        label="PayPal hosted button id"
+        description="From the PayPal Donate button generator. Renders PayPal's own button in the page."
+        value={form.paypalHostedButtonId}
+        onChange={(e) => set({ paypalHostedButtonId: e.currentTarget.value })}
+        styles={inputStyles}
+      />
+      <TextInput
+        label="One-time donate link"
+        description="A PayPal.me or hosted donate URL. Shown as a plain link, and used by anyone blocking scripts."
+        placeholder="https://www.paypal.com/donate/?hosted_button_id=..."
+        value={form.paypalDonateUrl}
+        onChange={(e) => set({ paypalDonateUrl: e.currentTarget.value })}
+        styles={inputStyles}
+      />
+      <TextInput
+        label="Monthly subscribe link"
+        description="The subscribe link for the recurring plan created in PayPal."
+        placeholder="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=..."
+        value={form.paypalSubscribeUrl}
+        onChange={(e) => set({ paypalSubscribeUrl: e.currentTarget.value })}
+        styles={inputStyles}
+      />
+      <Group gap={10} align="end" wrap="wrap">
+        <NumberInput
+          label="Minimum monthly"
+          description="In dollars."
+          min={1}
+          w={150}
+          value={form.minMonthly}
+          onChange={(v) => set({ minMonthly: Number(v) || 0 })}
+          styles={inputStyles}
+        />
+        <NumberInput
+          label="Goal: essentials"
+          min={0}
+          w={150}
+          value={form.goalEssentials}
+          onChange={(v) => set({ goalEssentials: Number(v) || 0 })}
+          styles={inputStyles}
+        />
+        <NumberInput
+          label="Goal: art"
+          min={0}
+          w={150}
+          value={form.goalGrowth}
+          onChange={(v) => set({ goalGrowth: Number(v) || 0 })}
+          styles={inputStyles}
+        />
+        <NumberInput
+          label="Goal: stretch"
+          min={0}
+          w={150}
+          value={form.goalStretch}
+          onChange={(v) => set({ goalStretch: Number(v) || 0 })}
+          styles={inputStyles}
+        />
+      </Group>
+      <Group gap={10} align="end" wrap="wrap">
+        <NumberInput
+          label="Raised so far"
+          description="Typed in by hand until the PayPal sync is built."
+          min={0}
+          w={190}
+          value={form.raised}
+          onChange={(v) => set({ raised: Number(v) || 0 })}
+          styles={inputStyles}
+        />
+        <TextInput
+          label="Total updated on"
+          placeholder="29 July 2026"
+          w={190}
+          value={form.raisedUpdated}
+          onChange={(e) => set({ raisedUpdated: e.currentTarget.value })}
+          styles={inputStyles}
+        />
+        <TextInput
+          label="Year shown"
+          placeholder="2026"
+          w={120}
+          value={form.year}
+          onChange={(e) => set({ year: e.currentTarget.value })}
+          styles={inputStyles}
+        />
+      </Group>
+      {saved && (
+        <Text fz={14} c="green.0" role="status" aria-live="polite">
+          Donation settings saved.
+        </Text>
+      )}
+      <GradientButtonPrimary
+        radius="xl"
+        w="fit-content"
+        loading={save.isPending}
+        onClick={() => save.mutateAsync()}
+      >
+        Save Donation Settings
+      </GradientButtonPrimary>
+    </Stack>
+  );
+}
+
+/**
  * Site Settings: a standalone page (outside the admin tools tabs) for
  * site-wide configuration. Admins, and directors granted ManageSEO, can view
  * it. Hosts the SEO / search settings; Discord config is admin-only.
@@ -192,6 +361,8 @@ export default function SiteSettings() {
             <DiscordConfigSection />
             <Divider color="#4a464a" />
             <EmailConfigSection />
+            <Divider color="#4a464a" />
+            <DonationConfigSection />
           </>
         )}
       </Stack>

@@ -186,6 +186,15 @@ service cloud.firestore {
       allow write: if isAdmin() || hasCap('ManageSEO');
     }
 
+    // Donation settings for the Library's Support the Guild wing. World
+    // readable because that wing is a public page (a logged out visitor has to
+    // see the goal); nothing secret lives here, only public PayPal button ids
+    // and links. Admin-only writes.
+    match /admin/donations {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // ---- Admin-managed shared data ----------------------------------------
     // Default: admin-only writes. This match also covers the economy and
     // balance docs (battle_config, casino_config, xp_defaults, leveling,

@@ -277,6 +277,25 @@ Status as of 2026-07:
 
 ## Unbuilt features
 
+- **Donations: PayPal sync + Supporter badge automation** (2026-07). The Support the
+  Guild wing (`/Library?tab=support`, `src/Pages/Library/support.tsx`) is SHIPPED, with
+  config in `admin/donations` (public read, admin write; Site Settings > Donations) and
+  a fixed cost table in `src/queries/donations.ts`. Two pieces are deliberately manual
+  for now and should be automated when the guild has real donation volume:
+  1. **Raised total.** An admin types it into Site Settings. Automating it means a
+     server-side PayPal Transactions API (or webhook) integration: a REST app in the
+     PayPal developer dashboard, client id + secret in `adminSecrets/paypal` (NEVER
+     `VITE_*`), a scheduled function summing completed donations into
+     `admin/donations.raised`, and a yearly rollover when the goal year changes.
+  2. **Supporter badge.** Granted by hand today (badge id `supporter` in
+     `DEFAULT_BADGES`, `src/queries/badges.ts`). With webhooks, subscribe
+     `BILLING.SUBSCRIPTION.ACTIVATED` / `.CANCELLED` / `.EXPIRED` to an HTTPS function
+     that adds or removes the badge on the matching member. Members would need to link
+     their PayPal email to their account first, which is the real blocker: decide
+     whether that lives on the profile or a claim form before building it.
+  The CSP in `netlify.toml` already allows `www.paypal.com` and `www.paypalobjects.com`
+  for script/frame/form-action; adding an API host means updating it again.
+
 - **Lore Library content** — NO LONGER Gaia-blocked; real gaps FILLED (2026-07). The Lore tab
   is BUILT, and a full Gaia crawl (all posts + replies) recovered the sections a first-post-only
   scraper had missed. `functions/scripts/lore-data.json` now includes them (LOCAL edit only, NOT
