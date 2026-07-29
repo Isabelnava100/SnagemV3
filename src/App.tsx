@@ -2,6 +2,7 @@ import { Box, Flex, Paper } from "@mantine/core";
 import { useMediaQuery as useMediaQueryCore } from "@mantine/hooks";
 import { Suspense, lazy, memo, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { SignedInAccessGate, useAccessGate } from "./components/auth/AccessGate";
 
 // The sidebar (and its query/firebase import chain) is lazy: marketing
 // routes render without it, keeping the public boot graph small.
@@ -14,10 +15,18 @@ const SideBar = lazy(() =>
 // carry the marketing top bar instead. Matched case-insensitively.
 const MARKETING_ROUTES = ["/", "/about", "/login", "/register", "/forgot", "/reset"];
 
+// While an account is waiting on email verification or admin approval it sees
+// the access gate on every route but these: the public marketing and auth
+// screens (so "back to the site" and signing out still work) and the Library,
+// which the gate links to for reading while they wait.
+const GATE_EXEMPT_ROUTES = [...MARKETING_ROUTES, "/library"];
+
 export const App = memo(() => {
   const isUnder900 = useMediaQueryCore("(max-width: 900px)");
   const hasLessHeight = useMediaQueryCore("(max-height: 900px)");
   const { pathname } = useLocation();
+  const { gated } = useAccessGate();
+  const route = pathname.toLowerCase().replace(/\/$/, "") || "/";
 
   // The static hero shell in index.html is permanent (React never re-renders
   // it, so the LCP paint is never replaced): show it on the marketing
@@ -27,7 +36,26 @@ export const App = memo(() => {
     if (shell) shell.style.display = pathname === "/" ? "" : "none";
   }, [pathname]);
 
-  if (MARKETING_ROUTES.includes(pathname.toLowerCase().replace(/\/$/, "") || "/")) {
+  // Site-wide gate: a logged-in but unverified or unapproved account sees the
+  // two-step gate in place of whatever it navigated to. Rendered full bleed
+  // (no sidebar) because none of the member navigation is open to them yet.
+  if (gated && !GATE_EXEMPT_ROUTES.includes(route)) {
+    return (
+      <Box
+        component="main"
+        id="main-content"
+        tabIndex={-1}
+        style={{ minHeight: "100dvh", background: "#0e0d11", outline: "none", paddingTop: 24 }}
+      >
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+        <SignedInAccessGate />
+      </Box>
+    );
+  }
+
+  if (MARKETING_ROUTES.includes(route)) {
     return (
       <Box
         component="main"

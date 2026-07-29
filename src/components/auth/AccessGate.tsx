@@ -2,6 +2,7 @@ import { Alert, Anchor, Badge, Box, Button, Grid, Group, Stack, Text, Title } fr
 import { IconCircleCheck, IconClockHour4, IconMailForward } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 /**
  * The two-step entry gate every new account passes before the guild opens up:
@@ -110,6 +111,9 @@ export function AccessGate(props: {
   footer?: React.ReactNode;
 }) {
   const { email, emailVerified } = props;
+  // Google applicants can reach the gate without an address on hand, so never
+  // render a sentence that starts with a blank.
+  const shown = email || "Your email address";
   const [resending, setResending] = useState(false);
   const [rechecking, setRechecking] = useState(false);
   const [message, setMessage] = useState("");
@@ -153,12 +157,12 @@ export function AccessGate(props: {
           <StepCard step="01" title="Verify your email" done={emailVerified}>
             {emailVerified ? (
               <Text fz={14} c="dimmed">
-                <b>{email}</b> is verified. Nothing else to do here.
+                <b>{shown}</b> is verified. Nothing else to do here.
               </Text>
             ) : (
               <>
                 <Text fz={14} c="dimmed">
-                  We sent a verification link to <b>{email}</b>. Open it, then come back and log in.
+                  We sent a verification link to <b>{shown}</b>. Open it, then come back and log in.
                   Not there? Check your spam folder first, then ask for a new one.
                 </Text>
                 <Button
@@ -231,6 +235,81 @@ export function AccessGate(props: {
 
       {props.footer}
     </Stack>
+  );
+}
+
+/**
+ * Whether the signed-in account still has a step to clear. Both flags read the
+ * auth context, so no extra Firestore read happens here.
+ *
+ * Fails OPEN on unknown state: `profileExists` is undefined when the users doc
+ * read failed (offline, rules hiccup), and an approved member must never be
+ * locked out by a flaky read.
+ */
+export function useAccessGate(): {
+  gated: boolean;
+  needsVerification: boolean;
+  needsApproval: boolean;
+} {
+  const { user } = useAuth();
+  const needsVerification = !!user && user.emailVerified === false;
+  const needsApproval = !!user && user.profileExists === false;
+  return { gated: needsVerification || needsApproval, needsVerification, needsApproval };
+}
+
+/**
+ * The gate wired to the live session: resend goes straight through Firebase
+ * (there IS a session here, unlike on the login screen), and "check again"
+ * reloads the auth user so a link opened in another tab is picked up.
+ */
+export function SignedInAccessGate() {
+  const { user, setUser } = useAuth();
+  const { needsVerification } = useAccessGate();
+
+  const onResend = async () => {
+    const { sendEmailVerification } = await import("firebase/auth");
+    const { auth } = await import("../../context/firebase");
+    if (!auth.currentUser) return "error";
+    try {
+      await sendEmailVerification(auth.currentUser);
+      return "sent";
+    } catch (error: any) {
+      return error?.code || "error";
+    }
+  };
+
+  // emailVerified is baked into the cached auth user, so a link opened
+  // elsewhere only shows up after reloading the Firebase user.
+  const onRecheck = async () => {
+    const { auth } = await import("../../context/firebase");
+    if (!auth.currentUser || !user) return;
+    await auth.currentUser.reload().catch(() => undefined);
+    if (auth.currentUser.emailVerified) setUser({ ...user, emailVerified: true });
+  };
+
+  const onSignOut = async () => {
+    const { signOut } = await import("firebase/auth");
+    const { auth } = await import("../../context/firebase");
+    await signOut(auth).catch(() => undefined);
+  };
+
+  return (
+    <AccessGatePage
+      email={user?.email ?? ""}
+      emailVerified={!needsVerification}
+      onResend={onResend}
+      onRecheck={onRecheck}
+      footer={
+        <Group gap={10}>
+          <Button variant="default" size="sm" onClick={onSignOut}>
+            Sign out
+          </Button>
+          <Button component={Link} to="/" variant="subtle" size="sm">
+            Back to the site
+          </Button>
+        </Group>
+      }
+    />
   );
 }
 
