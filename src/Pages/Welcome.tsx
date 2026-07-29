@@ -12,7 +12,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { v4 as uuid } from "uuid";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import Seo from "../components/common/Seo";
 import { StarterPicker, useOnboardingStatus } from "../components/onboarding/OnboardingChecklist";
 import { SectionLoader } from "../components/navigation/loading";
@@ -209,8 +209,13 @@ function CreateTeamStep() {
  */
 export default function Welcome() {
   const status = useOnboardingStatus();
+  const { user } = useAuth();
 
   if (status.loading) return <SectionLoader />;
+  // Gaia returnees set up through the import page, not the new-trainer wizard.
+  if (user?.otherinfo?.isGaia === "Yes" && !status.complete) {
+    return <Navigate to="/Onboarding" replace />;
+  }
 
   return (
     <Container size="md" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>

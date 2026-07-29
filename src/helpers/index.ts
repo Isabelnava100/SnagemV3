@@ -38,10 +38,13 @@ export const getPokemonImageURL = (slug: string, shiny = false) => {
   // Gen 9 (#906-1025) box sprites are local files under /public. Prefer the
   // shiny set when asked (every Gen 9 species has both variants on disk),
   // and non Gen 9 species come from the pokesprite CDN.
+  // ?v=2 busts browser caches of the pre-July-2026 tightly-cropped set, which
+  // rendered oversized next to the padded pokesprite canvases. Bump it if the
+  // local sprite files are ever regenerated again.
   if (GEN9_SLUGS.has(slug)) {
     return shiny
-      ? `${GEN9_SPRITE_BASE}/shiny/${slug}.png`
-      : `${GEN9_SPRITE_BASE}/${slug}.png`;
+      ? `${GEN9_SPRITE_BASE}/shiny/${slug}.png?v=2`
+      : `${GEN9_SPRITE_BASE}/${slug}.png?v=2`;
   }
   return `${POKESPRITE_CDN}/pokemon-gen8/${shiny ? "shiny" : "regular"}/${slug}.png`;
 };

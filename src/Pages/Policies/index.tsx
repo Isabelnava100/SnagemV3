@@ -1,8 +1,14 @@
-import { Box, Container, Stack, Text, Title, UnstyledButton } from "@mantine/core";
+import { Anchor, Box, Container, Stack, Text, Title, UnstyledButton } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { useSearchParams } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
 import Seo from "../../components/common/Seo";
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "../../lib/contact";
+
+/** The contact address, as an inline link. Policy copy repeats it a few times. */
+function SupportLink() {
+  return <Anchor href={SUPPORT_MAILTO}>{SUPPORT_EMAIL}</Anchor>;
+}
 
 /**
  * Public policies hub. Anyone (signed in or not) can read these. A sticky tab
@@ -155,16 +161,22 @@ export function Privacy() {
           We keep your information for as long as your account is active. You can
           edit or remove most of your profile content at any time from your
           dashboard, and change notification settings under Settings. To delete
-          your account, or to ask what we hold about you, contact the staff team
-          and we will take care of it. Some posts may remain in shared threads for
+          your account, or to ask what we hold about you, write to <SupportLink />
+          {" "}and we will take care of it. Some posts may remain in shared threads for
           context, with your name removed on request where practical.
         </Text>
       </PolicySection>
       <PolicySection title="Children">
         <Text inherit>
           Snagem Guild is meant for teenagers and adults. If you believe a child
-          has given us personal information without a guardian's consent, contact
-          the staff team and we will remove it.
+          has given us personal information without a guardian&apos;s consent, write to{" "}
+          <SupportLink /> and we will remove it.
+        </Text>
+      </PolicySection>
+      <PolicySection title="How to reach us">
+        <Text inherit>
+          Privacy questions, data requests, and account deletions all go to{" "}
+          <SupportLink />. It reaches the guild staff directly, and we answer as soon as we can.
         </Text>
       </PolicySection>
     </Stack>

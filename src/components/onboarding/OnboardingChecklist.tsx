@@ -194,6 +194,8 @@ export function StarterPicker() {
  */
 export default function OnboardingChecklist(props: { intro?: string }) {
   const status = useOnboardingStatus();
+  const { user } = useAuth();
+  const isGaia = user?.otherinfo?.isGaia === "Yes";
   if (status.loading) return null;
 
   return (
@@ -201,18 +203,31 @@ export default function OnboardingChecklist(props: { intro?: string }) {
       {props.intro && <Text c="white">{props.intro}</Text>}
       <Paper p={14} radius="md" bg="#242224" style={{ border: "1px solid #4a464a" }}>
         <Stack gap={12}>
-          <StepRow done={status.hasCharacter} label="1. Create your first character.">
-            <Box>
-              <Button
-                component={Link}
-                to="/Dashboard/Characters"
-                size="xs"
-                radius="xl"
-                color="pink.0"
-              >
-                Create a character
-              </Button>
-            </Box>
+          <StepRow
+            done={status.hasCharacter}
+            label={
+              isGaia
+                ? "1. Import your Gaia collection (characters, pokemon, items)."
+                : "1. Create your first character."
+            }
+          >
+            <Group gap={8} wrap="wrap">
+              {isGaia ? (
+                <Button component={Link} to="/Onboarding" size="xs" radius="xl" color="pink.0">
+                  Open the import page
+                </Button>
+              ) : (
+                <Button
+                  component={Link}
+                  to="/Dashboard/Characters"
+                  size="xs"
+                  radius="xl"
+                  color="pink.0"
+                >
+                  Create a character
+                </Button>
+              )}
+            </Group>
           </StepRow>
           <StepRow done={status.hasPokemon} label="2. Get your first pokemon.">
             <StarterPicker />

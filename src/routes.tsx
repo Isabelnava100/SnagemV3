@@ -22,7 +22,7 @@ import { lazyImport } from "./utils/lazyImport";
 // pushed LCP past 2s. Everything below stays route-lazy.
 import { App } from "./App";
 import { HomePage } from "./Pages/Homepage";
-import { AuthContextProvider } from "./context/AuthContext";
+import { AuthContextProvider, useAuth } from "./context/AuthContext";
 
 const { Dashboard } = lazyImport(() => import("./Pages/User/Dashboard"), "Dashboard");
 const { ForgotPassword } = lazyImport(() => import("./Pages/auth/ForgotPW"), "ForgotPassword");
@@ -152,8 +152,13 @@ function ScrollToTop() {
  */
 function RequireOnboarding(props: { children: JSX.Element }) {
   const status = useOnboardingStatus();
+  const { user } = useAuth();
   if (status.loading) return <Loader />;
-  if (!status.complete) return <Navigate to="/Welcome" replace />;
+  // Gaia returnees are not new trainers: their setup path is the import page
+  // (prefill their old collection), not the create-a-character wizard.
+  if (!status.complete) {
+    return <Navigate to={user?.otherinfo?.isGaia === "Yes" ? "/Onboarding" : "/Welcome"} replace />;
+  }
   return props.children;
 }
 

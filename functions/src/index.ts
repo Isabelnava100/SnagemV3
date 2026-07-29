@@ -3572,16 +3572,17 @@ export const approveNewUser = onCall(async (request) => {
   if (!newSnap.exists) throw new HttpsError("not-found", "That applicant no longer exists.");
   const data = newSnap.data()!;
 
-  // Never approve an unverified applicant: the login form also refuses them,
-  // so promoting one here would strand an account that can never sign in. A
-  // missing auth record fails the same way (nothing to verify against).
+  // Approval and email verification are independent steps: an admin may
+  // approve first, and the login form still refuses password sign-in until
+  // the address is verified, so no unverified account gets in either way.
+  // Only a missing auth record blocks approval (nothing to promote).
   const authRecord = await getAuth()
     .getUser(targetUid)
     .catch(() => null);
-  if (!authRecord?.emailVerified) {
+  if (!authRecord) {
     throw new HttpsError(
       "failed-precondition",
-      "That applicant has not verified their email address yet. Ask them to open the verification link in their inbox, then approve them."
+      "That applicant has no sign-in account on record, so they cannot be approved."
     );
   }
 

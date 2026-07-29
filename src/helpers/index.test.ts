@@ -27,12 +27,12 @@ describe("getPokemonImageURL", () => {
   });
   it("serves Gen 9 sprites from the local public directory", () => {
     expect(getPokemonImageURL("sprigatito")).toBe(
-      "/images/sprites/gen9/sprigatito.png"
+      "/images/sprites/gen9/sprigatito.png?v=2"
     );
   });
   it("serves Gen 9 shiny sprites from the local public directory", () => {
     expect(getPokemonImageURL("sprigatito", true)).toBe(
-      "/images/sprites/gen9/shiny/sprigatito.png"
+      "/images/sprites/gen9/shiny/sprigatito.png?v=2"
     );
   });
   it("falls back to the CDN for unknown slugs", () => {

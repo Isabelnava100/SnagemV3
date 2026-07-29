@@ -58,13 +58,12 @@ export function NewRegister() {
       email: (value: string) => (/^\S+@\S+$/.test(value) ? null : "Invalid email."),
       username: (value: string) => (/^[a-zA-Z0-9-_]{3,23}$/.test(value) ? null : "Invalid username."),
       password: (value: string) => {
-        if (gaia === "No") return null;
         if (value.length < 6) return "Password must include at least 6 characters.";
         const isValid = requirements.every((req) => req.re.test(value));
         return isValid ? null : "Password does not meet all requirements.";
       },
       confirmPassword: (value: string, values: any) =>
-        value !== values.password && gaia === "Yes" ? "Passwords did not match." : null,
+        value !== values.password ? "Passwords did not match." : null,
       application: (value: string) =>
         value.length < 500 && gaia === "No"
           ? "Application must be at least 500 characters long."
@@ -293,60 +292,58 @@ export function NewRegister() {
                   </Anchor>
                 </Text>
               )}
+
+              <Popover
+                opened={popoverOpened}
+                onChange={setPopoverOpened}
+                transitionProps={{ transition: "pop" }}
+                position="bottom-start"
+                width="target"
+              >
+                <Popover.Target>
+                  <PasswordInput
+                    mt="md"
+                    required
+                    {...form.getInputProps("password")}
+                    label="Password"
+                    description="Should include letters in lower and uppercase, at least 1 number and at least 1 special symbol."
+                    value={value}
+                    onFocus={() => setPopoverOpened(true)}
+                    onBlur={() => setPopoverOpened(false)}
+                    onChange={(event) => {
+                      setValue(event.currentTarget.value);
+                      form.setFieldValue("password", event.currentTarget.value);
+                    }}
+                  />
+                </Popover.Target>
+                <Popover.Dropdown>
+                  <Progress
+                    color={color}
+                    value={strength}
+                    size={5}
+                    style={{ marginBottom: 10 }}
+                  />
+                  <PasswordRequirement
+                    label="Includes at least 6 characters"
+                    meets={value.length > 5}
+                  />
+                  {checks}
+                </Popover.Dropdown>
+              </Popover>
+              <PasswordInput
+                {...form.getInputProps("confirmPassword")}
+                mt="md"
+                label="Confirm Password"
+                required
+              />
             </Grid.Col>
             <Grid.Col span={{ base: 12, sm: 6 }}>
               {gaia === "Yes" ? (
-                <>
-                  <TextInput
-                    required
-                    label="Gaiaonline Username"
-                    {...form.getInputProps("gaiaName")}
-                  />
-
-                  <Popover
-                    opened={popoverOpened}
-                    onChange={setPopoverOpened}
-                    transitionProps={{ transition: "pop" }}
-                    position="bottom-start"
-                    width="target"
-                  >
-                    <Popover.Target>
-                      <PasswordInput
-                        mt="md"
-                        required
-                        {...form.getInputProps("password")}
-                        label="Password"
-                        description="Should include letters in lower and uppercase, at least 1 number and at least 1 special symbol."
-                        value={value}
-                        onFocus={() => setPopoverOpened(true)}
-                        onBlur={() => setPopoverOpened(false)}
-                        onChange={(event) => {
-                          setValue(event.currentTarget.value);
-                          form.setFieldValue("password", event.currentTarget.value);
-                        }}
-                      />
-                    </Popover.Target>
-                    <Popover.Dropdown>
-                      <Progress
-                        color={color}
-                        value={strength}
-                        size={5}
-                        style={{ marginBottom: 10 }}
-                      />
-                      <PasswordRequirement
-                        label="Includes at least 6 characters"
-                        meets={value.length > 5}
-                      />
-                      {checks}
-                    </Popover.Dropdown>
-                  </Popover>
-                  <PasswordInput
-                    {...form.getInputProps("confirmPassword")}
-                    mt="md"
-                    label="Confirm Password"
-                    required
-                  />
-                </>
+                <TextInput
+                  required
+                  label="Gaiaonline Username"
+                  {...form.getInputProps("gaiaName")}
+                />
               ) : (
                 <>
                   <Stack gap={7}>

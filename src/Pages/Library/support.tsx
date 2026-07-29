@@ -1,5 +1,6 @@
 import {
   Alert,
+  Anchor,
   Badge,
   Box,
   Button,
@@ -14,6 +15,7 @@ import {
 import { IconExternalLink, IconHeart, IconRepeat } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "../../lib/contact";
 import { COST_LINES, COST_TOTAL, getDonationConfig } from "../../queries/donations";
 
 /**
@@ -303,6 +305,16 @@ export default function SupportWing() {
           Badges are awarded by hand right now, so after your first payment goes through, message an
           admin and it will be added. If a pledge is cancelled, the badge comes off at the next
           check.
+        </Text>
+      </Section>
+
+      <Section title="Questions or concerns">
+        <Text>
+          Anything about donations, a pledge you want changed or cancelled, a receipt, or where the
+          money went: write to{" "}
+          <Anchor href={SUPPORT_MAILTO}>{SUPPORT_EMAIL}</Anchor> and a person will answer. If you
+          would rather cancel a monthly pledge yourself, you can do that from your own PayPal
+          account without asking us.
         </Text>
       </Section>
 

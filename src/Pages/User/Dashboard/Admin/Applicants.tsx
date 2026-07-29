@@ -43,8 +43,8 @@ export function ApplicantCard(props: { applicant: NewUserApplicant; onDone: () =
   const approve = useMutation({
     mutationFn: () => approveNewUser(applicant.id, role),
     onSuccess: props.onDone,
-    // callableMessage surfaces the server's HttpsError text (e.g. the
-    // unverified-email refusal) and hides raw "internal" noise.
+    // callableMessage surfaces the server's HttpsError text and hides raw
+    // "internal" noise.
     onError: (e) => setMessage(callableMessage(e, "Could not approve.")),
   });
   const reject = useMutation({

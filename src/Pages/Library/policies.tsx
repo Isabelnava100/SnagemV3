@@ -1,5 +1,6 @@
-import { Box, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Anchor, Box, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useSearchParams } from "react-router-dom";
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "../../lib/contact";
 import { Conduct, Cookies, Credits, Privacy, Terms } from "../Policies";
 
 const DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
@@ -77,7 +78,12 @@ export default function PoliciesWing() {
         })}
       </Box>
       <Text fz={13} c="dimmed">
-        Snagem Guild is a non-commercial Pokemon fan community. Last updated July 2026.
+        Snagem Guild is a non-commercial Pokemon fan community. Last updated July 2026. For
+        privacy requests, account deletion, or anything else about these documents, write to{" "}
+        <Anchor href={SUPPORT_MAILTO} fz={13}>
+          {SUPPORT_EMAIL}
+        </Anchor>
+        .
       </Text>
       {activeDoc.content}
     </Stack>
