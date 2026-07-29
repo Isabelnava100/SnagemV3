@@ -103,6 +103,14 @@ function StepCard(props: {
 export function AccessGate(props: {
   email: string;
   emailVerified: boolean;
+  /** An admin has already cleared this account (a users doc exists). */
+  approved?: boolean;
+  /**
+   * Returning GaiaOnline member. Their step 2 is not an application review:
+   * staff are confirming the account matches their Gaia username, so the copy
+   * changes to say that.
+   */
+  isGaia?: boolean;
   /** Sends a fresh verification email. Resolves "sent" on success. */
   onResend: () => Promise<string>;
   /** Re-checks Firebase for a verification that just happened in another tab. */
@@ -111,9 +119,12 @@ export function AccessGate(props: {
   footer?: React.ReactNode;
 }) {
   const { email, emailVerified } = props;
+  const approved = !!props.approved;
+  const isGaia = !!props.isGaia;
   // Google applicants can reach the gate without an address on hand, so never
   // render a sentence that starts with a blank.
   const shown = email || "Your email address";
+  const reviewTitle = isGaia ? "Gaia account check" : "Admin review";
   const [resending, setResending] = useState(false);
   const [rechecking, setRechecking] = useState(false);
   const [message, setMessage] = useState("");
@@ -197,40 +208,58 @@ export function AccessGate(props: {
         </Grid.Col>
 
         <Grid.Col span={{ base: 12, sm: 6 }}>
-          {/* Step 2 is never "done" on this screen: once an admin approves, the
-              member is let straight through to the dashboard. It is always the
-              staff's turn, so it never asks the applicant for an action. */}
+          {/* Already-approved accounts (an admin cleared them, or they were
+              imported) show this step as done: their only remaining blocker is
+              the email link. Otherwise it is always the staff's turn, so this
+              card never asks the member for an action. */}
           <StepCard
             step="02"
-            title="Admin review"
-            done={false}
-            waiting
+            title={reviewTitle}
+            done={approved}
+            waiting={!approved}
             waitingLabel={emailVerified ? "Under review" : "Waiting on step 1"}
-            blocked={!emailVerified}
+            blocked={!approved && !emailVerified}
           >
-            {emailVerified ? (
+            {approved ? (
+              <Text fz={14} c="dimmed">
+                {isGaia
+                  ? "An admin has already confirmed your account against your GaiaOnline username. Nothing else to do here."
+                  : "An admin has already approved your account. Nothing else to do here."}
+              </Text>
+            ) : isGaia ? (
               <>
                 <Text fz={14} c="dimmed">
-                  Your email is verified, so your application is now with the team. Every one is read
-                  by hand, so give it a day or two.
+                  {emailVerified
+                    ? "Your email is verified, so an admin now needs to confirm your account is correctly associated with your GaiaOnline username."
+                    : "Once your email is verified, an admin needs to confirm your account is correctly associated with your GaiaOnline username."}{" "}
+                  That is a manual check against the guild's Gaia records, so give it a day or two.
+                </Text>
+                <Text fz={14} c="dimmed">
+                  You will hear back by email either way. Once you are in, your old collection can be
+                  imported from the onboarding page.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text fz={14} c="dimmed">
+                  {emailVerified
+                    ? "Your email is verified, so your application is now with the team. Every one is read by hand, so give it a day or two."
+                    : "Once your email is verified, an admin reviews your roleplay application. That usually takes a day or two."}
                 </Text>
                 <Text fz={14} c="dimmed">
                   You will get an email either way: a welcome message once you are accepted, or a
                   note explaining why you were turned down and whether you can apply again.
                 </Text>
               </>
-            ) : (
-              <Text fz={14} c="dimmed">
-                Once your email is verified, an admin reviews your roleplay application. That
-                usually takes a day or two, and you will hear back by email either way.
-              </Text>
             )}
           </StepCard>
         </Grid.Col>
       </Grid>
 
       <Alert color="grape" variant="light" role="status" aria-live="polite">
-        Both steps have to be cleared before your dashboard and the new trainer setup open up.
+        {approved
+          ? "One step left. Your dashboard and the new trainer setup open as soon as your email is verified."
+          : "Both steps have to be cleared before your dashboard and the new trainer setup open up."}
       </Alert>
 
       {props.footer}
@@ -271,7 +300,8 @@ export function SignedInAccessGate() {
     const { auth } = await import("../../context/firebase");
     if (!auth.currentUser) return "error";
     try {
-      await sendEmailVerification(auth.currentUser);
+      const { verifyEmailActionSettings } = await import("../../Pages/auth/components/Components");
+      await sendEmailVerification(auth.currentUser, verifyEmailActionSettings());
       return "sent";
     } catch (error: any) {
       return error?.code || "error";
@@ -297,6 +327,8 @@ export function SignedInAccessGate() {
     <AccessGatePage
       email={user?.email ?? ""}
       emailVerified={!needsVerification}
+      approved={user?.profileExists !== false}
+      isGaia={user?.otherinfo?.isGaia === "Yes"}
       onResend={onResend}
       onRecheck={onRecheck}
       footer={

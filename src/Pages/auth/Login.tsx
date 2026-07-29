@@ -19,7 +19,7 @@ import { MarketingTopBar } from "../../components/redesign/Marketing";
 import { useAuth } from "../../context/AuthContext";
 import { AuthCard, coolGradient, warmGradient } from "./components/AuthCard";
 import { handleGoogleSignIn, lastGoogleEmail } from "./components/GoogleHandle";
-import { handleSignIn, resendVerificationEmail } from "./components/LoginHandle";
+import { handleSignIn, lastSignInContext, resendVerificationEmail } from "./components/LoginHandle";
 
 const EEVEE_IMG =
   "https://firebasestorage.googleapis.com/v0/b/snagemguild.appspot.com/o/site%2Fsleepingeevee.png?alt=media&token=72f49c9d-9479-441f-bae3-4191b18ba42f";
@@ -100,6 +100,8 @@ export function Login() {
             <AccessGate
               email={gateEmail}
               emailVerified={!unverifiedEmail}
+              approved={lastSignInContext.approved}
+              isGaia={lastSignInContext.isGaia}
               onResend={onResend}
               footer={
                 <Group gap={10}>

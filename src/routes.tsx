@@ -29,6 +29,7 @@ const { ForgotPassword } = lazyImport(() => import("./Pages/auth/ForgotPW"), "Fo
 const { Login } = lazyImport(() => import("./Pages/auth/Login"), "Login");
 const { NewRegister } = lazyImport(() => import("./Pages/auth/NewRegister"), "NewRegister");
 const { ResetPW } = lazyImport(() => import("./Pages/auth/ResetPW"), "ResetPW");
+const { AuthAction } = lazyImport(() => import("./Pages/auth/AuthAction"), "AuthAction");
 const { default: ForumIndex } = lazyImport(
   () => import("./Pages/forum/pages/ForumIndex"),
   "default"
@@ -307,6 +308,9 @@ export default function AppRoutes() {
                     <Route path="/Register" element={<NewRegister />} />
                     <Route path="/Forgot" element={<ForgotPassword />} />
                     <Route path="/Reset" element={<ResetPW />} />
+                    {/* Firebase's custom action URL: every emailed auth link
+                        (verify, password reset, email-change revert) lands here. */}
+                    <Route path="/Auth/Action" element={<AuthAction />} />
                     <Route path="/Forum">
                       <Route index element={<Navigate to="Main-Forum" replace />} />
                       <Route path=":forum" element={<ForumIndex />} />

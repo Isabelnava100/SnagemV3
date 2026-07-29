@@ -4,7 +4,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, getDb } from "../../../context/firebase";
-import { generatePassword } from "./Components";
+import { generatePassword, verifyEmailActionSettings } from "./Components";
 
 /** A GaiaOnline name reduced to a stable, Firestore-safe claim key. */
 const gaiaClaimId = (gaiaName: string) =>
@@ -68,7 +68,7 @@ export const registerUser = async (
       // account; login refuses unverified password accounts and approveNewUser
       // refuses to promote them, so this link is the applicant's only way in.
       // Non-fatal: a mail hiccup should not block the application itself.
-      await sendEmailVerification(user).catch(() => undefined);
+      await sendEmailVerification(user, verifyEmailActionSettings()).catch(() => undefined);
     }
 
     return "success";

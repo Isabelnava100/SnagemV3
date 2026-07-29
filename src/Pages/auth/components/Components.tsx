@@ -48,7 +48,18 @@ export const requirements = [
 }
 
 //List of users pre-approved
-  export const Gusers:Array<string>=[
+  /**
+ * Where Firebase sends someone after they open a verification link. Passed as
+ * `actionCodeSettings`, so the link carries a continueUrl our own action
+ * handler (/Auth/Action) reads and redirects to. The origin is taken from the
+ * running site, so localhost and production both work without a build flag.
+ */
+export const verifyEmailActionSettings = () => ({
+  url: `${window.location.origin}/Login`,
+  handleCodeInApp: false,
+});
+
+export const Gusers:Array<string>=[
       // Members found in the July 2026 Gaia profile export (scripts/gaia-export)
       // who were missing from the original list; their onboarding prefill
       // packets exist, so they must be able to register with their Gaia name.

@@ -13,7 +13,7 @@ const SideBar = lazy(() =>
 // Full-bleed routes rendered outside the app shell (no sidebar / bottom tabs /
 // gradient frame): the marketing pages and the logged-out auth screens, which
 // carry the marketing top bar instead. Matched case-insensitively.
-const MARKETING_ROUTES = ["/", "/about", "/login", "/register", "/forgot", "/reset"];
+const MARKETING_ROUTES = ["/", "/about", "/login", "/register", "/forgot", "/reset", "/auth/action"];
 
 // While an account is waiting on email verification or admin approval it sees
 // the access gate on every route but these: the public marketing and auth
