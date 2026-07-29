@@ -279,23 +279,6 @@ export default function Welcome() {
           </Text>
         </StepCard>
 
-        <StepCard num="05" title="What happens when you post" done={false}>
-          <Stack gap={6}>
-            <Text fz={14} c="#b6b1bc" lh={1.55}>
-              Your team earns experience and friendship with every post. Level 20 and 40 can mean
-              evolution.
-            </Text>
-            <Text fz={14} c="#b6b1bc" lh={1.55}>
-              Wild Pokemon appear in threads: write the fight, wear them down, and snag them with
-              a Poke Ball.
-            </Text>
-            <Text fz={14} c="#b6b1bc" lh={1.55}>
-              Your team locks to the thread you first post in, so bring the right partner. And
-              watch for Shadow Pokemon: they can be purified, through play.
-            </Text>
-          </Stack>
-        </StepCard>
-
         {status.complete ? (
           <Box
             p={{ base: 18, sm: 24 }}
