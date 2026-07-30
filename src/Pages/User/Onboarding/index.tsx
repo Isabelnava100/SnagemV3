@@ -784,51 +784,107 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           + Add Pokemon
         </AngularButton>
       </Group>
-      <Stack gap={8}>
+      {/* Grid of editable cards: every field of every pokemon stays
+          adjustable right here in the draft, not just at add time. */}
+      <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={10}>
         {props.pokemon.map((p, i) => (
-          <Group
+          <PokemonEditCard
             key={i}
-            wrap="nowrap"
-            align="center"
-            gap={12}
-            style={{ background: "#0e0d11", border: "1px solid #232028", padding: "10px 14px" }}
-          >
-            <PokemonHoverCard species={{ slug: p.slug }}>
-              <Avatar
-                src={getPokemonImageURL(p.slug)}
-                alt={p.species}
-                size={32}
-                radius={0}
-                imageProps={{ style: { imageRendering: "pixelated" } }}
-              >
-                <img src={POKEMON_SPRITE_FALLBACK} alt="" width={20} height={20} />
-              </Avatar>
-            </PokemonHoverCard>
-            <Text fz={14} fw={700} c="white" style={{ flex: 1, minWidth: 0 }}>
-              {p.species}
-              {p.shiny ? " (Shiny)" : ""}
-            </Text>
-            <Text fz={14} c="#b6b1bc" style={{ flexShrink: 0 }}>
-              Lv {p.level} · {p.gender}
-            </Text>
-            <ActionIcon
-              size="sm"
-              color="red"
-              variant="subtle"
-              aria-label={`Remove ${p.species}`}
-              onClick={() => props.onChange(props.pokemon.filter((_, j) => j !== i))}
-            >
-              <IconTrash size={14} />
-            </ActionIcon>
-          </Group>
+            p={p}
+            onChange={(patch) =>
+              props.onChange(props.pokemon.map((x, j) => (j === i ? { ...x, ...patch } : x)))
+            }
+            onRemove={() => props.onChange(props.pokemon.filter((_, j) => j !== i))}
+          />
         ))}
-        {!props.pokemon.length && (
-          <Text fz={14} c="#8f8a99">
-            No Pokemon added yet.
-          </Text>
-        )}
-      </Stack>
+      </SimpleGrid>
+      {!props.pokemon.length && (
+        <Text fz={14} c="#8f8a99">
+          No Pokemon added yet.
+        </Text>
+      )}
     </SectionCard>
+  );
+}
+
+/** One editable pokemon tile in the draft grid. */
+function PokemonEditCard(props: {
+  p: ImportPokemon;
+  onChange: (patch: Partial<ImportPokemon>) => void;
+  onRemove: () => void;
+}) {
+  const { p, onChange, onRemove } = props;
+  const num = (
+    label: string,
+    key: "level" | "friendship" | "shadow" | "purification",
+    min: number,
+    max: number
+  ) => (
+    <NumberInput
+      label={label}
+      min={min}
+      max={max}
+      value={p[key]}
+      onChange={(v) => onChange({ [key]: Math.max(min, Math.min(max, Number(v) || min)) })}
+      size="xs"
+      radius={0}
+      sx={FIELD_SX}
+    />
+  );
+  return (
+    <Stack gap={10} p={12} style={{ background: "#0e0d11", border: "1px solid #232028" }}>
+      <Group wrap="nowrap" align="center" gap={10}>
+        <PokemonHoverCard species={{ slug: p.slug }}>
+          <Avatar
+            src={getPokemonImageURL(p.slug)}
+            alt={p.species}
+            size={36}
+            radius={0}
+            imageProps={{ style: { imageRendering: "pixelated" } }}
+          >
+            <img src={POKEMON_SPRITE_FALLBACK} alt="" width={20} height={20} />
+          </Avatar>
+        </PokemonHoverCard>
+        <Text fz={14} fw={700} c="white" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
+          {p.species}
+          {p.shiny ? " (Shiny)" : ""}
+        </Text>
+        <ActionIcon
+          size="sm"
+          color="red"
+          variant="subtle"
+          aria-label={`Remove ${p.species}`}
+          onClick={onRemove}
+        >
+          <IconTrash size={14} />
+        </ActionIcon>
+      </Group>
+      <SimpleGrid cols={2} spacing={8}>
+        <Select
+          label="Gender"
+          data={[
+            { value: "M", label: "Male" },
+            { value: "F", label: "Female" },
+          ]}
+          value={p.gender}
+          onChange={(v) => onChange({ gender: (v as "M" | "F") ?? "M" })}
+          size="xs"
+          radius={0}
+          sx={FIELD_SX}
+        />
+        {num("Level", "level", 1, MAX_LEVEL)}
+        {num("Friendship", "friendship", 0, 255)}
+        {num("Shadow", "shadow", 0, 100)}
+        {num("Purification", "purification", 0, 100)}
+        <Checkbox
+          label="Shiny"
+          checked={p.shiny}
+          onChange={(e) => onChange({ shiny: e.currentTarget.checked })}
+          mt={22}
+          sx={{ "& label": { color: "#fff" } }}
+        />
+      </SimpleGrid>
+    </Stack>
   );
 }
 
