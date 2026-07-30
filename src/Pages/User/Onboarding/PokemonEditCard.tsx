@@ -26,15 +26,14 @@ const FIELD_SX = {
   "& input::placeholder": { color: "#8f8a99" },
 } as const;
 
-export const UNASSIGNED = "";
-
 /** One editable pokemon tile in the draft: nickname, gender, level, and the
  * character it belongs to up front, stat fields behind an Edit stats toggle. */
 export default function PokemonEditCard(props: {
   p: ImportPokemon;
   onChange: (patch: Partial<ImportPokemon>) => void;
   onRemove: () => void;
-  /** Character names the pokemon can be assigned to; empty hides the select. */
+  /** Character names the pokemon can be assigned to; empty hides the select.
+   * Every pokemon must belong to a character, so there is no blank option. */
   characterOptions?: string[];
 }) {
   const { p, onChange, onRemove, characterOptions = [] } = props;
@@ -111,12 +110,10 @@ export default function PokemonEditCard(props: {
       {characterOptions.length > 0 && (
         <Select
           label="Character"
-          data={[
-            { value: UNASSIGNED, label: "Unassigned" },
-            ...characterOptions.map((name) => ({ value: name, label: name })),
-          ]}
-          value={p.character ?? UNASSIGNED}
-          onChange={(v) => onChange({ character: v || UNASSIGNED })}
+          data={characterOptions.map((name) => ({ value: name, label: name }))}
+          value={p.character && characterOptions.includes(p.character) ? p.character : null}
+          placeholder="Pick a character"
+          onChange={(v) => v && onChange({ character: v })}
           size="xs"
           radius={0}
           sx={FIELD_SX}

@@ -24,6 +24,7 @@ import { ItemHoverCard } from "../../../components/common/ItemHoverCard";
 import { PokemonHoverCard } from "../../../components/pokemon/PokemonHoverCard";
 import { SectionLoader } from "../../../components/navigation/loading";
 import { useAuth } from "../../../context/AuthContext";
+import { getCharacters } from "../../../queries/dashboard";
 import { itemData } from "../../../data/item";
 import { pokemonData } from "../../../data/pokemon";
 import { getItemImageURL, getPokemonImageURL, POKEMON_SPRITE_FALLBACK } from "../../../helpers";
@@ -210,12 +211,26 @@ export default function Onboarding() {
   const scratchActive = gaiaTab === "scratch";
   // Same packet the Gaia components load (shared query key, so it is
   // cached); the page needs the character names to group pokemon.
-  const { data: gaiaPacket } = useQuery({
+  const { data: gaiaPacket, isSuccess: packetLoaded } = useQuery({
     queryKey: ["gaia-export", gaiaSlug],
     queryFn: () => getGaiaExport(gaiaSlug!),
     enabled: !!gaiaSlug,
   });
   const characterNames = (gaiaPacket?.characters ?? []).map((c) => c.name).filter(Boolean);
+  // Characters already on the account (shares the dashboard query key).
+  const { data: accountChars, isSuccess: charsLoaded } = useQuery({
+    queryKey: ["get-characters", uid],
+    queryFn: () => getCharacters(uid as string),
+    enabled: !!uid,
+  });
+  // Every name a pokemon may be assigned to: Gaia characters first, then any
+  // characters already created on the account.
+  const assignableNames = [
+    ...new Set([
+      ...characterNames,
+      ...(accountChars?.sortedData ?? []).map((c) => c.name).filter(Boolean),
+    ]),
+  ];
 
   React.useEffect(() => {
     if (isPending || seeded) return;
@@ -238,6 +253,29 @@ export default function Onboarding() {
 
   const status = request?.status ?? "draft";
   const locked = status === "pending" || status === "completed";
+
+  // Every pokemon must belong to a character. Once the character sources
+  // have loaded, repair the live draft: unknown assignments move to the
+  // first available character, and with no characters at all the pokemon
+  // are removed (there is nobody to own them). Runs until the draft is
+  // clean, then never changes anything again.
+  const draftReady = seeded && !locked && charsLoaded && (!gaiaSlug || packetLoaded);
+  React.useEffect(() => {
+    if (!draftReady || !entries.pokemon.length) return;
+    if (!assignableNames.length) {
+      update({ ...entries, pokemon: [] });
+      return;
+    }
+    const valid = new Set(assignableNames);
+    if (entries.pokemon.every((p) => valid.has(p.character ?? ""))) return;
+    update({
+      ...entries,
+      pokemon: entries.pokemon.map((p) =>
+        valid.has(p.character ?? "") ? p : { ...p, character: assignableNames[0] }
+      ),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftReady, entries.pokemon, assignableNames.join("|")]);
 
   const saveDraft = useMutation({
     mutationFn: (next: ImportEntries) => saveImportDraft(uid as string, next),
@@ -394,10 +432,12 @@ export default function Onboarding() {
                   slug={gaiaSlug}
                   pokemon={entries.pokemon}
                   onPokemonChange={(pokemon) => update({ ...entries, pokemon })}
+                  characterOptions={assignableNames}
                 />
                 <PokemonSection
                   pokemon={entries.pokemon}
                   characterNames={characterNames}
+                  assignableNames={assignableNames}
                   onChange={(pokemon) => update({ ...entries, pokemon })}
                 />
 
@@ -643,6 +683,9 @@ function PokemonSection(props: {
   /** Gaia character names; pokemon assigned to one render under that
    * character's card above, this section holds the rest. */
   characterNames: string[];
+  /** Every assignable character (Gaia + created). Pokemon always belong to
+   * a character, so adding requires at least one. */
+  assignableNames: string[];
   onChange: (p: ImportPokemon[]) => void;
 }) {
   const [slug, setSlug] = React.useState<string | null>(null);
@@ -652,6 +695,12 @@ function PokemonSection(props: {
   const [friendship, setFriendship] = React.useState(0);
   const [shadow, setShadow] = React.useState(0);
   const [purification, setPurification] = React.useState(0);
+  const [addCharacter, setAddCharacter] = React.useState<string | null>(null);
+  // Default the character to the first available one.
+  const effectiveCharacter =
+    addCharacter && props.assignableNames.includes(addCharacter)
+      ? addCharacter
+      : props.assignableNames[0] ?? null;
 
   const options = React.useMemo(
     () => pokemonData.map((p) => ({ value: p.slug, label: p.name })),
@@ -660,13 +709,14 @@ function PokemonSection(props: {
 
   const add = () => {
     const p = pokemonData.find((x) => x.slug === slug);
-    if (!p) return;
+    if (!p || !effectiveCharacter) return;
     props.onChange([
       ...props.pokemon,
       {
         species: p.name,
         slug: p.slug,
         pokedex: String(Number(p.idx)),
+        character: effectiveCharacter,
         gender,
         shiny,
         level,
@@ -760,16 +810,31 @@ function PokemonSection(props: {
           radius={0}
           sx={FIELD_SX}
         />
+        <Select
+          label="Character"
+          data={props.assignableNames.map((name) => ({ value: name, label: name }))}
+          value={effectiveCharacter}
+          onChange={setAddCharacter}
+          w={170}
+          radius={0}
+          sx={FIELD_SX}
+        />
         <Checkbox
           label="Shiny"
           checked={shiny}
           onChange={(e) => setShiny(e.currentTarget.checked)}
           sx={{ "& label": { color: "#fff" } }}
         />
-        <AngularButton kind="cyan" size="sm" disabled={!slug} onClick={add}>
+        <AngularButton kind="cyan" size="sm" disabled={!slug || !effectiveCharacter} onClick={add}>
           + Add Pokemon
         </AngularButton>
       </Group>
+      {!props.assignableNames.length && (
+        <Text fz={14} c="#FFD074">
+          Every pokemon belongs to a character, so add your characters first (the Characters
+          section above), then add pokemon here.
+        </Text>
+      )}
       {/* Only pokemon without a (known) character live here; the rest render
           under their character's card in the Gaia section above. */}
       {(() => {
@@ -781,8 +846,8 @@ function PokemonSection(props: {
           <>
             {props.characterNames.length > 0 && (
               <Text fz={14} c="#8f8a99" lh={1.55}>
-                Pokemon assigned to a character are shown under that character above. These are
-                the unassigned ones; use the Character field on a card to assign it.
+                Pokemon belonging to a Gaia character are shown under that character above; this
+                section holds the ones assigned to your other characters.
               </Text>
             )}
             <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={10}>
@@ -790,7 +855,7 @@ function PokemonSection(props: {
                 <PokemonEditCard
                   key={index}
                   p={p}
-                  characterOptions={props.characterNames}
+                  characterOptions={props.assignableNames}
                   onChange={(patch) =>
                     props.onChange(
                       props.pokemon.map((x, j) => (j === index ? { ...x, ...patch } : x))

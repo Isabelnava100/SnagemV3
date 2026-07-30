@@ -161,21 +161,33 @@ export function entriesFromExport(packet: GaiaExport): {
   entries: ImportEntries;
   noteAppend: string;
 } {
-  const pokemon: ImportPokemon[] = packet.pokemon
-    .filter((p) => p.slug)
-    .map((p) => ({
-      species: p.species,
-      slug: p.slug,
-      pokedex: p.pokedex,
-      character: p.character || "",
-      gender: p.gender || (Math.random() < 0.5 ? "M" : "F"),
-      shiny: p.shiny,
-      level: p.level,
-      friendship: 0,
-      shadow: p.shadow ? 100 : 0,
-      purification: 0,
-    }));
+  // Every pokemon must belong to a character: unmatched ones fall back to
+  // the packet's first character, and a packet with no characters at all
+  // prefills no pokemon (there is nobody to assign them to).
+  const charNames = packet.characters.map((c) => c.name).filter(Boolean);
+  const knownChars = new Set(charNames);
+  const pokemon: ImportPokemon[] = charNames.length
+    ? packet.pokemon
+        .filter((p) => p.slug)
+        .map((p) => ({
+          species: p.species,
+          slug: p.slug,
+          pokedex: p.pokedex,
+          character: knownChars.has(p.character) ? p.character : charNames[0],
+          gender: p.gender || (Math.random() < 0.5 ? "M" : "F"),
+          shiny: p.shiny,
+          level: p.level,
+          friendship: 0,
+          shadow: p.shadow ? 100 : 0,
+          purification: 0,
+        }))
+    : [];
   const noteLines: string[] = [`Prefilled from the Gaia export for ${packet.gaiaName}.`];
+  if (!charNames.length && packet.pokemon.length) {
+    noteLines.push(
+      "The Gaia export lists pokemon but no characters, so no pokemon were prefilled (every pokemon needs a character). Staff should check the export."
+    );
+  }
   // "2/3" style piece counts import as the leading number; odd formats go to
   // the note for the reviewer instead.
   const pieces = parseInt(String(packet.emblemPieces), 10);
@@ -672,6 +684,9 @@ export function GaiaCharactersSection(props: {
   /** The draft's pokemon: each character's own render under their card. */
   pokemon: ImportPokemon[];
   onPokemonChange: (pokemon: ImportPokemon[]) => void;
+  /** Every assignable character name (Gaia + already-created), for the
+   * Character select on the pokemon cards. */
+  characterOptions: string[];
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -824,7 +839,6 @@ export function GaiaCharactersSection(props: {
           const theirs = props.pokemon
             .map((p, index) => ({ p, index }))
             .filter(({ p }) => (p.character ?? "") === d.sourceName);
-          const characterNames = [...new Set(charDrafts.map((c) => c.sourceName))];
           return (
             <Stack key={i} gap={10}>
               <CharacterReviewCard
@@ -844,7 +858,7 @@ export function GaiaCharactersSection(props: {
                         <PokemonEditCard
                           key={index}
                           p={p}
-                          characterOptions={characterNames}
+                          characterOptions={props.characterOptions}
                           onChange={(patch) => patchPokemon(index, patch)}
                           onRemove={() => removePokemon(index)}
                         />
