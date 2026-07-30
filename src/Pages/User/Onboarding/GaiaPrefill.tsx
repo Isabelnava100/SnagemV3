@@ -219,6 +219,9 @@ interface CharDraft {
   height: string;
   short_description: string;
   history: string;
+  /** Species tied to this character in the Gaia export (display only; the
+   * pokemon themselves import through the draft's Pokemon section). */
+  gaiaPokemon: string[];
 }
 
 /** Seed the review drafts from the export packet, nothing lost: age becomes
@@ -236,6 +239,12 @@ function draftsFromPacket(packet: GaiaExport): CharDraft[] {
       ]
         .filter(Boolean)
         .join("\n");
+      // "Pikachu, Eevee x2" style roster of the pokemon the export lists
+      // under this character.
+      const counts = new Map<string, number>();
+      packet.pokemon
+        .filter((p) => p.character === c.name && p.species)
+        .forEach((p) => counts.set(p.species, (counts.get(p.species) ?? 0) + 1));
       return {
         include: true,
         name: c.name,
@@ -245,6 +254,7 @@ function draftsFromPacket(packet: GaiaExport): CharDraft[] {
         height: "",
         short_description: "",
         history: [headline, c.history].filter(Boolean).join("\n\n"),
+        gaiaPokemon: [...counts.entries()].map(([s, n]) => (n > 1 ? `${s} x${n}` : s)),
       };
     });
 }
@@ -295,6 +305,11 @@ function CharacterReviewCard(props: {
           />
         )}
       </Group>
+      {draft.gaiaPokemon.length > 0 && (
+        <Text fz={13} c="#8f8a99" lh={1.55}>
+          Their Pokemon on Gaia: {draft.gaiaPokemon.join(", ")}
+        </Text>
+      )}
       {!exists && (
         <>
           <SimpleGrid cols={{ base: 1, xs: 2 }} spacing={10}>
@@ -361,18 +376,24 @@ function NeedAccountHint() {
 
 /**
  * Self-serve Gaia import tools, shown at the top of the import page. Three
- * options work as tabs (with OR between them): prefill the draft from the
- * export, edit the draft via one CSV template, or start the characters from
- * scratch with an editable review of the export's character data.
+ * exclusive options work as tabs (with OR between them): prefill the draft
+ * from the export, edit the draft via one CSV template, or ignore the Gaia
+ * data and start from scratch (closes the import). The characters review
+ * renders separately below Items via GaiaCharactersSection.
  */
 export default function GaiaPrefill(props: {
   entries: ImportEntries;
+  /** Selected export slug, owned by the page so the characters section
+   * (rendered further down, below Items) reads the same account. */
+  slug: string | null;
+  onSlugChange: (slug: string | null) => void;
   onPrefill: (entries: ImportEntries, noteAppend: string) => void;
   onCsvImported: (result: UploadResult, info: string) => void;
+  /** Option 3: ignore the Gaia data entirely and close the import. */
+  onStartFromScratch: () => void;
 }) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [slug, setSlug] = React.useState<string | null>(null);
+  const { slug, onSlugChange } = props;
   const [tab, setTab] = React.useState<string>("prefill");
   const [message, setMessage] = React.useState("");
 
@@ -394,19 +415,214 @@ export default function GaiaPrefill(props: {
   React.useEffect(() => {
     if (!index) return;
     if (lockedSlug) {
-      if (slug !== lockedSlug) setSlug(lockedSlug);
+      if (slug !== lockedSlug) onSlugChange(lockedSlug);
       return;
     }
     if (slug) return;
     if (user?.username && index[slugify(user.username)]) {
-      setSlug(slugify(user.username));
+      onSlugChange(slugify(user.username));
     }
-  }, [index, lockedSlug, user, slug]);
+  }, [index, lockedSlug, user, slug, onSlugChange]);
 
   const { data: packet } = useQuery({
     queryKey: ["gaia-export", slug],
     queryFn: () => getExport(slug!),
     enabled: !!slug,
+  });
+
+  // Wait for the account's Gaia name before showing anything: flashing an
+  // open dropdown that then locks shut reads as a bug.
+  if (!index || Object.keys(index).length === 0 || (!!user && ownGaiaNamePending)) return null;
+
+  const options = Object.entries(index)
+    .map(([value, label]) => ({ value, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  const tabSx = {
+    color: "#8f8a99",
+    fontFamily: FONT_DISPLAY,
+    fontWeight: 700,
+    fontSize: 13,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase" as const,
+    borderRadius: 0,
+    padding: "10px 14px",
+    "&[data-active]": { color: "#fff", borderColor: "#E54156" },
+    "&:hover": { background: "#201d27" },
+  };
+
+  return (
+    <Box p={{ base: 18, sm: 28 }} style={{ background: "#17151c", border: "1px solid #2a2637" }}>
+      <Stack gap={16}>
+        <Group gap={12} align="center" wrap="nowrap">
+          <SnagIcon name="gift" size={24} color="#fff" cut="#17151c" />
+          <Text
+            component="h2"
+            c="white"
+            fw={700}
+            fz={16}
+            tt="uppercase"
+            style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.06em", margin: 0 }}
+          >
+            Gaia import tools
+          </Text>
+        </Group>
+        <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+          We exported every profile from the Gaia guild board. Everything you add lands in the
+          draft below, where you can review and edit it before submitting.
+        </Text>
+        {lockedSlug ? (
+          <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+            Your account is linked to the Gaia username{" "}
+            <Text component="strong" c="white" fw={700}>
+              {index[lockedSlug]}
+            </Text>
+            , so that is the export we will use.
+          </Text>
+        ) : ownGaiaName ? (
+          <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+            Your account is linked to the Gaia username{" "}
+            <Text component="strong" c="white" fw={700}>
+              {ownGaiaName}
+            </Text>
+            , but no export matches it. Ask a staff member to check the archive for you. The CSV
+            option below still works in the meantime.
+          </Text>
+        ) : (
+          <Select
+            label="Your Gaia account"
+            placeholder="Search your Gaia username"
+            searchable
+            data={options}
+            value={slug}
+            onChange={onSlugChange}
+            maw={320}
+            radius={0}
+            sx={FIELD_SX}
+          />
+        )}
+
+        <Tabs
+          value={tab}
+          onChange={(v) => setTab(v ?? "prefill")}
+          keepMounted={false}
+          styles={{ list: { borderBottom: "1px solid #2a2637", gap: 4, flexWrap: "wrap" } }}
+        >
+          <Tabs.List>
+            <Tabs.Tab value="prefill" sx={tabSx}>
+              1 · Prefill the draft
+            </Tabs.Tab>
+            <OrDivider />
+            <Tabs.Tab value="csv" sx={tabSx}>
+              2 · Edit via CSV
+            </Tabs.Tab>
+            <OrDivider />
+            <Tabs.Tab value="scratch" sx={tabSx}>
+              3 · Start from scratch
+            </Tabs.Tab>
+          </Tabs.List>
+
+          <Tabs.Panel value="prefill" pt={16}>
+            {packet ? (
+              <Stack gap={12}>
+                <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+                  Good news, the export matching{" "}
+                  <Text component="strong" c="white" fw={700}>
+                    {packet.gaiaName}
+                  </Text>{" "}
+                  is ready: {packet.characters.length} characters, {packet.pokemon.length} Pokemon,{" "}
+                  {packet.itemsMatched.length} items matched, {packet.snagCoins} coins and{" "}
+                  {packet.snagEmblems} emblems. Prefilling fills your currency, Pokemon, and items
+                  into the draft below for review.
+                </Text>
+                <Box>
+                  <TileButton
+                    kind="gold"
+                    onClick={() => {
+                      const { entries, noteAppend } = entriesFromExport(packet);
+                      props.onPrefill(entries, noteAppend);
+                      setMessage(
+                        "Draft prefilled. Review each section below, adjust anything, then submit."
+                      );
+                    }}
+                  >
+                    Prefill my draft
+                  </TileButton>
+                </Box>
+                {packet.itemsUnmatched.length > 0 && (
+                  <Text fz={13} c="#8f8a99" lh={1.55}>
+                    {packet.itemsUnmatched.length} Gaia item entries have no catalog match;
+                    prefilling adds them to the reviewer note so staff can decide.
+                  </Text>
+                )}
+              </Stack>
+            ) : (
+              <NeedAccountHint />
+            )}
+          </Tabs.Panel>
+
+          <Tabs.Panel value="csv" pt={16}>
+            <CsvPanel entries={props.entries} onImported={props.onCsvImported} />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="scratch" pt={16}>
+            <Stack gap={12}>
+              <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+                Ignore the Gaia data and begin as a brand new member: nothing gets prefilled,
+                this import page closes for good, and you build your characters and team from
+                your dashboard instead. Anything already approved stays on your account.
+              </Text>
+              <Box>
+                <TileButton kind="purple" onClick={props.onStartFromScratch}>
+                  Skip the import and start fresh
+                </TileButton>
+              </Box>
+            </Stack>
+          </Tabs.Panel>
+        </Tabs>
+
+        {message && (
+          <Group
+            role="status"
+            aria-live="polite"
+            wrap="nowrap"
+            align="flex-start"
+            gap={12}
+            style={{
+              background: "rgba(199,155,214,.1)",
+              border: "1px solid rgba(199,155,214,.5)",
+              padding: "12px 16px",
+            }}
+          >
+            <Box style={{ flexShrink: 0, marginTop: 1 }}>
+              <SnagIcon name="sparkle" size={18} color="#c79bd6" cut="#17151c" />
+            </Box>
+            <Text fz={14} style={{ color: "#c79bd6", lineHeight: 1.5 }}>
+              {message}
+            </Text>
+          </Group>
+        )}
+      </Stack>
+    </Box>
+  );
+}
+
+/**
+ * "Characters from Gaia" review section, rendered by the import page below
+ * the Items section: every pokemon in the export belongs to one of these
+ * characters, so they sit right above the Pokemon list. Always visible while
+ * a packet is selected, whatever option tab is open. Shares the account slug
+ * picked in the tools panel at the top of the page.
+ */
+export function GaiaCharactersSection(props: { slug: string | null }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [message, setMessage] = React.useState("");
+
+  const { data: packet } = useQuery({
+    queryKey: ["gaia-export", props.slug],
+    queryFn: () => getExport(props.slug!),
+    enabled: !!props.slug,
   });
 
   // Editable review copies of the packet's characters; reseeded whenever a
@@ -477,32 +693,13 @@ export default function GaiaPrefill(props: {
     onError: () => setMessage("Could not create the characters. Try again."),
   });
 
-  // Wait for the account's Gaia name before showing anything: flashing an
-  // open dropdown that then locks shut reads as a bug.
-  if (!index || Object.keys(index).length === 0 || (!!user && ownGaiaNamePending)) return null;
-
-  const options = Object.entries(index)
-    .map(([value, label]) => ({ value, label }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-
-  const tabSx = {
-    color: "#8f8a99",
-    fontFamily: FONT_DISPLAY,
-    fontWeight: 700,
-    fontSize: 13,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase" as const,
-    borderRadius: 0,
-    padding: "10px 14px",
-    "&[data-active]": { color: "#fff", borderColor: "#E54156" },
-    "&:hover": { background: "#201d27" },
-  };
+  if (!packet || charDrafts.length === 0) return null;
 
   return (
     <Box p={{ base: 18, sm: 28 }} style={{ background: "#17151c", border: "1px solid #2a2637" }}>
       <Stack gap={16}>
         <Group gap={12} align="center" wrap="nowrap">
-          <SnagIcon name="gift" size={24} color="#fff" cut="#17151c" />
+          <SnagIcon name="users" size={24} color="#fff" cut="#17151c" />
           <Text
             component="h2"
             c="white"
@@ -511,147 +708,34 @@ export default function GaiaPrefill(props: {
             tt="uppercase"
             style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.06em", margin: 0 }}
           >
-            Gaia import tools
+            Characters from Gaia
           </Text>
         </Group>
         <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-          We exported every profile from the Gaia guild board. Everything you add lands in the
-          draft below, where you can review and edit it before submitting.
+          These are the characters on your Gaia profile, each with the Pokemon the export ties to
+          them. Review and edit anything, or add what Gaia never had (pronouns, birthday, height,
+          a short description), then create the ones you want. Everything stays editable later on
+          the Characters page.
         </Text>
-        {lockedSlug ? (
-          <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-            Your account is linked to the Gaia username{" "}
-            <Text component="strong" c="white" fw={700}>
-              {index[lockedSlug]}
-            </Text>
-            , so that is the export we will use.
-          </Text>
-        ) : ownGaiaName ? (
-          <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-            Your account is linked to the Gaia username{" "}
-            <Text component="strong" c="white" fw={700}>
-              {ownGaiaName}
-            </Text>
-            , but no export matches it. Ask a staff member to check the archive for you. The CSV
-            option below still works in the meantime.
-          </Text>
-        ) : (
-          <Select
-            label="Your Gaia account"
-            placeholder="Search your Gaia username"
-            searchable
-            data={options}
-            value={slug}
-            onChange={setSlug}
-            maw={320}
-            radius={0}
-            sx={FIELD_SX}
+        {charDrafts.map((d, i) => (
+          <CharacterReviewCard
+            key={i}
+            draft={d}
+            exists={existingNames.has(d.name.trim().toLowerCase())}
+            onChange={(patch) => patchDraft(i, patch)}
           />
-        )}
-
-        <Tabs
-          value={tab}
-          onChange={(v) => setTab(v ?? "prefill")}
-          keepMounted={false}
-          styles={{ list: { borderBottom: "1px solid #2a2637", gap: 4, flexWrap: "wrap" } }}
-        >
-          <Tabs.List>
-            <Tabs.Tab value="prefill" sx={tabSx}>
-              1 · Prefill the draft
-            </Tabs.Tab>
-            <OrDivider />
-            <Tabs.Tab value="csv" sx={tabSx}>
-              2 · Edit via CSV
-            </Tabs.Tab>
-            <OrDivider />
-            <Tabs.Tab value="characters" sx={tabSx}>
-              3 · Start from scratch
-            </Tabs.Tab>
-          </Tabs.List>
-
-          <Tabs.Panel value="prefill" pt={16}>
-            {packet ? (
-              <Stack gap={12}>
-                <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-                  Good news, the export matching{" "}
-                  <Text component="strong" c="white" fw={700}>
-                    {packet.gaiaName}
-                  </Text>{" "}
-                  is ready: {packet.characters.length} characters, {packet.pokemon.length} Pokemon,{" "}
-                  {packet.itemsMatched.length} items matched, {packet.snagCoins} coins and{" "}
-                  {packet.snagEmblems} emblems. Prefilling fills your currency, Pokemon, and items
-                  into the draft below for review.
-                </Text>
-                <Box>
-                  <TileButton
-                    kind="gold"
-                    onClick={() => {
-                      const { entries, noteAppend } = entriesFromExport(packet);
-                      props.onPrefill(entries, noteAppend);
-                      setMessage(
-                        "Draft prefilled. Review each section below, adjust anything, then submit."
-                      );
-                    }}
-                  >
-                    Prefill my draft
-                  </TileButton>
-                </Box>
-                {packet.itemsUnmatched.length > 0 && (
-                  <Text fz={13} c="#8f8a99" lh={1.55}>
-                    {packet.itemsUnmatched.length} Gaia item entries have no catalog match;
-                    prefilling adds them to the reviewer note so staff can decide.
-                  </Text>
-                )}
-              </Stack>
-            ) : (
-              <NeedAccountHint />
-            )}
-          </Tabs.Panel>
-
-          <Tabs.Panel value="csv" pt={16}>
-            <CsvPanel entries={props.entries} onImported={props.onCsvImported} />
-          </Tabs.Panel>
-
-          <Tabs.Panel value="characters" pt={16}>
-            {packet && charDrafts.length > 0 ? (
-              <Stack gap={14}>
-                <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-                  Review each character before creating it. Your Gaia profile filled in what it
-                  could (name, age, and the written history), and you can edit anything or add
-                  what Gaia never had, like pronouns, birthday, height, and a short description.
-                  Everything stays editable later on the Characters page.
-                </Text>
-                {charDrafts.map((d, i) => (
-                  <CharacterReviewCard
-                    key={i}
-                    draft={d}
-                    exists={existingNames.has(d.name.trim().toLowerCase())}
-                    onChange={(patch) => patchDraft(i, patch)}
-                  />
-                ))}
-                <Box>
-                  <TileButton
-                    kind="purple"
-                    loading={createCharacters.isPending}
-                    onClick={() => creatableCount > 0 && createCharacters.mutateAsync()}
-                  >
-                    {creatableCount > 0
-                      ? `Create ${creatableCount} character${creatableCount === 1 ? "" : "s"}`
-                      : "Nothing selected to create"}
-                  </TileButton>
-                </Box>
-              </Stack>
-            ) : packet ? (
-              <Text fz={14.5} c="#8f8a99" lh={1.6}>
-                This export has no characters on record. You can still create characters by hand
-                on the Characters page.
-              </Text>
-            ) : (
-              <NeedAccountHint />
-            )}
-          </Tabs.Panel>
-        </Tabs>
-
+        ))}
+        <Box>
+          <TileButton
+            kind="purple"
+            loading={createCharacters.isPending}
+            onClick={() => creatableCount > 0 && createCharacters.mutateAsync()}
+          >
+            {creatableCount > 0
+              ? `Create ${creatableCount} character${creatableCount === 1 ? "" : "s"}`
+              : "Nothing selected to create"}
+          </TileButton>
+        </Box>
         {message && (
           <Group
             role="status"

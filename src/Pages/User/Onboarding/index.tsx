@@ -42,7 +42,7 @@ import {
 } from "../../../queries/imports";
 import { UploadResult } from "./csv";
 import CsvPanel from "./CsvPanel";
-import GaiaPrefill from "./GaiaPrefill";
+import GaiaPrefill, { GaiaCharactersSection } from "./GaiaPrefill";
 
 const CURRENCY_LABELS: { key: keyof ImportEntries["currency"]; label: string }[] = [
   { key: "pokecoin", label: "Snag Coins" },
@@ -203,6 +203,9 @@ export default function Onboarding() {
   // Which import path the member picked on the first screen. Null shows the
   // three-way chooser; a returning draft with entries skips straight to the form.
   const [mode, setMode] = React.useState<"prefill" | "csv" | null>(null);
+  // Selected Gaia export, lifted here so the tools panel (top) and the
+  // characters section (below Items) read the same account.
+  const [gaiaSlug, setGaiaSlug] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (isPending || seeded) return;
@@ -345,6 +348,9 @@ export default function Onboarding() {
             {mode === "prefill" && (
               <GaiaPrefill
                 entries={entries}
+                slug={gaiaSlug}
+                onSlugChange={setGaiaSlug}
+                onStartFromScratch={openComplete}
                 onPrefill={(prefill, noteAppend) => {
                   // Merge, never clobber: per currency field, a hand-entered
                   // value wins and the prefill fills only what is still zero.
@@ -382,6 +388,9 @@ export default function Onboarding() {
               items={entries.items}
               onChange={(items) => update({ ...entries, items })}
             />
+            {/* Gaia characters sit between Items and Pokemon: the export ties
+                specific pokemon to each character, so the two read together. */}
+            {mode === "prefill" && <GaiaCharactersSection slug={gaiaSlug} />}
             <PokemonSection
               pokemon={entries.pokemon}
               onChange={(pokemon) => update({ ...entries, pokemon })}
