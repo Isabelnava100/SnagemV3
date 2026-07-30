@@ -20,8 +20,6 @@ import { useAuth } from "../../../context/AuthContext";
 import { SnagIcon } from "../../../icons/SnagIcon";
 import { getCharacters } from "../../../queries/dashboard";
 import { ImportEntries, ImportItem, ImportPokemon } from "../../../queries/imports";
-import CsvPanel from "./CsvPanel";
-import { UploadResult } from "./csv";
 
 const FONT_DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
 const CLIP_CTA = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
@@ -375,21 +373,19 @@ function NeedAccountHint() {
 }
 
 /**
- * Self-serve Gaia import tools, shown at the top of the import page. Three
+ * Self-serve Gaia import tools, shown at the top of the import page. Two
  * exclusive options work as tabs (with OR between them): prefill the draft
- * from the export, edit the draft via one CSV template, or ignore the Gaia
+ * from the export (everything stays editable below), or ignore the Gaia
  * data and start from scratch (closes the import). The characters review
  * renders separately below Items via GaiaCharactersSection.
  */
 export default function GaiaPrefill(props: {
-  entries: ImportEntries;
   /** Selected export slug, owned by the page so the characters section
    * (rendered further down, below Items) reads the same account. */
   slug: string | null;
   onSlugChange: (slug: string | null) => void;
   onPrefill: (entries: ImportEntries, noteAppend: string) => void;
-  onCsvImported: (result: UploadResult, info: string) => void;
-  /** Option 3: ignore the Gaia data entirely and close the import. */
+  /** Option 2: ignore the Gaia data entirely and close the import. */
   onStartFromScratch: () => void;
 }) {
   const { user } = useAuth();
@@ -485,8 +481,7 @@ export default function GaiaPrefill(props: {
             <Text component="strong" c="white" fw={700}>
               {ownGaiaName}
             </Text>
-            , but no export matches it. Ask a staff member to check the archive for you. The CSV
-            option below still works in the meantime.
+            , but no export matches it. Ask a staff member to check the archive for you.
           </Text>
         ) : (
           <Select
@@ -513,12 +508,8 @@ export default function GaiaPrefill(props: {
               1 · Prefill the draft
             </Tabs.Tab>
             <OrDivider />
-            <Tabs.Tab value="csv" sx={tabSx}>
-              2 · Edit via CSV
-            </Tabs.Tab>
-            <OrDivider />
             <Tabs.Tab value="scratch" sx={tabSx}>
-              3 · Start from scratch
+              2 · Start from scratch
             </Tabs.Tab>
           </Tabs.List>
 
@@ -559,10 +550,6 @@ export default function GaiaPrefill(props: {
             ) : (
               <NeedAccountHint />
             )}
-          </Tabs.Panel>
-
-          <Tabs.Panel value="csv" pt={16}>
-            <CsvPanel entries={props.entries} onImported={props.onCsvImported} />
           </Tabs.Panel>
 
           <Tabs.Panel value="scratch" pt={16}>
