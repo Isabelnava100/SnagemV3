@@ -731,9 +731,11 @@ export function GaiaCharactersSection(props: { slug: string | null }) {
             loading={createCharacters.isPending}
             onClick={() => creatableCount > 0 && createCharacters.mutateAsync()}
           >
-            {creatableCount > 0
-              ? `Create ${creatableCount} character${creatableCount === 1 ? "" : "s"}`
-              : "Nothing selected to create"}
+            {creatableCount === 0
+              ? "Nothing selected to add"
+              : creatableCount === 1
+                ? "Add a character"
+                : `Add ${creatableCount} characters`}
           </TileButton>
         </Box>
         {message && (
