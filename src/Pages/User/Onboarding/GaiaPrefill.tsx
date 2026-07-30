@@ -333,6 +333,23 @@ function CharacterReviewCard(props: {
   );
 }
 
+/** Small "OR" wedge between the option tabs. */
+function OrDivider() {
+  return (
+    <Text
+      component="span"
+      aria-hidden
+      fz={12}
+      fw={700}
+      c="#8f8a99"
+      px={4}
+      style={{ alignSelf: "center", fontFamily: FONT_DISPLAY, letterSpacing: "0.1em" }}
+    >
+      OR
+    </Text>
+  );
+}
+
 /** Shared "pick your account first" hint for the tabs that need a packet. */
 function NeedAccountHint() {
   return (
@@ -343,9 +360,10 @@ function NeedAccountHint() {
 }
 
 /**
- * Self-serve Gaia import tools, shown below the draft so the member reviews
- * the import first. Three options work as tabs: prefill the draft from the
- * export, edit the draft via one CSV template, or create the characters.
+ * Self-serve Gaia import tools, shown at the top of the import page. Three
+ * options work as tabs (with OR between them): prefill the draft from the
+ * export, edit the draft via one CSV template, or start the characters from
+ * scratch with an editable review of the export's character data.
  */
 export default function GaiaPrefill(props: {
   entries: ImportEntries;
@@ -498,7 +516,7 @@ export default function GaiaPrefill(props: {
         </Group>
         <Text fz={14.5} c="#b6b1bc" lh={1.6}>
           We exported every profile from the Gaia guild board. Everything you add lands in the
-          draft above, where you can review and edit it before submitting.
+          draft below, where you can review and edit it before submitting.
         </Text>
         {lockedSlug ? (
           <Text fz={14.5} c="#b6b1bc" lh={1.6}>
@@ -541,11 +559,13 @@ export default function GaiaPrefill(props: {
             <Tabs.Tab value="prefill" sx={tabSx}>
               1 · Prefill the draft
             </Tabs.Tab>
+            <OrDivider />
             <Tabs.Tab value="csv" sx={tabSx}>
               2 · Edit via CSV
             </Tabs.Tab>
+            <OrDivider />
             <Tabs.Tab value="characters" sx={tabSx}>
-              3 · Create characters
+              3 · Start from scratch
             </Tabs.Tab>
           </Tabs.List>
 
@@ -560,7 +580,7 @@ export default function GaiaPrefill(props: {
                   is ready: {packet.characters.length} characters, {packet.pokemon.length} Pokemon,{" "}
                   {packet.itemsMatched.length} items matched, {packet.snagCoins} coins and{" "}
                   {packet.snagEmblems} emblems. Prefilling fills your currency, Pokemon, and items
-                  into the draft above for review.
+                  into the draft below for review.
                 </Text>
                 <Box>
                   <TileButton
@@ -569,7 +589,7 @@ export default function GaiaPrefill(props: {
                       const { entries, noteAppend } = entriesFromExport(packet);
                       props.onPrefill(entries, noteAppend);
                       setMessage(
-                        "Draft prefilled. Review each section above, adjust anything, then submit."
+                        "Draft prefilled. Review each section below, adjust anything, then submit."
                       );
                     }}
                   >

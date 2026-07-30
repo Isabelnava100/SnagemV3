@@ -105,7 +105,7 @@ export default function CsvPanel(props: {
     } else {
       info =
         `Imported ${result.matched} row${result.matched === 1 ? "" : "s"} from ${file.name}; ` +
-        "your draft below now matches the file." +
+        "your draft now matches the file." +
         (result.skipped.length
           ? ` Skipped ${result.skipped.length} unrecognized: ${result.skipped.slice(0, 8).join(", ")}`
           : "");

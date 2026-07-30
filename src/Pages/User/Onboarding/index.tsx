@@ -340,21 +340,8 @@ export default function Onboarding() {
           />
         ) : (
           <>
-            <CurrencySection
-              currency={entries.currency}
-              onChange={(currency) => update({ ...entries, currency })}
-            />
-            <ItemsSection
-              items={entries.items}
-              onChange={(items) => update({ ...entries, items })}
-            />
-            <PokemonSection
-              pokemon={entries.pokemon}
-              onChange={(pokemon) => update({ ...entries, pokemon })}
-            />
-            {/* The import tools sit below the draft on purpose: the member
-                reviews what is in the import first, then reaches for the
-                prefill/CSV/characters options. */}
+            {/* Import tools first, review sections below: pick an option up
+                top, then everything it adds lands in the draft underneath. */}
             {mode === "prefill" && (
               <GaiaPrefill
                 entries={entries}
@@ -387,6 +374,18 @@ export default function Onboarding() {
                 {uploadInfo}
               </StatusNote>
             )}
+            <CurrencySection
+              currency={entries.currency}
+              onChange={(currency) => update({ ...entries, currency })}
+            />
+            <ItemsSection
+              items={entries.items}
+              onChange={(items) => update({ ...entries, items })}
+            />
+            <PokemonSection
+              pokemon={entries.pokemon}
+              onChange={(pokemon) => update({ ...entries, pokemon })}
+            />
 
             <SectionCard title="Note for the reviewer" icon="chat">
               <Textarea
