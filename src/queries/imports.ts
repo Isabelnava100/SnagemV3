@@ -39,6 +39,8 @@ export interface ImportPokemon {
   species: string;
   slug: string;
   pokedex: string;
+  /** Optional nickname; the owned pokemon falls back to the species name. */
+  name?: string;
   gender: "M" | "F";
   shiny: boolean;
   level: number;

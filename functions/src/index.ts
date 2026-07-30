@@ -4064,6 +4064,8 @@ interface ImportPokemonInput {
   species: string;
   slug: string;
   pokedex: string;
+  /** Optional nickname chosen on the import page; falls back to species. */
+  name?: string;
   gender: string;
   shiny: boolean;
   experience: number;
@@ -4159,7 +4161,7 @@ export const approveImport = onCall(async (request) => {
         gender: p.gender === "F" ? "F" : "M",
         generation: generationFor(p.pokedex),
         image_slug: String(p.slug ?? ""),
-        name: String(p.species ?? "").slice(0, 60),
+        name: String(String(p.name ?? "").trim() || p.species || "").slice(0, 60),
         pokedex: String(p.pokedex ?? ""),
         regiondex: "",
         species: String(p.species ?? "").slice(0, 60),

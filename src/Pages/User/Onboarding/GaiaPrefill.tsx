@@ -629,8 +629,19 @@ export function GaiaCharactersSection(props: { slug: string | null }) {
   // different export loads. Edits live here until "Create" writes them.
   const [charDrafts, setCharDrafts] = React.useState<CharDraft[]>([]);
   React.useEffect(() => {
-    setCharDrafts(packet ? draftsFromPacket(packet) : []);
-  }, [packet]);
+    let drafts = packet ? draftsFromPacket(packet) : [];
+    // TEMPORARY (owner testing, July 2026): duplicate PixelSylveon's
+    // characters so the two-character layout can be previewed on the live
+    // page. The copies are excluded by default so nothing gets created by
+    // accident. Remove this block once the layout is signed off.
+    if (props.slug === "pixelsylveon") {
+      drafts = [
+        ...drafts,
+        ...drafts.map((d) => ({ ...d, include: false, name: `${d.name} (Test Copy)` })),
+      ];
+    }
+    setCharDrafts(drafts);
+  }, [packet, props.slug]);
   const patchDraft = (i: number, patch: Partial<CharDraft>) =>
     setCharDrafts((ds) => ds.map((d, j) => (j === i ? { ...d, ...patch } : d)));
 
