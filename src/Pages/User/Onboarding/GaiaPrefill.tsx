@@ -1,4 +1,4 @@
-import { Box, Group, Loader, Select, SimpleGrid, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Group, Loader, Select, Stack, Tabs, Text, UnstyledButton } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { v4 as uuid } from "uuid";
@@ -6,7 +6,8 @@ import { getDb } from "../../../context/firebase";
 import { useAuth } from "../../../context/AuthContext";
 import { SnagIcon } from "../../../icons/SnagIcon";
 import { ImportEntries, ImportItem, ImportPokemon } from "../../../queries/imports";
-import { downloadCsv } from "./csv";
+import CsvPanel from "./CsvPanel";
+import { UploadResult } from "./csv";
 
 const FONT_DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
 const CLIP_CTA = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
@@ -19,21 +20,15 @@ const FIELD_SX = {
   "& input::placeholder": { color: "#8f8a99" },
 } as const;
 
-/** Small accented CTA used inside the Gaia option tiles. */
+/** Small accented CTA used inside the Gaia option tabs. */
 function TileButton(props: {
   children: React.ReactNode;
   onClick?: () => void;
   loading?: boolean;
-  kind: "gold" | "cyan" | "purple";
+  kind: "gold" | "purple";
 }) {
   const palettes = {
     gold: { background: "#FFD074", color: "#1A1B1E", border: "none", "&:hover": { background: "#fff" } },
-    cyan: {
-      background: "transparent",
-      color: "#12B7B6",
-      border: "1px solid #12B7B6",
-      "&:hover": { background: "#12B7B6", color: "#fff" },
-    },
     purple: {
       background: "transparent",
       color: "#c79bd6",
@@ -65,44 +60,6 @@ function TileButton(props: {
     >
       {props.loading ? <Loader size={15} color="#c79bd6" /> : props.children}
     </UnstyledButton>
-  );
-}
-
-/** One "how do you want to continue" card in the Gaia panel. */
-function OptionTile(props: {
-  step: string;
-  accent: string;
-  borderAccent?: string;
-  title: string;
-  desc: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Box
-      className="dc-card-tile"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        padding: "16px 18px",
-        ...(props.borderAccent ? { borderColor: props.borderAccent } : {}),
-      }}
-    >
-      <Text
-        component="span"
-        fz={14}
-        fw={700}
-        style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.12em", color: props.accent }}
-      >
-        {props.step} · {props.title}
-      </Text>
-      <Text component="span" fz={14} c="#b6b1bc" style={{ lineHeight: 1.55, flex: 1 }}>
-        {props.desc}
-      </Text>
-      <Group gap={8} wrap="wrap">
-        {props.children}
-      </Group>
-    </Box>
   );
 }
 
@@ -172,8 +129,6 @@ const getOwnGaiaName = async (uid: string): Promise<string> => {
   return (snap.data()?.gaiaName as string) ?? "";
 };
 
-const csvCell = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
-
 /** Entries + a reviewer-note appendix built from one export packet. */
 export function entriesFromExport(packet: GaiaExport): {
   entries: ImportEntries;
@@ -231,17 +186,29 @@ export function entriesFromExport(packet: GaiaExport): {
   };
 }
 
+/** Shared "pick your account first" hint for the tabs that need a packet. */
+function NeedAccountHint() {
+  return (
+    <Text fz={14.5} c="#8f8a99" lh={1.6}>
+      Pick your Gaia account above first, then this option unlocks.
+    </Text>
+  );
+}
+
 /**
- * Self-serve Gaia prefill: pick your old Gaia account, then prefill the draft,
- * create your characters (history included), or download the filled
- * spreadsheet instead of the empty template.
+ * Self-serve Gaia import tools, shown below the draft so the member reviews
+ * the import first. Three options work as tabs: prefill the draft from the
+ * export, edit the draft via one CSV template, or create the characters.
  */
 export default function GaiaPrefill(props: {
+  entries: ImportEntries;
   onPrefill: (entries: ImportEntries, noteAppend: string) => void;
+  onCsvImported: (result: UploadResult, info: string) => void;
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [slug, setSlug] = React.useState<string | null>(null);
+  const [tab, setTab] = React.useState<string>("prefill");
   const [message, setMessage] = React.useState("");
 
   const { data: index } = useQuery({ queryKey: ["gaia-export-index"], queryFn: getIndex });
@@ -337,33 +304,17 @@ export default function GaiaPrefill(props: {
     .map(([value, label]) => ({ value, label }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  const downloadPokemonCsv = () => {
-    if (!packet) return;
-    const rows = packet.pokemon
-      .filter((p) => p.slug)
-      .map((p) =>
-        [
-          csvCell(p.species),
-          p.gender || "M",
-          p.shiny ? "Y" : "N",
-          String(p.level),
-          "0",
-          p.shadow ? "100" : "0",
-          "0",
-        ].join(",")
-      );
-    downloadCsv(
-      "snagem-pokemon-gaia.csv",
-      "Species,Gender (M/F),Shiny (Y/N),Level,Friendship,Shadow,Purification\n" +
-        rows.join("\n") +
-        "\n"
-    );
-  };
-
-  const downloadItemsCsv = () => {
-    if (!packet) return;
-    const rows = packet.itemsMatched.map((i) => `${csvCell(i.name)},${i.qty}`);
-    downloadCsv("snagem-items-gaia.csv", "Item Name,Quantity\n" + rows.join("\n") + "\n");
+  const tabSx = {
+    color: "#8f8a99",
+    fontFamily: FONT_DISPLAY,
+    fontWeight: 700,
+    fontSize: 13,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase" as const,
+    borderRadius: 0,
+    padding: "10px 14px",
+    "&[data-active]": { color: "#fff", borderColor: "#E54156" },
+    "&:hover": { background: "#201d27" },
   };
 
   return (
@@ -379,13 +330,12 @@ export default function GaiaPrefill(props: {
             tt="uppercase"
             style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.06em", margin: 0 }}
           >
-            Prefill from Gaia archive
+            Gaia import tools
           </Text>
         </Group>
         <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-          We exported every profile from the Gaia guild board. Pick your old account and we can fill
-          in this import for you: characters, Pokemon, and items. You can still edit everything
-          before submitting.
+          We exported every profile from the Gaia guild board. Everything you add lands in the
+          draft above, where you can review and edit it before submitting.
         </Text>
         {lockedSlug ? (
           <Text fz={14.5} c="#b6b1bc" lh={1.6}>
@@ -401,7 +351,8 @@ export default function GaiaPrefill(props: {
             <Text component="strong" c="white" fw={700}>
               {ownGaiaName}
             </Text>
-            , but no export matches it. Ask a staff member to check the archive for you.
+            , but no export matches it. Ask a staff member to check the archive for you. The CSV
+            option below still works in the meantime.
           </Text>
         ) : (
           <Select
@@ -416,74 +367,92 @@ export default function GaiaPrefill(props: {
             sx={FIELD_SX}
           />
         )}
-        {packet && (
-          <>
-            <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-              Good news, the export matching{" "}
-              <Text component="strong" c="white" fw={700}>
-                {packet.gaiaName}
-              </Text>{" "}
-              is ready: {packet.characters.length} characters, {packet.pokemon.length} Pokemon,{" "}
-              {packet.itemsMatched.length} items matched, {packet.snagCoins} coins and{" "}
-              {packet.snagEmblems} emblems. Pick how you want to continue:
-            </Text>
-            <SimpleGrid cols={{ base: 1, sm: 3 }} spacing={12}>
-              <OptionTile
-                step="1"
-                accent="#FFD074"
-                borderAccent="rgba(255,208,116,.5)"
-                title="Prefill the draft"
-                desc="Fill your currency, Pokemon, and items from the export, then review and finalize below."
-              >
-                <TileButton
-                  kind="gold"
-                  onClick={() => {
-                    const { entries, noteAppend } = entriesFromExport(packet);
-                    props.onPrefill(entries, noteAppend);
-                    setMessage(
-                      "Draft prefilled. Review each section below, adjust anything, then submit."
-                    );
-                  }}
-                >
-                  Prefill my draft
-                </TileButton>
-              </OptionTile>
-              <OptionTile
-                step="2"
-                accent="#12B7B6"
-                title="Use the CSV template"
-                desc="Prefer a spreadsheet? Download your data filled in, edit it, and upload it below."
-              >
-                <TileButton kind="cyan" onClick={downloadPokemonCsv}>
-                  Pokemon CSV
-                </TileButton>
-                <TileButton kind="cyan" onClick={downloadItemsCsv}>
-                  Items CSV
-                </TileButton>
-              </OptionTile>
-              <OptionTile
-                step="3"
-                accent="#c79bd6"
-                title="Create your characters"
-                desc="Add your Gaia characters, with their history, straight to your account."
-              >
-                <TileButton
-                  kind="purple"
-                  loading={createCharacters.isPending}
-                  onClick={() => createCharacters.mutateAsync()}
-                >
-                  Create my characters
-                </TileButton>
-              </OptionTile>
-            </SimpleGrid>
-            {packet.itemsUnmatched.length > 0 && (
-              <Text fz={13} c="#8f8a99" lh={1.55}>
-                {packet.itemsUnmatched.length} Gaia item entries have no catalog match; prefilling
-                adds them to the reviewer note so staff can decide.
-              </Text>
+
+        <Tabs
+          value={tab}
+          onChange={(v) => setTab(v ?? "prefill")}
+          keepMounted={false}
+          styles={{ list: { borderBottom: "1px solid #2a2637", gap: 4, flexWrap: "wrap" } }}
+        >
+          <Tabs.List>
+            <Tabs.Tab value="prefill" sx={tabSx}>
+              1 · Prefill the draft
+            </Tabs.Tab>
+            <Tabs.Tab value="csv" sx={tabSx}>
+              2 · Edit via CSV
+            </Tabs.Tab>
+            <Tabs.Tab value="characters" sx={tabSx}>
+              3 · Create characters
+            </Tabs.Tab>
+          </Tabs.List>
+
+          <Tabs.Panel value="prefill" pt={16}>
+            {packet ? (
+              <Stack gap={12}>
+                <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+                  Good news, the export matching{" "}
+                  <Text component="strong" c="white" fw={700}>
+                    {packet.gaiaName}
+                  </Text>{" "}
+                  is ready: {packet.characters.length} characters, {packet.pokemon.length} Pokemon,{" "}
+                  {packet.itemsMatched.length} items matched, {packet.snagCoins} coins and{" "}
+                  {packet.snagEmblems} emblems. Prefilling fills your currency, Pokemon, and items
+                  into the draft above for review.
+                </Text>
+                <Box>
+                  <TileButton
+                    kind="gold"
+                    onClick={() => {
+                      const { entries, noteAppend } = entriesFromExport(packet);
+                      props.onPrefill(entries, noteAppend);
+                      setMessage(
+                        "Draft prefilled. Review each section above, adjust anything, then submit."
+                      );
+                    }}
+                  >
+                    Prefill my draft
+                  </TileButton>
+                </Box>
+                {packet.itemsUnmatched.length > 0 && (
+                  <Text fz={13} c="#8f8a99" lh={1.55}>
+                    {packet.itemsUnmatched.length} Gaia item entries have no catalog match;
+                    prefilling adds them to the reviewer note so staff can decide.
+                  </Text>
+                )}
+              </Stack>
+            ) : (
+              <NeedAccountHint />
             )}
-          </>
-        )}
+          </Tabs.Panel>
+
+          <Tabs.Panel value="csv" pt={16}>
+            <CsvPanel entries={props.entries} onImported={props.onCsvImported} />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="characters" pt={16}>
+            {packet ? (
+              <Stack gap={12}>
+                <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+                  Add your {packet.characters.length} Gaia character
+                  {packet.characters.length === 1 ? "" : "s"} straight to your account, with the
+                  age, gender, species, hometown, and written history from your old profile.
+                </Text>
+                <Box>
+                  <TileButton
+                    kind="purple"
+                    loading={createCharacters.isPending}
+                    onClick={() => createCharacters.mutateAsync()}
+                  >
+                    Create my characters
+                  </TileButton>
+                </Box>
+              </Stack>
+            ) : (
+              <NeedAccountHint />
+            )}
+          </Tabs.Panel>
+        </Tabs>
+
         {message && (
           <Group
             role="status"

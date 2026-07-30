@@ -1,4 +1,7 @@
-import { ImportItem, ImportPokemon } from "../../../queries/imports";
+import { ImportEntries, ImportItem, ImportPokemon } from "../../../queries/imports";
+
+/** Quote a value for a CSV cell when it needs it. */
+export const csvCell = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
 
 /** Trigger a client-side download of a small text file (a CSV template). */
 export function downloadCsv(filename: string, contents: string): void {
@@ -49,11 +52,50 @@ interface Lookups {
   itemByName: Map<string, { id: string; name: string; category: string; filePath: string }>;
 }
 
+/**
+ * Which template shape an uploaded file matched: the current combined
+ * template, one of the retired single-type templates (members may still hold
+ * files downloaded before the merge), or nothing we recognize.
+ */
+export type CsvFormat = "combined" | "items" | "pokemon" | "unknown";
+
 export interface ParseResult {
   items: ImportItem[];
   pokemon: ImportPokemon[];
   matched: number;
   skipped: string[];
+}
+
+export interface UploadResult extends ParseResult {
+  format: CsvFormat;
+}
+
+/** Header of the single combined template (items and pokemon in one file). */
+export const IMPORT_TEMPLATE_HEADER =
+  "Type,Name,Quantity,Gender (M/F),Shiny (Y/N),Level,Friendship,Shadow,Purification";
+
+/**
+ * Build the one downloadable template. With no entries (or an empty draft) it
+ * carries two example rows; with a draft it carries the member's current
+ * items and pokemon so they can edit the import in a spreadsheet.
+ */
+export function buildImportCsv(entries?: ImportEntries | null): string {
+  const lines = [IMPORT_TEMPLATE_HEADER];
+  const hasData = !!entries && (entries.items.length > 0 || entries.pokemon.length > 0);
+  if (!hasData) {
+    lines.push("Item,Rare Candy,5,,,,,,");
+    lines.push("Pokemon,Pikachu,,M,N,25,120,0,0");
+  } else {
+    for (const it of entries.items) {
+      lines.push(`Item,${csvCell(it.name)},${it.qty},,,,,,`);
+    }
+    for (const p of entries.pokemon) {
+      lines.push(
+        `Pokemon,${csvCell(p.species)},,${p.gender},${p.shiny ? "Y" : "N"},${p.level},${p.friendship},${p.shadow},${p.purification}`
+      );
+    }
+  }
+  return lines.join("\n") + "\n";
 }
 
 const yes = (v: string) => /^(y|yes|true|1)$/i.test(v.trim());
@@ -63,55 +105,98 @@ const clampNum = (v: string, min: number, max: number) => {
   return Math.max(min, Math.min(max, n));
 };
 
+/** Match an item row by catalog name; null goes to `skipped`. */
+function matchItem(name: string, qty: string, look: Lookups): ImportItem | null {
+  const item = look.itemByName.get(name.toLowerCase());
+  if (!item) return null;
+  return {
+    refId: item.id,
+    name: item.name,
+    filePath: item.filePath,
+    category: item.category,
+    qty: clampNum(qty, 1, 100000),
+  };
+}
+
+/** Match a pokemon row by species name; null goes to `skipped`. */
+function matchPokemon(
+  name: string,
+  [gender, shiny, level, friendship, shadow, purification]: string[],
+  look: Lookups
+): ImportPokemon | null {
+  const p = look.pokemonByName.get(name.toLowerCase());
+  if (!p) return null;
+  return {
+    species: p.name,
+    slug: p.slug,
+    pokedex: String(Number(p.idx)),
+    gender: /^f/i.test((gender ?? "M").trim()) ? "F" : "M",
+    shiny: yes(shiny ?? "N"),
+    level: clampNum(level ?? "5", 1, 100),
+    friendship: clampNum(friendship ?? "0", 0, 255),
+    shadow: clampNum(shadow ?? "0", 0, 100000000),
+    purification: clampNum(purification ?? "0", 0, 100000000),
+  };
+}
+
 /**
- * Parse an uploaded CSV into import entries. `kind` selects the expected shape;
- * unrecognized species/items are collected in `skipped` so the member can fix
- * them, and everything matched is returned for review before submitting.
+ * Parse an uploaded CSV into import entries, detecting the shape from the
+ * header row: the combined template (Type column), or one of the retired
+ * single-type templates so files downloaded before the merge still work.
+ * Unrecognized species/items land in `skipped` so the member can fix them.
  */
-export function parseImportCsv(text: string, kind: "items" | "pokemon", look: Lookups): ParseResult {
+export function parseUploadCsv(text: string, look: Lookups): UploadResult {
   const rows = parseCsv(text);
   const items: ImportItem[] = [];
   const pokemon: ImportPokemon[] = [];
   const skipped: string[] = [];
-  if (rows.length < 2) return { items, pokemon, matched: 0, skipped };
+  const done = (format: CsvFormat): UploadResult => ({
+    items,
+    pokemon,
+    matched: items.length + pokemon.length,
+    skipped,
+    format,
+  });
 
-  // Skip the header row.
+  const header = (rows[0] ?? []).map((c) => c.trim().toLowerCase());
+  const format: CsvFormat = header[0]?.startsWith("type")
+    ? "combined"
+    : header[0]?.startsWith("item")
+      ? "items"
+      : header[0]?.startsWith("species")
+        ? "pokemon"
+        : "unknown";
+  if (format === "unknown" || rows.length < 2) return done(format);
+
   for (const cols of rows.slice(1)) {
-    if (kind === "items") {
+    if (format === "combined") {
+      const type = (cols[0] ?? "").trim().toLowerCase();
+      const name = (cols[1] ?? "").trim();
+      if (!name) continue;
+      if (type.startsWith("i")) {
+        const item = matchItem(name, cols[2] ?? "1", look);
+        if (item) items.push(item);
+        else skipped.push(name);
+      } else if (type.startsWith("p")) {
+        const poke = matchPokemon(name, cols.slice(3), look);
+        if (poke) pokemon.push(poke);
+        else skipped.push(name);
+      } else {
+        skipped.push(name || type);
+      }
+    } else if (format === "items") {
       const name = (cols[0] ?? "").trim();
       if (!name) continue;
-      const item = look.itemByName.get(name.toLowerCase());
-      if (!item) {
-        skipped.push(name);
-        continue;
-      }
-      items.push({
-        refId: item.id,
-        name: item.name,
-        filePath: item.filePath,
-        category: item.category,
-        qty: clampNum(cols[1] ?? "1", 1, 100000),
-      });
+      const item = matchItem(name, cols[1] ?? "1", look);
+      if (item) items.push(item);
+      else skipped.push(name);
     } else {
       const name = (cols[0] ?? "").trim();
       if (!name) continue;
-      const p = look.pokemonByName.get(name.toLowerCase());
-      if (!p) {
-        skipped.push(name);
-        continue;
-      }
-      pokemon.push({
-        species: p.name,
-        slug: p.slug,
-        pokedex: String(Number(p.idx)),
-        gender: /^f/i.test((cols[1] ?? "M").trim()) ? "F" : "M",
-        shiny: yes(cols[2] ?? "N"),
-        level: clampNum(cols[3] ?? "5", 1, 100),
-        friendship: clampNum(cols[4] ?? "0", 0, 255),
-        shadow: clampNum(cols[5] ?? "0", 0, 100000000),
-        purification: clampNum(cols[6] ?? "0", 0, 100000000),
-      });
+      const poke = matchPokemon(name, cols.slice(1), look);
+      if (poke) pokemon.push(poke);
+      else skipped.push(name);
     }
   }
-  return { items, pokemon, matched: items.length + pokemon.length, skipped };
+  return done(format);
 }

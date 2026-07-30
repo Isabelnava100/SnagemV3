@@ -17,7 +17,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { IconTrash, IconUpload } from "@tabler/icons-react";
+import { IconTrash } from "@tabler/icons-react";
 import React from "react";
 import { Link } from "react-router-dom";
 import Seo from "../../../components/common/Seo";
@@ -40,7 +40,8 @@ import {
   saveImportDraft,
   submitImportRequest,
 } from "../../../queries/imports";
-import { downloadCsv, parseImportCsv } from "./csv";
+import { UploadResult } from "./csv";
+import CsvPanel from "./CsvPanel";
 import GaiaPrefill from "./GaiaPrefill";
 
 const CURRENCY_LABELS: { key: keyof ImportEntries["currency"]; label: string }[] = [
@@ -49,9 +50,6 @@ const CURRENCY_LABELS: { key: keyof ImportEntries["currency"]; label: string }[]
   { key: "snagemblem", label: "Snag Emblems" },
   { key: "snagEmblemPieces", label: "Emblem Pieces" },
 ];
-
-const pokemonByName = new Map(pokemonData.map((p) => [p.name.toLowerCase(), p]));
-const itemByName = new Map(itemData.map((i) => [i.name.toLowerCase(), i]));
 
 const FONT_DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
 const CLIP_CTA = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
@@ -255,6 +253,21 @@ export default function Onboarding() {
     },
   });
 
+  // An uploaded CSV replaces the matching part of the draft: the filled
+  // template carries the whole current import, so replacing (not appending)
+  // is what makes "download, edit, re-upload" round-trip without duplicates.
+  // Legacy single-type files only replace their own section.
+  const applyCsv = (result: UploadResult, info: string) => {
+    if (result.format !== "unknown") {
+      update({
+        ...entries,
+        items: result.format === "pokemon" ? entries.items : result.items,
+        pokemon: result.format === "items" ? entries.pokemon : result.pokemon,
+      });
+    }
+    setUploadInfo(info);
+  };
+
   if (isPending || !seeded) return <SectionLoader />;
 
   const totalCount =
@@ -327,26 +340,6 @@ export default function Onboarding() {
           />
         ) : (
           <>
-            {mode === "prefill" && (
-            <GaiaPrefill
-              onPrefill={(prefill, noteAppend) => {
-                // Merge, never clobber: per currency field, a hand-entered
-                // value wins and the prefill fills only what is still zero.
-                const mergedCurrency = { ...entries.currency };
-                CURRENCY_LABELS.forEach((c) => {
-                  if ((mergedCurrency[c.key] ?? 0) <= 0) {
-                    mergedCurrency[c.key] = prefill.currency[c.key] ?? 0;
-                  }
-                });
-                update({
-                  currency: mergedCurrency,
-                  items: [...entries.items, ...prefill.items],
-                  pokemon: [...entries.pokemon, ...prefill.pokemon],
-                });
-                setNote((prev) => (prev ? `${prev}\n\n${noteAppend}` : noteAppend));
-              }}
-            />
-            )}
             <CurrencySection
               currency={entries.currency}
               onChange={(currency) => update({ ...entries, currency })}
@@ -359,22 +352,40 @@ export default function Onboarding() {
               pokemon={entries.pokemon}
               onChange={(pokemon) => update({ ...entries, pokemon })}
             />
-            {mode === "csv" && (
-              <BulkUpload
-                onImported={(added, info) => {
-                  update({
-                    ...entries,
-                    items: [...entries.items, ...added.items],
-                    pokemon: [...entries.pokemon, ...added.pokemon],
+            {/* The import tools sit below the draft on purpose: the member
+                reviews what is in the import first, then reaches for the
+                prefill/CSV/characters options. */}
+            {mode === "prefill" && (
+              <GaiaPrefill
+                entries={entries}
+                onPrefill={(prefill, noteAppend) => {
+                  // Merge, never clobber: per currency field, a hand-entered
+                  // value wins and the prefill fills only what is still zero.
+                  const mergedCurrency = { ...entries.currency };
+                  CURRENCY_LABELS.forEach((c) => {
+                    if ((mergedCurrency[c.key] ?? 0) <= 0) {
+                      mergedCurrency[c.key] = prefill.currency[c.key] ?? 0;
+                    }
                   });
-                  setUploadInfo(info);
+                  update({
+                    currency: mergedCurrency,
+                    items: [...entries.items, ...prefill.items],
+                    pokemon: [...entries.pokemon, ...prefill.pokemon],
+                  });
+                  setNote((prev) => (prev ? `${prev}\n\n${noteAppend}` : noteAppend));
                 }}
+                onCsvImported={applyCsv}
               />
             )}
+            {mode === "csv" && (
+              <SectionCard title="Import from a spreadsheet" icon="chart">
+                <CsvPanel entries={entries} onImported={applyCsv} />
+              </SectionCard>
+            )}
             {uploadInfo && (
-              <Text fz={14} c="#b6b1bc">
+              <StatusNote icon="chart" accent="#12B7B6">
                 {uploadInfo}
-              </Text>
+              </StatusNote>
             )}
 
             <SectionCard title="Note for the reviewer" icon="chat">
@@ -474,7 +485,7 @@ function ImportChoice(props: {
     {
       key: "csv",
       title: "Import from a spreadsheet",
-      body: "Download the CSV templates, fill them in, and upload. Best if you have a lot to add or kept your own records.",
+      body: "Download the one CSV template (empty, or filled with your current draft), edit it in a spreadsheet, and upload it back. Only .csv files are accepted.",
       cta: "Use a spreadsheet",
       onClick: props.onCsv,
       accent: "#12B7B6",
@@ -809,90 +820,6 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           </Text>
         )}
       </Stack>
-    </SectionCard>
-  );
-}
-
-function BulkUpload(props: {
-  onImported: (added: { items: ImportItem[]; pokemon: ImportPokemon[] }, info: string) => void;
-}) {
-  const itemsInput = React.useRef<HTMLInputElement>(null);
-  const pokeInput = React.useRef<HTMLInputElement>(null);
-
-  const handleFile = async (file: File, kind: "items" | "pokemon") => {
-    const text = await file.text();
-    const { items, pokemon, matched, skipped } = parseImportCsv(text, kind, {
-      pokemonByName,
-      itemByName,
-    });
-    props.onImported(
-      { items, pokemon },
-      `Imported ${matched} row${matched === 1 ? "" : "s"} from ${file.name}` +
-        (skipped.length ? `. Skipped ${skipped.length} unrecognized: ${skipped.slice(0, 8).join(", ")}` : ".")
-    );
-  };
-
-  return (
-    <SectionCard title="Bulk import from a spreadsheet" icon="chart">
-      <Text fz={14} c="#b6b1bc" lh={1.6}>
-        Have a lot to add? Download a template, fill it in (in Google Sheets or Excel), export it as
-        CSV, and upload it here. You can review and edit everything before submitting.
-      </Text>
-      <Group gap={10} wrap="wrap">
-        <AngularButton
-          kind="cyan"
-          size="sm"
-          onClick={() =>
-            downloadCsv("snagem-items-template.csv", "Item Name,Quantity\nRare Candy,5\n")
-          }
-        >
-          Download items template
-        </AngularButton>
-        <AngularButton
-          kind="cyan"
-          size="sm"
-          onClick={() =>
-            downloadCsv(
-              "snagem-pokemon-template.csv",
-              "Species,Gender (M/F),Shiny (Y/N),Level,Friendship,Shadow,Purification\nPikachu,M,N,25,120,0,0\n"
-            )
-          }
-        >
-          Download Pokemon template
-        </AngularButton>
-      </Group>
-      <Group gap={10} wrap="wrap">
-        <input
-          ref={itemsInput}
-          type="file"
-          accept=".csv,text/csv"
-          hidden
-          aria-label="Items CSV file"
-          onChange={(e) => {
-            const f = e.currentTarget.files?.[0];
-            if (f) handleFile(f, "items");
-            e.currentTarget.value = "";
-          }}
-        />
-        <input
-          ref={pokeInput}
-          type="file"
-          accept=".csv,text/csv"
-          hidden
-          aria-label="Pokemon CSV file"
-          onChange={(e) => {
-            const f = e.currentTarget.files?.[0];
-            if (f) handleFile(f, "pokemon");
-            e.currentTarget.value = "";
-          }}
-        />
-        <AngularButton kind="cyan" size="sm" onClick={() => itemsInput.current?.click()}>
-          <IconUpload size={14} /> Upload items CSV
-        </AngularButton>
-        <AngularButton kind="cyan" size="sm" onClick={() => pokeInput.current?.click()}>
-          <IconUpload size={14} /> Upload Pokemon CSV
-        </AngularButton>
-      </Group>
     </SectionCard>
   );
 }
