@@ -1,13 +1,15 @@
 /**
  * Customizable navigation order. Members reorder these destinations in
- * Settings; the first N pin to the nav bar (4 on desktop, 4 on mobile) and the
+ * Settings; the first N pin to the nav bar (4 on desktop, 3 on mobile) and the
  * rest fall into the "Menu" drawer. The order is shared across desktop and
  * mobile, only the bar cutoff differs. Icons/routes live in SideBar; this file
  * is the label list + resolver, imported by both SideBar and the Settings UI.
  */
 
 export const NAV_BAR_LIMIT_DESKTOP = 4;
-export const NAV_BAR_LIMIT_MOBILE = 4;
+// Mobile keeps the bar to 3 pinned links so with Alerts and the Menu it is
+// 5 comfortable tap targets (owner decision, July 2026).
+export const NAV_BAR_LIMIT_MOBILE = 3;
 
 /** Pinnable destinations in their default order (top pins to the bar first). */
 export const PINNABLE_NAV_LABELS: string[] = [
