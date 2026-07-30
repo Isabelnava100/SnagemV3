@@ -182,6 +182,47 @@ function Teams(props: EditingProps) {
     queryFn: () => getCharacters(user!.uid),
     enabled: !!user,
   });
+  const { data: threadLocks, isSuccess: locksLoaded } = useQuery({
+    queryKey: ["thread-locks", user?.uid],
+    queryFn: () => getThreadLocks(user!.uid),
+    enabled: !!user,
+  });
+  const queryClient = useQueryClient();
+
+  // Teams belong to a character (July 2026, no shared teams): legacy teams
+  // without one self-repair here by adopting the character that owns most of
+  // their pokemon (else the first character). Teams pinned into an open
+  // battle thread are left alone so a live lock never shifts mid-battle.
+  const repairing = React.useRef(false);
+  React.useEffect(() => {
+    if (repairing.current || !user || !rawTeams || !characters || !owned || !locksLoaded) return;
+    const chars = characters.sortedData;
+    if (!chars.length) return;
+    const charIds = new Set(chars.map((c) => c.id));
+    const lockedTeamIds = new Set(
+      Object.values(threadLocks ?? {}).flatMap((l) => (Array.isArray(l.teamIds) ? l.teamIds : []))
+    );
+    const fixes: Record<string, { characterId: string }> = {};
+    for (const t of rawTeams) {
+      if ((t.characterId && charIds.has(t.characterId)) || lockedTeamIds.has(t.id)) continue;
+      const counts = new Map<string, number>();
+      (t.pokemon_ids ?? []).forEach((id) => {
+        const cid = owned.sortedData.find((p) => p.id === id)?.characterId;
+        if (cid && charIds.has(cid)) counts.set(cid, (counts.get(cid) ?? 0) + 1);
+      });
+      const best = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? chars[0]!.id;
+      fixes[t.id] = { characterId: best };
+    }
+    if (!Object.keys(fixes).length) return;
+    repairing.current = true;
+    (async () => {
+      const { doc, setDoc } = await import("firebase/firestore");
+      const { getDb } = await import("../../../context/firebase");
+      const db = await getDb();
+      await setDoc(doc(db, "users", user.uid, "bag", "teams"), fixes, { merge: true });
+      await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
+    })();
+  }, [user, rawTeams, characters, owned, threadLocks, locksLoaded, queryClient]);
 
   if (isLoading || !owned) return <SectionLoader />;
   if (isError)
@@ -199,7 +240,8 @@ function Teams(props: EditingProps) {
       teams: sortedData.filter((t) => t.characterId === character.id),
     }))
     .filter((g) => g.teams.length > 0);
-  // Teams with no (or a deleted) character stay shared for compatibility.
+  // Teams without a living character are legacy leftovers (self-repair above
+  // adopts them; only lock-frozen or zero-character cases linger here).
   const shared = sortedData.filter(
     (t) => !t.characterId || !chars.some((c) => c.id === t.characterId)
   );
@@ -275,7 +317,7 @@ function CharacterTeamPanel(props: { character: Character | null; teams: Team[] 
           lineClamp={1}
           style={{ letterSpacing: "0.06em", minWidth: 0 }}
         >
-          {character?.name ?? "Shared Teams"}
+          {character?.name ?? "Needs a character"}
         </Title>
         <Text fz={{ base: 12, lg: 14 }} c="#b6b1bc" style={{ flexShrink: 0 }}>
           {count} pokemon
@@ -357,7 +399,7 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
   const { user } = useAuth();
 
   // Characters, so a team can be assigned to one (its Pokemon are that
-  // character's box). Teams with no character stay shared for compatibility.
+  // character's box). Every team belongs to exactly one character.
   const { data: characters } = useQuery({
     queryKey: ["get-characters", user?.uid],
     queryFn: () => getCharacters(user!.uid),
@@ -413,6 +455,11 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
     }
     if (containsBlockedWord(name)) {
       setNameError("That team name isn't allowed. Pick something else.");
+      return;
+    }
+    // Every team belongs to a character; a save can no longer clear it.
+    if (!form.values.characterId) {
+      setNameError("Pick which character owns this team.");
       return;
     }
     setNameError("");
@@ -545,9 +592,8 @@ export function SingleTeam(props: { team: Team } & EditingProps & { isSingleTeam
       {isEditing ? (
         <Select
           label="Owned by"
-          placeholder="Any character (shared)"
+          placeholder="Pick a character"
           data={characterOptions}
-          clearable
           size="xs"
           w="100%"
           mb={12}
@@ -610,11 +656,34 @@ function CreateNewTeam() {
     queryFn: () => getTeamsRaw(user?.uid as string),
   });
   const teamCount = rawTeams?.length ?? 0;
+  // Every team belongs to a character, so creating one requires picking it.
+  const { data: characters } = useQuery({
+    queryKey: ["get-characters", user?.uid],
+    queryFn: () => getCharacters(user!.uid),
+    enabled: !!user,
+  });
+  const characterOptions = (characters?.sortedData ?? []).map((c) => ({
+    value: c.id,
+    label: c.name,
+  }));
+  const [charId, setCharId] = React.useState<string | null>(null);
+  const effectiveCharId =
+    charId && characterOptions.some((o) => o.value === charId)
+      ? charId
+      : characterOptions[0]?.value ?? null;
 
   const handleClick = async () => {
-    if (teamCount >= MAX_TEAMS) return;
+    if (teamCount >= MAX_TEAMS || !effectiveCharId) return;
     try {
-      await mutateAsync({});
+      await mutateAsync({
+        values: {
+          pokemon_ids: [],
+          team_name: "Untitled",
+          times_battled: "0",
+          created_at: new Date(),
+          characterId: effectiveCharId,
+        } as unknown as EditTeamType,
+      });
       await queryClient.invalidateQueries({ queryKey: ["get-teams"] });
       toastSuccess("Team created.");
     } catch (err) {
@@ -631,13 +700,30 @@ function CreateNewTeam() {
             : `${teamCount}/${MAX_TEAMS} teams. You're getting close to the limit.`}
         </Text>
       )}
-      <GradientButtonSecondary
-        onClick={handleClick}
-        loading={isLoading}
-        disabled={teamCount >= MAX_TEAMS}
-      >
-        Create a New Team
-      </GradientButtonSecondary>
+      <Group gap={8} align="flex-end" wrap="wrap" justify="flex-end">
+        <Select
+          label="For character"
+          data={characterOptions}
+          value={effectiveCharId}
+          onChange={setCharId}
+          size="xs"
+          w={180}
+          aria-label="Character the new team belongs to"
+          styles={{ input: { background: "#0e0d11" }, label: { color: "white" } }}
+        />
+        <GradientButtonSecondary
+          onClick={handleClick}
+          loading={isLoading}
+          disabled={teamCount >= MAX_TEAMS || !effectiveCharId}
+        >
+          Create a New Team
+        </GradientButtonSecondary>
+      </Group>
+      {!characterOptions.length && (
+        <Text fz={14} c="#FFD074">
+          Create a character first: every team belongs to one.
+        </Text>
+      )}
     </Stack>
   );
 }

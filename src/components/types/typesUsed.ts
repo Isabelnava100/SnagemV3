@@ -335,9 +335,10 @@ export interface Team {
     seconds: number;
   };
   /**
-   * Character this team belongs to. Optional for backward compatibility: a team
-   * with no characterId is shared and available to every one of the user's
-   * characters. New teams are assigned to a character in the dashboard.
+   * Character this team belongs to. Every team belongs to exactly one
+   * character (July 2026, shared teams retired): creation and saving require
+   * it, and legacy teams without one self-repair on the Pokemon dashboard.
+   * Optional in the type only because old docs may still lack it.
    */
   characterId?: string;
 }

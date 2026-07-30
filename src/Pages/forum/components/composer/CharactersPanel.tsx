@@ -58,12 +58,17 @@ export default function CharactersPanel(props: {
     [rawTeams, owned]
   );
 
-  // Teams available to a given character: its own plus any shared (no
-  // characterId) team, so existing teams keep working after the split.
+  // Teams available to a given character: its own only (every team belongs
+  // to one character). A legacy team with no characterId is offered only
+  // when a thread lock already pins it, so mid-battle posting keeps working.
   const teamOptionsFor = React.useCallback(
     (characterId: string) =>
       (teams?.sortedData ?? [])
-        .filter((team) => !team.characterId || team.characterId === characterId)
+        .filter(
+          (team) =>
+            team.characterId === characterId ||
+            (!team.characterId && !!restrictTo?.includes(team.id))
+        )
         .filter((team) => !restrictTo || restrictTo.includes(team.id))
         .map((team) => ({
           value: team.id,
