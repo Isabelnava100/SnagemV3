@@ -1,0 +1,6 @@
+Gaia Username,Type (Character/Pokemon),Name,Belongs To Character,Nickname,Gender,Level,Shiny (Y/N),Shadow (Y/N),Age,Pronouns,Birthday,Height,Character Species,Hometown,Short Description,History
+PixelSylveon,Character,Rell,,,Female,,,,24,she/her,July 5,"5'6""",Human,Phenac City,A quick one-line intro for the character card,"Rell grew up in Phenac City, joined Snagem after... (as long as you like; line breaks are fine inside quotes)"
+PixelSylveon,Pokemon,Sylveon,Rell,Ribbon,F,25,N,N,,,,,,,,
+PixelSylveon,Pokemon,Pikachu,Rell,,M,10,Y,N,,,,,,,,
+PixelSylveon,Character,Second Character,,,Male,,,,30,he/him,,,Human,Pyrite Town,,Another character's history goes here
+PixelSylveon,Pokemon,Croagunk,Second Character,,M,15,N,Y,,,,,,,,
