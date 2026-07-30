@@ -4066,6 +4066,9 @@ interface ImportPokemonInput {
   pokedex: string;
   /** Optional nickname chosen on the import page; falls back to species. */
   name?: string;
+  /** Gaia character this pokemon belongs to (matched to an existing
+   * character by name at approval, becoming its characterId). */
+  character?: string;
   gender: string;
   shiny: boolean;
   experience: number;
@@ -4117,9 +4120,19 @@ export const approveImport = onCall(async (request) => {
   const currencyRef = db.doc(`users/${targetUid}/bag/currency`);
   const itemsRef = db.doc(`users/${targetUid}/bag/items`);
   const ownedRef = db.doc(`users/${targetUid}/bag/owned_pokemons`);
+  const charsRef = db.doc(`users/${targetUid}/bag/characters`);
 
   await db.runTransaction(async (tx) => {
     const currencySnap = await tx.get(currencyRef);
+    // Pokemon arrive tagged with the character they belonged to (by name);
+    // when the member already created that character, the imported pokemon
+    // lands assigned to it (characterId) instead of the shared box.
+    const charsSnap = await tx.get(charsRef);
+    const charIdByName = new Map<string, string>();
+    Object.entries(charsSnap.data() ?? {}).forEach(([id, c]) => {
+      const nm = String((c as { name?: string }).name ?? "").trim().toLowerCase();
+      if (nm && !charIdByName.has(nm)) charIdByName.set(nm, id);
+    });
     const prev = currencySnap.data() ?? {};
 
     // Currency
@@ -4156,7 +4169,9 @@ export const approveImport = onCall(async (request) => {
     const pokeUpdate: Record<string, unknown> = {};
     pokemon.forEach((p) => {
       if (!p?.slug && !p?.species) return;
+      const characterId = charIdByName.get(String(p.character ?? "").trim().toLowerCase());
       pokeUpdate[randomUUID()] = {
+        ...(characterId ? { characterId } : {}),
         date_caught: { nt: now.getTime(), seconds: Math.floor(now.getTime() / 1000) },
         gender: p.gender === "F" ? "F" : "M",
         generation: generationFor(p.pokedex),

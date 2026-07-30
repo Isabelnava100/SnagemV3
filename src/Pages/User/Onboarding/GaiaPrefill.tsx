@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Checkbox,
   Group,
   Loader,
@@ -13,6 +14,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import React from "react";
 import { v4 as uuid } from "uuid";
 import { getDb } from "../../../context/firebase";
@@ -20,6 +22,11 @@ import { useAuth } from "../../../context/AuthContext";
 import { SnagIcon } from "../../../icons/SnagIcon";
 import { getCharacters } from "../../../queries/dashboard";
 import { ImportEntries, ImportItem, ImportPokemon } from "../../../queries/imports";
+import {
+  StarterPicker,
+  useOnboardingStatus,
+} from "../../../components/onboarding/OnboardingChecklist";
+import { CreateCharacterStep, CreateTeamStep, StepCard } from "../../Welcome";
 import PokemonEditCard from "./PokemonEditCard";
 
 const FONT_DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
@@ -375,6 +382,63 @@ function OrDivider() {
   );
 }
 
+/**
+ * Option 2 panel: the regular new-trainer onboarding, inline. Same three
+ * steps as the First Adventure wizard (character, starter, team); nothing
+ * from the Gaia prefill is used, and the page hides the draft while this
+ * tab is open.
+ */
+function StartFromScratchPanel() {
+  const status = useOnboardingStatus();
+  return (
+    <Stack gap={12}>
+      <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+        Skip the Gaia data and set up like a brand new member instead. Your prefill will not be
+        imported; finish these three steps and you are ready to roleplay.
+      </Text>
+      <StepCard num="01" title="Create your character" done={status.hasCharacter}>
+        {status.hasCharacter ? (
+          <Text fz={14} c="#3ecf8e">Character created.</Text>
+        ) : (
+          <CreateCharacterStep />
+        )}
+      </StepCard>
+      <StepCard num="02" title="Pick your first Pokemon" done={status.hasPokemon}>
+        {status.hasPokemon ? (
+          <Text fz={14} c="#3ecf8e">Starter claimed.</Text>
+        ) : (
+          <>
+            <Text fz={14} c="#b6b1bc" lh={1.55}>
+              Every trainer starts with one partner. Choose any 1 star Pokemon, or one of the
+              classic starters. Choose well, this one is yours for good.
+            </Text>
+            <StarterPicker />
+          </>
+        )}
+      </StepCard>
+      <StepCard num="03" title="Build your team" done={status.hasReadyTeam}>
+        {status.hasReadyTeam ? (
+          <Text fz={14} c="#3ecf8e">Team ready.</Text>
+        ) : (
+          <CreateTeamStep />
+        )}
+      </StepCard>
+      {status.complete && (
+        <Stack gap={10}>
+          <Text fz={14} c="#3ecf8e">
+            All set, Trainer! Your character, partner, and team are ready.
+          </Text>
+          <Group gap={10} wrap="wrap">
+            <Button component={Link} to="/Forum/Main-Forum" color="grape">
+              Go to the Forums
+            </Button>
+          </Group>
+        </Stack>
+      )}
+    </Stack>
+  );
+}
+
 /** Shared "pick your account first" hint for the tabs that need a packet. */
 function NeedAccountHint() {
   return (
@@ -396,13 +460,14 @@ export default function GaiaPrefill(props: {
    * (rendered further down, below Items) reads the same account. */
   slug: string | null;
   onSlugChange: (slug: string | null) => void;
+  /** Active option tab, owned by the page: when "scratch" is selected the
+   * page hides the whole prefill draft (it will not be imported). */
+  tab: string;
+  onTabChange: (tab: string) => void;
   onPrefill: (entries: ImportEntries, noteAppend: string) => void;
-  /** Option 2: ignore the Gaia data entirely and close the import. */
-  onStartFromScratch: () => void;
 }) {
   const { user } = useAuth();
-  const { slug, onSlugChange } = props;
-  const [tab, setTab] = React.useState<string>("prefill");
+  const { slug, onSlugChange, tab, onTabChange } = props;
   const [message, setMessage] = React.useState("");
 
   const { data: index } = useQuery({ queryKey: ["gaia-export-index"], queryFn: getIndex });
@@ -511,7 +576,7 @@ export default function GaiaPrefill(props: {
 
         <Tabs
           value={tab}
-          onChange={(v) => setTab(v ?? "prefill")}
+          onChange={(v) => onTabChange(v ?? "prefill")}
           keepMounted={false}
           styles={{ list: { borderBottom: "1px solid #2a2637", gap: 4, flexWrap: "wrap" } }}
         >
@@ -565,18 +630,7 @@ export default function GaiaPrefill(props: {
           </Tabs.Panel>
 
           <Tabs.Panel value="scratch" pt={16}>
-            <Stack gap={12}>
-              <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-                Ignore the Gaia data and begin as a brand new member: nothing gets prefilled,
-                this import page closes for good, and you build your characters and team from
-                your dashboard instead. Anything already approved stays on your account.
-              </Text>
-              <Box>
-                <TileButton kind="purple" onClick={props.onStartFromScratch}>
-                  Skip the import and start fresh
-                </TileButton>
-              </Box>
-            </Stack>
+            <StartFromScratchPanel />
           </Tabs.Panel>
         </Tabs>
 
@@ -672,7 +726,7 @@ export function GaiaCharactersSection(props: {
 
   const createCharacters = useMutation({
     mutationFn: async () => {
-      if (!user) return 0;
+      if (!user) return { count: 0, created: [] as Array<{ sourceName: string; newName: string }> };
       const { doc, getDoc, setDoc } = await import("firebase/firestore");
       const db = await getDb();
       const ref = doc(db, "users", user.uid, "bag", "characters");
@@ -681,7 +735,7 @@ export function GaiaCharactersSection(props: {
         Object.values(existing).map((c) => (c.name ?? "").toLowerCase())
       );
       const additions: Record<string, unknown> = {};
-      let count = 0;
+      const created: Array<{ sourceName: string; newName: string }> = [];
       for (const d of charDrafts) {
         const name = d.name.trim();
         if (!d.include || !name || have.has(name.toLowerCase())) continue;
@@ -699,17 +753,42 @@ export function GaiaCharactersSection(props: {
           imageURL: "",
           createdAt: new Date(),
         };
-        count += 1;
+        created.push({ sourceName: d.sourceName, newName: name });
       }
-      if (count) await setDoc(ref, additions, { merge: true });
-      return count;
+      if (created.length) await setDoc(ref, additions, { merge: true });
+      return { count: created.length, created };
     },
-    onSuccess: async (count) => {
+    onSuccess: async ({ count, created }) => {
       setMessage(
         count
           ? `${count} character(s) created. Review them any time on the Characters page.`
           : "All of these characters already exist on your account."
       );
+      // When a character got created under an edited name, retag their
+      // pokemon (and the group key) so the approval-time name match still
+      // assigns them to the right character. Skip ambiguous sources (two
+      // drafts sharing one source, e.g. the temporary test copies).
+      const renames = new Map(
+        created
+          .filter(
+            (r) =>
+              r.newName !== r.sourceName &&
+              charDrafts.filter((d) => d.sourceName === r.sourceName).length === 1
+          )
+          .map((r) => [r.sourceName, r.newName])
+      );
+      if (renames.size) {
+        props.onPokemonChange(
+          props.pokemon.map((p) =>
+            renames.has(p.character ?? "") ? { ...p, character: renames.get(p.character ?? "") } : p
+          )
+        );
+        setCharDrafts((ds) =>
+          ds.map((d) =>
+            renames.has(d.sourceName) ? { ...d, sourceName: renames.get(d.sourceName)! } : d
+          )
+        );
+      }
       await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
     },
     onError: () => setMessage("Could not create the characters. Try again."),

@@ -204,6 +204,10 @@ export default function Onboarding() {
   // Selected Gaia export, lifted here so the tools panel (top) and the
   // characters section (below Items) read the same account.
   const [gaiaSlug, setGaiaSlug] = React.useState<string | null>(null);
+  // Active option tab, lifted so the page can hide the whole prefill draft
+  // while "Start from scratch" is selected (that data will not be imported).
+  const [gaiaTab, setGaiaTab] = React.useState("prefill");
+  const scratchActive = gaiaTab === "scratch";
   // Same packet the Gaia components load (shared query key, so it is
   // cached); the page needs the character names to group pokemon.
   const { data: gaiaPacket } = useQuery({
@@ -320,7 +324,17 @@ export default function Onboarding() {
         )}
         {status === "granted" && (
           <StatusNote icon="shieldcheck" accent="#12B7B6">
-            Your last batch was added to your account. Add more below, or mark your import complete
+            Your last batch was added to your account. Add more below, or{" "}
+            <Anchor
+              component="button"
+              type="button"
+              onClick={openComplete}
+              c="cyan.3"
+              fz={14.5}
+              td="underline"
+            >
+              mark your import complete
+            </Anchor>{" "}
             when you are done.
           </StatusNote>
         )}
@@ -328,7 +342,13 @@ export default function Onboarding() {
         {locked ? (
           <SubmittedPreview entries={entries} />
         ) : mode === null ? (
-          <ImportChoice onPrefill={() => setMode("prefill")} onScratch={openComplete} />
+          <ImportChoice
+            onPrefill={() => setMode("prefill")}
+            onScratch={() => {
+              setGaiaTab("scratch");
+              setMode("prefill");
+            }}
+          />
         ) : (
           <>
             {/* Import tools first, review sections below: pick an option up
@@ -336,7 +356,8 @@ export default function Onboarding() {
             <GaiaPrefill
               slug={gaiaSlug}
               onSlugChange={setGaiaSlug}
-              onStartFromScratch={openComplete}
+              tab={gaiaTab}
+              onTabChange={setGaiaTab}
               onPrefill={(prefill, noteAppend) => {
                 // Merge, never clobber: per currency field, a hand-entered
                 // value wins and the prefill fills only what is still zero.
@@ -354,82 +375,73 @@ export default function Onboarding() {
                 setNote((prev) => (prev ? `${prev}\n\n${noteAppend}` : noteAppend));
               }}
             />
-            <CurrencySection
-              currency={entries.currency}
-              onChange={(currency) => update({ ...entries, currency })}
-            />
-            <ItemsSection
-              items={entries.items}
-              onChange={(items) => update({ ...entries, items })}
-            />
-            {/* Gaia characters sit between Items and Pokemon: each pokemon in
-                the export belongs to a character, so it renders under that
-                character's card. The Pokemon section below holds the rest. */}
-            <GaiaCharactersSection
-              slug={gaiaSlug}
-              pokemon={entries.pokemon}
-              onPokemonChange={(pokemon) => update({ ...entries, pokemon })}
-            />
-            <PokemonSection
-              pokemon={entries.pokemon}
-              characterNames={characterNames}
-              onChange={(pokemon) => update({ ...entries, pokemon })}
-            />
+            {/* The draft only shows while the prefill option is active: on
+                Start from scratch none of it would be imported anyway. */}
+            {!scratchActive && (
+              <>
+                <CurrencySection
+                  currency={entries.currency}
+                  onChange={(currency) => update({ ...entries, currency })}
+                />
+                <ItemsSection
+                  items={entries.items}
+                  onChange={(items) => update({ ...entries, items })}
+                />
+                {/* Gaia characters sit between Items and Pokemon: each pokemon
+                    in the export belongs to a character, so it renders under
+                    that character's card. The Pokemon section holds the rest. */}
+                <GaiaCharactersSection
+                  slug={gaiaSlug}
+                  pokemon={entries.pokemon}
+                  onPokemonChange={(pokemon) => update({ ...entries, pokemon })}
+                />
+                <PokemonSection
+                  pokemon={entries.pokemon}
+                  characterNames={characterNames}
+                  onChange={(pokemon) => update({ ...entries, pokemon })}
+                />
 
-            <SectionCard title="Note for the reviewer" icon="chat">
-              <Textarea
-                aria-label="Note for the reviewer (optional)"
-                placeholder="Anything the staff should know about your import"
-                value={note}
-                onChange={(e) => setNote(e.currentTarget.value)}
-                autosize
-                minRows={2}
-                radius={0}
-                sx={FIELD_SX}
-              />
-            </SectionCard>
+                <SectionCard title="Note for the reviewer" icon="chat">
+                  <Textarea
+                    aria-label="Note for the reviewer (optional)"
+                    placeholder="Anything the staff should know about your import"
+                    value={note}
+                    onChange={(e) => setNote(e.currentTarget.value)}
+                    autosize
+                    minRows={2}
+                    radius={0}
+                    sx={FIELD_SX}
+                  />
+                </SectionCard>
 
-            {message && (
-              <StatusNote icon="shieldcheck" accent="#12B7B6">
-                {message}
-              </StatusNote>
-            )}
+                {message && (
+                  <StatusNote icon="shieldcheck" accent="#12B7B6">
+                    {message}
+                  </StatusNote>
+                )}
 
-            <Group
-              justify="space-between"
-              align="center"
-              wrap="wrap"
-              gap={12}
-              pt={20}
-              style={{ borderTop: "1px solid #2a2637" }}
-            >
-              <Text fz={14} c="#b6b1bc">
-                Every edit auto-saves as a draft.
-              </Text>
-              <Group gap={10} wrap="wrap">
-                <AngularButton kind="outline" onClick={openComplete}>
-                  My import is complete
-                </AngularButton>
-                <AngularButton
-                  kind="red"
-                  disabled={totalCount === 0}
-                  loading={submit.isPending}
-                  onClick={() => submit.mutateAsync()}
+                <Group
+                  justify="space-between"
+                  align="center"
+                  wrap="wrap"
+                  gap={12}
+                  pt={20}
+                  style={{ borderTop: "1px solid #2a2637" }}
                 >
-                  Submit for review
-                </AngularButton>
-              </Group>
-            </Group>
-            <Anchor
-              component="button"
-              type="button"
-              onClick={() => setMode(null)}
-              fz={14}
-              c="grape.3"
-              ta="center"
-            >
-              Choose a different import method
-            </Anchor>
+                  <Text fz={14} c="#b6b1bc">
+                    Every edit auto-saves as a draft.
+                  </Text>
+                  <AngularButton
+                    kind="red"
+                    disabled={totalCount === 0}
+                    loading={submit.isPending}
+                    onClick={() => submit.mutateAsync()}
+                  >
+                    Submit for review
+                  </AngularButton>
+                </Group>
+              </>
+            )}
           </>
         )}
 
@@ -469,7 +481,7 @@ function ImportChoice(props: { onPrefill: () => void; onScratch: () => void }) {
     {
       key: "scratch",
       title: "Skip import, start fresh",
-      body: "Add nothing and go straight to creating your first character. You cannot return to this import page once you do this.",
+      body: "Set up like a brand new member: create a character, pick a starter Pokemon, and build your team. You can switch back to the Gaia prefill any time.",
       cta: "Start from scratch",
       onClick: props.onScratch,
       accent: "#E54156",

@@ -22,7 +22,7 @@ import { toastError } from "../lib/toast";
 
 const DISPLAY_FONT = "var(--font-display, 'Quantico', sans-serif)";
 
-function StepCard(props: {
+export function StepCard(props: {
   num: string;
   title: string;
   done: boolean;
@@ -64,7 +64,7 @@ function StepCard(props: {
 }
 
 /** Inline step 1: create the first character with just a name. */
-function CreateCharacterStep() {
+export function CreateCharacterStep() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [name, setName] = React.useState("");
@@ -126,7 +126,7 @@ function CreateCharacterStep() {
 }
 
 /** Inline step 3: name a team, auto-filled with the member's pokemon. */
-function CreateTeamStep() {
+export function CreateTeamStep() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const status = useOnboardingStatus();
