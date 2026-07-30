@@ -102,7 +102,7 @@ export function useItemSources(): Map<string, ItemSource[]> {
 /**
  * Non-hook version of the source map: fetches shops + recipes + boxes +
  * missions once and assembles the same itemId -> sources map. For places that
- * cannot call the hook (e.g. the S.N.A.G. chat answer builders).
+ * cannot call the hook (e.g. the GRAY chat answer builders).
  */
 export async function buildItemSources(): Promise<Map<string, ItemSource[]>> {
   const [shopsData, recipesData, boxesData, missionsData] = await Promise.all([

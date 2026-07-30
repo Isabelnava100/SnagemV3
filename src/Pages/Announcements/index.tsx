@@ -117,7 +117,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
     icon: "walkie",
     title: "HELP & COMMUNITY",
     items: [
-      "S.N.A.G. help agent on every page",
+      "GRAY help agent on every page",
       "The Library holds every guide and rule",
       "Member directory and public profiles",
     ],

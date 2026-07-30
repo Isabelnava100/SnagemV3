@@ -1,7 +1,7 @@
 import { getDb } from "../context/firebase";
 
 /**
- * Member messages sent through S.N.A.G. (suggestions, bug reports, questions),
+ * Member messages sent through GRAY (suggestions, bug reports, questions),
  * stored in the tickets collection with status "new" until staff promote them
  * to the Dev Board or discard them. Shared by the Dev Board tool and the Admin
  * inbox's "help desk open" stat (same ["dev-incoming"] query key).

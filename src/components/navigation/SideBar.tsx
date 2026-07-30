@@ -70,7 +70,7 @@ const ALL_LINKS: NavItem[] = [
   { link: "/Activities", label: "Activities", icon: { snag: "ferris" } },
   { link: "/Forum/Main-Forum", label: "Forum", icon: { img: Forum } },
   { link: "/Dashboard", label: "Console", icon: { img: TeamSangem } },
-  { link: "/SNAG", label: "S.N.A.G.", icon: { snag: "walkie" } },
+  { link: "/GRAY", label: "GRAY", icon: { snag: "walkie" } },
 ];
 
 // Every pinnable destination, keyed by label. ALL_LINKS plus the two that used
@@ -85,7 +85,7 @@ const NAV_BY_LABEL: Record<string, NavItem> = Object.fromEntries(
 
 /**
  * The member's ordered nav destinations (their saved order merged with the
- * master list). S.N.A.G. is members-only, so it drops out when logged out.
+ * master list). GRAY is members-only, so it drops out when logged out.
  * Reactive to the settings query so re-ordering in Settings updates live.
  */
 function useOrderedNav(): NavItem[] {
@@ -98,7 +98,7 @@ function useOrderedNav(): NavItem[] {
   const order = resolveNavOrder((settings as { navOrder?: string[] })?.navOrder);
   return order
     .map((label) => NAV_BY_LABEL[label])
-    .filter((item): item is NavItem => !!item && (item.label !== "S.N.A.G." || !!user));
+    .filter((item): item is NavItem => !!item && (item.label !== "GRAY" || !!user));
 }
 
 /** Red dot pinned to a nav icon when something needs the member's attention. */

@@ -52,7 +52,7 @@ function iconSet(fg: string, cut: string, label: string): Record<string, string>
     swords: `<g transform="rotate(45 24 24)"><rect x="21.2" y="3" width="5.6" height="27" rx="2.4" fill="${fg}"/><rect x="15" y="31" width="18" height="4.5" rx="2.2" fill="${fg}"/><rect x="21.2" y="36" width="5.6" height="9" rx="2.8" fill="${fg}"/></g><g transform="rotate(-45 24 24)"><rect x="21.2" y="3" width="5.6" height="27" rx="2.4" fill="${fg}"/><rect x="15" y="31" width="18" height="4.5" rx="2.2" fill="${fg}"/><rect x="21.2" y="36" width="5.6" height="9" rx="2.8" fill="${fg}"/></g>`,
     duo: `<circle cx="15.5" cy="15" r="6" fill="${fg}"/><path d="M15.5 23 c7 0 10.5 4.8 10.5 10 v4.5 H5 V33 c0 -5.2 3.5 -10 10.5 -10 z" fill="${fg}"/><circle cx="33" cy="15" r="6" fill="${fg}" stroke="${cut}" stroke-width="2.4"/><path d="M33 23 c7 0 10.5 4.8 10.5 10 v4.5 H22.5 V33 c0 -5.2 3.5 -10 10.5 -10 z" fill="${fg}" stroke="${cut}" stroke-width="2.4"/>`,
     target: `<circle cx="24" cy="24" r="17" fill="none" stroke="${fg}" stroke-width="3.5"/><circle cx="24" cy="24" r="9.5" fill="none" stroke="${fg}" stroke-width="3.5"/><circle cx="24" cy="24" r="3" fill="${fg}"/>`,
-    // The S.N.A.G. device: an old-school walkie-talkie (antenna, screen,
+    // The GRAY device: an old-school walkie-talkie (antenna, screen,
     // speaker grill, side talk button). Drawn in-set, not ported. The screen
     // and grill are punched out with a mask so they stay TRANSPARENT on any
     // background instead of painting a cutline color.

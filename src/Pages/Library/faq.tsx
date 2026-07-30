@@ -49,7 +49,7 @@ export const FAQ: FaqItem[] = [
         open a thread in Main Adventures (or start your own) and write: every post
         earns your team experience and friendship, wild Pokemon appear to battle
         and snag, and your team locks to the thread you first post in. Questions
-        along the way? Ask S.N.A.G., the walkie icon in the nav bar.
+        along the way? Ask GRAY, the walkie icon in the nav bar.
       </P>
     ),
   },

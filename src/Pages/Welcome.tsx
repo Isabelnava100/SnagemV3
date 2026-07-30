@@ -205,7 +205,7 @@ function CreateTeamStep() {
 /**
  * The First Adventure: the required three-step setup every member finishes
  * before the dashboard, the composers, or any page that needs a team. Steps 4
- * and 5 teach the loop; the Stuck card points at S.N.A.G. and the Library.
+ * and 5 teach the loop; the Stuck card points at GRAY and the Library.
  */
 export default function Welcome() {
   const status = useOnboardingStatus();
@@ -316,15 +316,15 @@ export default function Welcome() {
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={12}>
           <Box p={16} style={{ background: "#17151c", border: "1px solid #2a2637" }}>
             <Text c="white" fw={700} fz={15} style={{ fontFamily: DISPLAY_FONT }}>
-              Stuck? Ask S.N.A.G.
+              Stuck? Ask GRAY
             </Text>
             <Text fz={14} c="#b6b1bc" mt={6} mb={10} lh={1.55}>
               The walkie icon in your nav bar is our built-in helper. Ask it anything about
               playing, teams, posting, or currencies, and it answers instantly. It also files
               bugs and suggestions straight to the staff.
             </Text>
-            <Button component={Link} to="/SNAG" variant="light" color="grape" size="xs">
-              Chat with S.N.A.G.
+            <Button component={Link} to="/GRAY" variant="light" color="grape" size="xs">
+              Chat with GRAY
             </Button>
           </Box>
           <Box p={16} style={{ background: "#17151c", border: "1px solid #2a2637" }}>

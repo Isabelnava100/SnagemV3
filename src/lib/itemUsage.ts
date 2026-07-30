@@ -3,7 +3,7 @@ import { EXP_CANDY_XP, RARE_CANDY_ID, SELL_VALUES, VITAMIN_IDS } from "./itemUse
 
 /**
  * One-line "what this item does / how to use it" for the bag info card and the
- * S.N.A.G. agent. Kept in sync with the mechanics in functions/src/index.ts
+ * GRAY agent. Kept in sync with the mechanics in functions/src/index.ts
  * (battle-post effects) and the bag callables (sellItem / useItemOnPokemon).
  */
 export function usageForItem(itemId: string, category: string): string | undefined {

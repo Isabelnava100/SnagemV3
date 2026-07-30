@@ -3,6 +3,7 @@ import { useMediaQuery as useMediaQueryCore } from "@mantine/hooks";
 import { Suspense, lazy, memo, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { SignedInAccessGate, useAccessGate } from "./components/auth/AccessGate";
+import { useOnboardingStatus } from "./components/onboarding/OnboardingChecklist";
 
 // The sidebar (and its query/firebase import chain) is lazy: marketing
 // routes render without it, keeping the public boot graph small.
@@ -21,12 +22,23 @@ const MARKETING_ROUTES = ["/", "/about", "/login", "/register", "/forgot", "/res
 // which the gate links to for reading while they wait.
 const GATE_EXEMPT_ROUTES = [...MARKETING_ROUTES, "/library"];
 
+// Setup-focused routes: the first-adventure wizard and the Gaia import page.
+// While a member's onboarding is incomplete these render without the nav so
+// the only way forward is finishing the steps in front of them.
+const ONBOARDING_ROUTES = ["/welcome", "/onboarding"];
+
 export const App = memo(() => {
   const isUnder900 = useMediaQueryCore("(max-width: 900px)");
   const hasLessHeight = useMediaQueryCore("(max-height: 900px)");
   const { pathname } = useLocation();
   const { gated } = useAccessGate();
   const route = pathname.toLowerCase().replace(/\/$/, "") || "/";
+
+  // Hide the nav on the onboarding/import pages until setup is done (the
+  // reads only fire on those routes; everywhere else the hook stays idle).
+  const onOnboardingRoute = ONBOARDING_ROUTES.includes(route);
+  const onboarding = useOnboardingStatus(onOnboardingRoute);
+  const hideNav = onOnboardingRoute && !onboarding.complete;
 
   // The static hero shell in index.html is permanent (React never re-renders
   // it, so the LCP paint is never replaced): show it on the marketing
@@ -99,6 +111,7 @@ export const App = memo(() => {
           paddingBottom: isUnder900 ? 0 : 16,
         }}
       >
+        {!hideNav && (
         <nav
           style={
             isUnder900
@@ -123,6 +136,7 @@ export const App = memo(() => {
             <SideBar />
           </Suspense>
         </nav>
+        )}
         <div
           style={{
             height: "100%",
@@ -131,7 +145,8 @@ export const App = memo(() => {
             paddingLeft: isUnder900 ? 10 : 24,
             paddingRight: isUnder900 ? 10 : 24,
             // Clear the fixed bottom bar (bar height + home-indicator inset).
-            paddingBottom: isUnder900 ? "calc(74px + env(safe-area-inset-bottom))" : undefined,
+            paddingBottom:
+              isUnder900 && !hideNav ? "calc(74px + env(safe-area-inset-bottom))" : undefined,
             overflowX: "hidden",
           }}
         >

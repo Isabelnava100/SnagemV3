@@ -293,13 +293,15 @@ export default function AppRoutes() {
                       }
                     />
                     <Route
-                      path="/SNAG"
+                      path="/GRAY"
                       element={
                         <Protect>
                           <SnagAgent />
                         </Protect>
                       }
                     />
+                    {/* Legacy path from before the help agent was renamed. */}
+                    <Route path="/SNAG" element={<Navigate to="/GRAY" replace />} />
                     <Route
                       path="/Policies"
                       element={

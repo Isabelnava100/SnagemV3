@@ -27,26 +27,30 @@ import { getCharacters, getOwnedPokemons, getTeamsRaw } from "../../queries/dash
  * forum callables enforce the same three steps server-side, so this hook is
  * what the composers and the dashboard welcome use to guide people there
  * BEFORE they hit the wall.
+ *
+ * Pass `enabled: false` to skip the reads entirely (the app shell calls this
+ * on every route but only needs the answer on the onboarding pages).
  */
-export function useOnboardingStatus() {
+export function useOnboardingStatus(enabled = true) {
   const { user } = useAuth();
+  const active = !!user && enabled;
   const characters = useQuery({
     queryKey: ["get-characters", user?.uid],
     queryFn: () => getCharacters(user!.uid),
-    enabled: !!user,
+    enabled: active,
   });
   const teams = useQuery({
     queryKey: ["get-teams", user?.uid],
     queryFn: () => getTeamsRaw(user!.uid),
-    enabled: !!user,
+    enabled: active,
   });
   const owned = useQuery({
     queryKey: ["get-owned-pokemons", user?.uid],
     queryFn: () => getOwnedPokemons(user!.uid),
-    enabled: !!user,
+    enabled: active,
   });
 
-  const loading = !!user && (characters.isPending || teams.isPending || owned.isPending);
+  const loading = active && (characters.isPending || teams.isPending || owned.isPending);
   // Fail open on read errors: the publish callables enforce the same rule
   // server-side, so a transient Firestore error must never lock a fully
   // set-up member out of the composer.

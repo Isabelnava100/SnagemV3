@@ -245,22 +245,31 @@ export default function GaiaPrefill(props: {
   const [message, setMessage] = React.useState("");
 
   const { data: index } = useQuery({ queryKey: ["gaia-export-index"], queryFn: getIndex });
-  const { data: ownGaiaName } = useQuery({
+  const { data: ownGaiaName, isPending: ownGaiaNamePending } = useQuery({
     queryKey: ["own-gaia-name", user?.uid],
     queryFn: () => getOwnGaiaName(user!.uid),
     enabled: !!user,
   });
 
-  // Preselect by the gaiaName given at registration, else by site username.
+  // A Gaia name saved on the account (given at registration, copied at
+  // approval) locks the packet to that account: no picking someone else's
+  // export. The dropdown only appears for accounts with no Gaia name on file.
+  const lockedSlug =
+    ownGaiaName && index?.[slugify(ownGaiaName)] ? slugify(ownGaiaName) : null;
+
+  // Locked accounts always use their own packet; otherwise preselect by site
+  // username when it happens to match an export.
   React.useEffect(() => {
-    if (slug || !index) return;
-    for (const candidate of [ownGaiaName, user?.username]) {
-      if (candidate && index[slugify(candidate)]) {
-        setSlug(slugify(candidate));
-        return;
-      }
+    if (!index) return;
+    if (lockedSlug) {
+      if (slug !== lockedSlug) setSlug(lockedSlug);
+      return;
     }
-  }, [index, ownGaiaName, user, slug]);
+    if (slug) return;
+    if (user?.username && index[slugify(user.username)]) {
+      setSlug(slugify(user.username));
+    }
+  }, [index, lockedSlug, user, slug]);
 
   const { data: packet } = useQuery({
     queryKey: ["gaia-export", slug],
@@ -320,7 +329,9 @@ export default function GaiaPrefill(props: {
     onError: () => setMessage("Could not create the characters. Try again."),
   });
 
-  if (!index || Object.keys(index).length === 0) return null;
+  // Wait for the account's Gaia name before showing anything: flashing an
+  // open dropdown that then locks shut reads as a bug.
+  if (!index || Object.keys(index).length === 0 || (!!user && ownGaiaNamePending)) return null;
 
   const options = Object.entries(index)
     .map(([value, label]) => ({ value, label }))
@@ -376,17 +387,35 @@ export default function GaiaPrefill(props: {
           in this import for you: characters, Pokemon, and items. You can still edit everything
           before submitting.
         </Text>
-        <Select
-          label="Your Gaia account"
-          placeholder="Search your Gaia username"
-          searchable
-          data={options}
-          value={slug}
-          onChange={setSlug}
-          maw={320}
-          radius={0}
-          sx={FIELD_SX}
-        />
+        {lockedSlug ? (
+          <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+            Your account is linked to the Gaia username{" "}
+            <Text component="strong" c="white" fw={700}>
+              {index[lockedSlug]}
+            </Text>
+            , so that is the export we will use.
+          </Text>
+        ) : ownGaiaName ? (
+          <Text fz={14.5} c="#b6b1bc" lh={1.6}>
+            Your account is linked to the Gaia username{" "}
+            <Text component="strong" c="white" fw={700}>
+              {ownGaiaName}
+            </Text>
+            , but no export matches it. Ask a staff member to check the archive for you.
+          </Text>
+        ) : (
+          <Select
+            label="Your Gaia account"
+            placeholder="Search your Gaia username"
+            searchable
+            data={options}
+            value={slug}
+            onChange={setSlug}
+            maw={320}
+            radius={0}
+            sx={FIELD_SX}
+          />
+        )}
         {packet && (
           <>
             <Text fz={14.5} c="#b6b1bc" lh={1.6}>

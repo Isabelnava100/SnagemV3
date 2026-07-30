@@ -8,6 +8,7 @@ Disallow: /Forum
 Disallow: /Users
 Disallow: /Dashboard
 Disallow: /Admin
+Disallow: /GRAY
 Disallow: /SNAG
 Disallow: /Onboarding
 Disallow: /Welcome
@@ -53,6 +54,7 @@ Disallow: /Forum
 Disallow: /Users
 Disallow: /Dashboard
 Disallow: /Admin
+Disallow: /GRAY
 Disallow: /SNAG
 Disallow: /Onboarding
 Disallow: /Welcome

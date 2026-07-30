@@ -21,7 +21,7 @@ import { Incoming, getIncomingTickets } from "../../../../queries/devBoard";
 /**
  * Dev Board: the staff's development inbox and planning space.
  *  - Incoming: suggestions, bug reports and questions members sent through
- *    S.N.A.G. (tickets collection). Staff discard them or promote them into
+ *    GRAY (tickets collection). Staff discard them or promote them into
  *    board tickets.
  *  - Tickets: the working list (open / in progress / done).
  *  - Notes: admin-to-admin planning notes ("what's coming up next") so the
@@ -185,7 +185,7 @@ export default function DevBoard() {
 
       <Stack gap={8}>
         <Title order={3} c="white" size={22} fw={600}>
-          Incoming from S.N.A.G. ({(incoming.data ?? []).length})
+          Incoming from GRAY ({(incoming.data ?? []).length})
         </Title>
         <Text fz={14} c="dimmed">
           Suggestions, bug reports and questions members sent through the help device.

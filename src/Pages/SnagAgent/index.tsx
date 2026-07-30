@@ -30,7 +30,7 @@ import { buildItemSources } from "../../lib/itemSources";
 import { rarityForItem, RARITY_LABELS, RARITY_OBTAIN } from "../../lib/itemRarity";
 
 /**
- * S.N.A.G., the guild's help device. A self-contained FAQ/SOP chat: it
+ * GRAY, the guild's help device. A self-contained FAQ/SOP chat: it
  * answers "where do I find X / how does Y work" from a built-in knowledge
  * base, checks the member's own progress for personal questions (weekly Snag
  * List, badge runs), and takes suggestions / bug reports / open questions as
@@ -408,7 +408,7 @@ const KB: KbEntry[] = [
   },
   {
     // Staff tools directory: where each admin/director task lives. Kept broad
-    // but gated, members get pointed at S.N.A.G. tickets instead.
+    // but gated, members get pointed at GRAY tickets instead.
     match: /where.*(grade|approve|adjust list|dev board|site setting|battle cost|donate|import|star override|permission|manage|admin tool|staff tool)|how.*(grade|approve an|launch (a )?safari|edit.*(list|config|battle))|staff tools?|admin tools?/i,
     answer: ({ admin }) =>
       admin ? (
@@ -435,7 +435,7 @@ const KB: KbEntry[] = [
           Access &gt; Roles &amp; Permissions.
           <br />• <b>Donate</b> (grant currency, items, emblem pieces): Admin &gt;
           Manage &gt; Members &amp; Access &gt; Donate.
-          <br />• <b>Dev Board</b> (triage S.N.A.G. tickets, planning notes): Admin &gt;
+          <br />• <b>Dev Board</b> (triage GRAY tickets, planning notes): Admin &gt;
           Manage &gt; Dev Board.
           <br />• <b>Site Settings</b> (Discord webhook, SendGrid email, SEO, OG image):
           the <L to="/Dashboard/Site-Settings">Site Settings</L> nav tile (admins /
@@ -1213,7 +1213,7 @@ const KB: KbEntry[] = [
 
 const GREETING: React.ReactNode = (
   <>
-    S.N.A.G. online. Ask me where anything lives or how it works: battles, missions,
+    GRAY online. Ask me where anything lives or how it works: battles, missions,
     badges, your weekly Snag List. I can also take a suggestion, a bug report, or pass a
     question to the staff.
   </>
@@ -1221,7 +1221,7 @@ const GREETING: React.ReactNode = (
 
 const ADMIN_GREETING: React.ReactNode = (
   <>
-    S.N.A.G. online, staff mode. I answer member questions AND the admin manual: where
+    GRAY online, staff mode. I answer member questions AND the admin manual: where
     to approve applications and imports, manage encounter lists, launch Safari
     Contests, or triage the Dev Board. Ask away.
   </>
@@ -1392,7 +1392,7 @@ export default function SnagAgent() {
   // reply offers an inline path to the staff.
   const visibleChips = chips.filter((c) => isOverSm || c.keepOnMobile);
 
-  // Bot marker: the angled S.N.A.G. avatar tile carrying the walkie identity
+  // Bot marker: the angled GRAY avatar tile carrying the walkie identity
   // icon. Reused by every bot bubble and by the typing indicator.
   const botAvatar = (
     <Box
@@ -1410,13 +1410,13 @@ export default function SnagAgent() {
           "polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)",
       }}
     >
-      <SnagIcon name="walkie" size={20} color="#fff" title="S.N.A.G." />
+      <SnagIcon name="walkie" size={20} color="#fff" title="GRAY" />
     </Box>
   );
 
   return (
     <Container size="lg" py={{ base: 24, sm: 40 }} px={{ base: 16, sm: 24 }}>
-      <Seo noindex title="S.N.A.G. | Snagem Guild" />
+      <Seo noindex title="GRAY | Snagem Guild" />
 
       {/* Scoped animation + hover/focus states for the flat, angular chat panel
           (matches the SNAG mockup; no border-radius, Quantico SEND). */}
@@ -1435,8 +1435,8 @@ export default function SnagAgent() {
       `}</style>
 
       <PageHero
-        eyebrow="Support Network Assistance Gadget"
-        title="S.N.A.G."
+        eyebrow="Guidance Resource and Assistance Yielder"
+        title="GRAY"
         titleSuffix={
           admin ? (
             <Text
@@ -1512,7 +1512,7 @@ export default function SnagAgent() {
                 <Box
                   role="status"
                   aria-live="polite"
-                  aria-label="S.N.A.G. is typing"
+                  aria-label="GRAY is typing"
                   style={{
                     display: "flex",
                     gap: 6,
@@ -1565,9 +1565,9 @@ export default function SnagAgent() {
                     : intake === "bug"
                     ? "Describe the bug..."
                     : "Type your question for the staff..."
-                  : "Ask S.N.A.G. anything about the guild..."
+                  : "Ask GRAY anything about the guild..."
               }
-              aria-label="Message S.N.A.G."
+              aria-label="Message GRAY"
               value={input}
               onChange={(e) => setInput(e.currentTarget.value)}
               onKeyDown={(e) => {
@@ -1606,7 +1606,7 @@ export default function SnagAgent() {
             </Text>
           )}
           <Text fz={12} c="#6f6a78" mt={12} ta="center" style={{ lineHeight: 1.5 }}>
-            S.N.A.G. answers from the guild&apos;s own manuals and your progress; it is not
+            GRAY answers from the guild&apos;s own manuals and your progress; it is not
             connected to an external AI. Anything it cannot answer can be sent to the staff.
           </Text>
         </Box>

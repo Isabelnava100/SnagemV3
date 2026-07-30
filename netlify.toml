@@ -45,8 +45,14 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
 
-# S.N.A.G. (the member help chat) is login-gated and never indexable: header +
-# robots.txt disallow + noindex meta, same belt-and-braces as the forums.
+# GRAY (the member help chat, formerly S.N.A.G.) is login-gated and never
+# indexable: header + robots.txt disallow + noindex meta, same belt-and-braces
+# as the forums. The old /SNAG path redirects client-side and stays blocked.
+[[headers]]
+  for = "/GRAY"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
 [[headers]]
   for = "/SNAG"
   [headers.values]
