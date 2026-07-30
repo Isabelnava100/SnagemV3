@@ -41,6 +41,9 @@ export interface ImportPokemon {
   pokedex: string;
   /** Optional nickname; the owned pokemon falls back to the species name. */
   name?: string;
+  /** Gaia character this pokemon belongs to (display/grouping on the import
+   * page; empty or missing = unassigned). */
+  character?: string;
   gender: "M" | "F";
   shiny: boolean;
   level: number;

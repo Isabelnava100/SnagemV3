@@ -12,7 +12,6 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  TextInput,
   Textarea,
   UnstyledButton,
 } from "@mantine/core";
@@ -41,7 +40,8 @@ import {
   submitImportRequest,
 } from "../../../queries/imports";
 import { handleLogout } from "../../auth/components/LogoutHandle";
-import GaiaPrefill, { GaiaCharactersSection } from "./GaiaPrefill";
+import GaiaPrefill, { GaiaCharactersSection, getGaiaExport } from "./GaiaPrefill";
+import PokemonEditCard from "./PokemonEditCard";
 
 const CURRENCY_LABELS: { key: keyof ImportEntries["currency"]; label: string }[] = [
   { key: "pokecoin", label: "Snag Coins" },
@@ -204,6 +204,14 @@ export default function Onboarding() {
   // Selected Gaia export, lifted here so the tools panel (top) and the
   // characters section (below Items) read the same account.
   const [gaiaSlug, setGaiaSlug] = React.useState<string | null>(null);
+  // Same packet the Gaia components load (shared query key, so it is
+  // cached); the page needs the character names to group pokemon.
+  const { data: gaiaPacket } = useQuery({
+    queryKey: ["gaia-export", gaiaSlug],
+    queryFn: () => getGaiaExport(gaiaSlug!),
+    enabled: !!gaiaSlug,
+  });
+  const characterNames = (gaiaPacket?.characters ?? []).map((c) => c.name).filter(Boolean);
 
   React.useEffect(() => {
     if (isPending || seeded) return;
@@ -354,11 +362,17 @@ export default function Onboarding() {
               items={entries.items}
               onChange={(items) => update({ ...entries, items })}
             />
-            {/* Gaia characters sit between Items and Pokemon: the export ties
-                specific pokemon to each character, so the two read together. */}
-            <GaiaCharactersSection slug={gaiaSlug} />
+            {/* Gaia characters sit between Items and Pokemon: each pokemon in
+                the export belongs to a character, so it renders under that
+                character's card. The Pokemon section below holds the rest. */}
+            <GaiaCharactersSection
+              slug={gaiaSlug}
+              pokemon={entries.pokemon}
+              onPokemonChange={(pokemon) => update({ ...entries, pokemon })}
+            />
             <PokemonSection
               pokemon={entries.pokemon}
+              characterNames={characterNames}
               onChange={(pokemon) => update({ ...entries, pokemon })}
             />
 
@@ -612,7 +626,13 @@ function ItemsSection(props: { items: ImportItem[]; onChange: (i: ImportItem[]) 
   );
 }
 
-function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportPokemon[]) => void }) {
+function PokemonSection(props: {
+  pokemon: ImportPokemon[];
+  /** Gaia character names; pokemon assigned to one render under that
+   * character's card above, this section holds the rest. */
+  characterNames: string[];
+  onChange: (p: ImportPokemon[]) => void;
+}) {
   const [slug, setSlug] = React.useState<string | null>(null);
   const [gender, setGender] = React.useState<"M" | "F">("M");
   const [shiny, setShiny] = React.useState(false);
@@ -738,133 +758,47 @@ function PokemonSection(props: { pokemon: ImportPokemon[]; onChange: (p: ImportP
           + Add Pokemon
         </AngularButton>
       </Group>
-      {/* Grid of editable cards: every field of every pokemon stays
-          adjustable right here in the draft, not just at add time. */}
-      <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={10}>
-        {props.pokemon.map((p, i) => (
-          <PokemonEditCard
-            key={i}
-            p={p}
-            onChange={(patch) =>
-              props.onChange(props.pokemon.map((x, j) => (j === i ? { ...x, ...patch } : x)))
-            }
-            onRemove={() => props.onChange(props.pokemon.filter((_, j) => j !== i))}
-          />
-        ))}
-      </SimpleGrid>
-      {!props.pokemon.length && (
-        <Text fz={14} c="#8f8a99">
-          No Pokemon added yet.
-        </Text>
-      )}
+      {/* Only pokemon without a (known) character live here; the rest render
+          under their character's card in the Gaia section above. */}
+      {(() => {
+        const known = new Set(props.characterNames);
+        const unassigned = props.pokemon
+          .map((p, index) => ({ p, index }))
+          .filter(({ p }) => !p.character || !known.has(p.character));
+        return (
+          <>
+            {props.characterNames.length > 0 && (
+              <Text fz={14} c="#8f8a99" lh={1.55}>
+                Pokemon assigned to a character are shown under that character above. These are
+                the unassigned ones; use the Character field on a card to assign it.
+              </Text>
+            )}
+            <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={10}>
+              {unassigned.map(({ p, index }) => (
+                <PokemonEditCard
+                  key={index}
+                  p={p}
+                  characterOptions={props.characterNames}
+                  onChange={(patch) =>
+                    props.onChange(
+                      props.pokemon.map((x, j) => (j === index ? { ...x, ...patch } : x))
+                    )
+                  }
+                  onRemove={() => props.onChange(props.pokemon.filter((_, j) => j !== index))}
+                />
+              ))}
+            </SimpleGrid>
+            {!unassigned.length && (
+              <Text fz={14} c="#8f8a99">
+                {props.pokemon.length
+                  ? "All of your Pokemon are assigned to characters above."
+                  : "No Pokemon added yet."}
+              </Text>
+            )}
+          </>
+        );
+      })()}
     </SectionCard>
-  );
-}
-
-/** One editable pokemon tile in the draft grid: nickname, gender, and level
- * up front, the stat fields tucked behind an Edit stats toggle. */
-function PokemonEditCard(props: {
-  p: ImportPokemon;
-  onChange: (patch: Partial<ImportPokemon>) => void;
-  onRemove: () => void;
-}) {
-  const { p, onChange, onRemove } = props;
-  const [statsOpen, setStatsOpen] = React.useState(false);
-  const num = (
-    label: string,
-    key: "level" | "friendship" | "shadow" | "purification",
-    min: number,
-    max: number
-  ) => (
-    <NumberInput
-      label={label}
-      min={min}
-      max={max}
-      value={p[key]}
-      onChange={(v) => onChange({ [key]: Math.max(min, Math.min(max, Number(v) || min)) })}
-      size="xs"
-      radius={0}
-      sx={FIELD_SX}
-    />
-  );
-  return (
-    <Stack gap={10} p={12} style={{ background: "#0e0d11", border: "1px solid #232028" }}>
-      <Group wrap="nowrap" align="center" gap={10}>
-        <PokemonHoverCard species={{ slug: p.slug }}>
-          <Avatar
-            src={getPokemonImageURL(p.slug)}
-            alt={p.species}
-            size={36}
-            radius={0}
-            imageProps={{ style: { imageRendering: "pixelated" } }}
-          >
-            <img src={POKEMON_SPRITE_FALLBACK} alt="" width={20} height={20} />
-          </Avatar>
-        </PokemonHoverCard>
-        <Text fz={14} fw={700} c="white" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
-          {p.name?.trim() || p.species}
-          {p.shiny ? " (Shiny)" : ""}
-        </Text>
-        <ActionIcon
-          size="sm"
-          color="red"
-          variant="subtle"
-          aria-label={`Remove ${p.species}`}
-          onClick={onRemove}
-        >
-          <IconTrash size={14} />
-        </ActionIcon>
-      </Group>
-      <TextInput
-        label="Name"
-        placeholder={p.species}
-        value={p.name ?? ""}
-        onChange={(e) => onChange({ name: e.currentTarget.value })}
-        size="xs"
-        radius={0}
-        sx={FIELD_SX}
-      />
-      <SimpleGrid cols={2} spacing={8}>
-        <Select
-          label="Gender"
-          data={[
-            { value: "M", label: "Male" },
-            { value: "F", label: "Female" },
-          ]}
-          value={p.gender}
-          onChange={(v) => onChange({ gender: (v as "M" | "F") ?? "M" })}
-          size="xs"
-          radius={0}
-          sx={FIELD_SX}
-        />
-        {num("Level", "level", 1, MAX_LEVEL)}
-      </SimpleGrid>
-      <Anchor
-        component="button"
-        type="button"
-        fz={13}
-        c="grape.3"
-        ta="left"
-        aria-expanded={statsOpen}
-        onClick={() => setStatsOpen((o) => !o)}
-      >
-        {statsOpen ? "Hide stats" : "Edit stats"}
-      </Anchor>
-      {statsOpen && (
-        <SimpleGrid cols={2} spacing={8}>
-          {num("Friendship", "friendship", 0, 255)}
-          {num("Shadow", "shadow", 0, 100)}
-          {num("Purification", "purification", 0, 100)}
-          <Checkbox
-            label="Shiny"
-            checked={p.shiny}
-            onChange={(e) => onChange({ shiny: e.currentTarget.checked })}
-            mt={22}
-            sx={{ "& label": { color: "#fff" } }}
-          />
-        </SimpleGrid>
-      )}
-    </Stack>
   );
 }
 

@@ -20,6 +20,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { SnagIcon } from "../../../icons/SnagIcon";
 import { getCharacters } from "../../../queries/dashboard";
 import { ImportEntries, ImportItem, ImportPokemon } from "../../../queries/imports";
+import PokemonEditCard from "./PokemonEditCard";
 
 const FONT_DISPLAY = "var(--font-display, 'Quantico', sans-serif)";
 const CLIP_CTA = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
@@ -132,7 +133,9 @@ const getIndex = async (): Promise<Record<string, string>> => {
   return (snap.data()?.names as Record<string, string>) ?? {};
 };
 
-const getExport = async (slug: string): Promise<GaiaExport | null> => {
+/** Fetch one export packet; also used by the import page to know the
+ * character names for grouping pokemon (same query key, so it is cached). */
+export const getGaiaExport = async (slug: string): Promise<GaiaExport | null> => {
   const { doc, getDoc } = await import("firebase/firestore");
   const db = await getDb();
   const snap = await getDoc(doc(db, "gaiaExports", slug));
@@ -157,6 +160,7 @@ export function entriesFromExport(packet: GaiaExport): {
       species: p.species,
       slug: p.slug,
       pokedex: p.pokedex,
+      character: p.character || "",
       gender: p.gender || (Math.random() < 0.5 ? "M" : "F"),
       shiny: p.shiny,
       level: p.level,
@@ -217,8 +221,11 @@ interface CharDraft {
   height: string;
   short_description: string;
   history: string;
-  /** Species tied to this character in the Gaia export (display only; the
-   * pokemon themselves import through the draft's Pokemon section). */
+  /** Original character name in the export: the stable key that matches
+   * ImportPokemon.character even after the name field is edited. */
+  sourceName: string;
+  /** Species tied to this character in the Gaia export (fallback display
+   * while the draft holds no pokemon for them yet, i.e. before prefill). */
   gaiaPokemon: string[];
 }
 
@@ -252,6 +259,7 @@ function draftsFromPacket(packet: GaiaExport): CharDraft[] {
         height: "",
         short_description: "",
         history: [headline, c.history].filter(Boolean).join("\n\n"),
+        sourceName: c.name,
         gaiaPokemon: [...counts.entries()].map(([s, n]) => (n > 1 ? `${s} x${n}` : s)),
       };
     });
@@ -262,6 +270,9 @@ function CharacterReviewCard(props: {
   draft: CharDraft;
   exists: boolean;
   onChange: (patch: Partial<CharDraft>) => void;
+  /** True once the draft holds live pokemon for this character (rendered
+   * below the card), which supersedes the static Gaia roster line. */
+  hideRoster?: boolean;
 }) {
   const { draft, exists, onChange } = props;
   const skipped = exists || !draft.include;
@@ -303,9 +314,10 @@ function CharacterReviewCard(props: {
           />
         )}
       </Group>
-      {draft.gaiaPokemon.length > 0 && (
+      {!props.hideRoster && draft.gaiaPokemon.length > 0 && (
         <Text fz={13} c="#8f8a99" lh={1.55}>
-          Their Pokemon on Gaia: {draft.gaiaPokemon.join(", ")}
+          Their Pokemon on Gaia: {draft.gaiaPokemon.join(", ")} (prefill the draft to edit them
+          here)
         </Text>
       )}
       {!exists && (
@@ -422,7 +434,7 @@ export default function GaiaPrefill(props: {
 
   const { data: packet } = useQuery({
     queryKey: ["gaia-export", slug],
-    queryFn: () => getExport(slug!),
+    queryFn: () => getGaiaExport(slug!),
     enabled: !!slug,
   });
 
@@ -601,14 +613,26 @@ export default function GaiaPrefill(props: {
  * a packet is selected, whatever option tab is open. Shares the account slug
  * picked in the tools panel at the top of the page.
  */
-export function GaiaCharactersSection(props: { slug: string | null }) {
+export function GaiaCharactersSection(props: {
+  slug: string | null;
+  /** The draft's pokemon: each character's own render under their card. */
+  pokemon: ImportPokemon[];
+  onPokemonChange: (pokemon: ImportPokemon[]) => void;
+}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [message, setMessage] = React.useState("");
 
+  // Patch one pokemon by its index in the FULL draft list (the per-character
+  // grids are filtered views over the same array).
+  const patchPokemon = (index: number, patch: Partial<ImportPokemon>) =>
+    props.onPokemonChange(props.pokemon.map((x, j) => (j === index ? { ...x, ...patch } : x)));
+  const removePokemon = (index: number) =>
+    props.onPokemonChange(props.pokemon.filter((_, j) => j !== index));
+
   const { data: packet } = useQuery({
     queryKey: ["gaia-export", props.slug],
-    queryFn: () => getExport(props.slug!),
+    queryFn: () => getGaiaExport(props.slug!),
     enabled: !!props.slug,
   });
 
@@ -715,14 +739,44 @@ export function GaiaCharactersSection(props: { slug: string | null }) {
           a short description), then create the ones you want. Everything stays editable later on
           the Characters page.
         </Text>
-        {charDrafts.map((d, i) => (
-          <CharacterReviewCard
-            key={i}
-            draft={d}
-            exists={existingNames.has(d.name.trim().toLowerCase())}
-            onChange={(patch) => patchDraft(i, patch)}
-          />
-        ))}
+        {charDrafts.map((d, i) => {
+          // This character's pokemon, as (pokemon, full-list index) pairs so
+          // edits land on the right entry of the shared draft array.
+          const theirs = props.pokemon
+            .map((p, index) => ({ p, index }))
+            .filter(({ p }) => (p.character ?? "") === d.sourceName);
+          const characterNames = [...new Set(charDrafts.map((c) => c.sourceName))];
+          return (
+            <Stack key={i} gap={10}>
+              <CharacterReviewCard
+                draft={d}
+                exists={existingNames.has(d.name.trim().toLowerCase())}
+                onChange={(patch) => patchDraft(i, patch)}
+                hideRoster={theirs.length > 0}
+              />
+              {theirs.length > 0 && (
+                <Box pl={{ base: 0, xs: 16 }}>
+                  <Stack gap={8}>
+                    <Text fz={13} fw={700} c="#8f8a99" tt="uppercase" style={{ letterSpacing: "0.08em" }}>
+                      {d.name.trim() || d.sourceName}&apos;s Pokemon ({theirs.length})
+                    </Text>
+                    <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={10}>
+                      {theirs.map(({ p, index }) => (
+                        <PokemonEditCard
+                          key={index}
+                          p={p}
+                          characterOptions={characterNames}
+                          onChange={(patch) => patchPokemon(index, patch)}
+                          onRemove={() => removePokemon(index)}
+                        />
+                      ))}
+                    </SimpleGrid>
+                  </Stack>
+                </Box>
+              )}
+            </Stack>
+          );
+        })}
         <Box>
           <TileButton
             kind="purple"
