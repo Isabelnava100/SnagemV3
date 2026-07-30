@@ -1,10 +1,24 @@
-import { Box, Group, Loader, Select, Stack, Tabs, Text, UnstyledButton } from "@mantine/core";
+import {
+  Box,
+  Checkbox,
+  Group,
+  Loader,
+  Select,
+  SimpleGrid,
+  Stack,
+  Tabs,
+  Text,
+  TextInput,
+  Textarea,
+  UnstyledButton,
+} from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { v4 as uuid } from "uuid";
 import { getDb } from "../../../context/firebase";
 import { useAuth } from "../../../context/AuthContext";
 import { SnagIcon } from "../../../icons/SnagIcon";
+import { getCharacters } from "../../../queries/dashboard";
 import { ImportEntries, ImportItem, ImportPokemon } from "../../../queries/imports";
 import CsvPanel from "./CsvPanel";
 import { UploadResult } from "./csv";
@@ -15,9 +29,14 @@ const CLIP_CTA = "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)";
 /** Dark, square-cornered field look shared with the Onboarding page. */
 const FIELD_SX = {
   "& label": { color: "#fff", fontWeight: 700, fontSize: 14, marginBottom: 6 },
-  "& input": { background: "#0e0d11", border: "1px solid #2a2637", borderRadius: 0, color: "#fff" },
-  "& input:focus, & input:focus-within": { borderColor: "#c79bd6" },
-  "& input::placeholder": { color: "#8f8a99" },
+  "& input, & textarea": {
+    background: "#0e0d11",
+    border: "1px solid #2a2637",
+    borderRadius: 0,
+    color: "#fff",
+  },
+  "& input:focus, & input:focus-within, & textarea:focus": { borderColor: "#c79bd6" },
+  "& input::placeholder, & textarea::placeholder": { color: "#8f8a99" },
 } as const;
 
 /** Small accented CTA used inside the Gaia option tabs. */
@@ -186,6 +205,134 @@ export function entriesFromExport(packet: GaiaExport): {
   };
 }
 
+/**
+ * One character being reviewed before creation. Every member-editable field
+ * of the Character doc is here; species and type stay at their defaults
+ * (Human/None) because they are master-only fields on the dashboard too.
+ */
+interface CharDraft {
+  include: boolean;
+  name: string;
+  age: string;
+  pronouns: string;
+  birthday: string;
+  height: string;
+  short_description: string;
+  history: string;
+}
+
+/** Seed the review drafts from the export packet, nothing lost: age becomes
+ * its own field, and gender/species/hometown stay in the history text where
+ * the member can rework them. */
+function draftsFromPacket(packet: GaiaExport): CharDraft[] {
+  return packet.characters
+    .filter((c) => c.name)
+    .map((c) => {
+      const headline = [
+        c.age && `Age: ${c.age}`,
+        c.gender && `Gender: ${c.gender}`,
+        c.species && `Species: ${c.species}`,
+        c.hometown && `Hometown: ${c.hometown}`,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      return {
+        include: true,
+        name: c.name,
+        age: c.age || "",
+        pronouns: "",
+        birthday: "",
+        height: "",
+        short_description: "",
+        history: [headline, c.history].filter(Boolean).join("\n\n"),
+      };
+    });
+}
+
+/** Editable review card for one character from the export. */
+function CharacterReviewCard(props: {
+  draft: CharDraft;
+  exists: boolean;
+  onChange: (patch: Partial<CharDraft>) => void;
+}) {
+  const { draft, exists, onChange } = props;
+  const skipped = exists || !draft.include;
+  const field = (label: string, key: keyof CharDraft, placeholder: string) => (
+    <TextInput
+      label={label}
+      placeholder={placeholder}
+      value={draft[key] as string}
+      onChange={(e) => onChange({ [key]: e.currentTarget.value })}
+      disabled={skipped}
+      radius={0}
+      sx={FIELD_SX}
+    />
+  );
+  return (
+    <Stack
+      gap={12}
+      p={14}
+      style={{
+        background: "#0e0d11",
+        border: "1px solid #2a2637",
+        opacity: skipped ? 0.6 : 1,
+      }}
+    >
+      <Group justify="space-between" align="center" gap={10} wrap="wrap">
+        <Text c="white" fw={700} fz={15} style={{ fontFamily: FONT_DISPLAY }}>
+          {draft.name || "Unnamed character"}
+        </Text>
+        {exists ? (
+          <Text fz={13} c="#FFD074">
+            Already on your account, will be skipped
+          </Text>
+        ) : (
+          <Checkbox
+            label="Create this character"
+            checked={draft.include}
+            onChange={(e) => onChange({ include: e.currentTarget.checked })}
+            sx={{ "& label": { color: "#fff" } }}
+          />
+        )}
+      </Group>
+      {!exists && (
+        <>
+          <SimpleGrid cols={{ base: 1, xs: 2 }} spacing={10}>
+            {field("Name", "name", "Character name")}
+            {field("Age", "age", "Age")}
+            {field("Pronouns", "pronouns", "e.g. she/her, they/them")}
+            {field("Birthday", "birthday", "Birthday")}
+            {field("Height", "height", "Height")}
+          </SimpleGrid>
+          <Textarea
+            label="Short description"
+            placeholder="A sentence or two about who they are"
+            value={draft.short_description}
+            onChange={(e) => onChange({ short_description: e.currentTarget.value })}
+            disabled={skipped}
+            autosize
+            minRows={2}
+            radius={0}
+            sx={FIELD_SX}
+          />
+          <Textarea
+            label="History"
+            placeholder="Their background and story"
+            value={draft.history}
+            onChange={(e) => onChange({ history: e.currentTarget.value })}
+            disabled={skipped}
+            autosize
+            minRows={3}
+            maxRows={12}
+            radius={0}
+            sx={FIELD_SX}
+          />
+        </>
+      )}
+    </Stack>
+  );
+}
+
 /** Shared "pick your account first" hint for the tabs that need a packet. */
 function NeedAccountHint() {
   return (
@@ -244,9 +391,32 @@ export default function GaiaPrefill(props: {
     enabled: !!slug,
   });
 
+  // Editable review copies of the packet's characters; reseeded whenever a
+  // different export loads. Edits live here until "Create" writes them.
+  const [charDrafts, setCharDrafts] = React.useState<CharDraft[]>([]);
+  React.useEffect(() => {
+    setCharDrafts(packet ? draftsFromPacket(packet) : []);
+  }, [packet]);
+  const patchDraft = (i: number, patch: Partial<CharDraft>) =>
+    setCharDrafts((ds) => ds.map((d, j) => (j === i ? { ...d, ...patch } : d)));
+
+  // Names already on the account, to flag duplicates in the review list
+  // (shares the dashboard's query key, so it is usually already cached).
+  const { data: existingChars } = useQuery({
+    queryKey: ["get-characters", user?.uid],
+    queryFn: () => getCharacters(user!.uid),
+    enabled: !!user,
+  });
+  const existingNames = new Set(
+    (existingChars?.sortedData ?? []).map((c) => c.name.toLowerCase())
+  );
+  const creatableCount = charDrafts.filter(
+    (d) => d.include && d.name.trim() && !existingNames.has(d.name.trim().toLowerCase())
+  ).length;
+
   const createCharacters = useMutation({
     mutationFn: async () => {
-      if (!user || !packet) return 0;
+      if (!user) return 0;
       const { doc, getDoc, setDoc } = await import("firebase/firestore");
       const db = await getDb();
       const ref = doc(db, "users", user.uid, "bag", "characters");
@@ -256,26 +426,19 @@ export default function GaiaPrefill(props: {
       );
       const additions: Record<string, unknown> = {};
       let count = 0;
-      for (const c of packet.characters) {
-        if (!c.name || have.has(c.name.toLowerCase())) continue;
-        const headline = [
-          c.age && `Age: ${c.age}`,
-          c.gender && `Gender: ${c.gender}`,
-          c.species && `Species: ${c.species}`,
-          c.hometown && `Hometown: ${c.hometown}`,
-        ]
-          .filter(Boolean)
-          .join("\n");
+      for (const d of charDrafts) {
+        const name = d.name.trim();
+        if (!d.include || !name || have.has(name.toLowerCase())) continue;
         additions[uuid()] = {
-          age: c.age || "",
-          birthday: "",
-          height: "",
+          age: d.age,
+          birthday: d.birthday,
+          height: d.height,
           moveset: "",
-          name: c.name,
-          short_description: "",
-          history: [headline, c.history].filter(Boolean).join("\n\n"),
+          name,
+          short_description: d.short_description,
+          history: d.history,
           species: "Human",
-          pronouns: "",
+          pronouns: d.pronouns,
           type: "None",
           imageURL: "",
           createdAt: new Date(),
@@ -288,7 +451,7 @@ export default function GaiaPrefill(props: {
     onSuccess: async (count) => {
       setMessage(
         count
-          ? `${count} character(s) created with their Gaia history. Review them on the Characters page.`
+          ? `${count} character(s) created. Review them any time on the Characters page.`
           : "All of these characters already exist on your account."
       );
       await queryClient.invalidateQueries({ queryKey: ["get-characters"] });
@@ -430,23 +593,39 @@ export default function GaiaPrefill(props: {
           </Tabs.Panel>
 
           <Tabs.Panel value="characters" pt={16}>
-            {packet ? (
-              <Stack gap={12}>
+            {packet && charDrafts.length > 0 ? (
+              <Stack gap={14}>
                 <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-                  Add your {packet.characters.length} Gaia character
-                  {packet.characters.length === 1 ? "" : "s"} straight to your account, with the
-                  age, gender, species, hometown, and written history from your old profile.
+                  Review each character before creating it. Your Gaia profile filled in what it
+                  could (name, age, and the written history), and you can edit anything or add
+                  what Gaia never had, like pronouns, birthday, height, and a short description.
+                  Everything stays editable later on the Characters page.
                 </Text>
+                {charDrafts.map((d, i) => (
+                  <CharacterReviewCard
+                    key={i}
+                    draft={d}
+                    exists={existingNames.has(d.name.trim().toLowerCase())}
+                    onChange={(patch) => patchDraft(i, patch)}
+                  />
+                ))}
                 <Box>
                   <TileButton
                     kind="purple"
                     loading={createCharacters.isPending}
-                    onClick={() => createCharacters.mutateAsync()}
+                    onClick={() => creatableCount > 0 && createCharacters.mutateAsync()}
                   >
-                    Create my characters
+                    {creatableCount > 0
+                      ? `Create ${creatableCount} character${creatableCount === 1 ? "" : "s"}`
+                      : "Nothing selected to create"}
                   </TileButton>
                 </Box>
               </Stack>
+            ) : packet ? (
+              <Text fz={14.5} c="#8f8a99" lh={1.6}>
+                This export has no characters on record. You can still create characters by hand
+                on the Characters page.
+              </Text>
             ) : (
               <NeedAccountHint />
             )}
