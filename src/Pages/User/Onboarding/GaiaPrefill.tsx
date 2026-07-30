@@ -105,6 +105,11 @@ interface GaiaExport {
     species: string;
     hometown: string;
     history: string;
+    /** Present since the owner-curated CSV upload (July 2026). */
+    pronouns?: string;
+    birthday?: string;
+    height?: string;
+    shortDescription?: string;
   }>;
   pokemon: Array<{
     raw: string;
@@ -118,6 +123,8 @@ interface GaiaExport {
     shadow: boolean;
     notes: string[];
     level: number;
+    /** Present since the owner-curated CSV upload (July 2026). */
+    nickname?: string;
   }>;
   itemsMatched: Array<ImportItem>;
   itemsUnmatched: Array<{ raw: string; qty: number; character: string }>;
@@ -174,6 +181,7 @@ export function entriesFromExport(packet: GaiaExport): {
           slug: p.slug,
           pokedex: p.pokedex,
           character: knownChars.has(p.character) ? p.character : charNames[0],
+          name: p.nickname || "",
           gender: p.gender || (Math.random() < 0.5 ? "M" : "F"),
           shiny: p.shiny,
           level: p.level,
@@ -198,6 +206,15 @@ export function entriesFromExport(packet: GaiaExport): {
   if (forms.length) {
     noteLines.push(
       `Regional forms to check: ${forms.map((p) => `${p.form} ${p.species}`).join(", ")}.`
+    );
+  }
+  // Eggs and "unknown" listings have no Pokedex match, so they cannot
+  // prefill; hand them to the reviewer instead of dropping them silently.
+  const unmatchedPokes = packet.pokemon.filter((p) => !p.slug);
+  if (unmatchedPokes.length) {
+    noteLines.push(
+      "Gaia pokemon with no Pokedex match (for reviewer judgment): " +
+        unmatchedPokes.map((p) => `${p.species}${p.character ? ` (${p.character})` : ""}`).join("; ")
     );
   }
   if (packet.itemsUnmatched.length) {
@@ -273,10 +290,10 @@ function draftsFromPacket(packet: GaiaExport): CharDraft[] {
         include: true,
         name: c.name,
         age: c.age || "",
-        pronouns: "",
-        birthday: "",
-        height: "",
-        short_description: "",
+        pronouns: c.pronouns || "",
+        birthday: c.birthday || "",
+        height: c.height || "",
+        short_description: c.shortDescription || "",
         history: [headline, c.history].filter(Boolean).join("\n\n"),
         sourceName: c.name,
         gaiaPokemon: [...counts.entries()].map(([s, n]) => (n > 1 ? `${s} x${n}` : s)),
@@ -828,10 +845,10 @@ export function GaiaCharactersSection(props: {
           </Text>
         </Group>
         <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-          These are the characters on your Gaia profile, each with the Pokemon the export ties to
-          them. Review and edit anything, or add what Gaia never had (pronouns, birthday, height,
-          a short description), then create the ones you want. Everything stays editable later on
-          the Characters page.
+          These are the characters on your Gaia profile, each with the Pokemon that belong to
+          them. Everything we have is filled in; review and edit anything, add whatever is
+          missing, then create the ones you want. Everything stays editable later on the
+          Characters page.
         </Text>
         {charDrafts.map((d, i) => {
           // This character's pokemon, as (pokemon, full-list index) pairs so
