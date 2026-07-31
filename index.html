@@ -111,9 +111,10 @@
   <body>
     <!-- Static hero shell: PERMANENT, React never re-renders it (the React
          homepage starts below it), so the LCP paint is never replaced by a
-         remount. The inline script removes it synchronously on non-home
-         initial loads; after that, src/App.tsx hides/shows it per route.
-         Mirrors the hero in src/Pages/Homepage.tsx: keep in sync. -->
+         remount. The inline script hides it synchronously on non-home initial
+         loads; after that, src/App.tsx hides/shows it per route (it must stay
+         in the DOM, hidden, or client-side navigation to / has no shell to
+         re-show). Mirrors the hero in src/Pages/Homepage.tsx: keep in sync. -->
     <div id="boot-shell">
       <div class="hp">
         <header class="dc-topbar">
@@ -150,7 +151,10 @@
       </div>
     </div>
     <script>
-      "/" !== location.pathname && document.getElementById("boot-shell")?.remove();
+      // Hide, never remove: App.tsx re-shows this shell when the user navigates
+      // client-side to /. If you edit this script, regenerate the CSP sha256 in
+      // netlify.toml (script-src) or the browser will refuse to run it.
+      "/" !== location.pathname && document.getElementById("boot-shell")?.style.setProperty("display", "none");
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
