@@ -1,1 +1,5 @@
+# Firebase Auth custom domain: serve the auth handler through our own domain
+# (Google sign-in brands as snagemguild.com; first-party handshake). Must stay
+# above the SPA catch-all — rules in this file run before netlify.toml.
+/__/* https://snagemguild.firebaseapp.com/__/:splat 200!
 /* /index.html 200
