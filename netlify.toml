@@ -6,6 +6,17 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Firebase Auth custom domain: proxy the auth handler through our own domain
+# so Google sign-in shows "snagemguild.com" (not *.firebaseapp.com) and the
+# popup/redirect handshake is first-party (immune to third-party cookie
+# blocking). Must precede the SPA catch-all. src/context/firebase.ts picks the
+# matching authDomain at runtime.
+[[redirects]]
+  from = "/__/*"
+  to = "https://snagemguild.firebaseapp.com/__/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from="/*"
   to="/index.html"

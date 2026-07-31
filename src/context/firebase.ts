@@ -8,7 +8,13 @@ import type { FirebaseStorage } from "firebase/storage";
 // used the modular API against these instances, so only this file changed.
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_BACKEND_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_BACKEND_FIREBASE_AUTH_DOMAIN,
+  // Custom auth domain: on the production domain the auth handler is proxied
+  // (see netlify.toml "/__/*"), so Google sign-in brands as our own domain and
+  // the popup/redirect handshake stays first-party. Everywhere else (local
+  // dev, previews) fall back to the project's firebaseapp.com domain.
+  authDomain: location.hostname.endsWith("snagemguild.com")
+    ? location.hostname
+    : import.meta.env.VITE_BACKEND_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_BACKEND_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_BACKEND_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_BACKEND_FIREBASE_MESSAGING_SENDER_ID,
