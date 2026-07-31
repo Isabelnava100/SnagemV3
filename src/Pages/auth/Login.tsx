@@ -18,7 +18,12 @@ import Seo from "../../components/common/Seo";
 import { MarketingTopBar } from "../../components/redesign/Marketing";
 import { useAuth } from "../../context/AuthContext";
 import { AuthCard, coolGradient, warmGradient } from "./components/AuthCard";
-import { handleGoogleSignIn, lastGoogleEmail } from "./components/GoogleHandle";
+import {
+  handleGoogleSignIn,
+  lastGoogleEmail,
+  resolveGoogleRedirect,
+  type GoogleSignInResult,
+} from "./components/GoogleHandle";
 import { handleSignIn, lastSignInContext, resendVerificationEmail } from "./components/LoginHandle";
 
 const EEVEE_IMG =
@@ -60,10 +65,9 @@ export function Login() {
   // to re-authenticate with the credentials still on the form.
   const onResend = () => resendVerificationEmail(form.values.email, form.values.password);
 
-  const onGoogle = async () => {
-    setSub(true);
-    setGoogleError("");
-    const result = await handleGoogleSignIn(setUser);
+  // Shared result handling for the popup path and the redirect round-trip.
+  const handleGoogleResult = (result: GoogleSignInResult | null) => {
+    if (result === null || result === "redirect") return;
     if (result === "success") {
       navigate("/Dashboard");
     } else if (result === "pending") {
@@ -87,7 +91,29 @@ export function Login() {
       // from a screenshot.
       setGoogleError(`Google sign-in failed (${result}). Please try again.`);
     }
-    setSub(false);
+  };
+
+  useEffect(() => {
+    // Pick up a Google sign-in returning via full-page redirect (the fallback
+    // for browsers whose popup handshake fails, e.g. third-party storage
+    // blocked in Chrome).
+    let live = true;
+    resolveGoogleRedirect(setUser).then((result) => {
+      if (live) handleGoogleResult(result);
+    });
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onGoogle = async () => {
+    setSub(true);
+    setGoogleError("");
+    const result = await handleGoogleSignIn(setUser);
+    handleGoogleResult(result);
+    // "redirect" means the page is navigating to Google; keep the spinner.
+    if (result !== "redirect") setSub(false);
   };
 
   // "Wrong email" path: the gate already signed them out, but sign out again

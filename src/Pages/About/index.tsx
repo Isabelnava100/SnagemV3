@@ -231,7 +231,6 @@ export default function About() {
               style={{
                 flex: isOverSm ? "none" : undefined,
                 width: isOverSm ? 460 : "100%",
-                height: isOverSm ? 380 : 220,
                 marginTop: isOverSm ? 0 : 6,
                 border: "1px solid var(--dc-border-alt)",
                 background: "var(--dc-card)",
@@ -247,7 +246,7 @@ export default function About() {
                 height={1466}
                 loading="lazy"
                 decoding="async"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                style={{ width: "100%", height: "auto", display: "block" }}
               />
             </div>
           </div>
