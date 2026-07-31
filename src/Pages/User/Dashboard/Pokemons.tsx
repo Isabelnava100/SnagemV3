@@ -1145,6 +1145,16 @@ function PokemonDetails(props: { pokemon: OwnedPokemon }) {
                 Shadow&apos;ed
               </Badge>
             )}
+            {pokemon.traded && (
+              <Badge
+                size="sm"
+                style={{ background: "#000", border: "1px solid #FFD074" }}
+                c="gold.1"
+                title="Received in a trade: earns 1.5x Evo Points."
+              >
+                Traded
+              </Badge>
+            )}
           </Group>
           {pokemon.date_caught?.seconds && (
             <Text>Caught {formatter.format(new Date(pokemon.date_caught.seconds * 1000))}</Text>

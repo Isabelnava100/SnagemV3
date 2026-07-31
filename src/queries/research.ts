@@ -7,6 +7,10 @@ export interface ResearchConfig {
   fossilMap?: Record<string, string>; // fossil itemId -> pokemon slug
   channelerTypes?: string[];
   masterMissionsPerType?: number; // 10
+  // Canon reference maps (pure reference, no enforcement): stone/crystal
+  // display name -> pokemon slug. See functions/scripts/seed.mjs.
+  megaStoneSpecies?: Record<string, string>;
+  zCrystalSpecies?: Record<string, string>;
 }
 
 /** Per-character Hybrid/Channeler progression (stored on bag/profile or a doc). */

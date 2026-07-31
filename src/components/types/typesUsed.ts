@@ -376,6 +376,8 @@ export interface OwnedPokemon {
   shiny?: boolean;
   /** One of the 25 natures (assigned at catch/hatch; older mons derive one). */
   nature?: string;
+  /** Received via a Trading Post swap (respondTradeOffer): earns 1.5x Evo Points. */
+  traded?: boolean;
   /** Equipped held item (setHeldItem callable; battle effects server-side). */
   heldItem?: { itemId: string; name: string; filePath?: string; category?: string };
 }

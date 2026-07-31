@@ -928,14 +928,40 @@ function isSafariFood(category: string): boolean {
 function isFirstStageDex(idx: number): boolean {
   return stageForDex(idx) === "stage1";
 }
-function safariBallBaseRate(
-  ballKey: string,
-  ctx: { firstStage?: boolean; failCount?: number; firstEncounter?: boolean }
-): number {
+interface SafariBallContext {
+  firstStage?: boolean;
+  failCount?: number;
+  firstEncounter?: boolean;
+  /** Wild Pokemon's types (Net/Dive Balls). */
+  types?: string[];
+  /** Wild Pokemon's star tier (Nest Ball: weaker wilds catch easier). */
+  star?: number;
+  /** Fight posts landed so far (Timer Ball: longer struggles catch easier). */
+  fightPosts?: number;
+  /** The thrower already owns this species (Repeat Ball). */
+  alreadyOwned?: boolean;
+  /** Server-side night (Dusk Ball). */
+  night?: boolean;
+}
+function safariBallBaseRate(ballKey: string, ctx: SafariBallContext): number {
   let rate = SAFARI_BALL_BASE_RATE[ballKey] ?? 50;
   if (ballKey === "level" && ctx.firstStage) rate = 70;
   if (ballKey === "quick" && ctx.firstEncounter) rate = 80;
   if (ballKey === "heal" && (ctx.failCount ?? 0) > 0) rate = 80;
+  // Conditional balls whose conditions our data can evaluate (types, star,
+  // ownership, turns, time of day). A met condition lifts the ball to Great/
+  // Ultra-tier rates, matching the Level/Quick/Heal boosts above. Fast/Heavy/
+  // Love/Lure and friends stay at their 50% base: we have no speed, weight,
+  // gender or fishing data for a wild encounter.
+  const types = (ctx.types ?? []).map((t) => t.toLowerCase());
+  if (ballKey === "net" && (types.includes("water") || types.includes("bug"))) rate = 70;
+  if (ballKey === "dive" && types.includes("water")) rate = 70;
+  if (ballKey === "repeat" && ctx.alreadyOwned) rate = 70;
+  if (ballKey === "dusk" && ctx.night) rate = 70;
+  if (ballKey === "nest" && (ctx.star ?? 0) >= 1 && (ctx.star ?? 0) <= 3) {
+    rate = [0, 80, 70, 60][ctx.star ?? 0] || rate;
+  }
+  if (ballKey === "timer") rate = Math.min(80, rate + 10 * (ctx.fightPosts ?? 0));
   return rate;
 }
 function safariFightBonus(fightPosts: number, postsToDefeat: number): number {
@@ -947,10 +973,7 @@ function safariCatchChance(p: {
   fightPosts: number;
   postsToDefeat: number;
   berryBonus: number;
-  firstStage?: boolean;
-  failCount?: number;
-  firstEncounter?: boolean;
-}): number {
+} & SafariBallContext): number {
   const base = safariBallBaseRate(p.ballKey, p);
   if (base >= 100) return 100;
   const total =
@@ -1805,14 +1828,31 @@ export const publishForumPost = onCall(async (request) => {
       let outcome: string;
       if (ball) {
         const idx = Number(catalogBySlug.get(encounter.slug)?.idx ?? 0);
+        const ballKey = safariBallKey(ball.filePath || "", ball.name || "");
+        // Repeat Ball: better against a species the thrower already owns. The
+        // team read above only covers team pokemon, so pull the full box here
+        // (still before any write in this transaction).
+        let alreadyOwned = false;
+        if (ballKey === "repeat" && idx > 0) {
+          const box = Object.keys(ownedForXp).length
+            ? ownedForXp
+            : (((await tx.get(ownedRef)).data()) as Record<string, any>) ?? {};
+          alreadyOwned = Object.values(box).some((p) => Number(p?.pokedex) === idx);
+        }
+        // Dusk Ball: better at night (server clock, UTC 20:00-06:00).
+        const hour = new Date().getUTCHours();
         const chance = safariCatchChance({
-          ballKey: safariBallKey(ball.filePath || "", ball.name || ""),
+          ballKey,
           fightPosts,
           postsToDefeat,
           berryBonus: catchBonus,
           firstStage: isFirstStageDex(idx),
           failCount,
           firstEncounter: claimCount <= 1,
+          types: typesForDex(idx),
+          star: Number(encounter.star) || 0,
+          alreadyOwned,
+          night: hour >= 20 || hour < 6,
         });
         encounter.catchChance = chance;
         if (randomInt(100) < chance) {
@@ -2492,11 +2532,14 @@ export const publishForumPost = onCall(async (request) => {
         const wasShadowed = isShadowedShadow(curShadow);
 
         // Experience: capped at the level-100 total. A held Lucky Egg boosts
-        // the holder's share (admin-tunable).
-        const pokeExpPerPost =
+        // the holder's share (admin-tunable). Gaia lore: a pokemon received in
+        // a trade (`traded` flag, set by respondTradeOffer) earns 1.5x Evo
+        // Points, stacking with the Lucky Egg.
+        const baseExpPerPost =
           heldKeyOf(poke) === "lucky-egg" && mech.luckyEggBoost > 0
             ? Math.round(expPerPost * (1 + mech.luckyEggBoost / 100))
             : expPerPost;
+        const pokeExpPerPost = poke.traded === true ? Math.round(baseExpPerPost * 1.5) : baseExpPerPost;
         if (qualifies && pokeExpPerPost > 0 && curExp < maxXp) {
           const gain = Math.min(pokeExpPerPost, maxXp - curExp);
           update.experience = FieldValue.increment(gain);
@@ -3323,6 +3366,15 @@ export const finalizeThreadRewards = onCall(async (request) => {
         return { targetUid, ref, snap: await tx.get(ref) };
       })
     );
+    // Owned-pokemon reads for entries with bonus team XP: a traded pokemon's
+    // 1.5x Evo Point bonus needs the `traded` flag off its record.
+    const ownedReads = await Promise.all(
+      entries.map(async ([targetUid, entry]) => {
+        if (!entry.pokemonXp) return null;
+        const ref = db.doc(`users/${targetUid}/bag/owned_pokemons`);
+        return { targetUid, box: ((await tx.get(ref)).data() as Record<string, any>) ?? {} };
+      })
+    );
 
     const rewardNow = new Date();
     entries.forEach(([targetUid, entry]) => {
@@ -3367,13 +3419,18 @@ export const finalizeThreadRewards = onCall(async (request) => {
         if (Object.keys(update).length) tx.set(read.ref, update, { merge: true });
       }
       // Bonus team XP the admin chose to assign at close (on top of the XP that
-      // was already earned per post). Applied to each reviewed pokemon.
+      // was already earned per post). Applied to each reviewed pokemon. A
+      // traded pokemon's 1.5x Evo Point bonus applies to experience only.
       if (entry.pokemonXp) {
+        const box = ownedReads.find((r) => r?.targetUid === targetUid)?.box ?? {};
         const pokeUpdate: Record<string, Record<string, ReturnType<typeof FieldValue.increment>>> = {};
         Object.entries(entry.pokemonXp).forEach(([pokeId, xp]) => {
           const stats: Record<string, ReturnType<typeof FieldValue.increment>> = {};
           (["experience", "friendship", "purification", "shadow"] as const).forEach((k) => {
-            const amount = Number((xp as any)?.[k] ?? 0);
+            let amount = Number((xp as any)?.[k] ?? 0);
+            if (k === "experience" && amount > 0 && box[pokeId]?.traded === true) {
+              amount = Math.round(amount * 1.5);
+            }
             if (amount > 0) stats[k] = FieldValue.increment(amount);
           });
           if (Object.keys(stats).length) pokeUpdate[pokeId] = stats;
@@ -5220,7 +5277,8 @@ export const respondTradeOffer = onCall(async (request) => {
       return;
     }
     // Accept: swap the two pokemon between boxes. Character/team ties are
-    // stripped so a traded pokemon arrives unassigned.
+    // stripped so a traded pokemon arrives unassigned. Gaia lore: a pokemon
+    // received in a trade is flagged `traded` and earns 1.5x Evo Points.
     const ownerRef = db.doc(`users/${listing.ownerUid}/bag/owned_pokemons`);
     const offerRef = db.doc(`users/${offer.fromUid}/bag/owned_pokemons`);
     const ownerTeamsRef = db.doc(`users/${listing.ownerUid}/bag/teams`);
@@ -5241,7 +5299,7 @@ export const respondTradeOffer = onCall(async (request) => {
     if (!offered) throw new HttpsError("failed-precondition", "The offered pokemon is no longer available.");
     const strip = (p: Record<string, unknown>) => {
       const { characterId, ...rest } = p;
-      return rest;
+      return { ...rest, traded: true };
     };
     tx.update(ownerRef, { [listedPokemonId]: FieldValue.delete(), [randomUUID()]: strip(offered) });
     tx.update(offerRef, { [offeredPokemonId]: FieldValue.delete(), [randomUUID()]: strip(listed) });
@@ -5891,6 +5949,141 @@ export const rollTour = onCall(async (request) => {
   return { ok: true, ...result };
 });
 
+// --- Snag Mall: K&L Apricorn Picking ---------------------------------------
+// Three growing trees per member (docs/SHOP_DATA.md): Seeds -> Sprout ->
+// Sapling -> Mature, one stage per APRICORN_STAGE_MS; only a Mature tree can
+// be picked. A pick costs 6 Snag Coins, harvests 1-3 apricorns of the tree's
+// color, and replants the tree (new random color, back to Seeds). State lives
+// in users/{uid}/bag/apricorn_trees (owner-readable via the generic bag rule,
+// server-written only); the stage is derived from plantedAt, so clients can
+// render growth without waiting on a server write.
+const APRICORN_TREE_COUNT = 3;
+const APRICORN_PICK_COST = 6;
+const APRICORN_STAGE_MS = 86_400_000; // one stage per day
+const APRICORN_STAGES = ["seeds", "sprout", "sapling", "mature"] as const;
+// The seven K&L colors, keyed to the standard apricorn items in the catalog
+// (src/data/item/item.json: group "apricorn").
+const APRICORN_ITEMS: Record<string, { itemId: string; name: string; filePath: string }> = {
+  red: { itemId: "item_0485", name: "Red Apricorn", filePath: "apricorn/red.png" },
+  blue: { itemId: "item_0486", name: "Blue Apricorn", filePath: "apricorn/blue.png" },
+  yellow: { itemId: "item_0487", name: "Yellow Apricorn", filePath: "apricorn/yellow.png" },
+  green: { itemId: "item_0488", name: "Green Apricorn", filePath: "apricorn/green.png" },
+  pink: { itemId: "item_0489", name: "Pink Apricorn", filePath: "apricorn/pink.png" },
+  white: { itemId: "item_0490", name: "White Apricorn", filePath: "apricorn/white.png" },
+  black: { itemId: "item_0491", name: "Black Apricorn", filePath: "apricorn/black.png" },
+};
+const APRICORN_COLORS = Object.keys(APRICORN_ITEMS);
+
+interface ApricornTreeState {
+  color: string;
+  plantedAt: number; // epoch ms
+}
+
+function randomApricornColor(): string {
+  return APRICORN_COLORS[randomInt(APRICORN_COLORS.length)];
+}
+
+/** Normalize the stored trees map into exactly APRICORN_TREE_COUNT slots. */
+function apricornTreesFrom(raw: unknown, now: number): ApricornTreeState[] {
+  const stored = ((raw as Record<string, any>) ?? {}) || {};
+  return Array.from({ length: APRICORN_TREE_COUNT }, (_, i) => {
+    const t = stored[String(i)];
+    const color = APRICORN_ITEMS[String(t?.color)] ? String(t.color) : randomApricornColor();
+    const plantedRaw = t?.plantedAt?.toDate ? t.plantedAt.toDate().getTime() : Number(t?.plantedAt);
+    const plantedAt = Number.isFinite(plantedRaw) && plantedRaw > 0 ? plantedRaw : now;
+    return { color, plantedAt };
+  });
+}
+
+/** Present a tree for clients: derived growth stage + when it next advances. */
+function apricornTreeView(tree: ApricornTreeState, now: number) {
+  const stageIdx = Math.min(
+    APRICORN_STAGES.length - 1,
+    Math.max(0, Math.floor((now - tree.plantedAt) / APRICORN_STAGE_MS))
+  );
+  const stage = APRICORN_STAGES[stageIdx];
+  return {
+    color: tree.color,
+    stage,
+    plantedAt: tree.plantedAt,
+    nextStageAt: stageIdx < APRICORN_STAGES.length - 1 ? tree.plantedAt + (stageIdx + 1) * APRICORN_STAGE_MS : null,
+    pickable: stage === "mature",
+  };
+}
+
+/** Serialize the trees map for the state doc (slot-keyed, merge-friendly). */
+function apricornTreesDoc(trees: ApricornTreeState[]): Record<string, unknown> {
+  return {
+    trees: Object.fromEntries(
+      trees.map((t, i) => [String(i), { color: t.color, plantedAt: new Date(t.plantedAt) }])
+    ),
+  };
+}
+
+/** Show the member's apricorn trees, planting the initial three on first use. */
+export const getApricornTrees = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const stateRef = db.doc(`users/${uid}/bag/apricorn_trees`);
+  const now = Date.now();
+  const snap = await stateRef.get();
+  const trees = apricornTreesFrom(snap.data()?.trees, now);
+  if (!snap.exists) await stateRef.set(apricornTreesDoc(trees), { merge: true });
+  return {
+    ok: true,
+    cost: APRICORN_PICK_COST,
+    stageMs: APRICORN_STAGE_MS,
+    trees: trees.map((t, i) => ({ slot: i, ...apricornTreeView(t, now) })),
+  };
+});
+
+/** Pick from a Mature tree: 6 Snag Coins for 1-3 apricorns of its color. */
+export const pickApricorn = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await loadMember(uid);
+  const slot = requireInt(request.data?.tree ?? 0, "tree", 0, APRICORN_TREE_COUNT - 1);
+
+  const stateRef = db.doc(`users/${uid}/bag/apricorn_trees`);
+  const currencyRef = db.doc(`users/${uid}/bag/currency`);
+  const bagRef = db.doc(`users/${uid}/bag/items`);
+  const now = Date.now();
+
+  const result = await db.runTransaction(async (tx) => {
+    const [stateSnap, curSnap] = await Promise.all([tx.get(stateRef), tx.get(currencyRef)]);
+    const trees = apricornTreesFrom(stateSnap.data()?.trees, now);
+    const tree = trees[slot];
+    const view = apricornTreeView(tree, now);
+    if (!view.pickable) {
+      throw new HttpsError(
+        "failed-precondition",
+        `That tree is still ${view.stage === "seeds" ? "sprouting" : "growing"}; only a Mature tree can be picked.`
+      );
+    }
+    const have = parseInt(String(curSnap.data()?.pokecoin ?? "0"), 10) || 0;
+    if (have < APRICORN_PICK_COST) {
+      throw new HttpsError("failed-precondition", `You need ${APRICORN_PICK_COST} Snag Coins to pick a tree.`);
+    }
+    tx.set(currencyRef, { pokecoin: have - APRICORN_PICK_COST }, { merge: true });
+
+    const qty = randomInt(1, 4); // 1..3 apricorns per pick
+    const item = APRICORN_ITEMS[tree.color];
+    bagIncrement(tx, bagRef, item.itemId, { ...item, category: "apricorn" }, qty);
+
+    // Replant: the cycle restarts at Seeds with a new random color.
+    trees[slot] = { color: randomApricornColor(), plantedAt: now };
+    tx.set(stateRef, apricornTreesDoc(trees), { merge: true });
+
+    return {
+      item: { itemId: item.itemId, name: item.name, filePath: item.filePath },
+      qty,
+      trees: trees.map((t, i) => ({ slot: i, ...apricornTreeView(t, now) })),
+    };
+  });
+
+  await markSnagTask(uid, "mall");
+  return { ok: true, spent: APRICORN_PICK_COST, ...result };
+});
+
 // --- Snag Mall: Ambrosial Alchemy crafting ---------------------------------
 export const craftItem = onCall(async (request) => {
   const uid = requireAuth(request);
@@ -5950,7 +6143,7 @@ export const craftItem = onCall(async (request) => {
       );
     }
     if (failures > 0) {
-      bagIncrement(tx, bagRef, "mystery-pebble", { name: "Mystery Pebble", category: "valuable" }, failures);
+      bagIncrement(tx, bagRef, "item_15863", { name: "Mystery Pebble", filePath: "other-item/mystery-pebble.png", category: "other-item" }, failures);
     }
     return { successes, failures };
   });
@@ -6214,6 +6407,21 @@ export const gradeMission = onCall(async (request) => {
   }
   const specialItem = String(missionData?.special_item ?? "");
   const grant = specialItem ? SPECIAL_ITEM_GRANTS[itemKeyOf(specialItem)] : undefined;
+  // Emblem pieces are once-only per mission per user, ever
+  // (docs/MISSIONS_DATA.md): if any earlier graded submission for this
+  // mission+member already paid a piece (pieceAwarded flag), this grade
+  // skips the piece. Coins and special items still award normally.
+  let awardPiece = !!awards.emblemPiece;
+  if (awardPiece) {
+    const prior = await db
+      .collection("missionSubmissions")
+      .where("missionId", "==", String(sub.missionId))
+      .where("submitterUid", "==", targetUid)
+      .where("pieceAwarded", "==", true)
+      .limit(1)
+      .get();
+    awardPiece = prior.empty;
+  }
   const currencyRef = db.doc(`users/${targetUid}/bag/currency`);
   const bagRef = db.doc(`users/${targetUid}/bag/items`);
   await db.runTransaction(async (tx) => {
@@ -6221,16 +6429,16 @@ export const gradeMission = onCall(async (request) => {
     const cur = curSnap.data() ?? {};
     const update: Record<string, number> = {};
     if (coins > 0) update.pokecoin = addCurrency(cur.pokecoin, coins);
-    if (awards.emblemPiece) {
+    if (awardPiece) {
       const pieces = (parseInt(String(cur.snagEmblemPieces ?? "0"), 10) || 0) + 1;
       update.snagEmblemPieces = pieces;
       if (pieces % 3 === 0) update.snagemblem = addCurrency(cur.snagemblem, 1);
     }
     if (Object.keys(update).length) tx.set(currencyRef, update, { merge: true });
     if (grant) bagIncrement(tx, bagRef, grant.itemId, grant, 1);
-    tx.set(subRef, { status: "graded", gradedBy: member.username, gradedAt: new Date(), awarded: { coins, emblemPiece: !!awards.emblemPiece, ...(grant ? { specialItem: grant.name } : {}) } }, { merge: true });
+    tx.set(subRef, { status: "graded", gradedBy: member.username, gradedAt: new Date(), pieceAwarded: awardPiece, awarded: { coins, emblemPiece: awardPiece, ...(grant ? { specialItem: grant.name } : {}) } }, { merge: true });
   });
-  await notifyUsers([targetUid], { type: "reward", text: `Your mission was graded: +${coins} Snag Coins${awards.emblemPiece ? " and a Snag Emblem Piece" : ""}${grant ? ` and a ${grant.name}` : ""}.`, link: "/Dashboard" });
+  await notifyUsers([targetUid], { type: "reward", text: `Your mission was graded: +${coins} Snag Coins${awardPiece ? " and a Snag Emblem Piece" : ""}${grant ? ` and a ${grant.name}` : ""}.`, link: "/Dashboard" });
   return { ok: true };
 });
 
@@ -6412,6 +6620,26 @@ export const evoService = onCall(async (request) => {
   // member's chosen payment method instead of forcing coins.
   if (action === "new_adaptations" && request.data?.payWith === "snagemblem") {
     price = { currency: "snagemblem", amount: 2 };
+  }
+
+  // E.V.O. is a Master-track service (docs/SHOP_DATA.md): only Hybrid/Channeler
+  // characters that completed their FIRST Master Mission. Clearance flips
+  // character.type (resolveMasterClearance); grantMasterMission records each
+  // completed mission on users/{uid}/bag/research as a type entry with
+  // missionsCompleted >= 1, so that entry is the completion marker.
+  const charsSnap = await db.doc(`users/${uid}/bag/characters`).get();
+  const character = (charsSnap.data() ?? {})[characterId];
+  if (!character) throw new HttpsError("not-found", "Character not found.");
+  if (character.type !== "Hybrid" && character.type !== "Channeler") {
+    throw new HttpsError("failed-precondition", "E.V.O. serves Hybrid and Channeler characters only.");
+  }
+  const researchSnap = await db.doc(`users/${uid}/bag/research`).get();
+  const research = (researchSnap.data() ?? {})[characterId] as
+    | { types?: Array<{ missionsCompleted?: number }> }
+    | undefined;
+  const firstMissionDone = (research?.types ?? []).some((t) => (t.missionsCompleted ?? 0) >= 1);
+  if (!firstMissionDone) {
+    throw new HttpsError("failed-precondition", "E.V.O. unlocks once this character completes its first Master Mission.");
   }
 
   const currencyRef = db.doc(`users/${uid}/bag/currency`);
@@ -7171,17 +7399,27 @@ export const playCasinoGame = onCall(async (request) => {
     let payout = 0;
 
     // The house keeps an edge on every game (payouts below fair odds); winnings
-    // stay low by design. Retune these numbers to adjust the edge.
+    // stay low by design. Retune these numbers to adjust the edge. Exception:
+    // Hex Roulette follows the mockup's generous 20x scale (see below).
     if (game === "hexRoulette") {
-      const n = requireInt(pick, "pick", 1, 6);
+      // Cover 1-5 of the 6 hexes (mockup, docs/BACKLOG.md): a single int is
+      // still accepted so older single-pick clients keep working. Payout
+      // scales inversely with coverage off the mockup's 20x for one hex:
+      // floor(20/N) -> 1 hex 20x, 2 hexes 10x, 3 hexes 6x, 4 hexes 5x, 5 hexes 4x.
+      const picks = (Array.isArray(pick) ? pick : [pick]).map((p) => requireInt(p, "pick", 1, 6));
+      const covered = [...new Set(picks)];
+      if (covered.length < 1 || covered.length > 5) {
+        throw new HttpsError("invalid-argument", "Cover 1 to 5 hexes.");
+      }
       roll = randomInt(1, 7); // d6
-      if (roll === n) { win = true; payout = bet * 4; } // 1/6 chance, ~33% house
+      if (covered.includes(roll)) { win = true; payout = bet * Math.max(1, Math.floor(20 / covered.length)); }
     } else if (game === "dreamDice") {
       const total = requireInt(pick, "pick", 2, 12);
       const d1 = randomInt(1, 7);
       const d2 = randomInt(1, 7);
       roll = [d1, d2];
-      if (d1 + d2 === total) { win = true; payout = bet * 2; } // flat 2x, no doubles bonus
+      // 2x on a hit, 3x when the dice come up doubles (docs/CASINO_DATA.md).
+      if (d1 + d2 === total) { win = true; payout = d1 === d2 ? bet * 3 : bet * 2; }
     } else if (game === "paybackPyramid") {
       if (pick !== "even" && pick !== "odd") throw new HttpsError("invalid-argument", "Pick even or odd.");
       roll = randomInt(1, 7); // d6; a 5 or 6 is Gengar's Payback (house wins)

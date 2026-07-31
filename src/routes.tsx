@@ -27,6 +27,7 @@ import { AuthContextProvider, useAuth } from "./context/AuthContext";
 const { Dashboard } = lazyImport(() => import("./Pages/User/Dashboard"), "Dashboard");
 const { ForgotPassword } = lazyImport(() => import("./Pages/auth/ForgotPW"), "ForgotPassword");
 const { Login } = lazyImport(() => import("./Pages/auth/Login"), "Login");
+const { Logout } = lazyImport(() => import("./Pages/auth/Logout"), "Logout");
 const { NewRegister } = lazyImport(() => import("./Pages/auth/NewRegister"), "NewRegister");
 const { ResetPW } = lazyImport(() => import("./Pages/auth/ResetPW"), "ResetPW");
 const { AuthAction } = lazyImport(() => import("./Pages/auth/AuthAction"), "AuthAction");
@@ -312,6 +313,7 @@ export default function AppRoutes() {
                     />
                     <Route path="/Library" element={<Library />} />
                     <Route path="/Login" element={<Login />} />
+                    <Route path="/Logout" element={<Logout />} />
                     <Route path="/Register" element={<NewRegister />} />
                     <Route path="/Forgot" element={<ForgotPassword />} />
                     <Route path="/Reset" element={<ResetPW />} />

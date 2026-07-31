@@ -17,9 +17,9 @@ import {
 
 /**
  * Dashboard History tab: the member's own forum activity, split into the
- * threads they started and their latest posts. Private by construction: the
- * queries filter to the signed-in uid and the Firestore rules only allow
- * reading your own documents through the collection-group path.
+ * threads they started and their latest posts. The queries filter to the
+ * signed-in uid; the same queries back the public profile's Recent Activity
+ * panel for other members (forum docs are member-readable by rule).
  */
 
 const displayFont = "var(--font-display, 'Quantico', sans-serif)";
@@ -283,7 +283,7 @@ export default function History() {
           </SubTab>
         </Group>
         <Text fz={14} c="#b6b1bc" visibleFrom="sm">
-          Only you can see this.
+          Also shown on your public profile to signed-in members.
         </Text>
       </Flex>
 

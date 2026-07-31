@@ -37,6 +37,7 @@ import {
   formatPostDate,
   getAllPosts,
   getPublishedPostsPage,
+  subscribeToNewsletter,
 } from "../../queries/blog";
 
 const DISPLAY_FONT = "var(--font-display, 'Quantico', sans-serif)";
@@ -116,19 +117,31 @@ function PostCard({ post }: { post: BlogPost }) {
 
 /**
  * "Never miss a post" subscribe band: the striped-gradient hero surface reused
- * as a full-width call to action. The form is a local, no-backend capture that
- * acknowledges with a polite status message (wire to a list provider later).
+ * as a full-width call to action. Submissions persist to the
+ * newsletterSubscribers Firestore collection (anonymous create allowed by the
+ * rules); a failed write shows an error instead of the success message.
  */
 export function SubscribeBand() {
   const isMobile = useMediaQuery("(max-width: 800px)");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(false);
 
-  const submit = (e: FormEvent<HTMLFormElement>) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!email.trim()) return;
-    setSubscribed(true);
+    if (!email.trim() || submitting) return;
+    setSubmitting(true);
+    setError(false);
+    try {
+      await subscribeToNewsletter(name, email);
+      setSubscribed(true);
+    } catch {
+      setError(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const labelStyle: CSSProperties = {
@@ -257,9 +270,10 @@ export function SubscribeBand() {
             <button
               type="submit"
               className="dc-cta dc-cta-red"
+              disabled={submitting}
               style={{ flex: isMobile ? "1 1 100%" : "0 0 auto" }}
             >
-              Subscribe
+              {submitting ? "Subscribing..." : "Subscribe"}
             </button>
           </Flex>
           {subscribed && (
@@ -272,6 +286,17 @@ export function SubscribeBand() {
               style={{ fontFamily: DISPLAY_FONT, letterSpacing: "0.08em" }}
             >
               Thanks for subscribing!
+            </Text>
+          )}
+          {error && !subscribed && (
+            <Text
+              role="alert"
+              mt={12}
+              fz={14}
+              c="#E54156"
+              style={{ fontFamily: DISPLAY_FONT, letterSpacing: "0.08em" }}
+            >
+              Something went wrong. Please try again.
             </Text>
           )}
         </form>

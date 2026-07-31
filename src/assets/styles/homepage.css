@@ -6,7 +6,11 @@
   background: #0e0d11;
   color: #fff;
   min-height: 100vh;
-  overflow-x: hidden;
+  /* clip (not hidden) keeps horizontal overflow contained without making .hp
+     a vertical scroll container, so the skewed marquee can overlap the hero
+     above it instead of being cropped at .hp's top edge. */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 /* ---------------------------------------------------------------- Hero --- */

@@ -103,3 +103,33 @@ export const evoService = (
   characterId: string,
   payload?: { moveName?: string; replaceMove?: string; payWith?: "pokecoin" | "snagemblem" }
 ) => call<{ ok: boolean }>("evoService", { action, characterId, ...payload });
+
+/* --------------------------- Apricorn picking ---------------------------- */
+
+export type ApricornColor = "red" | "blue" | "yellow" | "green" | "pink" | "white" | "black";
+export type ApricornStage = "seeds" | "sprout" | "sapling" | "mature";
+
+/** One growing tree in the K&L apricorn grove (stage derived server-side). */
+export interface ApricornTree {
+  slot: number;
+  color: ApricornColor;
+  stage: ApricornStage;
+  plantedAt: number;
+  nextStageAt: number | null;
+  pickable: boolean;
+}
+
+export const getApricornTrees = () =>
+  call<{ ok: boolean; cost: number; stageMs: number; trees: ApricornTree[] }>(
+    "getApricornTrees",
+    {}
+  );
+
+export const pickApricorn = (tree: number) =>
+  call<{
+    ok: boolean;
+    spent: number;
+    item: { itemId: string; name: string; filePath?: string };
+    qty: number;
+    trees: ApricornTree[];
+  }>("pickApricorn", { tree });

@@ -33,13 +33,16 @@ import { itemData } from "../../data/item";
 import { getItemImageURL } from "../../helpers";
 import { clickable } from "../../lib/a11y";
 import { getCurrencies, getItems, getOwnedPokemons } from "../../queries/dashboard";
+import { exchangeTokens, getCasinoConfig } from "../../queries/casino";
 import {
   buyShopItem,
   convertCandyToScent,
   craftItem,
   evoService,
+  getApricornTrees,
   getRecipes,
   getShops,
+  pickApricorn,
   Recipe,
   recycleItems,
   rollTour,
@@ -285,7 +288,12 @@ function ShopCard(props: { shop: Shop; index: number; onEnter: () => void }) {
   );
 }
 
-function ArcadeView(props: { shops: Shop[]; onEnter: (id: string) => void }) {
+function ArcadeView(props: {
+  shops: Shop[];
+  onEnter: (id: string) => void;
+  snagCoins: number;
+  gengarTokens: number;
+}) {
   if (!props.shops.length) {
     return (
       <Card withBorder radius="md" p={40} bg="#17151c">
@@ -307,25 +315,58 @@ function ArcadeView(props: { shops: Shop[]; onEnter: (id: string) => void }) {
             onEnter={() => props.onEnter(shop.id)}
           />
         ))}
-        <ComingSoonShopCard />
+        <TokenExchangeCard snagCoins={props.snagCoins} gengarTokens={props.gengarTokens} />
       </SimpleGrid>
     </Stack>
   );
 }
 
 /**
- * A placeholder storefront for the future Gengar Token shop: a place to spend
- * Casino winnings. Not open yet, so it shows "Coming Soon!" and cannot be
- * entered. When it ships, seed a real shop with currency "gengarcoin".
+ * Gengar Token exchange storefront. The docs define no token-shop catalog
+ * (docs/SHOP_DATA.md keeps Gengar Tokens casino-only) and the backend has no
+ * item-selling callable for them, so this card wires the one thing that does
+ * exist: the `exchangeTokens` callable (Snag Coins <-> Gengar Tokens, same
+ * one the Casino's Exchange Cage uses). The prize-shop wares stay a "coming
+ * soon" note. Sell pays 1 coin per token (house spread, per the function).
  */
-function ComingSoonShopCard() {
+function TokenExchangeCard(props: { snagCoins: number; gengarTokens: number }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [direction, setDirection] = React.useState<"buy" | "sell">("buy");
+  const [amount, setAmount] = React.useState<number>(1);
+  const [note, setNote] = React.useState<{ ok: boolean; text: string } | null>(null);
   const accent = "#9775fa"; // the Gengar Token purple
   const displayFont = "var(--font-display, 'Quantico', sans-serif)";
+
+  const config = useQuery({ queryKey: ["casino-config"], queryFn: getCasinoConfig });
+  const rate = Math.max(1, Math.trunc(config.data?.exchangeRate ?? 2)); // Snag Coins per token (buy)
+
+  const safeAmount = Math.max(1, Math.trunc(amount) || 1);
+  const affordable =
+    direction === "buy" ? props.snagCoins >= safeAmount * rate : props.gengarTokens >= safeAmount;
+
+  const mutation = useMutation({
+    mutationFn: () => exchangeTokens(direction, safeAmount),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["currencies", user?.uid] });
+      setNote({
+        ok: true,
+        text:
+          direction === "buy"
+            ? `Bought ${safeAmount} tokens. Balance: ${res.gengarcoin} tokens.`
+            : `Sold ${safeAmount} tokens. Balance: ${res.pokecoin} coins.`,
+      });
+    },
+    onError: (err: unknown) => {
+      setNote({ ok: false, text: friendlyMessage(err, "Exchange failed.") });
+    },
+  });
+
   return (
     <Box
       className="dc-card"
-      aria-label="Gengar Token Shop, coming soon"
-      style={{ overflow: "hidden", display: "flex", flexDirection: "column", opacity: 0.9 }}
+      aria-label="Gengar Token Exchange"
+      style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}
     >
       <Box
         h={12}
@@ -351,29 +392,83 @@ function ComingSoonShopCard() {
           Gengar Tokens
         </Text>
         <Text fz={20} fw={700} lineClamp={1} c="white" style={{ fontFamily: displayFont }}>
-          Gengar Token Shop
+          Token Exchange
         </Text>
       </Box>
-      <Stack gap={12} p={16} justify="space-between" style={{ flex: 1 }}>
-        <Text fz={13} c="dimmed">
-          Spend your Casino winnings on exclusive goodies. The doors are not open yet.
-        </Text>
-        <Box
-          style={{
-            alignSelf: "flex-start",
-            background: accent,
-            color: "#0e0d11",
-            fontFamily: displayFont,
-            fontWeight: 700,
-            fontSize: 12,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            padding: "8px 16px",
-            clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)",
-          }}
+      <Stack gap={12} p={16} style={{ flex: 1 }}>
+        <Text
+          fz={12}
+          c="#b6b1bc"
+          ta="center"
+          px={10}
+          py={6}
+          style={{ background: "#141318", border: "1px solid #232028" }}
         >
-          Coming Soon!
-        </Box>
+          Buy {rate} coins = 1 token / Sell 1 token = 1 coin
+        </Text>
+        <Group gap={6} justify="center" wrap="nowrap">
+          <Button
+            size="xs"
+            radius="xl"
+            variant={direction === "buy" ? "gradient" : "default"}
+            gradient={{ from: "grape", to: "indigo", deg: 90 }}
+            onClick={() => {
+              setDirection("buy");
+              setNote(null);
+            }}
+            aria-pressed={direction === "buy"}
+          >
+            Buy
+          </Button>
+          <Button
+            size="xs"
+            radius="xl"
+            variant={direction === "sell" ? "gradient" : "default"}
+            gradient={{ from: "grape", to: "indigo", deg: 90 }}
+            onClick={() => {
+              setDirection("sell");
+              setNote(null);
+            }}
+            aria-pressed={direction === "sell"}
+          >
+            Sell
+          </Button>
+          <NumberInput
+            aria-label="Tokens to exchange"
+            value={amount}
+            onChange={(v) => setAmount(typeof v === "number" ? v : 1)}
+            min={1}
+            max={999}
+            size="xs"
+            w={80}
+          />
+        </Group>
+        <Button
+          radius="xl"
+          variant="gradient"
+          gradient={{ from: "grape", to: "indigo", deg: 90 }}
+          loading={mutation.isPending}
+          disabled={mutation.isPending || !affordable}
+          onClick={() => {
+            setNote(null);
+            mutation.mutate();
+          }}
+          aria-label={`${direction === "buy" ? "Buy" : "Sell"} ${safeAmount} Gengar Tokens`}
+        >
+          {direction === "buy" ? `Buy for ${safeAmount * rate} Coins` : `Sell for ${safeAmount} Coins`}
+        </Button>
+        <Text
+          role="status"
+          aria-live="polite"
+          fz={12}
+          ta="center"
+          c={note ? (note.ok ? "green" : "red") : "dimmed"}
+        >
+          {note ? note.text : `You hold ${props.gengarTokens} tokens · ${props.snagCoins} coins`}
+        </Text>
+        <Text fz={12} c="dimmed" ta="center" mt="auto">
+          Prize-shop wares: coming soon.
+        </Text>
       </Stack>
     </Box>
   );
@@ -905,7 +1000,7 @@ const TOUR_AREAS = [
   { name: "Tough Peak", emoji: "⛰️" },
 ];
 
-function TourBody() {
+function TourBody(props: { balance: number }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [area, setArea] = React.useState<string>(TOUR_AREAS[0]?.name ?? "Cool Canyon");
@@ -1047,6 +1142,199 @@ function TourBody() {
           >
             Roll &mdash; 2 Coins
           </Button>
+        </Box>
+      </Flex>
+      <ApricornGrove balance={props.balance} />
+    </Box>
+  );
+}
+
+/* --------------------------- Apricorn picking ---------------------------- */
+
+const APRICORN_HEX: Record<string, string> = {
+  red: "#e03131",
+  blue: "#1971c2",
+  yellow: "#f08c00",
+  green: "#2f9e44",
+  pink: "#e64980",
+  white: "#e9ecef",
+  black: "#495057",
+};
+
+const APRICORN_STAGE_META: Record<string, { emoji: string; label: string }> = {
+  seeds: { emoji: "🌰", label: "Seeds" },
+  sprout: { emoji: "🌱", label: "Sprout" },
+  sapling: { emoji: "🌿", label: "Sapling" },
+  mature: { emoji: "🌳", label: "Mature" },
+};
+
+/** "12h 34m" until a future epoch ms. */
+function countdownLabel(target: number): string {
+  const mins = Math.max(0, Math.round((target - Date.now()) / 60000));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+/** K&L apricorn grove: 3 trees growing Seeds -> Mature, 6 coins per pick. */
+function ApricornGrove(props: { balance: number }) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [pendingSlot, setPendingSlot] = React.useState<number | null>(null);
+  const [error, setError] = React.useState("");
+  const [result, setResult] = React.useState<{
+    item: { itemId: string; name: string; filePath?: string };
+    qty: number;
+  } | null>(null);
+
+  const { data, isPending } = useQuery({
+    queryKey: ["apricorn-trees", user?.uid],
+    queryFn: getApricornTrees,
+    enabled: !!user?.uid,
+    refetchInterval: 60_000, // stages advance on their own; keep the countdown honest
+  });
+
+  const cost = data?.cost ?? 6;
+  const trees = data?.trees ?? [];
+  const canAfford = props.balance >= cost;
+
+  const pick = async (slot: number) => {
+    setPendingSlot(slot);
+    setError("");
+    setResult(null);
+    try {
+      const res = await pickApricorn(slot);
+      setResult({ item: res.item, qty: res.qty });
+      // The response carries the post-pick grove; no second round-trip.
+      queryClient.setQueryData(["apricorn-trees", user?.uid], {
+        ok: res.ok,
+        cost,
+        stageMs: data?.stageMs ?? 86_400_000,
+        trees: res.trees,
+      });
+      queryClient.invalidateQueries({ queryKey: ["currencies", user?.uid] });
+      queryClient.invalidateQueries({ queryKey: ["bag-items", user?.uid] });
+    } catch (e) {
+      setError(friendlyMessage(e, "That tree could not be picked right now."));
+    } finally {
+      setPendingSlot(null);
+    }
+  };
+
+  if (isPending) return <SectionLoader />;
+
+  return (
+    <Box mt="xl">
+      <Text fz={14} fw={800} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: 2 }}>
+        Apricorn Grove &middot; {cost} Snag Coins per pick
+      </Text>
+      <Flex gap="lg" direction={{ base: "column", md: "row" }} align="stretch">
+        <Box style={{ flex: "2 1 0%", minWidth: 0 }}>
+          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
+            {trees.map((tree) => {
+              const meta = APRICORN_STAGE_META[tree.stage] ?? APRICORN_STAGE_META.seeds!;
+              const hex = APRICORN_HEX[tree.color] ?? "#868e96";
+              const busy = pendingSlot === tree.slot;
+              const ready = tree.pickable && canAfford;
+              return (
+                <Box
+                  key={tree.slot}
+                  p="md"
+                  style={{
+                    borderRadius: 14,
+                    textAlign: "center",
+                    background: "#141019",
+                    border: `1px solid ${tree.pickable ? hex : "#232028"}`,
+                  }}
+                >
+                  <Text fz={34} mb={6}>
+                    {meta.emoji}
+                  </Text>
+                  <Group gap={6} justify="center" wrap="nowrap" mb={2}>
+                    <Box
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: "50%",
+                        background: hex,
+                        border: "1px solid rgba(255,255,255,0.35)",
+                      }}
+                    />
+                    <Text fz={16} fw={700} c="white" tt="capitalize">
+                      {tree.color}
+                    </Text>
+                  </Group>
+                  <Text fz={14} c="dimmed" mb={10}>
+                    {meta.label}
+                    {tree.pickable
+                      ? " — ready!"
+                      : tree.nextStageAt
+                        ? ` · next in ${countdownLabel(tree.nextStageAt)}`
+                        : ""}
+                  </Text>
+                  <Button
+                    fullWidth
+                    radius="xl"
+                    variant="gradient"
+                    gradient={{ from: "grape", to: "cyan", deg: 90 }}
+                    loading={busy}
+                    disabled={busy || !ready}
+                    onClick={() => pick(tree.slot)}
+                    aria-label={`Pick the ${tree.color} apricorn tree for ${cost} Snag Coins`}
+                  >
+                    {tree.pickable ? (canAfford ? `Pick — ${cost} Coins` : "Not enough") : "Growing"}
+                  </Button>
+                </Box>
+              );
+            })}
+          </SimpleGrid>
+          <Text fz={14} c="dimmed" mt="md">
+            Trees grow one stage a day &middot; a pick harvests 1-3 apricorns and replants the tree.
+          </Text>
+          {error && <StatusMessage color="red">{error}</StatusMessage>}
+        </Box>
+
+        <Box
+          p="lg"
+          style={{ flex: "1 1 0%", minWidth: 0, maxWidth: 360, borderRadius: 16, background: "#141019", border: "1px solid #232028", textAlign: "center" }}
+        >
+          <Text fz={14} c="dimmed" tt="uppercase" mb={6} style={{ letterSpacing: 1 }}>
+            Last harvest
+          </Text>
+          <Box
+            style={{
+              width: 120, height: 120, margin: "0 auto 20px", borderRadius: 16,
+              background: "#0e0c14", border: "1px solid #232028",
+              display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+            }}
+            role="status"
+            aria-live="polite"
+          >
+            {result ? (
+              <ItemHoverCard item={{ id: result.item.itemId, name: result.item.name }}>
+                <Image
+                  src={result.item.filePath ? getItemImageURL(result.item.filePath) : undefined}
+                  alt={result.item.name}
+                  w={72}
+                  h={72}
+                  fit="contain"
+                />
+              </ItemHoverCard>
+            ) : (
+              <Text fz={44} c="dimmed">
+                ?
+              </Text>
+            )}
+          </Box>
+          {result ? (
+            <Text fz={16} fw={700} c="white" mb="md">
+              {result.qty}x {result.item.name}
+            </Text>
+          ) : (
+            <Text fz={14} c="dimmed">
+              Pick a mature tree to harvest.
+            </Text>
+          )}
         </Box>
       </Flex>
     </Box>
@@ -1529,7 +1817,7 @@ function StorefrontView(props: { shop: Shop; balance: number; onBack: () => void
       body = <RecycleBody />;
       break;
     case "tour":
-      body = <TourBody />;
+      body = <TourBody balance={props.balance} />;
       break;
     case "evo":
       body = <EvoBody />;
@@ -1670,7 +1958,12 @@ export default function Mall() {
         {shopsPending ? (
           <SectionLoader />
         ) : (
-          <ArcadeView shops={shopList} onEnter={(id) => setActiveShopId(id)} />
+          <ArcadeView
+            shops={shopList}
+            onEnter={(id) => setActiveShopId(id)}
+            snagCoins={Number(currencies?.pokecoin ?? 0) || 0}
+            gengarTokens={Number(currencies?.gengarcoin ?? 0) || 0}
+          />
         )}
 
         {/* Off-mall services: exchange and breeding live on their own pages. */}

@@ -27,7 +27,10 @@
          (100vh) cannot push the React content below the fold. -->
     <style>
       body { margin: 0; background: #0e0d11; }
-      #boot-shell { min-height: 0 !important; }
+      /* The app stylesheet gives .hp min-height:100vh; without this the shell
+         stretches to a full viewport and pushes the React content (marquee
+         etc.) a whole screen below the hero. */
+      #boot-shell, #boot-shell .hp { min-height: 0 !important; }
       .hp { background: #0e0d11; color: #fff; overflow-x: hidden; --font-display: "Quantico", "Roboto", sans-serif; }
       .dc-topbar { position: sticky; top: 0; z-index: 50; height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #0e0d11; border-bottom: 1px solid #232028; }
       .dc-topbar-brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: 0.2em; color: #fff; text-decoration: none; }

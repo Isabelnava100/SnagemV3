@@ -1,10 +1,13 @@
 import { getDb } from "../context/firebase";
 
 /**
- * The member's own forum activity for the dashboard History tab. Both reads
- * are collection-group queries filtered to the signed-in member; matching
- * rules blocks only allow reading documents you authored, so the history is
- * private by construction.
+ * A member's forum activity, used by the dashboard History tab (the signed-in
+ * member's own) and by the public profile's Recent Activity panel (any
+ * member's). Both reads are collection-group queries filtered by uid. Forum
+ * threads/posts are readable by any signed-in member via the /forum rules, so
+ * passing another member's uid is allowed for them; only non-forum
+ * posts/threads subcollections would fall back to the author-only wildcard
+ * rules (none exist today).
  */
 
 export interface MyThreadItem {

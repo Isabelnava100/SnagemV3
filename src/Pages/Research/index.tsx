@@ -4,10 +4,12 @@ import {
   Container,
   Flex,
   Group,
+  Image,
   Select,
   SimpleGrid,
   Stack,
   Text,
+  TextInput,
   Title,
   UnstyledButton,
 } from "@mantine/core";
@@ -19,6 +21,7 @@ import {
   IconExternalLink,
   IconFlask,
   IconLock,
+  IconSearch,
   IconSparkles,
   IconStar,
   IconTargetArrow,
@@ -32,6 +35,7 @@ import Seo from "../../components/common/Seo";
 import { SectionLoader } from "../../components/navigation/loading";
 import { Character } from "../../components/types/typesUsed";
 import { useAuth } from "../../context/AuthContext";
+import { POKEMON_SPRITE_FALLBACK, getPokemonImageURL, getPokemonName } from "../../helpers";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { isAdmin } from "../../lib/permissions";
 import { getCharacters, getItems, getOwnedPokemons } from "../../queries/dashboard";
@@ -342,6 +346,110 @@ const STEPS = [
   },
 ];
 
+/** Display name for a species slug, tolerant of slugs missing from the dex data. */
+function speciesDisplayName(slug: string): string {
+  try {
+    return getPokemonName(slug);
+  } catch {
+    return slug
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  }
+}
+
+/**
+ * Mega Stone / Z-Crystal reference (admin/research_config, seeded canon data):
+ * which species each stone or species-locked crystal attunes to. Pure lookup —
+ * access stays gated by the capstone unlocks; nothing here enforces a lock.
+ */
+function StoneCodex(props: { megaStones: Record<string, string>; zCrystals: Record<string, string> }) {
+  const [tab, setTab] = React.useState<"mega" | "z">("mega");
+  const [query, setQuery] = React.useState("");
+
+  const entries = React.useMemo(() => {
+    const map = tab === "mega" ? props.megaStones : props.zCrystals;
+    const q = query.trim().toLowerCase();
+    return Object.entries(map)
+      .map(([stone, slug]) => ({ stone, slug, species: speciesDisplayName(slug) }))
+      .filter(
+        (e) =>
+          !q ||
+          e.stone.toLowerCase().includes(q) ||
+          e.species.toLowerCase().includes(q) ||
+          e.slug.includes(q)
+      )
+      .sort((a, b) => a.stone.localeCompare(b.stone));
+  }, [tab, query, props.megaStones, props.zCrystals]);
+
+  return (
+    <Stack gap={20}>
+      <SectionLabel color="#5eead4">MEGA &amp; Z CODEX</SectionLabel>
+      <Text fz={15} c={DIM} lh={1.6}>
+        Plan the summit before you climb it: every Mega Stone and every species-locked Z-Crystal, and the one Pokemon
+        it attunes to. The eighteen type crystals aren't listed — any Pokemon of the matching type can use those.
+      </Text>
+      <Flex gap={12} wrap="wrap" align="center" justify="space-between">
+        <Group gap={10}>
+          <AngledPill
+            label="Mega Stones"
+            icon={<IconDiamond size={14} />}
+            active={tab === "mega"}
+            onClick={() => setTab("mega")}
+          />
+          <AngledPill
+            label="Z-Crystals"
+            icon={<IconSparkles size={14} />}
+            active={tab === "z"}
+            onClick={() => setTab("z")}
+          />
+        </Group>
+        <TextInput
+          placeholder="Search a stone, crystal or species"
+          aria-label="Search the codex"
+          leftSection={<IconSearch size={15} />}
+          value={query}
+          onChange={(e) => setQuery(e.currentTarget.value)}
+          w={{ base: "100%", sm: 280 }}
+          styles={{ input: { background: IDLE_BG, borderColor: "#3a3550" } }}
+        />
+      </Flex>
+      {entries.length ? (
+        <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={12}>
+          {entries.map((e) => (
+            <Box
+              key={e.stone}
+              className="dc-card-tile"
+              style={{ padding: "12px 16px", display: "flex", gap: 14, alignItems: "center" }}
+            >
+              <Image
+                src={getPokemonImageURL(e.slug)}
+                fallbackSrc={POKEMON_SPRITE_FALLBACK}
+                alt=""
+                w={40}
+                h={40}
+                style={{ flexShrink: 0 }}
+              />
+              <Box style={{ minWidth: 0 }}>
+                <Text fz={15} fw={700} c="white" lineClamp={1}>
+                  {e.species}
+                </Text>
+                <Text fz={13} c={DIM} lineClamp={1}>
+                  {e.stone}
+                </Text>
+              </Box>
+            </Box>
+          ))}
+        </SimpleGrid>
+      ) : (
+        <Text fz={14} c="dimmed">
+          Nothing in the codex matches that search.
+        </Text>
+      )}
+    </Stack>
+  );
+}
+
 /**
  * One "Are you ready?" requirement. `ok` is computed per character from real
  * data (see buildChecklist); unmet rows render in red.
@@ -409,7 +517,12 @@ interface ClearanceProps {
   onRequest: () => void;
 }
 
-function GuideView(props: { onPreview: () => void; checklist: ChecklistItem[] } & ClearanceProps) {
+function GuideView(props: {
+  onPreview: () => void;
+  checklist: ChecklistItem[];
+  megaStones: Record<string, string>;
+  zCrystals: Record<string, string>;
+} & ClearanceProps) {
   return (
     <Stack gap={30}>
       {/* Ascending benefits */}
@@ -490,6 +603,11 @@ function GuideView(props: { onPreview: () => void; checklist: ChecklistItem[] } 
           ))}
         </Stack>
       </Stack>
+
+      {/* Mega Stone / Z-Crystal species codex (seeded canon reference) */}
+      {(Object.keys(props.megaStones).length > 0 || Object.keys(props.zCrystals).length > 0) && (
+        <StoneCodex megaStones={props.megaStones} zCrystals={props.zCrystals} />
+      )}
 
       {/* Are you ready + request clearance */}
       <Box
@@ -1276,6 +1394,8 @@ export default function Research() {
   const config = configQuery.data ?? {};
   const fossilMap = config.fossilMap ?? {};
   const channelerTypes = config.channelerTypes ?? [];
+  const megaStoneSpecies = config.megaStoneSpecies ?? {};
+  const zCrystalSpecies = config.zCrystalSpecies ?? {};
   const progressMap = progressQuery.data ?? {};
   const fallbackType = channelerTypes[0] ?? "Dark";
 
@@ -1418,6 +1538,8 @@ export default function Research() {
           <GuideView
             onPreview={() => setView("console")}
             checklist={checklist}
+            megaStones={megaStoneSpecies}
+            zCrystals={zCrystalSpecies}
             characterSelected={!!selectedId}
             alreadyCleared={!!selected && selected.type !== "None"}
             requestPending={clearancePending}

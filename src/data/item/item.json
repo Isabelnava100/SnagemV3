@@ -5962,5 +5962,41 @@
   "Name": "shadow-vaccine",
   "Group": "medicine",
   "Filename": "medicine/shadow-vaccine.png"
+ },
+ "995": {
+  "Item ID": "joy-scent",
+  "Name": "joy-scent",
+  "Group": "medicine",
+  "Filename": "medicine/joy-scent.png"
+ },
+ "996": {
+  "Item ID": "excite-scent",
+  "Name": "excite-scent",
+  "Group": "medicine",
+  "Filename": "medicine/excite-scent.png"
+ },
+ "997": {
+  "Item ID": "vivid-scent",
+  "Name": "vivid-scent",
+  "Group": "medicine",
+  "Filename": "medicine/vivid-scent.png"
+ },
+ "998": {
+  "Item ID": "mystery-sack",
+  "Name": "mystery-sack",
+  "Group": "other-item",
+  "Filename": "other-item/mystery-sack.png"
+ },
+ "999": {
+  "Item ID": "snag-emblem",
+  "Name": "snag-emblem",
+  "Group": "valuable-item",
+  "Filename": "valuable-item/snag-emblem.png"
+ },
+ "1000": {
+  "Item ID": "snag-emblem-piece",
+  "Name": "snag-emblem-piece",
+  "Group": "valuable-item",
+  "Filename": "valuable-item/snag-emblem-piece.png"
  }
 }

@@ -184,6 +184,7 @@ const shops = {
         title: "Held Items",
         items: [
           named("Elemental Gem", 2, "Gems commonly found in Unova, containing the energy of whatever type it is. Can boost attacks of their type once per gem, or alchemize certain items. All 18 types available."),
+          named("Mystery Pebble", 3, "A plain-looking pebble that hums faintly with stored potential. Ambrosia can press three of them into a Mystery Sack."),
           named("Muscle Band", 10, "A strength-exuding headband to be held by a Pokemon. Slightly raises the power of Physical moves."),
           named("Wise Glasses", 10, "A thick pair of glasses to be held by a Pokemon. Slightly raises the power of Special moves."),
           named("Full Incense", 10, "An exotic-smelling incense to be held by a Pokemon. Makes the holder much slower."),
@@ -785,15 +786,17 @@ const gymRegions = {
   },
 };
 
-const trial = (order, id, island, name, type, extra) => [id, { order, island, name, type, ...extra }];
+// Every trial awards its type's Z-Crystal (docs/CHALLENGES_DATA.md: "5-10 Snag
+// Coins + a type-specific Z-Crystal"); grand trials pass the same via extra.
+const trial = (order, id, island, name, type, extra) => [id, { order, island, name, type, zCrystalReward: Z_NAME[type], ...extra }];
 const islandTrials = Object.fromEntries([
-  trial(1, "verdant-cave", "Melemele", "Verdant Cave", "Normal", { captain: "Ilima", totemPokemon: "Gumshoos", snagCoins: 5 }),
+  trial(1, "verdant-cave", "Melemele", "Verdant Cave", "Normal", { captain: "Ilima", totemPokemon: "Gumshoos / Raticate", snagCoins: 5 }),
   trial(2, "grand-hala", "Melemele", "Grand Trial: Hala", "Fighting", { grand: true, kahuna: "Hala", zCrystalReward: "Fightinium Z" }),
   trial(3, "brooklet-hill", "Akala", "Brooklet Hill", "Water", { captain: "Lana", totemPokemon: "Wishiwashi", snagCoins: 6 }),
   trial(4, "wela-volcano", "Akala", "Wela Volcano", "Fire", { captain: "Kiawe", totemPokemon: "Salazzle", snagCoins: 6 }),
   trial(5, "lush-jungle", "Akala", "Lush Jungle", "Grass", { captain: "Mallow", totemPokemon: "Lurantis", snagCoins: 6 }),
   trial(6, "grand-olivia", "Akala", "Grand Trial: Olivia", "Rock", { grand: true, kahuna: "Olivia", zCrystalReward: "Rockium Z" }),
-  trial(7, "hokulani-obs", "Ula'ula", "Hokulani Obs.", "Electric", { captain: "Sophocles", totemPokemon: "Vikavolt", snagCoins: 8 }),
+  trial(7, "hokulani-obs", "Ula'ula", "Hokulani Observatory", "Electric", { captain: "Sophocles", totemPokemon: "Vikavolt", snagCoins: 8 }),
   trial(8, "abandoned-megamart", "Ula'ula", "Abandoned Megamart", "Ghost", { captain: "Acerola", totemPokemon: "Mimikyu", snagCoins: 8 }),
   trial(9, "grand-nanu", "Ula'ula", "Grand Trial: Nanu", "Dark", { grand: true, kahuna: "Nanu", zCrystalReward: "Darkinium Z" }),
   trial(10, "vast-poni-canyon", "Poni", "Vast Poni Canyon", "Dragon", { totemPokemon: "Kommo-o", snagCoins: 10 }),

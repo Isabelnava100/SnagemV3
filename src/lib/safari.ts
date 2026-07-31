@@ -139,6 +139,16 @@ export interface BallContext {
   firstStage?: boolean;
   failCount?: number;
   firstEncounter?: boolean;
+  /** Wild Pokemon's types (Net/Dive Balls). */
+  types?: string[];
+  /** Wild Pokemon's star tier (Nest Ball: weaker wilds catch easier). */
+  star?: number;
+  /** Fight posts landed so far (Timer Ball: longer struggles catch easier). */
+  fightPosts?: number;
+  /** The thrower already owns this species (Repeat Ball). */
+  alreadyOwned?: boolean;
+  /** Night, UTC 20:00-06:00 (Dusk Ball). */
+  night?: boolean;
 }
 
 /** Base ball rate, applying the Gaia conditions we can evaluate from our data. */
@@ -147,6 +157,20 @@ export function safariBallBaseRate(ballKey: string, ctx: BallContext = {}): numb
   if (ballKey === "level" && ctx.firstStage) rate = 70;
   if (ballKey === "quick" && ctx.firstEncounter) rate = 80;
   if (ballKey === "heal" && (ctx.failCount ?? 0) > 0) rate = 80;
+  // Conditional balls whose conditions our data can evaluate (types, star,
+  // ownership, turns, time of day). A met condition lifts the ball to Great/
+  // Ultra-tier rates, matching the Level/Quick/Heal boosts above. Fast/Heavy/
+  // Love/Lure and friends stay at their 50% base: we have no speed, weight,
+  // gender or fishing data for a wild encounter.
+  const types = (ctx.types ?? []).map((t) => t.toLowerCase());
+  if (ballKey === "net" && (types.includes("water") || types.includes("bug"))) rate = 70;
+  if (ballKey === "dive" && types.includes("water")) rate = 70;
+  if (ballKey === "repeat" && ctx.alreadyOwned) rate = 70;
+  if (ballKey === "dusk" && ctx.night) rate = 70;
+  if (ballKey === "nest" && (ctx.star ?? 0) >= 1 && (ctx.star ?? 0) <= 3) {
+    rate = [0, 80, 70, 60][ctx.star ?? 0] || rate;
+  }
+  if (ballKey === "timer") rate = Math.min(80, rate + 10 * (ctx.fightPosts ?? 0));
   return rate;
 }
 

@@ -55,13 +55,14 @@ export type CasinoGame =
   | "ghostFlip";
 
 /**
- * Play an instant casino game. pick: number (roulette 1-36, dice total 2-12,
- * ghostFlip card 0-2), "even"/"odd" (pyramid), or omitted (spookySlots).
+ * Play an instant casino game. pick: number (dice total 2-12, ghostFlip card
+ * 0-2), number[] (roulette: 1-5 covered hexes of 6), "even"/"odd" (pyramid),
+ * or omitted (spookySlots).
  */
 export const playGame = (
   game: CasinoGame,
   bet: number,
-  pick?: number | "even" | "odd"
+  pick?: number | number[] | "even" | "odd"
 ) =>
   call<{ ok: boolean; win: boolean; roll: number | number[]; payout: number; gengarcoin: number }>(
     "playCasinoGame",

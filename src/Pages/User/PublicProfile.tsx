@@ -39,6 +39,8 @@ import {
   hydrateTeams,
 } from "../../queries/dashboard";
 import { autoBadgeIdsFor, getBadgeCatalog } from "../../queries/badges";
+import { getMyPosts, getMyThreads } from "../../queries/history";
+import { categoryByLink } from "../forum/config";
 import { emojiData, getEmoteImageURL } from "../../data/emote";
 
 // Redesign surface tokens (mirrors src/assets/styles/redesign.css so this page
@@ -144,6 +146,61 @@ function formatJoined(ts?: { seconds: number }): string {
     day: "numeric",
   });
 }
+
+/** Compact relative time for the activity feed ("5m ago" / "3h ago" / "2d ago"). */
+function timeAgo(seconds?: number): string {
+  if (!seconds) return "";
+  const diff = Math.max(0, Date.now() / 1000 - seconds);
+  if (diff < 3600) return `${Math.max(1, Math.round(diff / 60))}m ago`;
+  if (diff < 86400) return `${Math.round(diff / 3600)}h ago`;
+  return `${Math.round(diff / 86400)}d ago`;
+}
+
+const forumLabel = (link: string) => categoryByLink(link)?.label ?? link;
+
+interface ActivityItem {
+  kind: "thread" | "post";
+  id: string;
+  /** Route to the thread (posts deep-link to the last page). */
+  to: string;
+  title: string;
+  forum: string;
+  seconds: number;
+}
+
+const RECENT_ACTIVITY_LIMIT = 8;
+
+/**
+ * The member's latest forum activity: threads they started plus their recent
+ * posts, merged newest-first. Reuses the dashboard History queries, which are
+ * plain collection-group reads filtered by uid; the forum rules make every
+ * thread/post readable to any signed-in member, so no rules change is needed.
+ */
+const getRecentActivity = async (uid: string): Promise<ActivityItem[]> => {
+  const [threads, posts] = await Promise.all([getMyThreads(uid), getMyPosts(uid)]);
+  const items: ActivityItem[] = [
+    ...threads.map((t) => ({
+      kind: "thread" as const,
+      id: `thread-${t.forum}-${t.id}`,
+      to: `/Forum/${t.forum}/thread/${t.id}`,
+      title: t.title,
+      forum: t.forum,
+      seconds: t.createdAt?.seconds ?? 0,
+    })),
+    ...posts.map((p) => ({
+      kind: "post" as const,
+      id: `post-${p.threadId}-${p.id}`,
+      to: `/Forum/${p.forum}/thread/${p.threadId}/last`,
+      title: p.threadTitle,
+      forum: p.forum,
+      seconds: p.timePosted?.seconds ?? 0,
+    })),
+  ];
+  return items
+    .filter((item) => item.seconds > 0)
+    .sort((a, b) => b.seconds - a.seconds)
+    .slice(0, RECENT_ACTIVITY_LIMIT);
+};
 
 function characterTypeColor(type?: Character["type"]): string {
   if (type === "Hybrid") return "grape";
@@ -285,6 +342,12 @@ export default function PublicProfile() {
     queryKey: ["public-activity-counts", uid],
     queryFn: () => getActivityCounts(uid!),
     enabled: !!uid,
+  });
+  // Members-only activity feed (the panel shows a locked state logged out).
+  const { data: activity } = useQuery({
+    queryKey: ["public-recent-activity", uid],
+    queryFn: () => getRecentActivity(uid!),
+    enabled: !!uid && !!viewer,
   });
   // Status badges (admin/master/new member) derived from the public role, so
   // the Collections "hide from public profile" toggle has something to hide.
@@ -793,9 +856,57 @@ export default function PublicProfile() {
               {!viewer && <IconLock size={13} color="var(--mantine-color-dimmed)" />}
             </Group>
             {viewer ? (
-              <Text fz={14} c={DIM}>
-                No recent activity.
-              </Text>
+              activity?.length ? (
+                <Stack gap="sm">
+                  {activity.map((item) => (
+                    <Group
+                      key={item.id}
+                      justify="space-between"
+                      wrap="nowrap"
+                      gap="sm"
+                      px={16}
+                      py={12}
+                      style={{ background: WELL_BG, border: `1px solid ${PANEL_BORDER}` }}
+                    >
+                      <Box style={{ minWidth: 0 }}>
+                        <Text fz={14} c={DIM}>
+                          {item.kind === "thread" ? "Started a thread" : "Posted in"}
+                        </Text>
+                        <Anchor
+                          component={Link}
+                          to={item.to}
+                          fz={15}
+                          fw={700}
+                          c="#fff"
+                          underline="hover"
+                          lineClamp={1}
+                          display="block"
+                        >
+                          {item.title}
+                        </Anchor>
+                      </Box>
+                      <Box ta="right" style={{ flexShrink: 0 }}>
+                        <Text fz={14} c={DIM} style={{ whiteSpace: "nowrap" }}>
+                          {timeAgo(item.seconds)}
+                        </Text>
+                        <Text
+                          fz={12}
+                          fw={700}
+                          c="#FFD074"
+                          tt="uppercase"
+                          style={{ fontFamily: DISPLAY_FONT, letterSpacing: "0.08em" }}
+                        >
+                          {forumLabel(item.forum)}
+                        </Text>
+                      </Box>
+                    </Group>
+                  ))}
+                </Stack>
+              ) : (
+                <Text fz={14} c={DIM}>
+                  No recent activity.
+                </Text>
+              )
             ) : (
               <Text fz={14} c={DIM}>
                 Sign in to see this member's recent activity.

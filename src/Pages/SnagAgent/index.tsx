@@ -315,7 +315,7 @@ const KB: KbEntry[] = [
         Mega Evolve or unleash a Z-Move (Mega Stone / Z-Crystal, never used up, and both
         need a Master-cleared character), or spend battle items (X Attack, Dire Hit,
         X Defense, X Speed, and type-matched Gems, which are used up).
-        From your <L to="/Items">bag Items tab</L>: click an Exp Candy or Rare Candy to
+        From your <L to="/Dashboard/Items">bag Items tab</L>: click an Exp Candy or Rare Candy to
         grant a pokemon XP, a Vitamin to raise its friendship, or a valuable (nugget,
         pearl, relic, bottle cap) to sell it for Snag Coins. Held items equip on a boxed
         pokemon for a passive battle effect. Hover any item to see exactly what it does and

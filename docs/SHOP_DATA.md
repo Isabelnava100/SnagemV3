@@ -184,6 +184,10 @@ apricorn_picking:
   yield: roll 1-3 = quantity harvested
   trees: 3 trees cycle Seeds -> Sprout -> Sapling -> Mature; only Mature yields
   colors: [Red, White, Blue, Pink, Black, Green, Yellow]
+  status: SHIPPED — getApricornTrees() / pickApricorn({ tree }) callables;
+          state in users/{uid}/bag/apricorn_trees (slot-keyed color+plantedAt,
+          one stage per 24h derived server-side), apricorns are the standard
+          "apricorn"-group catalog items (item_0485..item_0491)
 
 loot_tables:                             # CONTENT: five 120-slot tables, number range -> item
   path: admin/kl_loot_tables             # effort: new; migrate full tables keyed to catalog items

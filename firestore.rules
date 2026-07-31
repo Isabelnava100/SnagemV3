@@ -189,6 +189,21 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Newsletter sign-ups from the blog's "Never miss a post" band. The blog
+    // is public, so anyone (even signed-out visitors) may create a doc; the
+    // shape is validated below. Emails are PII, so reads stay admin-only and
+    // only admins may edit or clear the list.
+    match /newsletterSubscribers/{doc} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(['name', 'email', 'createdAt'])
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() <= 80
+                    && request.resource.data.email is string
+                    && request.resource.data.email.size() <= 254
+                    && request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+      allow update, delete: if isAdmin();
+    }
+
     // SEO settings (admin/seo): social share image URLs and the X handle,
     // no PII. Public read so meta tags render for logged-out visitors too.
     match /admin/seo {

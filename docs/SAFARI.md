@@ -86,8 +86,13 @@ rules must be deployed together (Blaze plan) before this works in production.
 
 - Judging keeps the **most recent** catch per player as the "kept" one (the old
   contest's rule); there is no in-thread "release to keep the new one" flow yet.
-- Conditional balls that need data we do not have (type, weight, speed, gender)
-  fall back to their 50% base; Level (first-stage), Quick (first encounter) and
-  Heal (after a miss) are the ones evaluated.
+- Conditional balls are evaluated where our data reaches: Net (Water/Bug type)
+  and Dive (Water type) at 70, Repeat (species already in the thrower's box) at
+  70, Dusk (server night, UTC 20:00-06:00) at 70, Nest by star tier (1/2/3 star
+  = 80/70/60), Timer (+10 per fight post landed, max 80), on top of Level
+  (first-stage 70), Quick (first encounter 80) and Heal (after a miss 80).
+  Balls needing data we do not have (speed, weight, gender, fishing) — Fast,
+  Heavy, Love, Lure, Moon, Friend, Sport, Park, Dream, Beast — fall back to
+  their 50% base.
 - Prizes pay `pokecoin` (Snag Coins). Evolutionary-item prize option from the
   old contest is not built.

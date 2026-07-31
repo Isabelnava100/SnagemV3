@@ -54,8 +54,9 @@ Real gaps, highest value first:
   Medium (functions + composer). Likely intended as deferred Mega-parity.
 - **Channeler per-type skill trees + cooldowns unauthored** (custom content
   gap, `docs/RESEARCH_DATA.md`). Medium for the Research end-game.
-- **Mystery Pebble has no obtain source**, so the Mystery Sack recipe (needs 3)
-  is uncraftable though `craftItem` resolves it. Owner assigns a price/drop.
+- ~~**Mystery Pebble has no obtain source**~~ RESOLVED (2026-07): sold in the
+  Golden Sarcophagus "Held Items" section (3 SC), so the Mystery Sack recipe
+  (needs 3) is craftable.
 - **Nature Tours (K&L) loot tables are a ~5-row subset** of the full ~30-row
   biome tables (blocked on owner pasting the Gaia tables). Medium shop-balance.
 - **Challenges content is thin** (gym rosters names-only, no Elite Four/Champion,
@@ -180,6 +181,10 @@ Real gaps, highest value first:
   items (Link Cable, Metal Alloy, Syrupy Apple, Unremarkable Teacup, Auspicious/Malicious
   Armor), Elemental Gem, and Mystery Pebble now HAVE catalog rows (item_15856-15863) with
   `evo-item/`, `gem/`, `other-item/` sprite paths; the PNG files still need adding.
+  UPDATE (2026-07): Joy/Excite/Vivid Scent, Mystery Sack, and Snag Emblem/Piece now
+  HAVE catalog rows too (ids `joy-scent`/`excite-scent`/`vivid-scent`/`mystery-sack`/
+  `snag-emblem`/`snag-emblem-piece`, matching the ids the functions and recipe seed
+  already write into bags); PNG art still needed for all six.
 - **Gym badge art** (2026-07). Challenges "Badges Earned" uses letter chips, not real
   badge images. Options logged: SteGriff vector badges (jsDelivr) or vendor pixel PNGs
   into `public/badges/`. Plumbing not added yet.
@@ -224,9 +229,10 @@ Real gaps, highest value first:
   - **Mega Stone <-> species / Z-Crystal <-> species maps** ADDED as pure data (2026-07).
     `research_config.megaStoneSpecies` (45 stones incl. Charizardite X/Y -> charizard) and
     `research_config.zCrystalSpecies` (17 species-locked crystals; the 18 type crystals in
-    `Z_NAME` are not species-specific) are now seeded in `seed.mjs`. NOTE: still NO CONSUMER,
-    nothing reads them yet (Mega/Z access is gated by capstone unlock flags). They are reference
-    data ready for a future "which species can use this stone/crystal" UI.
+    `Z_NAME` are not species-specific) are now seeded in `seed.mjs`. CONSUMER DONE (2026-07):
+    the Research guide renders them as the searchable "Mega & Z Codex" (`StoneCodex` in
+    `src/Pages/Research/index.tsx`), read-only — Mega/Z access is still gated by capstone
+    unlock flags, no species-lock enforcement anywhere.
   - **Channeler per-type skill trees + cooldowns** still GENUINELY MISSING: not canon, custom
     guild content that needs the Gaia sub-posts (logged in) or fresh authoring. See
     `docs/RESEARCH_DATA.md`.
@@ -238,10 +244,13 @@ Real gaps, highest value first:
   have catalog rows and `SEED_CHECK=1 node scripts/seed.mjs` reports "All recipe ingredients
   are obtainable." **Elemental Gem** DONE: catalog row added (`gem`, item_15862) and it was
   already sold in the "Held Items" shop (2 SC), so the Mega Stone / Z-Crystal recipes can now
-  resolve + be crafted. **Mystery Pebble**: catalog row added (`other-item`, item_15863) so the
-  Mystery Sack recipe resolves, BUT it has NO source (guild-custom item, not canon; sold/dropped
-  nowhere). SOURCE IS AN OWNER DECISION: pick a home (shop price, mission reward, or a drop) so
-  players can obtain it and craft the Mystery Sack. Sprites still needed for both (blank icon).
+  resolve + be crafted. **Mystery Pebble** DONE (2026-07): catalog row (`other-item`,
+  item_15863) plus a direct source — sold in the Golden Sarcophagus "Held Items"
+  section (3 SC) next to the Elemental Gem, so the Mystery Sack recipe (3 pebbles)
+  is now craftable. Sprites still needed for both (blank icon). NOTE: the
+  craft-failure byproduct still writes bag key `mystery-pebble`
+  (functions/src/index.ts), not the catalog id `item_15863`, so byproduct pebbles
+  don't count as Mystery Sack ingredients — id alignment is a follow-up.
 
 ## Pokemon-game mechanics wishlist (2026-07 evaluation)
 

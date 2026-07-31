@@ -120,6 +120,25 @@ export const deleteBlogPost = async (slug: string): Promise<void> => {
   await deleteDoc(doc(db, "blogPosts", slug));
 };
 
+/**
+ * Newsletter sign-up from the blog's "Never miss a post" band. Direct client
+ * write to newsletterSubscribers (no Cloud Function); the rules validate the
+ * shape and allow anonymous create since the blog is public, with reads and
+ * edits restricted to admins. Email is normalized lowercase/trimmed.
+ */
+export const subscribeToNewsletter = async (
+  name: string,
+  email: string,
+): Promise<void> => {
+  const { addDoc, collection, serverTimestamp } = await import("firebase/firestore");
+  const db = await getDb();
+  await addDoc(collection(db, "newsletterSubscribers"), {
+    name: name.trim(),
+    email: email.trim().toLowerCase(),
+    createdAt: serverTimestamp(),
+  });
+};
+
 export const formatPostDate = (ts?: { seconds: number }): string =>
   ts?.seconds
     ? new Date(ts.seconds * 1000).toLocaleDateString("en-US", {

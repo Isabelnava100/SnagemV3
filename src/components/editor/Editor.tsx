@@ -50,7 +50,10 @@ const CustomImage = Image.extend({
   },
 });
 
-export function useRichTextEditor(options?: Partial<Omit<EditorType["options"], "extensions">>) {
+export function useRichTextEditor(
+  options?: Partial<Omit<EditorType["options"], "extensions">> & { placeholder?: string }
+) {
+  const { placeholder, ...editorOptions } = options || {};
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ link: false }),
@@ -58,7 +61,7 @@ export function useRichTextEditor(options?: Partial<Omit<EditorType["options"], 
       // inline so custom emotes sit within the text flow
       CustomImage.configure({ inline: true }),
       Color,
-      Placeholder.configure({ placeholder: "This is placeholder" }),
+      Placeholder.configure({ placeholder: placeholder ?? "Write something…" }),
       Link,
       Superscript,
       SubScript,
@@ -71,7 +74,7 @@ export function useRichTextEditor(options?: Partial<Omit<EditorType["options"], 
         suggestion,
       }),
     ],
-    ...(options || {}),
+    ...editorOptions,
   });
 
   React.useEffect(() => {

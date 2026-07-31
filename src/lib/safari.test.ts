@@ -28,6 +28,42 @@ describe("safariBallBaseRate", () => {
     expect(safariBallBaseRate("quick")).toBe(50);
     expect(safariBallBaseRate("heal", { failCount: 0 })).toBe(50);
   });
+
+  it("applies the type-based ball bonuses (Net/Dive)", () => {
+    expect(safariBallBaseRate("net", { types: ["Water"] })).toBe(70);
+    expect(safariBallBaseRate("net", { types: ["bug", "flying"] })).toBe(70);
+    expect(safariBallBaseRate("dive", { types: ["water"] })).toBe(70);
+    // Conditions unmet: base rate.
+    expect(safariBallBaseRate("net", { types: ["fire"] })).toBe(50);
+    expect(safariBallBaseRate("dive", { types: ["bug"] })).toBe(50);
+    expect(safariBallBaseRate("net")).toBe(50);
+  });
+
+  it("applies the Repeat Ball bonus when the species is already owned", () => {
+    expect(safariBallBaseRate("repeat", { alreadyOwned: true })).toBe(70);
+    expect(safariBallBaseRate("repeat")).toBe(50);
+  });
+
+  it("applies the Dusk Ball bonus at night", () => {
+    expect(safariBallBaseRate("dusk", { night: true })).toBe(70);
+    expect(safariBallBaseRate("dusk")).toBe(50);
+  });
+
+  it("scales the Nest Ball by wild star tier", () => {
+    expect(safariBallBaseRate("nest", { star: 1 })).toBe(80);
+    expect(safariBallBaseRate("nest", { star: 2 })).toBe(70);
+    expect(safariBallBaseRate("nest", { star: 3 })).toBe(60);
+    // 4/5-star wilds: base rate.
+    expect(safariBallBaseRate("nest", { star: 4 })).toBe(50);
+    expect(safariBallBaseRate("nest")).toBe(50);
+  });
+
+  it("grows the Timer Ball with fight posts, capped at 80", () => {
+    expect(safariBallBaseRate("timer")).toBe(50);
+    expect(safariBallBaseRate("timer", { fightPosts: 1 })).toBe(60);
+    expect(safariBallBaseRate("timer", { fightPosts: 3 })).toBe(80);
+    expect(safariBallBaseRate("timer", { fightPosts: 10 })).toBe(80);
+  });
 });
 
 describe("safariFightBonus", () => {

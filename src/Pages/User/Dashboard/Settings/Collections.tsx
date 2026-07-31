@@ -367,13 +367,6 @@ function Emojis() {
       </Text>
     );
   const emojiIds = data;
-  // No per-user obtain data yet, so show today as a temporary placeholder until
-  // the "how you earn emojis" flow ships with Activities.
-  const obtainedDate = new Date().toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
   return (
     <SimpleSectionWrapper>
       <Stack gap={18}>
@@ -448,9 +441,9 @@ function Emojis() {
                         <Text fz={14}>
                           <b>Obtained from:</b> Manually assigned
                         </Text>
-                        <Text fz={14}>
-                          <b>Date obtained:</b> {obtainedDate}
-                        </Text>
+                        {/* No obtain date shown: per-user obtain data doesn't
+                            exist until the "how you earn emojis" flow ships
+                            with Activities. */}
                       </Stack>
                     </Stack>
                   </HoverCard.Dropdown>

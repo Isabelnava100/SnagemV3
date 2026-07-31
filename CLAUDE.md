@@ -204,7 +204,10 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
     `assignPokemonCharacter`. Wants criteria + snapshot previews are
     data-driven (MUSTHAVE_OPTIONS in `src/Pages/Trading/index.tsx` +
     `tradeSnapshotOf` server-side); extend those when new mechanics land.
-    Reach the page from the Snag Mall footer cards.
+    Reach the page from the Snag Mall footer cards. Pokemon received via an
+    accepted offer arrive flagged `traded: true` and earn 1.5x Evo Points
+    (applied in publishForumPost per-post XP and finalizeThreadRewards bonus
+    XP; experience only, stacks with Lucky Egg).
   - The Fishing Pond: `ensureFishingThread` creates a pinned fishing-only
     thread in Events on first use (like the training log). One cast per member
     per week (snagWeekId, `thread.fishingClaims`); a rod is required and the

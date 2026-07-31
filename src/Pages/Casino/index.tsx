@@ -366,7 +366,7 @@ function ExchangeCage(props: { uid: string }) {
   const idleLine =
     direction === "buy"
       ? `Buy: costs ${safeAmount * rate} Snag Coins`
-      : `Sell: returns ${safeAmount * rate} Snag Coins`;
+      : `Sell: returns ${safeAmount} Snag Coins (1 per Token)`;
 
   const stepBtn = (dir: -1 | 1) => (
     <UnstyledButton
@@ -445,17 +445,17 @@ const TABLES: TableDef[] = [
     id: "hexRoulette",
     name: "Hex Roulette",
     icon: <IconTargetArrow size={22} color={GOLD} />,
-    payout: "Win 4x",
-    blurb: "Cover a hex on the board, then one spin decides your fate.",
-    rules: "Pick a number 1 to 6 and set your chip. Land it and take 4x your stake.",
+    payout: "Up to 20x",
+    blurb: "Cover hexes on the board, then one spin decides your fate.",
+    rules: "Cover 1 to 5 of the 6 hexes and set your chip. Land a covered hex to win — fewer covered hexes pay more, up to 20x on a single hex.",
   },
   {
     id: "dreamDice",
     name: "Dream Dice",
     icon: <IconDice5 size={22} color={CYAN} />,
-    payout: "Win 2x",
+    payout: "2x · 3x on Doubles",
     blurb: "Call the total before the bones land.",
-    rules: "Call the 2d6 total and set your chip. A hit pays 2x.",
+    rules: "Call the 2d6 total and set your chip. A hit pays 2x — land it on doubles and it pays 3x.",
   },
   {
     id: "paybackPyramid",
@@ -612,7 +612,7 @@ function useGamePlay(
   const [state, setState] = React.useState<{ ok: boolean | null; msg: string | null }>({ ok: null, msg: null });
 
   const mutation = useMutation({
-    mutationFn: (vars: { game: CasinoGame; bet: number; pick?: number | "even" | "odd" }) =>
+    mutationFn: (vars: { game: CasinoGame; bet: number; pick?: number | number[] | "even" | "odd" }) =>
       playGame(vars.game, vars.bet, vars.pick),
     onSuccess: (res, vars) => {
       queryClient.invalidateQueries({ queryKey: ["currencies", uid] });
@@ -638,7 +638,7 @@ type GameProps = {
 /* --------------------------------- games ---------------------------------- */
 
 function HexRouletteBody(props: GameProps) {
-  const [pick, setPick] = React.useState<number>(1);
+  const [picks, setPicks] = React.useState<number[]>([1]);
   const [wheel, setWheel] = React.useState<string>("?");
   const { mutation, ok, msg, reset } = useGamePlay(
     props.uid,
@@ -651,14 +651,25 @@ function HexRouletteBody(props: GameProps) {
       props.record(res.win, res.payout, bet);
     }
   );
-  const disabled = mutation.isPending || props.tokens < props.stake;
+  const disabled = mutation.isPending || props.tokens < props.stake || picks.length === 0;
+  // Mirrors playCasinoGame: payout scales inversely with coverage (20x on 1 hex).
+  const multiplier = picks.length > 0 ? Math.max(1, Math.floor(20 / picks.length)) : 0;
+
+  const toggle = (n: number) =>
+    setPicks((cur) =>
+      cur.includes(n)
+        ? cur.filter((p) => p !== n)
+        : cur.length >= 5
+          ? cur
+          : [...cur, n].sort((a, b) => a - b)
+    );
 
   return (
     <Flex gap={28} wrap="wrap" align="flex-start">
       <Box style={{ flex: "1 1 300px", minWidth: 0, maxWidth: 372 }}>
         <Box style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 6 }}>
           {Array.from({ length: 6 }, (_, i) => i + 1).map((n) => (
-            <Cell key={n} n={n} label={`Number ${n}`} selected={pick === n} onClick={() => setPick(n)} h={44} fz={15} />
+            <Cell key={n} n={n} label={`Number ${n}`} selected={picks.includes(n)} onClick={() => toggle(n)} h={44} fz={15} />
           ))}
         </Box>
       </Box>
@@ -667,14 +678,16 @@ function HexRouletteBody(props: GameProps) {
           <Wheel value={wheel} />
           <Stack gap={8}>
             <Text fz={14} c={DIM}>
-              {props.stake} token{props.stake > 1 ? "s" : ""} on hex {pick}.
+              {picks.length > 0
+                ? `${props.stake} token${props.stake > 1 ? "s" : ""} on hex${picks.length > 1 ? "es" : ""} ${picks.join(", ")} · pays ${multiplier}x.`
+                : "Cover up to 5 hexes."}
             </Text>
-            <Cta onClick={() => { reset(); mutation.mutate({ game: "hexRoulette", bet: props.stake, pick }); }} loading={mutation.isPending} disabled={disabled}>
+            <Cta onClick={() => { reset(); mutation.mutate({ game: "hexRoulette", bet: props.stake, pick: picks }); }} loading={mutation.isPending} disabled={disabled}>
               Spin the Wheel &rarr;
             </Cta>
           </Stack>
         </Group>
-        <GameMsg ok={ok}>{msg ?? "Cover a hex and spin."}</GameMsg>
+        <GameMsg ok={ok}>{msg ?? "Cover 1 to 5 hexes and spin."}</GameMsg>
         {props.tokens < props.stake && <NeedNote>You need {props.stake} Gengar Tokens for this chip.</NeedNote>}
       </Stack>
     </Flex>
