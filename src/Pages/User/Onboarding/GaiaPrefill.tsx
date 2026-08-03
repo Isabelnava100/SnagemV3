@@ -479,10 +479,11 @@ function NeedAccountHint() {
 
 /**
  * Self-serve Gaia import tools, shown at the top of the import page. Two
- * exclusive options work as tabs (with OR between them): prefill the draft
- * from the export (everything stays editable below), or ignore the Gaia
- * data and start from scratch (closes the import). The characters review
- * renders separately below Items via GaiaCharactersSection.
+ * exclusive options work as tabs (with OR between them): use the Gaia export
+ * (the page auto-prefills the draft from it on first load — everything stays
+ * editable below), or ignore the Gaia data and start from scratch (closes the
+ * import). The characters review renders separately below Items via
+ * GaiaCharactersSection.
  */
 export default function GaiaPrefill(props: {
   /** Selected export slug, owned by the page so the characters section
@@ -493,11 +494,9 @@ export default function GaiaPrefill(props: {
    * page hides the whole prefill draft (it will not be imported). */
   tab: string;
   onTabChange: (tab: string) => void;
-  onPrefill: (entries: ImportEntries, noteAppend: string) => void;
 }) {
   const { user } = useAuth();
   const { slug, onSlugChange, tab, onTabChange } = props;
-  const [message, setMessage] = React.useState("");
 
   const { data: index } = useQuery({ queryKey: ["gaia-export-index"], queryFn: getIndex });
   const { data: ownGaiaName, isPending: ownGaiaNamePending } = useQuery({
@@ -566,12 +565,12 @@ export default function GaiaPrefill(props: {
             tt="uppercase"
             style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.06em", margin: 0 }}
           >
-            Gaia import tools
+            Import your collection from Gaiaonline
           </Text>
         </Group>
         <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-          We exported every profile from the Gaia guild board. Everything you add lands in the
-          draft below, where you can review and edit it before submitting.
+          We exported every profile from the Gaia guild board. Review and adjust as needed before
+          submitting. An admin will review and approve your submission.
         </Text>
         {lockedSlug ? (
           <Text fz={14.5} c="#b6b1bc" lh={1.6}>
@@ -623,33 +622,19 @@ export default function GaiaPrefill(props: {
             {packet ? (
               <Stack gap={12}>
                 <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-                  Good news, the export matching{" "}
+                  Good news, we have found data for the user{" "}
                   <Text component="strong" c="white" fw={700}>
                     {packet.gaiaName}
-                  </Text>{" "}
-                  is ready: {packet.characters.length} characters, {packet.pokemon.length} Pokemon,{" "}
+                  </Text>
+                  : {packet.characters.length} characters, {packet.pokemon.length} Pokemon,{" "}
                   {packet.itemsMatched.length} items matched, {packet.snagCoins} coins and{" "}
-                  {packet.snagEmblems} emblems. Prefilling fills your currency, Pokemon, and items
-                  into the draft below for review.
+                  {packet.snagEmblems} emblems. It has been added to your draft below — review and
+                  adjust anything before submitting.
                 </Text>
-                <Box>
-                  <TileButton
-                    kind="gold"
-                    onClick={() => {
-                      const { entries, noteAppend } = entriesFromExport(packet);
-                      props.onPrefill(entries, noteAppend);
-                      setMessage(
-                        "Draft prefilled. Review each section below, adjust anything, then submit."
-                      );
-                    }}
-                  >
-                    Prefill my draft
-                  </TileButton>
-                </Box>
                 {packet.itemsUnmatched.length > 0 && (
                   <Text fz={13} c="#8f8a99" lh={1.55}>
-                    {packet.itemsUnmatched.length} Gaia item entries have no catalog match;
-                    prefilling adds them to the reviewer note so staff can decide.
+                    {packet.itemsUnmatched.length} Gaia item entries have no catalog match; they go
+                    to the reviewer note so staff can decide.
                   </Text>
                 )}
               </Stack>
@@ -662,28 +647,6 @@ export default function GaiaPrefill(props: {
             <StartFromScratchPanel />
           </Tabs.Panel>
         </Tabs>
-
-        {message && (
-          <Group
-            role="status"
-            aria-live="polite"
-            wrap="nowrap"
-            align="flex-start"
-            gap={12}
-            style={{
-              background: "rgba(199,155,214,.1)",
-              border: "1px solid rgba(199,155,214,.5)",
-              padding: "12px 16px",
-            }}
-          >
-            <Box style={{ flexShrink: 0, marginTop: 1 }}>
-              <SnagIcon name="sparkle" size={18} color="#c79bd6" cut="#17151c" />
-            </Box>
-            <Text fz={14} style={{ color: "#c79bd6", lineHeight: 1.5 }}>
-              {message}
-            </Text>
-          </Group>
-        )}
       </Stack>
     </Box>
   );

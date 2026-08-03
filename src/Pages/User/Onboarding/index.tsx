@@ -41,7 +41,7 @@ import {
   submitImportRequest,
 } from "../../../queries/imports";
 import { handleLogout } from "../../auth/components/LogoutHandle";
-import GaiaPrefill, { GaiaCharactersSection, getGaiaExport } from "./GaiaPrefill";
+import GaiaPrefill, { GaiaCharactersSection, getGaiaExport, entriesFromExport } from "./GaiaPrefill";
 import PokemonEditCard from "./PokemonEditCard";
 
 const CURRENCY_LABELS: { key: keyof ImportEntries["currency"]; label: string }[] = [
@@ -277,6 +277,28 @@ export default function Onboarding() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftReady, entries.pokemon, assignableNames.join("|")]);
 
+  // Auto-prefill the draft from the Gaia export on first load — no button.
+  // Runs once, only into an untouched draft (no entries yet and no earlier
+  // prefill note), so it never clobbers edits or a returning member's work.
+  const autoPrefilled = React.useRef(false);
+  React.useEffect(() => {
+    if (autoPrefilled.current || mode !== "prefill" || !seeded || locked || !gaiaPacket) return;
+    const hasEntries =
+      entries.items.length > 0 ||
+      entries.pokemon.length > 0 ||
+      CURRENCY_LABELS.some((c) => (entries.currency[c.key] ?? 0) > 0);
+    if (hasEntries || (request?.note ?? "").includes("Prefilled from the Gaia export")) return;
+    autoPrefilled.current = true;
+    const { entries: prefill, noteAppend } = entriesFromExport(gaiaPacket);
+    update({
+      currency: { ...prefill.currency },
+      items: [...prefill.items],
+      pokemon: [...prefill.pokemon],
+    });
+    setNote((prev) => (prev ? `${prev}\n\n${noteAppend}` : noteAppend));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, seeded, locked, gaiaPacket]);
+
   const saveDraft = useMutation({
     mutationFn: (next: ImportEntries) => saveImportDraft(uid as string, next),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["import-request", uid] }),
@@ -335,12 +357,7 @@ export default function Onboarding() {
             tt="uppercase"
             style={{ fontFamily: FONT_DISPLAY, letterSpacing: "0.02em", lineHeight: 1.05, margin: 0 }}
           >
-            Welcome back. Import your collection
-          </Text>
-          <Text fz={{ base: 15, sm: 16 }} c="#b6b1bc" mt={12} lh={1.6}>
-            Returning from the Gaia guild? Add the currency, items, and Pokemon you had so a staff
-            member can restore them. Prefill from your old profile, then review and edit
-            everything below. You can come back to this page any time until you mark it complete.
+            Welcome Back!
           </Text>
         </Box>
 
@@ -396,22 +413,6 @@ export default function Onboarding() {
               onSlugChange={setGaiaSlug}
               tab={gaiaTab}
               onTabChange={setGaiaTab}
-              onPrefill={(prefill, noteAppend) => {
-                // Merge, never clobber: per currency field, a hand-entered
-                // value wins and the prefill fills only what is still zero.
-                const mergedCurrency = { ...entries.currency };
-                CURRENCY_LABELS.forEach((c) => {
-                  if ((mergedCurrency[c.key] ?? 0) <= 0) {
-                    mergedCurrency[c.key] = prefill.currency[c.key] ?? 0;
-                  }
-                });
-                update({
-                  currency: mergedCurrency,
-                  items: [...entries.items, ...prefill.items],
-                  pokemon: [...entries.pokemon, ...prefill.pokemon],
-                });
-                setNote((prev) => (prev ? `${prev}\n\n${noteAppend}` : noteAppend));
-              }}
             />
             {/* The draft only shows while the prefill option is active: on
                 Start from scratch none of it would be imported anyway. */}
