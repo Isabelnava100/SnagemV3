@@ -34,7 +34,14 @@ functions/scripts/backups/
 # already uploaded to Firestore by upload-gaia-exports.mjs). Scripts stay tracked.
 scripts/gaia-export/raw/
 scripts/gaia-export/accounts.json
+scripts/gaia-export/accounts-xlsx.json
 scripts/gaia-export/gap-report.md
+
+# Local machine-specific tool settings (not shared)
+.claude/settings.local.json
+
+# One-off debug/lookup scratch scripts (may embed a member email; never commit)
+*.tmp.mjs
 
 # Firebase emulator logs
 firestore-debug.log

@@ -22,28 +22,63 @@ export interface MyThreadItem {
   trainingLog?: boolean;
 }
 
-/** Every thread the member started (hostUid), newest first. */
+/** How many started threads the activity feeds surface. */
+export const MY_THREADS_LIMIT = 25;
+
+const toThreadItem = (d: {
+  id: string;
+  ref: { parent: { parent: { id: string } | null } };
+  data: () => Record<string, any>;
+}): MyThreadItem => {
+  const data = d.data();
+  return {
+    id: d.id,
+    forum: d.ref.parent.parent?.id ?? "Main-Forum",
+    title: String(data.title ?? "Untitled thread"),
+    closed: !!data.closed,
+    replyCount: data.replyCount,
+    createdAt: data.createdAt,
+    missionId: data.missionId,
+    trainingLog: data.trainingLog,
+  };
+};
+
+/**
+ * Every thread the member started (hostUid), newest first.
+ *
+ * Prefers the server-side ordered + limited read (needs the threads
+ * hostUid + createdAt composite index). If that index is not deployed yet the
+ * query throws failed-precondition, so we fall back to the unordered
+ * collection-group read and sort/slice on the client. Safe to ship before or
+ * after `firebase deploy --only firestore:indexes`; it self-upgrades once the
+ * index is live.
+ */
 export const getMyThreads = async (uid: string): Promise<MyThreadItem[]> => {
-  const { collectionGroup, getDocs, query, where } = await import("firebase/firestore");
-  const db = await getDb();
-  const snap = await getDocs(
-    query(collectionGroup(db, "threads"), where("hostUid", "==", uid))
+  const { collectionGroup, getDocs, limit, orderBy, query, where } = await import(
+    "firebase/firestore"
   );
-  return snap.docs
-    .map((d) => {
-      const data = d.data() as Record<string, any>;
-      return {
-        id: d.id,
-        forum: d.ref.parent.parent?.id ?? "Main-Forum",
-        title: String(data.title ?? "Untitled thread"),
-        closed: !!data.closed,
-        replyCount: data.replyCount,
-        createdAt: data.createdAt,
-        missionId: data.missionId,
-        trainingLog: data.trainingLog,
-      };
-    })
-    .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+  const db = await getDb();
+  try {
+    const snap = await getDocs(
+      query(
+        collectionGroup(db, "threads"),
+        where("hostUid", "==", uid),
+        orderBy("createdAt", "desc"),
+        limit(MY_THREADS_LIMIT)
+      )
+    );
+    return snap.docs.map(toThreadItem);
+  } catch (err) {
+    // Missing composite index (failed-precondition) or any transient issue:
+    // fall back to the original fetch-all + client sort so the feed still works.
+    const snap = await getDocs(
+      query(collectionGroup(db, "threads"), where("hostUid", "==", uid))
+    );
+    return snap.docs
+      .map(toThreadItem)
+      .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
+      .slice(0, MY_THREADS_LIMIT);
+  }
 };
 
 export interface MyPostItem {
