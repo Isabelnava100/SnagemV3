@@ -572,15 +572,7 @@ export default function GaiaPrefill(props: {
           We exported every profile from the Gaia guild board. Review and adjust as needed before
           submitting. An admin will review and approve your submission.
         </Text>
-        {lockedSlug ? (
-          <Text fz={14.5} c="#b6b1bc" lh={1.6}>
-            Your account is linked to the Gaia username{" "}
-            <Text component="strong" c="white" fw={700}>
-              {index[lockedSlug]}
-            </Text>
-            , so that is the export we will use.
-          </Text>
-        ) : ownGaiaName ? (
+        {lockedSlug ? null : ownGaiaName ? (
           <Text fz={14.5} c="#b6b1bc" lh={1.6}>
             Your account is linked to the Gaia username{" "}
             <Text component="strong" c="white" fw={700}>
