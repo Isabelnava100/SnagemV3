@@ -340,8 +340,8 @@ function AlertsDropdown(props: { onClose: () => void }) {
     enabled: !!user,
   });
 
-  // The alerts dot derives from this same query (useAlertsBadge), so one
-  // invalidation refreshes both the list and the badge.
+  // The alerts indicator (red bolt) derives from this same query
+  // (useAlertsBadge), so one invalidation refreshes both the list and the badge.
   const refreshAlerts = () =>
     queryClient.invalidateQueries({ queryKey: ["notifications", user?.uid] });
 
@@ -539,8 +539,12 @@ function AlertsSideButton() {
           }}
         >
           <Box style={{ position: "relative" }}>
-            <SnagIcon name="bolt" size={isUnder900 ? 40 : 44} title="Alerts" />
-            <AlertDot show={show} />
+            <SnagIcon
+              name="bolt"
+              size={isUnder900 ? 40 : 44}
+              title="Alerts"
+              color={show ? "#E54156" : "#fff"}
+            />
           </Box>
           {!isUnder900 && (
             <Text c="white" tt="uppercase" fz={14}>
@@ -658,8 +662,13 @@ function AlertsTabButton() {
                   : "transparent",
               }}
             >
-              <SnagIcon name="bolt" size={22} title="Alerts" style={{ opacity: opened ? 1 : 0.65 }} />
-              <AlertDot show={show} />
+              <SnagIcon
+                name="bolt"
+                size={22}
+                title="Alerts"
+                color={show ? "#E54156" : "#fff"}
+                style={{ opacity: opened ? 1 : 0.65 }}
+              />
             </Box>
             <Text
               fz={14}
