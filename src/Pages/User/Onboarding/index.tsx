@@ -13,6 +13,7 @@ import {
   Stack,
   Text,
   Textarea,
+  TextInput,
   UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -690,6 +691,7 @@ function PokemonSection(props: {
   onChange: (p: ImportPokemon[]) => void;
 }) {
   const [slug, setSlug] = React.useState<string | null>(null);
+  const [nickname, setNickname] = React.useState("");
   const [gender, setGender] = React.useState<"M" | "F">("M");
   const [shiny, setShiny] = React.useState(false);
   const [level, setLevel] = React.useState(5);
@@ -718,6 +720,7 @@ function PokemonSection(props: {
         slug: p.slug,
         pokedex: String(Number(p.idx)),
         character: effectiveCharacter,
+        name: nickname.trim(),
         gender,
         shiny,
         level,
@@ -727,6 +730,7 @@ function PokemonSection(props: {
       },
     ]);
     setSlug(null);
+    setNickname("");
     setShiny(false);
     setLevel(5);
     setFriendship(0);
@@ -759,6 +763,15 @@ function PokemonSection(props: {
               </PokemonHoverCard>
             ) : undefined
           }
+          sx={FIELD_SX}
+        />
+        <TextInput
+          label="Nickname"
+          placeholder="Optional"
+          value={nickname}
+          onChange={(e) => setNickname(e.currentTarget.value)}
+          w={140}
+          radius={0}
           sx={FIELD_SX}
         />
         <Select

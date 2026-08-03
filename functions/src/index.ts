@@ -331,7 +331,7 @@ const rollShiny = (): boolean => randomInt(SHINY_ODDS) === 0;
 function buildOwnedPokemon(
   slug: string,
   now: Date,
-  opts: { shiny?: boolean; gender?: string; characterId?: string; caughtIn?: Record<string, unknown> } = {}
+  opts: { shiny?: boolean; gender?: string; characterId?: string; caughtIn?: Record<string, unknown>; name?: string } = {}
 ): Record<string, unknown> {
   const info = catalogBySlug.get(slug);
   const idx = Number(info?.idx ?? 0);
@@ -340,7 +340,7 @@ function buildOwnedPokemon(
     gender: opts.gender === "M" || opts.gender === "F" ? opts.gender : randomInt(2) === 0 ? "M" : "F",
     generation: generationFor(String(idx || "")),
     image_slug: slug,
-    name: info?.name ?? slug,
+    name: opts.name ? opts.name : info?.name ?? slug,
     pokedex: String(idx || ""),
     regiondex: "",
     species: info?.name ?? slug,
@@ -3571,6 +3571,9 @@ export const chooseStarter = onCall(async (request) => {
   const uid = requireAuth(request);
   const member = await loadMember(uid);
   const slug = requireString(request.data?.slug, "pokemon", 100);
+  // Optional nickname for the starter (empty falls back to the species name).
+  const nickname =
+    typeof request.data?.name === "string" ? request.data.name.trim().slice(0, 60) : "";
   const info = catalogBySlug.get(slug);
   if (!info) throw new HttpsError("invalid-argument", "Unknown pokemon.");
   const idx = Number(info.idx ?? 0);
@@ -3596,7 +3599,7 @@ export const chooseStarter = onCall(async (request) => {
         "The starter pick is only for members with no pokemon yet."
       );
     }
-    tx.set(ownedRef, { [randomUUID()]: buildOwnedPokemon(slug, now, {}) }, { merge: true });
+    tx.set(ownedRef, { [randomUUID()]: buildOwnedPokemon(slug, now, { name: nickname || undefined }) }, { merge: true });
     tx.set(db.doc(`users/${uid}`), { starterChosen: slug }, { merge: true });
   });
 

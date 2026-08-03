@@ -97,6 +97,7 @@ export function StarterPicker() {
   const options = React.useMemo(starterOptions, []);
   const [slug, setSlug] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
+  const [nickname, setNickname] = React.useState("");
   const [message, setMessage] = React.useState("");
 
   const shown = options.filter((o) =>
@@ -105,7 +106,7 @@ export function StarterPicker() {
   const selected = options.find((o) => o.slug === slug);
 
   const claim = useMutation({
-    mutationFn: () => chooseStarter(slug!),
+    mutationFn: () => chooseStarter(slug!, nickname.trim() || undefined),
     onSuccess: async (res) => {
       setMessage(`${res.name} joined your box! Now add it to a team.`);
       await queryClient.invalidateQueries({ queryKey: ["get-owned-pokemons"] });
@@ -163,7 +164,15 @@ export function StarterPicker() {
           )}
         </Group>
       </Box>
-      <Group gap={10} align="center" wrap="wrap">
+      <Group gap={10} align="flex-end" wrap="wrap">
+        <TextInput
+          label="Nickname (optional)"
+          placeholder="Name your partner"
+          value={nickname}
+          onChange={(e) => setNickname(e.currentTarget.value)}
+          w={{ base: "100%", xs: 200 }}
+          styles={{ input: { background: "#2E2D2E" }, label: { color: "white" } }}
+        />
         <Button
           color="green.0"
           radius="xl"
@@ -175,7 +184,7 @@ export function StarterPicker() {
           {selected ? `Claim ${selected.name}` : "Claim starter"}
         </Button>
         {selected && (
-          <Text fz={14} c="white">
+          <Text fz={14} c="white" pb={4}>
             {selected.name}
             {selected.isClassic ? " (classic starter)" : ""}
           </Text>

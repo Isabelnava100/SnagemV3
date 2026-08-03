@@ -426,11 +426,12 @@ function StartFromScratchPanel() {
         imported; finish these three steps and you are ready to roleplay.
       </Text>
       <StepCard num="01" title="Create your character" done={status.hasCharacter}>
-        {status.hasCharacter ? (
-          <Text fz={14} c="#3ecf8e">Character created.</Text>
-        ) : (
-          <CreateCharacterStep />
+        {status.hasCharacter && (
+          <Text fz={14} c="#3ecf8e">
+            Character created. Add another below, or move on to the next step.
+          </Text>
         )}
+        <CreateCharacterStep />
       </StepCard>
       <StepCard num="02" title="Pick your first Pokemon" done={status.hasPokemon}>
         {status.hasPokemon ? (
