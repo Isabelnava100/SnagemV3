@@ -18,8 +18,10 @@ import { useAuth } from "../../context/AuthContext";
 import { getPokemonImageURL } from "../../helpers";
 import { PokemonHoverCard } from "../pokemon/PokemonHoverCard";
 import { starterOptions } from "../../lib/starters";
+import { levelForXp } from "../../lib/leveling";
 import { chooseStarter } from "../../queries/onboarding";
 import { getCharacters, getOwnedPokemons, getTeamsRaw } from "../../queries/dashboard";
+import type { OwnedPokemon } from "../types/typesUsed";
 
 /**
  * Shared "are you set up to roleplay yet?" status: at least one character, at
@@ -86,6 +88,77 @@ function StepRow(props: { done: boolean; label: string; children?: React.ReactNo
         {!props.done && props.children}
       </Stack>
     </Group>
+  );
+}
+
+/** Compact sprite + name + level chips for a list of owned pokemon. */
+export function PokemonChips(props: { pokemon: OwnedPokemon[] }) {
+  return (
+    <Group gap={8} wrap="wrap">
+      {props.pokemon.map((p) => {
+        const label = p.name?.trim() ? p.name.trim() : p.species;
+        return (
+          <Group key={p.id} gap={8} wrap="nowrap" style={{ background: "#1c1a22", padding: "5px 10px" }}>
+            <PokemonHoverCard species={{ slug: p.image_slug }}>
+              <Avatar
+                src={getPokemonImageURL(p.image_slug)}
+                alt=""
+                size={26}
+                radius={0}
+                bg="transparent"
+                imageProps={{ style: { imageRendering: "pixelated" } }}
+              />
+            </PokemonHoverCard>
+            <Text fz={13} c="white" fw={700}>
+              {label}
+              {p.shiny ? " (Shiny)" : ""}
+            </Text>
+            <Text fz={12} c="#8f8a99">
+              Lv {levelForXp(p.experience ?? 0)}
+            </Text>
+          </Group>
+        );
+      })}
+    </Group>
+  );
+}
+
+/**
+ * Read-only preview of the member's teams: team name plus each pokemon's
+ * sprite, name, and level. Shown by the onboarding pages' team step so a
+ * brand-new team is visible right after creation (onboarding teams
+ * automatically include every owned pokemon).
+ */
+export function TeamRosterPreview() {
+  const { user } = useAuth();
+  const teams = useQuery({
+    queryKey: ["get-teams", user?.uid],
+    queryFn: () => getTeamsRaw(user!.uid),
+    enabled: !!user,
+  });
+  const owned = useQuery({
+    queryKey: ["get-owned-pokemons", user?.uid],
+    queryFn: () => getOwnedPokemons(user!.uid),
+    enabled: !!user,
+  });
+  const byId = new Map((owned.data?.sortedData ?? []).map((p) => [p.id, p]));
+  const filled = (teams.data ?? []).filter((t) => (t.pokemon_ids ?? []).length > 0);
+  if (!filled.length) return null;
+  return (
+    <Stack gap={8}>
+      {filled.map((t) => (
+        <Box key={t.id} p={10} style={{ background: "#141318", border: "1px solid #2a2637" }}>
+          <Stack gap={8}>
+            <Text fz={14} fw={700} c="white">
+              {t.team_name} · {t.pokemon_ids.length} Pokemon
+            </Text>
+            <PokemonChips
+              pokemon={t.pokemon_ids.map((id) => byId.get(id)).filter((p): p is OwnedPokemon => !!p)}
+            />
+          </Stack>
+        </Box>
+      ))}
+    </Stack>
   );
 }
 

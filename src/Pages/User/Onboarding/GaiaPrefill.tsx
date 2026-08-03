@@ -24,6 +24,7 @@ import { getCharacters } from "../../../queries/dashboard";
 import { ImportEntries, ImportItem, ImportPokemon } from "../../../queries/imports";
 import {
   StarterPicker,
+  TeamRosterPreview,
   useOnboardingStatus,
 } from "../../../components/onboarding/OnboardingChecklist";
 import { CreateCharacterStep, CreateTeamStep, StepCard } from "../../Welcome";
@@ -448,7 +449,10 @@ function StartFromScratchPanel() {
       </StepCard>
       <StepCard num="03" title="Build your team" done={status.hasReadyTeam}>
         {status.hasReadyTeam ? (
-          <Text fz={14} c="#3ecf8e">Team ready.</Text>
+          <>
+            <Text fz={14} c="#3ecf8e">Team ready.</Text>
+            <TeamRosterPreview />
+          </>
         ) : (
           <CreateTeamStep />
         )}

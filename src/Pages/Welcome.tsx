@@ -10,15 +10,21 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { v4 as uuid } from "uuid";
 import React from "react";
 import { Link, Navigate } from "react-router-dom";
 import Seo from "../components/common/Seo";
-import { StarterPicker, useOnboardingStatus } from "../components/onboarding/OnboardingChecklist";
+import {
+  PokemonChips,
+  StarterPicker,
+  TeamRosterPreview,
+  useOnboardingStatus,
+} from "../components/onboarding/OnboardingChecklist";
 import { SectionLoader } from "../components/navigation/loading";
 import { useAuth } from "../context/AuthContext";
 import { assignPokemonCharacter } from "../queries/evolution";
+import { getOwnedPokemons } from "../queries/dashboard";
 import { toastError } from "../lib/toast";
 
 const DISPLAY_FONT = "var(--font-display, 'Quantico', sans-serif)";
@@ -186,12 +192,19 @@ export function CreateCharacterStep() {
   );
 }
 
-/** Inline step 3: name a team, auto-filled with the member's pokemon. */
+/** Inline step 3: name a team. Teams are automatic — every owned pokemon
+ * joins — so show exactly who will be on it before the name goes in. */
 export function CreateTeamStep() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const status = useOnboardingStatus();
   const [name, setName] = React.useState("");
+  const owned = useQuery({
+    queryKey: ["get-owned-pokemons", user?.uid],
+    queryFn: () => getOwnedPokemons(user!.uid),
+    enabled: !!user,
+  });
+  const ownedList = owned.data?.sortedData ?? [];
 
   const create = useMutation({
     mutationFn: async (trimmed: string) => {
@@ -237,10 +250,18 @@ export function CreateTeamStep() {
   return (
     <Stack gap={8}>
       <Text fz={14} c="#b6b1bc" lh={1.55}>
-        A team is the group of Pokemon that travels with your character. Give it a name and we
-        will place your new partner on it. A Pokemon belongs to its character, so it can only
+        A team is the group of Pokemon that travels with your character. Give it a name — every
+        Pokemon you own joins automatically. A Pokemon belongs to its character, so it can only
         join that character&apos;s team.
       </Text>
+      {ownedList.length > 0 && (
+        <Box>
+          <Text fz={13} fw={700} c="#8f8a99" tt="uppercase" mb={6} style={{ letterSpacing: "0.08em" }}>
+            On this team ({ownedList.length})
+          </Text>
+          <PokemonChips pokemon={ownedList} />
+        </Box>
+      )}
       <Group gap={8} wrap="wrap" align="flex-end">
         <TextInput
           label="Team name"
@@ -331,7 +352,10 @@ export default function Welcome() {
 
         <StepCard num="03" title="Build your team" done={status.hasReadyTeam}>
           {status.hasReadyTeam ? (
-            <Text fz={14} c="#3ecf8e">Team ready.</Text>
+            <>
+              <Text fz={14} c="#3ecf8e">Team ready.</Text>
+              <TeamRosterPreview />
+            </>
           ) : (
             <CreateTeamStep />
           )}
