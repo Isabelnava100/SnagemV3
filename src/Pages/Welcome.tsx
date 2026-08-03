@@ -6,6 +6,7 @@ import {
   SimpleGrid,
   Stack,
   Text,
+  Textarea,
   TextInput,
   Title,
 } from "@mantine/core";
@@ -63,13 +64,27 @@ export function StepCard(props: {
   );
 }
 
-/** Inline step 1: create the first character with just a name. */
+/** Inline step 1: create the first character. Collects the same fields the
+ * Gaia import review card does (name, age, pronouns, birthday, height, short
+ * description, history); only the name is required. */
 export function CreateCharacterStep() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [name, setName] = React.useState("");
+  const [form, setForm] = React.useState({
+    name: "",
+    age: "",
+    pronouns: "",
+    birthday: "",
+    height: "",
+    short_description: "",
+    history: "",
+  });
+  const set =
+    (key: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [key]: e.currentTarget.value }));
   const create = useMutation({
-    mutationFn: async (trimmed: string) => {
+    mutationFn: async (values: typeof form) => {
       const { doc, setDoc } = await import("firebase/firestore");
       const { getDb } = await import("../context/firebase");
       const db = await getDb();
@@ -77,15 +92,15 @@ export function CreateCharacterStep() {
         doc(db, "users", user!.uid, "bag", "characters"),
         {
           [uuid()]: {
-            age: "",
-            birthday: "",
-            height: "",
+            age: values.age.trim(),
+            birthday: values.birthday.trim(),
+            height: values.height.trim(),
             moveset: "",
-            name: trimmed,
-            short_description: "",
-            history: "",
+            name: values.name.trim(),
+            short_description: values.short_description.trim(),
+            history: values.history.trim(),
             species: "Human",
-            pronouns: "",
+            pronouns: values.pronouns.trim(),
             type: "None",
             imageURL: "",
             createdAt: new Date(),
@@ -97,30 +112,76 @@ export function CreateCharacterStep() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["get-characters"] }),
     onError: (e) => toastError(e, "Could not create the character."),
   });
+  const fieldStyles = {
+    input: { background: "#141318", border: "1px solid #2a2637", color: "#fff" },
+    label: { color: "#fff" },
+  } as const;
   return (
-    <Stack gap={8}>
+    <Stack gap={10}>
       <Text fz={14} c="#b6b1bc" lh={1.55}>
-        Your character is you in our world: a name, a face, a story. Nothing fancy needed yet, just
-        a name to start.
+        Your character is you in our world: a name, a face, a story. Fill in what you know — the
+        same details the Gaia import collects. Everything stays editable later.
       </Text>
-      <Group gap={8} wrap="wrap" align="flex-end">
+      <SimpleGrid cols={{ base: 1, xs: 2 }} spacing={10}>
         <TextInput
-          label="Character name"
+          label="Name"
           placeholder="e.g. Rell"
-          value={name}
-          onChange={(e) => setName(e.currentTarget.value)}
-          w={{ base: "100%", xs: 260 }}
-          styles={{ input: { background: "#141318", border: "1px solid #2a2637" } }}
+          required
+          value={form.name}
+          onChange={set("name")}
+          styles={fieldStyles}
         />
+        <TextInput label="Age" placeholder="Age" value={form.age} onChange={set("age")} styles={fieldStyles} />
+        <TextInput
+          label="Pronouns"
+          placeholder="e.g. she/her, they/them"
+          value={form.pronouns}
+          onChange={set("pronouns")}
+          styles={fieldStyles}
+        />
+        <TextInput
+          label="Birthday"
+          placeholder="Birthday"
+          value={form.birthday}
+          onChange={set("birthday")}
+          styles={fieldStyles}
+        />
+        <TextInput
+          label="Height"
+          placeholder="Height"
+          value={form.height}
+          onChange={set("height")}
+          styles={fieldStyles}
+        />
+      </SimpleGrid>
+      <Textarea
+        label="Short description"
+        placeholder="A sentence or two about who they are"
+        value={form.short_description}
+        onChange={set("short_description")}
+        autosize
+        minRows={2}
+        styles={fieldStyles}
+      />
+      <Textarea
+        label="History"
+        placeholder="Their background and story"
+        value={form.history}
+        onChange={set("history")}
+        autosize
+        minRows={3}
+        styles={fieldStyles}
+      />
+      <Box>
         <Button
           color="grape"
-          disabled={!name.trim()}
+          disabled={!form.name.trim()}
           loading={create.isPending}
-          onClick={() => create.mutateAsync(name.trim())}
+          onClick={() => create.mutateAsync(form)}
         >
           Create my character
         </Button>
-      </Group>
+      </Box>
     </Stack>
   );
 }
