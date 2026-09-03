@@ -1,4 +1,5 @@
 import {
+  Anchor,
   Box,
   Button,
   Container,
@@ -26,6 +27,7 @@ import { useAuth } from "../context/AuthContext";
 import { assignPokemonCharacter } from "../queries/evolution";
 import { getOwnedPokemons } from "../queries/dashboard";
 import { toastError } from "../lib/toast";
+import { handleLogout } from "./auth/components/LogoutHandle";
 
 const DISPLAY_FONT = "var(--font-display, 'Quantico', sans-serif)";
 
@@ -304,6 +306,19 @@ export default function Welcome() {
       <Seo noindex title="Your First Adventure | Snagem Guild" />
       <Stack gap={16}>
         <Box>
+          {/* The nav is hidden while setup is unfinished, so this is the only
+              way off the page for someone signed into the wrong account. */}
+          <Anchor
+            component="button"
+            type="button"
+            onClick={handleLogout}
+            c="blue.3"
+            fz={14}
+            display="inline-block"
+            mb={10}
+          >
+            Sign out
+          </Anchor>
           <Text
             fz={13}
             fw={700}
