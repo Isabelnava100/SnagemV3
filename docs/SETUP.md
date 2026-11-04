@@ -191,12 +191,88 @@ copies must stay in sync.
 - **Quota-hit deploys can drop the `allUsers` invoker binding** on Cloud Run
   services, which makes callables return 403. Redeploying does not restore it.
   Fix with `gcloud run services add-iam-policy-binding`.
-- **Node version drift.** `functions/package.json` declares `engines.node: 22`
-  while `firebase.json` pins the deployed runtime to `nodejs20`. Deploys work
-  today, but do not "fix" one without checking the other.
+- **Node version.** Netlify builds on 22 (`netlify.toml NODE_VERSION`),
+  `firebase.json` pins the functions runtime to `nodejs22`, and
+  `functions/package.json` declares `engines.node: 22`. All three agree today.
+  A newer local Node (24.x) builds fine, but when something only breaks locally,
+  check whether you are off 22 before chasing it further.
 - **Never introduce `package-lock.json`.** bun only.
 - **No em dashes anywhere**, including code comments and commit messages. See
   `CLAUDE.md`.
+
+## Moving to a brand new computer
+
+The repo is the easy part. What bites is the handful of things that are
+deliberately NOT in git, so a clone alone leaves you with a site that will not
+boot and a CLI that refuses every command.
+
+### What does not travel with the clone
+
+| Missing after clone | Why | How to restore |
+| --- | --- | --- |
+| `.env` | gitignored | `cp .env.example .env`, fill from the Firebase console (see First run above) |
+| `node_modules` | gitignored | `bun install`, then `npm install` inside `functions/` |
+| Firebase project selection | no `.firebaserc` in the repo | `firebase login` then `firebase use snagemguild` |
+| Application Default Credentials | per machine | `gcloud auth application-default login` |
+| Gaia export data | gitignored (member content) | already uploaded to Firestore; regenerate only if you need the raw files |
+| Claude Code memory and settings | live in `~/.claude`, outside the repo | copy `~/.claude/projects/<project>/memory/` across if you want the history, otherwise start fresh |
+
+Runtime secrets (SendGrid, Discord) do NOT need to be moved. They live in
+Firestore under `adminSecrets/*` and are edited from Site Settings on the live
+site, so a correct `.env` plus a logged-in CLI is a fully working setup.
+
+### Order of operations
+
+```bash
+git clone https://github.com/Isabelnava100/SnagemV3.git
+cd SnagemV3
+bun install
+(cd functions && npm install)
+cp .env.example .env     # then fill it in
+firebase login
+firebase use snagemguild
+gcloud auth application-default login
+```
+
+### Verify before trusting the machine
+
+Run all four. Each one proves a different half of the setup.
+
+```bash
+npx tsc --noEmit         # zero errors
+bun run test             # all green
+bun run build            # tsc + sitemap + vite build
+bun run dev              # app boots and you can sign in
+```
+
+If `bun run dev` loads but Firebase calls fail, `.env` is wrong or incomplete.
+If `firebase` commands fail, you skipped `firebase use snagemguild`. If a seed
+script under `functions/scripts/` fails on credentials, you skipped the gcloud
+ADC login.
+
+Confirm the backend matches the repo before changing anything:
+
+```bash
+firebase functions:list
+```
+
+### Do not re-deploy just to prove it works
+
+The frontend deploys from a push to `main`, and the backend is already live and
+in sync. Deploying functions has real risk attached (see the CPU quota and
+invoker gotchas below), so deploy only when you actually changed rules or
+functions.
+
+### Handing this to Claude on the new machine
+
+Point it at the two files that matter, in this order:
+
+1. `CLAUDE.md` for the coding rules (writing style, UI, SEO, accessibility,
+   Firestore, security).
+2. This file for environment, deploys, secrets, and the gotchas.
+
+Then have it run the four verification commands above and report what failed,
+rather than assuming the machine is good.
 
 ## Where to read next
 
