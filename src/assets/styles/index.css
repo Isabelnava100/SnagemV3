@@ -1,3 +1,7 @@
+/* Tailwind 4: theme + utilities only, preflight intentionally excluded (was disabled in v3 config) */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@source "../../";
 /* @import url("./fonts.css"); */
 /* Roboto is self-hosted (public/fonts, latin variable files) so text never
    waits on the Google Fonts RTT chain. Keep weights synced to what the UI
@@ -16,10 +20,6 @@
   font-style: italic;
   font-display: swap;
 }
-/* Tailwind 4: theme + utilities only, preflight intentionally excluded (was disabled in v3 config) */
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
-@source "../../";
 
 :root {
   --w: #fff;

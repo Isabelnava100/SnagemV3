@@ -137,7 +137,7 @@ Check what is currently live at any time:
 firebase functions:list
 ```
 
-As of the last check, all 81 functions exported from `functions/src/index.ts`
+As of the last check, all 84 functions exported from `functions/src/index.ts`
 are deployed and in sync, so the backend is current. If you add a callable,
 that command is how you confirm it landed.
 
@@ -182,10 +182,8 @@ copies must stay in sync.
 
 ## Gotchas that will bite you
 
-- **This repo lives in an iCloud synced folder.** If builds hang on file reads,
-  `node_modules` was evicted. Run `brctl download node_modules` and wait.
-- **Cloud Functions CPU quota.** us-central1 caps at 20 vCPU. There are 81
-  functions at `cpu 0.2` each, which is 16.2 vCPU. Keep
+- **Cloud Functions CPU quota.** us-central1 caps at 20 vCPU. There are 84
+  functions at `cpu 0.2` each, which is 16.8 vCPU. Keep
   `functions x cpu_milli` at or under 20000 or raise the quota, otherwise
   deploys fail partway.
 - **Quota-hit deploys can drop the `allUsers` invoker binding** on Cloud Run

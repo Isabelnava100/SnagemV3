@@ -87,7 +87,6 @@ Bake these in for every new/edited UI (a11y is a first-class requirement, not a 
 - **Homepage boot shell**: `index.html` contains a PERMANENT static copy of the hero (`#boot-shell`, outside `#root`) plus inline critical CSS, so first paint and LCP do not wait for the bundle and React never remounts the hero. The React `HomePage` renders only what is below the hero, `App.tsx` hides/shows the shell per route, and a CSP-hashed inline script strips it on non-home loads. When editing the hero, marketing top bar, or the `.dc-cta`/`.dc-kicker`/`.hp-*` classes, update the shell and its inline CSS in the same commit. The shell's inline script has a sha256 in the CSP in `netlify.toml`; recompute it if the script changes.
 - Fonts are self-hosted in `public/fonts` (Roboto variable regular + italic, Quantico 4 styles); @font-face lives in `src/assets/styles/index.css` and `redesign.css`. Do not re-add Google Fonts links.
 - Typecheck: `npx tsc --noEmit` (also `bun run typecheck`). Keep at zero errors. Tests: `bun run test` (vitest). `react-hooks/rules-of-hooks` is an eslint ERROR; the rest are warnings.
-- This repo lives in iCloud-synced Documents: if builds hang on file reads, node_modules was evicted: run `brctl download node_modules` and wait.
 
 ## Known deferred work
 
